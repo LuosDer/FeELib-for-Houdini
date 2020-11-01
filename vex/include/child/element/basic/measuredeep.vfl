@@ -76,11 +76,11 @@ float linepointdistance(
     ) {
     vector dir = lP1 - lP0;
     vector vec = pP - lP0;
-    if (1) {
+    #if 1
         return length(cross(dir, vec)) / length(dir);
-    } else {
+    #else
         return sqrt(square(length(vec)) - square(dot(vec, dir) / length(dir)));
-    }
+    #endif
 }
 
 /*

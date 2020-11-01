@@ -6,7 +6,7 @@
 
 
 static
-float swapf(
+void swapf(
     float *arg0,
     float *arg1
 ) {
@@ -16,7 +16,7 @@ float swapf(
 }
 
 static
-int swapi(
+void swapi(
     int *arg0,
     int *arg1
 ) {
@@ -90,7 +90,7 @@ float clampf(
     return val < min ? min : (val > max ? max : val);
 }
 
-
+/*
 //Bresenham's line algorithm
 //https://zh.wikipedia.org/zh-cn/布雷森漢姆直線演算法
 int x0 = gidx;
@@ -131,7 +131,7 @@ for (int x = x0; x < x1; ++x) {
         error += deltax;
     }
 }
-
+*/
 
 
 
