@@ -462,7 +462,27 @@ int intersectdebug_all(
 #endif
 
 
+function
+void intersect_visualize(
+    const int geo;
+    const vector rayorig;
+    const vector raydir;
+    ) {
+    int newpt0 = addpoint(geo, rayorig);
+    int newpt1 = addpoint(geo, rayorig + raydir);
+    addprim(geo, 'polyline', newpt0, newpt1);
+}
 
+
+function
+void intersectdebug_visualize(
+    const int geo;
+    const vector rayorig;
+    const vector raydir;
+    const float threshold;
+    ) {
+    intersect_visualize(geo, rayorig + threshold * normalize(raydir), raydir);
+}
 
 
 

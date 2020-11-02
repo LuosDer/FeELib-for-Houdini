@@ -131,6 +131,16 @@ int intersectdebugbbox_all(
 }
 
 
+function
+void intersectdebugbbox_visualize(
+    const int geo;
+    const vector rayorig;
+    const vector raydir;
+    const float threshold;
+    ) {
+    intersectdebug_visualize(geo, rayorig, getbbox_diameter(geo) * normalize(raydir), threshold);
+}
+
 
 
 
