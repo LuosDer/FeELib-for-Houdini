@@ -64,7 +64,7 @@ int[] polyedgeneighbours(
         int flag = 1;
         for (int hedge_nextequiv = hedge_nextequiv(geo, hedge_next); hedge_nextequiv != hedge_next; hedge_nextequiv = hedge_nextequiv(geo, hedge_nextequiv)) {
             int hedge_prim = hedge_prim(geo, hedge_nextequiv);
-            if (hedge_prim == -1 || hedge_prim == primnum) continue;
+            if (hedge_prim == -1 || hedge_prim == primnum) break;
             push(result, hedge_prim);
             flag = 0;
             if (ignoremanifold) break;

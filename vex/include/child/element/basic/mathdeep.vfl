@@ -813,7 +813,41 @@ DEFINEFUNCi(FUNCdec2bin)
 
 DEFINEFUNCfv(FUNCweight)
 
-
+function
+vector orthogonolizedir(
+    vector dir;
+    ) {
+    vector absdir = abs(dir);
+    if ( absdir.x > absdir.y ) {
+        if ( absdir.x > absdir.z ) {
+            if ( dir.x > 0 ) {
+                return {1,0,0};
+            } else {
+                return {-1,0,0};
+            }
+        } else {
+            if ( dir.z > 0 ) {
+                return {0,0,1};
+            } else {
+                return {0,0,-1};
+            }
+        }
+    } else {
+        if ( absdir.y > absdir.z ) {
+            if ( dir.y > 0 ) {
+                return {0,1,0};
+            } else {
+                return {0,-1,0};
+            }
+        } else {
+            if ( dir.z > 0 ) {
+                return {0,0,1};
+            } else {
+                return {0,0,-1};
+            }
+        }
+    }
+}
 
 
 
