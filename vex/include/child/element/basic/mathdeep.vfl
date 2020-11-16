@@ -7,6 +7,8 @@
 #include <mathdeep.vfl>
 
 
+
+
 function
 float normaldistribution(
     float x, mean, var;
@@ -868,6 +870,34 @@ float[] create_pdf_fee(
         pdf[i] = values[i] / sum;
     }
     return pdf;
+}
+
+function
+int sample_pdf(
+    float pdf[];
+    float uniform_rand;
+    ) {
+    float cdf[]= create_cdf(pdf);
+    return sample_cdf(cdf, uniform_rand);
+}
+
+function
+float random_type(
+    float seed;
+    int offset;
+    int core;
+    ) {
+    if (core == -1) {
+        return offset;
+    } else if (core == 0) {
+        return random(seed, offset);
+    } else if (core == 1) {
+        return random_brj(seed, offset);
+    } else if (core == 2) {
+        return random_sobol(seed, offset);
+    } else {
+        return -1;
+    }
 }
 
 
