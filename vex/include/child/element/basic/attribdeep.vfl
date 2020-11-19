@@ -19,9 +19,10 @@
 			const string attribname;\
 			const type value;\
 			) {\
+			int numelem = numelem(geo, attribclass);\
 			int result[];\
-			for (int i = 0; i < numelem(geo, attribclass); ++i){\
-				if (value == type(attrib(geo, attribclass, attribname, i))) {\
+			for (int i = 0; i < numelem; ++i) {\
+				if ( value == type(attrib(geo, attribclass, attribname, i)) ) {\
 					push(result, i);\
 				}\
 			}\
@@ -78,8 +79,9 @@ DEFINEFUNCall(FUNCfindprimattrib)
 			const string attribname;\
 			const type value;\
 			) {\
-			for (int i = 0; i < numelem(geo, attribclass); ++i){\
-				if (value == type(attrib(geo, attribclass, attribname, i))) {\
+			int numelem = numelem(geo, attribclass);\
+			for (int i = 0; i < numelem; ++i) {\
+				if ( value == type(attrib(geo, attribclass, attribname, i)) ) {\
 					return i;\
 				}\
 			}\
@@ -87,6 +89,24 @@ DEFINEFUNCall(FUNCfindprimattrib)
 		}\
 
 DEFINEFUNCfvm(FUNCfindattribval0)
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const float value;
+	const float threshold;
+	) {
+	int numelem = numelem(geo, attribclass);
+	for (int i = 0; i < numelem; ++i) {
+		if ( abs(value - float(attrib(geo, attribclass, attribname, i))) < threshold ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 
 #define FUNCfindattribval1(type)\
 		function\
@@ -97,7 +117,8 @@ DEFINEFUNCfvm(FUNCfindattribval0)
 			const type value;\
 			const int which;\
 			) {\
-			for (int i = 0; i < numelem(geo, attribclass); ++i){\
+			int numelem = numelem(geo, attribclass);\
+			for (int i = 0; i < numelem; ++i) {\
 				int num = 0;\
 				type result = attrib(geo, attribclass, attribname, i);\
 				if (value == result) {\
