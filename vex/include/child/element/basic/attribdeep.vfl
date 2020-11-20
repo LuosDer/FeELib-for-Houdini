@@ -90,23 +90,6 @@ DEFINEFUNCall(FUNCfindprimattrib)
 
 DEFINEFUNCfvm(FUNCfindattribval0)
 
-function
-int findattribval(
-	const int geo;
-	const string attribclass;
-	const string attribname;
-	const float value;
-	const float threshold;
-	) {
-	int numelem = numelem(geo, attribclass);
-	for (int i = 0; i < numelem; ++i) {
-		if ( abs(value - float(attrib(geo, attribclass, attribname, i))) < threshold ) {
-			return i;
-		}
-	}
-	return -1;
-}
-
 
 #define FUNCfindattribval1(type)\
 		function\
@@ -117,15 +100,14 @@ int findattribval(
 			const type value;\
 			const int which;\
 			) {\
+			int findnum = 0;\
 			int numelem = numelem(geo, attribclass);\
 			for (int i = 0; i < numelem; ++i) {\
-				int num = 0;\
-				type result = attrib(geo, attribclass, attribname, i);\
-				if (value == result) {\
-					if(num == which){\
+				if ( value == type(attrib(geo, attribclass, attribname, i)) ) {\
+					if ( findnum == which ) {\
 						return i;\
 					}\
-					num++;\
+					++findnum;\
 				}\
 			}\
 			return -1;\
@@ -207,6 +189,161 @@ DEFINEFUNCall(FUNCfindprimattribval0)
 		}\
 
 DEFINEFUNCall(FUNCfindprimattribval1)
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const float value;
+	const int which;
+	const int threshold;
+	) {
+	if ( threshold == 0 ) {
+		return findattribval(geo, attribclass, attribname, value, which);
+	} else if ( threshold < 0 ) {
+		error('feelib: attribdeep.vfl findattribval function');
+		return -1;
+	} else {
+		int findnum = 0;
+		int numelem = numelem(geo, attribclass);
+		for (int i = 0; i < numelem; ++i) {
+			if ( abs(value - float(attrib(geo, attribclass, attribname, i))) <= threshold ) {
+				if ( findnum == which ) {
+					return i;
+				}
+				++findnum;
+			}
+		}
+		return -1;
+	}
+}
+
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const float value;
+	const float threshold;
+	) {
+	if ( threshold == 0 ) {
+		return findattribval(geo, attribclass, attribname, value);
+	} else if ( threshold < 0 ) {
+		error('feelib: attribdeep.vfl findattribval function');
+		return -1;
+	} else {
+		int numelem = numelem(geo, attribclass);
+		for (int i = 0; i < numelem; ++i) {
+			if ( abs(value - float(attrib(geo, attribclass, attribname, i))) <= threshold ) {
+				return i;
+			}
+		}
+		return -1;
+	}
+}
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const float value;
+	const int which;
+	const float threshold;
+	) {
+	if ( threshold == 0 ) {
+		return findattribval(geo, attribclass, attribname, value, which);
+	} else if ( threshold < 0 ) {
+		error('feelib: attribdeep.vfl findattribval function');
+		return -1;
+	} else {
+		int findnum = 0;
+		int numelem = numelem(geo, attribclass);
+		for (int i = 0; i < numelem; ++i) {
+			if ( abs(value - float(attrib(geo, attribclass, attribname, i))) <= threshold ) {
+				if ( findnum == which ) {
+					return i;
+				}
+				++findnum;
+			}
+		}
+		return -1;
+	}
+
+}
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const string value;
+	const int which;
+	const float threshold;
+	) {
+	return findattribval(geo, attribclass, attribname, value, which);
+}
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const string value;
+	const int which;
+	const int threshold;
+	) {
+	return findattribval(geo, attribclass, attribname, value, which);
+}
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const int value;
+	const int which;
+	const int threshold;
+	) {
+	if ( threshold < 1 ) {
+		return findattribval(geo, attribclass, attribname, value, which);
+	} else {
+		int findattribval = findattribval(geo, attribclass, attribname, value, which);
+		for (int i = 1; i <= threshold; ++i) {
+			if ( findattribval != -1 ) break;
+			findattribval = findattribval(geo, attribclass, attribname, value + i, which);
+			if ( findattribval != -1 ) break;
+			findattribval = findattribval(geo, attribclass, attribname, value - i, which);
+		}
+		return findattribval;
+	}
+}
+
+function
+int findattribval(
+	const int geo;
+	const string attribclass;
+	const string attribname;
+	const int value;
+	const int which;
+	const float threshold;
+	) {
+	if ( threshold < 1 ) {
+		return findattribval(geo, attribclass, attribname, value, which);
+	} else {
+		int findattribval = findattribval(geo, attribclass, attribname, value, which);
+		for (int i = 1; i <= threshold; ++i) {
+			if ( findattribval != -1 ) break;
+			findattribval = findattribval(geo, attribclass, attribname, value + i, which);
+			if ( findattribval != -1 ) break;
+			findattribval = findattribval(geo, attribclass, attribname, value - i, which);
+		}
+		return findattribval;
+	}
+}
+
 
 
 function
