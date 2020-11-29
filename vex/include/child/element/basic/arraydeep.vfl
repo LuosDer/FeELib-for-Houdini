@@ -449,6 +449,18 @@ DEFINEFUNCifv(FUNCmaxidx1)
 
 DEFINEFUNCifv(FUNCminidx0)
 
+#define FUNCminidx01(type)\
+        function\
+        int minidx(\
+            const type arr[];\
+            export type min;\
+            ) {\
+            min = min(arr);\
+            return find(arr, min);\
+        }\
+
+DEFINEFUNCifv(FUNCminidx01)
+
 #define FUNCminidx1(type)\
         function\
         int[] minidx(\
@@ -459,6 +471,18 @@ DEFINEFUNCifv(FUNCminidx0)
         }\
 
 DEFINEFUNCifv(FUNCminidx1)
+
+#define FUNCminidx11(type)\
+        function\
+        int[] minidx(\
+            const type arr[];\
+            export type min;\
+            ) {\
+            min = min(arr);\
+            return find(arr, min);\
+        }\
+
+DEFINEFUNCifv(FUNCminidx11)
 
 
 

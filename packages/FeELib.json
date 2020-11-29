@@ -71,6 +71,7 @@
                     "$FeELib/otls/Filter/Bake",
                     "$FeELib/otls/Filter/Boolean",
                     "$FeELib/otls/Filter/Constraint",
+                    "$FeELib/otls/Filter/Constraint/Kinematics",
                     "$FeELib/otls/Filter/Curve",
                     "$FeELib/otls/Filter/Deform",
                     "$FeELib/otls/Filter/Deform/Bend",
