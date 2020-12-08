@@ -5,7 +5,7 @@
 #include <tet.vfl>
 
 /*
-for (int i = 0; i < 4; ++i){
+for (int i = 0; i < 4; ++i) {
     int tetnum = tet_adjacent(0, @primnum, i);
     if (tetnum != -1) {
         
@@ -19,11 +19,9 @@ int[] tet_adjacents(
 	const int primindex;
 	) {
 	int result[];
-	for (int i = 0; i < 4; ++i){
-		int tetnum = tet_adjacent(geometry, primindex, i);
-		if (tetnum != -1) {
-			push(result, tetnum);
-		}
+	resize(result, 4);
+	for (int i = 0; i < 4; ++i) {
+		result[i] = tet_adjacent(geometry, primindex, i);
 	}
 	return result;
 }
@@ -33,7 +31,11 @@ int tet_adjacentcount(
 	const int geometry;
 	const int primindex;
 	) {
-	return len(tet_adjacents(geometry, primindex));
+	int result = 0;
+	for (int i = 0; i < 4; ++i) {
+		result += tet_adjacent(geometry, primindex, i) > -1;
+	}
+	return result;
 }
 
 function
@@ -42,7 +44,7 @@ int tet_isadjacent(
 	const int primindex0, primindex1;
 	) {
 	int adjacents[] = tet_adjacents(geometry, primindex0);
-	return find(adjacents, primindex1) != -len(adjacents)-1;
+	return find(adjacents, primindex1) > -1;
 }
 
 function

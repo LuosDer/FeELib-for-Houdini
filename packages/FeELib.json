@@ -53,7 +53,6 @@
                     "$FeELib/otls/Data/Hull",
                     "$FeELib/otls/Data/NDC",
                     "$FeELib/otls/Data/Orient",
-                    "$FeELib/otls/Data/Point Cloud",
                     "$FeELib/otls/Data/Property",
                     "$FeELib/otls/Data/Shading",
                     "$FeELib/otls/Data/Similar",
