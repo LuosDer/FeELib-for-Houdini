@@ -2,7 +2,7 @@
     "path": [
         {        
             "value" : "$LibPath/FeELib-for-Houdini",
-            "method" : "prepend",
+            "method" : "append",
         },
     ],
     "env": [

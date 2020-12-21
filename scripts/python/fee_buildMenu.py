@@ -67,7 +67,18 @@ def buildAttribsMenu(node, input_num=0, attribClass='point', attribType='all'):
     return menu
 
 
-def buildAllAttribsMenu(node, input_num=0, attribType='all'):
+def buildMultiClassAttribsMenu(node, input_num=0, attribClasses=['point'], attribType='all'):
+    menu = []
+    for attribClass in attribClasses:
+        try:
+            menu += buildAttribsMenu(node, input_num, attribClass, attribType)
+        except:
+            continue
+    
+    return menu
+
+
+def buildAllClassAttribsMenu(node, input_num=0, attribType='all'):
     menu = []
     for attribClass in ['detail', 'prim', 'point', 'vertex']:
         try:
@@ -103,7 +114,18 @@ def buildGroupsMenu(node, input_num=0, groupClass='point'):
     return menu
 
 
-def buildAllGroupsMenu(node, input_num=0):
+def buildMultiClassGroupsMenu(node, input_num=0, groupClasses=['point']):
+    menu = []
+    for groupClass in groupClasses:
+        try:
+            menu += buildGroupsMenu(node, input_num, groupClass)
+        except:
+            continue
+    
+    return menu
+
+
+def buildAllClassGroupsMenu(node, input_num=0):
     menu = []
     for groupClass in ['detail', 'prim', 'point', 'edge', 'vertex']:
         try:
