@@ -1,6 +1,3 @@
 
-#Directories
 **/backup
-
-#Files
 *.pyc
