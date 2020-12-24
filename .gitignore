@@ -1,0 +1,6 @@
+
+#Directories
+**/backup
+
+#Files
+*.pyc
