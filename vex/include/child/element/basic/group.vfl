@@ -45,9 +45,12 @@ int[] inpointgroup(
 	string groupname;
 	int ptnums[];
 	) {
+	int len = len(ptnums);
 	int attrib[];
-	foreach (int index; int ptnum; ptnums)
-		attrib[index] = inpointgroup(geo, groupname, ptnum);
+	resize(attrib, len);
+	for (int i = 0; i < len; ++i) {
+		attrib[i] = inpointgroup(geo, groupname, ptnums[i]);
+	}
 	return attrib;
 }
 
@@ -57,9 +60,12 @@ int[] inprimgroup(
 	string groupname;
 	int primnums[];
 	) {
+	int len = len(primnums);
 	int attrib[];
-	foreach (int index; int primnum; primnums)
-		attrib[index] = inprimgroup(geo, groupname, primnum);
+	resize(attrib, len);
+	for (int i = 0; i < len; ++i) {
+		attrib[i] = inprimgroup(geo, groupname, primnums[i]);
+	}
 	return attrib;
 }
 

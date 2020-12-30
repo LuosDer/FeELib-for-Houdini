@@ -453,32 +453,35 @@ DEFINEFUNCifv(FUNCpow)
 
 
 
+
+
+
+
+
+
 function
-int factorial(int n;) {
-    if(n < 0) {
-        error("bad arg value");
-    }
+int factorial(
+    const int n;
+    ) {
+    if ( n < 0 ) error("fee factorial: bad arg value");
     int result = n;
-    for(int i = n-1; i > 1; --i) {
+    for (int i = n-1; i > 1; --i) {
         result *= i;
     }
 	return max(result, 1);
 }
 
 function
-int combination(int n,m;) {
-    if(n > m || n < 0) {
-        error("bad arg value");
-    }
-    if(n == 0) {
-	    return 0;
-    }
+int combination(
+    const int n, m;
+    ) {
+    if ( n > m || n < 0 ) error("fee combination: bad arg value");
+    if ( n == 0 ) return 0;
     int msn = m - n;
-    if(n > msn) {
-        n = msn;
-    }
+    int cptn = n;
+    if ( cptn > msn ) cptn = msn;
     int result = 1;
-    for(int i = 1; i <= n; ++i) {
+    for (int i = 1; i <= cptn; ++i) {
         result = result * (msn+i) / i; //先算乘法，因为(m-n+i)/i除不尽 //result *= (m-n+i) / i;
     }
 	return result;
@@ -486,14 +489,10 @@ int combination(int n,m;) {
 
 function
 int permutations(
-    int n,m;
+    const int n, m;
     ) {
-    if(n > m || n < 0) {
-        error("bad arg value");
-    }
-    if(n == 0) {
-	    return 0;
-    }
+    if ( n > m || n < 0 ) error("fee permutations: bad arg value");
+    if ( n == 0 ) return 0;
     int msn = m - n;
     int result = msn + 1;
     for(int i = msn + 2; i <= m; ++i) {
@@ -501,6 +500,53 @@ int permutations(
     }
 	return result;
 }
+
+
+/*
+
+function
+void cal(
+    ) {
+    fac[0]=1;
+    for(int i = 1; i <= P; ++i) {
+        fac[i] = fac[i-1] * i % P;
+    }
+}
+
+function
+int qpow(
+    int a, b;
+    ) {
+    int result = 1;
+    while ( b ) {
+        if ( b & 1 ) {
+            result = result * a % P;
+        }
+        b >>= 1;
+        a = a * a % P;
+    }
+    return result;
+}
+  
+function
+int C(
+    int n, m;
+    ) {
+    if ( n < m ) return 0;
+    return fac[n] * qpow(fac[n-m] * fac[m] % P, P-2) % P;
+}
+
+
+*/
+
+
+
+
+
+
+
+
+
 
 
 
@@ -612,6 +658,71 @@ DEFINEFUNCv(FUNCfit0)
 
 DEFINEFUNCv(FUNCfit1)
 
+//众数
+function
+int mode(
+    const int arr[];
+    const int which;
+    export int times;
+    ) {
+    int mask[];
+    int len = len(arr);
+    resize(mask, len);
+    for (int i = 0; i < len; ++i) {
+        if ( mask[i] > 0 ) continue;
+        mask[i] = 1;
+        for (int j = i+1; j < len; ++j) {
+            if ( mask[j] > 0 || (arr[i] - arr[j]) != 0 ) continue;
+            mask[j] = 1;
+            ++mask[i];
+        }
+    }
+    times = max(mask);
+    int find[] = find(mask, times);
+    return arr[find[clamp(which, 0, len(find)-1)]];
+}
+
+function
+int mode(
+    const int arr[];
+    export int times;
+    ) {
+    int mask[];
+    int len = len(arr);
+    resize(mask, len);
+    for (int i = 0; i < len; ++i) {
+        if ( mask[i] > 0 ) continue;
+        mask[i] = 1;
+        for (int j = i+1; j < len; ++j) {
+            if ( mask[j] > 0 || (arr[i] - arr[j]) != 0 ) continue;
+            mask[j] = 1;
+            ++mask[i];
+        }
+    }
+    times = max(mask);
+    return arr[find(mask, times)];
+}
+
+function
+int mode(
+    const int arr[];
+    ) {
+    int mask[];
+    int len = len(arr);
+    resize(mask, len);
+    for (int i = 0; i < len; ++i) {
+        if ( mask[i] > 0 ) continue;
+        mask[i] = 1;
+        for (int j = i+1; j < len; ++j) {
+            if ( mask[j] > 0 || (arr[i] - arr[j]) != 0 ) continue;
+            mask[j] = 1;
+            ++mask[i];
+        }
+    }
+    return arr[find(mask, max(mask))];
+}
+
+//众数
 #define FUNCmode0(type)\
         function\
         type mode(\
@@ -623,7 +734,7 @@ DEFINEFUNCv(FUNCfit1)
             if ( tolerance < 0 ) return 0;\
             int mask[];\
             int len = len(arr);\
-            resize(mask, len(arr));\
+            resize(mask, len);\
             for (int i = 0; i < len; ++i) {\
                 if ( mask[i] > 0 ) continue;\
                 mask[i] = 1;\
@@ -638,7 +749,7 @@ DEFINEFUNCv(FUNCfit1)
             return arr[find[clamp(which, 0, len(find)-1)]];\
         }\
 
-DEFINEFUNCifv(FUNCmode0)
+DEFINEFUNCfv(FUNCmode0)
 
 #define FUNCmode1(type)\
         function\
@@ -650,7 +761,7 @@ DEFINEFUNCifv(FUNCmode0)
             if ( tolerance < 0 ) return 0;\
             int mask[];\
             int len = len(arr);\
-            resize(mask, len(arr));\
+            resize(mask, len);\
             for (int i = 0; i < len; ++i) {\
                 if ( mask[i] > 0 ) continue;\
                 mask[i] = 1;\
@@ -664,7 +775,7 @@ DEFINEFUNCifv(FUNCmode0)
             return arr[find(mask, times)];\
         }\
 
-DEFINEFUNCifv(FUNCmode1)
+DEFINEFUNCfv(FUNCmode1)
 //you should use this function like this style //mode(arr, times, 0.0);
 
 #define FUNCmode2(type)\
@@ -676,7 +787,7 @@ DEFINEFUNCifv(FUNCmode1)
             if ( tolerance < 0 ) return 0;\
             int mask[];\
             int len = len(arr);\
-            resize(mask, len(arr));\
+            resize(mask, len);\
             for (int i = 0; i < len; ++i) {\
                 if ( mask[i] > 0 ) continue;\
                 mask[i] = 1;\
@@ -689,7 +800,7 @@ DEFINEFUNCifv(FUNCmode1)
             return arr[find(mask, max(mask))];\
         }\
 
-DEFINEFUNCifv(FUNCmode2)
+DEFINEFUNCfv(FUNCmode2)
 //you should use this function like this style //mode(arr, 0.0);
 
 #define FUNCmode01(type)\
@@ -850,6 +961,7 @@ vector orthogonolizedir(
         }
     }
 }
+
 
 
 

@@ -485,7 +485,17 @@ DEFINEFUNCifv(FUNCminidx1)
 DEFINEFUNCifv(FUNCminidx11)
 
 
-
+/*
+function
+void uniquepush(
+    int arr[];
+    const type arg;
+    ) {
+    if ( int(find(arr, arg)) < 0 ) {
+        push(arr, arg);
+    }
+}
+*/
 
 #define FUNCuniquepush0(type)\
         function\
@@ -493,7 +503,7 @@ DEFINEFUNCifv(FUNCminidx11)
             type arr[];\
             const type arg;\
             ) {\
-            if ( int(find(arr, arg)) == -len(arr)-1 ) {\
+            if ( int(find(arr, arg)) < 0 ) {\
                 push(arr, arg);\
             }\
         }\
@@ -985,24 +995,50 @@ DEFINEFUNCall(FUNCpop)
 
 DEFINEFUNCall(FUNCremoveindex)
 
+/*
+function
+void removevalue(
+    export int arr[];
+    const int values[];
+    ) {
+    for (int i = len(values)-1; i > -1; --i) {
+        removevalue(arr, values[i]);
+    }
+    return;
+}
+*/
 
+#define FUNCremovevalue0(type)\
+        function\
+        void removevalue(\
+            export type arr[];\
+            const type values[];\
+            ) {\
+            /* this is auto resize ??*/\
+            for (int i = len(values)-1; i > -1; --i) {\
+                removevalue(arr, values[i]);\
+            }\
+            return;\
+        }\
 
+DEFINEFUNCall(FUNCremovevalue0)
 
-#define FUNCremovevalue(type)\
+#define FUNCremovevalue1(type)\
         function\
         int[] removevalue(\
             export type arr[];\
             const type values[];\
             ) {\
-            /* this is auto resize */\
+            /* this is auto resize ??*/\
             int result[];\
-            foreach (type value; values){\
-                push(result, removevalue(arr, value));\
+            resize(result, len(values));\
+            for (int i = len(values)-1; i > -1; --i) {\
+                result[i] = removevalue(arr, values[i]);\
             }\
             return result;\
         }\
 
-DEFINEFUNCall(FUNCremovevalue)
+DEFINEFUNCall(FUNCremovevalue1)
 
 #define FUNCremovemultivalue0(type)\
         function\
@@ -1026,10 +1062,11 @@ DEFINEFUNCall(FUNCremovemultivalue0)
             export type arr[];\
             const type values[];\
             ) {\
-            /* this is auto resize */\
+            /* this is auto resize ??*/\
             int result[];\
-            foreach (type value; values) {\
-                push(result, removemultivalue(arr, value));\
+            resize(result, len(values));\
+            for (int i = len(values)-1; i > -1; --i) {\
+                result[i] = removemultivalue(arr, values[i]);\
             }\
             return result;\
         }\
@@ -1145,7 +1182,25 @@ DEFINEFUNCif(FUNCunique)
 
 DEFINEFUNCall(FUNCnuniqueval)
 
-
+/*
+function
+int[] uniqueneb(
+    const int arr[];
+    ) {
+    int result[];
+    resize(result, len(arr));
+    int lenarr = len(arr);
+    int len = 0;
+    result[len] = arr[len];
+    for (int i = 0; i < lenarr; ++i) {
+        if ( arr[i] == result[-1] ) continue;
+        ++len;
+        result[len] = arr[i];
+    }
+    resize(result, len);
+    return result;
+}
+*/
 
 #define FUNCuniqueneb(type)\
         function\
@@ -1153,13 +1208,16 @@ DEFINEFUNCall(FUNCnuniqueval)
             const type arr[];\
             ) {\
             type result[];\
-            push(result, arr[0]);\
-            foreach (type item; arr){\
-                /*if ( !equal(item, result[-1]) ) {*/\
-                if ( item != result[-1] ) {\
-                    push(result, item);\
-                }\
+            resize(result, len(arr));\
+            int lenarr = len(arr);\
+            int len = 0;\
+            result[len] = arr[len];\
+            for (int i = 0; i < lenarr; ++i) {\
+                if ( arr[i] == result[-1] ) continue;\
+                ++len;\
+                result[len] = arr[i];\
             }\
+            resize(result, len);\
             return result;\
         }\
 

@@ -380,8 +380,9 @@ int[] hedge_prim(
     const int hnums[];
     ) {
     int result[];
-    foreach (int hnum; hnums) {
-        push(result, hedge_prim(geo, hnum));
+    resize(result, len(hnums));
+    for (int i = len(hnums)-1; i > -1; --i) {
+        result[i] = hedge_prim(geo, hnums[i]);
     }
     return result;
 }
