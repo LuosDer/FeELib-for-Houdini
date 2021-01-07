@@ -23,16 +23,53 @@ float N(
     return exp(pow(-(x-mean)/var, 2)/2) / var / sqrt(2*PI);
 }
 
+/*
+
+function
+int distance(
+    int val0, val1;
+    ) {
+    return abs(val0 - val1);
+}
+
+function
+float distance(
+    float val0, val1;
+    ) {
+    return abs(val0 - val1);
+}
+
+*/
 
 #define FUNCdistance(type)\
         function\
         type distance(\
             type val0, val1;\
             ) {\
-            return abs(val0 -val1);\
+            return abs(val0 - val1);\
         }\
 
 DEFINEFUNCif(FUNCdistance)
+
+/*
+
+function
+int distance2(
+    int val0, val1;
+    ) {
+    int diff = val0 - val1;
+    return diff*diff;
+}
+
+function
+float distance2(
+    float val0, val1;
+    ) {
+    float diff = val0 - val1;
+    return diff*diff;
+}
+
+*/
 
 #define FUNCdistance2(type)\
         function\

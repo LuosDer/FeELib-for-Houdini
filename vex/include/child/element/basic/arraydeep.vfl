@@ -415,21 +415,110 @@ DEFINEFUNCv(FUNCreorder)
 DEFINEFUNCv(FUNCargsort)
 
 
+/*
+function
+int maxidx(
+    const float arr[];
+    ) {
+    int idx = 0;
+    float val = arr[idx];
+    int len = len(arr);
+    for (int i = 1; i < len; ++i) {
+        if ( arr[i] <= val ) continue;
+        idx = i;
+        val = arr[idx];
+    }
+    return idx;
+}
+
+function
+int maxidx (
+    const float arr[];
+    export float val;
+    ) {
+    int idx = 0;
+    val = arr[idx];
+    int len = len(arr);
+    for (int i = 1; i < len; ++i) {
+        if ( arr[i] <= val ) continue;
+        idx = i;
+        val = arr[idx];
+    }
+    return idx;
+}
+
+function
+int minidx (
+    const float arr[];
+    ) {
+    int idx = 0;
+    float val = arr[idx];
+    int len = len(arr);
+    for (int i = 1; i < len; ++i) {
+        if ( arr[i] >= val ) continue;
+        idx = i;
+        val = arr[idx];
+    }
+    return idx;
+}
+
+function
+int minidx (
+    const float arr[];
+    export float val;
+    ) {
+    int idx = 0;
+    val = arr[idx];
+    int len = len(arr);
+    for (int i = 1; i < len; ++i) {
+        if ( arr[i] >= val ) continue;
+        idx = i;
+        val = arr[idx];
+    }
+    return idx;
+}
+*/
 
 #define FUNCmaxidx0(type)\
         function\
-        int maxidx(\
+        int maxidx (\
             const type arr[];\
             ) {\
-            type max = max(arr);\
-            return find(arr, max);\
+            int idx = 0;\
+            type val = arr[idx];\
+            int len = len(arr);\
+            for (int i = 1; i < len; ++i) {\
+                if ( arr[i] <= val ) continue;\
+                idx = i;\
+                val = arr[idx];\
+            }\
+            return idx;\
         }\
 
 DEFINEFUNCifv(FUNCmaxidx0)
 
+#define FUNCmaxidx01(type)\
+        function\
+        int maxidx (\
+            const type arr[];\
+            export type val;\
+            ) {\
+            int idx = 0;\
+            val = arr[idx];\
+            int len = len(arr);\
+            for (int i = 1; i < len; ++i) {\
+                if ( arr[i] <= val ) continue;\
+                idx = i;\
+                val = arr[idx];\
+            }\
+            return idx;\
+        }\
+
+DEFINEFUNCifv(FUNCmaxidx01)
+
 #define FUNCmaxidx1(type)\
         function\
-        int[] maxidx(\
+        int[] maxidx (\
             const type arr[];\
             ) {\
             type max = max(arr);\
@@ -438,32 +527,58 @@ DEFINEFUNCifv(FUNCmaxidx0)
 
 DEFINEFUNCifv(FUNCmaxidx1)
 
+#define FUNCmaxidx12(type)\
+        function\
+        int[] maxidx(\
+            const type arr[];\
+            export type max;\
+            ) {\
+            max = max(arr);\
+            return find(arr, max);\
+        }\
+
+DEFINEFUNCifv(FUNCmaxidx12)
+
 #define FUNCminidx0(type)\
         function\
-        int minidx(\
+        int minidx (\
             const type arr[];\
             ) {\
-            type min = min(arr);\
-            return find(arr, min);\
+            int idx = 0;\
+            type val = arr[idx];\
+            int len = len(arr);\
+            for (int i = 1; i < len; ++i) {\
+                if ( arr[i] >= val ) continue;\
+                idx = i;\
+                val = arr[idx];\
+            }\
+            return idx;\
         }\
 
 DEFINEFUNCifv(FUNCminidx0)
 
 #define FUNCminidx01(type)\
         function\
-        int minidx(\
+        int minidx (\
             const type arr[];\
-            export type min;\
+            export type val;\
             ) {\
-            min = min(arr);\
-            return find(arr, min);\
+            int idx = 0;\
+            val = arr[idx];\
+            int len = len(arr);\
+            for (int i = 1; i < len; ++i) {\
+                if ( arr[i] >= val ) continue;\
+                idx = i;\
+                val = arr[idx];\
+            }\
+            return idx;\
         }\
 
 DEFINEFUNCifv(FUNCminidx01)
 
 #define FUNCminidx1(type)\
         function\
-        int[] minidx(\
+        int[] minidx (\
             const type arr[];\
             ) {\
             type min = min(arr);\
@@ -474,7 +589,7 @@ DEFINEFUNCifv(FUNCminidx1)
 
 #define FUNCminidx11(type)\
         function\
-        int[] minidx(\
+        int[] minidx (\
             const type arr[];\
             export type min;\
             ) {\
@@ -487,7 +602,7 @@ DEFINEFUNCifv(FUNCminidx11)
 
 /*
 function
-void uniquepush(
+void uniquepush (
     int arr[];
     const type arg;
     ) {
