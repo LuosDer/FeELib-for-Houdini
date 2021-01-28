@@ -127,6 +127,7 @@
                     "$FeELib/otls/Generator/Stylize",
                     "$FeELib/otls/Generator/Volume",
                     "$FeELib/otls/Geo/Ball",
+                    "$FeELib/otls/Geo/Biome",
                     "$FeELib/otls/Geo/Box",
                     "$FeELib/otls/Geo/Building",
                     "$FeELib/otls/Geo/Building/Stone",
