@@ -5,6 +5,7 @@
             "method" : "append",
         },
     ],
+    "load_package_once": true,
     "env": [
         {
             "FeELib": "$LibPath/FeELib-for-Houdini",
