@@ -261,3 +261,18 @@ def convert_All_HDA_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1):
     children = node.children()
     for child in children:
         convertSubnet(child, ignoreUnlock, Only_FeEHDA = 0, ignore_SideFX_HDA = ignore_SideFX_HDA)
+
+
+
+
+
+
+def findAllSubParmRawValue(subnet, strValue):
+    for child in subnet.allSubChildren(recurse_in_locked_nodes=False):
+        for parm in child.parms():
+            if strValue in parm.rawValue():
+                print(child)
+                print(parm)
+
+
+
