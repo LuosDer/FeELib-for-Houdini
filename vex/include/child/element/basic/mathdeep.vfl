@@ -1002,6 +1002,49 @@ vector orthogonolizedir(
 
 
 
+function
+int inOrthoConeAngle(
+    vector dir;
+    vector threhsold;
+    int reversegroup;
+    ) {
+    float ndir = normalize(dir);
+    return reversegroup != ( ndir.x >= threhsold.x || ndir.y >= threhsold.y || ndir.z >= threhsold.z );
+}
+
+function
+int inOrthoConeAngle(
+    vector dir;
+    float threhsold;
+    int reversegroup;
+    ) {
+    float ndir = normalize(dir);
+    return reversegroup != ( ndir.x >= threhsold || ndir.y >= threhsold || ndir.z >= threhsold );
+}
+
+function
+int inOrthoConeAngle(
+    vector dir;
+    vector threhsold;
+    int reversegroup;
+    int isNormalized;
+    ) {
+    float ndir = select(isNormalized, dir, normalize(dir));
+    return reversegroup != ( ndir.x >= threhsold.x || ndir.y >= threhsold.y || ndir.z >= threhsold.z );
+}
+
+function
+int inOrthoConeAngle(
+    vector dir;
+    float threhsold;
+    int reversegroup;
+    int isNormalized;
+    ) {
+    float ndir = select(isNormalized, dir, normalize(dir));
+    return reversegroup != ( ndir.x >= threhsold || ndir.y >= threhsold || ndir.z >= threhsold );
+}
+
+
 
 function
 float[] create_pdf_fee(
