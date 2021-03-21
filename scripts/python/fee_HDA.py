@@ -1,9 +1,23 @@
 
 import hou
 
+#import fee_HDA
+
+def isFeENode(nodeType):
+    return nodeType.nameComponents()[2].endswith("_fee") and nodeType.description().startswith("FeE")
+
 def copyParms_NodetoNode(sourceNode, targetNode):
     origParmTemplateGroup = sourceNode.parmTemplateGroup()
-    targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
+    if 0:
+        targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
+    else:
+        try:
+            targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
+        except:
+            '''Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes'''
+            print(sourceNode, targetNode)
+            print(origParmTemplateGroup.asDialogScript())
+        
     for parm in sourceNode.parms():
         if parm.parmTemplate().type() == hou.parmTemplateType.Folder:
             try:
@@ -38,8 +52,27 @@ def copyParms_NodetoNode(sourceNode, targetNode):
             #print(parm)
     
 
+def convertSubnet(node, ignoreUnlock = 0, Only_FeEHDA = 1, ignore_SideFX_HDA = 1):
+    nodeType = node.type()
+    
+    if nodeType.name() == 'subnet':
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
 
-def convertSubnet(node):
+    definition = nodeType.definition()
+    if definition is None:
+        return
+
+    if ignoreUnlock and not node.matchesCurrentDefinition():
+        #print(node)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
+        return
+    
+    if ignore_SideFX_HDA:
+        defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+        if definition.libraryFilePath().startswith(defaultLibPath):
+            convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
+            return
+
     node.allowEditingOfContents()
 
     parent = node.parent()
@@ -107,10 +140,32 @@ def convertSubnet(node):
                 outputNode.setInput(outputConnection.inputIndex(), objectMerge)
 
 
+    #origNodeshape = node.userData('nodeshape')
+
     copyOrigNode = hou.copyNodesTo([node], parent)[0]
     newNode = node.changeNodeType('subnet', keep_parms=False)
     newNode.removeSpareParms()
+    # newNode.parm('label1').hide(True)
+    # newNode.parm('label2').hide(True)
+    # newNode.parm('label3').hide(True)
+    # newNode.parm('label4').hide(True)
+
     copyParms_NodetoNode(copyOrigNode, newNode)
+
+    #if origNodeshape is not None:
+        #这个是自动的啦
+        #pass
+        #newNode.setUserData('nodeshape', origNodeshape)
+    
+    newNodeParmTemplateGroup = newNode.parmTemplateGroup()
+    # folder = newNodeParmTemplateGroup.findFolder('Standard')
+    # folder.endsTabGroup()
+    #print(folder)
+    #newNodeParmTemplateGroup.hideFolder('Standard', True)
+    #newNode.setParmTemplateGroup(newNodeParmTemplateGroup, rename_conflicting_parms=False)
+
+    #newNode.removeSpareParmFolder(('Standard', ))
+    #newNode.removeSpareParmTuple(newNode.parmTuple('Standard'))
 
     newNode.setDisplayFlag(displayFlag)
     newNode.setRenderFlag(renderFlag)
@@ -121,18 +176,27 @@ def convertSubnet(node):
     newNode.setUnloadFlag(isUnloadFlagSet)
 
 
-    optype_exp = copyOrigNode.type().nameComponents()[2]
-
-    convertSubnet_recurseSubChild(newNode, newNode, optype_exp)
-    
     copyOrigNode.destroy()
 
+    convertSubnet_recurseSubChild(newNode, newNode, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+    
 
 
-def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp):
+
+def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = 0, Only_FeEHDA = 1, ignore_SideFX_HDA = 1):
+    nodeType = recurseNode.type()
+    isNotSubnet = nodeType.name() != 'subnet'
+    if recurseNode.matchesCurrentDefinition() and isNotSubnet:
+        return
+    
+    if nodeType.definition() is None and isNotSubnet:
+        return
+    
+    if optype_exp == '':
+        optype_exp = sourceNode.type().nameComponents()[2]
+
     optype_exp1 = '\'' + optype_exp + '\''
     
-    recurseNode.allowEditingOfContents()
     for child in recurseNode.children():
         relativePathTo = child.relativePathTo(sourceNode)
         str_optype = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
@@ -165,12 +229,35 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp):
                 
                 #print(rawValue)
         
-        typename = child.type().name()
+        childNodeType = child.type()
+        typename = childNodeType.name()
         #if "fee" in typename.lower() and child.matchesCurrentDefinition():
-        if "fee" in typename.lower():
+        
+        if typename == 'subnet':
             pass
-            convertSubnet(child)
-        elif ( not child.matchesCurrentDefinition() ) or ( typename == 'subnet' ):
-            pass
-            convertSubnet_recurseSubChild(sourceNode, child, optype_exp)
+            convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+        else:
+            if Only_FeEHDA:
+                if isFeENode(childNodeType):
+                    convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+                else:
+                    convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+            else:
+                convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
 
+
+
+def convert_All_FeENode_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1):
+    node.allowEditingOfContents()
+    children = node.children()
+    for child in children:
+        childNodeType = child.type()
+        if isFeENode(childNodeType):
+            convertSubnet(child, ignoreUnlock, Only_FeEHDA = 1, ignore_SideFX_HDA = ignore_SideFX_HDA)
+
+
+def convert_All_HDA_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1):
+    node.allowEditingOfContents()
+    children = node.children()
+    for child in children:
+        convertSubnet(child, ignoreUnlock, Only_FeEHDA = 0, ignore_SideFX_HDA = ignore_SideFX_HDA)

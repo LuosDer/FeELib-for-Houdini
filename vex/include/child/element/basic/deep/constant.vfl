@@ -292,6 +292,21 @@ int linearnumberi[] = linearnumber(start, end, 1);
 */
 DEFINEFUNCif(FUNClinearnumber0)
 
+function
+int[] linearnumber(
+    int start, end;
+    ) {
+    int arr[];
+    int len = end - start;
+    if ( len <= 0 ) return arr;
+    resize(arr, len);
+    arr[0] = start;
+    for (int i = 1; i < len; ++i) {
+        arr[i] = arr[i-1] + 1;
+    }
+    return arr;
+}
+
 #define FUNClinearnumber1(type)\
         function\
         type[] linearnumber(\
@@ -302,7 +317,7 @@ DEFINEFUNCif(FUNClinearnumber0)
             return arr;\
         }\
 
-DEFINEFUNCif(FUNClinearnumber1)
+DEFINEFUNCf(FUNClinearnumber1)
 
 #define FUNClinearnumber2(type)\
         function\

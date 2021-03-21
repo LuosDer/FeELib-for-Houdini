@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <!-- This file contains definitions of shelves, toolbars, and tools.
+ It should not be hand-edited when it is being used by the application.
+ Note, that two definitions of the same element are not allowed in
+ a single file. -->
+
+  <toolshelf name="FeE HDA Manger" label="FeE HDA Manger">
+    <memberTool name="convertHDA_to_Subnet_publish"/>
+    <memberTool name="convertFeE HDA_to_Subnet_publish"/>
+  </toolshelf>
+
+  <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import fee_HDA
+
+# from importlib import reload
+# reload(fee_HDA)
+
+selectedNodes = hou.selectedNodes()
+for node in selectedNodes:
+    fee_HDA.convert_All_HDA_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1)
+
+]]></script>
+  </tool>
+
+  <tool name="convertFeE HDA_to_Subnet_publish" label="convert FeE HDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import fee_HDA
+
+# from importlib import reload
+# reload(fee_HDA)
+
+selectedNodes = hou.selectedNodes()
+for node in selectedNodes:
+    fee_HDA.convert_All_FeENode_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1)
+
+]]></script>
+  </tool>
+</shelfDocument>
