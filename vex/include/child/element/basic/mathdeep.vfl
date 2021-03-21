@@ -1000,8 +1000,10 @@ vector orthogonolizedir(
 }
 
 
-
-
+/*
+#define THRESHOLD_ConeAngle 1e-05
+inOrthoConeAngle(@N, THRESHOLD, 0, 0)
+*/
 function
 int inOrthoConeAngle(
     vector dir;
