@@ -1011,7 +1011,7 @@ int inOrthoConeAngle(
     int reversegroup;
     ) {
     vector ndir = normalize(dir);
-    return reversegroup != ( ndir.x >= threhsold.x || ndir.y >= threhsold.y || ndir.z >= threhsold.z );
+    return reversegroup != ( abs(ndir.x) >= threhsold.x || abs(ndir.y) >= threhsold.y || abs(ndir.z) >= threhsold.z );
 }
 
 function
@@ -1021,7 +1021,7 @@ int inOrthoConeAngle(
     int reversegroup;
     ) {
     vector ndir = normalize(dir);
-    return reversegroup != ( ndir.x >= threhsold || ndir.y >= threhsold || ndir.z >= threhsold );
+    return reversegroup != ( abs(ndir.x) >= threhsold || abs(ndir.y) >= threhsold || abs(ndir.z) >= threhsold );
 }
 
 function
@@ -1032,7 +1032,7 @@ int inOrthoConeAngle(
     int isNormalized;
     ) {
     vector ndir = select(isNormalized, dir, normalize(dir));
-    return reversegroup != ( ndir.x >= threhsold.x || ndir.y >= threhsold.y || ndir.z >= threhsold.z );
+    return reversegroup != ( abs(ndir.x) >= threhsold.x || abs(ndir.y) >= threhsold.y || abs(ndir.z) >= threhsold.z );
 }
 
 function
@@ -1043,7 +1043,7 @@ int inOrthoConeAngle(
     int isNormalized;
     ) {
     vector ndir = select(isNormalized, dir, normalize(dir));
-    return reversegroup != ( ndir.x >= threhsold || ndir.y >= threhsold || ndir.z >= threhsold );
+    return reversegroup != ( abs(ndir.x) >= threhsold || abs(ndir.y) >= threhsold || abs(ndir.z) >= threhsold );
 }
 
 
