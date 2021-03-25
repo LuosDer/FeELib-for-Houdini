@@ -24,13 +24,15 @@ vector primN_avg(
     vector pos[] = primpointspos(geo, primnum);
 
 	vector dir[];
-	for (int i = 0; i < len(pos) - 1;)
+	for (int i = 0; i < len(pos) - 1;) {
 		push(dir, pos[i] - pos[++i]);
+    }
 	push(dir, pos[-1] - pos[0]);
 	
 	vector primN = 0;
-	for (int i = 0; i < len(pos) - 1; ++i)
+	for (int i = 0; i < len(pos) - 1; ++i) {
 		primN += cross(dir[i+1], dir[i]);
+    }
 	primN += cross(dir[0], dir[-1]);
 
     return normalize(primN);
@@ -41,8 +43,11 @@ vector primN_first(
     const int geo;
     const int primnum;
     ) {
-    vector pos[] = primpointspos(geo, primnum);
-    return normalize(cross(pos[1] - pos[2], pos[0] - pos[1]));
+    int primpoints[] = primpoints(geo, primnum);
+    vector pos0 = point(geo, 'P', primpoints[0]);
+    vector pos1 = point(geo, 'P', primpoints[1]);
+    vector pos2 = point(geo, 'P', primpoints[2]);
+    return normalize(cross(pos1 - pos2, pos0 - pos1));
 }
 
 function
@@ -50,8 +55,11 @@ vector primN_last(
     const int geo;
     const int primnum;
     ) {
-    vector pos[] = primpointspos(geo, primnum);
-    return normalize(cross(pos[-1] - pos[0], pos[-2] - pos[-1]));
+    int primpoints[] = primpoints(geo, primnum);
+    vector pos0 = point(geo, 'P', primpoints[-2]);
+    vector pos1 = point(geo, 'P', primpoints[-1]);
+    vector pos2 = point(geo, 'P', primpoints[0]);
+    return normalize(cross(pos1 - pos2, pos0 - pos1));
 }
 
 function
@@ -59,7 +67,7 @@ vector primN(
     const int geo;
     const int primnum;
     ) {
-    if(hasprimattrib(geo, 'N')){
+    if ( hasprimattrib(geo, 'N') ) {
         return prim(geo, 'N', primnum);
     }
     return primN_avg(geo, primnum);
@@ -71,7 +79,7 @@ vector[] primN_avg(
     const int primnums[];
     ) {
     vector result[];
-    foreach (int primnum; primnums){
+    foreach (int primnum; primnums) {
         push(result, primN_avg(geo, primnum));
     }
     return result;
@@ -83,7 +91,7 @@ vector[] primN_first(
     const int primnums[];
     ) {
     vector result[];
-    foreach (int primnum; primnums){
+    foreach (int primnum; primnums) {
         push(result, primN_first(geo, primnum));
     }
     return result;
@@ -95,7 +103,7 @@ vector[] primN_last(
     const int primnums[];
     ) {
     vector result[];
-    foreach (int primnum; primnums){
+    foreach (int primnum; primnums) {
         push(result, primN_last(geo, primnum));
     }
     return result;
@@ -121,7 +129,7 @@ vector hasprimattrib_autocalN(
     const string Nattribname;
     const int primnum;
     ) {
-    if (hasprimattrib(geo, Nattribname)) {
+    if ( hasprimattrib(geo, Nattribname) ) {
         return prim(geo, Nattribname, primnum);
     } else {
         if (Nattribname == 'N') {
