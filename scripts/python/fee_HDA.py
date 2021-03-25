@@ -1,7 +1,9 @@
 
 import hou
 
-#import fee_HDA
+# import fee_HDA
+# from importlib import reload
+# reload(fee_HDA)
 
 def isFeENode(nodeType):
     return nodeType.nameComponents()[2].endswith("_fee") and nodeType.description().startswith("FeE")
