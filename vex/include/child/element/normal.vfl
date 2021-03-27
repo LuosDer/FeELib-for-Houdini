@@ -4,6 +4,24 @@
 
 #include <normal.vfl>
 
+/*
+#if 0
+    #include <normal.vfl>
+#else
+    function
+    vector primN_first(
+        const int geo;
+        const int primnum;
+        ) {
+        int primpoints[] = primpoints(geo, primnum);
+        vector pos0 = point(geo, 'P', primpoints[0]);
+        vector pos1 = point(geo, 'P', primpoints[1]);
+        vector pos2 = point(geo, 'P', primpoints[2]);
+        return normalize(cross(pos1 - pos2, pos0 - pos1));
+    }
+#endif
+*/
+
 
 
 #include <promoteattrib.vfl>
