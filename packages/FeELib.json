@@ -141,6 +141,7 @@
                     "$FeELib/otls/Geo/Fractal 2D",
                     "$FeELib/otls/Geo/Hard Surface",
                     "$FeELib/otls/Geo/Hedra",
+                    "$FeELib/otls/Geo/Industry",
                     "$FeELib/otls/Geo/Installation",
                     "$FeELib/otls/Geo/Layout",
                     "$FeELib/otls/Geo/Machine",
