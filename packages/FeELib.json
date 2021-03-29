@@ -154,7 +154,7 @@
                     "$FeELib/otls/Geo/Primitive",
                     "$FeELib/otls/Geo/Primitive/2D",
                     "$FeELib/otls/Geo/Primitive/Curve",
-                    "$FeELib/otls/Geo/Primitive/Helix & Spiral",
+                    "$FeELib/otls/Geo/Primitive/Helix Spiral",
                     "$FeELib/otls/Geo/Primitive/Knot",
                     "$FeELib/otls/Geo/Primitive/Polyhedron",
                     "$FeELib/otls/Geo/Primitive/Surface",

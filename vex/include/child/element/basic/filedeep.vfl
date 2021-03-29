@@ -1,0 +1,39 @@
+
+#ifndef __FILEDEEP_VFL__
+#define __FILEDEEP_VFL__
+
+//#include <precompile.vfl>
+
+#if 0
+    #include <filedeep.vfl>
+#else
+#endif
+
+
+
+function
+string filename(
+    string fullpath;
+    ) {
+    string mid[] = split(fullpath, '.');
+    pop(mid);
+    return join(mid, '.');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
