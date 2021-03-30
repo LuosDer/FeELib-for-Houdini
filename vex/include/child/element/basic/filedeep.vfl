@@ -15,11 +15,9 @@ function
 string filename(
     string fullpath;
     ) {
-    string mid[] = split(fullpath, '.');
-    pop(mid);
-    return join(mid, '.');
+    int finds[] = find(fullpath, '.');
+    return fullpath[0 : finds[-1]+1];
 }
-
 
 
 
