@@ -4,8 +4,10 @@
 
 #include <precompile.vfl>
 
-#include <constant.vfl>
-
+#if 0
+    #include <constant.vfl>
+#else
+#endif
 
 /*
 these has been defined in <math.h>
@@ -491,16 +493,27 @@ int fibonaccitable(
 function
 int numelem(
     const int geo;
+    const int class;
+    ) {
+    if ( class == 0 ) return nprimitives(geo);
+    else if ( class == 1 ) return npoints(geo);
+    else if ( class == 2 ) return nvertices(geo);
+    else return -1;
+}
+
+function
+int numelem(
+    const int geo;
     const string class;
     ) {
-    if(class == 'point') return npoints(geo);
-    else if(class == 'points') return npoints(geo);
-    else if(class == 'vertex') return nvertices(geo);
-    else if(class == 'vertices') return nvertices(geo);
-    else if(class == 'prim') return nprimitives(geo);
-    else if(class == 'prims') return nprimitives(geo);
-    else if(class == 'primitive') return nprimitives(geo);
-    else if(class == 'primitives') return nprimitives(geo);
+    if ( class == 'point' ) return npoints(geo);
+    else if ( class == 'points' ) return npoints(geo);
+    else if ( class == 'vertex' ) return nvertices(geo);
+    else if ( class == 'vertices' ) return nvertices(geo);
+    else if ( class == 'prim' ) return nprimitives(geo);
+    else if ( class == 'prims' ) return nprimitives(geo);
+    else if ( class == 'primitive' ) return nprimitives(geo);
+    else if ( class == 'primitives' ) return nprimitives(geo);
     else return -1;
 }
 
@@ -510,14 +523,14 @@ int numelemgroup(
     const string group;
     const string class;
     ) {
-    if(class == 'point') return npointsgroup(geo, group);
-    else if(class == 'points') return npointsgroup(geo, group);
-    else if(class == 'vertex') return nverticesgroup(geo, group);
-    else if(class == 'vertices') return nverticesgroup(geo, group);
-    else if(class == 'prim') return nprimitivesgroup(geo, group);
-    else if(class == 'prims') return nprimitivesgroup(geo, group);
-    else if(class == 'primitive') return nprimitivesgroup(geo, group);
-    else if(class == 'primitives') return nprimitivesgroup(geo, group);
+    if ( class == 'point' ) return npointsgroup(geo, group);
+    else if ( class == 'points' ) return npointsgroup(geo, group);
+    else if ( class == 'vertex' ) return nverticesgroup(geo, group);
+    else if ( class == 'vertices' ) return nverticesgroup(geo, group);
+    else if ( class == 'prim' ) return nprimitivesgroup(geo, group);
+    else if ( class == 'prims' ) return nprimitivesgroup(geo, group);
+    else if ( class == 'primitive' ) return nprimitivesgroup(geo, group);
+    else if ( class == 'primitives' ) return nprimitivesgroup(geo, group);
     else return -1;
 }
 
