@@ -6,9 +6,10 @@
 
 #include <constant.vfl>
 
-#include <arraydeep.vfl>
-
-
+#if 0
+    #include <arraydeep.vfl>
+#else
+#endif
 
 
 #define FUNCswap0(type)\
@@ -522,6 +523,114 @@ DEFINEFUNCv(FUNCargsort)
 
 */
 
+function
+int minidx(
+    const vector arg;
+    ) {
+    int idx = 0;
+    float val = arg[idx];
+    for (int i = 1; i < 3; ++i) {
+        if ( arg[i] >= val ) continue;
+        idx = i;
+        val = arg[idx];
+    }
+    return idx;
+}
+
+function
+int minidx(
+    const vector arg;
+    export float val;
+    ) {
+    int idx = 0;
+    val = arg[idx];
+    for (int i = 1; i < 3; ++i) {
+        if ( arg[i] >= val ) continue;
+        idx = i;
+        val = arg[idx];
+    }
+    return idx;
+}
+
+function
+int mididx(
+    const vector arg;
+    ) {
+    if ( arg[1] > arg[0] ) {
+        if ( arg[2] > arg[1] ) {
+            return 1;
+        } else if ( arg[2] > arg[0] ) {
+            return 2;
+        } else {
+            return 0;
+        }
+    } else {
+        if ( arg[2] > arg[0] ) {
+            return 0;
+        } else if ( arg[2] > arg[1] ) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }
+}
+
+function
+int mididx(
+    const vector arg;
+    export float val;
+    ) {
+    int idx;
+    if ( arg[1] > arg[0] ) {
+        if ( arg[2] > arg[1] ) {
+            idx = 1;
+        } else if ( arg[2] > arg[0] ) {
+            idx = 2;
+        } else {
+            idx = 0;
+        }
+    } else {
+        if ( arg[2] > arg[0] ) {
+            idx = 0;
+        } else if ( arg[2] > arg[1] ) {
+            idx = 2;
+        } else {
+            idx = 1;
+        }
+    }
+    val = arg[idx];
+    return idx;
+}
+
+function
+int maxidx(
+    const vector arg;
+    ) {
+    int idx = 0;
+    float val = arg[idx];
+    for (int i = 1; i < 3; ++i) {
+        if ( arg[i] <= val ) continue;
+        idx = i;
+        val = arg[idx];
+    }
+    return idx;
+}
+
+function
+int maxidx(
+    const vector arg;
+    export float val;
+    ) {
+    int idx = 0;
+    val = arg[idx];
+    for (int i = 1; i < 3; ++i) {
+        if ( arg[i] <= val ) continue;
+        idx = i;
+        val = arg[idx];
+    }
+    return idx;
+}
+
 #define FUNCmaxidx0(type)\
         function\
         int maxidx (\
@@ -538,7 +647,7 @@ DEFINEFUNCv(FUNCargsort)
             return idx;\
         }\
 
-DEFINEFUNCifv(FUNCmaxidx0)
+DEFINEFUNCif(FUNCmaxidx0)
 
 #define FUNCmaxidx01(type)\
         function\
@@ -557,7 +666,7 @@ DEFINEFUNCifv(FUNCmaxidx0)
             return idx;\
         }\
 
-DEFINEFUNCifv(FUNCmaxidx01)
+DEFINEFUNCif(FUNCmaxidx01)
 
 #define FUNCmaxidx1(type)\
         function\
@@ -569,6 +678,8 @@ DEFINEFUNCifv(FUNCmaxidx01)
         }\
 
 DEFINEFUNCifv(FUNCmaxidx1)
+
+
 
 #define FUNCmaxidx12(type)\
         function\
@@ -598,7 +709,7 @@ DEFINEFUNCifv(FUNCmaxidx12)
             return idx;\
         }\
 
-DEFINEFUNCifv(FUNCminidx0)
+DEFINEFUNCif(FUNCminidx0)
 
 #define FUNCminidx01(type)\
         function\
@@ -617,7 +728,7 @@ DEFINEFUNCifv(FUNCminidx0)
             return idx;\
         }\
 
-DEFINEFUNCifv(FUNCminidx01)
+DEFINEFUNCif(FUNCminidx01)
 
 #define FUNCminidx1(type)\
         function\
@@ -641,6 +752,9 @@ DEFINEFUNCifv(FUNCminidx1)
         }\
 
 DEFINEFUNCifv(FUNCminidx11)
+
+
+
 
 
 /*
