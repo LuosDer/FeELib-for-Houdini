@@ -355,6 +355,21 @@ vector[] linearnumber(
 #define linearnumberv linearnumber
 
 
+/*
+
+function
+int[] naturalnumber(
+    int end;
+    ) {
+    int result[];
+    resize(result, end);
+    for (int i = 0; i < end; ++i) {
+        result[i] = i;
+    }
+    return result;
+}
+
+*/
 
 #define FUNCnaturalnumber(type)\
         function\

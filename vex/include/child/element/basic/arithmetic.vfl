@@ -4,7 +4,10 @@
 
 #include <precompile.vfl>
 
-#include <arithmetic.vfl>
+#if 0
+    #include <arithmetic.vfl>
+#else
+#endif
 
 
 
@@ -78,7 +81,7 @@ DEFINEFUNCarithmeticifvm()
 
 
 /*
-***新版函数已经不会有如下问题***
+////////////////新版函数已经不会有如下问题////////////////
 以下函数使用需要小心，使用时不可作为别的函数的参数
 因为参数在使用过程中被修改了
 例如
@@ -135,6 +138,19 @@ DEFINEFUNCarithmeticifv(FUNCsumofsquares)
 DEFINEFUNCarithmeticifv(FUNCrootmeansquare)
 */
 
+function
+int[] sum(
+    const int arr[];
+    const int arg;
+    ) {
+    int len = len(arr);
+    int result[];
+    resize(result, len);
+    for(int i = 0; i < len; ++i) {
+        result[i] = arr[i] + arg;
+    }
+    return result;
+}
 
 #define FUNCsumarr0(type0, type1)\
         function\
@@ -142,9 +158,12 @@ DEFINEFUNCarithmeticifv(FUNCrootmeansquare)
             const type0 arr[];\
             const type1 arg;\
             ) {\
+            int len = len(arr);\
             type0 result[];\
-            for(int i = 0; i < len(arr); ++i)\
-                push(result, arr[i] + arg);\
+            resize(result, len);\
+            for(int i = 0; i < len; ++i) {\
+                result[i] = arr[i] + arg;\
+            }\
             return result;\
         }\
 
@@ -156,9 +175,12 @@ DEFINEFUNCarithmeticifv(FUNCsumarr0)
             const type0 arr[];\
             const type1 arg[];\
             ) {\
+            int len = len(arr);\
             type0 result[];\
-            for(int i = 0; i < len(arr); ++i)\
-                push(result, arr[i] + arg[i]);\
+            resize(result, len);\
+            for(int i = 0; i < len; ++i) {\
+                result[i] = arr[i] + arg[i];\
+            }\
             return result;\
         }\
 
@@ -303,14 +325,18 @@ DEFINEFUNCarithmeticifv(FUNCsub2)
 
 
 
+
 function
 int[] mod(
     const int arr[];
     const int arg;
     ) {
+    int len = len(arr);
     int result[];
-    for (int i = 0; i < len(arr);)
-        result[i] = arr[i++] % arg;
+    resize(result, len);
+    for(int i = 0; i < len; ++i) {
+        result[i] = arr[i] % arg;
+    }
     return result;
 }
 
