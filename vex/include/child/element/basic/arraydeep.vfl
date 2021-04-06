@@ -1460,18 +1460,13 @@ int[] uniqueneb(
     const int arr[];
     ) {
     int result[];
-    resize(result, len(arr));
     int lenarr = len(arr);
+    resize(result, lenarr);
     int len = 0;
     result[len] = arr[len];
     for (int i = 1; i < lenarr; ++i) {
-        #if 1
-            if ( arr[i] == result[len] ) continue;
-            result[++len] = arr[i];
-        #else
-            if ( arr[i] == result[-1] ) continue;
-            push(result, arr[i]);
-        #endif
+        if ( arr[i] == result[len] ) continue;
+        result[++len] = arr[i];
     }
     resize(result, len+1);
     return result;
@@ -1484,8 +1479,8 @@ int[] uniqueneb(
             const type arr[];\
             ) {\
             type result[];\
-            resize(result, len(arr));\
             int lenarr = len(arr);\
+            resize(result, lenarr);\
             int len = 0;\
             result[len] = arr[len];\
             for (int i = 1; i < lenarr; ++i) {\

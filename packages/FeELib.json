@@ -99,6 +99,7 @@
                     "$FeELib/otls/Filter/Topo/LOD",
                     "$FeELib/otls/Filter/Topo/Optimize",
                     "$FeELib/otls/Filter/Topo/Subdivid",
+                    "$FeELib/otls/Filter/Transfer",
                     "$FeELib/otls/Filter/Transform",
                     "$FeELib/otls/Filter/Volume",
                     "$FeELib/otls/Filter/Volume/Analysis",
