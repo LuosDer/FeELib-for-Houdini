@@ -1,6 +1,7 @@
 ﻿
 **/backup
 *.pyc
+*.ini
 __pycache__
 
 #嘻嘻，恭喜你发现了我~~
