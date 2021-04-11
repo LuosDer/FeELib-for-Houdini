@@ -5,8 +5,23 @@ import hou
 # from importlib import reload
 # reload(fee_HDA)
 
-def isFeENode(nodeType):
-    return nodeType.nameComponents()[2].endswith("_fee") and nodeType.description().startswith("FeE")
+def isFeENode(nodeType, detectName = True, detectPath = False):
+    if detectName:
+        if not nodeType.nameComponents()[2].endswith("_fee") or not nodeType.description().startswith("FeE"):
+            return False
+    if detectPath:
+        defi = nodeType.definition()
+        if defi is None:
+            libraryFilePath = 'None'
+        else:
+            libraryFilePath = defi.libraryFilePath()
+        pathFeELib = hou.getenv('FeELib')
+        pathFeEProject = hou.getenv('FeEProjectHoudini')
+        pathFeEmiHoYo = hou.getenv('FeEmiHoYo')
+        if not (pathFeELib in libraryFilePath or pathFeEProject in libraryFilePath or pathFeEmiHoYo in libraryFilePath):
+            return False
+    
+    return True
 
 def copyParms_NodetoNode(sourceNode, targetNode):
     origParmTemplateGroup = sourceNode.parmTemplateGroup()
@@ -54,7 +69,7 @@ def copyParms_NodetoNode(sourceNode, targetNode):
             #print(parm)
     
 
-def convertSubnet(node, ignoreUnlock = 0, Only_FeEHDA = 1, ignore_SideFX_HDA = 1):
+def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = node.type()
     
     if nodeType.name() == 'subnet':
@@ -64,11 +79,15 @@ def convertSubnet(node, ignoreUnlock = 0, Only_FeEHDA = 1, ignore_SideFX_HDA = 1
     if definition is None:
         return
 
-    if ignoreUnlock and not node.matchesCurrentDefinition():
+    if ignoreUnlock==0 and not node.matchesCurrentDefinition():
         #print(node)
         convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
         return
     
+    if Only_FeEHDA:
+        if not isFeENode(nodeType, detectName, detectPath):
+            return
+
     if ignore_SideFX_HDA:
         defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
         if definition.libraryFilePath().startswith(defaultLibPath):
@@ -180,12 +199,12 @@ def convertSubnet(node, ignoreUnlock = 0, Only_FeEHDA = 1, ignore_SideFX_HDA = 1
 
     copyOrigNode.destroy()
 
-    convertSubnet_recurseSubChild(newNode, newNode, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+    convertSubnet_recurseSubChild(newNode, newNode, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
     
 
 
 
-def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = 0, Only_FeEHDA = 1, ignore_SideFX_HDA = 1):
+def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = recurseNode.type()
     isNotSubnet = nodeType.name() != 'subnet'
     if recurseNode.matchesCurrentDefinition() and isNotSubnet:
@@ -237,32 +256,32 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
         
         if typename == 'subnet':
             pass
-            convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+            convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         else:
             if Only_FeEHDA:
-                if isFeENode(childNodeType):
-                    convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+                if isFeENode(childNodeType, detectName, detectPath):
+                    convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
                 else:
-                    convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+                    convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
             else:
-                convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+                convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
 
 
-def convert_All_FeENode_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1):
+def convert_All_FeENode_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     node.allowEditingOfContents()
     children = node.children()
     for child in children:
         childNodeType = child.type()
-        if isFeENode(childNodeType):
-            convertSubnet(child, ignoreUnlock, Only_FeEHDA = 1, ignore_SideFX_HDA = ignore_SideFX_HDA)
+        #if isFeENode(childNodeType, detectName, detectPath):
+        convertSubnet(child, ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
 
 
-def convert_All_HDA_to_Subnet(node, ignoreUnlock = 0, ignore_SideFX_HDA = 1):
+def convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True):
     node.allowEditingOfContents()
     children = node.children()
     for child in children:
-        convertSubnet(child, ignoreUnlock, Only_FeEHDA = 0, ignore_SideFX_HDA = ignore_SideFX_HDA)
+        convertSubnet(child, ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
 
 
 
