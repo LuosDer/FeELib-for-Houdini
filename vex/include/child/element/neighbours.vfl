@@ -2,9 +2,42 @@
 #ifndef __NEIGHBOURS_VFL__
 #define __NEIGHBOURS_VFL__
 
-#include <neighbours.vfl>
-
-
+#if 1
+    #inc//lude <neighbours.vfl>
+#else
+    //和原版的区别是，对于unshared edge，会输出-1
+    function
+    int[] polyedgeneighbours(
+        int geo;
+        int primnum;
+        int ignorenonneb, ignoremanifold;
+        ) {
+        int result[];
+        //if ( ignoremanifold && includenonneb ) resize(result, );
+        int start = primhedge(geo, primnum);
+        for (int hedge_next = start; hedge_next != -1;) {
+            int flag = 1;
+            for (int hedge_nextequiv = hedge_nextequiv(geo, hedge_next); hedge_nextequiv != hedge_next; hedge_nextequiv = hedge_nextequiv(geo, hedge_nextequiv)) {
+                int hedge_prim = hedge_prim(geo, hedge_nextequiv);
+                if (hedge_prim == -1 || hedge_prim == primnum) break;
+                flag = 0;
+                // if ( ignoremanifold ) {
+                //     result[i] = hedge_prim;
+                //     break;
+                // } else {
+                    push(result, hedge_prim);
+                // }
+                if ( ignoremanifold ) break;
+            }
+            if ( !ignorenonneb && flag ) {
+                push(result, -1);
+            }
+            hedge_next = hedge_next(geo, hedge_next);
+            if ( hedge_next == start ) break;
+        }
+        return result;
+    }
+#endif
 
 #include <arraydeep.vfl>
 #include <group.vfl>
@@ -51,6 +84,7 @@ int[] polylineneighbours(
 */
 
 
+//和原版的区别是，对于unshared edge，会输出-1
 function
 int[] polyedgeneighbours(
     int geo;
@@ -58,16 +92,21 @@ int[] polyedgeneighbours(
     int ignorenonneb, ignoremanifold;
     ) {
     int result[];
-    //if (ignoremanifold && includenonneb) resize(result, );
+    //if ( ignoremanifold && includenonneb ) resize(result, );
     int start = primhedge(geo, primnum);
     for (int hedge_next = start; hedge_next != -1;) {
         int flag = 1;
         for (int hedge_nextequiv = hedge_nextequiv(geo, hedge_next); hedge_nextequiv != hedge_next; hedge_nextequiv = hedge_nextequiv(geo, hedge_nextequiv)) {
             int hedge_prim = hedge_prim(geo, hedge_nextequiv);
             if (hedge_prim == -1 || hedge_prim == primnum) break;
-            push(result, hedge_prim);
             flag = 0;
-            if (ignoremanifold) break;
+            // if ( ignoremanifold ) {
+            //     result[i] = hedge_prim;
+            //     break;
+            // } else {
+                push(result, hedge_prim);
+            // }
+            if ( ignoremanifold ) break;
         }
         if ( !ignorenonneb && flag ) {
             push(result, -1);
@@ -186,6 +225,22 @@ int[] neighbours_pointgroup(
 
 
 
+function
+int[] neighbours(
+    const int geo;
+    const int ptnum;
+    export float dists[];
+    ) {
+    int nebs[] = neighbours(geo, ptnum);
+    int len = len(nebs);
+    resize(dists, len);
+    vector pos = point(geo, 'P', ptnum);
+    for (int i = 0; i < len; ++i) {
+        vector nebpos = point(geo, 'P', nebs[i]);
+        dists[i] = distance2(pos, nebpos);
+    }
+    return nebs;
+}
 
 function
 int[] neighbourssortdist(
@@ -240,7 +295,7 @@ int[] neighbourssortdist_pointgroup(
 
 
 
-
+/*
 
 
 function
@@ -254,7 +309,7 @@ int[] neighboursdebug(
     return result;
 }
 
-
+*/
 
 
 
@@ -352,6 +407,28 @@ int[] prevpoints(
     int ptnum;
     ) {
     return prevpoints(geo, pointprims(geo, ptnum), ptnum);
+}
+
+
+
+
+function
+int[] verticesSharedPoint(
+    int geometry;
+    int linearvertex;
+    ) {
+    int vertexpoint = vertexpoint(geometry, linearvertex);
+    if ( vertexpoint == -1 ) {
+        return {};
+    }
+    int pointvertex = pointvertex(geometry, vertexpoint);
+    int vertexnext = vertexnext(geometry, pointvertex);
+    int vertices[] = array(pointvertex);
+    for (; vertexnext != -1; vertexnext = vertexnext(geometry, vertexnext)) {
+        push(vertices, vertexnext);
+    }
+    
+    return vertices;
 }
 
 

@@ -2,9 +2,33 @@
 #ifndef __HEDGEDEEP_VFL__
 #define __HEDGEDEEP_VFL__
 
-#include <hedgedeep.vfl>
-
-
+#if 1
+    #include <hedgedeep.vfl>
+#else
+    function
+    int hedge_isMininEquivs(
+        const int geo;
+        const int hnum;
+        ) {
+        // retrun -1 means this hedge is not found
+        // retrun 0 means this hedge is not Min in Equivs
+        // retrun 1 means this hedge is     Min in Equivs
+        // retrun 2 means this hedge is unshared
+        int hnext = hedge_nextequiv(geo, hnum);
+        if ( hnext == -1 ) {
+            return -1;
+        }
+        if ( hnext == hnum ) {
+            return 2;
+        }
+        for (;   hnext != hnum;   hnext = hedge_nextequiv(geo, hnext) ) {
+            if ( hnext < hnum ) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+#endif
 
 
 function
@@ -34,6 +58,46 @@ float hedgelength(
 }
 
 
+function
+int hedge_minequiv(
+    const int geo;
+    const int hnum;
+    ) {
+    int hnext = hedge_nextequiv(geo, hnum);
+    if ( hnext == -1 ) {
+        return -1;
+    }
+    int hmin = hnum;
+    for (;   hnext != hnum;   hnext = hedge_nextequiv(geo, hnext) ) {
+        if ( hnext >= hmin ) continue;
+        hmin = hnext;
+    }
+    return hmin;
+}
+
+function
+int hedge_isMininEquivs(
+    const int geo;
+    const int hnum;
+    ) {
+    // retrun -1 means this hedge is not found
+    // retrun 0 means this hedge is not Min in Equivs
+    // retrun 1 means this hedge is     Min in Equivs
+    // retrun 2 means this hedge is unshared
+    int hnext = hedge_nextequiv(geo, hnum);
+    if ( hnext == -1 ) {
+        return -1;
+    }
+    if ( hnext == hnum ) {
+        return 2;
+    }
+    for (;   hnext != hnum;   hnext = hedge_nextequiv(geo, hnext) ) {
+        if ( hnext < hnum ) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 
 function
@@ -42,12 +106,43 @@ int[] hedge_equivs(
     const int hnum;
     ) {
     //hedge_nextequiv非常慢（测试低面数不卡）
-    int hnext = hnum, hedges[];
-    do{
+    int hnext = hedge_nextequiv(geo, hnum);
+    if ( hnext == -1 ) {
+        //没有这个hedge
+        return array();
+    }
+    int hedges[] = array(hnum);
+    for (;   hnext != hnum;   hnext = hedge_nextequiv(geo, hnext) ) {
         push(hedges, hnext);
-        hnext = hedge_nextequiv(geo, hnext);
-    } while(hnext != hnum && hnext != -1);
+    }
     return hedges;
+}
+
+function
+int[] hedge_equivsOrdered(
+    const int geo;
+    const int hnum;
+    ) {
+    int hnext = hedge_nextequiv(geo, hnum);
+    if ( hnext == -1 ) {
+        //没有这个hedge
+        return array();
+    }
+    int hedges[] = array(hnum), result[], len = 1, hedgemin = hnum, hedgemin_idx = len;
+    for (;   hnext != hnum && hnext != -1;   hnext = hedge_nextequiv(geo, hnext) ) {
+        push(hedges, hnext);
+        ++len;
+        if ( hnext < hedgemin ) {
+            hedgemin = hnext;
+            hedgemin_idx = len;
+        }
+    }
+    --hedgemin_idx;///// idx比实际的要大1，因为上面写了 = len
+    resize(result, len);
+    for (int i = 0; i < len; ++i) {
+        result[i] = hedges[(i + hedgemin_idx) % len];
+    }
+    return result;
 }
 
 function

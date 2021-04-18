@@ -2,48 +2,74 @@
 #ifndef __PROMOTEDEEP_VFL__
 #define __PROMOTEDEEP_VFL__
 
-#include <promotedeep.vfl>
+#if 1
+    #include <promotedeep.vfl>
+#else
+    //point first pointprim
+    function
+    int pointprim(
+        const int geo;
+        const int ptnum;
+        ) {
+        int pointvertex = pointvertex(geo, ptnum);
+        return vertexprim(geo, pointvertex);
+    }
+#endif
 
 
+/*
+function
+int primpoint(
+    const int geo;
+    const int primnum;
+    const int idx;
+    ) {
+    int primvertex = primvertex(geo, primnum, idx);
+    return vertexpoint(geo, primvertex);
+}
+*/
+
+//point first pointprim
+function
+int pointprim(
+    const int geo;
+    const int ptnum;
+    ) {
+    int pointvertex = pointvertex(geo, ptnum);
+    return vertexprim(geo, pointvertex);
+}
 
 
-
+// find ptnum in the primpoints index
 function
 int pointprimindex(
     const int geo;
     const int primnum;
     const int ptnum;
     ) {
-    int primpoints[] = primpoints(geo, primnum);
-    int index = find(primpoints, ptnum);
-    if (index < 0) {
-        return -1;
-    } else {
-        return index;
+    int primvertexcount = primvertexcount(geo, primnum);
+    for (int primvtxnum = 0; primvtxnum < primvertexcount; ++primvtxnum) {
+        int primvertex = primvertex(geo, primnum, primvtxnum);
+        int vertexpoint = vertexpoint(geo, primvertex);
+        if ( vertexpoint == ptnum ) {
+            return primvtxnum;
+        }
     }
+    return -1;
 }
 
+
+// find ptnum in the first pointprim primpoints index
 function
 int pointprimindex(
     const int geo;
     const int ptnum;
     ) {
-    int pointprim = pointprims(geo, ptnum)[0];
-    return pointprimindex(geo, pointprim, ptnum);
+    return pointprimindex(geo, pointprim(geo, ptnum), ptnum);
 }
 
 
 
-
-//point to prim
-
-function
-int pointprim(
-    const int geo;
-    const int ptnum;
-    ) {
-    return pointprims(geo, ptnum)[0];
-}
 
 function
 int[] orderedpointprims(
@@ -365,6 +391,18 @@ int[] pointedges(
 
 
 
+
+function
+int vertexdstpoint(
+    const int geo;
+    const int hnum;
+    ) {
+    int vertexprim = vertexprim(geo, hnum);
+    int vertexprimindex = vertexprimindex(geo, hnum);
+    int primvertexcount = primvertexcount(geo, vertexprim);
+    int primvertex = primvertex(geo, vertexprim, (vertexprimindex+1) % primvertexcount);
+    return vertexpoint(geo, primvertex);
+}
 
 
 

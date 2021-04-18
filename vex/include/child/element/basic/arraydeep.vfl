@@ -418,7 +418,7 @@ DEFINEFUNCv(FUNCargsort)
 
 /*
 #if 0
-    //#inc//lude <arraydeep.vfl>
+    #inc//lude <arraydeep.vfl>
 #else
     function
     int maxidx (
