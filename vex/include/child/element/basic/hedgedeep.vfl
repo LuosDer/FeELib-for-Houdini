@@ -105,6 +105,25 @@ int[] hedge_equivs(
     const int geo;
     const int hnum;
     ) {
+    int hedge_equivcount = hedge_equivcount(geo, hnum);
+    if ( hedge_equivcount == -1 ) {
+        //没有这个hedge
+        return array();
+    }
+    int hedges[];
+    resize(hedges, hedge_equivcount);
+    hedges[0] = hnum;
+    for (int i = 1; i < hedge_equivcount; ++i) {
+        hedges[i] = hedge_nextequiv(geo, hedges[i-1]);
+    }
+    return hedges;
+}
+/*
+function
+int[] hedge_equivs(
+    const int geo;
+    const int hnum;
+    ) {
     //hedge_nextequiv非常慢（测试低面数不卡）
     int hnext = hedge_nextequiv(geo, hnum);
     if ( hnext == -1 ) {
@@ -117,6 +136,7 @@ int[] hedge_equivs(
     }
     return hedges;
 }
+*/
 
 function
 int[] hedge_equivsOrdered(

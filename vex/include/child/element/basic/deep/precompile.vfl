@@ -32,6 +32,21 @@ DEFINEFUNCi()
 /*
 DEFINEFUNCf()
 */
+#define DEFINEFUNCv2(DEFINEFUNCname)\
+        DEFINEFUNCname(vector2)\
+/*
+DEFINEFUNCv2()
+*/
+#define DEFINEFUNCv3(DEFINEFUNCname)\
+        DEFINEFUNCname(vector)\
+/*
+DEFINEFUNCv()
+*/
+#define DEFINEFUNCv4(DEFINEFUNCname)\
+        DEFINEFUNCname(vector4)\
+/*
+DEFINEFUNCv4()
+*/
 #define DEFINEFUNCif(DEFINEFUNCname)\
         DEFINEFUNCname(int)\
         DEFINEFUNCname(float)\
@@ -43,6 +58,12 @@ DEFINEFUNCif()
         DEFINEFUNCname(string)\
 /*
 DEFINEFUNCis()
+*/
+#define DEFINEFUNCv24(DEFINEFUNCname)\
+        DEFINEFUNCname(vector2)\
+        DEFINEFUNCname(vector4)\
+/*
+DEFINEFUNCv4()
 */
 #define DEFINEFUNCv23(DEFINEFUNCname)\
         DEFINEFUNCname(vector2)\

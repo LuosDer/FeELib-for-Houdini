@@ -209,7 +209,7 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                         subnetIndirectInput = inputItem
                         flag = True
                     else:
-                        raise hou.error('fee : 不可能的情况')
+                        raise(hou.Error('fee : 不可能的情况'))
                         return 0
                         #nulls.append(inputItem)
                         #flag = False
@@ -257,7 +257,7 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     #### 处理0-3号输入口
     inputItems = []
     inputItem_output_index = []
-    for idx in range(0, min(nInputs, 3)):
+    for idx in range(0, min(nInputs, 4)):
         if len(inputConnectors[idx]) == 0:
             # 说明没有连
             inputItems.append(None)
@@ -266,8 +266,11 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
         inputConnection = inputConnectors[idx][0]
         inputItem = inputConnection.inputItem()
         inputItems.append(inputItem)
-        inputItem_output_index.append(inputConnection.outputIndex())
-
+        #if type(inputItem).__name__ == 'NetworkDot' or type(inputItem).__name__ == 'SubnetIndirectInput':
+        if isinstance(inputItem, hou.NetworkDot) or isinstance(inputItem, hou.SubnetIndirectInput):
+            inputItem_output_index.append(0)
+        else:
+            inputItem_output_index.append(inputConnection.outputIndex())
 
 
     ############ 修改节点类型 ############
@@ -275,13 +278,33 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     copyOrigNode = hou.copyNodesTo([node], parent)[0]
     newNode = node.changeNodeType('subnet', keep_parms=False)
     newNode.removeSpareParms()
-    for idx in range(0, min(nInputs, 3)):
+    for idx in range(0, min(nInputs, 4)):
         if inputItems[idx] is not None:
-            newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+            try:
+                newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+            except:
+                print(newNode)
+                print(inputItems[idx])
+                print(inputItem_output_index[idx])
+                raise(hou.Error('setInput Error'))
     # newNode.parm('label1').hide(True)
     # newNode.parm('label2').hide(True)
     # newNode.parm('label3').hide(True)
     # newNode.parm('label4').hide(True)
+
+    oldIndirectInputs = copyOrigNode.indirectInputs()
+    newIndirectInputs = newNode.indirectInputs()
+    for idx in range(0, min(len(oldIndirectInputs), 4)):
+        try:
+            pos = oldIndirectInputs[idx].position()
+            newIndirectInputs[idx].setPosition(pos)
+        except:
+            print(copyOrigNode)
+            print(newNode)
+            print(oldIndirectInputs[idx])
+            print(newIndirectInputs[idx])
+            raise(hou.Error('fee Error'))
+
 
     copyParms_NodetoNode(copyOrigNode, newNode)
 

@@ -351,21 +351,79 @@ vector4 sort(
             return unserialize(resultarr);\
         }\
 
-DEFINEFUNCv(FUNCsort)
+DEFINEFUNCv4(FUNCsort)
+
+function
+vector2 sort(
+    const vector2 vec;
+    ) {
+    vector2 result;
+    if ( vec.x < vec.y ) {
+        result = vec;
+    } else {
+        result.x = vec.y;
+        result.y = vec.x;
+    }
+    return result;
+}
+
+function
+vector sort(
+    const vector vec;
+    ) {
+    vector result;
+    if ( vec.x < vec.y ) {
+        if ( vec.x < vec.z ) {
+            result.x = vec.x;
+            if ( vec.y < vec.z ) {
+                result.y = vec.y;
+                result.z = vec.z;
+            } else {
+                result.y = vec.z;
+                result.z = vec.y;
+            }
+        } else {
+            result.x = vec.z;
+            result.y = vec.x;
+            result.z = vec.y;
+        }
+    } else {
+        if ( vec.y < vec.z ) {
+            result.x = vec.y;
+            if ( vec.x < vec.z ) {
+                result.y = vec.x;
+                result.z = vec.z;
+            } else {
+                result.y = vec.z;
+                result.z = vec.x;
+            }
+        } else {
+            result.x = vec.z;
+            result.y = vec.y;
+            result.z = vec.x;
+        }
+    }
+    return result;
+}
+
+
 
 #define FUNCsortarr(type)\
         function\
         type[] sort(\
             const type arr[];\
             ) {\
+            int len = len(arr);\
             float length2[];\
-            foreach(type vec; arr) {\
-                push(length2, length2(vec));\
+            resize(length2, len);\
+            for (int i = 0; i < len; ++i) {\
+                length2[i] = length2(arr[i]);\
             }\
             return reorder(arr, argsort(length2));\
         }\
 
 DEFINEFUNCv(FUNCsortarr)
+
 
 #define FUNCexsort(type)\
         function\
@@ -1430,6 +1488,27 @@ DEFINEFUNCall(FUNCupush)
 
 DEFINEFUNCif(FUNCunique)
 
+/*
+function
+int nuniqueval(
+    int arr[];
+    ) {
+    int result = 0;
+    for (int i = len(arr)-1; i > -1; --i) {
+        int flag = 1;
+        for (int j = i-1; j > -1; --j) {
+            if ( arr[i] == arr[j] ) {
+                flag = 0;
+                break;
+            }
+        }
+        if ( flag ) {
+            ++result;
+        }
+    }
+    return result;
+}
+*/
 
 #define FUNCnuniqueval(type)\
         function\
