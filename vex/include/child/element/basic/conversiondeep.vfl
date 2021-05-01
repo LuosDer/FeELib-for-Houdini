@@ -16,10 +16,24 @@
 
 
 function
+int[] opdigits(
+    string strarr[];
+    ) {
+	int result[];
+    int len = len(strarr);
+    resize(result, len);
+    for (int i = 0; i < len; ++i) {
+        result[i] = opdigits(strarr[i]);
+    }
+    return result;
+}
+
+function
 int[] atoi(
     string strarr[];
     ) {
-	int result[], len = len(strarr);
+	int result[];
+    int len = len(strarr);
     resize(result, len);
     for (int i = 0; i < len; ++i) {
         result[i] = atoi(strarr[i]);
@@ -38,7 +52,8 @@ function
 string[] itoa(
     int argarr[];
     ) {
-	string result[], len = len(argarr);
+	string result[];
+    int len = len(argarr);
     resize(result, len);
     for (int i = 0; i < len; ++i) {
         result[i] = itoa(argarr[i]);
@@ -52,14 +67,6 @@ string itoa(
     string whitespace;
     ) {
     return join(itoa(argarr), whitespace);
-    /*
-    string result = '';
-	foreach (int arg; argarr) {
-		concat(result, itoa(arg), whitespace);
-	}
-    rstrip(result, whitespace);
-    return result;
-    */
 }
 
 function

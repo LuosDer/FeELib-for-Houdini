@@ -2,8 +2,10 @@
 #ifndef __GROUP_VFL__
 #define __GROUP_VFL__
 
-#include <group.vfl>
-
+#if 0
+	#include <group.vfl>
+#else
+#endif
 
 function
 int invertexgroup(
@@ -358,8 +360,6 @@ int setnebedgegroup(
 
 
 
-
-
 function
 int setgroup(
 	int geohandle;
@@ -374,13 +374,22 @@ int setgroup(
 	} else if ( elemclass == 1 ) {
 		return setpointgroup(geohandle, groupname, elemnum, value, mode);
 	} else if ( elemclass == 2 ) {
+		int hedge_srcpoint = vertexpoint(geohandle, elemnum);
+
+		int vertexprim = vertexprim(geohandle, elemnum);
+		int vertexprimindex = vertexprimindex(geohandle, elemnum);
+		int primvertexcount = primvertexcount(geohandle, vertexprim);
+		int primvertex = primvertex(geohandle, vertexprim, (vertexprimindex+1) % primvertexcount);
+		int hedge_dstpoint = vertexpoint(geohandle, primvertex);
+		/*
 		int hedge_srcpoint = hedge_srcpoint(geohandle, elemnum);
 		int hedge_dstpoint = hedge_dstpoint(geohandle, elemnum);
+		*/
 		return setedgegroup(geohandle, groupname, hedge_srcpoint, hedge_dstpoint, value, mode);
 	} else if ( elemclass == 3 ) {
 		return setvertexgroup(geohandle, groupname, elemnum, value, mode);
 	} else {
-		error('fee setgroup function error');
+		error('setgroup function error');
 	}
 	return 0;
 }
@@ -404,7 +413,7 @@ int setgroup(
 	} else if ( elemclass == 3 ) {
 		return setvertexgroup(geohandle, groupname, primnum, elemnum, value, mode);
 	} else {
-		error('fee setgroup function error');
+		error('setgroup function error');
 	}
 	return 0;
 }
@@ -530,7 +539,7 @@ int setgroup(
 			setvertexgroup(geohandle, groupname, elemnum, value, mode);
 		}
 	} else {
-		error('fee setgroup function error');
+		error('setgroup function error');
 	}
 	return 1;
 }
@@ -655,7 +664,7 @@ int ingroup(
 	} else if ( elemclass == 3 ) {
 		return invertexgroup(geo, groupname, elemnum0, elemnum);
 	} else {
-		error('fee ingroup func error invalid class 644');
+		error('ingroup func error invalid class 644');
 	}
 	return -1;
 }
@@ -678,7 +687,7 @@ int ingroup(
 	} else if ( elemclass == 3 ) {
 		return invertexgroup(geo, groupname, elemnum);
 	} else {
-		error('fee ingroup func error invalid class 665');
+		error('ingroup func error invalid class 665');
 	}
 	return -1;
 }
@@ -701,7 +710,7 @@ int ingroup(
 	} else if ( elemclass == "vtx" || elemclass == "vertex" || elemclass == "vertices" ) {
 		return ingroup(geo, 3, groupname, elemnum0, elemnum);
 	} else {
-		error('fee ingroup func error invalid class 687');
+		error('ingroup func error invalid class 687');
 	}
 	return -1;
 }
@@ -722,7 +731,7 @@ int ingroup(
 	} else if ( elemclass == "vtx" || elemclass == "vertex" || elemclass == "vertices" ) {
 		return ingroup(geo, 3, groupname, elemnum);
 	} else {
-		error('fee ingroup func error invalid class 706');
+		error('ingroup func error invalid class 706');
 	}
 	return -1;
 }
@@ -741,7 +750,7 @@ int expandgroup(
 	} else if ( elemclass == "pt" || elemclass == "pts" || elemclass == "point" || elemclass == "points" ) {
 		return expandpointgroup(geo, groupname);
 	} else {
-		error('fee expandgroup func error invalid class');
+		error('expandgroup func error invalid class');
 	}
 	return -1;
 }

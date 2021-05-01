@@ -3,7 +3,7 @@
 #define __NEIGHBOURS_VFL__
 
 #if 1
-    #inc//lude <neighbours.vfl>
+    #include <neighbours.vfl>
 #else
     //和原版的区别是，对于unshared edge，会输出-1
     function

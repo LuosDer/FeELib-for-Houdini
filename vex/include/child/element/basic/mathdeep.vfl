@@ -4,7 +4,10 @@
 
 #include <precompile.vfl>
 
-#include <mathdeep.vfl>
+#if 0
+    #include <mathdeep.vfl>
+#else
+#endif
 
 
 
@@ -23,8 +26,8 @@ float N(
     return exp(pow(-(x-mean)/var, 2)/2) / var / sqrt(2*PI);
 }
 
-/*
 
+/*
 function
 int distance(
     int val0, val1;
@@ -39,7 +42,57 @@ float distance(
     return abs(val0 - val1);
 }
 
+
 */
+
+function
+int length(
+    int val0;
+    ) {
+    return abs(val0);
+}
+
+function
+float length(
+    float val0;
+    ) {
+    return abs(val0);
+}
+
+function
+int sizeForSort(
+    int val0;
+    ) {
+    return val0;
+}
+
+function
+float sizeForSort(
+    float val0;
+    ) {
+    return val0;
+}
+
+function
+float sizeForSort(
+    vector2 val0;
+    ) {
+    return length2(val0);
+}
+
+function
+float sizeForSort(
+    vector val0;
+    ) {
+    return length2(val0);
+}
+
+function
+float sizeForSort(
+    vector4 val0;
+    ) {
+    return length2(val0);
+}
 
 #define FUNCdistance(type)\
         function\
@@ -50,6 +103,8 @@ float distance(
         }\
 
 DEFINEFUNCif(FUNCdistance)
+
+
 
 /*
 
@@ -900,32 +955,57 @@ DEFINEFUNCv(FUNCefit011)
 
 
 
+function
+vector2 chramp(
+    string channel;
+    vector2 value;
+    ) {
+    vector2 result;
+    result[0] = chramp(channel, value[0]);
+    result[1] = chramp(channel, value[1]);
+    return result;
+}
 
+function
+vector4 chramp(
+    string channel;
+    vector4 value;
+    ) {
+    vector4 result;
+    result[0] = chramp(channel, value[0]);
+    result[1] = chramp(channel, value[1]);
+    result[2] = chramp(channel, value[2]);
+    result[3] = chramp(channel, value[3]);
+    return result;
+}
+
+/*
 #define FUNCchramp0(type)\
         function\
         type chramp(\
-            string channal;\
+            string channel;\
             type value;\
             ) {\
             type result;\
             for (int i = 0; i < argsize(value); ++i){\
-                result[i] = chramp(channal, value[i]);\
+                result[i] = chramp(channel, value[i]);\
             }\
             return result;\
         }\
 
 DEFINEFUNCv(FUNCchramp0)
+*/
 
 #define FUNCchramp1(type)\
         function\
         type chramp(\
-            string channal;\
+            string channel;\
             type value;\
             float time;\
             ) {\
             type result;\
             for (int i = 0; i < argsize(value); ++i){\
-                result[i] = chramp(channal, value[i], time);\
+                result[i] = chramp(channel, value[i], time);\
             }\
             return result;\
         }\

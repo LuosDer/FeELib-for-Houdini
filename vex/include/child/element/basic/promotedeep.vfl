@@ -222,7 +222,7 @@ int vertexhedge(
     int primnum;
     int vtxpnum;
     ) {
-    return vertexhedge(geo, vertexindex(geo, primnum, vtxpnum));
+    return vertexindex(geo, primnum, vtxpnum);
 }
 
 

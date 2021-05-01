@@ -487,3 +487,84 @@ def extract_LockedNull(node, subPath = 'extractLockedGeo', savePath_rel_to_HIP =
             foreverychildren(child)
 
 
+
+def removeEmbeded(netCategories):
+    dictNodeTypes = netCategories.nodeTypes()
+    for nodeTypeDictsKey in dictNodeTypes:
+        nodeType = dictNodeTypes[nodeTypeDictsKey]
+        defi = nodeType.definition()
+        if not defi:
+            continue
+        if defi.libraryFilePath() == 'Embedded':
+            defi.destroy()
+
+
+def hasEmbeded(netCategories):
+    dictNodeTypes = netCategories.nodeTypes()
+    for nodeTypeDictsKey in dictNodeTypes:
+        secNodeType = dictNodeTypes[nodeTypeDictsKey]
+        defi = secNodeType.definition()
+        if not defi:
+            continue
+        if defi.libraryFilePath() == 'Embedded':
+            return True
+    return False
+
+
+"""
+def TABSubmenuPathfromDefi(defi):
+    sections = defi.sections()
+    try:
+        sectionToolShelf = sections[r'Tools.shelf']
+    except:
+        print('not found section: Tools Shelf:', end = ' ')
+        print(nodeType)
+    contents = sectionToolShelf.contents()#hou.compressionType.NoCompression
+    #print(contents)
+
+    '''
+    try:
+        import xml.etree.cElementTree as ET
+    except ImportError:
+        import xml.etree.ElementTree as ET
+    '''
+    import xml.etree.ElementTree as ET
+
+    tree = ET.fromstring(str(contents))
+    toolSubmenu = tree.find('tool').find('toolSubmenu').text
+"""
+
+
+def TABSubmenuPathfromContents(contents):
+    '''
+    try:
+        import xml.etree.cElementTree as ET
+    except ImportError:
+        import xml.etree.ElementTree as ET
+    '''
+    import xml.etree.ElementTree as ET
+
+    tree = ET.fromstring(str(contents))
+    toolSubmenu = tree.find('tool').find('toolSubmenu').text
+
+def TABSubmenuPathfromSectionToolShelf(sectionToolShelf):
+    contents = sectionToolShelf.contents()#hou.compressionType.NoCompression
+    return TABSubmenuPathfromContents(contents)
+
+
+def TABSubmenuPathfromSections(sections):
+    try:
+        sectionToolShelf = sections[r'Tools.shelf']
+        return TABSubmenuPathfromSectionToolShelf(sectionToolShelf)
+    except:
+        print('not found section: Tools Shelf:', end = ' ')
+        print(nodeType)
+        return None
+    
+
+
+
+def TABSubmenuPathfromDefi(defi):
+    sections = defi.sections()
+    return TABSubmenuPathfromSections(sections)
+

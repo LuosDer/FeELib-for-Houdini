@@ -4,7 +4,23 @@
 
 #include <precompile.vfl>
 
-#include <vector.vfl>
+#if 1
+    #include <vector.vfl>
+#else
+    function
+    float normalize(
+        float value;
+        ) {
+        return 1;
+    }
+
+    function
+    int normalize(
+        int value;
+        ) {
+        return 1;
+    }
+#endif
 
 
 
@@ -129,7 +145,22 @@ int anglethreshold(
 
 
 
+function
+float normalize(
+    float value;
+    ) {
+    return 1;
+}
 
+function
+int normalize(
+    int value;
+    ) {
+    return 1;
+}
+
+
+/*
 #define FUNCnormalize01(type)\
         function\
         type normalize(\
@@ -139,7 +170,7 @@ int anglethreshold(
         }\
 
 DEFINEFUNCif(FUNCnormalize01)
-
+*/
 
 #define FUNCnormalize10(type)\
         function\
