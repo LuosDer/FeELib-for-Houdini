@@ -34,9 +34,7 @@ def strisVertex(argString):
         return False
 
 
-
-
-def buildAttribsMenu(node, input_num=0, attribClass='point', attribType='all'):
+def buildAttribsMenu_sub(node, input_num=0, attribClass='point', attribType='all'):
     try:
         input = node.inputs()[input_num]
         geo = input.geometry()
@@ -71,11 +69,19 @@ def buildMultiClassAttribsMenu(node, input_num=0, attribClasses=['point'], attri
     menu = []
     for attribClass in attribClasses:
         try:
-            menu += buildAttribsMenu(node, input_num, attribClass, attribType)
+            menu += buildAttribsMenu_sub(node, input_num, attribClass, attribType)
         except:
             continue
     
     return menu
+
+
+def buildAttribsMenu(node, input_num=0, attribClass='point', attribType='all'):
+    if isinstance(attribClass, list) or isinstance(attribClass, tuple):
+        return buildMultiClassAttribsMenu(node, input_num, attribClass, attribType)
+    else:
+        return buildAttribsMenu_sub(node, input_num, attribClass, attribType)
+
 
 
 def buildAllClassAttribsMenu(node, input_num=0, attribType='all'):

@@ -1128,7 +1128,7 @@ int inOrthoConeAngle(
 
 
 function
-float[] create_pdf_fee(
+float[] create_pdf_custom(
     float values[];
     ) {
     float min = min(values);
@@ -1155,18 +1155,18 @@ int sample_pdf(
 }
 
 function
-float random_type(
+float random_uniform(
     float seed;
     int offset;
     int core;
     ) {
-    if (core == -1) {
+    if ( core == -1 ) {
         return offset;
-    } else if (core == 0) {
+    } else if ( core == 0 ) {
         return random(seed, offset);
-    } else if (core == 1) {
+    } else if ( core == 1 ) {
         return random_brj(seed, offset);
-    } else if (core == 2) {
+    } else if ( core == 2 ) {
         return random_sobol(seed, offset);
     } else {
         return -1;

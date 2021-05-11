@@ -1,14 +1,22 @@
 {
+    "load_package_once": true,
     "path": [
         {        
             "value" : "$LibPath/FeELib-for-Houdini",
-            "method" : "append",
+            "method" : "prepend",
         },
     ],
-    "load_package_once": true,
     "env": [
         {
-            "FeELib": "$LibPath/FeELib-for-Houdini",
+            "FeELib": "$LibPath/FeELib-for-Houdini"
+        },
+        {
+            "HOUDINI_SCRIPT_PATH": {
+                "method": "prepend",
+                "value": [
+                    "$FeELib/scripts",
+                ]
+            }
         },
         {
             "HOUDINI_OTLSCAN_PATH": {
@@ -22,6 +30,7 @@
                     "$FeELib/otls/Convert",
                     "$FeELib/otls/Data",
                     "$FeELib/otls/Deform",
+                    "$FeELib/otls/Deprecated",
                     "$FeELib/otls/Edit",
                     "$FeELib/otls/Filter",
                     "$FeELib/otls/Fluid",

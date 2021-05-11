@@ -75,7 +75,14 @@ def copyParms_NodetoNode(sourceNode, targetNode):
             #print(targetNode)
             print(targetNode.parm(parm.name()))
             #print(parm)
-    
+
+def copyRelRef_NodetoNode(sourceNode, targetNode):
+    for sourceParm in sourceNode.parms():
+        parmName = sourceParm.name()
+        targetParm = targetNode.parm(parmName)
+        if targetParm is not None:
+            targetParm.deleteAllKeyframes()
+            targetParm.set(sourceParm)
 
 def bake_optypeExp_to_str(targetNode, sourceNode, optype_exp, optype_exp1):
     relativePathTo = targetNode.relativePathTo(sourceNode)
@@ -234,10 +241,14 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
                 if null is None:
                     if 1:
-                        null = subnetIndirectInput.createOutputNode('null', exact_type_name=True)
-                    else:
                         null = parent.createNode('null', exact_type_name=True)
                         null.setInput(0, subnetIndirectInput, output_index=0)
+                    else:
+                        try:
+                            null = subnetIndirectInput.createOutputNode('null', exact_type_name=True)
+                        except:
+                            print(subnetIndirectInput)
+                            raise(hou.Error('241'))
                     # null.setPosition(subnetIndirectInput.position().__add__(shiftVector2))
                     null.setPosition(subnetIndirectInput.position() + shiftVector2)
                     nulls.append(null)
@@ -428,6 +439,17 @@ def convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = Tr
     for child in node.children():
         convertSubnet(child, ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
 
+
+
+def unlock_All_HDA(node, detectName = True, detectPath = False):
+    node.allowEditingOfContents()
+    for child in node.children():
+        childNodeType = child.type()
+        if isFeENode(childNodeType, detectName, detectPath):
+            # child.allowEditingOfContents()
+            unlock_All_FeENode(child, detectName, detectPath)
+        elif isUnlockedHDA(child):
+            unlock_All_FeENode(child, detectName, detectPath)
 
 
 def unlock_All_FeENode(node, detectName = True, detectPath = False):

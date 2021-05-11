@@ -9,6 +9,7 @@
     <memberTool name="convertHDA_to_Subnet_publish"/>
     <memberTool name="convertFeE HDA_to_Subnet_publish"/>
     <memberTool name="unlock_FeE_HDA_publish"/>
+    <memberTool name="unlock_HDA_publish"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -43,13 +44,27 @@ for node in selectedNodes:
     <script scriptType="python"><![CDATA[
 import fee_HDA
 
-from importlib import reload
-reload(fee_HDA)
+# from importlib import reload
+# reload(fee_HDA)
 
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
     fee_HDA.unlock_All_FeENode(node, detectName = True, detectPath = False)
 
+
+]]></script>
+  </tool>
+
+  <tool name="unlock_HDA_publish" label="Unlock HDA" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import fee_HDA
+
+# from importlib import reload
+# reload(fee_HDA)
+
+selectedNodes = hou.selectedNodes()
+for node in selectedNodes:
+    fee_HDA.unlock_All_HDA(node, detectName = True, detectPath = False)
 
 ]]></script>
   </tool>
