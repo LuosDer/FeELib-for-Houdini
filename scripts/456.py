@@ -2,6 +2,7 @@
 import hou
 
 
+hou.hscript('ophide Sop packintrinsics_fee')
 hou.hscript('ophide Sop groupbybearing_fee')
 hou.hscript('ophide Sop matchsize_fee')
 hou.hscript('ophide Sop uniquenames_fee')
@@ -14,6 +15,9 @@ hou.hscript('ophide Sop polyframe_cubic_fee::1.0')
 hou.hscript('ophide Sop meshlayout_fee')
 hou.hscript('ophide Sop meshlayout_multilayer_fee')
 hou.hscript('ophide Sop copytopoints_fee')
+
+hou.hscript('ophide Sop uniformnormaldir_fee::1.0')
+hou.hscript('ophide Sop uniformnormaldir_fee::2.0')
 
 hou.hscript('ophide Sop spreadout_fee')
 hou.hscript('ophide Sop spreadout_fee::0.9')
