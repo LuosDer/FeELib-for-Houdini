@@ -16,6 +16,7 @@ hou.hscript('ophide Sop meshlayout_fee')
 hou.hscript('ophide Sop meshlayout_multilayer_fee')
 hou.hscript('ophide Sop copytopoints_fee')
 
+hou.hscript('ophide Sop separatepoly2d_fee')
 hou.hscript('ophide Sop uniformnormaldir_fee::1.0')
 hou.hscript('ophide Sop uniformnormaldir_fee::2.0')
 
@@ -23,7 +24,13 @@ hou.hscript('ophide Sop spreadout_fee')
 hou.hscript('ophide Sop spreadout_fee::0.9')
 hou.hscript('ophide Sop spreadout_fee::1.0')
 hou.hscript('ophide Sop spreadout_multiinput_fee')
+hou.hscript('ophide Sop is2dswitch_fee')
 
+hou.hscript('ophide Sop correctMeshWinding_volume_fee')
+hou.hscript('ophide Sop matchbbox_fee')
+hou.hscript('ophide Sop correctgeowinding_wn_fee')
+hou.hscript('ophide Sop normalizedirpoly_fee::1.0')
+hou.hscript('ophide Sop normalizedirpoly_fee::2.0')
 
 
 

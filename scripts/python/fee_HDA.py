@@ -23,8 +23,8 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
             libraryFilePath = defi.libraryFilePath()
         pathFeELib = hou.getenv('FeELib')
         pathFeEProject = hou.getenv('FeEProjectHoudini')
-        pathFeEwork = hou.getenv('FeEwork')
-        if not (pathFeELib in libraryFilePath or pathFeEProject in libraryFilePath or pathFeEwork in libraryFilePath):
+        pathFeEworkHoudini = hou.getenv('FeEworkHoudini')
+        if not (pathFeELib in libraryFilePath or pathFeEProject in libraryFilePath or pathFeEworkHoudini in libraryFilePath):
             return False
     
     return True

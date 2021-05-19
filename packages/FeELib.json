@@ -102,6 +102,7 @@
                     "$FeELib/otls/Filter/Ref",
                     "$FeELib/otls/Filter/Rewrite",
                     "$FeELib/otls/Filter/Smooth",
+                    "$FeELib/otls/Filter/Space",
                     "$FeELib/otls/Filter/Struct",
                     "$FeELib/otls/Filter/Topo",
                     "$FeELib/otls/Filter/Topo/Artificial Line",

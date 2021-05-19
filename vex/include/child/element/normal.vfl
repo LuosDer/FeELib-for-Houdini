@@ -13,10 +13,9 @@
         const int geo;
         const int primnum;
         ) {
-        int primpoints[] = primpoints(geo, primnum);
-        vector pos0 = point(geo, 'P', primpoints[0]);
-        vector pos1 = point(geo, 'P', primpoints[1]);
-        vector pos2 = point(geo, 'P', primpoints[2]);
+        vector pos0 = point(geo, 'P', primpoint(geo, primnum, 0));
+        vector pos1 = point(geo, 'P', primpoint(geo, primnum, 1));
+        vector pos2 = point(geo, 'P', primpoint(geo, primnum, 2));
         return normalize(cross(pos1 - pos2, pos0 - pos1));
     }
 #endif
@@ -61,12 +60,9 @@ vector primN_first(
     const int geo;
     const int primnum;
     ) {
-    int primvertex0 = primvertex(geo, primnum, 0);
-    int primvertex1 = primvertex(geo, primnum, 1);
-    int primvertex2 = primvertex(geo, primnum, 2);
-    vector pos0 = point(geo, 'P', vertexpoint(geo, primvertex0));
-    vector pos1 = point(geo, 'P', vertexpoint(geo, primvertex1));
-    vector pos2 = point(geo, 'P', vertexpoint(geo, primvertex2));
+    vector pos0 = point(geo, 'P', primpoint(geo, primnum, 0));
+    vector pos1 = point(geo, 'P', primpoint(geo, primnum, 1));
+    vector pos2 = point(geo, 'P', primpoint(geo, primnum, 2));
     return normalize(cross(pos1 - pos2, pos0 - pos1));
 }
 
@@ -76,12 +72,9 @@ vector primN_last(
     const int primnum;
     ) {
     int primvertexcount = primvertexcount(geo, primnum);
-    int primvertex0 = primvertex(geo, primnum, primvertexcount-3);
-    int primvertex1 = primvertex(geo, primnum, primvertexcount-2);
-    int primvertex2 = primvertex(geo, primnum, primvertexcount-1);
-    vector pos0 = point(geo, 'P', vertexpoint(geo, primvertex0));
-    vector pos1 = point(geo, 'P', vertexpoint(geo, primvertex1));
-    vector pos2 = point(geo, 'P', vertexpoint(geo, primvertex2));
+    vector pos0 = point(geo, 'P', primpoint(geo, primnum, primvertexcount-3));
+    vector pos1 = point(geo, 'P', primpoint(geo, primnum, primvertexcount-2));
+    vector pos2 = point(geo, 'P', primpoint(geo, primnum, primvertexcount-1));
     return normalize(cross(pos1 - pos2, pos0 - pos1));
 }
 
