@@ -33,6 +33,7 @@ hou.hscript('ophide Sop normalizedirpoly_fee::1.0')
 hou.hscript('ophide Sop normalizedirpoly_fee::2.0')
 
 
+hou.hscript('ophide Sop animationloop_fee')
 
 
 
