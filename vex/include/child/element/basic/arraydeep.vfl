@@ -406,7 +406,20 @@ vector sort(
     return result;
 }
 
-
+/*
+function
+vector[] sort(
+    const vector arr[];
+    ) {
+    int len = len(arr);
+    float length2[];
+    resize(length2, len);
+    for (int i = 0; i < len; ++i) {
+        length2[i] = length2(arr[i]);
+    }
+    return reorder(arr, argsort(length2));
+}
+*/
 
 #define FUNCsortarr(type)\
         function\
@@ -829,12 +842,15 @@ void uniquepush (
 
 #define FUNCuniquepush0(type)\
         function\
-        void uniquepush(\
+        int uniquepush(\
             type arr[];\
             const type arg;\
             ) {\
-            if ( int(find(arr, arg)) < 0 ) {\
+            if ( find(arr, arg) < 0 ) {\
                 push(arr, arg);\
+                return 1;\
+            } else {\
+                return 0;\
             }\
         }\
 
@@ -846,9 +862,14 @@ DEFINEFUNCall(FUNCuniquepush0)
             type arr[];\
             const type arg[];\
             ) {\
+            int len = len(arr);\
+            resize(arr, len + len(arg));\
             foreach (type item; arg) {\
-                uniquepush(arr, item);\
+                if ( find(arr, item) < 0 ) {\
+                    arr[len++] = item;\
+                }\
             }\
+            resize(arr, len);\
         }\
 
 DEFINEFUNCall(FUNCuniquepush1)

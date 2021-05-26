@@ -85,18 +85,12 @@ def buildAttribsMenu(node, input_num=0, attribClass='point', attribType='all'):
 
 
 def buildAllClassAttribsMenu(node, input_num=0, attribType='all'):
-    menu = []
-    for attribClass in ['detail', 'prim', 'point', 'vertex']:
-        try:
-            menu += buildAttribsMenu(node, input_num, attribClass, attribType)
-        except:
-            continue
-    
-    return menu
+    return buildMultiClassAttribsMenu(node, input_num, ['detail', 'prim', 'point', 'vertex'], attribType)
 
 
 
-def buildGroupsMenu(node, input_num=0, groupClass='point'):
+
+def buildGroupsMenu_sub(node, input_num=0, groupClass='point'):
     try:
         input = node.inputs()[input_num]
         geo = input.geometry()
@@ -124,19 +118,22 @@ def buildMultiClassGroupsMenu(node, input_num=0, groupClasses=['point']):
     menu = []
     for groupClass in groupClasses:
         try:
-            menu += buildGroupsMenu(node, input_num, groupClass)
+            menu += buildGroupsMenu_sub(node, input_num, groupClass)
         except:
             continue
     
     return menu
+
+
+
+def buildGroupsMenu(node, input_num=0, groupClass='point'):
+    if isinstance(groupClass, list) or isinstance(groupClass, tuple):
+        return buildMultiClassAttribsMenu(node, input_num, groupClass)
+    else:
+        return buildGroupsMenu_sub(node, input_num, groupClass)
+
 
 
 def buildAllClassGroupsMenu(node, input_num=0):
-    menu = []
-    for groupClass in ['detail', 'prim', 'point', 'edge', 'vertex']:
-        try:
-            menu += buildGroupsMenu(node, input_num, groupClass)
-        except:
-            continue
-    
-    return menu
+    return buildMultiClassGroupsMenu(node, input_num, ['detail', 'prim', 'point', 'edge', 'vertex'])
+

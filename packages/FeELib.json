@@ -147,6 +147,7 @@
                     "$FeELib/otls/Geo/Building",
                     "$FeELib/otls/Geo/Building/Stone",
                     "$FeELib/otls/Geo/Building/Wood",
+                    "$FeELib/otls/Geo/Building/Decoration",
                     "$FeELib/otls/Geo/City/Block",
                     "$FeELib/otls/Geo/Curve",
                     "$FeELib/otls/Geo/Fractal",
