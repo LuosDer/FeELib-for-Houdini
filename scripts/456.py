@@ -28,9 +28,9 @@ hou.hscript('ophide Sop is2dswitch_fee')
 
 
 
-hou.hscript('ophide Sop correctMeshWinding_volume_fee')
 hou.hscript('ophide Sop matchbbox_fee')
 hou.hscript('ophide Sop correctgeowinding_wn_fee')
+hou.hscript('ophide Sop correctgeowinding_volume_fee')
 hou.hscript('ophide Sop normalizedirpoly_fee::1.0')
 hou.hscript('ophide Sop normalizedirpoly_fee::2.0')
 hou.hscript('ophide Sop animationloop_fee')
@@ -43,7 +43,24 @@ hou.hscript('ophide Sop matchtransform_bound_fee')
 hou.hscript('ophide Sop polycenterextrude_fee')
 hou.hscript('ophide Sop groupbydir_fee')
 hou.hscript('ophide Sop groupbydir_fast_fee')
+hou.hscript('ophide Sop groupedgebydir_fee')
+hou.hscript('ophide Sop cameraproject_fee')
+hou.hscript('ophide Sop frontfaceborder_fee')
+hou.hscript('ophide Sop attribdirnoise_fee')
+hou.hscript('ophide Sop extractintrinsic_fee')
+hou.hscript('ophide Sop resttransform_fee')
+hou.hscript('ophide Sop attribaccumulate_fee')
 
+
+
+
+
+
+
+hou.hscript('ophide Sop extractallpiecestransform_fee')
+hou.hscript('ophide Sop extractsimilarpiecestransform_fee')
+hou.hscript('ophide Sop uvtile_fee::0.1')
+hou.hscript('ophide Sop uvtile_fee::1.0')
 
 
 
