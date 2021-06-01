@@ -50,6 +50,7 @@ hou.hscript('ophide Sop attribdirnoise_fee')
 hou.hscript('ophide Sop extractintrinsic_fee')
 hou.hscript('ophide Sop resttransform_fee')
 hou.hscript('ophide Sop attribaccumulate_fee')
+hou.hscript('ophide Sop intrinsicpromote_fee')
 
 
 
