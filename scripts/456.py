@@ -9,7 +9,7 @@ hou.hscript('ophide Sop uniquenames_fee')
 hou.hscript('ophide Sop groupbyname_fee')
 hou.hscript('ophide Sop sortnamebyattrib_fee')
 hou.hscript('ophide Sop keepname_betweenframe_fee')
-hou.hscript('ophide Sop numpieces_fee')
+# hou.hscript('ophide Sop numpieces_fee')
 hou.hscript('ophide Sop polyframe_cubic_fee')
 hou.hscript('ophide Sop polyframe_cubic_fee::1.0')
 hou.hscript('ophide Sop meshlayout_fee')
@@ -51,6 +51,7 @@ hou.hscript('ophide Sop extractintrinsic_fee')
 hou.hscript('ophide Sop resttransform_fee')
 hou.hscript('ophide Sop attribaccumulate_fee')
 hou.hscript('ophide Sop intrinsicpromote_fee')
+hou.hscript('ophide Sop matchtransform_bb_fee')
 
 
 

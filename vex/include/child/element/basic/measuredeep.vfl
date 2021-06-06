@@ -2,7 +2,12 @@
 #ifndef __MEASUREDEEP_VFL__
 #define __MEASUREDEEP_VFL__
 
-#include <measuredeep.vfl>
+#if 0
+    #include <measuredeep.vfl>
+#else
+
+#endif
+
 
 
 
@@ -204,6 +209,93 @@ float[] sidelength(
     return sidelength;
 }
 
+
+
+function
+float planepointdistance(
+    vector plP, plN;
+    vector ptP;
+    ) {
+    vector intersect_pos;
+    return planepointdistance(plP, plN, ptP, intersect_pos);
+}
+
+function
+float planepointdistance(
+    int geo, primnum;
+    vector ptP;
+    ) {
+    vector intersect_pos;
+    vector
+    plP = prim(geo, "P", primnum),
+    //plP = primP_avg(geo, primnum),
+    plN = primN_last(geo, primnum);
+    
+    return planepointdistance(plP, plN, ptP, intersect_pos);
+}
+
+function
+float planepointdistance(
+    int geo, primnum;
+    vector ptP;
+    export vector intersect_pos;
+    ) {
+    vector
+    plP = prim(geo, "P", primnum),
+    //plP = primP_avg(geo, primnum),
+    plN = primN_last(geo, primnum);
+
+    return planepointdistance(plP, plN, ptP, intersect_pos);
+}
+
+function
+float planePointDirectedDistance(
+    int geo, primnum;
+    vector ptP;
+    export vector intersect_pos;
+    ) {
+    vector intersect_pos;
+    vector
+    plP = prim(geo, "P", primnum),
+    //plP = primP_avg(geo, primnum),
+    plN = primN_last(geo, primnum);
+    
+    return planepointdistance(plP, plN, ptP, intersect_pos) * (dot(-plN, ptP - plP) < 0 ? -1 : 1);
+}
+
+function
+float planePointDirectedDistance(
+    int geo, primnum;
+    vector ptP;
+    export vector intersect_pos;
+    ) {
+    vector
+    plP = prim(geo, "P", primnum),
+    //plP = primP_avg(geo, primnum),
+    plN = primN_last(geo, primnum);
+    
+    return planepointdistance(plP, plN, ptP, intersect_pos) * (dot(-plN, ptP - plP) < 0 ? -1 : 1);
+}
+
+
+
+function
+float planePointDirectedDistance(
+    vector plP, plN;
+    vector ptP;
+    ) {
+    vector intersect_pos;
+    return planepointdistance(plP, plN, ptP, intersect_pos) * (dot(-plN, ptP - plP) < 0 ? -1 : 1);
+}
+
+function
+float planePointDirectedDistance(
+    vector plP, plN;
+    vector ptP;
+    export vector intersect_pos;
+    ) {
+    return planepointdistance(plP, plN, ptP, intersect_pos) * (dot(-plN, ptP - plP) < 0 ? -1 : 1);
+}
 
 
 

@@ -2,9 +2,11 @@
 #ifndef __MEASURE_VFL__
 #define __MEASURE_VFL__
 
-#include <measure.vfl>
+#if 0
+    #include <measure.vfl>
+#else
 
-
+#endif
 
 
 
@@ -15,92 +17,10 @@
 #include <mathdeep.vfl>
 #include <measuredeep.vfl>
 #include <normal.vfl>
-#include <vector.vfl>
+//#include <vector.vfl>
 
 
 
-
-
-function
-float planepointdistance(
-    vector plP, plN;
-    vector ptP;
-    ) {
-    return planepointdistance(plP, plN, ptP, {0,0,0});
-}
-
-function
-float planepointdistance(
-    int geo, primnum;
-    vector ptP;
-    ) {
-    vector
-    plP = prim(geo, "P", primnum),
-    //plP = primP_avg(geo, primnum),
-    plN = primN_last(geo, primnum);
-    
-    return planepointdistance(plP, plN, ptP);
-}
-
-function
-float planepointdistance(
-    int geo, primnum;
-    vector ptP;
-    export vector intersect_pos;
-    ) {
-    vector
-    plP = prim(geo, "P", primnum),
-    //plP = primP_avg(geo, primnum),
-    plN = primN_last(geo, primnum);
-
-    return planepointdistance(plP, plN, ptP, intersect_pos);
-}
-
-function
-float planepointdirecteddistance(
-    int geo, primnum;
-    vector ptP;
-    ) {
-    vector
-    plP = prim(geo, "P", primnum),
-    //plP = primP_avg(geo, primnum),
-    plN = primN_last(geo, primnum);
-    
-    return planepointdistance(plP, plN, ptP) * isvertical(-plN, ptP - plP);
-}
-
-function
-float planepointdirecteddistance(
-    int geo, primnum;
-    vector ptP;
-    export vector intersect_pos;
-    ) {
-    vector
-    plP = prim(geo, "P", primnum),
-    //plP = primP_avg(geo, primnum),
-    plN = primN_last(geo, primnum);
-    
-    return planepointdistance(plP, plN, ptP, intersect_pos) * isvertical(-plN, ptP - plP);
-}
-
-
-
-function
-float planepointdirecteddistance(
-    vector plP, plN;
-    vector ptP;
-    ) {
-    return planepointdistance(plP, plN, ptP) * isvertical(-plN, ptP - plP);
-}
-
-function
-float planepointdirecteddistance(
-    vector plP, plN;
-    vector ptP;
-    export vector intersect_pos;
-    ) {
-    return planepointdistance(plP, plN, ptP, intersect_pos) * isvertical(-plN, ptP - plP);
-}
 
 
 
