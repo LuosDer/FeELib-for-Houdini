@@ -10,6 +10,7 @@
     <memberTool name="convertFeE HDA_to_Subnet_publish"/>
     <memberTool name="unlock_FeE_HDA_publish"/>
     <memberTool name="unlock_HDA_publish"/>
+    <memberTool name="HideFeENode"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -65,6 +66,20 @@ import fee_HDA
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
     fee_HDA.unlock_All_HDA(node, detectName = True, detectPath = False)
+
+]]></script>
+  </tool>
+
+  <tool name="HideFeENode" label="Hide FeE Node" icon="SOP_sort">
+    <script scriptType="python"><![CDATA[
+import os
+
+import hou
+import fee_HDA
+# from importlib import reload
+# reload(fee_HDA)
+
+fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True)
 
 ]]></script>
   </tool>

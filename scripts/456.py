@@ -1,76 +1,88 @@
 
 import hou
-
-
-hou.hscript('ophide Sop packintrinsics_fee')
-hou.hscript('ophide Sop groupbybearing_fee')
-hou.hscript('ophide Sop matchsize_fee')
-hou.hscript('ophide Sop uniquenames_fee')
-hou.hscript('ophide Sop groupbyname_fee')
-hou.hscript('ophide Sop sortnamebyattrib_fee')
-hou.hscript('ophide Sop keepname_betweenframe_fee')
-# hou.hscript('ophide Sop numpieces_fee')
-hou.hscript('ophide Sop polyframe_cubic_fee')
-hou.hscript('ophide Sop polyframe_cubic_fee::1.0')
-hou.hscript('ophide Sop meshlayout_fee')
-hou.hscript('ophide Sop meshlayout_multilayer_fee')
-hou.hscript('ophide Sop copytopoints_fee')
-
-hou.hscript('ophide Sop separatepoly2d_fee')
-hou.hscript('ophide Sop uniformnormaldir_fee::1.0')
-hou.hscript('ophide Sop uniformnormaldir_fee::2.0')
-
-hou.hscript('ophide Sop spreadout_fee')
-hou.hscript('ophide Sop spreadout_fee::0.9')
-hou.hscript('ophide Sop spreadout_fee::1.0')
-hou.hscript('ophide Sop spreadout_multiinput_fee')
-hou.hscript('ophide Sop is2dswitch_fee')
-
-
-
-hou.hscript('ophide Sop matchbbox_fee')
-hou.hscript('ophide Sop correctgeowinding_wn_fee')
-hou.hscript('ophide Sop correctgeowinding_volume_fee')
-hou.hscript('ophide Sop normalizedirpoly_fee::1.0')
-hou.hscript('ophide Sop normalizedirpoly_fee::2.0')
-hou.hscript('ophide Sop animationloop_fee')
-hou.hscript('ophide Sop restdir2d_fee')
-hou.hscript('ophide Sop restdir_fee')
-hou.hscript('ophide Sop matchdir2d_fee')
-hou.hscript('ophide Sop normalizedir2d_fee')
-hou.hscript('ophide Sop matchdir_fee')
-hou.hscript('ophide Sop matchtransform_bound_fee')
-hou.hscript('ophide Sop polycenterextrude_fee')
-hou.hscript('ophide Sop groupbydir_fee')
-hou.hscript('ophide Sop groupbydir_fast_fee')
-hou.hscript('ophide Sop groupedgebydir_fee')
-hou.hscript('ophide Sop cameraproject_fee')
-hou.hscript('ophide Sop frontfaceborder_fee')
-hou.hscript('ophide Sop attribdirnoise_fee')
-hou.hscript('ophide Sop extractintrinsic_fee')
-hou.hscript('ophide Sop resttransform_fee')
-hou.hscript('ophide Sop attribaccumulate_fee')
-hou.hscript('ophide Sop intrinsicpromote_fee')
-hou.hscript('ophide Sop matchtransform_bb_fee')
-
-
-
-
-
-
-
-hou.hscript('ophide Sop extractallpiecestransform_fee')
-hou.hscript('ophide Sop extractsimilarpiecestransform_fee')
-hou.hscript('ophide Sop uvtile_fee::0.1')
-hou.hscript('ophide Sop uvtile_fee::1.0')
-
-
-
-
-
-
-import hou
 import os
+import fee_HDA
+
+fee_HDA.checkHideFeENode(keepHide = True, detectName = False, detectPath = True)
+
+
+
+
+
+
+
+
+
+sopNodeTypeNameTuple = (
+'packintrinsics_fee',
+'groupbybearing_fee',
+'matchsize_fee',
+'uniquenames_fee',
+'groupbyname_fee',
+'sortnamebyattrib_fee',
+'keepname_betweenframe_fee',
+'numpieces_fee',
+'polyframe_cubic_fee',
+'polyframe_cubic_fee::1.0',
+'meshlayout_fee',
+'meshlayout_multilayer_fee',
+'copytopoints_fee',
+
+'separatepoly2d_fee',
+'uniformnormaldir_fee::1.0',
+'uniformnormaldir_fee::2.0',
+
+'spreadout_fee',
+'spreadout_fee::0.9',
+'spreadout_fee::1.0',
+'spreadout_multiinput_fee',
+'is2dswitch_fee',
+
+'matchbbox_fee',
+'correctgeowinding_wn_fee',
+'correctgeowinding_volume_fee',
+'normalizedirpoly_fee::1.0',
+'normalizedirpoly_fee::2.0',
+'animationloop_fee',
+'restdir2d_fee',
+'restdir_fee',
+'matchdir2d_fee',
+'normalizedir2d_fee',
+'matchdir_fee',
+'matchtransform_bound_fee',
+'polycenterextrude_fee',
+'groupbydir_fee',
+'groupbydir_fast_fee',
+'groupedgebydir_fee',
+'cameraproject_fee',
+'frontfaceborder_fee',
+'attribdirnoise_fee',
+'extractintrinsic_fee',
+'resttransform_fee',
+'attribaccumulate_fee',
+'intrinsicpromote_fee',
+'matchtransform_bb_fee',
+'groupfromenum_fee',
+'matchdirorient_fee::1.0',
+
+'extractallpiecestransform_fee',
+'extractsimilarpiecestransform_fee',
+'uvtile_fee::0.1',
+'uvtile_fee::1.0',
+
+)
+
+for sopNodeTypeName in sopNodeTypeNameTuple:
+    nodetype = hou.nodeType(hou.sopNodeTypeCategory(), sopNodeTypeName)
+    if nodetype is not None:
+        nodetype.setHidden(True)
+
+
+
+
+
+
+
 
 __FeE_FeELib_PATH = hou.getenv('FeELib')#### 复制脚本需要修改这个
 # print(__FeE_FeELib_PATH)

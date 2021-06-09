@@ -32,6 +32,7 @@
                     "$FeELib/otls/Deform",
                     "$FeELib/otls/Deprecated",
                     "$FeELib/otls/Edit",
+                    "$FeELib/otls/Export",
                     "$FeELib/otls/Filter",
                     "$FeELib/otls/Fluid",
                     "$FeELib/otls/Fracture",
