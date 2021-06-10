@@ -27,6 +27,7 @@ sopNodeTypeNameTuple = (
 'meshlayout_fee',
 'meshlayout_multilayer_fee',
 'copytopoints_fee',
+'matchpolywinding_fast_fee::0.1',
 
 'separatepoly2d_fee',
 'uniformnormaldir_fee::1.0',

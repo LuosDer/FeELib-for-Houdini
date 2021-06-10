@@ -11,6 +11,7 @@
     <memberTool name="unlock_FeE_HDA_publish"/>
     <memberTool name="unlock_HDA_publish"/>
     <memberTool name="HideFeENode"/>
+    <memberTool name="convert_usedDefi_to_BalckBox"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -81,6 +82,93 @@ import fee_HDA
 
 fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True)
 
+]]></script>
+  </tool>
+
+  <tool name="convert_usedDefi_to_BalckBox" label="Convert Used Definition to Balck Box" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import hou
+import os
+
+import fee_HDA
+
+from importlib import reload
+reload(fee_HDA)
+
+'''
+theTool = hou.shelves.runningTool()
+if theTool.icon().count("hicon:/SVGIcons.index?NODEFLAGS_hardlock.svg")==0:
+    theTool.setIcon("hicon:/SVGIcons.index?NODEFLAGS_hardlock.svg")
+    
+if theTool.label().count("Create BlackBoxAsset")==0:
+    theTool.setLabel("Create BlackBoxAsset")
+    
+if theTool.name().count("Create_BlackBox")==0:
+    theTool.setName("Create_BlackBox")
+'''
+
+ignoreNodeTypeNames = (
+'csr_rbd_bullet_solver.hda',
+'csr_PyroSolverSop.hda',
+'csr_materialbuilder.hda',
+'csr_dir_displacement_shader.hda',
+
+)
+
+# hou.ui.displayMessage('å»ºè®®åå¦å­ä¸çHip')
+
+bottons = ("ç¡®è®¤", "åæ¶")
+Input = hou.ui.readInput("è¾å¥ä½ otlsåºçè·¯å¾",bottons,close_choice=1)
+
+if Input[0] == 0:
+    mypath = Input[1].replace("\\","/")
+
+    HIPPath = hou.hipFile.path()
+    save_OTLFolderPath = os.path.split(HIPPath)[0] + '/otls'
+    save_OTLPath = save_OTLFolderPath + '/blackBox.hda'
+
+    if not os.path.exists(save_OTLFolderPath):
+        os.makedirs(save_OTLFolderPath)
+
+    BlackBoxMode = hou.ui.displayMessage(text='è¯·éæ©æåé»ççæ¨¡å¼\n(æ´åæ¨¡å¼ä¼å°ææHDAå­æ¾è¿ä¸ä¸ª.hdaæä»¶)',buttons=('ç¬ç«','æ´å'))
+    
+    convertedDefi = []
+    if BlackBoxMode == 0:
+        newHDAFilePaths = []
+    else:
+        newHDAFilePaths = [save_OTLPath]
+
+    selectedNodes = hou.selectedNodes()
+    for selectedNode in selectedNodes:
+        for allSubChild in selectedNode.allSubChildren():
+            if not allSubChild.matchesCurrentDefinition():
+                continue
+            nodeType = allSubChild.type()
+            defi = nodeType.definition()
+            if defi is None:
+                continue
+            if defi in convertedDefi:
+                continue
+            if fee_HDA.isSideFXDefinition(defi):
+                continue
+            nodeTypeName = allSubChild.type().name()
+            if nodeTypeName in ignoreNodeTypeNames:
+                continue
+
+            if BlackBoxMode == 0:
+                defiPath = defi.libraryFilePath()
+                save_OTLPath = save_OTLFolderPath + '/' + os.path.split(defiPath)[1]
+
+            defi.save(save_OTLPath, compile_contents=True, black_box=True, create_backup=False)
+            convertedDefi.append(defi)
+            if BlackBoxMode == 0 and save_OTLPath not in newHDAFilePaths:
+                newHDAFilePaths.aapend(save_OTLPath)
+
+    for newHDAFilePath in newHDAFilePaths:
+        hou.hda.installFile(newHDAFilePath)
+
+    #hou.hda.uninstallFile(defiPath)
+    #convertedDefi = list(set(convertedDefi)) #å»é
 ]]></script>
   </tool>
 </shelfDocument>

@@ -30,6 +30,17 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
     return True
 
 
+def isSideFXNode(nodeType, ignoreDSO = True):
+    defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+    defi = nodeType.definition()
+    if ignoreDSO and defi is None:
+        return False
+    return defi.libraryFilePath().startswith(defaultLibPath)
+
+def isSideFXDefinition(defi):
+    defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+    return defi.libraryFilePath().startswith(defaultLibPath)
+
 
 def copyParms_NodetoNode(sourceNode, targetNode):
     origParmTemplateGroup = sourceNode.parmTemplateGroup()
@@ -144,8 +155,8 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     if nodeType.name() == 'subnet':
         convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
 
-    definition = nodeType.definition()
-    if definition is None:
+    defi = nodeType.definition()
+    if defi is None:
         return
 
     if not ignoreUnlock and not node.matchesCurrentDefinition():
@@ -158,8 +169,9 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             return
 
     if ignore_SideFX_HDA:
-        defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
-        if definition.libraryFilePath().startswith(defaultLibPath):
+        # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+        # if defi.libraryFilePath().startswith(defaultLibPath):
+        if isSideFXDefinition(defi):
             convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
             return
 
@@ -507,7 +519,8 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
     'meshlayout_fee',
     'meshlayout_multilayer_fee',
     'copytopoints_fee',
-
+    'matchpolywinding_fast_fee::0.1',
+    
     'separatepoly2d_fee',
     'uniformnormaldir_fee::1.0',
     'uniformnormaldir_fee::2.0',
