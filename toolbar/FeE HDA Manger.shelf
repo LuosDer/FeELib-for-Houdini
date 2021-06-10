@@ -116,21 +116,34 @@ ignoreNodeTypeNames = (
 )
 
 # hou.ui.displayMessage('å»ºè®®åå¦å­ä¸çHip')
+buttons = ("ç¡®è®¤", "åæ¶")
+checkInput = hou.ui.readInput(r'ç¡®è®¤è¦è¿è¡è½¬black boxå', buttons = buttons, close_choice = 1)
 
-bottons = ("ç¡®è®¤", "åæ¶")
-Input = hou.ui.readInput("è¾å¥ä½ otlsåºçè·¯å¾",bottons,close_choice=1)
-
-if Input[0] == 0:
-    mypath = Input[1].replace("\\","/")
+if checkInput[0] == 0:
+    BlackBoxMode = hou.ui.displayMessage(text='è¯·éæ©æåé»ççæ¨¡å¼\n(æ´åæ¨¡å¼ä¼å°ææHDAå­æ¾è¿ä¸ä¸ª.hdaæä»¶)',buttons=('ç¬ç«','æ´å'))
 
     HIPPath = hou.hipFile.path()
-    save_OTLFolderPath = os.path.split(HIPPath)[0] + '/otls'
+    save_OTLFolderPath = os.path.split(HIPPath)[0] + '/otls/'
+        
+    #print(save_OTLFolderPath)
+    #print(os.listdir(save_OTLFolderPath))
+    for subDir in os.listdir(save_OTLFolderPath):
+        subFullDir = save_OTLFolderPath + subDir
+        if not os.path.isfile(subFullDir):
+            continue
+        #print(os.path.splitext(subDir))
+        if os.path.splitext(subDir)[1].lower() != '.hda':
+            continue
+        try:
+            hou.hda.uninstallFile(subFullDir)
+        except:
+            pass
+        os.remove(subFullDir)
+
     save_OTLPath = save_OTLFolderPath + '/blackBox.hda'
 
     if not os.path.exists(save_OTLFolderPath):
         os.makedirs(save_OTLFolderPath)
-
-    BlackBoxMode = hou.ui.displayMessage(text='è¯·éæ©æåé»ççæ¨¡å¼\n(æ´åæ¨¡å¼ä¼å°ææHDAå­æ¾è¿ä¸ä¸ª.hdaæä»¶)',buttons=('ç¬ç«','æ´å'))
     
     convertedDefi = []
     if BlackBoxMode == 0:
@@ -159,10 +172,16 @@ if Input[0] == 0:
                 defiPath = defi.libraryFilePath()
                 save_OTLPath = save_OTLFolderPath + '/' + os.path.split(defiPath)[1]
 
-            defi.save(save_OTLPath, compile_contents=True, black_box=True, create_backup=False)
+            allSubChild.allowEditingOfContents(propagate=True)
+            if 1:
+                defi.save(save_OTLPath, template_node = allSubChild, compile_contents=True, black_box=True, create_backup=False)
+            else:
+                defi.save(save_OTLPath, compile_contents=False, black_box=True, create_backup=False)
+                
             convertedDefi.append(defi)
+            
             if BlackBoxMode == 0 and save_OTLPath not in newHDAFilePaths:
-                newHDAFilePaths.aapend(save_OTLPath)
+                newHDAFilePaths.append(save_OTLPath)
 
     for newHDAFilePath in newHDAFilePaths:
         hou.hda.installFile(newHDAFilePath)
