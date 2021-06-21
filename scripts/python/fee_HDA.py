@@ -1,10 +1,12 @@
 
 import hou
+import sys
 
 # import fee_HDA
 
 # from importlib import reload
 # reload(fee_HDA)
+
 
 
 def isUnlockedHDA(node):
@@ -13,7 +15,8 @@ def isUnlockedHDA(node):
 
 def isFeENode(nodeType, detectName = True, detectPath = False):
     if detectName:
-        if not nodeType.nameComponents()[2].endswith("_fee") or not nodeType.description().startswith("FeE"):
+        nameComponents = nodeType.nameComponents()
+        if not ( (nameComponents[1]=='FeE' or nameComponents[1]=='Five elements Elf') or (nameComponents[2].endswith("_fee") and nodeType.description().startswith("FeE")) ):
             return False
     if detectPath:
         defi = nodeType.definition()
@@ -21,10 +24,26 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
             libraryFilePath = 'None'
         else:
             libraryFilePath = defi.libraryFilePath()
+        
         pathFeELib = hou.getenv('FeELib')
-        pathFeEProject = hou.getenv('FeEProjectHoudini')
-        pathFeEworkHoudini = hou.getenv('FeEworkHoudini')
-        if not (pathFeELib in libraryFilePath or pathFeEProject in libraryFilePath or pathFeEworkHoudini in libraryFilePath):
+        if pathFeELib is None:
+            if sys.version_info >= (3,):
+                print('not found env: FeELib')
+            else:
+                pass
+                #print 'not found env: FeELib'
+
+        isInPathCondition = pathFeELib in libraryFilePath
+
+        pathFeELib = hou.getenv('FeEProjectHoudini')
+        if pathFeELib is not None:
+            isInPathCondition = isInPathCondition or pathFeELib in libraryFilePath
+
+        pathFeELib = hou.getenv('FeEworkHoudini')
+        if pathFeELib is not None:
+            isInPathCondition = isInPathCondition or pathFeELib in libraryFilePath
+
+        if not isInPathCondition:
             return False
     
     return True
@@ -51,8 +70,9 @@ def copyParms_NodetoNode(sourceNode, targetNode):
             targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
         except:
             '''Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes'''
-            print(sourceNode, targetNode)
-            print(origParmTemplateGroup.asDialogScript())
+            if sys.version_info >= (3,):
+                print(sourceNode, targetNode)
+                print(origParmTemplateGroup.asDialogScript())
         
     for parm in sourceNode.parms():
         if parm.parmTemplate().type() == hou.parmTemplateType.Folder:
@@ -67,14 +87,16 @@ def copyParms_NodetoNode(sourceNode, targetNode):
                 for idx in range(0, parmVal):
                     parentFolder.insertMultiParmInstance(idx)
             except:
-                print('')
-                #print(targetNode)
-                print(parm)
+                if sys.version_info >= (3,):
+                    print('')
+                    #print(targetNode)
+                    print(parm)
                 
     if 0:
         for parm in targetNode.parms():
             if parm.isMultiParmInstance():
-                print(parm)
+                if sys.version_info >= (3,):
+                    print(parm)
 
     for parm in sourceNode.parms():
         #break
@@ -83,14 +105,15 @@ def copyParms_NodetoNode(sourceNode, targetNode):
             targetparm.deleteAllKeyframes()
             targetparm.setFromParm(parm)
         except:
-            #print(targetNode)
-            print(targetNode.parm(parm.name()))
-            #print(parm)
+            if sys.version_info >= (3,):
+                #print(targetNode)
+                print(targetNode.parm(parm.name()))
+                #print(parm)
 
-def copyRelRef_NodetoNode(sourceNode, targetNode):
+def copyRelRef_NodetoNode(sourceNode, targetNode, prefix='', sufix=''):
     for sourceParm in sourceNode.parms():
         parmName = sourceParm.name()
-        targetParm = targetNode.parm(parmName)
+        targetParm = targetNode.parm(prefix + parmName + sufix)
         if targetParm is not None:
             targetParm.deleteAllKeyframes()
             targetParm.set(sourceParm)
@@ -259,8 +282,10 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                         try:
                             null = subnetIndirectInput.createOutputNode('null', exact_type_name=True)
                         except:
-                            print(subnetIndirectInput)
-                            raise(hou.Error('241'))
+                            if sys.version_info >= (3,):
+                                print(subnetIndirectInput)
+                                hou.Error('241')
+                                return
                     # null.setPosition(subnetIndirectInput.position().__add__(shiftVector2))
                     null.setPosition(subnetIndirectInput.position() + shiftVector2)
                     nulls.append(null)
@@ -306,10 +331,11 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             try:
                 newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
             except:
-                print(newNode)
-                print(inputItems[idx])
-                print(inputItem_output_index[idx])
-                raise(hou.Error('setInput Error'))
+                if sys.version_info >= (3,):
+                    print(newNode)
+                    print(inputItems[idx])
+                    print(inputItem_output_index[idx])
+                    hou.Error('setInput Error')
     # newNode.parm('label1').hide(True)
     # newNode.parm('label2').hide(True)
     # newNode.parm('label3').hide(True)
@@ -322,11 +348,12 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             pos = oldIndirectInputs[idx].position()
             newIndirectInputs[idx].setPosition(pos)
         except:
-            print(copyOrigNode)
-            print(newNode)
-            print(oldIndirectInputs[idx])
-            print(newIndirectInputs[idx])
-            raise(hou.Error('fee Error'))
+            if sys.version_info >= (3,):
+                print(copyOrigNode)
+                print(newNode)
+                print(oldIndirectInputs[idx])
+                print(newIndirectInputs[idx])
+                raise(hou.Error('fee Error'))
 
 
     copyParms_NodetoNode(copyOrigNode, newNode)
@@ -587,12 +614,14 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
             defi = nodeType.definition()
             if not defi:
                 continue
-            if not isFeENode(nodeType, detectName = detectName, detectPath = detectPath):
-                continue
-            
+
             nodeTypeName = nodeType.name()
             if nodeTypeName in sopNodeTypeNameTuple:
                 continue
+                
+            if not isFeENode(nodeType, detectName = detectName, detectPath = detectPath):
+                continue
+            
 
             nodeType.setHidden(not isHiding)
             """
@@ -613,8 +642,13 @@ def findAllSubParmRawValue(subnet, strValue):
     for child in subnet.allSubChildren(recurse_in_locked_nodes=False):
         for parm in child.parms():
             if strValue in parm.rawValue():
-                print(child)
-                print(parm)
+                if sys.version_info >= (3,):
+                    print(child)
+                    print(parm)
+                else:
+                    pass
+                    # print child
+                    # print parm
 
 
 
@@ -623,8 +657,13 @@ def findAllSubParmRawValue(subnet, strValue):
     for child in subnet.allSubChildren(recurse_in_locked_nodes=False):
         for parm in child.parms():
             if strValue in parm.rawValue():
-                print(child)
-                print(parm)
+                if sys.version_info >= (3,):
+                    print(child)
+                    print(parm)
+                else:
+                    pass
+                    # print child
+                    # print parm
 
 
 
@@ -729,9 +768,10 @@ def TABSubmenuPathfromSections(sections):
         sectionToolShelf = sections[r'Tools.shelf']
         return TABSubmenuPathfromSectionToolShelf(sectionToolShelf)
     except:
-        print('not found section: Tools Shelf:', end = ' ')
-        print(nodeType)
-        return None
+        if sys.version_info >= (3,):
+            print('not found section: Tools Shelf:', end = ' ')
+            print(nodeType)
+            return None
     
 
 
