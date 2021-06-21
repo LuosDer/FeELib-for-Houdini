@@ -24,7 +24,6 @@ import fee_HDA
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
     fee_HDA.convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True)
-
 ]]></script>
   </tool>
 
@@ -73,15 +72,14 @@ for node in selectedNodes:
 
   <tool name="HideFeENode" label="Hide FeE Node" icon="SOP_sort">
     <script scriptType="python"><![CDATA[
+import hou
 import os
 
-import hou
 import fee_HDA
 # from importlib import reload
 # reload(fee_HDA)
 
 fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True)
-
 ]]></script>
   </tool>
 
@@ -92,8 +90,8 @@ import os
 
 import fee_HDA
 
-from importlib import reload
-reload(fee_HDA)
+# from importlib import reload
+# reload(fee_HDA)
 
 '''
 theTool = hou.shelves.runningTool()

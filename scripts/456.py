@@ -70,6 +70,8 @@ sopNodeTypeNameTuple = (
 'extractsimilarpiecestransform_fee',
 'uvtile_fee::0.1',
 'uvtile_fee::1.0',
+'import_fbx_fee',
+'chineseeaves_fee',
 
 )
 
