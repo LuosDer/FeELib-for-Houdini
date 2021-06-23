@@ -568,6 +568,7 @@ def unlock_All_FeENode(node, detectName = True, detectPath = False):
 
 
 def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
+    ############### keepHide is False 用于切换hide模式
     TEMP_path = hou.getenv('TEMP')
     isHidingTXT_path = TEMP_path + '/isHidingFeENode.txt'
 
@@ -579,7 +580,6 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
         if not keepHide:
             with open(isHidingTXT_path, "w") as isHidingTXT:
                 isHidingTXT.write('0' if isHiding else '1')
-
     else:
         isHiding = False
         if not keepHide:
@@ -587,6 +587,14 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
             with open(isHidingTXT_path, "w") as isHidingTXT:
                 isHidingTXT.write('1')
 
+
+    if keepHide:
+        if isHiding:
+            hideToggle = True
+        else:
+            return
+    else:
+        hideToggle = not isHiding
 
     deprecatedNodeList = readDeprecatedNode()
     deprecatedNodeList.extend(readNeedHideNode())
@@ -608,13 +616,11 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
             if not defi:
                 continue
             '''
-            if keepHide and not isHiding:
-                break
         
             if not isFeENode(nodeType, detectName = detectName, detectPath = detectPath):
                 continue
 
-            nodeType.setHidden(not isHiding)
+            nodeType.setHidden(hideToggle)
             """
             if 1:
                 #if nodeType.hidden():
