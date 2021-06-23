@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <menuDocument>
   <menu>
+
     <subMenu id="FeE">
       <label>FeE</label>
       <insertBefore />
+
       <scriptItem id="setOptypePython">
         <label>set Optype Python</label>
         <scriptCode><![CDATA[
@@ -15,12 +17,30 @@ if len(parms) > 0:
         try:
             parm0.expressionLanguage()
         except:
-            eval = parm0.evalAsString()
-            parm0.setExpression("'__" + eval + "_' + " + "hou.node('../.').type().nameComponents()[2]", language=hou.exprLanguage.Python)
+            evalAsString = parm0.rawValue()
+            if evalAsString.startswith('__') and evalAsString.endswith("_`optype('../.')`"):
+                evalAsString = evalAsString.lstrip('__')
+                evalAsString = evalAsString.rstrip("_`optype('../.')`")
+            else:
+                evalAsString = parm0.evalAsString()
+            parm0.setExpression("'__" + evalAsString + "_' + " + "hou.node('../.').type().nameComponents()[2]", language=hou.exprLanguage.Python)
     else:
         pass
       ]]></scriptCode>
       </scriptItem>
+
+      <scriptItem id="CopyParmName">
+        <label>Copy Parm Name</label>
+        <scriptCode><![CDATA[
+parms = kwargs["parms"]
+if len(parms) > 0:
+    parm0 = parms[0]
+    import fee_Utils
+    fee_Utils.setClipboardText(parm0.name())
+      ]]></scriptCode>
+      </scriptItem>
+      
     </subMenu>
+
   </menu>
 </menuDocument>

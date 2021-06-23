@@ -14,6 +14,7 @@
     <memberTool name="convert_usedDefi_to_BalckBox"/>
     <memberTool name="open$HIP"/>
     <memberTool name="open$TEMP"/>
+    <memberTool name="git pull"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -208,6 +209,36 @@ import os
 
 start_directory = hou.getenv('TEMP')
 os.startfile(start_directory)
+]]></script>
+  </tool>
+
+  <tool name="git pull" label="Git Pull" icon="SHELF_download_engine_plugin">
+    <script scriptType="python"><![CDATA[
+import os
+
+#os.system('D:/Houdini/FeEProjectHoudini/otls/gitpull.bat')
+#os.system('D:; cd D:/Git/houdini_toolkit; git pull')
+
+
+TEMP_path = hou.getenv('TEMP')
+FeELib_path = hou.getenv('FeELib')
+if FeELib_path is not None:
+    command = FeELib_path[:2] + '\n'
+    command += 'cd ' + FeELib_path + '\n'
+    command += 'git pull'
+    
+    #print(command)
+    
+    batName = 'feELibGitPull.bat'
+    batPath = TEMP_path + '/' + batName
+    with open(batPath, 'w') as BAT:
+        BAT.write(command)
+    
+    os.system(batPath)
+    
+    hou.hda.reloadAllFiles(rescan = True)
+    #hou.hda.reloadNamespaceOrder()
+    
 ]]></script>
   </tool>
 </shelfDocument>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menuDocument>
+  <menu>
+
+    <subMenu id="FeE">
+      <label>FeE</label>
+      <insertBefore />
+      <scriptItem id="CopyNodeTypeName">
+        <label>Copy Node Type Name</label>
+        <scriptCode><![CDATA[
+import fee_Utils
+name = kwargs["node"].type().name()
+fee_Utils.setClipboardText(name)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="CopyNodePath">
+        <label>Copy Node Path</label>
+        <scriptCode><![CDATA[
+import fee_Utils
+path = kwargs["node"].path()
+fee_Utils.setClipboardText(path)
+      ]]></scriptCode>
+      </scriptItem>
+      
+      <scriptItem id="setNodeAsOutput">
+        <label>Set Node as Output</label>
+        <scriptCode><![CDATA[
+import fee_Node
+node = kwargs["node"]
+fee_Node.setNodeAsOutput(node)
+      ]]></scriptCode>
+      </scriptItem>
+
+    </subMenu>
+
+  </menu>
+</menuDocument>
