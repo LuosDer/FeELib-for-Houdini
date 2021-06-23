@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menuDocument>
+  <menu>
+    <subMenu id="FeE">
+      <label>FeE</label>
+      <insertBefore />
+      <scriptItem id="setOptypePython">
+        <label>set Optype Python</label>
+        <scriptCode><![CDATA[
+parms = kwargs["parms"]
+if len(parms) > 0:
+    parm0 = parms[0]
+    parmTemplate0 = parm0.parmTemplate()
+    if isinstance(parmTemplate0, hou.StringParmTemplate):
+        try:
+            parm0.expressionLanguage()
+        except:
+            eval = parm0.evalAsString()
+            parm0.setExpression("'__" + eval + "_' + " + "hou.node('../.').type().nameComponents()[2]", language=hou.exprLanguage.Python)
+    else:
+        pass
+      ]]></scriptCode>
+      </scriptItem>
+    </subMenu>
+  </menu>
+</menuDocument>

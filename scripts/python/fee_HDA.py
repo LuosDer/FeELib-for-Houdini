@@ -1,11 +1,71 @@
 
 import hou
 import sys
+import os
+
+import fee_Utils
+# from importlib import reload
+# reload(fee_Utils)
+
 
 # import fee_HDA
-
 # from importlib import reload
 # reload(fee_HDA)
+
+
+def readDeprecatedNode():
+    deprecatedNodeList = []
+
+    pathFeELib = hou.getenv('FeELib')
+    if pathFeELib is not None:
+        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+
+    pathFeELib = hou.getenv('FeEProjectHoudini')
+    if pathFeELib is not None:
+        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+    
+    pathFeELib = hou.getenv('FeEworkHoudini')
+    if pathFeELib is not None:
+        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+
+    deprecatedNodeList = list(set(deprecatedNodeList))
+    return deprecatedNodeList
+
+
+def readNeedHideNode():
+    deprecatedNodeList = []
+    pathFeELib = hou.getenv('FeELib')
+    if pathFeELib is not None:
+        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/needHideSopNode.txt'
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+
+    pathFeELib = hou.getenv('FeEProjectHoudini')
+    if pathFeELib is not None:
+        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/needHideSopNode.txt'
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+
+    pathFeELib = hou.getenv('FeEworkHoudini')
+    if pathFeELib is not None:
+        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/needHideSopNode.txt'
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+
+    deprecatedNodeList = list(set(deprecatedNodeList))
+    return deprecatedNodeList
 
 
 
@@ -33,7 +93,8 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
                 pass
                 #print 'not found env: FeELib'
 
-        isInPathCondition = pathFeELib in libraryFilePath
+        if pathFeELib is not None:
+            isInPathCondition = pathFeELib in libraryFilePath
 
         pathFeELib = hou.getenv('FeEProjectHoudini')
         if pathFeELib is not None:
@@ -506,104 +567,30 @@ def unlock_All_FeENode(node, detectName = True, detectPath = False):
 
 
 
-
 def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
-    import os
-
     TEMP_path = hou.getenv('TEMP')
     isHidingTXT_path = TEMP_path + '/isHidingFeENode.txt'
 
     if os.path.exists(isHidingTXT_path):
         with open(isHidingTXT_path, "r") as isHidingTXT:
-            isHiding = int(isHidingTXT.read(1))
-            #print(isHiding)
-            isHiding = isHiding == 1
+            isHiding = int(isHidingTXT.read(1)) == 1
             #print(isHiding)
             
-        with open(isHidingTXT_path, "w") as isHidingTXT:
-            isHidingTXT.write('0' if isHiding else '1')
+        if not keepHide:
+            with open(isHidingTXT_path, "w") as isHidingTXT:
+                isHidingTXT.write('0' if isHiding else '1')
 
     else:
         isHiding = False
-        #os.makedirs(isHidingTXT_path)
-        with open(isHidingTXT_path, "w") as isHidingTXT:
-            isHidingTXT.write('1')
+        if not keepHide:
+            #os.makedirs(isHidingTXT_path)
+            with open(isHidingTXT_path, "w") as isHidingTXT:
+                isHidingTXT.write('1')
 
-    if keepHide and not isHiding:
-        return
 
-    sopNodeTypeNameTuple = (
-    'packintrinsics_fee',
-    'groupbybearing_fee',
-    'matchsize_fee',
-    'uniquenames_fee',
-    'groupbyname_fee',
-    'sortnamebyattrib_fee',
-    'keepname_betweenframe_fee',
-    'numpieces_fee',
-    'polyframe_cubic_fee',
-    'polyframe_cubic_fee::1.0',
-    'meshlayout_fee',
-    'meshlayout_multilayer_fee',
-    'copytopoints_fee',
-    'matchpolywinding_fast_fee::0.1',
+    deprecatedNodeList = readDeprecatedNode()
+    deprecatedNodeList.extend(readNeedHideNode())
     
-    'separatepoly2d_fee',
-    'uniformnormaldir_fee::1.0',
-    'uniformnormaldir_fee::2.0',
-
-    'spreadout_fee',
-    'spreadout_fee::0.9',
-    'spreadout_fee::1.0',
-    'spreadout_multiinput_fee',
-    'is2dswitch_fee',
-
-    'matchbbox_fee',
-    'correctgeowinding_wn_fee',
-    'correctgeowinding_volume_fee',
-    'normalizedirpoly_fee::1.0',
-    'normalizedirpoly_fee::2.0',
-    'animationloop_fee',
-    'restdir2d_fee',
-    'restdir_fee',
-    'matchdir2d_fee',
-    'normalizedir2d_fee',
-    'matchdir_fee',
-    'matchtransform_bound_fee',
-    'polycenterextrude_fee',
-    'groupbydir_fee',
-    'groupbydir_fast_fee',
-    'groupedgebydir_fee',
-    'cameraproject_fee',
-    'frontfaceborder_fee',
-    'attribdirnoise_fee',
-    'extractintrinsic_fee',
-    'resttransform_fee',
-    'attribaccumulate_fee',
-    'intrinsicpromote_fee',
-    'matchtransform_bb_fee',
-    'groupfromenum_fee',
-    'matchdirorient_fee::1.0',
-
-    'extractallpiecestransform_fee',
-    'extractsimilarpiecestransform_fee',
-    'uvtile_fee::0.1',
-    'uvtile_fee::1.0',
-
-
-
-
-    'attribute',
-    'attribdelete',
-    'uvquickshade',
-    'copyNodeParms',
-    'copyNodeParms::0.1',
-
-    'copy_node_parms',
-    'crossroad_skeleton_generator',
-    'crossingsplit',
-    )
-
     nodeTypeCategories = hou.nodeTypeCategories()
     for nodeTypeCategoriesKey in nodeTypeCategories:
         # run over all nodeType
@@ -611,17 +598,21 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
         for nodeTypeDictsKey in dictNodeTypes:
             nodeType = dictNodeTypes[nodeTypeDictsKey]
 
+            nodeTypeName = nodeType.name()
+            if nodeTypeName in deprecatedNodeList:
+                #print(nodeTypeName)
+                nodeType.setHidden(True)
+                continue
+            '''
             defi = nodeType.definition()
             if not defi:
                 continue
-
-            nodeTypeName = nodeType.name()
-            if nodeTypeName in sopNodeTypeNameTuple:
-                continue
-                
+            '''
+            if keepHide and not isHiding:
+                break
+        
             if not isFeENode(nodeType, detectName = detectName, detectPath = detectPath):
                 continue
-            
 
             nodeType.setHidden(not isHiding)
             """

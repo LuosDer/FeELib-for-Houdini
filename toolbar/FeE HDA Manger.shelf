@@ -12,6 +12,8 @@
     <memberTool name="unlock_HDA_publish"/>
     <memberTool name="HideFeENode"/>
     <memberTool name="convert_usedDefi_to_BalckBox"/>
+    <memberTool name="open$HIP"/>
+    <memberTool name="open$TEMP"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -70,14 +72,16 @@ for node in selectedNodes:
 ]]></script>
   </tool>
 
-  <tool name="HideFeENode" label="Hide FeE Node" icon="SOP_sort">
+  <tool name="HideFeENode" label="Hide FeE Node" icon="SOP_visibility">
     <script scriptType="python"><![CDATA[
 import hou
 import os
 
 import fee_HDA
-# from importlib import reload
-# reload(fee_HDA)
+from importlib import reload
+reload(fee_HDA)
+
+#fee_HDA.checkHideFeENode(keepHide = True, detectName = False, detectPath = True)
 
 fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True)
 ]]></script>
@@ -186,6 +190,24 @@ if checkInput[0] == 0:
 
     #hou.hda.uninstallFile(defiPath)
     #convertedDefi = list(set(convertedDefi)) #å»é
+]]></script>
+  </tool>
+
+  <tool name="open$HIP" label="Open $HIP" icon="SHELF_download_engine_plugin">
+    <script scriptType="python"><![CDATA[
+import os
+
+start_directory = hou.getenv('HIP')
+os.startfile(start_directory)
+]]></script>
+  </tool>
+
+  <tool name="open$TEMP" label="Open $TEMP" icon="SHELF_download_engine_plugin">
+    <script scriptType="python"><![CDATA[
+import os
+
+start_directory = hou.getenv('TEMP')
+os.startfile(start_directory)
 ]]></script>
   </tool>
 </shelfDocument>

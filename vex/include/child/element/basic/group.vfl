@@ -2,10 +2,37 @@
 #ifndef __GROUP_VFL__
 #define __GROUP_VFL__
 
-#if 0
+#if 1
     #include <group.vfl>
 #else
+    function
+    int ingroup(
+        int geo;
+        int elemclass;
+        string groupname;
+        int elemnum;
+        ) {
+        if ( elemclass == 0 ) {
+            return inprimgroup(geo, groupname, elemnum);
+        } else if ( elemclass == 1 ) {
+            return inpointgroup(geo, groupname, elemnum);
+        } else if ( elemclass == 2 ) {
+            return invertexgroup(geo, groupname, elemnum);
+        } else {
+            error('ingroup func error invalid class 664');
+        }
+        return -1;
+    }
 #endif
+
+
+
+
+
+
+
+
+
 
 function
 int invertexgroup(
@@ -646,7 +673,7 @@ int setgroup(
     return setgroup(geohandle, elemclass, groupname, primnums, elemnums, value, 'set');
 }
 
-
+/*
 function
 int ingroup(
     int geo;
@@ -665,6 +692,7 @@ int ingroup(
     }
     return -1;
 }
+*/
 
 function
 int ingroup(
