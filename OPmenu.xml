@@ -5,6 +5,9 @@
     <subMenu id="FeE">
       <label>FeE</label>
       <insertBefore />
+
+
+
       <scriptItem id="CopyNodeTypeName">
         <label>Copy Node Type Name</label>
         <scriptCode><![CDATA[
@@ -13,6 +16,8 @@ name = kwargs["node"].type().name()
 fee_Utils.setClipboardText(name)
       ]]></scriptCode>
       </scriptItem>
+
+
 
       <scriptItem id="CopyNodePath">
         <label>Copy Node Path</label>
@@ -23,16 +28,94 @@ fee_Utils.setClipboardText(path)
       ]]></scriptCode>
       </scriptItem>
       
+
+
+
+      <scriptItem id="bakeAllParms">
+        <label>Bake All Parms</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.bakeAllParms(selectedNodes)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+
+      <scriptItem id="setToDefaultPositionWithNode">
+        <label>Set to Default Position with Node</label>
+        <scriptCode><![CDATA[
+import fee_Node
+#kwargsNode = kwargs["node"]
+selectedItems = hou.selectedItems()
+fee_Node.setToDefaultPositionWithNode(selectedItems)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+
+      <scriptItem id="setToDefaultPosition">
+        <label>Set to Default Position</label>
+        <scriptCode><![CDATA[
+import fee_Node
+#kwargsNode = kwargs["node"]
+selectedItems = hou.selectedItems()
+fee_Node.setToDefaultPosition(selectedItems)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+
       <scriptItem id="setNodeAsOutput">
         <label>Set Node as Output</label>
         <scriptCode><![CDATA[
 import fee_Node
-node = kwargs["node"]
-fee_Node.setNodeAsOutput(node)
+kwargsNode = kwargs["node"]
+fee_Node.setNodeAsOutput(kwargsNode)
       ]]></scriptCode>
       </scriptItem>
+
+
+
+      <scriptItem id="subNodeCount">
+        <label>Sub Node Count</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+print(fee_Node.subNodeCount(selectedNodes))
+      ]]></scriptCode>
+      </scriptItem>
+
+
+
+      <scriptItem id="selectSameNodes">
+        <label>Select Same Nodes</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.selectSameNodes(selectedNodes)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+      <scriptItem id="setToDefaultColorShape">
+        <label>Set to Default Color and Shape</label>
+        <scriptCode><![CDATA[
+import fee_Node
+#kwargsNode = kwargs["node"]
+selectedItems = hou.selectedItems()
+fee_Node.setToDefaultColorShape(selectedItems)
+      ]]></scriptCode>
+      </scriptItem>
+
+
 
     </subMenu>
 
   </menu>
 </menuDocument>
+
+

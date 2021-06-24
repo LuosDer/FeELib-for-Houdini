@@ -15,6 +15,7 @@
     <memberTool name="open$HIP"/>
     <memberTool name="open$TEMP"/>
     <memberTool name="git pull"/>
+    <memberTool name="Correct Wrangle Parmeter"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -194,7 +195,7 @@ if checkInput[0] == 0:
 ]]></script>
   </tool>
 
-  <tool name="open$HIP" label="Open $HIP" icon="SHELF_download_engine_plugin">
+  <tool name="open$HIP" label="Open $HIP" icon="hicon:/SVGIcons.index?DESKTOP_application.svg">
     <script scriptType="python"><![CDATA[
 import os
 
@@ -203,7 +204,7 @@ os.startfile(start_directory)
 ]]></script>
   </tool>
 
-  <tool name="open$TEMP" label="Open $TEMP" icon="SHELF_download_engine_plugin">
+  <tool name="open$TEMP" label="Open $TEMP" icon="hicon:/SVGIcons.index?DESKTOP_application.svg">
     <script scriptType="python"><![CDATA[
 import os
 
@@ -214,31 +215,68 @@ os.startfile(start_directory)
 
   <tool name="git pull" label="Git Pull" icon="SHELF_download_engine_plugin">
     <script scriptType="python"><![CDATA[
-import os
+import fee_Utils
+# from importlib import reload
+# reload(fee_Utils)
 
-#os.system('D:/Houdini/FeEProjectHoudini/otls/gitpull.bat')
-#os.system('D:; cd D:/Git/houdini_toolkit; git pull')
-
-
-TEMP_path = hou.getenv('TEMP')
 FeELib_path = hou.getenv('FeELib')
-if FeELib_path is not None:
-    command = FeELib_path[:2] + '\n'
-    command += 'cd ' + FeELib_path + '\n'
-    command += 'git pull'
+fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
+]]></script>
+  </tool>
+
+  <tool name="Correct Wrangle Parmeter" label="Correct Wrangle Parmeter" icon="SOP_attribwrangle">
+    <script scriptType="python"><![CDATA[
+import re
+
+import fee_HDA
+
+selectedNodes = hou.selectedNodes()
+for node in selectedNodes:
+    nodeType = node.type()
+    nodeTypeName = nodeType.name()
+    if nodeTypeName != 'attribwrangle':
+        continue
     
-    #print(command)
+    snippet = node.evalParm('snippet')
     
-    batName = 'feELibGitPull.bat'
-    batPath = TEMP_path + '/' + batName
-    with open(batPath, 'w') as BAT:
-        BAT.write(command)
+    vex_inplace = node.parm('vex_inplace')
+    vex_inplace.set(True)
+    for substr in ('attrib(0,', 'prim(0,', 'point(0,', 'vertex(0,', 'detail(0,'):
+        if substr in snippet:
+            vex_inplace.set(False)
+            break
     
-    os.system(batPath)
+    #print(usedAttribNames)
     
-    hou.hda.reloadAllFiles(rescan = True)
-    #hou.hda.reloadNamespaceOrder()
-    
+    if node.evalParm('autobind')==1 or node.evalParm('groupautobind')==1:
+        node.parm('autobind').set(False)
+        node.parm('groupautobind').set(False)
+        usedAttribNames = []
+        pattern = re.compile(r'@[a-zA-Z0-9]*')
+        usedAttribNames = pattern.findall(snippet)
+        usedAttribNames = list(set(usedAttribNames))
+
+        for idx in range(len(usedAttribNames)):
+            usedAttribNames[idx] = usedAttribNames[idx][1:]
+        
+        for topStr in ('elemnum', 'ptnum', 'primnum', 'vtxnum', 'numelem', 'numprim', 'numpt', 'numvtx'):
+            if topStr in usedAttribNames:
+                usedAttribNames.remove(topStr)
+
+        for topStr in ('color', 'Alpha', 'Cd', 'N', 'P'):
+            if topStr not in usedAttribNames:
+                continue
+            usedAttribNames.remove(topStr)
+            usedAttribNames.insert(0, topStr)
+            
+
+        node.parm('bindings').set(len(usedAttribNames))
+        for idx in range(len(usedAttribNames)):
+            stridx = str(idx+1)
+            node.parm('bindname' + stridx).set(usedAttribNames[idx])
+            node.parm('bindparm' + stridx).set(usedAttribNames[idx])
+
+
 ]]></script>
   </tool>
 </shelfDocument>

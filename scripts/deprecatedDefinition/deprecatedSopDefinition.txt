@@ -69,3 +69,10 @@ copy_node_parms
 crossroad_skeleton_generator
 crossingsplit
 uvhlayout_fee
+normal2d_fee
+normal2d_fee::0.5
+normal2d_fee::0.7
+normal2d_fee::0.8
+normal2d_fee::0.9
+normal2d_fee::1.0
+attribgradient_fee

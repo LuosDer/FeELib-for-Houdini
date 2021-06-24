@@ -51,14 +51,14 @@ int length(
     ) {
     return abs(val0);
 }
-
+/*
 function
 float length(
     float val0;
     ) {
     return abs(val0);
 }
-
+*/
 function
 int sizeForSort(
     int val0;

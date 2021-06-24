@@ -30,12 +30,6 @@
 
 
 
-function
-int length(
-    int i;
-    ) {
-    return abs(i);
-}
 
 #define FUNClength1(type)\
         function \

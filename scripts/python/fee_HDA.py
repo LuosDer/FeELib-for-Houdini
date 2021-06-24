@@ -588,18 +588,11 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
                 isHidingTXT.write('1')
 
 
-    if keepHide:
-        if isHiding:
-            hideToggle = True
-        else:
-            return
-    else:
-        hideToggle = not isHiding
-
     deprecatedNodeList = readDeprecatedNode()
     deprecatedNodeList.extend(readNeedHideNode())
     
     nodeTypeCategories = hou.nodeTypeCategories()
+
     for nodeTypeCategoriesKey in nodeTypeCategories:
         # run over all nodeType
         dictNodeTypes = nodeTypeCategories[nodeTypeCategoriesKey].nodeTypes()
@@ -611,6 +604,23 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
                 #print(nodeTypeName)
                 nodeType.setHidden(True)
                 continue
+    
+
+    if keepHide:
+        if isHiding:
+            hideToggle = True
+        else:
+            return
+    else:
+        hideToggle = not isHiding
+    
+
+    for nodeTypeCategoriesKey in nodeTypeCategories:
+        # run over all nodeType
+        dictNodeTypes = nodeTypeCategories[nodeTypeCategoriesKey].nodeTypes()
+        for nodeTypeDictsKey in dictNodeTypes:
+            nodeType = dictNodeTypes[nodeTypeDictsKey]
+
             '''
             defi = nodeType.definition()
             if not defi:
