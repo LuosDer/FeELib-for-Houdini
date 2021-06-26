@@ -113,6 +113,20 @@ fee_Node.setToDefaultColorShape(selectedItems)
 
 
 
+      <scriptItem id="createNode">
+        <label>Create Node</label>
+        <scriptCode><![CDATA[
+nodeName = hou.ui.readInput('Input Node Name', buttons=(''), initial_contents='')[1]
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+for selectedNode in selectedNodes:
+    selectedNode.createNode(nodeName)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+
     </subMenu>
 
   </menu>

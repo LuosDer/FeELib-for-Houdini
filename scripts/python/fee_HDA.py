@@ -1,6 +1,5 @@
 
 import hou
-import sys
 import os
 
 import fee_Utils
@@ -87,11 +86,7 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
         
         pathFeELib = hou.getenv('FeELib')
         if pathFeELib is None:
-            if sys.version_info >= (3,):
-                print('not found env: FeELib')
-            else:
-                pass
-                #print 'not found env: FeELib'
+            print('not found env: FeELib')
 
         if pathFeELib is not None:
             isInPathCondition = pathFeELib in libraryFilePath
@@ -110,66 +105,111 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
     return True
 
 
-def isSideFXNode(nodeType, ignoreDSO = True):
+def isSideFXNode(inputNodeType, ignoreDSO = True):
+    if isinstance(nodeType, hou.Node):
+        nodeType = inputNodeType.type()
+    elif isinstance(nodeType, hou.NodeType):
+        nodeType = inputNodeType
+    else:
+        raise TypeError('invalid type')
+    
     defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
     defi = nodeType.definition()
     if ignoreDSO and defi is None:
         return False
     return defi.libraryFilePath().startswith(defaultLibPath)
 
+
 def isSideFXDefinition(defi):
     defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
     return defi.libraryFilePath().startswith(defaultLibPath)
 
 
-def copyParms_NodetoNode(sourceNode, targetNode):
-    origParmTemplateGroup = sourceNode.parmTemplateGroup()
-    if 0:
-        targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
-    else:
-        try:
+def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
+    if copyNoneExistParms:
+        origParmTemplateGroup = sourceNode.parmTemplateGroup()
+        #print(origParmTemplateGroup.asDialogScript())
+        if 1:
             targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
-        except:
-            '''Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes'''
-            if sys.version_info >= (3,):
+        else:
+            try:
+                targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
+            except:
+                '''Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes'''
                 print(sourceNode, targetNode)
                 print(origParmTemplateGroup.asDialogScript())
         
     for parm in sourceNode.parms():
         if parm.parmTemplate().type() == hou.parmTemplateType.Folder:
+            parmVal = parm.evalAsInt()
+            #print(parmVal)
+            #print(parm.multiParmStartOffset())
+            parentFolder = targetNode.parm(parm.name())
+            if parentFolder is None:
+                continue
+            #parentFolder.setFromParm(parm)
+            for idx in range(0, parentFolder.evalAsInt()):
+                parentFolder.removeMultiParmInstance(0)
+            for idx in range(0, parmVal):
+                parentFolder.insertMultiParmInstance(idx)
+            '''
             try:
                 parmVal = parm.evalAsInt()
                 #print(parmVal)
                 #print(parm.multiParmStartOffset())
                 parentFolder = targetNode.parm(parm.name())
+                if parentFolder is None:
+                    continue
                 #parentFolder.setFromParm(parm)
                 for idx in range(0, parentFolder.evalAsInt()):
                     parentFolder.removeMultiParmInstance(0)
                 for idx in range(0, parmVal):
                     parentFolder.insertMultiParmInstance(idx)
             except:
-                if sys.version_info >= (3,):
-                    print('')
-                    #print(targetNode)
-                    print(parm)
-                
+                print('')
+                #print(targetNode)
+                print(parm)
+            '''
+
     if 0:
         for parm in targetNode.parms():
             if parm.isMultiParmInstance():
-                if sys.version_info >= (3,):
-                    print(parm)
+                print(parm)
 
-    for parm in sourceNode.parms():
+    for targetparm in targetNode.parms():
+        #break
+        sourceparm = sourceNode.parm(targetparm.name())
+        if sourceparm is None:
+            continue
+        targetparm.deleteAllKeyframes()
+        targetparm.setFromParm(sourceparm)
+        '''
+        try:
+            sourceparm = sourceNode.parm(targetparm.name())
+            if sourceparm is None:
+                continue
+            targetparm.deleteAllKeyframes()
+            targetparm.setFromParm(sourceparm)
+        except:
+            #print(targetNode)
+            #print(targetNode.parm(targetparm.name()))
+            print(targetparm)
+        '''
+    '''
+    for sourceparm in sourceNode.parms():
         #break
         try:
-            targetparm = targetNode.parm(parm.name())
+            targetparm = targetNode.parm(sourceparm.name())
+            if targetparm is None:
+                continue
             targetparm.deleteAllKeyframes()
-            targetparm.setFromParm(parm)
+            targetparm.setFromParm(sourceparm)
         except:
-            if sys.version_info >= (3,):
-                #print(targetNode)
-                print(targetNode.parm(parm.name()))
-                #print(parm)
+            #print(targetNode)
+            #print(targetNode.parm(sourceparm.name()))
+            print(sourceparm)
+    '''
+
 
 def copyRelRef_NodetoNode(sourceNode, targetNode, prefix='', sufix=''):
     for sourceParm in sourceNode.parms():
@@ -265,11 +305,11 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     parent = node.parent()
     #print(parent.childTypeCategory().name())
     if parent.childTypeCategory().name() != 'Sop':
-        raise('error')
+        raise TypeError('error')
     if node.isHardLocked():
-        raise('isHardLocked')
+        raise TypeError('isHardLocked')
     if node.isSoftLocked():
-        raise('isSoftLocked')
+        raise TypeError('isSoftLocked')
     
     displayFlag = node == parent.displayNode()
     renderFlag = node == parent.renderNode()
@@ -312,8 +352,7 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                         subnetIndirectInput = inputItem
                         flag = True
                     else:
-                        raise(hou.Error('fee : 不可能的情况'))
-                        return 0
+                        raise ValueError('fee : 不可能的情况')
                         #nulls.append(inputItem)
                         #flag = False
                 else:
@@ -343,10 +382,8 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                         try:
                             null = subnetIndirectInput.createOutputNode('null', exact_type_name=True)
                         except:
-                            if sys.version_info >= (3,):
-                                print(subnetIndirectInput)
-                                hou.Error('241')
-                                return
+                            print(subnetIndirectInput)
+                            raise ValueError('')
                     # null.setPosition(subnetIndirectInput.position().__add__(shiftVector2))
                     null.setPosition(subnetIndirectInput.position() + shiftVector2)
                     nulls.append(null)
@@ -392,11 +429,10 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             try:
                 newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
             except:
-                if sys.version_info >= (3,):
-                    print(newNode)
-                    print(inputItems[idx])
-                    print(inputItem_output_index[idx])
-                    hou.Error('setInput Error')
+                print(newNode)
+                print(inputItems[idx])
+                print(inputItem_output_index[idx])
+                raise ValueError('setInput Error')
     # newNode.parm('label1').hide(True)
     # newNode.parm('label2').hide(True)
     # newNode.parm('label3').hide(True)
@@ -409,12 +445,11 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             pos = oldIndirectInputs[idx].position()
             newIndirectInputs[idx].setPosition(pos)
         except:
-            if sys.version_info >= (3,):
-                print(copyOrigNode)
-                print(newNode)
-                print(oldIndirectInputs[idx])
-                print(newIndirectInputs[idx])
-                raise(hou.Error('fee Error'))
+            print(copyOrigNode)
+            print(newNode)
+            print(oldIndirectInputs[idx])
+            print(newIndirectInputs[idx])
+            raise ValueError('fee Error')
 
 
     copyParms_NodetoNode(copyOrigNode, newNode)
@@ -649,13 +684,8 @@ def findAllSubParmRawValue(subnet, strValue):
     for child in subnet.allSubChildren(recurse_in_locked_nodes=False):
         for parm in child.parms():
             if strValue in parm.rawValue():
-                if sys.version_info >= (3,):
-                    print(child)
-                    print(parm)
-                else:
-                    pass
-                    # print child
-                    # print parm
+                print(child)
+                print(parm)
 
 
 
@@ -664,13 +694,8 @@ def findAllSubParmRawValue(subnet, strValue):
     for child in subnet.allSubChildren(recurse_in_locked_nodes=False):
         for parm in child.parms():
             if strValue in parm.rawValue():
-                if sys.version_info >= (3,):
-                    print(child)
-                    print(parm)
-                else:
-                    pass
-                    # print child
-                    # print parm
+                print(child)
+                print(parm)
 
 
 
@@ -775,10 +800,9 @@ def TABSubmenuPathfromSections(sections):
         sectionToolShelf = sections[r'Tools.shelf']
         return TABSubmenuPathfromSectionToolShelf(sectionToolShelf)
     except:
-        if sys.version_info >= (3,):
-            print('not found section: Tools Shelf:', end = ' ')
-            print(nodeType)
-            return None
+        print('not found section: Tools Shelf:', end = ' ')
+        print(nodeType)
+        return None
     
 
 
@@ -786,4 +810,80 @@ def TABSubmenuPathfromSections(sections):
 def TABSubmenuPathfromDefi(defi):
     sections = defi.sections()
     return TABSubmenuPathfromSections(sections)
+
+
+
+def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = ()):
+    fee_Utils.displayConfirmation()
+
+    toBlackBox = hou.ui.displayMessage('Convert to Black Box?', buttons = ("yes", "no"), default_choice = 0, close_choice = 0)
+
+    blackBoxMode = hou.ui.displayMessage('HDA File Type', buttons=('Seperated', 'All in One'), default_choice = 1, close_choice = 1)
+
+    HIPPath = hou.hipFile.path()
+    save_OTLFolderPath = os.path.split(HIPPath)[0] + '/otls/'
+        
+    #print(save_OTLFolderPath)
+    #print(os.listdir(save_OTLFolderPath))
+    for subDir in os.listdir(save_OTLFolderPath):
+        subFullDir = save_OTLFolderPath + subDir
+        if not os.path.isfile(subFullDir):
+            continue
+        #print(os.path.splitext(subDir))
+        if os.path.splitext(subDir)[1].lower() != '.hda':
+            continue
+        try:
+            hou.hda.uninstallFile(subFullDir)
+        except:
+            pass
+        os.remove(subFullDir)
+
+    save_OTLPath = save_OTLFolderPath + '/blackBox.hda'
+
+    if not os.path.exists(save_OTLFolderPath):
+        os.makedirs(save_OTLFolderPath)
+
+    convertedDefi = []
+    if blackBoxMode == 0:
+        newHDAFilePaths = []
+    else:
+        newHDAFilePaths = [save_OTLPath]
+
+    selectedNodes = hou.selectedNodes()
+    for selectedNode in selectedNodes:
+        for allSubChild in selectedNode.allSubChildren():
+            if not allSubChild.matchesCurrentDefinition():
+                continue
+            nodeType = allSubChild.type()
+            defi = nodeType.definition()
+            if defi is None:
+                continue
+            if defi in convertedDefi:
+                continue
+            if fee_HDA.isSideFXDefinition(defi):
+                continue
+            nodeTypeName = allSubChild.type().name()
+            if nodeTypeName in ignoreNodeTypeNames:
+                continue
+
+            if blackBoxMode == 0:
+                defiPath = defi.libraryFilePath()
+                save_OTLPath = save_OTLFolderPath + '/' + os.path.split(defiPath)[1]
+
+            allSubChild.allowEditingOfContents(propagate=True)
+            if 1:
+                defi.save(save_OTLPath, template_node = allSubChild, compile_contents=True, black_box=True, create_backup=False)
+            else:
+                defi.save(save_OTLPath, compile_contents=False, black_box=True, create_backup=False)
+                
+            convertedDefi.append(defi)
+            
+            if blackBoxMode == 0 and save_OTLPath not in newHDAFilePaths:
+                newHDAFilePaths.append(save_OTLPath)
+
+    for newHDAFilePath in newHDAFilePaths:
+        hou.hda.installFile(newHDAFilePath)
+
+    #hou.hda.uninstallFile(defiPath)
+    #convertedDefi = list(set(convertedDefi)) #去重
 

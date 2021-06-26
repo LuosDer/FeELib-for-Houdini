@@ -7,6 +7,10 @@ import fee_Utils
 # from importlib import reload
 # reload(fee_Utils)
 
+def displayConfirmation():
+    sureToRunThis = hou.ui.displayConfirmation('Are you sure you want to run this')
+    if not sureToRunThis:
+        raise SystemExit('Stop Run', sureToRunThis)
 
 def readTXTAsList(outList, txt):
     for line in txt.readlines():

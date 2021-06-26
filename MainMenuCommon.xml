@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mainMenu>
+  <menu>
+
+    <addScriptItem id="open$HIP">
+      <label>Open $HIP</label>
+      <parent>file_menu</parent>
+      <insertAfter>recent_files</insertAfter>
+      <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?DATATYPES_folder.svg
+
+import os
+
+start_directory = hou.getenv('HIP')
+os.startfile(start_directory)
+
+    ]]></scriptCode>
+    </addScriptItem>
+
+    <addScriptItem id="open$TEMP">
+      <label>Open $TEMP</label>
+      <parent>file_menu</parent>
+      <insertAfter>open$HIP</insertAfter>
+      <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?DATATYPES_folder.svg
+
+import os
+
+start_directory = hou.getenv('TEMP')
+os.startfile(start_directory)
+
+    ]]></scriptCode>
+    </addScriptItem>
+
+    <addScriptItem id="updatemode">
+      <label>Update Mode</label>
+      <parent>FeE</parent>
+      <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?DESKTOP_application.svg
+if hou.ui.updateMode() == hou.updateMode.AutoUpdate:
+    hou.ui.setUpdateMode(hou.updateMode.Manual)
+else:
+    hou.ui.setUpdateMode(hou.updateMode.AutoUpdate)
+    ]]></scriptCode>
+    </addScriptItem>
+
+  </menu>
+
+
+
+
+
+
+  <menuBar>
+    <!-- ======================== FeE Menu ============================== -->
+    <subMenu id="FeE">
+    <label>FeE</label>
+
+      <scriptItem id="git_pull">
+      <label>Git Pull</label>
+        <scriptCode><![CDATA[
+#SHELF_download_engine_plugin
+import fee_Utils
+# from importlib import reload
+# reload(fee_Utils)
+FeELib_path = hou.getenv('FeELib')
+fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="hideFeENode">
+      <label>Hide FeE Node</label>
+        <scriptCode><![CDATA[
+#SOP_visibility
+import fee_HDA
+# from importlib import reload
+# reload(fee_HDA)
+#fee_HDA.checkHideFeENode(keepHide = True, detectName = False, detectPath = True)
+fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="updatemode">
+      <label>Update Mode</label>
+        <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?DESKTOP_application.svg
+if hou.ui.updateMode() == hou.updateMode.AutoUpdate:
+    hou.ui.setUpdateMode(hou.updateMode.Manual)
+else:
+    hou.ui.setUpdateMode(hou.updateMode.AutoUpdate)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+      <scriptItem id="reverseSaveMode">
+      <label>Reverse Save Mode</label>
+        <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?DESKTOP_application.svg
+hipFile = hou.hipFile
+saveMode = hipFile.saveMode()
+if saveMode == hou.saveMode.Text:
+    hipFile.setSaveMode(hou.saveMode.Binary)
+else:
+    hipFile.setSaveMode(hou.saveMode.Text)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="clearABCCache">
+      <label>Clear ABC Cache</label>
+        <scriptCode><![CDATA[
+#SOP_alembic
+import _alembic_hom_extensions as abc
+abc.alembicClearArchiveCache()
+      ]]></scriptCode>
+      </scriptItem>
+
+
+  </menuBar>
+
+</mainMenu>

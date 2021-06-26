@@ -11,10 +11,8 @@
     <memberTool name="unlock_FeE_HDA_publish"/>
     <memberTool name="unlock_HDA_publish"/>
     <memberTool name="HideFeENode"/>
-    <memberTool name="convert_usedDefi_to_BalckBox"/>
-    <memberTool name="open$HIP"/>
-    <memberTool name="open$TEMP"/>
-    <memberTool name="git pull"/>
+    <memberTool name="extractAllUsedDefiToEmbeded"/>
+    <memberTool name="findRefNode"/>
     <memberTool name="Correct Wrangle Parmeter"/>
   </toolshelf>
 
@@ -89,138 +87,49 @@ fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True
 ]]></script>
   </tool>
 
-  <tool name="convert_usedDefi_to_BalckBox" label="Convert Used Definition to Balck Box" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+  <tool name="findRefNode" label="Find Ref Node" icon="PLASMA_App">
     <script scriptType="python"><![CDATA[
-import hou
-import os
-
-import fee_HDA
-
-# from importlib import reload
-# reload(fee_HDA)
-
-'''
-theTool = hou.shelves.runningTool()
-if theTool.icon().count("hicon:/SVGIcons.index?NODEFLAGS_hardlock.svg")==0:
-    theTool.setIcon("hicon:/SVGIcons.index?NODEFLAGS_hardlock.svg")
+def isRef(str, base_node, node):
+    path = base_node.path()
+    if ( path in str ):
+        return True
+    path = node.relativePathTo(base_node)
+    if ( path in str ):
+        return True
+    return False
     
-if theTool.label().count("Create BlackBoxAsset")==0:
-    theTool.setLabel("Create BlackBoxAsset")
-    
-if theTool.name().count("Create_BlackBox")==0:
-    theTool.setName("Create_BlackBox")
-'''
 
-ignoreNodeTypeNames = (
-'csr_rbd_bullet_solver.hda',
-'csr_PyroSolverSop.hda',
-'csr_materialbuilder.hda',
-'csr_dir_displacement_shader.hda',
 
-)
+selectedNodes = hou.selectedNodes()
+if selectedNodes:
+    print()
+    print()
+    print()
 
-# hou.ui.displayMessage('å»ºè®®åå¦å­ä¸çHip')
-buttons = ("ç¡®è®¤", "åæ¶")
-checkInput = hou.ui.readInput(r'ç¡®è®¤è¦è¿è¡è½¬black boxå', buttons = buttons, close_choice = 1)
 
-if checkInput[0] == 0:
-    BlackBoxMode = hou.ui.displayMessage(text='è¯·éæ©æåé»ççæ¨¡å¼\n(æ´åæ¨¡å¼ä¼å°ææHDAå­æ¾è¿ä¸ä¸ª.hdaæä»¶)',buttons=('ç¬ç«','æ´å'))
-
-    HIPPath = hou.hipFile.path()
-    save_OTLFolderPath = os.path.split(HIPPath)[0] + '/otls/'
-        
-    #print(save_OTLFolderPath)
-    #print(os.listdir(save_OTLFolderPath))
-    for subDir in os.listdir(save_OTLFolderPath):
-        subFullDir = save_OTLFolderPath + subDir
-        if not os.path.isfile(subFullDir):
-            continue
-        #print(os.path.splitext(subDir))
-        if os.path.splitext(subDir)[1].lower() != '.hda':
-            continue
-        try:
-            hou.hda.uninstallFile(subFullDir)
-        except:
-            pass
-        os.remove(subFullDir)
-
-    save_OTLPath = save_OTLFolderPath + '/blackBox.hda'
-
-    if not os.path.exists(save_OTLFolderPath):
-        os.makedirs(save_OTLFolderPath)
-    
-    convertedDefi = []
-    if BlackBoxMode == 0:
-        newHDAFilePaths = []
-    else:
-        newHDAFilePaths = [save_OTLPath]
-
-    selectedNodes = hou.selectedNodes()
-    for selectedNode in selectedNodes:
-        for allSubChild in selectedNode.allSubChildren():
-            if not allSubChild.matchesCurrentDefinition():
+for selectedNode in selectedNodes:
+    refTimes = 0
+    nodeTypeName = selectedNode.type().name()
+    print('Referenced Node Name:', end='')
+    print(nodeTypeName)
+    for subNode in hou.node('/obj').allSubChildren(top_down=True, recurse_in_locked_nodes=False):
+        for parm in subNode.parms():
+            val = parm.rawValue()
+            if isRef(val, selectedNode, subNode):
+                print(parm)
+                refTimes += 1
+                break
                 continue
-            nodeType = allSubChild.type()
-            defi = nodeType.definition()
-            if defi is None:
+            val = parm.evalAsString()
+            if isRef(val, selectedNode, subNode):
+                print(parm)
+                refTimes += 1
+                break
                 continue
-            if defi in convertedDefi:
-                continue
-            if fee_HDA.isSideFXDefinition(defi):
-                continue
-            nodeTypeName = allSubChild.type().name()
-            if nodeTypeName in ignoreNodeTypeNames:
-                continue
-
-            if BlackBoxMode == 0:
-                defiPath = defi.libraryFilePath()
-                save_OTLPath = save_OTLFolderPath + '/' + os.path.split(defiPath)[1]
-
-            allSubChild.allowEditingOfContents(propagate=True)
-            if 1:
-                defi.save(save_OTLPath, template_node = allSubChild, compile_contents=True, black_box=True, create_backup=False)
-            else:
-                defi.save(save_OTLPath, compile_contents=False, black_box=True, create_backup=False)
                 
-            convertedDefi.append(defi)
-            
-            if BlackBoxMode == 0 and save_OTLPath not in newHDAFilePaths:
-                newHDAFilePaths.append(save_OTLPath)
+    print('This Node has been Referenced Times: ', end='')
+    print(refTimes)
 
-    for newHDAFilePath in newHDAFilePaths:
-        hou.hda.installFile(newHDAFilePath)
-
-    #hou.hda.uninstallFile(defiPath)
-    #convertedDefi = list(set(convertedDefi)) #å»é
-]]></script>
-  </tool>
-
-  <tool name="open$HIP" label="Open $HIP" icon="hicon:/SVGIcons.index?DESKTOP_application.svg">
-    <script scriptType="python"><![CDATA[
-import os
-
-start_directory = hou.getenv('HIP')
-os.startfile(start_directory)
-]]></script>
-  </tool>
-
-  <tool name="open$TEMP" label="Open $TEMP" icon="hicon:/SVGIcons.index?DESKTOP_application.svg">
-    <script scriptType="python"><![CDATA[
-import os
-
-start_directory = hou.getenv('TEMP')
-os.startfile(start_directory)
-]]></script>
-  </tool>
-
-  <tool name="git pull" label="Git Pull" icon="SHELF_download_engine_plugin">
-    <script scriptType="python"><![CDATA[
-import fee_Utils
-# from importlib import reload
-# reload(fee_Utils)
-
-FeELib_path = hou.getenv('FeELib')
-fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
 ]]></script>
   </tool>
 
@@ -277,6 +186,39 @@ for node in selectedNodes:
             node.parm('bindparm' + stridx).set(usedAttribNames[idx])
 
 
+]]></script>
+  </tool>
+
+  <tool name="extractAllUsedDefiToEmbeded" label="Extract All Used Defi To Embeded" icon="hicon:/SVGIcons.index?MISC_digital_asset.svg">
+    <script scriptType="python"><![CDATA[
+import hou
+import os
+
+import fee_HDA
+from importlib import reload
+reload(fee_HDA)
+
+
+ignoreNodeTypeNames = (
+'',
+
+)
+
+fee_HDA.extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = ignoreNodeTypeNames)
+
+
+
+'''
+theTool = hou.shelves.runningTool()
+if theTool.icon().count("hicon:/SVGIcons.index?NODEFLAGS_hardlock.svg")==0:
+    theTool.setIcon("hicon:/SVGIcons.index?NODEFLAGS_hardlock.svg")
+    
+if theTool.label().count("Create BlackBoxAsset")==0:
+    theTool.setLabel("Create BlackBoxAsset")
+    
+if theTool.name().count("Create_BlackBox")==0:
+    theTool.setName("Create_BlackBox")
+'''
 ]]></script>
   </tool>
 </shelfDocument>
