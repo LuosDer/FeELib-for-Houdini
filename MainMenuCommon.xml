@@ -8,12 +8,10 @@
       <insertAfter>recent_files</insertAfter>
       <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DATATYPES_folder.svg
-
 import os
 
 start_directory = hou.getenv('HIP')
 os.startfile(start_directory)
-
     ]]></scriptCode>
     </addScriptItem>
 
@@ -23,12 +21,10 @@ os.startfile(start_directory)
       <insertAfter>open$HIP</insertAfter>
       <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DATATYPES_folder.svg
-
 import os
 
 start_directory = hou.getenv('TEMP')
 os.startfile(start_directory)
-
     ]]></scriptCode>
     </addScriptItem>
 
@@ -64,6 +60,8 @@ import fee_Utils
 # from importlib import reload
 # reload(fee_Utils)
 FeELib_path = hou.getenv('FeELib')
+if FeELib is None:
+    raise ValueError('not exist FeELib env')
 fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
       ]]></scriptCode>
       </scriptItem>
@@ -88,6 +86,19 @@ if hou.ui.updateMode() == hou.updateMode.AutoUpdate:
     hou.ui.setUpdateMode(hou.updateMode.Manual)
 else:
     hou.ui.setUpdateMode(hou.updateMode.AutoUpdate)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="openFeELibFolder">
+      <label>Open FeELib Folder</label>
+        <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?DATATYPES_folder.svg
+import os
+
+start_directory = hou.getenv('FeELib')
+if FeELib is None:
+    raise ValueError('not exist FeELib env')
+os.startfile(start_directory)
       ]]></scriptCode>
       </scriptItem>
 
