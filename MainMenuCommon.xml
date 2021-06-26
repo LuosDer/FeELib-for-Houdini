@@ -28,15 +28,16 @@ os.startfile(start_directory)
     ]]></scriptCode>
     </addScriptItem>
 
-    <addScriptItem id="updatemode">
-      <label>Update Mode</label>
-      <parent>FeE</parent>
+    <addScriptItem id="open$HFS">
+      <label>Open $HFS</label>
+      <parent>file_menu</parent>
+      <insertAfter>open$TEMP</insertAfter>
       <scriptCode><![CDATA[
-#hicon:/SVGIcons.index?DESKTOP_application.svg
-if hou.ui.updateMode() == hou.updateMode.AutoUpdate:
-    hou.ui.setUpdateMode(hou.updateMode.Manual)
-else:
-    hou.ui.setUpdateMode(hou.updateMode.AutoUpdate)
+#hicon:/SVGIcons.index?DATATYPES_folder.svg
+import os
+
+start_directory = hou.getenv('HFS')
+os.startfile(start_directory)
     ]]></scriptCode>
     </addScriptItem>
 
@@ -52,7 +53,7 @@ else:
     <subMenu id="FeE">
     <label>FeE</label>
 
-      <scriptItem id="git_pull">
+      <scriptItem id="fee_git_pull">
       <label>Git Pull FeELib(Need Git Bash)</label>
         <scriptCode><![CDATA[
 #SHELF_download_engine_plugin
@@ -66,7 +67,7 @@ fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
       ]]></scriptCode>
       </scriptItem>
 
-      <scriptItem id="hideFeENode">
+      <scriptItem id="fee_hideFeENode">
       <label>Toggle Hide or Unhide FeE Node</label>
         <scriptCode><![CDATA[
 #SOP_visibility
@@ -78,7 +79,7 @@ fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True
       ]]></scriptCode>
       </scriptItem>
 
-      <scriptItem id="updatemode">
+      <scriptItem id="fee_toggle_updateMode">
       <label>Toggle Update Mode</label>
         <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DESKTOP_application.svg
@@ -89,7 +90,7 @@ else:
       ]]></scriptCode>
       </scriptItem>
 
-      <scriptItem id="openFeELibFolder">
+      <scriptItem id="fee_openFeELibFolder">
       <label>Open FeELib Folder</label>
         <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DATATYPES_folder.svg
@@ -103,7 +104,7 @@ os.startfile(start_directory)
       </scriptItem>
 
 
-      <scriptItem id="reverseSaveMode">
+      <scriptItem id="fee_reverseSaveMode">
       <label>Toggle Save Mode</label>
         <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DESKTOP_application.svg
@@ -116,7 +117,7 @@ else:
       ]]></scriptCode>
       </scriptItem>
 
-      <scriptItem id="clearABCCache">
+      <scriptItem id="fee_clearABCCache">
       <label>Clear ABC Cache</label>
         <scriptCode><![CDATA[
 #SOP_alembic
@@ -126,6 +127,7 @@ abc.alembicClearArchiveCache()
       </scriptItem>
 
 
+    </subMenu>
   </menuBar>
 
 </mainMenu>
