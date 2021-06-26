@@ -7,8 +7,8 @@ import fee_Utils
 # from importlib import reload
 # reload(fee_Utils)
 
-def displayConfirmation():
-    sureToRunThis = hou.ui.displayConfirmation('Are you sure you want to run this')
+def displayConfirmation(prevText='', postText=''):
+    sureToRunThis = hou.ui.displayConfirmation(prevText + '\n\nAre you sure you want to run this\n你是否确定要运行这个工具\n\n' + postText)
     if not sureToRunThis:
         raise SystemExit('Stop Run', sureToRunThis)
 

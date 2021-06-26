@@ -61,7 +61,7 @@ import fee_Utils
 # from importlib import reload
 # reload(fee_Utils)
 FeELib_path = hou.getenv('FeELib')
-if FeELib is None:
+if FeELib_path is None:
     raise ValueError('not exist FeELib env')
 fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
       ]]></scriptCode>
@@ -96,10 +96,10 @@ else:
 #hicon:/SVGIcons.index?DATATYPES_folder.svg
 import os
 
-start_directory = hou.getenv('FeELib')
-if FeELib is None:
+FeELib_path = hou.getenv('FeELib')
+if FeELib_path is None:
     raise ValueError('not exist FeELib env')
-os.startfile(start_directory)
+os.startfile(FeELib_path)
       ]]></scriptCode>
       </scriptItem>
 

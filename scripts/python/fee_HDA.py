@@ -813,41 +813,52 @@ def TABSubmenuPathfromDefi(defi):
 
 
 
-def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = ()):
-    fee_Utils.displayConfirmation()
+def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = (), ignoreFeEHDA = False):
+    fee_Utils.displayConfirmation(prevText = "This tool can copy all used HDA under all selectedNodes's allSubChildren to otls/ folder by the HIP path and also can convert those HDA to Black Box \n这个工具可以把所有 selectedNodes(选择的节点) 的 allSubChildren(子节点) 内用到的HDA复制到HIP路径下的otls/文件夹内 并可选转为Black Box")
 
-    toBlackBox = hou.ui.displayMessage('Convert to Black Box?', buttons = ("yes", "no"), default_choice = 0, close_choice = 0)
+    toBlackBox = hou.ui.displayMessage('Convert to Black Box?\n转为黑盒？', buttons = ("yes", "no"), default_choice = 0, close_choice = 0)
+    toBlackBox = toBlackBox == 0
 
-    blackBoxMode = hou.ui.displayMessage('HDA File Type', buttons=('Seperated', 'All in One'), default_choice = 1, close_choice = 1)
+    hdaFileType = hou.ui.displayMessage('HDA File Type\nHDA类型？', buttons=('Seperated', 'All in One'), default_choice = 1, close_choice = 1)
+    hdaFileType = hdaFileType == 1
 
     HIPPath = hou.hipFile.path()
     save_OTLFolderPath = os.path.split(HIPPath)[0] + '/otls/'
-        
-    #print(save_OTLFolderPath)
-    #print(os.listdir(save_OTLFolderPath))
-    for subDir in os.listdir(save_OTLFolderPath):
-        subFullDir = save_OTLFolderPath + subDir
-        if not os.path.isfile(subFullDir):
-            continue
-        #print(os.path.splitext(subDir))
-        if os.path.splitext(subDir)[1].lower() != '.hda':
-            continue
-        try:
-            hou.hda.uninstallFile(subFullDir)
-        except:
-            pass
-        os.remove(subFullDir)
-
-    save_OTLPath = save_OTLFolderPath + '/blackBox.hda'
+    if os.path.exists(save_OTLFolderPath):
+        #print(save_OTLFolderPath)
+        #print(os.listdir(save_OTLFolderPath))
+        for subDir in os.listdir(save_OTLFolderPath):
+            subFullDir = save_OTLFolderPath + subDir
+            if not os.path.isfile(subFullDir):
+                continue
+            #print(os.path.splitext(subDir))
+            if os.path.splitext(subDir)[1].lower() != '.hda':
+                continue
+            try:
+                hou.hda.uninstallFile(subFullDir)
+            except:
+                pass
+            os.remove(subFullDir)
+    else:
+        os.mkdir(save_OTLFolderPath)
+    
+    save_OTLPath = save_OTLFolderPath
+    if toBlackBox:
+        save_OTLPath += '/allUsedHDAs_blackBox.hda'
+    else:
+        save_OTLPath += '/allUsedHDAs.hda'
 
     if not os.path.exists(save_OTLFolderPath):
         os.makedirs(save_OTLFolderPath)
 
     convertedDefi = []
-    if blackBoxMode == 0:
-        newHDAFilePaths = []
-    else:
+    if hdaFileType:
         newHDAFilePaths = [save_OTLPath]
+    else:
+        newHDAFilePaths = []
+
+    
+    allowEditingOfContentsNodes = []
 
     selectedNodes = hou.selectedNodes()
     for selectedNode in selectedNodes:
@@ -860,29 +871,40 @@ def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = ()):
                 continue
             if defi in convertedDefi:
                 continue
-            if fee_HDA.isSideFXDefinition(defi):
+            #if fee_HDA.isSideFXDefinition(defi):
+            if isSideFXDefinition(defi):
                 continue
+            if ignoreFeEHDA:
+                #if fee_HDA.isFeENode(nodeType):
+                if isFeENode(nodeType):
+                    continue
             nodeTypeName = allSubChild.type().name()
             if nodeTypeName in ignoreNodeTypeNames:
                 continue
 
-            if blackBoxMode == 0:
+            if not hdaFileType:
                 defiPath = defi.libraryFilePath()
                 save_OTLPath = save_OTLFolderPath + '/' + os.path.split(defiPath)[1]
 
             allSubChild.allowEditingOfContents(propagate=True)
-            if 1:
+            allowEditingOfContentsNodes.append(allSubChild)
+            if toBlackBox:
                 defi.save(save_OTLPath, template_node = allSubChild, compile_contents=True, black_box=True, create_backup=False)
+                #defi.save(save_OTLPath, compile_contents=False, black_box=True, create_backup=False)
             else:
-                defi.save(save_OTLPath, compile_contents=False, black_box=True, create_backup=False)
+                defi.save(save_OTLPath, template_node = allSubChild, create_backup=False)
                 
             convertedDefi.append(defi)
             
-            if blackBoxMode == 0 and save_OTLPath not in newHDAFilePaths:
+            if not hdaFileType and save_OTLPath not in newHDAFilePaths:
                 newHDAFilePaths.append(save_OTLPath)
 
+    for node in allowEditingOfContentsNodes:
+        node.matchCurrentDefinition()
+    
     for newHDAFilePath in newHDAFilePaths:
         hou.hda.installFile(newHDAFilePath)
+    
 
     #hou.hda.uninstallFile(defiPath)
     #convertedDefi = list(set(convertedDefi)) #去重
