@@ -57,7 +57,7 @@ else:
     <label>FeE</label>
 
       <scriptItem id="git_pull">
-      <label>Git Pull</label>
+      <label>Git Pull FeELib(Need Git Bash)</label>
         <scriptCode><![CDATA[
 #SHELF_download_engine_plugin
 import fee_Utils
@@ -69,7 +69,7 @@ fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
       </scriptItem>
 
       <scriptItem id="hideFeENode">
-      <label>Hide FeE Node</label>
+      <label>Toggle Hide or Unhide FeE Node</label>
         <scriptCode><![CDATA[
 #SOP_visibility
 import fee_HDA
@@ -81,7 +81,7 @@ fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True
       </scriptItem>
 
       <scriptItem id="updatemode">
-      <label>Update Mode</label>
+      <label>Toggle Update Mode</label>
         <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DESKTOP_application.svg
 if hou.ui.updateMode() == hou.updateMode.AutoUpdate:
@@ -93,7 +93,7 @@ else:
 
 
       <scriptItem id="reverseSaveMode">
-      <label>Reverse Save Mode</label>
+      <label>Toggle Save Mode</label>
         <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DESKTOP_application.svg
 hipFile = hou.hipFile
