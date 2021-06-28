@@ -6,12 +6,103 @@ import hou
 # from importlib import reload
 # reload(fee_Node)
 
+
+def convertNodeTuple(node):
+    if isinstance(node, tuple):
+        if len(node) > 0:
+            if isinstance(node[0], hou.Node):
+                return node
+        else:
+            return node
+    elif isinstance(node, hou.Node):
+        return (node, )
+    
+    raise TypeError('Only Support Node or Node Tuple Type')
+
 def getUserWantedSelectedNodes(kwargsNode):
     selectedNodes = hou.selectedNodes()
     if kwargsNode in selectedNodes:
         return selectedNodes
     else:
         return (kwargsNode, )
+
+
+def nodesBottomRightPosition(selectedNodes):
+    selectedNodesTuple = convertNodeTuple(selectedNodes)
+    if len(selectedNodesTuple) == 0:
+        raise ValueError('No Input Nodes')
+
+    BottomRightPosition = hou.Vector2(1e10, -1e10)
+    for selectedNode in selectedNodes:
+        nodePosition = selectedNode.position()
+        BottomRightPosition[0] = min(BottomRightPosition[0], nodePosition[0])
+        BottomRightPosition[1] = max(BottomRightPosition[1], nodePosition[1])
+    
+    return BottomRightPosition
+
+def createCopyNodeParmsNode(selectedNodes):
+    selectedNodesTuple = convertNodeTuple(selectedNodes)
+    if len(selectedNodesTuple) == 0:
+        raise ValueError('No Input Nodes')
+        
+    parentNode = selectedNodes[0].parent()
+
+    copyParmsNode = parentNode.node('./copyNodeParms_tempNodeforPython1')
+    if copyParmsNode is None:
+        copyParmsNode = parentNode.createNode('FeE::copyNodeParms', node_name = 'copyNodeParms_tempNodeforPython1')
+    
+    sourceNodesStrs = []
+    for selectedNode in selectedNodes:
+        sourceNodesStrs.append(selectedNode.name())
+        
+    copyParmsNode.parm('sourceNodes').set('../' + ' ../'.join(sourceNodesStrs))
+    
+    nwePos = nodesBottomRightPosition(selectedNodesTuple) + hou.Vector2(0, -1)
+    copyParmsNode.setPosition(nwePos)
+
+def setCopyNodeParmsNode(selectedNodes):
+    selectedNodesTuple = convertNodeTuple(selectedNodes)
+    if len(selectedNodesTuple) == 0:
+        raise ValueError('No Input Nodes')
+
+    parentNode = selectedNodes[0].parent()
+
+    copyParmsNode = parentNode.node('./copyNodeParms_tempNodeforPython1')
+    sourceNodesStrs = []
+    for selectedNode in selectedNodes:
+        sourceNodesStrs.append(selectedNode.name())
+        
+    copyParmsNode.parm('targetNodes').set('../' + ' ../'.join(sourceNodesStrs))
+    
+
+
+def extract_LockedNull(selectedNodes, subPath = 'extractLockedGeo', savePath_rel_to_HIP = True, keep_name = True):
+    selectedNodesTuple = convertNodeTuple(selectedNodes)
+    for selectedNode in selectedNodesTuple:
+        nodetype = selectedNode.type()
+        if nodetype.name() == 'null' and selectedNode.isGenericFlagSet(hou.nodeFlag.Lock):
+            
+            filepath = ''.join(['/', subPath, '/', selectedNode.path().lstrip('/').replace('/', '.'), '.bgeo'])
+
+            envName = "HIP" if savePath_rel_to_HIP else "TEMP"
+            filepath_abs = hou.getenv(envName) + filepath
+            filepath_rel = '$' + envName + filepath
+            # print(filepath_abs)
+            # print(filepath_rel)
+            import os
+            pathDir = os.path.split(filepath_abs)[0]
+            if not os.path.exists(pathDir):
+                os.mkdir(pathDir)
+            # print(pathDir)
+            selectedNode.geometry().saveToFile(filepath_abs)
+
+            selectedNode.setGenericFlag(hou.nodeFlag.Lock, 0)
+            newnode = selectedNode.changeNodeType(new_node_type='file', keep_name = keep_name, keep_parms=False, keep_network_contents=True, force_change_on_node_type_match=True)
+            newnode.setParms({"file": filepath_rel})
+
+        elif selectedNode.isNetwork() and nodetype.category().name() == 'Sop' and not selectedNode.isLockedHDA():
+            for child in selectedNode.children():
+                foreverychildren(child)
 
 def setNodeAsOutput(selectedNode):
     #selectedNode = hou.selectedNodes()[0]
@@ -53,10 +144,7 @@ def setNodeAsOutput(selectedNode):
 
 
 def subNodeCount(selectedNodes):
-    if isinstance(selectedNodes, hou.Node):
-        selectedNodesTuple = (selectedNodes, )
-    else:
-        selectedNodesTuple = selectedNodes
+    selectedNodesTuple = convertNodeTuple(selectedNodes)
 
     subNodeCountSum = len(selectedNodesTuple)
     for selectedNode in selectedNodesTuple:
@@ -66,10 +154,7 @@ def subNodeCount(selectedNodes):
     return subNodeCountSum
 
 def bakeAllParms(selectedNodes):
-    if isinstance(selectedNodes, hou.Node):
-        selectedNodesTuple = (selectedNodes, )
-    else:
-        selectedNodesTuple = selectedNodes
+    selectedNodesTuple = convertNodeTuple(selectedNodes)
 
     for selectedNode in selectedNodesTuple:
         if 0:

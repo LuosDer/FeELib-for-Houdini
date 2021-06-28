@@ -50,8 +50,10 @@ os.startfile(start_directory)
 
   <menuBar>
     <!-- ======================== FeE Menu ============================== -->
-    <subMenu id="FeE">
+    <subMenu id="FeELibMainMenu">
     <label>FeE</label>
+
+      <!-- <separatorItem id="fee_mainMenu_firstSeparatorItem"/> -->
 
       <scriptItem id="fee_git_pull">
       <label>Git Pull FeELib(Need Git Bash)</label>
@@ -103,6 +105,8 @@ os.startfile(FeELib_path)
       ]]></scriptCode>
       </scriptItem>
 
+      <separatorItem id="fee_mainMenu_separatorItem01"/>
+
 
       <scriptItem id="fee_reverseSaveMode">
       <label>Toggle Save Mode</label>
@@ -117,6 +121,15 @@ else:
       ]]></scriptCode>
       </scriptItem>
 
+      <scriptItem id="removeEmbededDefi">
+      <label>Remove Embeded HDA</label>
+        <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?BUTTONS_clear.svg
+import fee_HDA
+fee_HDA.removeEmbeded(displayConfirmation = True)
+      ]]></scriptCode>
+      </scriptItem>
+
       <scriptItem id="fee_clearABCCache">
       <label>Clear ABC Cache</label>
         <scriptCode><![CDATA[
@@ -126,6 +139,7 @@ abc.alembicClearArchiveCache()
       ]]></scriptCode>
       </scriptItem>
 
+      <!-- <separatorItem id="fee_mainMenu_lastSeparatorItem"/> -->
 
     </subMenu>
   </menuBar>

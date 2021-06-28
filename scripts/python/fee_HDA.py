@@ -452,7 +452,7 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             raise ValueError('fee Error')
 
 
-    copyParms_NodetoNode(copyOrigNode, newNode)
+    copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
 
     #if origNodeshape is not None:
         #这个是自动的啦
@@ -703,36 +703,13 @@ def findAllSubParmRawValue(subnet, strValue):
 
 
 
-def extract_LockedNull(node, subPath = 'extractLockedGeo', savePath_rel_to_HIP = True, keep_name = True):
-    nodetype = node.type()
-    if nodetype.name() == 'null' and node.isGenericFlagSet(hou.nodeFlag.Lock):
-        
-        filepath = ''.join(['/', subPath, '/', node.path().lstrip('/').replace('/', '.'), '.bgeo'])
 
-        envName = "HIP" if savePath_rel_to_HIP else "TEMP"
-        filepath_abs = hou.getenv(envName) + filepath
-        filepath_rel = '$' + envName + filepath
-        # print(filepath_abs)
-        # print(filepath_rel)
-        import os
-        pathDir = os.path.split(filepath_abs)[0]
-        if not os.path.exists(pathDir):
-            os.mkdir(pathDir)
-        # print(pathDir)
-        node.geometry().saveToFile(filepath_abs)
+def removeCategoryEmbeded(nodeTypeCategory = hou.nodeTypeCategories()['Sop'], displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation()
 
-        node.setGenericFlag(hou.nodeFlag.Lock, 0)
-        newnode = node.changeNodeType(new_node_type='file', keep_name = keep_name, keep_parms=False, keep_network_contents=True, force_change_on_node_type_match=True)
-        newnode.setParms({"file": filepath_rel})
+    dictNodeTypes = nodeTypeCategory.nodeTypes()
 
-    elif node.isNetwork() and nodetype.category().name() == 'Sop' and not node.isLockedHDA():
-        for child in node.children():
-            foreverychildren(child)
-
-
-
-def removeEmbeded(netCategories):
-    dictNodeTypes = netCategories.nodeTypes()
     for nodeTypeDictsKey in dictNodeTypes:
         nodeType = dictNodeTypes[nodeTypeDictsKey]
         defi = nodeType.definition()
@@ -741,6 +718,15 @@ def removeEmbeded(netCategories):
         if defi.libraryFilePath() == 'Embedded':
             defi.destroy()
 
+def removeEmbeded(displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation()
+
+    nodeTypeCategories = hou.nodeTypeCategories()
+
+    for nodeTypeCategoryKey in nodeTypeCategories:
+        nodeTypeCategory = nodeTypeCategories[nodeTypeCategoryKey]
+        removeCategoryEmbeded(nodeTypeCategory = nodeTypeCategory)
 
 def hasEmbeded(netCategories):
     dictNodeTypes = netCategories.nodeTypes()

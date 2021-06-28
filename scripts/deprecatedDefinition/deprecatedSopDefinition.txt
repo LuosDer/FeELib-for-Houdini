@@ -14,6 +14,11 @@ meshlayout_fee
 meshlayout_multilayer_fee
 copytopoints_fee
 matchpolywinding_fast_fee::0.1
+copyNodeParms_fee::0.1
+
+chain2d_fee
+chain2d_fee::1.0
+chain2d_fee::1.2
 
 separatepoly2d_fee
 uniformnormaldir_fee::1.0
@@ -51,12 +56,14 @@ intrinsicpromote_fee
 matchtransform_bb_fee
 groupfromenum_fee
 matchdirorient_fee::1.0
+rayfromUp_fee
+matchPolyWinding_fast_fee::1.0
 
 extractallpiecestransform_fee
 extractsimilarpiecestransform_fee
 uvtile_fee::0.1
 uvtile_fee::1.0
-
+blastpiece_fee
 
 import_fbx_fee
 chineseeaves_fee

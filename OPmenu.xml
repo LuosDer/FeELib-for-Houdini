@@ -2,20 +2,9 @@
 <menuDocument>
   <menu>
 
-    <subMenu id="FeE">
+    <subMenu id="FeELibOPMenu">
       <label>FeE</label>
       <insertBefore />
-
-
-
-      <scriptItem id="CopyNodeTypeName">
-        <label>Copy Node Type Name</label>
-        <scriptCode><![CDATA[
-import fee_Utils
-name = kwargs["node"].type().name()
-fee_Utils.setClipboardText(name)
-      ]]></scriptCode>
-      </scriptItem>
 
 
 
@@ -43,6 +32,61 @@ fee_Node.bakeAllParms(selectedNodes)
 
 
 
+
+      <scriptItem id="createCopyNodeParmsNode">
+        <label>Create Copy Node Parms Node</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.createCopyNodeParmsNode(selectedNodes)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="setCopyNodeParmsNode">
+        <label>Set Copy Node Parms Node</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.setCopyNodeParmsNode(selectedNodes)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+      <scriptItem id="extract_LockedNull">
+        <label>Extract Locked Null</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.extract_LockedNull(selectedNodes)
+      ]]></scriptCode>
+      </scriptItem>
+
+
+
+      <separatorItem id="fee_opmenu_separatorItem01"/>
+
+      <scriptItem id="setNodeAsOutput">
+        <label>Set Node as Output</label>
+        <scriptCode><![CDATA[
+import fee_Node
+kwargsNode = kwargs["node"]
+fee_Node.setNodeAsOutput(kwargsNode)
+      ]]></scriptCode>
+      </scriptItem>
+
+      <scriptItem id="setToDefaultColorShape">
+        <label>Set to Default Color and Shape</label>
+        <scriptCode><![CDATA[
+import fee_Node
+#kwargsNode = kwargs["node"]
+selectedItems = hou.selectedItems()
+fee_Node.setToDefaultColorShape(selectedItems)
+      ]]></scriptCode>
+      </scriptItem>
+
       <scriptItem id="setToDefaultPositionWithNode">
         <label>Set to Default Position with Node</label>
         <scriptCode><![CDATA[
@@ -54,7 +98,6 @@ fee_Node.setToDefaultPositionWithNode(selectedItems)
       </scriptItem>
 
 
-
       <scriptItem id="setToDefaultPosition">
         <label>Set to Default Position</label>
         <scriptCode><![CDATA[
@@ -62,17 +105,6 @@ import fee_Node
 #kwargsNode = kwargs["node"]
 selectedItems = hou.selectedItems()
 fee_Node.setToDefaultPosition(selectedItems)
-      ]]></scriptCode>
-      </scriptItem>
-
-
-
-      <scriptItem id="setNodeAsOutput">
-        <label>Set Node as Output</label>
-        <scriptCode><![CDATA[
-import fee_Node
-kwargsNode = kwargs["node"]
-fee_Node.setNodeAsOutput(kwargsNode)
       ]]></scriptCode>
       </scriptItem>
 
@@ -89,6 +121,7 @@ print(fee_Node.subNodeCount(selectedNodes))
       </scriptItem>
 
 
+      <separatorItem id="fee_opmenu_separatorItem02"/>
 
       <scriptItem id="selectSameNodes">
         <label>Select Same Nodes</label>
@@ -101,17 +134,7 @@ fee_Node.selectSameNodes(selectedNodes)
       </scriptItem>
 
 
-      <scriptItem id="setToDefaultColorShape">
-        <label>Set to Default Color and Shape</label>
-        <scriptCode><![CDATA[
-import fee_Node
-#kwargsNode = kwargs["node"]
-selectedItems = hou.selectedItems()
-fee_Node.setToDefaultColorShape(selectedItems)
-      ]]></scriptCode>
-      </scriptItem>
-
-
+      <separatorItem id="fee_opmenu_separatorItem03"/>
 
       <scriptItem id="createNode">
         <label>Create Node</label>

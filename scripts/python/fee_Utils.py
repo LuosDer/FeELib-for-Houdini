@@ -33,10 +33,6 @@ def setClipboardText(text):
 
 
 def gitPullByBat(repositoryPath, reloadAllFiles = False):
-
-    #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpull.bat')
-    #os.system('D:; cd D:/Git/houdini_toolkit; git pull')
-
     if repositoryPath is None:
         raise TypeError('invalid input', repositoryPath)
 
@@ -58,4 +54,15 @@ def gitPullByBat(repositoryPath, reloadAllFiles = False):
     if reloadAllFiles:
         hou.hda.reloadAllFiles(rescan = True)
         #hou.hda.reloadNamespaceOrder()
+
+    '''
+    try:
+        from git.repo import Repo
+        repo = Repo(repositoryPath)
+        repo.git.pull(repositoryPath)
+    except:
+        pass
+    '''
+    #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpull.bat')
+    #os.system('D:; cd D:/Git/houdini_toolkit; git pull')
         

@@ -12,7 +12,6 @@
     <memberTool name="unlock_HDA_publish"/>
     <memberTool name="extractAllUsedDefiToEmbeded"/>
     <memberTool name="findRefNode"/>
-    <memberTool name="Correct Wrangle Parmeter"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -81,15 +80,11 @@ def isRef(str, base_node, node):
     if ( path in str ):
         return True
     return False
-    
-
 
 selectedNodes = hou.selectedNodes()
 if selectedNodes:
     print()
     print()
-    print()
-
 
 for selectedNode in selectedNodes:
     refTimes = 0
@@ -117,61 +112,6 @@ for selectedNode in selectedNodes:
 ]]></script>
   </tool>
 
-  <tool name="Correct Wrangle Parmeter" label="Correct Wrangle Parmeter" icon="SOP_attribwrangle">
-    <script scriptType="python"><![CDATA[
-import re
-
-import fee_HDA
-
-selectedNodes = hou.selectedNodes()
-for node in selectedNodes:
-    nodeType = node.type()
-    nodeTypeName = nodeType.name()
-    if nodeTypeName != 'attribwrangle':
-        continue
-    
-    snippet = node.evalParm('snippet')
-    
-    vex_inplace = node.parm('vex_inplace')
-    vex_inplace.set(True)
-    for substr in ('attrib(0,', 'prim(0,', 'point(0,', 'vertex(0,', 'detail(0,'):
-        if substr in snippet:
-            vex_inplace.set(False)
-            break
-    
-    #print(usedAttribNames)
-    
-    if node.evalParm('autobind')==1 or node.evalParm('groupautobind')==1:
-        node.parm('autobind').set(False)
-        node.parm('groupautobind').set(False)
-        usedAttribNames = []
-        pattern = re.compile(r'@[a-zA-Z0-9]*')
-        usedAttribNames = pattern.findall(snippet)
-        usedAttribNames = list(set(usedAttribNames))
-
-        for idx in range(len(usedAttribNames)):
-            usedAttribNames[idx] = usedAttribNames[idx][1:]
-        
-        for topStr in ('elemnum', 'ptnum', 'primnum', 'vtxnum', 'numelem', 'numprim', 'numpt', 'numvtx'):
-            if topStr in usedAttribNames:
-                usedAttribNames.remove(topStr)
-
-        for topStr in ('color', 'Alpha', 'Cd', 'N', 'P'):
-            if topStr not in usedAttribNames:
-                continue
-            usedAttribNames.remove(topStr)
-            usedAttribNames.insert(0, topStr)
-            
-
-        node.parm('bindings').set(len(usedAttribNames))
-        for idx in range(len(usedAttribNames)):
-            stridx = str(idx+1)
-            node.parm('bindname' + stridx).set(usedAttribNames[idx])
-            node.parm('bindparm' + stridx).set(usedAttribNames[idx])
-
-
-]]></script>
-  </tool>
 
   <tool name="extractAllUsedDefiToEmbeded" label="Extract All Used HDA To Embeded" icon="hicon:/SVGIcons.index?MISC_digital_asset.svg">
     <script scriptType="python"><![CDATA[
