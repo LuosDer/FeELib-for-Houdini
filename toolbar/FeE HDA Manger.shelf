@@ -16,41 +16,40 @@
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
     <script scriptType="python"><![CDATA[
-import fee_HDA
+import fee_Node
 
 # from importlib import reload
-# reload(fee_HDA)
+# reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
-    fee_HDA.convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True)
+    fee_Node.convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = True)
 ]]></script>
   </tool>
 
   <tool name="convertFeE HDA_to_Subnet_publish" label="convert FeE HDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
     <script scriptType="python"><![CDATA[
-import fee_HDA
-
+import fee_Node
 # from importlib import reload
-# reload(fee_HDA)
+# reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
-    fee_HDA.convert_All_FeENode_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True)
+    fee_Node.convert_All_FeENode_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
 
 ]]></script>
   </tool>
 
   <tool name="unlock_FeE_HDA_publish" label="Unlock FeE HDA" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
     <script scriptType="python"><![CDATA[
-import fee_HDA
+import fee_Node
 
 # from importlib import reload
-# reload(fee_HDA)
+# reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
-    fee_HDA.unlock_All_FeENode(node, detectName = True, detectPath = False)
+    fee_Node.unlock_All_FeENode(node, detectName = True, detectPath = False, displayConfirmation = True)
 
 
 ]]></script>
@@ -58,14 +57,14 @@ for node in selectedNodes:
 
   <tool name="unlock_HDA_publish" label="Unlock HDA" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
     <script scriptType="python"><![CDATA[
-import fee_HDA
+import fee_Node
 
 # from importlib import reload
-# reload(fee_HDA)
+# reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
 for node in selectedNodes:
-    fee_HDA.unlock_All_HDA(node, detectName = True, detectPath = False)
+    fee_Node.unlock_All_HDA(node, detectName = True, detectPath = False, displayConfirmation = True)
 
 ]]></script>
   </tool>
@@ -111,7 +110,6 @@ for selectedNode in selectedNodes:
 
 ]]></script>
   </tool>
-
 
   <tool name="extractAllUsedDefiToEmbeded" label="Extract All Used HDA To Embeded" icon="hicon:/SVGIcons.index?MISC_digital_asset.svg">
     <script scriptType="python"><![CDATA[

@@ -13,19 +13,19 @@ import fee_Utils
 
 
 def convertDefi(inputNodeType):
-    if isinstance(nodeType, hou.HDADefinition):
+    if isinstance(inputNodeType, hou.HDADefinition):
         return inputNodeType
     elif isinstance(inputNodeType, hou.NodeType):
         return inputNodeType.definition()
-    elif isinstance(nodeType, hou.Node):
+    elif isinstance(inputNodeType, hou.Node):
         return inputNodeType.type().definition()
     else:
         raise TypeError('Invalid Type')
 
 def convertNodeType(inputNodeType):
-    if isinstance(nodeType, hou.NodeType):
+    if isinstance(inputNodeType, hou.NodeType):
         return inputNodeType
-    elif isinstance(nodeType, hou.Node):
+    elif isinstance(inputNodeType, hou.Node):
         return inputNodeType.type()
     elif isinstance(inputNodeType, hou.HDADefinition):
         return inputNodeType.nodeType()
@@ -98,7 +98,7 @@ def isFeENode(inputNodeType, detectName = True, detectPath = False):
 
     if detectName:
         nameComponents = nodeType.nameComponents()
-        if not ( (nameComponents[1]=='FeE' or nameComponents[1]=='Five elements Elf') or (nameComponents[2].endswith("_fee") and nodeType.description().startswith("FeE")) ):
+        if not ( ('FeE' in nameComponents[1] or 'Five elements Elf' in nameComponents[1]) or (nameComponents[2].endswith("_fee") and nodeType.description().startswith("FeE")) ):
             return False
     
     if detectPath:

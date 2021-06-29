@@ -2,7 +2,8 @@
 import hou
 
 
-# import fee_HDA
+import fee_Utils
+import fee_HDA
 
 # import fee_Node
 # from importlib import reload
@@ -207,13 +208,13 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
         return
     
     if Only_FeEHDA:
-        if not isFeENode(nodeType, detectName, detectPath):
+        if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
             return
 
     if ignore_SideFX_HDA:
         # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
         # if defi.libraryFilePath().startswith(defaultLibPath):
-        if isSideFXDefinition(defi):
+        if fee_HDA.isSideFXDefinition(defi):
             convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
             return
 
@@ -470,7 +471,7 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
             convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         else:
             if Only_FeEHDA:
-                if isFeENode(childNodeType, detectName, detectPath):
+                if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
                     convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
                 else:
                     convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
@@ -485,40 +486,52 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
 
 
 
-def convert_All_FeENode_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
+def convert_All_FeENode_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+
     node.allowEditingOfContents()
     for child in node.children():
         childNodeType = child.type()
-        #if isFeENode(childNodeType, detectName, detectPath):
+        #if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
         convertSubnet(child, ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
 
 
-def convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True):
+def convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+
     node.allowEditingOfContents()
     for child in node.children():
         convertSubnet(child, ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
 
 
 
-def unlock_All_HDA(node, detectName = True, detectPath = False):
+def unlock_All_HDA(node, detectName = True, detectPath = False, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+
     node.allowEditingOfContents()
     for child in node.children():
         childNodeType = child.type()
-        if isFeENode(childNodeType, detectName, detectPath):
+        if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
             # child.allowEditingOfContents()
             unlock_All_FeENode(child, detectName, detectPath)
-        elif isUnlockedHDA(child):
+        elif fee_HDA.isUnlockedHDA(child):
             unlock_All_FeENode(child, detectName, detectPath)
 
 
-def unlock_All_FeENode(node, detectName = True, detectPath = False):
+def unlock_All_FeENode(node, detectName = True, detectPath = False, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+
     node.allowEditingOfContents()
     for child in node.children():
         childNodeType = child.type()
-        if isFeENode(childNodeType, detectName, detectPath):
+        if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
             # child.allowEditingOfContents()
             unlock_All_FeENode(child, detectName, detectPath)
-        elif isUnlockedHDA(child):
+        elif fee_HDA.isUnlockedHDA(child):
             unlock_All_FeENode(child, detectName, detectPath)
 
 
