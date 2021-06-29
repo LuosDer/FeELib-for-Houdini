@@ -10,6 +10,7 @@
     <memberTool name="refresh all file SOP"/>
     <memberTool name="extract_all_sub"/>
     <memberTool name="Reconnect all Path to $HIP"/>
+    <memberTool name="createNodesUnderInput"/>
   </toolshelf>
 
   <tool name="filecache" label="File Cache" icon="SOP_filecache">
@@ -203,5 +204,33 @@ for selectedNode in selectedNodes:
             parm.set(rawValue)
             print(parm)
 ]]></script>
+  </tool>
+
+  <tool name="createNodesUnderInput" label="Create Nodes Under Input" icon="SOP_null">
+    <script scriptType="python"><![CDATA[
+import fee_Node
+# from importlib import reload
+# reload(fee_Node)
+
+nodeTypeNames = ('null', )
+#shiftPos = hou.Vector2(0, -1)
+
+selectedNodes = hou.selectedNodes()
+for selectedNode in selectedNodes:
+    
+    inputConnectors = selectedNode.inputConnectors()
+    numInput = len(inputConnectors)
+    for inputnum in range(numInput):
+        subnetInput = selectedNode.item(str(inputnum+1))
+        
+        upstreamNode = subnetInput
+        upstreamPos = upstreamNode.position()
+        
+        for nodesTypeName in nodeTypeNames:
+            upstreamNode = fee_Node.createOutputNode_allItemVer(upstreamNode, nodesTypeName)
+            #upstreamNode = upstreamNode.createOutputNode(nodesTypeName)
+            #upstreamPos += shiftPos
+            #upstreamNode.setPosition(upstreamPos)
+        ]]></script>
   </tool>
 </shelfDocument>
