@@ -110,7 +110,7 @@ def isFeENode(inputNodeType, detectName = True, detectPath = False):
         
         pathFeELib = hou.getenv('FeELib')
         if pathFeELib is None:
-            print('not found env: FeELib')
+            raise AttributeError('not found env: FeELib')
 
         if pathFeELib is not None:
             isInPathCondition = pathFeELib in libraryFilePath
@@ -122,6 +122,32 @@ def isFeENode(inputNodeType, detectName = True, detectPath = False):
         pathFeELib = hou.getenv('FeEworkHoudini')
         if pathFeELib is not None:
             isInPathCondition = isInPathCondition or pathFeELib in libraryFilePath
+
+        if not isInPathCondition:
+            return False
+    
+    return True
+
+def isSideFXLabsNode(inputNodeType, detectName = True, detectPath = False):
+    nodeType = convertNodeType(inputNodeType)
+
+    if detectName:
+        nameComponents = nodeType.nameComponents()
+        if not 'labs' in nameComponents[1]:
+            return False
+    
+    if detectPath:
+        defi = nodeType.definition()
+        if defi is None:
+            libraryFilePath = 'None'
+        else:
+            libraryFilePath = defi.libraryFilePath()
+        
+        pathFeELib = hou.getenv('SIDEFXLABS')
+        if pathFeELib is None:
+            raise AttributeError('not found env: SIDEFXLABS')
+
+        isInPathCondition = pathFeELib in libraryFilePath
 
         if not isInPathCondition:
             return False
