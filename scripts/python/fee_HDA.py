@@ -33,6 +33,186 @@ def convertNodeType(inputNodeType):
         raise TypeError('Invalid Type')
 
 
+
+
+
+def splitTypeNametoNameComponents(nodeTypeName):
+    ### FeE::attrib_fee::0.1 --> ['', 'FeE', 'attrib_fee', '0.1']
+    ### print(fee_HDA.splitTypeNametoNameComponents("FeE::attrib_fee::0.1"))
+    if not isinstance(nodeTypeName, str):
+        raise ValueError('input must be string')
+    
+    nameComponents = ['', '', '', '']
+    nodeTypeName = nodeTypeName.split('::')
+
+    listlen = len(nodeTypeName)
+    if listlen == 3:
+        if fee_Utils.isFloat(nodeTypeName[-1]):
+            nameComponents[3] = nodeTypeName[-1]
+        else:
+            raise ValueError('must be float')
+        
+        if fee_Utils.isFloat(nodeTypeName[-2]):
+            raise ValueError('can not be float')
+        else:
+            nameComponents[2] = nodeTypeName[-2]
+
+        if fee_Utils.isFloat(nodeTypeName[-3]):
+            raise ValueError('can not be float')
+        else:
+            nameComponents[1] = nodeTypeName[-3]
+    
+    elif listlen == 2:
+        if fee_Utils.isFloat(nodeTypeName[-1]):
+            nameComponents[3] = nodeTypeName[-1]
+            if fee_Utils.isFloat(nodeTypeName[-2]):
+                raise ValueError('can not be float')
+            else:
+                nameComponents[2] = nodeTypeName[-2]
+                
+        else:
+            nameComponents[2] = nodeTypeName[-1]
+            if fee_Utils.isFloat(nodeTypeName[-2]):
+                raise ValueError('can not be float')
+            else:
+                nameComponents[1] = nodeTypeName[-2]
+        
+    
+    elif listlen == 1:
+        if fee_Utils.isFloat(nodeTypeName[-1]):
+            raise ValueError('can not be float')
+        else:
+            nameComponents[2] = nodeTypeName[-1]
+    
+    else:
+        raise ValueError('len too high')
+    
+    listlen = len(nodeTypeName)
+    
+    return tuple(nameComponents)
+
+
+def trimNodeTypeName(nodeTypeName):
+    ### FeE::attrib_fee::0.1 --> attrib_fee
+    if not isinstance(nodeTypeName, str):
+        raise ValueError()
+    
+    nodeTypeName = nodeTypeName.split('::')
+    listlen = len(nodeTypeName)
+    for idx in range(listlen-1, -1, -1):
+        if fee_Utils.isFloat(nodeTypeName[idx]):
+            continue
+        return nodeTypeName[idx]
+    
+    raise ValueError()
+
+
+def trimFeENodeName(nodeTypeName):
+    ### FeE::attrib_fee::0.1 --> attrib
+    ### attrib_fee::0.1 --> attrib
+    if isinstance(nodeTypeName, str):
+        nodeTypeName = trimNodeTypeName(nodeTypeName)
+    elif isinstance(nodeTypeName, tuple):
+        nodeTypeName = nodeTypeName[2]
+        if not isinstance(nodeTypeName, str):
+            raise ValueError()
+    else:
+        raise ValueError()
+        
+    trimString = '_fee'
+    if nodeTypeName.endswith(trimString):
+        nodeTypeName = nodeTypeName[:len(nodeTypeName) - len(trimString)]
+    trimString = 'FeE_'
+    if nodeTypeName.startswith(trimString):
+        nodeTypeName = nodeTypeName[len(trimString) :]
+    
+    return nodeTypeName
+
+
+def combineNameComponents(nameComponents):
+    ### ['', 'FeE', 'attrib_fee', '0.1'] --> FeE::attrib_fee::0.1
+    ### print(fee_HDA.combineNameComponents(['', 'FeE', 'attrib_fee', '0.1']))
+    if isinstance(nameComponents, tuple):
+        nameComponents = list(nameComponents)
+    if not isinstance(nameComponents, list):
+        raise ValueError('must be list or tuple')
+    if len(nameComponents) != 4:
+        raise ValueError('not correct len')
+    for idx in range(3, -1, -1):
+        if not isinstance(nameComponents[idx], str):
+            raise ValueError('must be str')
+        elif nameComponents[idx] == '':
+            del nameComponents[idx]
+    
+    return '::'.join(nameComponents)
+
+
+def tryFindNodeType(inputNodeTypeName):
+    print(hou.node('/obj/'))
+    geoNet = hou.node('/obj/').createNode('geo', run_init_scripts=False, load_contents=False)
+    try:
+        newNode = geoNet.createNode(inputNodeTypeName, run_init_scripts=False, load_contents=False)
+        outNodeType = newNode.type()
+    except:
+        outNodeType = None
+    
+    geoNet.destroy(disable_safety_checks=True)
+    return outNodeType
+
+
+'''
+def hasNodeType(nodeTypeName):
+    nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
+    if nodeType is None:
+        return None
+    else:
+        return nodeTypeName
+'''
+
+def findFeENodeType(inputNodeTypeName, fuzzy=False):
+    nodeTypeName = inputNodeTypeName
+    nameComponents = splitTypeNametoNameComponents(inputNodeTypeName)
+
+    if nameComponents[1] == '':
+        nameComponents[1] = 'FeE'
+        nodeTypeName = combineNameComponents(nameComponents)
+
+        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
+        if nodeType is not None:
+            return nodeTypeName
+            
+        nameComponents[1] = ''
+
+        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
+        if nodeType is not None:
+            return nodeTypeName
+    
+    if nameComponents[2].endswith('_fee'):
+        nameComponents[2] = trimFeENodeName(nameComponents[2])
+    else:
+        nameComponents[2] += '_fee'
+    
+    if nameComponents[1] == '':
+        nameComponents[1] = 'FeE'
+        nodeTypeName = combineNameComponents(nameComponents)
+
+        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
+        if nodeType is not None:
+            return nodeTypeName
+            
+        nameComponents[1] = ''
+
+        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
+        if nodeType is not None:
+            return nodeTypeName
+
+    #return hasNodeType(nodeTypeName)
+    print('can not found node type' + nodeTypeName)
+    return None
+    
+
+
+
 def readDeprecatedNode():
     deprecatedNodeList = []
 
@@ -93,8 +273,8 @@ def isUnlockedHDA(node):
     return not node.isLockedHDA() and node.type().definition() is not None
 
 
-def isFeENode(inputNodeType, detectName = True, detectPath = False):
-    nodeType = convertNodeType(inputNodeType)
+def isFeENode(nodeType, detectName = True, detectPath = False):
+    nodeType = convertNodeType(nodeType)
 
     if detectName:
         nameComponents = nodeType.nameComponents()
@@ -128,8 +308,8 @@ def isFeENode(inputNodeType, detectName = True, detectPath = False):
     
     return True
 
-def isSideFXLabsNode(inputNodeType, detectName = True, detectPath = False):
-    nodeType = convertNodeType(inputNodeType)
+def isSideFXLabsNode(nodeType, detectName = True, detectPath = False):
+    nodeType = convertNodeType(nodeType)
 
     if detectName:
         nameComponents = nodeType.nameComponents()
@@ -156,9 +336,12 @@ def isSideFXLabsNode(inputNodeType, detectName = True, detectPath = False):
 
 
 def isSideFXNode(inputNodeType, ignoreDSO = True):
-    nodeType = convertNodeType(inputNodeType)
+    HFS = hou.getenv('HFS')
+    if HFS is None:
+        raise AttributeError('dont have HFS env')
     
-    defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+    nodeType = convertNodeType(inputNodeType)
+    defaultLibPath = HFS + r'/houdini/otls/'
     defi = nodeType.definition()
     if ignoreDSO and defi is None:
         return False
@@ -166,7 +349,10 @@ def isSideFXNode(inputNodeType, ignoreDSO = True):
 
 
 def isSideFXDefinition(defi):
-    defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+    HFS = hou.getenv('HFS')
+    if HFS is None:
+        raise AttributeError('dont have HFS env')
+    defaultLibPath = HFS + r'/houdini/otls/'
     return defi.libraryFilePath().startswith(defaultLibPath)
 
 

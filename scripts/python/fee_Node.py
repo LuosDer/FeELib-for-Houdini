@@ -11,16 +11,17 @@ import fee_HDA
 
 
 def convertNodeTuple(node):
+    if isinstance(node, list):
+        node = tuple(node)
     if isinstance(node, tuple):
-        if len(node) > 0:
-            if isinstance(node[0], hou.Node):
-                return node
-        else:
-            return node
+        for idx in range(len(node)):
+            if not isinstance(node[idx], hou.Node):
+                raise TypeError('Only Support Node or Node Tuple/List Type')
+        return node
     elif isinstance(node, hou.Node):
         return (node, )
     
-    raise TypeError('Only Support Node or Node Tuple Type')
+    raise TypeError('Only Support Node or Node Tuple/List Type')
 
 def getUserWantedSelectedNodes(kwargsNode):
     selectedNodes = hou.selectedNodes()
@@ -46,17 +47,31 @@ def addSpareInput(kwargsNode):
 
 def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
     if copyNoneExistParms:
-        origParmTemplateGroup = sourceNode.parmTemplateGroup()
-        #print(origParmTemplateGroup.asDialogScript())
+        sourceParmTemplateGroup = sourceNode.parmTemplateGroup()
+        targetParmTemplateGroup = targetNode.parmTemplateGroup()
+        copyParmTemplates = []
+        for sourceParmTemplate in sourceParmTemplateGroup.parmTemplates():
+            sourceParmTemplateName = sourceParmTemplate.name()
+            targetParmTemplate = targetParmTemplateGroup.find(sourceParmTemplateName)
+            if targetParmTemplate is None:
+                copyParmTemplates.append(sourceParmTemplate)
+
+        for copyParmTemplate in copyParmTemplates:
+            targetParmTemplateGroup.append(copyParmTemplate)
+
+        targetNode.setParmTemplateGroup(targetParmTemplateGroup, rename_conflicting_parms=False)
+        #print(sourceParmTemplateGroup.asDialogScript())
+        '''
         if 1:
-            targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
+            targetNode.setParmTemplateGroup(sourceParmTemplateGroup, rename_conflicting_parms=False)
         else:
             try:
-                targetNode.setParmTemplateGroup(origParmTemplateGroup, rename_conflicting_parms=False)
+                targetNode.setParmTemplateGroup(sourceParmTemplateGroup, rename_conflicting_parms=False)
             except:
-                '''Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes'''
+                # Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes
                 print(sourceNode, targetNode)
-                print(origParmTemplateGroup.asDialogScript())
+                print(sourceParmTemplateGroup.asDialogScript())
+        '''
         
     for parm in sourceNode.parms():
         if parm.parmTemplate().type() == hou.parmTemplateType.Folder:
@@ -193,10 +208,11 @@ def bake_optypeExp_to_str(targetNode, sourceNode, optype_exp, optype_exp1):
 
 def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = node.type()
-    
+    nodeTypeName = nodeType.name()
     ##### 检测各种情况
-    if nodeType.name() == 'subnet':
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA)
+    if nodeTypeName == 'subnet':
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        return False
 
     defi = nodeType.definition()
     if defi is None:
@@ -204,8 +220,8 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
     if not ignoreUnlock and not node.matchesCurrentDefinition():
         #print(node)
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
-        return
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        return False
     
     if Only_FeEHDA:
         if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
@@ -215,8 +231,8 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
         # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
         # if defi.libraryFilePath().startswith(defaultLibPath):
         if fee_HDA.isSideFXDefinition(defi):
-            convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA)
-            return
+            convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+            return False
 
     node.allowEditingOfContents()
 
@@ -352,10 +368,6 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                 print(inputItems[idx])
                 print(inputItem_output_index[idx])
                 raise ValueError('setInput Error')
-    # newNode.parm('label1').hide(True)
-    # newNode.parm('label2').hide(True)
-    # newNode.parm('label3').hide(True)
-    # newNode.parm('label4').hide(True)
 
     oldIndirectInputs = copyOrigNode.indirectInputs()
     newIndirectInputs = newNode.indirectInputs()
@@ -370,15 +382,31 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             print(newIndirectInputs[idx])
             raise ValueError('fee Error')
 
-
-    copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
-
     #if origNodeshape is not None:
         #这个是自动的啦
         #pass
         #newNode.setUserData('nodeshape', origNodeshape)
-    
+
+
+
+
+    ############### parm type #################
+    #newNode.parm('standardfolder').hide(True)
+    newNode.parm('label1').hide(True)
+    newNode.parm('label2').hide(True)
+    newNode.parm('label3').hide(True)
+    newNode.parm('label4').hide(True)
+    copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+
+    #nameComponents = nodeType.nameComponents()
+    #nameComponents[2]
+    targetParmTemplateGroup = newNode.parmTemplateGroup()
+    tmpParm = hou.StringParmTemplate('tmpParm_origNodeType', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
+    tmpParm.hide(True)
     newNodeParmTemplateGroup = newNode.parmTemplateGroup()
+    newNodeParmTemplateGroup.append(tmpParm)
+    newNode.setParmTemplateGroup(newNodeParmTemplateGroup)
+
     # folder = newNodeParmTemplateGroup.findFolder('Standard')
     # folder.endsTabGroup()
     #print(folder)
@@ -404,18 +432,18 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
     copyOrigNode.destroy()
 
+    return True
     
-
 
 
 def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = recurseNode.type()
-    isNotSubnet = nodeType.name() != 'subnet'
-    if recurseNode.matchesCurrentDefinition() and isNotSubnet:
-        return
-    
-    if nodeType.definition() is None and isNotSubnet:
-        return
+    nodeTypeName = nodeType.name()
+    defi = nodeType.definition()
+
+    if nodeTypeName != 'subnet':
+        if recurseNode.matchesCurrentDefinition() or defi is None:
+            return False
     
     if optype_exp == '':
         optype_exp = sourceNode.type().nameComponents()[2]
@@ -463,14 +491,398 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
         """
 
         childNodeType = child.type()
-        typename = childNodeType.name()
-        #if "fee" in typename.lower() and child.matchesCurrentDefinition():
+        childNodeTypeName = childNodeType.name()
+        #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
         
-        if typename == 'subnet':
+        if childNodeTypeName == 'subnet':
             pass
             convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         else:
             if Only_FeEHDA:
+                """
+                if childNodeTypeName == 'deltamush::1.0':
+                    print(fee_HDA.isFeENode(childNodeType, detectName, detectPath))
+                    print(childNodeType)
+                    print(detectName)
+                    print(detectPath)
+                """
+                if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+                    convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+                else:
+                    convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+            else:
+                convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+    
+    return True
+
+
+'''
+
+def recoverStrTo_optypeExp(targetNode, sourceNode, optype_exp, optype_exp1):
+    relativePathTo = targetNode.relativePathTo(sourceNode)
+    str_optype0 = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
+    str_optype1 = r"optype('" + relativePathTo + r"')" # r"optype('..')"
+    str_py_optype0 = r"hou.node('" + relativePathTo + r"/.').type().nameComponents()[2]" # r"hou.node('../.').type().nameComponents()[2]"
+    str_py_optype1 = r"hou.node('" + relativePathTo + r"').type().nameComponents()[2]" # r"hou.node('..').type().nameComponents()[2]"
+    #print(str_py_optype0)
+
+    parms = targetNode.parms()
+    for parm in parms:
+        rawValue = parm.rawValue()
+        try:
+            expLang = parm.expressionLanguage()
+        except:
+            #没有exp
+            if parm.parmTemplate().dataType() == hou.parmData.String:
+                #是string类型
+                if r'`' + str_optype0 + r'`' in rawValue:
+                    rawValue = rawValue.replace(r'`' + str_optype0 + r'`', optype_exp)
+                    parm.set(rawValue)
+                if r'`' + str_optype1 + r'`' in rawValue:
+                    rawValue = rawValue.replace(r'`' + str_optype1 + r'`', optype_exp)
+                    parm.set(rawValue)
+                if str_optype0 in rawValue:
+                    rawValue = rawValue.replace(str_optype0, optype_exp1)
+                    parm.set(rawValue)
+                if str_optype1 in rawValue:
+                    rawValue = rawValue.replace(str_optype1, optype_exp1)
+                    parm.set(rawValue)
+        else:
+            #有exp
+            if expLang == hou.exprLanguage.Python:
+                if str_py_optype0 in rawValue:
+                    rawValue = rawValue.replace(str_py_optype0, optype_exp1)
+                    parm.deleteAllKeyframes()
+                    parm.setExpression(rawValue, hou.exprLanguage.Python, True)
+                if str_py_optype1 in rawValue:
+                    rawValue = rawValue.replace(str_py_optype1, optype_exp1)
+                    parm.deleteAllKeyframes()
+                    parm.setExpression(rawValue, hou.exprLanguage.Python, True)
+
+            elif expLang == hou.exprLanguage.Hscript:
+                if str_optype0 in rawValue:
+                    rawValue = rawValue.replace(str_optype0, optype_exp1)
+                    parm.deleteAllKeyframes()
+                    parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
+                if str_optype1 in rawValue:
+                    rawValue = rawValue.replace(str_optype1, optype_exp1)
+                    parm.deleteAllKeyframes()
+                    parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
+
+
+def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
+    nodeType = node.type()
+    nodeTypeName = nodeType.name()
+    ##### 检测各种情况
+    if nodeTypeName != 'subnet':
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+
+    ############ 能到这里的节点一定是subnet ############
+    defi = nodeType.definition()
+    if defi is None:
+        return False
+
+    if not ignoreUnlock and not node.matchesCurrentDefinition():
+        #print(node)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        return False
+    
+    """
+    if Only_FeEHDA:
+        if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
+            return False
+
+    if ignore_SideFX_HDA:
+        # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+        # if defi.libraryFilePath().startswith(defaultLibPath):
+        if fee_HDA.isSideFXDefinition(defi):
+            convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+            return False
+
+    """
+
+    origNodeTypeNameParm = node.Parm('tmpParm_origNodeType')
+    if origNodeTypeNameParm is None:
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        return False
+    
+    origNodeTypeName = origNodeTypeNameParm.evalAsString()
+    #newNode = node.changeNodeType(origNodeTypeName, keep_parms=False)
+
+
+    ##### 记录flag情况
+    parent = node.parent()
+    #print(parent.childTypeCategory().name())
+    if parent.childTypeCategory().name() != 'Sop':
+        raise TypeError('error')
+    if node.isHardLocked():
+        raise TypeError('isHardLocked')
+    if node.isSoftLocked():
+        raise TypeError('isSoftLocked')
+    
+    displayFlag = node == parent.displayNode()
+    renderFlag = node == parent.renderNode()
+    bypass = node.isBypassed()
+    isTemplateFlagSet = node.isTemplateFlagSet()
+    isHighlightFlagSet = node.isHighlightFlagSet()
+    isSelectableTemplateFlagSet = node.isSelectableTemplateFlagSet()
+    isUnloadFlagSet = node.isUnloadFlagSet()
+
+    inputConnectors = node.inputConnectors()
+    nInputs = len(inputConnectors)
+
+    """
+    #### 处理4号以后的输入口
+    if nInputs > 4:
+        shiftVector2 = hou.Vector2(0.0, -1.0)
+        nulls = []
+
+        ###算出nulls列表的所有元素，后面有用
+        for idx in range(4, nInputs):
+            if len(inputConnectors[idx]) == 0:
+                # 说明没有连
+                nulls.append(None)
+                continue
+            
+            inputConnection = inputConnectors[idx][0]
+            subnetIndirectInput = inputConnection.subnetIndirectInput()
+
+            #### 查找输入的类型
+            flag = False
+            if subnetIndirectInput is None:
+                inputNode = inputConnection.inputNode()
+                if inputNode is None:
+                    ####说明输入是一个个dot，最终连接到subnet input
+                    inputItem = inputConnection.inputItem()
+                    while type(inputItem).__name__ == 'NetworkDot':
+                        ####寻找dot的最终链接
+                        inputItem = inputItem.inputItem()
+                    
+                    if type(inputItem).__name__ == 'SubnetIndirectInput':
+                        subnetIndirectInput = inputItem
+                        flag = True
+                    else:
+                        raise ValueError('fee : 不可能的情况')
+                        #nulls.append(inputItem)
+                        #flag = False
+                else:
+                    ####说明输入是一个node
+                    nulls.append(inputNode)
+                    flag = False
+            else:
+                ####说明输入是一个subnet input
+                flag = True
+            
+            #### 建立null节点
+            if flag:
+                null = None
+                for outputConnection in subnetIndirectInput.outputConnections():
+                    outputNode = outputConnection.outputNode()
+                    if outputNode.type().name() == 'null':
+                        if outputNode.parm('copyinput').evalAsInt() == 1:
+                            null = outputNode
+                            nulls.append(null)
+                            break
+
+                if null is None:
+                    if 1:
+                        null = parent.createNode('null', exact_type_name=True)
+                        null.setInput(0, subnetIndirectInput, output_index=0)
+                    else:
+                        try:
+                            null = subnetIndirectInput.createOutputNode('null', exact_type_name=True)
+                        except:
+                            print(subnetIndirectInput)
+                            raise ValueError('')
+                    # null.setPosition(subnetIndirectInput.position().__add__(shiftVector2))
+                    null.setPosition(subnetIndirectInput.position() + shiftVector2)
+                    nulls.append(null)
+            
+        indirectInputs = node.indirectInputs()
+        for idx in range(4, nInputs):
+            if nulls[idx-4] is None: #没有连
+                continue
+            objectMerge = node.createNode('object_merge', exact_type_name=True)
+            objectMerge.parm('objpath1').set('../../' + nulls[idx-4].name() )
+            objectMerge.setPosition(indirectInputs[idx].position())
+            for outputConnection in indirectInputs[idx].outputConnections():
+                outputNode = outputConnection.outputNode()
+                outputNode.setInput(outputConnection.inputIndex(), objectMerge)
+
+
+    #### 处理0-3号输入口
+    inputItems = []
+    inputItem_output_index = []
+    for idx in range(0, min(nInputs, 4)):
+        if len(inputConnectors[idx]) == 0:
+            # 说明没有连
+            inputItems.append(None)
+            inputItem_output_index.append(None)
+            continue
+        inputConnection = inputConnectors[idx][0]
+        inputItem = inputConnection.inputItem()
+        inputItems.append(inputItem)
+        #if type(inputItem).__name__ == 'NetworkDot' or type(inputItem).__name__ == 'SubnetIndirectInput':
+        if isinstance(inputItem, hou.NetworkDot) or isinstance(inputItem, hou.SubnetIndirectInput):
+            inputItem_output_index.append(0)
+        else:
+            inputItem_output_index.append(inputConnection.outputIndex())
+
+    """
+
+    ############ 修改节点类型 ############
+    #origNodeshape = node.userData('nodeshape')
+    copyOrigNode = hou.copyNodesTo([node], parent)[0]
+    newNode = node.changeNodeType('subnet', keep_parms=False)
+    newNode.removeSpareParms()
+    for idx in range(0, min(nInputs, 4)):
+        if inputItems[idx] is not None:
+            try:
+                newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+            except:
+                print(newNode)
+                print(inputItems[idx])
+                print(inputItem_output_index[idx])
+                raise ValueError('setInput Error')
+
+    oldIndirectInputs = copyOrigNode.indirectInputs()
+    newIndirectInputs = newNode.indirectInputs()
+    for idx in range(0, min(len(oldIndirectInputs), 4)):
+        try:
+            pos = oldIndirectInputs[idx].position()
+            newIndirectInputs[idx].setPosition(pos)
+        except:
+            print(copyOrigNode)
+            print(newNode)
+            print(oldIndirectInputs[idx])
+            print(newIndirectInputs[idx])
+            raise ValueError('fee Error')
+
+    #if origNodeshape is not None:
+        #这个是自动的啦
+        #pass
+        #newNode.setUserData('nodeshape', origNodeshape)
+
+
+
+
+    ############### parm type #################
+    #newNode.parm('standardfolder').hide(True)
+    newNode.parm('label1').hide(True)
+    newNode.parm('label2').hide(True)
+    newNode.parm('label3').hide(True)
+    newNode.parm('label4').hide(True)
+    copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+
+    #nameComponents = nodeType.nameComponents()
+    #nameComponents[2]
+    targetParmTemplateGroup = newNode.parmTemplateGroup()
+    tmpParm = hou.StringParmTemplate('tmpParm_origNodeType', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
+    tmpParm.hide(True)
+    newNodeParmTemplateGroup = newNode.parmTemplateGroup()
+    newNodeParmTemplateGroup.append(tmpParm)
+    newNode.setParmTemplateGroup(newNodeParmTemplateGroup)
+
+    # folder = newNodeParmTemplateGroup.findFolder('Standard')
+    # folder.endsTabGroup()
+    #print(folder)
+    #newNodeParmTemplateGroup.hideFolder('Standard', True)
+    #newNode.setParmTemplateGroup(newNodeParmTemplateGroup, rename_conflicting_parms=False)
+
+    #newNode.removeSpareParmFolder(('Standard', ))
+    #newNode.removeSpareParmTuple(newNode.parmTuple('Standard'))
+
+    newNode.setDisplayFlag(displayFlag)
+    newNode.setRenderFlag(renderFlag)
+    newNode.bypass(bypass)
+    newNode.setTemplateFlag(isTemplateFlagSet)
+    newNode.setHighlightFlag(isHighlightFlagSet)
+    newNode.setSelectableTemplateFlag(isSelectableTemplateFlagSet)
+    newNode.setUnloadFlag(isUnloadFlagSet)
+
+    optype_exp = copyOrigNode.type().nameComponents()[2]
+    optype_exp1 = '\'' + optype_exp + '\''
+    recoverStrTo_optypeExp(newNode, newNode, optype_exp, optype_exp1)
+    convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+    #print(optype_exp)
+
+    copyOrigNode.destroy()
+    return True
+
+
+
+
+
+def recoverSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
+    nodeType = recurseNode.type()
+    nodeTypeName = nodeType.name()
+    defi = nodeType.definition()
+
+    if nodeTypeName != 'subnet':
+        if recurseNode.matchesCurrentDefinition() or defi is None:
+            return False
+    
+    if optype_exp == '':
+        optype_exp = sourceNode.type().nameComponents()[2]
+
+    optype_exp1 = '\'' + optype_exp + '\''
+    
+    for child in recurseNode.children():
+        bake_optypeExp_to_str(child, sourceNode, optype_exp, optype_exp1)
+
+        """
+        relativePathTo = child.relativePathTo(sourceNode)
+        str_optype = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
+        str_py_optype = r"hou.node('" + relativePathTo + r"/.').type().nameComponents()[2]" # r"hou.node('../.').type().nameComponents()[2]"
+        # print(str_py_optype)
+
+        parms = child.parms()
+        for parm in parms:
+            rawValue = parm.rawValue()
+            try:
+                expLang = parm.expressionLanguage()
+            except:
+                #没有exp
+                if parm.parmTemplate().dataType() == hou.parmData.String:
+                    #是string类型
+                    if r'`' + str_optype + r'`' in rawValue:
+                        rawValue = rawValue.replace(r'`' + str_optype + r'`', optype_exp)
+                        parm.set(rawValue)
+                    if str_optype in rawValue:
+                        rawValue = rawValue.replace(str_optype, optype_exp1)
+                        parm.set(rawValue)
+            else:
+                #有exp
+                if expLang == hou.exprLanguage.Python:
+                    if str_py_optype in rawValue:
+                        rawValue = rawValue.replace(str_py_optype, optype_exp1)
+                        parm.deleteAllKeyframes()
+                        parm.setExpression(rawValue, hou.exprLanguage.Python, True)
+                elif expLang == hou.exprLanguage.Hscript:
+                    if str_optype in rawValue:
+                        rawValue = rawValue.replace(str_optype, optype_exp1)
+                        parm.deleteAllKeyframes()
+                        parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
+                
+                #print(rawValue)
+        """
+
+        childNodeType = child.type()
+        childNodeTypeName = childNodeType.name()
+        #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
+        
+        if childNodeTypeName == 'subnet':
+            pass
+            convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        else:
+            if Only_FeEHDA:
+                """
+                if childNodeTypeName == 'deltamush::1.0':
+                    print(fee_HDA.isFeENode(childNodeType, detectName, detectPath))
+                    print(childNodeType)
+                    print(detectName)
+                    print(detectPath)
+                """
                 if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
                     convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
                 else:
@@ -478,6 +890,17 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
             else:
                 convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
+    return True
+
+'''
+
+def recoverAllFeENode_fromSubnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+    
+    nodes = convertNodeTuple(inputNodes)
+    for node in nodes:
+        recoverSubnet(node, ignoreUnlock, ignore_SideFX_HDA, detectName, detectPath, displayConfirmation)
 
 
 
@@ -485,54 +908,63 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
 
 
 
-
-def convert_All_FeENode_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
+def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
-    node.allowEditingOfContents()
-    for child in node.children():
-        childNodeType = child.type()
-        #if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
-        convertSubnet(child, ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
+    nodes = convertNodeTuple(inputNodes)
+    ##print(nodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            #print(child)
+            #childNodeeType = child.type()
+            #if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
 
 
-def convert_All_HDA_to_Subnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = False):
+def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
-    node.allowEditingOfContents()
-    for child in node.children():
-        convertSubnet(child, ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
+    nodes = convertNodeTuple(inputNodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
 
 
 
-def unlock_All_HDA(node, detectName = True, detectPath = False, displayConfirmation = False):
+def unlock_All_HDA(inputNodes, detectName = True, detectPath = False, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
-    node.allowEditingOfContents()
-    for child in node.children():
-        childNodeType = child.type()
-        if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
-            # child.allowEditingOfContents()
-            unlock_All_FeENode(child, detectName, detectPath)
-        elif fee_HDA.isUnlockedHDA(child):
-            unlock_All_FeENode(child, detectName, detectPath)
+    nodes = convertNodeTuple(inputNodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            childNodeType = child.type()
+            if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+                # child.allowEditingOfContents()
+                unlock_All_FeENode(child, detectName, detectPath)
+            elif fee_HDA.isUnlockedHDA(child):
+                unlock_All_FeENode(child, detectName, detectPath)
 
 
-def unlock_All_FeENode(node, detectName = True, detectPath = False, displayConfirmation = False):
+def unlock_All_FeENode(inputNodes, detectName = True, detectPath = False, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
-    node.allowEditingOfContents()
-    for child in node.children():
-        childNodeType = child.type()
-        if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
-            # child.allowEditingOfContents()
-            unlock_All_FeENode(child, detectName, detectPath)
-        elif fee_HDA.isUnlockedHDA(child):
-            unlock_All_FeENode(child, detectName, detectPath)
+    nodes = convertNodeTuple(inputNodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            childNodeType = child.type()
+            if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+                # child.allowEditingOfContents()
+                unlock_All_FeENode(child, detectName, detectPath)
+            elif fee_HDA.isUnlockedHDA(child):
+                unlock_All_FeENode(child, detectName, detectPath)
 
 
 # def unlock_All_FeENode_recurseSubChild(node, detectName = True, detectPath = False):

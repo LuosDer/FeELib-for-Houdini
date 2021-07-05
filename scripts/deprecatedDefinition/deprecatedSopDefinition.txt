@@ -16,6 +16,7 @@ copytopoints_fee
 matchpolywinding_fast_fee::0.1
 copyNodeParms_fee::0.1
 uvquickshade_fee
+matchbboxbase_fee
 
 chain2d_fee
 chain2d_fee::1.0
