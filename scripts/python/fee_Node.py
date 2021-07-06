@@ -39,6 +39,37 @@ def addSpareInput(kwargsNode):
 
 
 
+def isEqual_networkChildren(node0, node1, recurseInNetwork = True, checkNodeType = True):
+    if not isinstance(node0, hou.Node):
+        raise TypeError('input node0 must be hou.Node')
+    if not isinstance(node1, hou.Node):
+        raise TypeError('input node1 must be hou.Node')
+    
+    for child in node0.children():
+        childName = child.name()
+        child_ref = node1.node(childName)
+        if child_ref is None: 
+            return False
+
+        childType = child.type()
+        child_refType = child_ref.type()
+        if checkNodeType and childType != child_refType:
+            return False
+        
+        childTypeName = childType.name()
+        if childTypeName != 'subnet':
+            continue
+
+        child_refTypeName = child_refType.name()
+        if childTypeName != 'subnet' and child_refTypeName != 'subnet' and child.matchesCurrentDefinition() and child_ref.matchesCurrentDefinition():
+            continue
+        
+        if recurseInNetwork and not isEqual_networkChildren(child, child_ref, recurseInNetwork, checkNodeType):
+            return False
+
+    return True
+
+
 
 
 
@@ -257,7 +288,7 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     inputConnectors = node.inputConnectors()
     nInputs = len(inputConnectors)
 
-    #### 处理4号以后的输入口
+    ############ 处理4号以后的输入口
     if nInputs > 4:
         shiftVector2 = hou.Vector2(0.0, -1.0)
         nulls = []
@@ -335,10 +366,10 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                 outputNode.setInput(outputConnection.inputIndex(), objectMerge)
 
 
-    #### 处理0-3号输入口
+    ############ 处理0-3号输入口 ########### 没有这部分也能跑，只是连接比较丑
     inputItems = []
     inputItem_output_index = []
-    for idx in range(0, min(nInputs, 4)):
+    for idx in range(min(nInputs, 4)):
         if len(inputConnectors[idx]) == 0:
             # 说明没有连
             inputItems.append(None)
@@ -347,31 +378,93 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
         inputConnection = inputConnectors[idx][0]
         inputItem = inputConnection.inputItem()
         inputItems.append(inputItem)
-        #if type(inputItem).__name__ == 'NetworkDot' or type(inputItem).__name__ == 'SubnetIndirectInput':
         if isinstance(inputItem, hou.NetworkDot) or isinstance(inputItem, hou.SubnetIndirectInput):
             inputItem_output_index.append(0)
         else:
             inputItem_output_index.append(inputConnection.outputIndex())
 
 
+    ########### rest outputs ############ 没有这部分也能跑，只是连接比较丑
+    outputNodes = node.outputs()
+    outputNodes = list(set(outputNodes))
+
+    outputNodes_inputItems = []
+    outputNodes_inputItem_output_index = []
+    for idx in range(len(outputNodes)):
+        
+        outputNodes_inputConnectors = outputNodes[idx].inputConnectors()
+        outputNodes_inputItems.append([])
+        outputNodes_inputItem_output_index.append([])
+
+        #for idy in range(len(outputNodes_inputConnectors)):
+        for outputNodes_inputConnector in outputNodes_inputConnectors:
+            if len(outputNodes_inputConnector) == 0:
+                outputNodes_inputItems[idx].append(None)
+                outputNodes_inputItem_output_index[idx].append(None)
+                continue
+            outputNodes_inputConnection = outputNodes_inputConnector[0]
+            outputNodes_inputItem = outputNodes_inputConnection.inputItem()
+            #outputNodes_inputItems[idx].append(outputNodes_inputItem)
+            outputNodes_inputItems[idx].append(outputNodes_inputItem.name())
+            if isinstance(outputNodes_inputItem, hou.NetworkDot) or isinstance(outputNodes_inputItem, hou.SubnetIndirectInput):
+                outputNodes_inputItem_output_index[idx].append(0)
+            else:
+                outputNodes_inputItem_output_index[idx].append(outputNodes_inputConnection.outputIndex())
+
+    ########### rest hou.NetworkDot outputs ############ 没有这部分也能跑，只是连接比较丑
+    
+    nodeName = node.name()
+    outputConnectors = node.outputConnectors()
+    for idx in range(len(outputConnectors)):
+    # for outputConnector in outputConnectors:
+        for outputConnection in outputConnectors[idx]:
+            outputItem = outputConnection.outputItem()
+            if not isinstance(outputItem, hou.NetworkDot):
+                continue
+            outputNodes.append(outputItem)
+            outputNodes_inputItems.append([nodeName, ])
+            outputNodes_inputItem_output_index.append([idx, ])
+
+
+
+
+
+
     ############ 修改节点类型 ############
     #origNodeshape = node.userData('nodeshape')
-    copyOrigNode = hou.copyNodesTo([node], parent)[0]
+    copyOrigNode = hou.copyNodesTo([node], parent)[0]## , run_init_scripts=False, load_contents=False
     newNode = node.changeNodeType('subnet', keep_parms=False)
     newNode.removeSpareParms()
-    for idx in range(0, min(nInputs, 4)):
-        if inputItems[idx] is not None:
-            try:
-                newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
-            except:
-                print(newNode)
-                print(inputItems[idx])
-                print(inputItem_output_index[idx])
-                raise ValueError('setInput Error')
 
+
+
+
+
+
+
+    ############ 处理0-3号输入口 ########### 没有这部分也能跑，只是连接比较丑
+
+    ############ set Input ###############
+    for idx in range(min(nInputs, 4)):
+        if inputItems[idx] is None:
+            continue
+        newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+        """
+        try:
+            newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+        except:
+            print(newNode)
+            print(inputItems[idx])
+            print(inputItem_output_index[idx])
+            raise ValueError('setInput Error')
+        """
+    ############ set position ###############
     oldIndirectInputs = copyOrigNode.indirectInputs()
     newIndirectInputs = newNode.indirectInputs()
     for idx in range(0, min(len(oldIndirectInputs), 4)):
+        pos = oldIndirectInputs[idx].position()
+        newIndirectInputs[idx].setPosition(pos)
+        """
         try:
             pos = oldIndirectInputs[idx].position()
             newIndirectInputs[idx].setPosition(pos)
@@ -381,6 +474,22 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             print(oldIndirectInputs[idx])
             print(newIndirectInputs[idx])
             raise ValueError('fee Error')
+        """
+
+
+    ########### 处理输出口 ############ 没有这部分也能跑，只是连接比较丑
+    if 1:
+        parent = newNode.parent()
+        # print(outputNodes)
+        # print(outputNodes_inputItems)
+        # print(outputNodes_inputItem_output_index)
+        for idx in range(len(outputNodes)):
+            for idy in range(len(outputNodes_inputItems[idx])):
+                if outputNodes_inputItems[idx][idy] is None:
+                    continue
+                outputNodes_inputItems[idx][idy] = parent.item(outputNodes_inputItems[idx][idy])
+                outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+
 
     #if origNodeshape is not None:
         #这个是自动的啦
@@ -396,23 +505,28 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     newNode.parm('label2').hide(True)
     newNode.parm('label3').hide(True)
     newNode.parm('label4').hide(True)
-    copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+    if 1:
+        tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
+        tmpParm.hide(True)
+        newNode.addSpareParmTuple(tmpParm)
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+    else:
+        ### 这样顺序反过来，就会丢失linked channal链接关系哦，所以不能这样写
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+        tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
+        tmpParm.hide(True)
+        newNode.addSpareParmTuple(tmpParm)
+
+
 
     #nameComponents = nodeType.nameComponents()
     #nameComponents[2]
+    '''
     targetParmTemplateGroup = newNode.parmTemplateGroup()
-    tmpParm = hou.StringParmTemplate('tmpParm_origNodeType', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
-    tmpParm.hide(True)
     newNodeParmTemplateGroup = newNode.parmTemplateGroup()
     newNodeParmTemplateGroup.append(tmpParm)
     newNode.setParmTemplateGroup(newNodeParmTemplateGroup)
-
-    # folder = newNodeParmTemplateGroup.findFolder('Standard')
-    # folder.endsTabGroup()
-    #print(folder)
-    #newNodeParmTemplateGroup.hideFolder('Standard', True)
-    #newNode.setParmTemplateGroup(newNodeParmTemplateGroup, rename_conflicting_parms=False)
-
+    '''
     #newNode.removeSpareParmFolder(('Standard', ))
     #newNode.removeSpareParmTuple(newNode.parmTuple('Standard'))
 
@@ -492,7 +606,7 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
 
         childNodeType = child.type()
         childNodeTypeName = childNodeType.name()
-        #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
+        # #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
         
         if childNodeTypeName == 'subnet':
             pass
@@ -516,58 +630,41 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
     return True
 
 
-'''
 
-def recoverStrTo_optypeExp(targetNode, sourceNode, optype_exp, optype_exp1):
-    relativePathTo = targetNode.relativePathTo(sourceNode)
-    str_optype0 = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
-    str_optype1 = r"optype('" + relativePathTo + r"')" # r"optype('..')"
-    str_py_optype0 = r"hou.node('" + relativePathTo + r"/.').type().nameComponents()[2]" # r"hou.node('../.').type().nameComponents()[2]"
-    str_py_optype1 = r"hou.node('" + relativePathTo + r"').type().nameComponents()[2]" # r"hou.node('..').type().nameComponents()[2]"
-    #print(str_py_optype0)
 
-    parms = targetNode.parms()
-    for parm in parms:
-        rawValue = parm.rawValue()
-        try:
-            expLang = parm.expressionLanguage()
-        except:
-            #没有exp
-            if parm.parmTemplate().dataType() == hou.parmData.String:
-                #是string类型
-                if r'`' + str_optype0 + r'`' in rawValue:
-                    rawValue = rawValue.replace(r'`' + str_optype0 + r'`', optype_exp)
-                    parm.set(rawValue)
-                if r'`' + str_optype1 + r'`' in rawValue:
-                    rawValue = rawValue.replace(r'`' + str_optype1 + r'`', optype_exp)
-                    parm.set(rawValue)
-                if str_optype0 in rawValue:
-                    rawValue = rawValue.replace(str_optype0, optype_exp1)
-                    parm.set(rawValue)
-                if str_optype1 in rawValue:
-                    rawValue = rawValue.replace(str_optype1, optype_exp1)
-                    parm.set(rawValue)
-        else:
-            #有exp
-            if expLang == hou.exprLanguage.Python:
-                if str_py_optype0 in rawValue:
-                    rawValue = rawValue.replace(str_py_optype0, optype_exp1)
-                    parm.deleteAllKeyframes()
-                    parm.setExpression(rawValue, hou.exprLanguage.Python, True)
-                if str_py_optype1 in rawValue:
-                    rawValue = rawValue.replace(str_py_optype1, optype_exp1)
-                    parm.deleteAllKeyframes()
-                    parm.setExpression(rawValue, hou.exprLanguage.Python, True)
+def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
-            elif expLang == hou.exprLanguage.Hscript:
-                if str_optype0 in rawValue:
-                    rawValue = rawValue.replace(str_optype0, optype_exp1)
-                    parm.deleteAllKeyframes()
-                    parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
-                if str_optype1 in rawValue:
-                    rawValue = rawValue.replace(str_optype1, optype_exp1)
-                    parm.deleteAllKeyframes()
-                    parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
+    nodes = convertNodeTuple(inputNodes)
+    ##print(nodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            #print(child)
+            #childNodeeType = child.type()
+            #if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
+
+
+def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+
+    nodes = convertNodeTuple(inputNodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
+
+
+
+
+
+
+
+
+
 
 
 def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
@@ -575,64 +672,84 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     nodeTypeName = nodeType.name()
     ##### 检测各种情况
     if nodeTypeName != 'subnet':
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        return False
+        # recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+
+
 
     ############ 能到这里的节点一定是subnet ############
-    defi = nodeType.definition()
-    if defi is None:
-        return False
-
-    if not ignoreUnlock and not node.matchesCurrentDefinition():
-        #print(node)
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
-        return False
     
-    """
-    if Only_FeEHDA:
-        if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
-            return False
+    # defi = nodeType.definition()
 
-    if ignore_SideFX_HDA:
-        # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
-        # if defi.libraryFilePath().startswith(defaultLibPath):
-        if fee_HDA.isSideFXDefinition(defi):
-            convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
-            return False
+    # if not ignoreUnlock and not node.matchesCurrentDefinition():
+    #     #print(node)
+    #     recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+    #     return False
+    
 
-    """
 
-    origNodeTypeNameParm = node.Parm('tmpParm_origNodeType')
-    if origNodeTypeNameParm is None:
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+    # if Only_FeEHDA:
+    #     if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
+    #         return False
+
+    # if ignore_SideFX_HDA:
+    #     # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+    #     # if defi.libraryFilePath().startswith(defaultLibPath):
+    #     if fee_HDA.isSideFXDefinition(defi):
+    #         recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+    #         return False
+
+
+    ############# try found tmp Parm ###########
+    flag = True
+    for tmpStr in ('tmpParm_origNodeType_createdByPy', ):
+        origNodeTypeNameParm = node.parm(tmpStr)
+        if origNodeTypeNameParm is None:
+            continue
+        flag = False
+        break
+    
+    if flag:
+        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         return False
     
     origNodeTypeName = origNodeTypeNameParm.evalAsString()
-    #newNode = node.changeNodeType(origNodeTypeName, keep_parms=False)
 
+
+    parent = node.parent()
+    newRefNode = parent.createNode(origNodeTypeName, run_init_scripts=False, load_contents=True)
+    if not isEqual_networkChildren(node, newRefNode, checkNodeType = False):
+        newRefNode.destroy()
+        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        return False
+    
+    newRefNode.destroy()
+
+
+    node.removeSpareParmTuple(origNodeTypeNameParm)
 
     ##### 记录flag情况
-    parent = node.parent()
     #print(parent.childTypeCategory().name())
-    if parent.childTypeCategory().name() != 'Sop':
-        raise TypeError('error')
-    if node.isHardLocked():
-        raise TypeError('isHardLocked')
-    if node.isSoftLocked():
-        raise TypeError('isSoftLocked')
+    # if parent.childTypeCategory().name() != 'Sop':
+    #     raise TypeError('error')
+    # if node.isHardLocked():
+    #     raise TypeError('isHardLocked')
+    # if node.isSoftLocked():
+    #     raise TypeError('isSoftLocked')
     
-    displayFlag = node == parent.displayNode()
-    renderFlag = node == parent.renderNode()
-    bypass = node.isBypassed()
-    isTemplateFlagSet = node.isTemplateFlagSet()
-    isHighlightFlagSet = node.isHighlightFlagSet()
-    isSelectableTemplateFlagSet = node.isSelectableTemplateFlagSet()
-    isUnloadFlagSet = node.isUnloadFlagSet()
+    # displayFlag = node == parent.displayNode()
+    # renderFlag = node == parent.renderNode()
+    # bypass = node.isBypassed()
+    # isTemplateFlagSet = node.isTemplateFlagSet()
+    # isHighlightFlagSet = node.isHighlightFlagSet()
+    # isSelectableTemplateFlagSet = node.isSelectableTemplateFlagSet()
+    # isUnloadFlagSet = node.isUnloadFlagSet()
 
-    inputConnectors = node.inputConnectors()
-    nInputs = len(inputConnectors)
+    # inputConnectors = node.inputConnectors()
+    # nInputs = len(inputConnectors)
 
     """
-    #### 处理4号以后的输入口
+    ############ 处理4号以后的输入口
     if nInputs > 4:
         shiftVector2 = hou.Vector2(0.0, -1.0)
         nulls = []
@@ -710,10 +827,10 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
                 outputNode.setInput(outputConnection.inputIndex(), objectMerge)
 
 
-    #### 处理0-3号输入口
+    ############ 处理0-3号输入口 ########### 没有这部分也能跑，只是连接比较丑
     inputItems = []
     inputItem_output_index = []
-    for idx in range(0, min(nInputs, 4)):
+    for idx in range(min(nInputs, 4)):
         if len(inputConnectors[idx]) == 0:
             # 说明没有连
             inputItems.append(None)
@@ -722,7 +839,6 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
         inputConnection = inputConnectors[idx][0]
         inputItem = inputConnection.inputItem()
         inputItems.append(inputItem)
-        #if type(inputItem).__name__ == 'NetworkDot' or type(inputItem).__name__ == 'SubnetIndirectInput':
         if isinstance(inputItem, hou.NetworkDot) or isinstance(inputItem, hou.SubnetIndirectInput):
             inputItem_output_index.append(0)
         else:
@@ -730,24 +846,103 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
     """
 
+    ########### rest outputs ############ 没有这部分也能跑，只是连接比较丑
+    outputNodes = node.outputs()
+    outputNodes = list(set(outputNodes))
+
+    outputNodes_inputItems = []
+    outputNodes_inputItem_output_index = []
+    for idx in range(len(outputNodes)):
+        
+        outputNodes_inputConnectors = outputNodes[idx].inputConnectors()
+        outputNodes_inputItems.append([])
+        outputNodes_inputItem_output_index.append([])
+
+        #for idy in range(len(outputNodes_inputConnectors)):
+        for outputNodes_inputConnector in outputNodes_inputConnectors:
+            if len(outputNodes_inputConnector) == 0:
+                outputNodes_inputItems[idx].append(None)
+                outputNodes_inputItem_output_index[idx].append(None)
+                continue
+            outputNodes_inputConnection = outputNodes_inputConnector[0]
+            outputNodes_inputItem = outputNodes_inputConnection.inputItem()
+            #outputNodes_inputItems[idx].append(outputNodes_inputItem)
+            outputNodes_inputItems[idx].append(outputNodes_inputItem.name())
+            if isinstance(outputNodes_inputItem, hou.NetworkDot) or isinstance(outputNodes_inputItem, hou.SubnetIndirectInput):
+                outputNodes_inputItem_output_index[idx].append(0)
+            else:
+                outputNodes_inputItem_output_index[idx].append(outputNodes_inputConnection.outputIndex())
+
+
+    ########### rest hou.NetworkDot outputs ############ 没有这部分也能跑，只是连接比较丑
+    
+    nodeName = node.name()
+    outputConnectors = node.outputConnectors()
+    for idx in range(len(outputConnectors)):
+        # for outputConnector in outputConnectors:
+        for outputConnection in outputConnectors[idx]:
+            outputItem = outputConnection.outputItem()
+            if not isinstance(outputItem, hou.NetworkDot):
+                continue
+            outputNodes.append(outputItem)
+            outputNodes_inputItems.append([nodeName, ])
+            outputNodes_inputItem_output_index.append([idx, ])
+
+
+    inputConnectors = node.inputConnectors()
+    outputNodes.append(nodeName)
+    outputNodes_inputItems.append([])
+    outputNodes_inputItem_output_index.append([])
+    for idx in range(len(inputConnectors)):
+        # for outputConnector in inputConnectors:
+        if len(inputConnectors[idx]) == 0:
+            continue
+        inputConnection = inputConnectors[idx][0]
+        inputItem = inputConnection.inputItem()
+        outputNodes_inputItems[-1].append(inputItem)
+        outputNodes_inputItem_output_index[-1].append(inputConnection.outputIndex())
+
+
+
+
+
+
     ############ 修改节点类型 ############
     #origNodeshape = node.userData('nodeshape')
     copyOrigNode = hou.copyNodesTo([node], parent)[0]
-    newNode = node.changeNodeType('subnet', keep_parms=False)
-    newNode.removeSpareParms()
-    for idx in range(0, min(nInputs, 4)):
-        if inputItems[idx] is not None:
-            try:
-                newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
-            except:
-                print(newNode)
-                print(inputItems[idx])
-                print(inputItem_output_index[idx])
-                raise ValueError('setInput Error')
+    newNode = node.changeNodeType(origNodeTypeName, keep_parms=True)
+    newNode.matchCurrentDefinition()
+    #newNode.removeSpareParms()
 
+
+
+
+
+    '''
+
+    ############ 处理0-3号输入口 ########### 没有这部分也能跑，只是连接比较丑
+
+    ############ set Input ###############
+    for idx in range(min(nInputs, 4)):
+        if inputItems[idx] is None:
+            continue
+        newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+        """
+        try:
+            newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+        except:
+            print(newNode)
+            print(inputItems[idx])
+            print(inputItem_output_index[idx])
+            raise ValueError('setInput Error')
+        """
+    ############ set position ###############
     oldIndirectInputs = copyOrigNode.indirectInputs()
     newIndirectInputs = newNode.indirectInputs()
     for idx in range(0, min(len(oldIndirectInputs), 4)):
+        pos = oldIndirectInputs[idx].position()
+        newIndirectInputs[idx].setPosition(pos)
+        """
         try:
             pos = oldIndirectInputs[idx].position()
             newIndirectInputs[idx].setPosition(pos)
@@ -757,6 +952,29 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
             print(oldIndirectInputs[idx])
             print(newIndirectInputs[idx])
             raise ValueError('fee Error')
+        """
+
+    '''
+
+    ########### 处理输出口 ############ 没有这部分也能跑，只是连接比较丑
+    if 1:
+        parent = newNode.parent()
+        # print(nodeName)
+        # print(outputNodes)
+        # print(outputNodes_inputItems)
+        # print(outputNodes_inputItem_output_index)
+        for idx in range(len(outputNodes)):
+            if isinstance(outputNodes[idx], str):
+                outputNodes[idx] = parent.item(outputNodes[idx])
+
+            for idy in range(len(outputNodes_inputItems[idx])):
+                if outputNodes_inputItems[idx][idy] is None:
+                    continue
+                if isinstance(outputNodes_inputItems[idx][idy], str):
+                    outputNodes_inputItems[idx][idy] = parent.item(outputNodes_inputItems[idx][idy])
+
+                outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+
 
     #if origNodeshape is not None:
         #这个是自动的啦
@@ -765,48 +983,58 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
 
 
+    '''
 
     ############### parm type #################
     #newNode.parm('standardfolder').hide(True)
-    newNode.parm('label1').hide(True)
-    newNode.parm('label2').hide(True)
-    newNode.parm('label3').hide(True)
-    newNode.parm('label4').hide(True)
-    copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+    # newNode.parm('label1').hide(True)
+    # newNode.parm('label2').hide(True)
+    # newNode.parm('label3').hide(True)
+    # newNode.parm('label4').hide(True)
+    if 1:
+        tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
+        tmpParm.hide(True)
+        newNode.addSpareParmTuple(tmpParm)
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+    else:
+        ### 这样顺序反过来，就会丢失linked channal链接关系哦，所以不能这样写
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+        tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
+        tmpParm.hide(True)
+        newNode.addSpareParmTuple(tmpParm)
+    '''
+
+    #copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+
 
     #nameComponents = nodeType.nameComponents()
     #nameComponents[2]
+    """
     targetParmTemplateGroup = newNode.parmTemplateGroup()
-    tmpParm = hou.StringParmTemplate('tmpParm_origNodeType', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
-    tmpParm.hide(True)
     newNodeParmTemplateGroup = newNode.parmTemplateGroup()
     newNodeParmTemplateGroup.append(tmpParm)
     newNode.setParmTemplateGroup(newNodeParmTemplateGroup)
-
-    # folder = newNodeParmTemplateGroup.findFolder('Standard')
-    # folder.endsTabGroup()
-    #print(folder)
-    #newNodeParmTemplateGroup.hideFolder('Standard', True)
-    #newNode.setParmTemplateGroup(newNodeParmTemplateGroup, rename_conflicting_parms=False)
-
+    """
     #newNode.removeSpareParmFolder(('Standard', ))
     #newNode.removeSpareParmTuple(newNode.parmTuple('Standard'))
 
-    newNode.setDisplayFlag(displayFlag)
-    newNode.setRenderFlag(renderFlag)
-    newNode.bypass(bypass)
-    newNode.setTemplateFlag(isTemplateFlagSet)
-    newNode.setHighlightFlag(isHighlightFlagSet)
-    newNode.setSelectableTemplateFlag(isSelectableTemplateFlagSet)
-    newNode.setUnloadFlag(isUnloadFlagSet)
+    # newNode.setDisplayFlag(displayFlag)
+    # newNode.setRenderFlag(renderFlag)
+    # newNode.bypass(bypass)
+    # newNode.setTemplateFlag(isTemplateFlagSet)
+    # newNode.setHighlightFlag(isHighlightFlagSet)
+    # newNode.setSelectableTemplateFlag(isSelectableTemplateFlagSet)
+    # newNode.setUnloadFlag(isUnloadFlagSet)
 
-    optype_exp = copyOrigNode.type().nameComponents()[2]
-    optype_exp1 = '\'' + optype_exp + '\''
-    recoverStrTo_optypeExp(newNode, newNode, optype_exp, optype_exp1)
-    convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+    # optype_exp = copyOrigNode.type().nameComponents()[2]
+    # optype_exp1 = '\'' + optype_exp + '\''
+    # bake_optypeExp_to_str(newNode, newNode, optype_exp, optype_exp1)
+    
     #print(optype_exp)
 
     copyOrigNode.destroy()
+
+
     return True
 
 
@@ -814,124 +1042,31 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
 
 def recoverSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
-    nodeType = recurseNode.type()
+    nodeType = sourceNode.type()
     nodeTypeName = nodeType.name()
-    defi = nodeType.definition()
 
-    if nodeTypeName != 'subnet':
-        if recurseNode.matchesCurrentDefinition() or defi is None:
-            return False
-    
-    if optype_exp == '':
-        optype_exp = sourceNode.type().nameComponents()[2]
-
-    optype_exp1 = '\'' + optype_exp + '\''
+    if nodeTypeName != 'subnet' and sourceNode.matchesCurrentDefinition():
+        return False
     
     for child in recurseNode.children():
-        bake_optypeExp_to_str(child, sourceNode, optype_exp, optype_exp1)
-
-        """
-        relativePathTo = child.relativePathTo(sourceNode)
-        str_optype = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
-        str_py_optype = r"hou.node('" + relativePathTo + r"/.').type().nameComponents()[2]" # r"hou.node('../.').type().nameComponents()[2]"
-        # print(str_py_optype)
-
-        parms = child.parms()
-        for parm in parms:
-            rawValue = parm.rawValue()
-            try:
-                expLang = parm.expressionLanguage()
-            except:
-                #没有exp
-                if parm.parmTemplate().dataType() == hou.parmData.String:
-                    #是string类型
-                    if r'`' + str_optype + r'`' in rawValue:
-                        rawValue = rawValue.replace(r'`' + str_optype + r'`', optype_exp)
-                        parm.set(rawValue)
-                    if str_optype in rawValue:
-                        rawValue = rawValue.replace(str_optype, optype_exp1)
-                        parm.set(rawValue)
-            else:
-                #有exp
-                if expLang == hou.exprLanguage.Python:
-                    if str_py_optype in rawValue:
-                        rawValue = rawValue.replace(str_py_optype, optype_exp1)
-                        parm.deleteAllKeyframes()
-                        parm.setExpression(rawValue, hou.exprLanguage.Python, True)
-                elif expLang == hou.exprLanguage.Hscript:
-                    if str_optype in rawValue:
-                        rawValue = rawValue.replace(str_optype, optype_exp1)
-                        parm.deleteAllKeyframes()
-                        parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
-                
-                #print(rawValue)
-        """
-
-        childNodeType = child.type()
-        childNodeTypeName = childNodeType.name()
-        #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
-        
-        if childNodeTypeName == 'subnet':
-            pass
-            convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
-        else:
-            if Only_FeEHDA:
-                """
-                if childNodeTypeName == 'deltamush::1.0':
-                    print(fee_HDA.isFeENode(childNodeType, detectName, detectPath))
-                    print(childNodeType)
-                    print(detectName)
-                    print(detectPath)
-                """
-                if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
-                    convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
-                else:
-                    convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
-            else:
-                convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        recoverSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
     return True
 
-'''
 
-def recoverAllFeENode_fromSubnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
+
+def recoverNodesFromSubnet(inputNodes, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
     
     nodes = convertNodeTuple(inputNodes)
     for node in nodes:
-        recoverSubnet(node, ignoreUnlock, ignore_SideFX_HDA, detectName, detectPath, displayConfirmation)
+        recoverSubnet(node, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
 
 
 
 
-
-
-def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
-    if displayConfirmation:
-        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
-
-    nodes = convertNodeTuple(inputNodes)
-    ##print(nodes)
-    for node in nodes:
-        node.allowEditingOfContents()
-        for child in node.children():
-            #print(child)
-            #childNodeeType = child.type()
-            #if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
-
-
-def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = False):
-    if displayConfirmation:
-        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
-
-    nodes = convertNodeTuple(inputNodes)
-    for node in nodes:
-        node.allowEditingOfContents()
-        for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
 
 
 
@@ -1061,35 +1196,41 @@ def extract_LockedNull(selectedNodes, subPath = 'extractLockedGeo', savePath_rel
             for child in selectedNode.children():
                 foreverychildren(child)
 
-def setNodeAsOutput(selectedNode):
-    #selectedNode = hou.selectedNodes()[0]
-    selectedParent = selectedNode.parent()
+def getAllSubOutputNodes(selectedNode, orderdByOutputIndex = True):
+    if not isinstance(selectedNode, hou.Node):
+        raise TypeError('not hou.Node')
 
     outputRenderNodes = []
-    #outputRenderNodesIdx = []
+    selectedParent = selectedNode.parent()
     for child in selectedParent.children():
         if child.type().name() != 'output':
             continue
         outputRenderNodes.append(child)
         #outputRenderNodesIdx.append(child.parm('outputidx').evalAsInt())
-
-    if outputRenderNodes:
-        if 1:
-            outputRenderNodes.sort(key = lambda node: node.parm('outputidx').evalAsInt())
-        else:
-            outputRenderNodes = [i[0] for i in sorted(zip(outputRenderNodes, outputRenderNodesIdx), key=lambda n: n[1])]
-
         # for node in outputRenderNodes:
         #     print(node.parm('outputidx').evalAsInt())
         
-        flag = 1
+    if orderdByOutputIndex and outputRenderNodes:
+        outputRenderNodes.sort(key = lambda node: node.parm('outputidx').evalAsInt())
+        #outputRenderNodes = [i[0] for i in sorted(zip(outputRenderNodes, outputRenderNodesIdx), key=lambda n: n[1])]
+
+    return tuple(outputRenderNodes)
+
+def setNodeAsOutput(selectedNode):
+    #selectedNode = hou.selectedNodes()[0]
+    if not isinstance(selectedNode, hou.Node):
+        raise TypeError('not hou.Node')
+    
+    outputRenderNodes = getAllSubOutputNodes(selectedNode)
+    if outputRenderNodes:
+        flag = True
         
         for outputNode in selectedNode.outputs():
             if outputNode not in outputRenderNodes:
                 continue
             outputNode.setInput(0, None)
             outputRenderNodes[(outputRenderNodes.index(outputNode) + 1) % len(outputRenderNodes)].setInput(0, selectedNode)
-            flag = 0
+            flag = False
             break
 
         if flag:
@@ -1098,6 +1239,18 @@ def setNodeAsOutput(selectedNode):
     else:
         newOutputNode = selectedNode.createOutputNode('output')
         newOutputNode.setPosition(selectedNode.position() + hou.Vector2(0.0, -1.0))
+
+
+def displayOutput(selectedNode):
+    parent = selectedNode.parent()
+    outputRenderNodes = getAllSubOutputNodes(selectedNode)
+    if outputRenderNodes:
+        parentDisplayNode = parent.displayNode()
+        if parentDisplayNode in outputRenderNodes:
+            outputRenderNodes[(outputRenderNodes.index(parentDisplayNode) + 1) % len(outputRenderNodes)].setDisplayFlag(True)
+        else:
+            outputRenderNodes[0].setDisplayFlag(True)
+        
 
 
 def subNodeCount(selectedNodes):

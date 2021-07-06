@@ -132,82 +132,85 @@ def trimFeENodeName(nodeTypeName):
 def combineNameComponents(nameComponents):
     ### ['', 'FeE', 'attrib_fee', '0.1'] --> FeE::attrib_fee::0.1
     ### print(fee_HDA.combineNameComponents(['', 'FeE', 'attrib_fee', '0.1']))
-    if isinstance(nameComponents, tuple):
-        nameComponents = list(nameComponents)
-    if not isinstance(nameComponents, list):
+    import copy
+    trimedNameComponents = copy.deepcopy(nameComponents)
+    #trimedNameComponents = ['', '', '', '']
+    if isinstance(trimedNameComponents, tuple):
+        trimedNameComponents = list(trimedNameComponents)
+    if not isinstance(trimedNameComponents, list):
         raise ValueError('must be list or tuple')
-    if len(nameComponents) != 4:
+    if len(trimedNameComponents) != 4:
         raise ValueError('not correct len')
     for idx in range(3, -1, -1):
-        if not isinstance(nameComponents[idx], str):
+        if not isinstance(trimedNameComponents[idx], str):
             raise ValueError('must be str')
-        elif nameComponents[idx] == '':
-            del nameComponents[idx]
+        elif trimedNameComponents[idx] == '':
+            del trimedNameComponents[idx]
     
-    return '::'.join(nameComponents)
+    return '::'.join(trimedNameComponents)
 
 
-def tryFindNodeType(inputNodeTypeName):
-    print(hou.node('/obj/'))
-    geoNet = hou.node('/obj/').createNode('geo', run_init_scripts=False, load_contents=False)
+def tryFindNodeType(inputNodeTypeName, nodeTypeCategory = hou.sopNodeTypeCategory()):
+    #print(hou.node('/obj/'))
+    if nodeTypeCategory == hou.sopNodeTypeCategory():
+        tmp_NodeNetwork = hou.node('/obj/').createNode('geo', run_init_scripts=False, load_contents=False)
+    else:
+        raise ValueError('unsupport nodeTypeCategory')
+    
     try:
-        newNode = geoNet.createNode(inputNodeTypeName, run_init_scripts=False, load_contents=False)
+        newNode = tmp_NodeNetwork.createNode(inputNodeTypeName, run_init_scripts=False, load_contents=False)
         outNodeType = newNode.type()
     except:
         outNodeType = None
-    
-    geoNet.destroy(disable_safety_checks=True)
+        
+    tmp_NodeNetwork.destroy(disable_safety_checks=True)
     return outNodeType
 
 
 '''
 def hasNodeType(nodeTypeName):
-    nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
+    nodeType = hou.nodeType(hou.sopNodeTypeCategory(), nodeTypeName)
     if nodeType is None:
         return None
     else:
         return nodeTypeName
 '''
 
-def findFeENodeType(inputNodeTypeName, fuzzy=False):
-    nodeTypeName = inputNodeTypeName
-    nameComponents = splitTypeNametoNameComponents(inputNodeTypeName)
+def findFeENodeType_byNameComponents(nameComponents, nodeTypeCategory = hou.sopNodeTypeCategory(), fuzzy=False):
+    nodeTypeName = combineNameComponents(nameComponents)
+    nodeType = tryFindNodeType(nodeTypeName) if fuzzy else hou.nodeType(nodeTypeCategory, nodeTypeName)
+    return nodeType
 
-    if nameComponents[1] == '':
-        nameComponents[1] = 'FeE'
-        nodeTypeName = combineNameComponents(nameComponents)
-
-        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
-        if nodeType is not None:
-            return nodeTypeName
-            
-        nameComponents[1] = ''
-
-        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
-        if nodeType is not None:
-            return nodeTypeName
+def findFeENodeType(inputNodeTypeName, nodeTypeCategory = hou.sopNodeTypeCategory(), fuzzy=False):
+    if not isinstance(inputNodeTypeName, str):
+        raise TypeError('must be string')
     
+    nodeTypeName = inputNodeTypeName
+    nameComponents = list(splitTypeNametoNameComponents(inputNodeTypeName))
+
+    nameComponents[1] = 'FeE'
     if nameComponents[2].endswith('_fee'):
         nameComponents[2] = trimFeENodeName(nameComponents[2])
-    else:
-        nameComponents[2] += '_fee'
     
-    if nameComponents[1] == '':
-        nameComponents[1] = 'FeE'
-        nodeTypeName = combineNameComponents(nameComponents)
+    nodeType = findFeENodeType_byNameComponents(nameComponents, nodeTypeCategory, fuzzy)
+    if nodeType is not None:
+        return nodeType
+    
+    nameComponents[2] += '_fee'
+    nodeType = findFeENodeType_byNameComponents(nameComponents, nodeTypeCategory, fuzzy)
+    if nodeType is not None:
+        return nodeType
 
-        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
-        if nodeType is not None:
-            return nodeTypeName
-            
-        nameComponents[1] = ''
-
-        nodeType = hou.nodeType(hou.SopNodeTypeCategory(), nodeTypeName)
-        if nodeType is not None:
-            return nodeTypeName
-
+    nameComponents[1] = ''
+    nodeType = findFeENodeType_byNameComponents(nameComponents, nodeTypeCategory, fuzzy)
+    if nodeType is not None:
+        return nodeType
+    
+        
+    # nodeTypeName = combineNameComponents(nameComponents)
+    # nodeType = tryFindNodeType(nodeTypeName) if fuzzy else hou.nodeType(nodeTypeCategory, nodeTypeName)
     #return hasNodeType(nodeTypeName)
-    print('can not found node type' + nodeTypeName)
+    print('can not found node type' + inputNodeTypeName)
     return None
     
 

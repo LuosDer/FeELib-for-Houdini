@@ -12,7 +12,7 @@
     <memberTool name="unlock_HDA_publish"/>
     <memberTool name="extractAllUsedDefiToEmbeded"/>
     <memberTool name="findRefNode"/>
-    <memberTool name="recoverFeENodefromSubnet"/>
+    <memberTool name="recoverNodesFromSubnet"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -138,33 +138,16 @@ if theTool.name().count("Create_BlackBox")==0:
 ]]></script>
   </tool>
 
-  <tool name="recoverFeENodefromSubnet" label="Recover FeENode from Subnet" icon="hicon:/SVGIcons.index?VOP_structpack.svg">
+  <tool name="recoverNodesFromSubnet" label="Recover Nodes from Subnet" icon="hicon:/SVGIcons.index?VOP_structpack.svg">
     <script scriptType="python"><![CDATA[
-#import fee_Node
+import fee_Node
 # from importlib import reload
 # reload(fee_Node)
 
-import fee_Utils
-from importlib import reload
-reload(fee_Utils)
-
-import fee_HDA
-from importlib import reload
-reload(fee_HDA)
-
-import fee_Node
-reload(fee_Node)
 selectedNodes = hou.selectedNodes()
-selectedNode = hou.node('/obj/geo1/roadcrossing_prefab2')
-inputNode = hou.node('/obj/geo1/subnet3/deltamush3')
-fee_Node.recoverAllFeENode_fromSubnet(selectedNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
+fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, Only_FeEHDA = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
 
-#inputNodeType = hou.node('/obj/geo1/subnet3/deltamush3').type()
-#print(inputNodeType)
-#print(fee_HDA.isFeENode(inputNodeType, detectName = False, detectPath = True))
-
-#fee_Node.convertSubnet(inputNode, ignoreUnlock = True, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = False, detectPath = True)
-#fee_Node.convert_All_FeENode_to_Subnet(selectedNode, detectName = False, detectPath = True)
+#print(fee_Node.isEqual_networkChildren(hou.node('/obj/geo1/subnet3/geolayout_fee1'), hou.node('/obj/geo1/subnet3/geolayout_fee2'), checkNodeType = False))
 ]]></script>
   </tool>
 </shelfDocument>
