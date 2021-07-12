@@ -127,8 +127,8 @@ fee_Node.extract_LockedNull(selectedNodes)
         <scriptCode><![CDATA[
 #SOP_attribwrangle
 import fee_Node
-from importlib import reload
-reload(fee_Node)
+# from importlib import reload
+# reload(fee_Node)
 kwargsNode = kwargs["node"]
 selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
 fee_Node.correctWrangleParmeter(selectedNodes)

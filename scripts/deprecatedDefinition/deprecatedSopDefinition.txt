@@ -63,6 +63,10 @@ groupfromenum_fee
 matchdirorient_fee::1.0
 rayfromUp_fee
 matchPolyWinding_fast_fee::1.0
+dircross_fee
+minimalsurface_remeshBlur_fee::1.0
+enumfromattrib_fee
+triangulate2d_fee
 
 extractallpiecestransform_fee
 extractsimilarpiecestransform_fee

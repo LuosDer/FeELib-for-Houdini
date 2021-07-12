@@ -497,14 +497,30 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
         #newNode.setUserData('nodeshape', origNodeshape)
 
 
-
+    inputLabels = copyOrigNode.inputLabels()
+    # print(newNode.parm('label1'))
+    # newNode.parm('label1').hide(True)
+    # newNode.parm('label2').hide(True)
+    # newNode.parm('label3').hide(True)
+    # newNode.parm('label4').hide(True)
+    for idx in range(4):
+        inputLabel = newNode.parm('label' + str(idx+1))
+        inputLabel.hide(True)
+        if idx < len(inputLabels):
+            inputLabel.set(inputLabels[idx])
+        else:
+            inputLabel.set('')
+    
+    parmTemplateGroup = newNode.parmTemplateGroup()
+    for idx in range(4):
+        parmName = 'label' + str(idx+1)
+        inputLabel = parmTemplateGroup.find(parmName)
+        inputLabel.hide(True)
+        parmTemplateGroup.replace(parmName, inputLabel)
+    newNode.setParmTemplateGroup(parmTemplateGroup)
 
     ############### parm type #################
     #newNode.parm('standardfolder').hide(True)
-    newNode.parm('label1').hide(True)
-    newNode.parm('label2').hide(True)
-    newNode.parm('label3').hide(True)
-    newNode.parm('label4').hide(True)
     if 1:
         tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
         tmpParm.hide(True)
@@ -544,7 +560,9 @@ def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
     convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
     #print(optype_exp)
 
+    
     copyOrigNode.destroy()
+
 
     return True
     
@@ -908,10 +926,11 @@ def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_
 
 
     ############ 修改节点类型 ############
-    #origNodeshape = node.userData('nodeshape')
+    origNodeshape = node.userData('nodeshape')
     copyOrigNode = hou.copyNodesTo([node], parent)[0]
     newNode = node.changeNodeType(origNodeTypeName, keep_parms=True)
     newNode.matchCurrentDefinition()
+    newNode.setUserData('nodeshape', origNodeshape)
     #newNode.removeSpareParms()
 
 
@@ -1305,7 +1324,7 @@ def selectSameNodes(selectedNodes):
     for selectedNode in selectedNodes:
         siblingNodes = selectedNode.parent().children()
         nodeType = selectedNode.type()
-        map(select, sibling)
+        map(select, siblingNodes)
 
 def createOutputNode_allItemVer(inputItem, node_type_name, node_name=None, run_init_scripts=True, load_contents=True, exact_type_name=False):
     #if isinstance(inputItem, hou.SubnetIndirectInput):
@@ -1403,37 +1422,42 @@ def correctWrangleParmeter(selectedNodes):
                 vex_inplaceVal = False
                 break
         if vex_inplaceVal:
-            classParmVal = node.parm('vex_inplace').evalAsString()
-            print("findattribval(0, '" + classParmVal + "'")
-            if "findattribval(0, '" + classParmVal + "'" in snippet:
-                vex_inplaceVal = False
+            classParmVal = node.parm('class').evalAsString()
+            if classParmVal != 'detail' and classParmVal != 'number':
+                #print("findattribval(0, '" + classParmVal + "'")
+                if "findattribval(0, '" + classParmVal + "'" in snippet:
+                    vex_inplaceVal = False
         
         vex_inplace.set(vex_inplaceVal)
         
         #print(usedAttribNames)
         ############################ autobind ######################
-        if node.evalParm('autobind')==1 or node.evalParm('groupautobind')==1:
+        if 1 or node.evalParm('autobind')==1 or node.evalParm('groupautobind')==1:
             node.parm('autobind').set(False)
             node.parm('groupautobind').set(False)
             usedAttribNames = []
-            pattern = re.compile(r'@[a-zA-Z0-9]*')
+            pattern = re.compile(r'@[a-zA-Z0-9_]*')
             usedAttribNames = pattern.findall(snippet)
             usedAttribNames = list(set(usedAttribNames))
-
+            usedGroupNames = []
+            #print(snippet)
             for idx in range(len(usedAttribNames)):
                 usedAttribNames[idx] = usedAttribNames[idx][1:]
+                if usedAttribNames[idx].startswith('group_'):
+                    usedGroupNames.append(usedAttribNames[idx][len('group_'):])
+                    del usedAttribNames[idx]
             
-            for topStr in ('elemnum', 'ptnum', 'primnum', 'vtxnum', 'numelem', 'numprim', 'numpt', 'numvtx'):
+
+            for topStr in ('elemnum', 'ptnum', 'primnum', 'vtxnum', 'numelem', 'numprim', 'numpt', 'numvtx', 'OpInput1', 'OpInput2', 'OpInput3', 'OpInput4'):
                 if topStr in usedAttribNames:
                     usedAttribNames.remove(topStr)
 
-            for topStr in ('color', 'Alpha', 'Cd', 'N', 'P'):
+            for topStr in ('color', 'Alpha', 'Cd', 'length', 'width', 'xform', 'transform', 'rotate', 'scale', 'pscale', 'up', 'N', 'P'):
                 if topStr not in usedAttribNames:
                     continue
                 usedAttribNames.remove(topStr)
                 usedAttribNames.insert(0, topStr)
                 
-
             node.parm('bindings').set(len(usedAttribNames))
             for idx in range(len(usedAttribNames)):
                 stridx = str(idx+1)
