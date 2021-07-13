@@ -67,6 +67,8 @@ dircross_fee
 minimalsurface_remeshBlur_fee::1.0
 enumfromattrib_fee
 triangulate2d_fee
+hedgepoints_fee::1.0
+hedgepoints_fee::0.1
 
 extractallpiecestransform_fee
 extractsimilarpiecestransform_fee
