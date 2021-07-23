@@ -69,6 +69,7 @@ enumfromattrib_fee
 triangulate2d_fee
 hedgepoints_fee::1.0
 hedgepoints_fee::0.1
+hasnormal_fee
 
 extractallpiecestransform_fee
 extractsimilarpiecestransform_fee
@@ -94,3 +95,5 @@ normal2d_fee::0.8
 normal2d_fee::0.9
 normal2d_fee::1.0
 attribgradient_fee
+
+matchBBox_fee
