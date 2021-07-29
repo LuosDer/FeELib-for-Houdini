@@ -97,3 +97,5 @@ normal2d_fee::1.0
 attribgradient_fee
 
 matchBBox_fee
+pointsfrompieces_fee
+curveends_fee
