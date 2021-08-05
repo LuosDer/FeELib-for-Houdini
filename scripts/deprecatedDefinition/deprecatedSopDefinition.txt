@@ -99,3 +99,6 @@ attribgradient_fee
 matchBBox_fee
 pointsfrompieces_fee
 curveends_fee
+polyreduce2d_fee
+attribinterpolate_ray_fee
+displacementfrommap_fee
