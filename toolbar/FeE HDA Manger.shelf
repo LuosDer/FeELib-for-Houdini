@@ -14,6 +14,7 @@
     <memberTool name="findRefNode"/>
     <memberTool name="recoverNodesFromSubnet"/>
     <memberTool name="convertHDA_to_Subnet_Melt"/>
+    <memberTool name="Git pull And Push Sample Code"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -179,6 +180,142 @@ def isMeltNode(node):
 selectedNodes = hou.selectedNodes()
 
 fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = isMeltNode, convertFeENode = True, displayConfirmation = True)
+]]></script>
+  </tool>
+
+  <tool name="Git pull And Push Sample Code" label="Git pull And Push Sample Code" icon="PLASMA_App">
+    <script scriptType="python"><![CDATA[
+raise SystemError('this is a sample code, can not be run\nè¿æ¯ä¸ä»½æµè¯ä»£ç ï¼ä¸è½è¢«è¿è¡')
+
+strictNodeNameDict = dict()
+strictNodeParmDefaultValueDict = dict()
+hideParmNodeDict = dict()
+subMenuDict = dict()
+changeNodeTypeDict = dict()
+
+if 1:
+    strictNodeNameDict[''] = ('', )
+
+if 1:
+    ##ç¬¬äºä¸ªåæ°è¡¨ç¤ºæ¯å¦æ¯expression
+    strictNodeParmDefaultValueDict[''] = (
+        ('tol3d', 0, (0.001, )),
+    )
+
+
+
+if 1:
+    hideParmNodeDict[''] = (
+        '', 
+    )
+
+
+if 1:
+    subMenuDict[''] = ''
+
+
+if 1:
+    changeNodeTypeDict[''] = ''
+
+
+bypassNodeType = ()
+'''
+bypassNodeType = (
+)
+'''
+
+deleteNodeType = (
+
+)
+
+
+
+
+
+targetHDAPath = 'C:/Users//Documents/houdini18.5/otls/a.hda'
+
+
+
+import hou
+import os
+import re
+
+import mUtils
+
+import fee_Utils
+import fee_HDA
+import fee_Node
+
+# from importlib import reload
+# reload(fee_Utils)
+# reload(fee_HDA)
+# reload(fee_Node)
+
+#FeEexpand_otlPath = hou.getenv("FeEexpand").replace("//","/") + "/otls/"
+
+def isMeltNode(node):
+    if isinstance(node, hou.Node):
+        nodeType = node.type()
+        if nodeType.definition():
+            name = nodeType.name()
+            label = nodeType.description()
+            nameComponents = nodeType.nameComponents()
+            if nameComponents[0].startswith('Melt::') or nameComponents[1] == 'Melt' or (name.startswith('melt_') and label.startswith('Melt ')):
+                return True
+    # elif isinstance(node, str):
+    #     if hou.nodeType(node).type().defi():
+    #         return True
+    else:
+        raise TypeError('invalid input', node)
+
+    return False
+
+
+selectedNodes = hou.selectedNodes()
+
+if len(selectedNodes) > 1:
+    raise ValueError('len(selectedNodes) > 1')
+
+updateGit = hou.ui.displayMessage(text='Git Push', buttons=('yes','no'))
+updateGit = 1 - updateGit
+
+
+# updateGit = 1
+
+if updateGit:
+    fee_Utils.gitPullByBat('D:/HoudiniLib')
+    #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpull.bat')
+
+
+
+
+print()
+print()
+
+for selectedNode in selectedNodes:
+
+    if not isMeltNode(selectedNode, detectName = False, detectPath = True):
+        raise TypeError('this in not melt Node: ', selectedNode)
+
+    nodeType = selectedNode.type()
+    defi = nodeType.definition()
+
+    newDefi = fee_Node.convertDefiByFilter(
+        selectedNode, targetHDAPath = targetHDAPath, 
+        namespaceOriginal = 'Melt', namespaceTarget = '', 
+        subMenuOriginalPrefix = 'Melt', subMenuTargetPrefix = 'DT',
+        nodeTypeNameFromLabel = False, hdaNameFromNodeTypeName = False, 
+        # name_lower = False, name_convertSpacetoUnderscore = False, 
+        name_lower = False, name_convertSpacetoUnderscore = False,
+        deleteNodeType = deleteNodeType, bypassNodeType = bypassNodeType, 
+        strictNodeNameDict = strictNodeNameDict, subMenuDict = subMenuDict, changeNodeTypeDict = changeNodeTypeDict, 
+        strictNodeParmDefaultValueDict = strictNodeParmDefaultValueDict, hideParmNodeDict = hideParmNodeDict
+    )
+
+if updateGit:
+    fee_Utils.gitPushByBat('D:/HoudiniLib')
+
+    #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpush.bat')
 ]]></script>
   </tool>
 </shelfDocument>

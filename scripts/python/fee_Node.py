@@ -1551,9 +1551,9 @@ def correctWrangleParmeter(selectedNodes):
 
 def convertDefiByFilter(selectedNode, targetHDAPath = '', 
     namespaceOriginal = '', namespaceTarget = '', 
+    subMenuOriginalPrefix = '', subMenuTargetPrefix = '', 
     nodeTypeNameFromLabel = False, hdaNameFromNodeTypeName = False, 
     name_lower = False, name_convertSpacetoUnderscore = False, 
-    subMenuOriginalPrefix = '', subMenuTargetPrefix = '', 
     deleteNodeType = (), bypassNodeType = (), 
     strictNodeNameDict = {}, subMenuDict = {}, changeNodeTypeDict = {}, 
     strictNodeParmDefaultValueDict = {}, hideParmNodeDict = {}):
