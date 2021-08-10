@@ -102,3 +102,5 @@ curveends_fee
 polyreduce2d_fee
 attribinterpolate_ray_fee
 displacementfrommap_fee
+blast_fee
+smallpieces_fee::1.0

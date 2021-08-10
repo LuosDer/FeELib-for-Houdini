@@ -12,6 +12,11 @@ import fee_Utils
 # reload(fee_HDA)
 
 
+# if 1:
+#     import fee_HDA
+# else:
+
+
 def convertDefi(inputNodeType):
     if isinstance(inputNodeType, hou.HDADefinition):
         return inputNodeType
@@ -140,7 +145,7 @@ def combineNameComponents(nameComponents):
     if not isinstance(trimedNameComponents, list):
         raise ValueError('must be list or tuple')
     if len(trimedNameComponents) != 4:
-        raise ValueError('not correct len')
+        raise ValueError('len of nameComponents must be 4')
     for idx in range(3, -1, -1):
         if not isinstance(trimedNameComponents[idx], str):
             raise ValueError('must be str')
@@ -281,7 +286,7 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
 
     if detectName:
         nameComponents = nodeType.nameComponents()
-        if not ( ('FeE' in nameComponents[1] or 'Five elements Elf' in nameComponents[1]) or (nameComponents[2].endswith("_fee") and nodeType.description().startswith("FeE")) ):
+        if not ( nameComponents[0].startswith('FeE::') or nameComponents[1] == 'FeE' or (nameComponents[2].endswith("_fee") and nodeType.description().startswith("FeE")) ):
             return False
     
     if detectPath:
@@ -653,3 +658,18 @@ def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = (), ignoreFeEHDA = False):
     #hou.hda.uninstallFile(defiPath)
     #convertedDefi = list(set(convertedDefi)) #去重
 
+
+
+def expandHDA(origHDAPath, targetHDAPath):
+    if not os.path.exists(origHDAPath):
+        raise ValueError("HDA '{}' not exist".format(origHDAPath))
+    if os.path.isdir(origHDAPath):
+        raise ValueError("HDA '{}' is expanded".format(origHDAPath))
+
+    hou.hda.expandToDirectory(origHDAPath, targetHDAPath)
+    return targetHDAPath
+    #hou.hda.expandToDirectory(newLibraryFilePath, expandHDAPath)
+    # hscriptCommand = ' '.join((r"hotl -t", expandHDAPath, newLibraryFilePath))
+    # hscriptCommand = ' '.join((r"otexpand", newLibraryFilePath, expandHDAPath))
+    # print(hscriptCommand)
+    # hou.hscript(hscriptCommand)

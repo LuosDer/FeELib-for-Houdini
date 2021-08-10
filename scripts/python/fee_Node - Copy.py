@@ -284,49 +284,33 @@ def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
         changeAllSubNodeTypeMatchesType(newNode, changeNodeTypeDict)
 
 
-def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False):
-    if not isinstance(node, hou.Node):
-        raise TypeError('invalid node', node)
-
+def convertSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = node.type()
     nodeTypeName = nodeType.name()
     ##### 检测各种情况
     if nodeTypeName == 'subnet':
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         return False
 
     defi = nodeType.definition()
     if defi is None:
-        return False
+        return
 
-    if ignoreUnlock and not node.matchesCurrentDefinition():
+    if not ignoreUnlock and not node.matchesCurrentDefinition():
         #print(node)
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         return False
-        
     
-    if ignore_SideFX_HDA and fee_HDA.isSideFXDefinition(defi):
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
-        return False
-    else:
-        flag = not fee_HDA.isSideFXDefinition(defi)
+    if Only_FeEHDA:
+        if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
+            return
 
-        
-    
-    if flag and convertFeENode:
-        if fee_HDA.isFeENode(nodeType, detectName, detectPath):
-            flag = False
-        
-
-    if flag and nodeFilterFunc is not None:
-        if nodeFilterFunc(node):
-            flag = False
-
-    if flag:
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
-        return False
-
-        
+    if ignore_SideFX_HDA:
+        # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
+        # if defi.libraryFilePath().startswith(defaultLibPath):
+        if fee_HDA.isSideFXDefinition(defi):
+            convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+            return False
 
     node.allowEditingOfContents()
 
@@ -620,7 +604,7 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     optype_exp = copyOrigNode.type().nameComponents()[2]
     optype_exp1 = '\'' + optype_exp + '\''
     bake_optypeExp_to_str(newNode, newNode, optype_exp, optype_exp1)
-    convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+    convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
     #print(optype_exp)
 
     
@@ -631,13 +615,14 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     
 
 
-def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False):
+def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = recurseNode.type()
     nodeTypeName = nodeType.name()
     defi = nodeType.definition()
 
-    if nodeTypeName != 'subnet' and (recurseNode.matchesCurrentDefinition() or defi is None):
-        return False
+    if nodeTypeName != 'subnet':
+        if recurseNode.matchesCurrentDefinition() or defi is None:
+            return False
     
     if optype_exp == '':
         optype_exp = sourceNode.type().nameComponents()[2]
@@ -647,73 +632,87 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
     for child in recurseNode.children():
         bake_optypeExp_to_str(child, sourceNode, optype_exp, optype_exp1)
 
-        # relativePathTo = child.relativePathTo(sourceNode)
-        # str_optype = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
-        # str_py_optype = r"hou.node('" + relativePathTo + r"/.').type().nameComponents()[2]" # r"hou.node('../.').type().nameComponents()[2]"
-        # # print(str_py_optype)
+        """
+        relativePathTo = child.relativePathTo(sourceNode)
+        str_optype = r"optype('" + relativePathTo + r"/.')" # r"optype('../.')"
+        str_py_optype = r"hou.node('" + relativePathTo + r"/.').type().nameComponents()[2]" # r"hou.node('../.').type().nameComponents()[2]"
+        # print(str_py_optype)
 
-        # parms = child.parms()
-        # for parm in parms:
-        #     rawValue = parm.rawValue()
-        #     try:
-        #         expLang = parm.expressionLanguage()
-        #     except:
-        #         #没有exp
-        #         if parm.parmTemplate().dataType() == hou.parmData.String:
-        #             #是string类型
-        #             if r'`' + str_optype + r'`' in rawValue:
-        #                 rawValue = rawValue.replace(r'`' + str_optype + r'`', optype_exp)
-        #                 parm.set(rawValue)
-        #             if str_optype in rawValue:
-        #                 rawValue = rawValue.replace(str_optype, optype_exp1)
-        #                 parm.set(rawValue)
-        #     else:
-        #         #有exp
-        #         if expLang == hou.exprLanguage.Python:
-        #             if str_py_optype in rawValue:
-        #                 rawValue = rawValue.replace(str_py_optype, optype_exp1)
-        #                 parm.deleteAllKeyframes()
-        #                 parm.setExpression(rawValue, hou.exprLanguage.Python, True)
-        #         elif expLang == hou.exprLanguage.Hscript:
-        #             if str_optype in rawValue:
-        #                 rawValue = rawValue.replace(str_optype, optype_exp1)
-        #                 parm.deleteAllKeyframes()
-        #                 parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
+        parms = child.parms()
+        for parm in parms:
+            rawValue = parm.rawValue()
+            try:
+                expLang = parm.expressionLanguage()
+            except:
+                #没有exp
+                if parm.parmTemplate().dataType() == hou.parmData.String:
+                    #是string类型
+                    if r'`' + str_optype + r'`' in rawValue:
+                        rawValue = rawValue.replace(r'`' + str_optype + r'`', optype_exp)
+                        parm.set(rawValue)
+                    if str_optype in rawValue:
+                        rawValue = rawValue.replace(str_optype, optype_exp1)
+                        parm.set(rawValue)
+            else:
+                #有exp
+                if expLang == hou.exprLanguage.Python:
+                    if str_py_optype in rawValue:
+                        rawValue = rawValue.replace(str_py_optype, optype_exp1)
+                        parm.deleteAllKeyframes()
+                        parm.setExpression(rawValue, hou.exprLanguage.Python, True)
+                elif expLang == hou.exprLanguage.Hscript:
+                    if str_optype in rawValue:
+                        rawValue = rawValue.replace(str_optype, optype_exp1)
+                        parm.deleteAllKeyframes()
+                        parm.setExpression(rawValue, hou.exprLanguage.Hscript, True)
                 
-        #         #print(rawValue)
+                #print(rawValue)
+        """
 
         childNodeType = child.type()
         childNodeTypeName = childNodeType.name()
         # #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
-
-        convertSubnet(child, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
-        # if childNodeTypeName == 'subnet':
-        #     convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
-        #     continue
-
-        # # if childNodeTypeName == 'deltamush::1.0':
-        # #     print(fee_HDA.isFeENode(childNodeType, detectName, detectPath))
-        # #     print(childNodeType)
-        # #     print(detectName)
-        # #     print(detectPath)
-        # if convertFeENode:
-        #     if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
-        #         convertSubnet(child, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
-        #         continue
         
-        # if nodeFilterFunc is not None:
-        #     if nodeFilterFunc(child):
-        #         convertSubnet(child, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
-        #         continue
-
-        # convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        if childNodeTypeName == 'subnet':
+            pass
+            convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+        else:
+            if Only_FeEHDA:
+                """
+                if childNodeTypeName == 'deltamush::1.0':
+                    print(fee_HDA.isFeENode(childNodeType, detectName, detectPath))
+                    print(childNodeType)
+                    print(detectName)
+                    print(detectPath)
+                """
+                if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+                    convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+                else:
+                    convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
+            else:
+                convertSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
     
     return True
 
 
 
 
-def convertSubnet_custom(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, displayConfirmation = False):
+def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
+    if displayConfirmation:
+        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
+
+    nodes = convertNodeTuple(inputNodes)
+    ##print(nodes)
+    for node in nodes:
+        node.allowEditingOfContents()
+        for child in node.children():
+            #print(child)
+            #childNodeeType = child.type()
+            #if fee_HDA.isFeENode(childNodeType, detectName, detectPath):
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = True, ignore_SideFX_HDA = ignore_SideFX_HDA, detectName = detectName, detectPath = detectPath)
+
+
+def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
@@ -721,42 +720,7 @@ def convertSubnet_custom(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = Tr
     for node in nodes:
         node.allowEditingOfContents()
         for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = convertFeENode, detectName = True, detectPath = False)
-
-
-
-def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, detectName = True, detectPath = False, displayConfirmation = False):
-    if displayConfirmation:
-        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
-
-    nodes = convertNodeTuple(inputNodes)
-    for node in nodes:
-        node.allowEditingOfContents()
-        for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = True, detectName = detectName, detectPath = detectPath)
-
-
-def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, displayConfirmation = False):
-    if displayConfirmation:
-        fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
-
-    def nodeFilter_allNode(node):
-        if isinstance(node, hou.Node):
-            if node.type().definition():
-                return True
-        elif isinstance(node, str):
-            if hou.nodeType(node).type().definition():
-                return True
-        else:
-            raise TypeError('invalid input', node)
-
-        return False
-
-    nodes = convertNodeTuple(inputNodes)
-    for node in nodes:
-        node.allowEditingOfContents()
-        for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilter_allNode, convertFeENode = True, detectName = True, detectPath = False)
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, Only_FeEHDA = False, ignore_SideFX_HDA = ignore_SideFX_HDA)
 
 
 
@@ -764,13 +728,17 @@ def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA
 
 
 
-def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False):
+
+
+
+
+def recoverSubnet(node, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = node.type()
     nodeTypeName = nodeType.name()
     ##### 检测各种情况
     if nodeTypeName != 'subnet':
         return False
-        # recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        # recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
 
 
@@ -780,12 +748,12 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
 
     # if not ignoreUnlock and not node.matchesCurrentDefinition():
     #     #print(node)
-    #     recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+    #     recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
     #     return False
     
 
 
-    # if convertFeENode:
+    # if Only_FeEHDA:
     #     if not fee_HDA.isFeENode(nodeType, detectName, detectPath):
     #         return False
 
@@ -793,7 +761,7 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     #     # defaultLibPath = hou.getenv('HFS') + r'/houdini/otls/'
     #     # if defi.libraryFilePath().startswith(defaultLibPath):
     #     if fee_HDA.isSideFXDefinition(defi):
-    #         recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+    #         recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
     #         return False
 
 
@@ -807,7 +775,7 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         break
     
     if flag:
-        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         return False
     
     origNodeTypeName = origNodeTypeNameParm.evalAsString()
@@ -817,7 +785,7 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     newRefNode = parent.createNode(origNodeTypeName, run_init_scripts=False, load_contents=True)
     if not isEqual_networkChildren(node, newRefNode, checkNodeType = False):
         newRefNode.destroy()
-        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
         return False
     
     newRefNode.destroy()
@@ -1139,7 +1107,7 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
 
 
 
-def recoverSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False):
+def recoverSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False):
     nodeType = sourceNode.type()
     nodeTypeName = nodeType.name()
 
@@ -1147,19 +1115,19 @@ def recoverSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
         return False
     
     for child in recurseNode.children():
-        recoverSubnet(child, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        recoverSubnet(child, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
     return True
 
 
 
-def recoverNodesFromSubnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False, displayConfirmation = False):
+def recoverNodesFromSubnet(inputNodes, ignoreUnlock = False, Only_FeEHDA = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = False):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
     
     nodes = convertNodeTuple(inputNodes)
     for node in nodes:
-        recoverSubnet(node, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        recoverSubnet(node, ignoreUnlock, Only_FeEHDA, ignore_SideFX_HDA, detectName, detectPath)
 
 
 
@@ -1609,7 +1577,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     # fee_Node.deleteAllSubNodeMatchesType(selectedNode)
 
     changeAllSubNodeTypeMatchesType(selectedNode, changeNodeTypeDict)
-    convert_All_FeENode_to_Subnet(selectedNode, ignoreUnlock = True, ignore_SideFX_HDA = True, detectName = False, detectPath = True)
+    convert_All_FeENode_to_Subnet(selectedNode, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = False, detectPath = True)
     deleteAllSubNodeMatchesType(selectedNode, deleteNodeType)
 
     # for allSubChild in selectedNode.allSubChiledren():

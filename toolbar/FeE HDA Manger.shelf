@@ -13,14 +13,15 @@
     <memberTool name="extractAllUsedDefiToEmbeded"/>
     <memberTool name="findRefNode"/>
     <memberTool name="recoverNodesFromSubnet"/>
+    <memberTool name="convertHDA_to_Subnet_Melt"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
     <script scriptType="python"><![CDATA[
 import fee_Node
 
-# from importlib import reload
-# reload(fee_Node)
+from importlib import reload
+reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
 fee_Node.convert_All_HDA_to_Subnet(selectedNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, displayConfirmation = True)
@@ -145,9 +146,39 @@ import fee_Node
 # reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
-fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, Only_FeEHDA = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
+fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, convertFeENode = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
 
 #print(fee_Node.isEqual_networkChildren(hou.node('/obj/geo1/subnet3/geolayout_fee1'), hou.node('/obj/geo1/subnet3/geolayout_fee2'), checkNodeType = False))
+]]></script>
+  </tool>
+
+  <tool name="convertHDA_to_Subnet_Melt" label="convertHDA to Subnet Melt" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import fee_Node
+from importlib import reload
+reload(fee_Node)
+
+def isMeltNode(node):
+    if isinstance(node, hou.Node):
+        nodeType = node.type()
+        if nodeType.definition():
+            name = nodeType.name()
+            label = nodeType.description()
+            nameComponents = nodeType.nameComponents()
+            if nameComponents[0].startswith('Melt::') or nameComponents[1] == 'Melt' or (name.startswith('melt_') and label.startswith('Melt ')):
+                return True
+    # elif isinstance(node, str):
+    #     if hou.nodeType(node).type().defi():
+    #         return True
+    else:
+        raise TypeError('invalid input', node)
+
+    return False
+
+
+selectedNodes = hou.selectedNodes()
+#fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, displayConfirmation = True, convertFeENode = True)
+fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = isMeltNode, displayConfirmation = True, convertFeENode = True)
 ]]></script>
   </tool>
 </shelfDocument>
