@@ -177,8 +177,8 @@ def isMeltNode(node):
 
 
 selectedNodes = hou.selectedNodes()
-#fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, displayConfirmation = True, convertFeENode = True)
-fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = isMeltNode, displayConfirmation = True, convertFeENode = True)
+
+fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = isMeltNode, convertFeENode = True, displayConfirmation = True)
 ]]></script>
   </tool>
 </shelfDocument>
