@@ -1555,6 +1555,7 @@ def correctWrangleParmeter(selectedNodes):
 
 
 def convertDefiByFilter(selectedNode, targetHDAPath = '', 
+    ignoreUnlock = True, nodeFilterFunc = None, convertFeENode = True, 
     namespaceOriginal = '', namespaceTarget = '', 
     subMenuOriginalPrefix = '', subMenuTargetPrefix = '', 
     nodeTypeNameFromLabel = False, hdaNameFromNodeTypeName = False, 
@@ -1614,7 +1615,8 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     # fee_Node.deleteAllSubNodeMatchesType(selectedNode)
 
     changeAllSubNodeTypeMatchesType(selectedNode, changeNodeTypeDict)
-    convert_All_FeENode_to_Subnet(selectedNode, ignoreUnlock = True, ignore_SideFX_HDA = True, detectName = False, detectPath = True)
+    #convert_All_FeENode_to_Subnet(selectedNode, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = True, detectName = False, detectPath = True)
+    convertSubnet_custom(selectedNode, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = True, nodeFilterFunc = nodeFilterFunc, convertFeENode = convertFeENode, displayConfirmation = False)
     deleteAllSubNodeMatchesType(selectedNode, deleteNodeType)
 
     # for allSubChild in selectedNode.allSubChiledren():

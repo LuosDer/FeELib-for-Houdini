@@ -229,7 +229,6 @@ deleteNodeType = (
 )
 
 
-gitDir = 'D:/Houdini/FeEProjectHoudini/'
 gitDir = 'D:/Houdini/FeELib-for-Houdini/'
 
 import hou
@@ -313,6 +312,7 @@ for selectedNode in selectedNodes:
 
     newDefi = fee_Node.convertDefiByFilter(
         selectedNode, targetHDAPath = targetHDAPath, 
+        ignoreUnlock = True, nodeFilterFunc = isMeltNode, convertFeENode = True, 
         namespaceOriginal = 'Melt', namespaceTarget = '', 
         subMenuOriginalPrefix = 'Melt', subMenuTargetPrefix = 'DT',
         nodeTypeNameFromLabel = False, hdaNameFromNodeTypeName = False, 
