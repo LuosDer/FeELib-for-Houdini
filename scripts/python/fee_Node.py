@@ -246,6 +246,9 @@ def deleteAllSubNodeMatchesType(node, inputDeleteNodeType):
     if not isinstance(deleteNodeType, tuple):
         raise TypeError('deleteNodeType must be sequence')
 
+    if len(deleteNodeType) == 0:
+        return False
+    
     if not isinstance(deleteNodeType[0], str):
         raise TypeError('deleteNodeType must be string')
 
@@ -267,6 +270,8 @@ def deleteAllSubNodeMatchesType(node, inputDeleteNodeType):
         #elif not childNode.matchesCurrentDefinition():
         else:
             deleteAllSubNodeMatchesType(childNodem, inputDeleteNodeType)
+            
+    return True
 
 def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
     if not isinstance(changeNodeTypeDict, dict):
@@ -1280,7 +1285,7 @@ def extract_LockedNull(selectedNodes, subPath = 'extractLockedGeo', savePath_rel
             # print(filepath_abs)
             # print(filepath_rel)
             import os
-            pathDir = os.path.split(filepath_abs)[0]
+            pathDir = os.path.dirname(filepath_abs)
             if not os.path.exists(pathDir):
                 os.mkdir(pathDir)
             # print(pathDir)
