@@ -122,9 +122,9 @@ def gitPushByBat(repositoryPath):
     #print(command)
     createAndRunBat_HoudiniTEMP(command, 'feE_Utils_GitPush.bat')
 
-    if reloadAllFiles:
-        hou.hda.reloadAllFiles(rescan = True)
-        #hou.hda.reloadNamespaceOrder()
+    # if reloadAllFiles:
+    #     hou.hda.reloadAllFiles(rescan = True)
+    #     #hou.hda.reloadNamespaceOrder()
 
     
     # import subprocess
