@@ -185,7 +185,7 @@ fee_Node.convertSubnet_custom(selectedNodes, ignoreUnlock = True, ignore_SideFX_
 
   <tool name="Git pull And Push Sample Code" label="Git pull And Push Sample Code" icon="PLASMA_App">
     <script scriptType="python"><![CDATA[
-raise SystemError('this is a sample code, can not be run\nè¿æ¯ä¸ä»½æµè¯ä»£ç ï¼ä¸è½è¢«è¿è¡')
+#raise SystemError('this is a sample code, can not be run\nè¿æ¯ä¸ä»½æµè¯ä»£ç ï¼ä¸è½è¢«è¿è¡')
 
 strictNodeNameDict = dict()
 strictNodeParmDefaultValueDict = dict()
@@ -229,12 +229,8 @@ deleteNodeType = (
 )
 
 
-
-
-
-targetHDAPath = 'C:/Users//Documents/houdini18.5/otls/a.hda'
-
-
+gitDir = 'D:/Houdini/FeEProjectHoudini/'
+gitDir = 'D:/Houdini/FeELib-for-Houdini/'
 
 import hou
 import os
@@ -273,8 +269,23 @@ def isMeltNode(node):
 
 selectedNodes = hou.selectedNodes()
 
-if len(selectedNodes) > 1:
-    raise ValueError('len(selectedNodes) > 1')
+if len(selectedNodes) != 1:
+    raise ValueError('len(selectedNodes) != 1')
+
+
+    
+nameComponents = selectedNodes[0].type().nameComponents()
+trimName = nameComponents[2]
+trimName = trimName.lstrip('Melt')
+trimName = trimName.lstrip('Melt ')
+trimName = trimName.lstrip('Melt_')
+trimName = trimName.lstrip('melt')
+trimName = trimName.lstrip('melt ')
+trimName = trimName.lstrip('melt_')
+targetHDAPath = gitDir + 'otls/' + trimName + '.hda'
+print(targetHDAPath)
+#targetHDAPath = 'C:/Users//Documents/houdini18.5/otls/a.hda'
+
 
 updateGit = hou.ui.displayMessage(text='Git Push', buttons=('yes','no'))
 updateGit = 1 - updateGit
@@ -283,7 +294,7 @@ updateGit = 1 - updateGit
 # updateGit = 1
 
 if updateGit:
-    fee_Utils.gitPullByBat('D:/HoudiniLib')
+    fee_Utils.gitPullByBat(gitDir)
     #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpull.bat')
 
 
@@ -294,7 +305,7 @@ print()
 
 for selectedNode in selectedNodes:
 
-    if not isMeltNode(selectedNode, detectName = False, detectPath = True):
+    if not isMeltNode(selectedNode):
         raise TypeError('this in not melt Node: ', selectedNode)
 
     nodeType = selectedNode.type()
@@ -313,7 +324,7 @@ for selectedNode in selectedNodes:
     )
 
 if updateGit:
-    fee_Utils.gitPushByBat('D:/HoudiniLib')
+    fee_Utils.gitPushByBat(gitDir)
 
     #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpush.bat')
 ]]></script>

@@ -104,20 +104,20 @@ def gitPushByBat(repositoryPath):
     command = absRepositoryPath[:2] + '\n'
     command += 'cd ' + absRepositoryPath + '\n'
     command += r'''
-    git pull
-    git status
+git pull
+git status
 
-    set /p commitComment=
-    :: if [%commitComment%]==[] ( xxxxx ) else ( xxxx )
+set /p commitComment=
+:: if [%commitComment%]==[] ( xxxxx ) else ( xxxx )
 
-    git add .
+git add .
 
-    git commit -m "%commitComment%"
+git commit -m "%commitComment%"
 
-    git status
+git status
 
-    :: pause
-    git push
+:: pause
+git push
     '''
     #print(command)
     createAndRunBat_HoudiniTEMP(command, 'feE_Utils_GitPush.bat')
