@@ -113,3 +113,4 @@ cull_frontface_fee::1.0
 cull_frustum_boolean
 cull_frustum_clip_fee
 cull_ndc_fee
+cull_frustum_boolean_fee
