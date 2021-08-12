@@ -143,8 +143,8 @@ if theTool.name().count("Create_BlackBox")==0:
   <tool name="recoverNodesFromSubnet" label="Recover Nodes from Subnet" icon="hicon:/SVGIcons.index?VOP_structpack.svg">
     <script scriptType="python"><![CDATA[
 import fee_Node
-# from importlib import reload
-# reload(fee_Node)
+from importlib import reload
+reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
 fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, convertFeENode = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)

@@ -230,6 +230,8 @@ def readDeprecatedNode():
         if os.path.exists(deprecatedSopDefinitionTXT):
             with open(deprecatedSopDefinitionTXT, "r") as TXT:
                 fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+    else:
+        print('no found env FeELib which belongs to FeELib for Houdini')
 
     pathFeELib = hou.getenv('FeEProjectHoudini')
     if pathFeELib is not None:
@@ -245,7 +247,7 @@ def readDeprecatedNode():
             with open(deprecatedSopDefinitionTXT, "r") as TXT:
                 fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
 
-    deprecatedNodeList = list(set(deprecatedNodeList))
+    deprecatedNodeList = tuple(set(deprecatedNodeList))
     return deprecatedNodeList
 
 
@@ -257,6 +259,8 @@ def readNeedHideNode():
         if os.path.exists(deprecatedSopDefinitionTXT):
             with open(deprecatedSopDefinitionTXT, "r") as TXT:
                 fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+    else:
+        print('no found env FeELib which belongs to FeELib for Houdini')
 
     pathFeELib = hou.getenv('FeEProjectHoudini')
     if pathFeELib is not None:
@@ -272,7 +276,7 @@ def readNeedHideNode():
             with open(deprecatedSopDefinitionTXT, "r") as TXT:
                 fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
 
-    deprecatedNodeList = list(set(deprecatedNodeList))
+    deprecatedNodeList = tuple(set(deprecatedNodeList))
     return deprecatedNodeList
 
 
@@ -365,7 +369,7 @@ def isSideFXDefinition(defi):
 
 
 
-def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
+def checkHideFeENode(keepHide = True, detectName = True, detectPath = False):
     ############### keepHide is False 用于切换hide模式
     TEMP_path = hou.getenv('TEMP')
     isHidingTXT_path = TEMP_path + '/isHidingFeENode.txt'
@@ -386,9 +390,10 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
                 isHidingTXT.write('1')
 
 
-    deprecatedNodeList = readDeprecatedNode()
+    deprecatedNodeList = list(readDeprecatedNode())
     deprecatedNodeList.extend(readNeedHideNode())
-    
+    #print(deprecatedNodeList)
+
     nodeTypeCategories = hou.nodeTypeCategories()
 
     for nodeTypeCategoriesKey in nodeTypeCategories:
@@ -418,6 +423,10 @@ def checkHideFeENode(keepHide = True, detectName = False, detectPath = True):
         dictNodeTypes = nodeTypeCategories[nodeTypeCategoriesKey].nodeTypes()
         for nodeTypeDictsKey in dictNodeTypes:
             nodeType = dictNodeTypes[nodeTypeDictsKey]
+            nodeTypeName = nodeType.name()
+            if nodeTypeName in deprecatedNodeList:
+                nodeType.setHidden(True)
+                continue
 
             '''
             defi = nodeType.definition()

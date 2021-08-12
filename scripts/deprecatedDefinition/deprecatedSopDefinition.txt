@@ -104,3 +104,12 @@ attribinterpolate_ray_fee
 displacementfrommap_fee
 blast_fee
 smallpieces_fee::1.0
+convertline_fast_fee
+group_blast_fee
+cull_customtrace_fee
+cull_frustumtrace_fee
+cull_frontface_fee
+cull_frontface_fee::1.0
+cull_frustum_boolean
+cull_frustum_clip_fee
+cull_ndc_fee

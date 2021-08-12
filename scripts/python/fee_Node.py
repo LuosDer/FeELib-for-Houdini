@@ -1014,7 +1014,8 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     copyOrigNode = hou.copyNodesTo([node], parent)[0]
     newNode = node.changeNodeType(origNodeTypeName, keep_parms=True)
     newNode.matchCurrentDefinition()
-    newNode.setUserData('nodeshape', origNodeshape)
+    if origNodeshape is not None:
+        newNode.setUserData('nodeshape', origNodeshape)
     #newNode.removeSpareParms()
 
 

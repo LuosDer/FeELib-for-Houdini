@@ -76,8 +76,8 @@ fee_Utils.gitPullByBat(FeELib_path, reloadAllFiles = True)
 import fee_HDA
 # from importlib import reload
 # reload(fee_HDA)
-#fee_HDA.checkHideFeENode(keepHide = True, detectName = False, detectPath = True)
-fee_HDA.checkHideFeENode(keepHide = False, detectName = False, detectPath = True)
+#fee_HDA.checkHideFeENode(keepHide = True, detectName = True, detectPath = False)
+fee_HDA.checkHideFeENode(keepHide = False, detectName = True, detectPath = False)
       ]]></scriptCode>
       </scriptItem>
 
