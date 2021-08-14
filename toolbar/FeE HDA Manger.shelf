@@ -156,8 +156,8 @@ fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, convertFeEN
   <tool name="convertHDA_to_Subnet_Melt" label="convertHDA to Subnet Melt" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
     <script scriptType="python"><![CDATA[
 import fee_Node
-from importlib import reload
-reload(fee_Node)
+# from importlib import reload
+# reload(fee_Node)
 
 def isMeltNode(node):
     if isinstance(node, hou.Node):
@@ -235,16 +235,14 @@ import hou
 import os
 import re
 
-import mUtils
-
 import fee_Utils
 import fee_HDA
 import fee_Node
 
-# from importlib import reload
-# reload(fee_Utils)
-# reload(fee_HDA)
-# reload(fee_Node)
+from importlib import reload
+reload(fee_Utils)
+reload(fee_HDA)
+reload(fee_Node)
 
 #FeEexpand_otlPath = hou.getenv("FeEexpand").replace("//","/") + "/otls/"
 
