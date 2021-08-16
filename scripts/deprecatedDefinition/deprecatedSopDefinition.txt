@@ -114,3 +114,10 @@ cull_frustum_boolean
 cull_frustum_clip_fee
 cull_ndc_fee
 cull_frustum_boolean_fee
+attribchangedframe_fee
+attribchangedframe_fee::2.0
+convertline_fee
+convertline_fee::0.1
+convertline_fee::1.0
+convertline_fee::2.0
+stopcondition_fee
