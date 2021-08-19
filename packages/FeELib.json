@@ -65,6 +65,7 @@
                     "$FeELib/otls/Data/Enumerate",
                     "$FeELib/otls/Data/Graph",
                     "$FeELib/otls/Data/Hull",
+                    "$FeELib/otls/Data/Intersection",
                     "$FeELib/otls/Data/NDC",
                     "$FeELib/otls/Data/Orient",
                     "$FeELib/otls/Data/Property",
