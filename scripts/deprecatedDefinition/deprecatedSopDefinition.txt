@@ -131,8 +131,6 @@ addprimperpt_fee
 oglattrib_fee
 queuegeo_multiInput_fee
 queuegeo_fee
-merge_fee::1.0
-merge_fee::0.1
 groupnewelems_fee
 resampleedge_fee
 attribtogroup_fee
@@ -145,5 +143,7 @@ silhouette_ortho_fee
 silhouette_ortho_fee::2.0
 silhouette_ortho_fee::3.0
 inlinepoints_fee
-
+extractIntrinsicAttrib_fee
+merge_fee::1.0
+merge_fee::0.1
 
