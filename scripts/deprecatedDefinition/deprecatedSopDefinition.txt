@@ -102,10 +102,8 @@ curveends_fee
 polyreduce2d_fee
 attribinterpolate_ray_fee
 displacementfrommap_fee
-blast_fee
 smallpieces_fee::1.0
 convertline_fast_fee
-group_blast_fee
 cull_customtrace_fee
 cull_frustumtrace_fee
 cull_frontface_fee
@@ -147,3 +145,5 @@ extractIntrinsicAttrib_fee
 merge_fee::1.0
 merge_fee::0.1
 
+blast_fee
+group_blast_fee
