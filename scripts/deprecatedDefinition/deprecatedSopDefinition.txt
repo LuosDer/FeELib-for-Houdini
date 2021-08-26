@@ -142,8 +142,10 @@ silhouette_ortho_fee::2.0
 silhouette_ortho_fee::3.0
 inlinepoints_fee
 extractIntrinsicAttrib_fee
+
 merge_fee::1.0
 merge_fee::0.1
+merge_fast_fee::1.0
 
 blast_fee
 group_blast_fee
