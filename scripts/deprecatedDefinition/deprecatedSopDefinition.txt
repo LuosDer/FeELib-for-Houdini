@@ -157,3 +157,4 @@ group_blast_fee
 leavedetailattrib_fee
 isClosedSharedPts_fee
 curvesubtractpoly_fee
+vdbfrompoly_fee
