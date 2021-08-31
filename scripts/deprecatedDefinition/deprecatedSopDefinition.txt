@@ -1,4 +1,14 @@
 
+FeE::box
+
+
+
+
+
+
+
+
+
 file_fbx_fee
 packintrinsics_fee
 groupbybearing_fee
@@ -159,3 +169,20 @@ isClosedSharedPts_fee
 curvesubtractpoly_fee
 vdbfrompoly_fee
 correctMeshWinding_volume_fee
+edgecusp_fee
+extrude_fee
+
+hedge_dstpoints_fee::1.0
+minHedgeNum_fee::1.0
+minHedgeNum_fee::2.0
+
+
+
+
+
+
+
+
+
+
+
