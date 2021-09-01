@@ -176,8 +176,8 @@ hedge_dstpoints_fee::1.0
 minHedgeNum_fee::1.0
 minHedgeNum_fee::2.0
 
-
-
+groupattribborder_fee
+clipseam_fee
 
 
 
