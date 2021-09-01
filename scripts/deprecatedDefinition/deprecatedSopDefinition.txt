@@ -178,8 +178,9 @@ minHedgeNum_fee::2.0
 
 groupattribborder_fee
 clipseam_fee
-
-
+groupcopy_fee::0.1
+groupcopy_fee::1.0
+correctMeshWinding_WN_fee
 
 
 
