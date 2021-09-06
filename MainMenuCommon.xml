@@ -130,6 +130,17 @@ fee_HDA.removeEmbeded(displayConfirmation = True)
       ]]></scriptCode>
       </scriptItem>
 
+      <scriptItem id="checkAllGeoMemoryUsage">
+      <label>Check All Geo Memory Usage</label>
+        <scriptCode><![CDATA[
+#hicon:/SVGIcons.index?BUTTONS_clear.svg
+import fee_HIP
+# from importlib import reload
+# reload(fee_HIP)
+fee_HIP.checkAllGeoMemoryUsage()
+      ]]></scriptCode>
+      </scriptItem>
+
       <scriptItem id="fee_clearABCCache">
       <label>Clear ABC Cache</label>
         <scriptCode><![CDATA[

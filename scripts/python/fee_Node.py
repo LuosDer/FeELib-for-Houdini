@@ -1,13 +1,13 @@
 
+# import fee_Node
+# from importlib import reload
+# reload(fee_Node)
+
 import hou
 
 
 import fee_Utils
 import fee_HDA
-
-# import fee_Node
-# from importlib import reload
-# reload(fee_Node)
 
 
 def convertNodeTuple(node):

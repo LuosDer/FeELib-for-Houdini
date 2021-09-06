@@ -181,6 +181,20 @@ clipseam_fee
 groupcopy_fee::0.1
 groupcopy_fee::1.0
 correctMeshWinding_WN_fee
+matchXform_extractXform_fee
+duplicate_fee
+geolayout_fee
+geolayout_multilayer_fee
+groupboundary_fee
+grouprest_fee
+uvgridify_fee
+filecache_fee
+
+golfball_fee
+spherify_fee
+
+
+
 
 
 
