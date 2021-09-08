@@ -18,6 +18,16 @@ fee_Utils.setClipboardText(path)
       </scriptItem>
       
 
+      <scriptItem id="CopyNodeTypeName">
+        <label>Copy Node Type Name</label>
+        <scriptCode><![CDATA[
+import fee_Utils
+name = kwargs["node"].type().name()
+fee_Utils.setClipboardText(name)
+      ]]></scriptCode>
+      </scriptItem>
+      
+
       <scriptItem id="subNodeCount">
         <label>Sub Node Count</label>
         <scriptCode><![CDATA[
@@ -121,6 +131,19 @@ selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
 fee_Node.extract_LockedNull(selectedNodes)
       ]]></scriptCode>
       </scriptItem>
+
+      <scriptItem id="buildFileCacheROPNodeChain">
+        <label>Build FileCache ROP NodeChain</label>
+        <scriptCode><![CDATA[
+import fee_Node
+# from importlib import reload
+# reload(fee_Node)
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.buildFileCacheROPNodeChain(selectedNodes)
+      ]]></scriptCode>
+      </scriptItem>
+
 
       <scriptItem id="correctWrangleParmeter">
         <label>Correct Wrangle Parmeter</label>

@@ -15,3 +15,5 @@ def bakeParm(parms):
         value = parm.eval()
         parm.deleteAllKeyframes()
         parm.set(value)
+
+hou.Parm.bakeParm = bakeParm

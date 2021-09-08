@@ -1,3 +1,5 @@
+# This Python file uses the following encoding: utf-8
+from __future__ import print_function
 
 import hou
 import os
@@ -27,6 +29,10 @@ def convertDefi(inputNodeType):
     else:
         raise TypeError('Invalid Type')
 
+hou.Node.convertDefi = convertDefi
+hou.NodeType.convertDefi = convertDefi
+hou.HDADefinition.convertDefi = convertDefi
+
 def convertNodeType(inputNodeType):
     if isinstance(inputNodeType, hou.NodeType):
         return inputNodeType
@@ -36,6 +42,10 @@ def convertNodeType(inputNodeType):
         return inputNodeType.nodeType()
     else:
         raise TypeError('Invalid Type')
+
+hou.Node.convertNodeType = convertNodeType
+hou.NodeType.convertNodeType = convertNodeType
+hou.HDADefinition.convertNodeType = convertNodeType
 
 
 
@@ -190,7 +200,7 @@ def findFeENodeType(inputNodeTypeName, nodeTypeCategory = hou.sopNodeTypeCategor
     if not isinstance(inputNodeTypeName, str):
         raise TypeError('must be string')
     
-    nodeTypeName = inputNodeTypeName
+    # nodeTypeName = inputNodeTypeName
     nameComponents = list(splitTypeNametoNameComponents(inputNodeTypeName))
 
     nameComponents[1] = 'FeE'
@@ -284,6 +294,7 @@ def readNeedHideNode():
 def isUnlockedHDA(node):
     return not node.isLockedHDA() and node.type().definition() is not None
 
+hou.Node.isUnlockedHDA = isUnlockedHDA
 
 def isFeENode(nodeType, detectName = True, detectPath = False):
     nodeType = convertNodeType(nodeType)
@@ -320,6 +331,10 @@ def isFeENode(nodeType, detectName = True, detectPath = False):
     
     return True
 
+hou.Node.isFeENode = isFeENode
+hou.NodeType.isFeENode = isFeENode
+hou.HDADefinition.isFeENode = isFeENode
+
 def isSideFXLabsNode(nodeType, detectName = True, detectPath = False):
     nodeType = convertNodeType(nodeType)
 
@@ -346,6 +361,10 @@ def isSideFXLabsNode(nodeType, detectName = True, detectPath = False):
     
     return True
 
+hou.Node.isSideFXLabsNode = isSideFXLabsNode
+hou.NodeType.isSideFXLabsNode = isSideFXLabsNode
+hou.HDADefinition.isSideFXLabsNode = isSideFXLabsNode
+
 
 def isSideFXNode(inputNodeType, ignoreDSO = True):
     HFS = hou.getenv('HFS')
@@ -359,6 +378,10 @@ def isSideFXNode(inputNodeType, ignoreDSO = True):
         return False
     return defi.libraryFilePath().startswith(defaultLibPath)
 
+hou.Node.isSideFXNode = isSideFXNode
+hou.NodeType.isSideFXNode = isSideFXNode
+hou.HDADefinition.isSideFXNode = isSideFXNode
+
 
 def isSideFXDefinition(defi):
     HFS = hou.getenv('HFS')
@@ -366,6 +389,8 @@ def isSideFXDefinition(defi):
         raise AttributeError('dont have HFS env')
     defaultLibPath = HFS + r'/houdini/otls/'
     return defi.libraryFilePath().startswith(defaultLibPath)
+
+hou.HDADefinition.isSideFXDefinition = isSideFXDefinition
 
 
 
@@ -460,15 +485,7 @@ def findAllSubParmRawValue(subnet, strValue):
                 print(parm)
 
 
-
-
-def findAllSubParmRawValue(subnet, strValue):
-    for child in subnet.allSubChildren(recurse_in_locked_nodes=False):
-        for parm in child.parms():
-            if strValue in parm.rawValue():
-                print(child)
-                print(parm)
-
+hou.Node.findAllSubParmRawValue = findAllSubParmRawValue
 
 
 
@@ -569,6 +586,7 @@ def TABSubmenuPathfromDefi(defi):
     sections = defi.sections()
     return TABSubmenuPathfromSections(sections)
 
+hou.HDADefinition.TABSubmenuPathfromDefi = TABSubmenuPathfromDefi
 
 
 def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = (), ignoreFeEHDA = False):

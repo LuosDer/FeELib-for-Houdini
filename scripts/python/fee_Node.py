@@ -23,6 +23,8 @@ def convertNodeTuple(node):
     
     raise TypeError('Only Support Node or Node Tuple/List Type')
 
+hou.Node.convertNodeTuple = convertNodeTuple
+
 def getUserWantedSelectedNodes(kwargsNode):
     selectedNodes = hou.selectedNodes()
     if kwargsNode in selectedNodes:
@@ -30,12 +32,16 @@ def getUserWantedSelectedNodes(kwargsNode):
     else:
         return (kwargsNode, )
 
+hou.Node.getUserWantedSelectedNodes = getUserWantedSelectedNodes
+
 
 def addSpareInput(kwargsNode):
     selectedNodesTuple = convertNodeTuple(selectedNodes)
-    for selectedNode in selectedNodes:
+    for selectedNode in selectedNodesTuple:
         pass
         #selectedNode.addSpareParmTuple(parm_template, in_folder=(), create_missing_folders=False)
+
+hou.Node.addSpareInput = addSpareInput
 
 
 
@@ -273,6 +279,8 @@ def deleteAllSubNodeMatchesType(node, inputDeleteNodeType):
             
     return True
 
+hou.Node.deleteAllSubNodeMatchesType = deleteAllSubNodeMatchesType
+
 def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
     if not isinstance(changeNodeTypeDict, dict):
         raise TypeError('changeNodeTypeDict must be dict')
@@ -287,6 +295,8 @@ def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
         else:
             newNode = childNode
         changeAllSubNodeTypeMatchesType(newNode, changeNodeTypeDict)
+
+hou.Node.changeAllSubNodeTypeMatchesType = changeAllSubNodeTypeMatchesType
 
 
 def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False):
@@ -634,6 +644,8 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
 
     return True
     
+hou.Node.convertSubnet = convertSubnet
+
 
 
 def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False):
@@ -1189,6 +1201,7 @@ def unlock_All_HDA(inputNodes, detectName = True, detectPath = False, displayCon
             elif fee_HDA.isUnlockedHDA(child):
                 unlock_All_FeENode(child, detectName, detectPath)
 
+hou.Node.unlock_All_HDA = unlock_All_HDA
 
 def unlock_All_FeENode(inputNodes, detectName = True, detectPath = False, displayConfirmation = False):
     if displayConfirmation:
@@ -1204,6 +1217,8 @@ def unlock_All_FeENode(inputNodes, detectName = True, detectPath = False, displa
                 unlock_All_FeENode(child, detectName, detectPath)
             elif fee_HDA.isUnlockedHDA(child):
                 unlock_All_FeENode(child, detectName, detectPath)
+
+hou.Node.unlock_All_FeENode = unlock_All_FeENode
 
 
 # def unlock_All_FeENode_recurseSubChild(node, detectName = True, detectPath = False):
@@ -1229,12 +1244,14 @@ def nodesBottomRightPosition(selectedNodes):
         raise ValueError('No Input Nodes')
 
     BottomRightPosition = hou.Vector2(1e10, -1e10)
-    for selectedNode in selectedNodes:
+    for selectedNode in selectedNodesTuple:
         nodePosition = selectedNode.position()
         BottomRightPosition[0] = min(BottomRightPosition[0], nodePosition[0])
         BottomRightPosition[1] = max(BottomRightPosition[1], nodePosition[1])
     
     return BottomRightPosition
+
+hou.Node.nodesBottomRightPosition = nodesBottomRightPosition
 
 def createCopyNodeParmsNode(selectedNodes):
     selectedNodesTuple = convertNodeTuple(selectedNodes)
@@ -1273,6 +1290,7 @@ def setCopyNodeParmsNode(selectedNodes):
 
 
 def extract_LockedNull(selectedNodes, subPath = 'extractLockedGeo', savePath_rel_to_HIP = True, keep_name = True):
+    fee_Utils.displayConfirmation()
     selectedNodesTuple = convertNodeTuple(selectedNodes)
     for selectedNode in selectedNodesTuple:
         nodetype = selectedNode.type()
@@ -1344,6 +1362,8 @@ def setNodeAsOutput(selectedNode):
         newOutputNode = selectedNode.createOutputNode('output')
         newOutputNode.setPosition(selectedNode.position() + hou.Vector2(0.0, -1.0))
 
+hou.Node.setNodeAsOutput = setNodeAsOutput
+
 
 def displayOutput(selectedNode):
     parent = selectedNode.parent()
@@ -1354,7 +1374,9 @@ def displayOutput(selectedNode):
             outputRenderNodes[(outputRenderNodes.index(parentDisplayNode) + 1) % len(outputRenderNodes)].setDisplayFlag(True)
         else:
             outputRenderNodes[0].setDisplayFlag(True)
-        
+
+hou.Node.displayOutput = displayOutput
+
 
 
 def subNodeCount(selectedNodes):
@@ -1366,6 +1388,8 @@ def subNodeCount(selectedNodes):
         subNodeCountSum += len(allSubChildren)
         
     return subNodeCountSum
+
+hou.Node.subNodeCount = subNodeCount
 
 def bakeAllParms(selectedNodes):
     selectedNodesTuple = convertNodeTuple(selectedNodes)
@@ -1380,6 +1404,8 @@ def bakeAllParms(selectedNodes):
                 parm.deleteAllKeyframes()
                 parm.set(value)
             
+hou.Node.bakeAllParms = bakeAllParms
+
 def setToDefaultPosition(selectedItems):
     for selectedItem in selectedItems:
         if selectedItem.networkItemType() == hou.networkItemType.SubnetIndirectInput:
@@ -1410,6 +1436,8 @@ def selectSameNodes(selectedNodes):
         siblingNodes = selectedNode.parent().children()
         nodeType = selectedNode.type()
         map(select, siblingNodes)
+
+hou.Node.selectSameNodes = selectSameNodes
 
 def createOutputNode_allItemVer(inputItem, node_type_name, node_name=None, run_init_scripts=True, load_contents=True, exact_type_name=False):
     #if isinstance(inputItem, hou.SubnetIndirectInput):
@@ -1885,3 +1913,96 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     newDefi.setParmTemplateGroup(parmTemplateGroup)
 
     return newDefi
+
+hou.Node.convertDefiByFilter = convertDefiByFilter
+
+
+
+
+
+
+
+def isFileCacheNode(node):
+    nodeTypeName = node.type().name()
+    return nodeTypeName == 'filecache' or nodeTypeName == r'FeE::fileCache' or nodeTypeName == 'filecache_fee'
+
+hou.Node.isFileCacheNode = isFileCacheNode
+
+
+class NodeChain(object):
+    def __init__(self, node):
+        self.node = node
+        self.inputNodeChains = []
+
+    # def buildNodeChain(self, node):
+    #     self.inputNodeChains = [self.buildNodeChain(upstreamNode) for upstreamNode in searchUpstreamFileCacheNodes(node)]
+    #     return self
+
+    def ropName(self):
+        return self.node.path().replace('/', '_')
+
+    def isFileCacheNode(self):
+        return self.node.isFileCacheNode()
+
+    def createRopNodes(self, ropNodeParent):
+        childTypeCategory = ropNodeParent.childTypeCategory()
+        if not childTypeCategory:
+            raise TypeError('not a subnet', ropNodeParent)
+            
+        if childTypeCategory.name() != 'Driver':
+            raise TypeError('not a rop net', ropNodeParent)
+        
+        ropNode = ropNodeParent.node(self.ropName())
+
+        if ropNode:
+            for idx in range(len(ropNode.inputs())):
+                ropNode.setInput(idx, None)
+        else:
+            # take the case that first selected node is not filecache into consideration
+            ropNode = ropNodeParent.createNode('fetch' if self.isFileCacheNode() else 'merge')
+            ropNode.setName(self.ropName())
+        
+        ropNode.setColor(self.node.color())
+        if self.isFileCacheNode():
+            ropNode.parm('source').set(self.node.path() + '/render')
+
+        for idx, input_rop in enumerate([inputNodeChain.createRopNodes(ropNodeParent) for inputNodeChain in self.inputNodeChains]):
+            ropNode.setInput(idx, input_rop)
+        
+        ropNode.moveToGoodPosition()
+
+        return ropNode
+
+
+
+def searchUpstreamFileCacheNodes(node):
+    fileCacheNodes = []
+    for inputNode in node.inputs():
+        if inputNode.isFileCacheNode():
+            fileCacheNodes.append(inputNode)
+        else:
+            fileCacheNodes.extend(searchUpstreamFileCacheNodes(inputNode))
+    return fileCacheNodes
+
+def buildNodeChain(node):
+    nodeChain = NodeChain(node)
+    nodeChain.inputNodeChains = [buildNodeChain(upstreamNode) for upstreamNode in searchUpstreamFileCacheNodes(node)]
+    return nodeChain
+
+
+
+
+def buildFileCacheROPNodeChain(inputNodes):
+    fee_Utils.displayConfirmation()
+    nodes = convertNodeTuple(inputNodes)
+    for node in nodes:
+        ropnetNode = node.parent().createNode('ropnet')
+        ropnetNode.setName('ropnet_fileCache1', unique_name=True)
+        ropnetNode.setPosition(node.nodesBottomRightPosition() + hou.Vector2(1, -1))
+
+        nodeChain = buildNodeChain(node)
+        nodeChain.createRopNodes(ropnetNode)
+
+
+
+

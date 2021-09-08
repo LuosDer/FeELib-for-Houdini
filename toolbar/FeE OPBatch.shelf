@@ -14,7 +14,8 @@
   </toolshelf>
 
   <tool name="filecache" label="File Cache" icon="SOP_filecache">
-    <script scriptType="python"><![CDATA['''
+    <script scriptType="python"><![CDATA[
+'''
 Houdiniå°èæ¬:æåfilecacheèç¹å°/outä¸
 ææ¶åä¸æ¸¸å¤§æ¹äºï¼éè¦æ ¹æ®ä¾èµå³ç³»æfilecacheä»¬ä¾æ¬¡è¾åºä¸éï¼filecacheå¤äºä¹åä¾æ¬¡ç¹ä¸æ¯å¾æ¹ä¾¿ï¼æä»¥æäºè¿ä¹ä¸ªå°èæ¬ã
 
@@ -26,64 +27,74 @@ Houdiniå°èæ¬:æåfilecacheèç¹å°/outä¸
 ä¿çåèç¹é¢è²
 '''
 
-FC_COLOR = (0, 0.533, 0)
+import hou
+
+def isFileCacheNode(node):
+    nodeTypeName = node.type().name()
+    return nodeTypeName == 'filecache' or nodeTypeName == r'FeE::fileCache' or nodeTypeName == 'filecache_fee'
+
+hou.Node.isFileCacheNode = isFileCacheNode
 
 
-class Chain(object):
+
+class NodeChain(object):
     def __init__(self, node):
         self.node = node
         self.inputs = []
-        # if self.isFC():
-        #    node.setColor(hou.Color(FC_COLOR))
+        # if self.isFileCacheNode():
+        #    node.setColor(hou.Color(0.9, 0.8, 0.55))
 
     def ropName(self):
-        return self.node.name() + '__CHAIN'
+        return self.node.path().replace('/', '_')
 
-    def isFC(self):
-        return self.node.type().name() == 'filecache'
+    def isFileCacheNode(self):
+        return self.node.isFileCacheNode()
 
+    def createRopNodes(self, ropNodeParent):
+        ropNode = ropNodeParent.node(self.ropName())
 
-def directUpstreamFC(node):
-    FCs = []
-    for i in node.inputs():
-        if i.type().name() == 'filecache':
-            FCs.append(i)
+        if not ropNode:
+            # take the case that first selected node is not filecache into consideration
+            ropNode = ropNodeParent.createNode('fetch' if self.isFileCacheNode() else 'merge')
+            ropNode.setName(self.ropName())
         else:
-            FCs.extend(directUpstreamFC(i))
-    return FCs
+            for idx in range(len(ropNode.inputs())):
+                ropNode.setInput(idx, None)
+        
+        ropNode.setColor(self.node.color())
+        if self.isFileCacheNode():
+            ropNode.parm('source').set(self.node.path() + '/render')
+
+        for idx, input_rop in enumerate([input.createRopNodes(ropNodeParent) for input in self.inputs]):
+            ropNode.setInput(idx, input_rop)
+        ropNode.moveToGoodPosition()
+        return ropNode
 
 
-def toChain(node):
-    chain = Chain(node)
-    chain.inputs = [toChain(i) for i in directUpstreamFC(node)]
+
+
+def buildNodeChain(node):
+    chain = NodeChain(node)
+    chain.inputs = [buildNodeChain(node) for node in directUpstreamFC(node)]
     return chain
 
-
-def toRop(chain, rop_parent):
-    r = rop_parent.node(chain.ropName())
-    if not r:
-        # take the case that first selected node is not filecache into consideration
-        r = rop_parent.createNode('fetch' if chain.isFC() else 'merge')
-        r.setName(chain.ropName())
-    else:
-        for i in range(len(r.inputs())):
-            r.setInput(i, None)
-    r.setColor(chain.node.color())
-    if chain.isFC():
-        r.parm('source').set(chain.node.path() + '/render')
-
-    for i, input_rop in enumerate([toRop(i, rop_parent) for i in chain.inputs]):
-        r.setInput(i, input_rop)
-    r.moveToGoodPosition()
-    return r
+def directUpstreamFC(node):
+    fileCacheNodes = []
+    for inputNode in node.inputs():
+        if inputNode.isFileCacheNode():
+            fileCacheNodes.append(inputNode)
+        else:
+            fileCacheNodes.extend(directUpstreamFC(inputNode))
+    return fileCacheNodes
 
 
-sel = hou.selectedNodes()
-if not sel:
-    pass
-else:
-    for node in sel:
-        toRop(toChain(node), hou.node('/out'))]]></script>
+
+for node in hou.selectedNodes():
+    nodeChain = buildNodeChain(node)
+    nodeChain.createRopNodes(hou.node('/out'))
+
+
+]]></script>
   </tool>
 
   <tool name="refresh all file SOP" label="Refresh file SOP" icon="PLASMA_App">
