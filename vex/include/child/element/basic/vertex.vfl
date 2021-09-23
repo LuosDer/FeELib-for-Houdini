@@ -208,11 +208,7 @@ int vertexnextprim(
     int primnum;
     int vtxpnum;
     ) {
-    if( vtxpnum == primvertexcount(geo, primnum) - 1 ) {
-        return 0;
-    } else {
-        return vtxpnum + 1;
-    }
+    return ( vtxpnum == primvertexcount(geo, primnum)-1 ) ? 0 : vtxpnum + 1;
 }
 
 function

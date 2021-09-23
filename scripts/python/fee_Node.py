@@ -241,7 +241,14 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
         for copyParmTemplate in copyParmTemplates:
             targetParmTemplateGroup.append(copyParmTemplate)
 
-        targetNode.setParmTemplateGroup(targetParmTemplateGroup, rename_conflicting_parms=False)
+        try:
+            targetNode.setParmTemplateGroup(targetParmTemplateGroup, rename_conflicting_parms=False)
+        except:
+            print(targetNode)
+            print(targetParmTemplateGroup)
+            print("hou.OperationFailed: Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes")
+            raise SystemError("hou.OperationFailed: Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes")
+
         #print(sourceParmTemplateGroup.asDialogScript())
         '''
         if 1:
