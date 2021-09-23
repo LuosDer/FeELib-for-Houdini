@@ -36,7 +36,7 @@ hou.Node.getUserWantedSelectedNodes = getUserWantedSelectedNodes
 
 
 def addSpareInput(kwargsNode):
-    selectedNodesTuple = convertNodeTuple(selectedNodes)
+    selectedNodesTuple = convertNodeTuple(kwargsNode)
     for selectedNode in selectedNodesTuple:
         pass
         #selectedNode.addSpareParmTuple(parm_template, in_folder=(), create_missing_folders=False)
@@ -54,7 +54,8 @@ def isEqual_networkChildren(node0, node1, recurseInNetwork = True, checkNodeType
     for child in node0.children():
         childName = child.name()
         child_ref = node1.node(childName)
-        if child_ref is None: 
+        if child_ref is None:
+            #print(childName)
             return False
 
         childType = child.type()
@@ -75,11 +76,155 @@ def isEqual_networkChildren(node0, node1, recurseInNetwork = True, checkNodeType
 
     return True
 
+hou.Node.isEqual_networkChildren = isEqual_networkChildren
+
+
+def changeNodeType_keepIO(node, targetNodeType, keep_parms = True):
+    if isinstance(targetNodeType, str):
+        raise TypeError('targetNodeType must be string', targetNodeType)
+    
+    parent = node.parent()
+    ########### rest outputs ############ 没有这部分也能跑，只是连接比较丑
+    outputNodes = node.outputs()
+    outputNodes = list(set(outputNodes))
+
+    outputNodes_inputItems = []
+    outputNodes_inputItem_output_index = []
+    for idx in range(len(outputNodes)):
+        
+        outputNodes_inputConnectors = outputNodes[idx].inputConnectors()
+        outputNodes_inputItems.append([])
+        outputNodes_inputItem_output_index.append([])
+
+        #for idy in range(len(outputNodes_inputConnectors)):
+        for outputNodes_inputConnector in outputNodes_inputConnectors:
+            if len(outputNodes_inputConnector) == 0:
+                outputNodes_inputItems[idx].append(None)
+                outputNodes_inputItem_output_index[idx].append(None)
+                continue
+            outputNodes_inputConnection = outputNodes_inputConnector[0]
+            outputNodes_inputItem = outputNodes_inputConnection.inputItem()
+            #outputNodes_inputItems[idx].append(outputNodes_inputItem)
+            outputNodes_inputItems[idx].append(outputNodes_inputItem.name())
+            if isinstance(outputNodes_inputItem, hou.NetworkDot) or isinstance(outputNodes_inputItem, hou.SubnetIndirectInput):
+                outputNodes_inputItem_output_index[idx].append(0)
+            else:
+                outputNodes_inputItem_output_index[idx].append(outputNodes_inputConnection.outputIndex())
+
+
+    ########### rest hou.NetworkDot outputs ############ 没有这部分也能跑，只是连接比较丑
+    
+    nodeName = node.name()
+    outputConnectors = node.outputConnectors()
+    for idx in range(len(outputConnectors)):
+        # for outputConnector in outputConnectors:
+        for outputConnection in outputConnectors[idx]:
+            outputItem = outputConnection.outputItem()
+            if not isinstance(outputItem, hou.NetworkDot):
+                continue
+            outputNodes.append(outputItem)
+            outputNodes_inputItems.append([nodeName, ])
+            outputNodes_inputItem_output_index.append([idx, ])
+
+
+    inputConnectors = node.inputConnectors()
+    outputNodes.append(nodeName)
+    outputNodes_inputItems.append([])
+    outputNodes_inputItem_output_index.append([])
+    for idx in range(len(inputConnectors)):
+        # for outputConnector in inputConnectors:
+        if len(inputConnectors[idx]) == 0:
+            continue
+        inputConnection = inputConnectors[idx][0]
+        inputItem = inputConnection.inputItem()
+        outputNodes_inputItems[-1].append(inputItem)
+        outputNodes_inputItem_output_index[-1].append(inputConnection.outputIndex())
 
 
 
 
 
+
+    ############ 修改节点类型 ############
+    origNodeshape = node.userData('nodeshape')
+    copyOrigNode = hou.copyNodesTo([node], parent)[0]
+    newNode = node.changeNodeType(targetNodeType, keep_parms=keep_parms)
+    newNode.matchCurrentDefinition()
+    if origNodeshape is not None:
+        newNode.setUserData('nodeshape', origNodeshape)
+    #newNode.removeSpareParms()
+
+
+
+
+
+    '''
+
+    ############ 处理0-3号输入口 ########### 没有这部分也能跑，只是连接比较丑
+
+    ############ set Input ###############
+    for idx in range(min(nInputs, 4)):
+        if inputItems[idx] is None:
+            continue
+        newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+        """
+        try:
+            newNode.setInput(idx, inputItems[idx], inputItem_output_index[idx])
+        except:
+            print(newNode)
+            print(inputItems[idx])
+            print(inputItem_output_index[idx])
+            raise ValueError('setInput Error')
+        """
+    ############ set position ###############
+    oldIndirectInputs = copyOrigNode.indirectInputs()
+    newIndirectInputs = newNode.indirectInputs()
+    for idx in range(0, min(len(oldIndirectInputs), 4)):
+        pos = oldIndirectInputs[idx].position()
+        newIndirectInputs[idx].setPosition(pos)
+        """
+        try:
+            pos = oldIndirectInputs[idx].position()
+            newIndirectInputs[idx].setPosition(pos)
+        except:
+            print(copyOrigNode)
+            print(newNode)
+            print(oldIndirectInputs[idx])
+            print(newIndirectInputs[idx])
+            raise ValueError('fee Error')
+        """
+
+    '''
+
+    ########### 处理输出口 ############ 没有这部分也能跑，只是连接比较丑
+    if 1:
+        parent = newNode.parent()
+        # print(nodeName)
+        # print(outputNodes)
+        # print(outputNodes_inputItems)
+        # print(outputNodes_inputItem_output_index)
+        for idx in range(len(outputNodes)):
+            if isinstance(outputNodes[idx], str):
+                outputNodes[idx] = parent.item(outputNodes[idx])
+
+            for idy in range(len(outputNodes_inputItems[idx])):
+                if outputNodes_inputItems[idx][idy] is None:
+                    continue
+                if isinstance(outputNodes_inputItems[idx][idy], str):
+                    outputNodes_inputItems[idx][idy] = parent.item(outputNodes_inputItems[idx][idy])
+
+                outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+
+    return newNode
+
+hou.Node.changeNodeType_keepIO = changeNodeType_keepIO
+
+
+def changeNodeTypeToSubnet(node, keep_parms = True):
+    newNode = node.changeNodeType('subnet', keep_parms=keep_parms)
+    return newNode
+
+hou.Node.changeNodeTypeToSubnet = changeNodeTypeToSubnet
 
 
 def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
@@ -275,7 +420,7 @@ def deleteAllSubNodeMatchesType(node, inputDeleteNodeType):
 
         #elif not childNode.matchesCurrentDefinition():
         else:
-            deleteAllSubNodeMatchesType(childNodem, inputDeleteNodeType)
+            deleteAllSubNodeMatchesType(childNode, inputDeleteNodeType)
             
     return True
 
@@ -828,10 +973,10 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         return False
     
     origNodeTypeName = origNodeTypeNameParm.evalAsString()
-
+    #print(node)
 
     parent = node.parent()
-    newRefNode = parent.createNode(origNodeTypeName, run_init_scripts=False, load_contents=True)
+    newRefNode = parent.createNode(origNodeTypeName, run_init_scripts=False, load_contents=True, exact_type_name=True)
     if not isEqual_networkChildren(node, newRefNode, checkNodeType = False):
         newRefNode.destroy()
         recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
@@ -1014,7 +1159,10 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         inputConnection = inputConnectors[idx][0]
         inputItem = inputConnection.inputItem()
         outputNodes_inputItems[-1].append(inputItem)
-        outputNodes_inputItem_output_index[-1].append(inputConnection.outputIndex())
+        if isinstance(inputItem, hou.NetworkDot):
+            outputNodes_inputItem_output_index[-1].append(0)
+        else:
+            outputNodes_inputItem_output_index[-1].append(inputConnection.outputIndex())
 
 
 
@@ -1089,7 +1237,17 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
                 if isinstance(outputNodes_inputItems[idx][idy], str):
                     outputNodes_inputItems[idx][idy] = parent.item(outputNodes_inputItems[idx][idy])
 
-                outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+                if 1:
+                    if idy < len(outputNodes[idx].inputConnectors()):
+                        outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+                else:
+                    try:
+                        outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+                    except:
+                        print(outputNodes[idx])
+                        print(idy)
+                        print(outputNodes_inputItems[idx][idy])
+                        print(outputNodes_inputItem_output_index[idx][idy])
 
 
     #if origNodeshape is not None:
@@ -2002,6 +2160,17 @@ def buildFileCacheROPNodeChain(inputNodes):
 
         nodeChain = buildNodeChain(node)
         nodeChain.createRopNodes(ropnetNode)
+
+
+def findChildNodeMatchesType(inputNodes, matchNodeTypeName):
+    for childNode in inputNodes.allSubChildren():
+        childNodeType = childNode.type()
+        childNodeTypeName = childNodeType.name()
+        if childNodeTypeName != matchNodeTypeName:
+            continue
+        print(childNode)
+
+
 
 
 
