@@ -137,7 +137,8 @@ fee_HDA.removeEmbeded(displayConfirmation = True)
 import fee_HIP
 # from importlib import reload
 # reload(fee_HIP)
-fee_HIP.checkAllGeoMemoryUsage()
+# fee_HIP.checkAllGeoMemoryUsage()
+fee_HIP.checkAllGeoMemoryUsage_InputMemoryThreshold()
       ]]></scriptCode>
       </scriptItem>
 

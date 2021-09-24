@@ -3,9 +3,9 @@
 # from importlib import reload
 # reload(fee_Math)
 
-def isNumber(s):
+def isNumber(input):
     try:
-        float(s)
+        float(input)
         return True
     except ValueError:
         pass
