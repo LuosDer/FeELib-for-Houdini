@@ -80,10 +80,30 @@ hou.Node.isEqual_networkChildren = isEqual_networkChildren
 
 
 def changeNodeType_keepIO(node, targetNodeType, keep_parms = True):
-    if isinstance(targetNodeType, str):
+    if not isinstance(targetNodeType, str):
         raise TypeError('targetNodeType must be string', targetNodeType)
     
+
+    ##### 记录flag情况
     parent = node.parent()
+    #print(parent.childTypeCategory().name())
+    if parent.childTypeCategory().name() != 'Sop':
+        raise TypeError('error')
+    if node.isHardLocked():
+        raise TypeError('isHardLocked')
+    if node.isSoftLocked():
+        raise TypeError('isSoftLocked')
+    
+    displayFlag = node == parent.displayNode()
+    renderFlag = node == parent.renderNode()
+    bypass = node.isBypassed()
+    isTemplateFlagSet = node.isTemplateFlagSet()
+    isHighlightFlagSet = node.isHighlightFlagSet()
+    isSelectableTemplateFlagSet = node.isSelectableTemplateFlagSet()
+    isUnloadFlagSet = node.isUnloadFlagSet()
+
+
+
     ########### rest outputs ############ 没有这部分也能跑，只是连接比较丑
     outputNodes = node.outputs()
     outputNodes = list(set(outputNodes))
@@ -137,8 +157,12 @@ def changeNodeType_keepIO(node, targetNodeType, keep_parms = True):
             continue
         inputConnection = inputConnectors[idx][0]
         inputItem = inputConnection.inputItem()
+
         outputNodes_inputItems[-1].append(inputItem)
-        outputNodes_inputItem_output_index[-1].append(inputConnection.outputIndex())
+        if isinstance(inputItem, hou.NetworkDot) or isinstance(inputItem, hou.SubnetIndirectInput):
+            outputNodes_inputItem_output_index[-1].append(0)
+        else:
+            outputNodes_inputItem_output_index[-1].append(inputConnection.outputIndex())
 
 
 
@@ -214,6 +238,26 @@ def changeNodeType_keepIO(node, targetNodeType, keep_parms = True):
                     outputNodes_inputItems[idx][idy] = parent.item(outputNodes_inputItems[idx][idy])
 
                 outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+                # try:
+                #     outputNodes[idx].setInput(idy, outputNodes_inputItems[idx][idy], outputNodes_inputItem_output_index[idx][idy])
+                # except:
+                #     print(idy)
+                #     print(outputNodes_inputItems[idx][idy])
+                #     print(outputNodes_inputItem_output_index[idx][idy])
+                #     raise TypeError('1')
+
+
+
+    newNode.setDisplayFlag(displayFlag)
+    newNode.setRenderFlag(renderFlag)
+    newNode.bypass(bypass)
+    newNode.setTemplateFlag(isTemplateFlagSet)
+    newNode.setHighlightFlag(isHighlightFlagSet)
+    newNode.setSelectableTemplateFlag(isSelectableTemplateFlagSet)
+    newNode.setUnloadFlag(isUnloadFlagSet)
+
+    
+    copyOrigNode.destroy()
 
     return newNode
 
@@ -727,6 +771,7 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         #newNode.setUserData('nodeshape', origNodeshape)
 
 
+    ############### hide subnet input label parm #################
     inputLabels = copyOrigNode.inputLabels()
     # print(newNode.parm('label1'))
     # newNode.parm('label1').hide(True)
@@ -748,6 +793,9 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         inputLabel.hide(True)
         parmTemplateGroup.replace(parmName, inputLabel)
     newNode.setParmTemplateGroup(parmTemplateGroup)
+
+
+
 
     ############### parm type #################
     #newNode.parm('standardfolder').hide(True)
@@ -1592,17 +1640,25 @@ def setToDefaultPositionWithNode(selectedItems):
         selectedItem.move(shiftedPosition)
 
 
+
 def selectSameNodes(selectedNodes):
     def select(node):
-        if node.type() == nodeType:
+        if node.type() == selectedNodeType:
             node.setSelected(1)
 
     for selectedNode in selectedNodes:
         siblingNodes = selectedNode.parent().children()
-        nodeType = selectedNode.type()
-        map(select, siblingNodes)
+        selectedNodeType = selectedNode.type()
+        if 1:
+            for siblingNode in siblingNodes:
+                if siblingNode.type() == selectedNodeType:
+                    siblingNode.setSelected(1)
+        else:
+            map(select, siblingNodes)
 
 hou.Node.selectSameNodes = selectSameNodes
+
+
 
 def createOutputNode_allItemVer(inputItem, node_type_name, node_name=None, run_init_scripts=True, load_contents=True, exact_type_name=False):
     #if isinstance(inputItem, hou.SubnetIndirectInput):
