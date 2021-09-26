@@ -202,6 +202,28 @@ texel_density_fee
 mergeandFuse_fee
 normalizedelemnum_fee
 uniqueEnum_fee
+attribcopy_fee::1.0
+attribcopy_fee::0.1
+polypath_fee
+polypath_straight_fee
+splitdissolve_fee
+groupnewedge_fee
+cull_frontface_fee::1.0
+merge_fee::1.0
+merge_fast_fee::1.0
+intrinsicAttribPromote_fee
+openclwarm_fee::1.0
+openclwarm_fee::2.0
+cull_geotrace_fee
+
+
+
+
+
+
+
+
+
 
 
 

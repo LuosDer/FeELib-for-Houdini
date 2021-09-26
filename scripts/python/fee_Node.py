@@ -1788,7 +1788,7 @@ def correctWrangleParmeter(selectedNodes):
                 if topStr in usedAttribNames:
                     usedAttribNames.remove(topStr)
 
-            for topStr in ('color', 'Alpha', 'Cd', 'length', 'width', 'xform', 'transform', 'rotate', 'scale', 'pscale', 'binormal', 'bitangent', 'tangent', 'up', 'N', 'P'):
+            for topStr in ('color', 'Alpha', 'Cd', 'boneCapture_data', 'boneCapture_index', 'compxform', 'boneCapture_pCaptData', 'boneCapture_pCaptPath', 'pCaptSkelRoot', 'length', 'width', 'xform', 'transform', 'rotate', 'scale', 'pscale', 'binormal', 'bitangent', 'tangent', 'up', 'N', 'P'):
                 if topStr not in usedAttribNames:
                     continue
                 usedAttribNames.remove(topStr)
