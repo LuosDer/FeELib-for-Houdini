@@ -147,7 +147,7 @@ from importlib import reload
 reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
-fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, convertFeENode = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
+fee_Node.recoverNodesFromSubnet(selectedNodes, ignoreUnlock = False, convertFeENode = True, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
 
 #print(fee_Node.isEqual_networkChildren(hou.node('/obj/geo1/subnet3/geolayout_fee1'), hou.node('/obj/geo1/subnet3/geolayout_fee2'), checkNodeType = False))
 ]]></script>

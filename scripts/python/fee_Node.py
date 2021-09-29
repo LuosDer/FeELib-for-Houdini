@@ -11,17 +11,17 @@ import fee_HDA
 
 
 def convertNodeTuple(node):
-    if isinstance(node, list):
-        node = tuple(node)
-    if isinstance(node, tuple):
+    if isinstance(node, hou.Node):
+        return (node, )
+    elif isinstance(node, list):
+        return tuple(node)
+    elif isinstance(node, tuple):
         for idx in range(len(node)):
             if not isinstance(node[idx], hou.Node):
-                raise TypeError('Only Support Node or Node Tuple/List Type')
+                raise TypeError('Only Support hou.Node or hou.Node Tuple/List Type')
         return node
-    elif isinstance(node, hou.Node):
-        return (node, )
     
-    raise TypeError('Only Support Node or Node Tuple/List Type')
+    raise TypeError('Only Support hou.Node or hou.Node Tuple/List Type')
 
 hou.Node.convertNodeTuple = convertNodeTuple
 
@@ -986,8 +986,8 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     nodeTypeName = nodeType.name()
     ##### 检测各种情况
     if nodeTypeName != 'subnet':
+        recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
         return False
-        # recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
 
 
 

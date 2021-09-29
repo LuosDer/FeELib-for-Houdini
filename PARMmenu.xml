@@ -9,35 +9,28 @@
       <scriptItem id="setOptypePython">
         <label>set Optype Python</label>
         <scriptCode><![CDATA[
+import fee_Parm
+# from importlib import reload
+# reload(fee_Parm)
+
 parms = kwargs["parms"]
 if len(parms) == 0:
     raise ValueError('invalid input', parms)
 
-parm0 = parms[0]
-parmTemplate0 = parm0.parmTemplate()
-if isinstance(parmTemplate0, hou.StringParmTemplate):
-    try:
-        parm0.expressionLanguage()
-    except:
-        evalAsString = parm0.rawValue()
-        if evalAsString.startswith('__') and evalAsString.endswith("_`optype('../.')`"):
-            evalAsString = evalAsString.lstrip('__')
-            evalAsString = evalAsString.rstrip("_`optype('../.')`")
-        else:
-            evalAsString = parm0.evalAsString()
-        parm0.setExpression("'__" + evalAsString + "_' + " + "hou.node('../.').type().nameComponents()[2]", language=hou.exprLanguage.Python)
+fee_Parm.setOptypePython(parms[0])
       ]]></scriptCode>
       </scriptItem>
 
       <scriptItem id="CopyParmName">
         <label>Copy Parm Name</label>
         <scriptCode><![CDATA[
+import fee_Utils
+
 parms = kwargs["parms"]
 if len(parms) == 0:
     raise ValueError('invalid input', parms)
-parm0 = parms[0]
-import fee_Utils
-fee_Utils.setClipboardText(parm0.name())
+
+fee_Utils.setClipboardText(parms[0].name())
       ]]></scriptCode>
       </scriptItem>
       
