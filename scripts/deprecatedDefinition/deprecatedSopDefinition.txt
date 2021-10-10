@@ -218,9 +218,9 @@ cull_geotrace_fee
 writemultifile_fee
 skinpieces_fee::2.0
 FeE::carveAverageUVSpace
-
-
-
+flatedge_fee
+groupEdgebyDir_fee
+groupbyDir_fee
 
 
 
