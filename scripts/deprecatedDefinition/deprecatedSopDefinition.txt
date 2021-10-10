@@ -221,7 +221,7 @@ FeE::carveAverageUVSpace
 flatedge_fee
 groupEdgebyDir_fee
 groupbyDir_fee
-
+hasconnectivityattrib_fee
 
 
 
