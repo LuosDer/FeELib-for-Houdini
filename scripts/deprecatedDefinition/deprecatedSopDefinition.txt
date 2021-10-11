@@ -222,7 +222,7 @@ flatedge_fee
 groupEdgebyDir_fee
 groupbyDir_fee
 hasconnectivityattrib_fee
-
+attribnormalize_fee
 
 
 
