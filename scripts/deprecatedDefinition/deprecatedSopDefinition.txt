@@ -223,6 +223,17 @@ groupEdgebyDir_fee
 groupbyDir_fee
 hasconnectivityattrib_fee
 attribnormalize_fee
+dissolveUnsharedEdges_fee::1.0
+dissolveUnsharedEdges_fee::2.0
+FeE::group_blast
+split_fee
+multifile_fee
+multifilefromattrib_fee
+
+
+
+
+
 
 
 
