@@ -271,19 +271,29 @@ def changeNodeTypeToSubnet(node, keep_parms = True):
 hou.Node.changeNodeTypeToSubnet = changeNodeTypeToSubnet
 
 
-def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
+# def parmTemplateIsHidden(parmTemplate):
+#     if not isinstance(parmTemplate, hou.ParmTemplate):
+#         raise TypeError('input not hou.Parm')
+
+#     return isinstance(parmTemplate, hou.MenuParmTemplate) and parmTemplate.isHidden()
+
+
+def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ignoreInvisibleParms = False):
     if copyNoneExistParms:
         sourceParmTemplateGroup = sourceNode.parmTemplateGroup()
         targetParmTemplateGroup = targetNode.parmTemplateGroup()
-        copyParmTemplates = []
+        # copyParmTemplates = []
         for sourceParmTemplate in sourceParmTemplateGroup.parmTemplates():
+            if ignoreInvisibleParms and  sourceParmTemplate.isHidden():
+                continue
             sourceParmTemplateName = sourceParmTemplate.name()
             targetParmTemplate = targetParmTemplateGroup.find(sourceParmTemplateName)
             if targetParmTemplate is None:
-                copyParmTemplates.append(sourceParmTemplate)
+                targetParmTemplateGroup.append(sourceParmTemplate)
+                # copyParmTemplates.append(sourceParmTemplate)
 
-        for copyParmTemplate in copyParmTemplates:
-            targetParmTemplateGroup.append(copyParmTemplate)
+        # for copyParmTemplate in copyParmTemplates:
+        #     targetParmTemplateGroup.append(copyParmTemplate)
 
         try:
             targetNode.setParmTemplateGroup(targetParmTemplateGroup, rename_conflicting_parms=False)
@@ -307,6 +317,10 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
         '''
         
     for parm in sourceNode.parms():
+        if ignoreInvisibleParms and not parm.isVisible():
+            #print(parm)
+            continue
+
         if parm.parmTemplate().type() == hou.parmTemplateType.Folder:
             parmVal = parm.evalAsInt()
             #print(parmVal)
@@ -344,6 +358,9 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
                 print(parm)
 
     for targetparm in targetNode.parms():
+        if ignoreInvisibleParms and not targetparm.isVisible():
+            #print(targetparm)
+            continue
         #break
         sourceparm = sourceNode.parm(targetparm.name())
         if sourceparm is None:
@@ -378,13 +395,20 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False):
     '''
 
 
-def copyRelRef_NodetoNode(sourceNode, targetNode, prefix='', sufix=''):
+def copyRelRef_NodetoNode(sourceNode, targetNode, prefix='', sufix='', ignoreInvisibleParms = False):
     for sourceParm in sourceNode.parms():
+        if ignoreInvisibleParms and not sourceParm.isVisible():
+            #print(sourceParm)
+            continue
         parmName = sourceParm.name()
         targetParm = targetNode.parm(prefix + parmName + sufix)
         if targetParm is not None:
             targetParm.deleteAllKeyframes()
             targetParm.set(sourceParm)
+
+
+
+
 
 def bake_optypeExp_to_str(targetNode, sourceNode, optype_exp, optype_exp1):
     relativePathTo = targetNode.relativePathTo(sourceNode)
