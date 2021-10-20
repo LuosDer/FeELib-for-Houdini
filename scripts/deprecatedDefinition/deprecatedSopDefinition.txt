@@ -233,6 +233,17 @@ FeE::dissolveUnsharedEdges::1.0
 FeE::dissolveUnsharedEdges::2.0
 ninputs_npoints_fee
 
+attribcopy_firstelem_fee
+FeE::import_fbx
+raypieces_fee::1.0
+heightfield_fee
+heightfield_visualization_fee
+visdir_fee
+heightfield_project_fee
+
+
+
+
 
 
 

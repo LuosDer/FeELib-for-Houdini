@@ -278,7 +278,7 @@ hou.Node.changeNodeTypeToSubnet = changeNodeTypeToSubnet
 #     return isinstance(parmTemplate, hou.MenuParmTemplate) and parmTemplate.isHidden()
 
 
-def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ignoreInvisibleParms = False):
+def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ignoreInvisibleParms = False, debugMode = 0):
     if copyNoneExistParms:
         sourceParmTemplateGroup = sourceNode.parmTemplateGroup()
         targetParmTemplateGroup = targetNode.parmTemplateGroup()
@@ -301,7 +301,9 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ign
             print(targetNode)
             print(targetParmTemplateGroup)
             print("hou.OperationFailed: Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes")
-            raise SystemError("hou.OperationFailed: Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes")
+            if debugMode == 1:
+                # 如果运行到这里，经常会崩溃
+                raise SystemError("hou.OperationFailed: Parameters don't support MinMax, MaxMin, StartEnd, BeginEnd, or XYWH parmNamingSchemes")
 
         #print(sourceParmTemplateGroup.asDialogScript())
         '''
@@ -519,7 +521,7 @@ def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
 hou.Node.changeAllSubNodeTypeMatchesType = changeAllSubNodeTypeMatchesType
 
 
-def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False):
+def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False, debugMode = 0):
     if not isinstance(node, hou.Node):
         raise TypeError('invalid node', node)
 
@@ -527,7 +529,7 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     nodeTypeName = nodeType.name()
     ##### 检测各种情况
     if nodeTypeName == 'subnet':
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, debugMode = debugMode)
         return False
 
     defi = nodeType.definition()
@@ -536,12 +538,12 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
 
     if ignoreUnlock and not node.matchesCurrentDefinition():
         #print(node)
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, debugMode = debugMode)
         return False
         
     
     if ignore_SideFX_HDA and fee_HDA.isSideFXDefinition(defi):
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, debugMode = debugMode)
         return False
     else:
         flag = not fee_HDA.isSideFXDefinition(defi)
@@ -556,12 +558,12 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     if flag and nodeFilterFunc is not None:
         if nodeFilterFunc(node):
             flag = False
-
+    
     if flag:
-        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, debugMode = debugMode)
         return False
 
-        
+    
 
     node.allowEditingOfContents()
 
@@ -827,10 +829,10 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
         tmpParm.hide(True)
         newNode.addSpareParmTuple(tmpParm)
-        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True, debugMode = debugMode)
     else:
         ### 这样顺序反过来，就会丢失linked channal链接关系哦，所以不能这样写
-        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True, debugMode = debugMode)
         tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
         tmpParm.hide(True)
         newNode.addSpareParmTuple(tmpParm)
@@ -859,7 +861,7 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
     optype_exp = copyOrigNode.type().nameComponents()[2]
     optype_exp1 = '\'' + optype_exp + '\''
     bake_optypeExp_to_str(newNode, newNode, optype_exp, optype_exp1)
-    convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+    convertSubnet_recurseSubChild(newNode, newNode, optype_exp, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, debugMode = debugMode)
     #print(optype_exp)
 
     
@@ -872,7 +874,7 @@ hou.Node.convertSubnet = convertSubnet
 
 
 
-def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False):
+def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False, debugMode = 0):
     nodeType = recurseNode.type()
     nodeTypeName = nodeType.name()
     defi = nodeType.definition()
@@ -923,11 +925,11 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
                 
         #         #print(rawValue)
 
-        childNodeType = child.type()
-        childNodeTypeName = childNodeType.name()
+        # childNodeType = child.type()
+        # childNodeTypeName = childNodeType.name()
         # #if "fee" in childNodeTypeName.lower() and child.matchesCurrentDefinition():
 
-        convertSubnet(child, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        convertSubnet(child, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, debugMode = debugMode)
         # if childNodeTypeName == 'subnet':
         #     convertSubnet_recurseSubChild(sourceNode, child, optype_exp, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
         #     continue
@@ -954,7 +956,7 @@ def convertSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
 
 
 
-def convertSubnet_custom(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, displayConfirmation = False):
+def convertSubnet_custom(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, displayConfirmation = False, debugMode = 0):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
@@ -962,11 +964,11 @@ def convertSubnet_custom(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = Tr
     for node in nodes:
         node.allowEditingOfContents()
         for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = convertFeENode, detectName = True, detectPath = False)
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = convertFeENode, detectName = True, detectPath = False, debugMode = debugMode)
 
 
 
-def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, detectName = True, detectPath = False, displayConfirmation = False):
+def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, nodeFilterFunc = None, detectName = True, detectPath = False, displayConfirmation = False, debugMode = 0):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
@@ -974,10 +976,10 @@ def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX
     for node in nodes:
         node.allowEditingOfContents()
         for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = True, detectName = detectName, detectPath = detectPath)
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = True, detectName = detectName, detectPath = detectPath, debugMode = debugMode)
 
 
-def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, displayConfirmation = False):
+def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, displayConfirmation = False, debugMode = 0):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
@@ -997,7 +999,7 @@ def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA
     for node in nodes:
         node.allowEditingOfContents()
         for child in node.children():
-            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilter_allNode, convertFeENode = True, detectName = True, detectPath = False)
+            convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilter_allNode, convertFeENode = True, detectName = True, detectPath = False, debugMode = debugMode)
 
 
 
@@ -1348,16 +1350,16 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
         tmpParm.hide(True)
         newNode.addSpareParmTuple(tmpParm)
-        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True, debugMode = debugMode)
     else:
         ### 这样顺序反过来，就会丢失linked channal链接关系哦，所以不能这样写
-        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+        copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True, debugMode = debugMode)
         tmpParm = hou.StringParmTemplate('tmpParm_origNodeType_createdByPy', 'Temp Parm Original Node Type', 1, default_value=(nodeTypeName, ) )
         tmpParm.hide(True)
         newNode.addSpareParmTuple(tmpParm)
     '''
 
-    #copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True)
+    #copyParms_NodetoNode(copyOrigNode, newNode, copyNoneExistParms = True, debugMode = debugMode)
 
 
     #nameComponents = nodeType.nameComponents()
@@ -1836,7 +1838,8 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     name_lower = False, name_convertSpacetoUnderscore = False, 
     deleteNodeType = (), bypassNodeType = (), 
     strictNodeNameDict = {}, subMenuDict = {}, changeNodeTypeDict = {}, 
-    strictNodeParmDefaultValueDict = {}, hideParmNodeDict = {}):
+    strictNodeParmDefaultValueDict = {}, hideParmNodeDict = {},
+    debugMode = 0):
 
     # return Value is definition
 
@@ -1890,7 +1893,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
 
     changeAllSubNodeTypeMatchesType(selectedNode, changeNodeTypeDict)
     #convert_All_FeENode_to_Subnet(selectedNode, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = True, detectName = False, detectPath = True)
-    convertSubnet_custom(selectedNode, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = True, nodeFilterFunc = nodeFilterFunc, convertFeENode = convertFeENode, displayConfirmation = False)
+    convertSubnet_custom(selectedNode, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = True, nodeFilterFunc = nodeFilterFunc, convertFeENode = convertFeENode, displayConfirmation = False, debugMode = debugMode)
     deleteAllSubNodeMatchesType(selectedNode, deleteNodeType)
 
     # for allSubChild in selectedNode.allSubChiledren():

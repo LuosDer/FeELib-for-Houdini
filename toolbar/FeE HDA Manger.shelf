@@ -36,7 +36,7 @@ from importlib import reload
 reload(fee_Node)
 
 selectedNodes = hou.selectedNodes()
-fee_Node.convert_All_FeENode_to_Subnet(selectedNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True)
+fee_Node.convert_All_FeENode_to_Subnet(selectedNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, detectName = True, detectPath = False, displayConfirmation = True, debugMode = 0)
 ]]></script>
   </tool>
 
