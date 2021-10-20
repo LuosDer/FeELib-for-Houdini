@@ -240,9 +240,9 @@ heightfield_fee
 heightfield_visualization_fee
 visdir_fee
 heightfield_project_fee
-
-
-
+heightfield_contourline_fee::2.0
+heightfield_contourline_fee
+volumenormalize_fee
 
 
 
