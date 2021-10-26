@@ -138,8 +138,8 @@ fee_Node.extract_LockedNull(selectedNodes)
         <label>Build FileCache ROP NodeChain</label>
         <scriptCode><![CDATA[
 import fee_Node
-# from importlib import reload
-# reload(fee_Node)
+from importlib import reload
+reload(fee_Node)
 kwargsNode = kwargs["node"]
 selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
 fee_Node.buildFileCacheROPNodeChain(selectedNodes)

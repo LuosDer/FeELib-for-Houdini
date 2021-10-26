@@ -2,7 +2,7 @@
 <mainMenu>
   <menu>
 
-    <addScriptItem id="open$HIP">
+    <addScriptItem id="openHIP">
       <label>Open $HIP</label>
       <parent>file_menu</parent>
       <insertAfter>recent_files</insertAfter>
@@ -15,10 +15,10 @@ os.startfile(start_directory)
     ]]></scriptCode>
     </addScriptItem>
 
-    <addScriptItem id="open$TEMP">
+    <addScriptItem id="openTEMP">
       <label>Open $TEMP</label>
       <parent>file_menu</parent>
-      <insertAfter>open$HIP</insertAfter>
+      <insertAfter>openHIP</insertAfter>
       <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DATATYPES_folder.svg
 import os
@@ -28,10 +28,10 @@ os.startfile(start_directory)
     ]]></scriptCode>
     </addScriptItem>
 
-    <addScriptItem id="open$HFS">
+    <addScriptItem id="openHFS">
       <label>Open $HFS</label>
       <parent>file_menu</parent>
-      <insertAfter>open$TEMP</insertAfter>
+      <insertAfter>openTEMP</insertAfter>
       <scriptCode><![CDATA[
 #hicon:/SVGIcons.index?DATATYPES_folder.svg
 import os

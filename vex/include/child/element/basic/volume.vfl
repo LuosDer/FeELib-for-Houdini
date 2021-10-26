@@ -51,9 +51,27 @@
 
 #include <precompile.vfl>
 
-#include <volume.vfl>
+#if 1
+    #include <volume.vfl>
+#else
+    function
+    float volumesample_nearest(
+        const int geometry;
+        const int primnum;
+        const vector position;
+        ) {
+        return volumeindex(geometry, primnum, volumepostoindex(geometry, primnum, position));
+    }
 
-
+    function
+    vector volumesamplev_nearest(
+        const int geometry;
+        const int primnum;
+        const vector position;
+        ) {
+        return volumeindex(geometry, primnum, volumepostoindex(geometry, primnum, position));
+    }
+#endif
 
 
 /*
@@ -192,6 +210,26 @@ float vsize1x = vsize1.x;
 
 
 
+
+
+
+function
+float volumesample_nearest(
+    const int geometry;
+    const int primnum;
+    const vector position;
+    ) {
+    return volumeindex(geometry, primnum, volumepostoindex(geometry, primnum, position));
+}
+
+function
+vector volumesamplev_nearest(
+    const int geometry;
+    const int primnum;
+    const vector position;
+    ) {
+    return volumeindex(geometry, primnum, volumepostoindex(geometry, primnum, position));
+}
 
 
 

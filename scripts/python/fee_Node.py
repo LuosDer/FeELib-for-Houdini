@@ -2167,6 +2167,20 @@ hou.Node.convertDefiByFilter = convertDefiByFilter
 
 
 
+def getOutputNode(inputNode, idx):
+    for node in inputNode.children():
+        if node.type().name() != 'output':
+            continue
+        if node.evalParm('outputidx') == idx:
+            return node
+    
+    if idx == 0:
+        return inputNode.displayNode()
+        
+    raise ValueError('not found inputNode idx', inputNode)
+    
+hou.Node.getOutputNode = getOutputNode
+
 
 
 
@@ -2211,8 +2225,10 @@ class NodeChain(object):
             ropNode.setName(self.ropName())
         
         ropNode.setColor(self.node.color())
-        if self.isFileCacheNode():
+        if self.node.type().name() == 'filecache':
             ropNode.parm('source').set(self.node.path() + '/render')
+        elif self.isFileCacheNode():
+            ropNode.parm('source').set(self.node.path() + '/execute')
 
         for idx, input_rop in enumerate([inputNodeChain.createRopNodes(ropNodeParent) for inputNodeChain in self.inputNodeChains]):
             ropNode.setInput(idx, input_rop)
@@ -2223,14 +2239,67 @@ class NodeChain(object):
 
 
 
+def nodeSubInputs(node, stopFunc):
+# def nodeSubInputs(node):
+    inputNodes = []
+    for inputConnection in node.inputConnections():
+        inputNode = inputConnection.inputNode()
+        if inputNode is None:
+            continue
+
+        if not inputNode.type().definition():
+            inputNodes.append(inputNode)
+            continue
+
+        if stopFunc(inputNode):
+        # if isFileCacheNode(inputNode):
+            inputNodes.append(inputNode)
+            continue
+
+        outputIndex = inputConnection.outputIndex()
+        realOutputNode = inputNode.getOutputNode(outputIndex)
+        if stopFunc(realOutputNode):
+        # if isFileCacheNode(realOutputNode):
+            inputNodes.append(realOutputNode)
+            continue
+
+        # if not realOutputNode.type().definition():
+        #     inputNodes.append(realOutputNode)
+        #     continue
+
+        while not stopFunc(realOutputNode) and realOutputNode.type().definition():
+        # while not isFileCacheNode(realOutputNode) and realOutputNode.type().definition():
+            realOutputNode = realOutputNode.getOutputNode(0)
+
+        inputNodes.append(realOutputNode)
+        continue
+
+    return inputNodes
+
+hou.Node.nodeSubInputs = nodeSubInputs
+
+
+
 def searchUpstreamFileCacheNodes(node):
     fileCacheNodes = []
-    for inputNode in node.inputs():
+    # if inputNodes is None:
+    #     return None
+    # for inputNode in node.inputs():
+    for inputNode in node.nodeSubInputs(isFileCacheNode):
+    # for inputNode in node.nodeSubInputs():
+        if inputNode is None:
+            continue
         if inputNode.isFileCacheNode():
             fileCacheNodes.append(inputNode)
-        else:
-            fileCacheNodes.extend(searchUpstreamFileCacheNodes(inputNode))
+            continue
+        
+        upstreamFileCacheNodes = searchUpstreamFileCacheNodes(inputNode)
+        if upstreamFileCacheNodes is not None:
+            fileCacheNodes.extend(upstreamFileCacheNodes)
     return fileCacheNodes
+
+hou.Node.searchUpstreamFileCacheNodes = searchUpstreamFileCacheNodes
+
 
 def buildNodeChain(node):
     nodeChain = NodeChain(node)
