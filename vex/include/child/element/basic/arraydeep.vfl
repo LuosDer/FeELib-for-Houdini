@@ -11,6 +11,16 @@
 #else
 #endif
 
+/*
+function
+void swap(
+    export float arg0, arg1;
+    ) {
+    float temp = arg0;
+    arg0 = arg1;
+    arg1 = temp;
+}
+*/
 
 #define FUNCswap0(type)\
         function\

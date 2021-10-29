@@ -511,7 +511,7 @@ def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
         childType = childNode.type()
         childTypeName = childType.name()
         if childTypeName in changeNodeTypeDict:
-            newNode.parent().allowEditingOfContents(propagate=True)
+            childNode.parent().allowEditingOfContents(propagate=True)
             newNode = childNode.changeNodeType(changeNodeTypeDict[childTypeName], keep_parms=True)
         #elif not childNode.matchesCurrentDefinition():
         else:
