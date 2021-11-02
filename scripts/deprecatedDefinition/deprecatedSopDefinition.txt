@@ -167,7 +167,6 @@ curvesubtractpoly_fee
 vdbfrompoly_fee
 correctMeshWinding_volume_fee
 edgecusp_fee
-extrude_fee
 
 hedge_dstpoints_fee::1.0
 minHedgeNum_fee::1.0
@@ -250,4 +249,24 @@ FeE::VizParticleFluidAttrib
 convertHFtoPoly_fee
 extrudevolume_fee
 piecenumelem_fee
+hole_fee
+FeE::miniSurf_remeshBlur::1.0
+
+extrude_fee
+FeE::extrude
+linearextrude_fee
+linearextrude_skin_fee
+linearextrude_sweep_fee
+linearextrude_sweep_fee::1.0
+FeE::rayfromUp
+peakPolyExtrude_fee
+closePolyline2d_boolean_fee
+
+
+
+
+
+
+
+
 
