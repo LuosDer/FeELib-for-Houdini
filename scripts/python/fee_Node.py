@@ -1934,7 +1934,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
                 newNodeTypeName = newNodeTypeName.rstrip('_' + namespaceOriginal.lower())
             if name_lower:
                 newNodeTypeName = newNodeTypeName.lower()
-            #newNodeTypeName = re.sub('generator', 'gen', newNodeTypeName)
+            newNodeTypeName = re.sub('generator', 'gen', newNodeTypeName)
             newNodeTypeName = re.sub(' ', '_', newNodeTypeName)
 
             nodeNameComponents[2] = newNodeTypeName

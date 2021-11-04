@@ -1178,7 +1178,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -1218,7 +1218,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -1232,7 +1232,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -1254,15 +1254,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_edgepointwrangle1 (Sop/attribwrangle)
-set _obj_edgepointwrangle1 = `run("opadd -e -n -v attribwrangle edgepointwrangle1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_edgepointwrangle1
-opparm $_obj_edgepointwrangle1  bindings ( 0 ) groupbindings ( 0 )
-opparm $_obj_edgepointwrangle1 snippet ( '\nint nebcount = neighbourcount(0, @ptnum);\nif ( nebcount < 2 ) return;\n\nint nebs[] = neighbours(0, @ptnum);\n\nint nebcount = len(nebs);\nfor (int i = 0; i < nebcount; ++i) {\n    if ( @ptnum > nebs[i] ) continue;\n}\n' ) vex_inplace ( on )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_edgepointwrangle1
-opexprlanguage -s hscript $_obj_edgepointwrangle1
-opuserdata -n '___Version___' -v '' $_obj_edgepointwrangle1
-opset -p on $_obj_edgepointwrangle1
+# Node $edgepointwrangle1 (Sop/attribwrangle)
+set edgepointwrangle1 = `run("opadd -e -n -v attribwrangle edgepointwrangle1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $edgepointwrangle1
+opparm $edgepointwrangle1  bindings ( 0 ) groupbindings ( 0 )
+opparm $edgepointwrangle1 folder0 ( 1 1 ) snippet ( '\nint nebcount = neighbourcount(0, @ptnum);\nif ( nebcount < 2 ) return;\n\nint nebs[] = neighbours(0, @ptnum);\n\nint nebcount = len(nebs);\nfor (int i = 0; i < nebcount; ++i) {\n    if ( @ptnum > nebs[i] ) continue;\n}\n' ) autobind ( off ) groupautobind ( off ) vex_matchattrib ( "" ) vex_inplace ( on )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $edgepointwrangle1
+opexprlanguage -s hscript $edgepointwrangle1
+opuserdata -n '___Version___' -v '' $edgepointwrangle1
+opset -p on $edgepointwrangle1
 
 opcf $arg1
 
@@ -1272,11 +1272,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_edgepointwrangle1
+    set output = $edgepointwrangle1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_edgepointwrangle1
+    set input = $edgepointwrangle1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -8547,7 +8547,7 @@ opcf $arg1
 set setPy1 = `run("opadd -e -n -v attribwrangle setPy1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $setPy1
 opparm $setPy1  bindings ( 1 ) groupbindings ( 0 )
-opparm $setPy1 folder0 ( 1 1 ) snippet ( '\n@P.y = 0;\n' ) autobind ( off ) bindings ( 1 ) groupautobind ( off ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P )
+opparm $setPy1 folder0 ( 1 1 ) snippet ( '\n@P.y = 0;\n' ) autobind ( off ) bindings ( 1 ) groupautobind ( off ) vex_matchattrib ( "" ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $setPy1
 opexprlanguage -s hscript $setPy1
 opuserdata -n '___Version___' -v '' $setPy1
@@ -11365,7 +11365,7 @@ opcf $arg1
 set setPz1 = `run("opadd -e -n -v attribwrangle setPz1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $setPz1
 opparm $setPz1  bindings ( 1 ) groupbindings ( 0 )
-opparm $setPz1 folder0 ( 1 1 ) snippet ( '\n@P.z = 0;\n' ) autobind ( off ) bindings ( 1 ) groupautobind ( off ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P )
+opparm $setPz1 folder0 ( 1 1 ) snippet ( '\n@P.z = 0;\n' ) autobind ( off ) bindings ( 1 ) groupautobind ( off ) vex_matchattrib ( "" ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $setPz1
 opexprlanguage -s hscript $setPz1
 opuserdata -n '___Version___' -v '' $setPz1
