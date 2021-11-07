@@ -1803,7 +1803,11 @@ def correctWrangleParmeter(selectedNodes):
             usedAttribNames = list(set(usedAttribNames))
             usedGroupNames = []
             #print(snippet)
-            for idx in range(len(usedAttribNames)):
+            #print(usedAttribNames)
+            for idx in range(len(usedAttribNames)-1, -1, -1):
+                if len(usedAttribNames[idx]) == 0:
+                    raise ValueError('usedAttribNames len is 0', usedAttribNames[idx])
+                    continue
                 usedAttribNames[idx] = usedAttribNames[idx][1:]
                 if usedAttribNames[idx].startswith('group_'):
                     usedGroupNames.append(usedAttribNames[idx][len('group_'):])
