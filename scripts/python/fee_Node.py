@@ -1007,7 +1007,7 @@ def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA
 
 
 
-def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False):
+def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False, checkMatchSubNode = True):
     nodeType = node.type()
     nodeTypeName = nodeType.name()
     ##### 检测各种情况
@@ -1058,7 +1058,8 @@ def recoverSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
 
     parent = node.parent()
     newRefNode = parent.createNode(origNodeTypeName, run_init_scripts=False, load_contents=True, exact_type_name=True)
-    if not isEqual_networkChildren(node, newRefNode, checkNodeType = False):
+    
+    if checkMatchSubNode and not isEqual_networkChildren(node, newRefNode, checkNodeType = False):
         newRefNode.destroy()
         recoverSubnet_recurseSubChild(node, node, '', ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
         return False
@@ -1410,13 +1411,13 @@ def recoverSubnet_recurseSubChild(sourceNode, recurseNode, optype_exp = '', igno
 
 
 
-def recoverNodesFromSubnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False, displayConfirmation = False):
+def recoverNodesFromSubnet(inputNodes, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = True, detectName = True, detectPath = False, displayConfirmation = False, checkMatchSubNode = True):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
     
     nodes = convertNodeTuple(inputNodes)
     for node in nodes:
-        recoverSubnet(node, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath)
+        recoverSubnet(node, ignoreUnlock, ignore_SideFX_HDA, nodeFilterFunc, convertFeENode, detectName, detectPath, checkMatchSubNode)
 
 
 
