@@ -84,7 +84,6 @@
     <memberTool name="setPz1"/>
     <memberTool name="removeUnusedPoints1"/>
     <memberTool name="surfaceShatter1"/>
-    <memberTool name="copyPy1"/>
     <memberTool name="attribcreate::2.0"/>
     <memberTool name="triangulate"/>
     <memberTool name="attribrest"/>
@@ -219,7 +218,7 @@ opcf $arg1
 set detailwrangle1 = `run("opadd -e -n -v attribwrangle detailwrangle1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $detailwrangle1
 opparm $detailwrangle1  bindings ( 0 ) groupbindings ( 0 )
-opparm $detailwrangle1 class ( detail ) autobind ( off ) groupautobind ( off ) vex_inplace ( on )
+opparm $detailwrangle1 class ( detail ) autobind ( off ) groupautobind ( off ) vex_matchattrib ( "" ) vex_inplace ( on )
 opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $detailwrangle1
 opexprlanguage -s hscript $detailwrangle1
 opuserdata -n '___Version___' -v '' $detailwrangle1
@@ -1111,7 +1110,7 @@ opcf $arg1
 set edgepointwrangle1 = `run("opadd -e -n -v attribwrangle edgepointwrangle1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $edgepointwrangle1
 opparm $edgepointwrangle1  bindings ( 0 ) groupbindings ( 0 )
-opparm $edgepointwrangle1 folder0 ( 1 1 ) snippet ( '\nint nebcount = neighbourcount(0, @ptnum);\nif ( nebcount < 2 ) return;\n\nint nebs[] = neighbours(0, @ptnum);\n\nint nebcount = len(nebs);\nfor (int i = 0; i < nebcount; ++i) {\n    if ( @ptnum > nebs[i] ) continue;\n}\n' ) autobind ( off ) groupautobind ( off ) vex_matchattrib ( "" ) vex_inplace ( on )
+opparm $edgepointwrangle1 folder0 ( 1 1 ) vex_matchattrib ( "" ) snippet ( '\nint nebcount = neighbourcount(0, @ptnum);\nif ( nebcount < 2 ) return;\n\nint nebs[] = neighbours(0, @ptnum);\n\nint nebcount = len(nebs);\nfor (int i = 0; i < nebcount; ++i) {\n    if ( @ptnum > nebs[i] ) continue;\n}\n' ) autobind ( off ) groupautobind ( off ) vex_matchattrib ( "" ) vex_inplace ( on )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $edgepointwrangle1
 opexprlanguage -s hscript $edgepointwrangle1
 opuserdata -n '___Version___' -v '' $edgepointwrangle1
@@ -1259,7 +1258,7 @@ opcf $arg1
 set _obj_detailwrangle_workset1 = `run("opadd -e -n -v attribwrangle detailwrangle_workset1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_detailwrangle_workset1
 opparm $_obj_detailwrangle_workset1  bindings ( 2 ) groupbindings ( 0 )
-opparm $_obj_detailwrangle_workset1 class ( detail ) snippet ( '\ni[]@workset_begins = {0};\ni[]@workset_lengths = array(@numpt);\n\nvector volumeres = volumeres(0, 0);\ni[]@workset_lengths = array(volumeres.x*volumeres.y*volumeres.z);\n' ) bindings ( 2 ) bindname1 ( '`chs("../opencl1/worksets_begin")`' ) bindparm1 ( workset_begins ) bindname2 ( '`chs("../opencl1/worksets_length")`' ) bindparm2 ( workset_lengths )
+opparm $_obj_detailwrangle_workset1 class ( detail ) vex_matchattrib ( "" ) snippet ( '\ni[]@workset_begins = {0};\ni[]@workset_lengths = array(@numpt);\n\nvector volumeres = volumeres(0, 0);\ni[]@workset_lengths = array(volumeres.x*volumeres.y*volumeres.z);\n' ) bindings ( 2 ) bindname1 ( '`chs("../opencl1/worksets_begin")`' ) bindparm1 ( workset_begins ) bindname2 ( '`chs("../opencl1/worksets_length")`' ) bindparm2 ( workset_lengths )
 chautoscope $_obj_detailwrangle_workset1 +bindparm1 +bindparm2
 opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_detailwrangle_workset1
 opexprlanguage -s hscript $_obj_detailwrangle_workset1
@@ -1413,7 +1412,7 @@ chblockbegin
 chadd -t 0 0 $_obj_piecewrangle1 vex_numcount
 chkey -t 0 -v 10 -m 0 -a 0 -A 0 -T a  -F 'nuniquevals(-1, 2-ch("piececlass"), chs("pieceattrib"))' $_obj_piecewrangle1/vex_numcount
 chblockend
-opparm $_obj_piecewrangle1 class ( number ) vex_numcount ( vex_numcount ) snippet ( '\nint pieceElemnums[] = findattribval(0, chs("piececlass"), chs("pieceattrib"), @elemnum);\n\nif ( attribtype(0, chs("piececlass"), chs("pieceattrib")) == 2 ) {\n    string uniquevalstr = uniqueval(0, chs("piececlass"), chs("pieceattrib"), @elemnum);\n    int pieceElemnums[] = findattribval(0, chs("piececlass"), chs("pieceattrib"), uniquevalstr);\n} else {\n    int uniquevalint = uniqueval(0, chs("piececlass"), chs("pieceattrib"), @elemnum);\n    int pieceElemnums[] = findattribval(0, chs("piececlass"), chs("pieceattrib"), uniquevalint);\n}\n' ) vex_inplace ( on ) spare_input0 ( '../`opinput(".", 0)`' )
+opparm $_obj_piecewrangle1 class ( number ) vex_matchattrib ( "" ) vex_numcount ( vex_numcount ) snippet ( '\nint pieceElemnums[] = findattribval(0, chs("piececlass"), chs("pieceattrib"), @elemnum);\n\nif ( attribtype(0, chs("piececlass"), chs("pieceattrib")) == 2 ) {\n    string uniquevalstr = uniqueval(0, chs("piececlass"), chs("pieceattrib"), @elemnum);\n    int pieceElemnums[] = findattribval(0, chs("piececlass"), chs("pieceattrib"), uniquevalstr);\n} else {\n    int uniquevalint = uniqueval(0, chs("piececlass"), chs("pieceattrib"), @elemnum);\n    int pieceElemnums[] = findattribval(0, chs("piececlass"), chs("pieceattrib"), uniquevalint);\n}\n' ) vex_inplace ( on ) spare_input0 ( '../`opinput(".", 0)`' )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_piecewrangle1
 opexprlanguage -s hscript $_obj_piecewrangle1
 opuserdata -n '___Version___' -v '' $_obj_piecewrangle1
@@ -4666,7 +4665,7 @@ chblockbegin
 chadd -t 0 0 $_obj_hedgewrangle1 vex_numcount
 chkey -t 0 -v 10 -m 0 -a 0 -A 0 -T a  -F 'detail(-1, \'intrinsic:vertexcount\', 0)' $_obj_hedgewrangle1/vex_numcount
 chblockend
-opparm $_obj_hedgewrangle1 class ( number ) vex_numcount ( vex_numcount ) snippet ( '\nint dstpt = vertex(1, chs("dstpt_attribname"), @vtxnum);\nif ( dstpt == -1 ) return;\n\nint srcpt = vertexpoint(1, @vtxnum);\nint vertexnext;\n\nif ( srcpt >= dstpt ) {\n    // æ£æµæ¯å¦æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n    vertexnext = pointvertex(1, dstpt);\n    for (; vertexnext != -1; vertexnext = vertexnext(1, vertexnext)) {\n        int vertexnext_dstpt = vertex(1, chs("dstpt_attribname"), vertexnext);\n        if ( vertexnext_dstpt == srcpt ) {\n            // å»é\n            return;\n        }\n    }\n}\n// è½ä»å¾ªç¯åºæ¥ï¼è¯´æä¸æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n\nvertexnext = pointvertex(1, srcpt);\nfor (; vertexnext != -1; vertexnext = vertexnext(1, vertexnext)) {\n    if ( vertexnext >= @vtxnum ) continue;\n    int vertexnext_dstpt = vertex(1, chs("dstpt_attribname"), vertexnext);\n    if ( vertexnext_dstpt == dstpt ) {\n        // å»é\n        return;\n    }\n}\n\nvector srcpos = @P;\nvector dstpos = point(0, \'P\', dstpt);\n' ) vex_inplace ( on ) spare_input0 ( '../`opinput(".", 1)`' )
+opparm $_obj_hedgewrangle1 class ( number ) vex_numcount ( vex_numcount ) vex_matchattrib ( "" ) snippet ( '\nint dstpt = vertex(1, chs("dstpt_attribname"), @vtxnum);\nif ( dstpt == -1 ) return;\n\nint srcpt = vertexpoint(1, @vtxnum);\nint vertexnext;\n\nif ( srcpt >= dstpt ) {\n    // æ£æµæ¯å¦æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n    vertexnext = pointvertex(1, dstpt);\n    for (; vertexnext != -1; vertexnext = vertexnext(1, vertexnext)) {\n        int vertexnext_dstpt = vertex(1, chs("dstpt_attribname"), vertexnext);\n        if ( vertexnext_dstpt == srcpt ) {\n            // å»é\n            return;\n        }\n    }\n}\n// è½ä»å¾ªç¯åºæ¥ï¼è¯´æä¸æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n\nvertexnext = pointvertex(1, srcpt);\nfor (; vertexnext != -1; vertexnext = vertexnext(1, vertexnext)) {\n    if ( vertexnext >= @vtxnum ) continue;\n    int vertexnext_dstpt = vertex(1, chs("dstpt_attribname"), vertexnext);\n    if ( vertexnext_dstpt == dstpt ) {\n        // å»é\n        return;\n    }\n}\n\nvector srcpos = @P;\nvector dstpos = point(0, \'P\', dstpt);\n' ) vex_inplace ( on ) spare_input0 ( '../`opinput(".", 1)`' )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_hedgewrangle1
 opexprlanguage -s hscript $_obj_hedgewrangle1
 opuserdata -n '___Version___' -v '' $_obj_hedgewrangle1
@@ -4825,7 +4824,7 @@ set _obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1
 oplocate -x `$arg2 + -1.1996000100000002` -y `$arg3 + -1.0398999999999998` $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1
 opspareds '    group {         name    "folder1"         label   "Code"          parm {             name    "group"             baseparm             label   "Group"             export  none             bindselector points "Modify Points"                 "Select the points to affect and press Enter to complete."                 0 1 0xffffffff 0 grouptype 0         }         parm {             name    "grouptype"             baseparm             label   "Group Type"             export  none         }         parm {             name    "class"             baseparm             label   "Run Over"             export  none         }         parm {             name    "vex_numcount"             baseparm             label   "Number Count"             export  none         }         parm {             name    "vex_threadjobsize"             baseparm             label   "Thread Job Size"             export  none         }         parm {             name    "snippet"             baseparm             label   "VEXpression"             export  all         }         parm {             name    "exportlist"             baseparm             label   "Attributes to Create"             export  none         }         parm {             name    "vex_strict"             baseparm             label   "Enforce Prototypes"             export  none         }     }      group {         name    "folder1_1"         label   "Bindings"          parm {             name    "autobind"             baseparm             label   "Autobind by Name"             export  none         }         multiparm {             name    "bindings"             label    "Number of Bindings"             baseparm             default 0             parmtag { "autoscope" "0000000000000000" }             parmtag { "multistartoffset" "1" }              parm {                 name    "bindname#"                 baseparm                 label   "Attribute Name"                 export  none             }             parm {                 name    "bindparm#"                 baseparm                 label   "VEX Parameter"                 export  none             }         }          parm {             name    "groupautobind"             baseparm             label   "Autobind Groups by Name"             export  none         }         multiparm {             name    "groupbindings"             label    "Group Bindings"             baseparm             default 0             parmtag { "autoscope" "0000000000000000" }             parmtag { "multistartoffset" "1" }              parm {                 name    "bindgroupname#"                 baseparm                 label   "Group Name"                 export  none             }             parm {                 name    "bindgroupparm#"                 baseparm                 label   "VEX Parameter"                 export  none             }         }          parm {             name    "vex_cwdpath"             baseparm             label   "Evaluation Node Path"             export  none         }         parm {             name    "vex_outputmask"             baseparm             label   "Export Parameters"             export  none         }         parm {             name    "vex_updatenmls"             baseparm             label   "Update Normals If Displaced"             export  none         }         parm {             name    "vex_matchattrib"             baseparm             label   "Attribute to Match"             export  none         }         parm {             name    "vex_inplace"             baseparm             label   "Compute Results In Place"             export  none         }         parm {             name    "vex_selectiongroup"             baseparm             label   "Output Selection Group"             export  none         }         parm {             name    "vex_precision"             baseparm             label   "VEX Precision"             export  none         }     }      parm {         name    "dstpt_attribname"         label   "Desitnate Point Attrib Name"         type    string         default { "`chs(\\"../hedge_dstpoints_fee1/dstpt_attribname\\")`" }         parmtag { "script_callback_language" "python" }     } ' $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1
 opparm $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1  bindings ( 0 ) groupbindings ( 0 )
-opparm $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1 folder0 ( 1 1 ) class ( vertex ) snippet ( '\nif ( i@opinput1_`chs("dstpt_attribname")` == -1 ) return;\n\nint vertexnext;\n\nif ( @ptnum >= i@opinput1_`chs("dstpt_attribname")` ) {\n    // æ£æµæ¯å¦æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n    vertexnext = pointvertex(0, i@opinput1_`chs("dstpt_attribname")`);\n    for (; vertexnext != -1; vertexnext = vertexnext(0, vertexnext)) {\n        int vertexnext_dstpt = vertex(1, chs("bindname1"), vertexnext);\n        if ( vertexnext_dstpt == @ptnum ) {\n            // å»é\n            return;\n        }\n    }\n}\n// è½ä»å¾ªç¯åºæ¥ï¼è¯´æä¸æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n\nvertexnext = pointvertex(0, @ptnum);\nfor (; vertexnext != -1; vertexnext = vertexnext(0, vertexnext)) {\n    if ( vertexnext >= @vtxnum ) continue;\n    int vertexnext_dstpt = vertex(1, chs("bindname1"), vertexnext);\n    if ( vertexnext_dstpt == i@opinput1_`chs("dstpt_attribname")` ) {\n        // å»é\n        return;\n    }\n}\n\nvector srcpos = @P;\nvector dstpos = point(0, \'P\', i@opinput1_`chs("dstpt_attribname")`);\n' ) vex_inplace ( on )
+opparm $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1 folder0 ( 1 1 ) class ( vertex ) vex_matchattrib ( "" ) snippet ( '\nif ( i@opinput1_`chs("dstpt_attribname")` == -1 ) return;\n\nint vertexnext;\n\nif ( @ptnum >= i@opinput1_`chs("dstpt_attribname")` ) {\n    // æ£æµæ¯å¦æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n    vertexnext = pointvertex(0, i@opinput1_`chs("dstpt_attribname")`);\n    for (; vertexnext != -1; vertexnext = vertexnext(0, vertexnext)) {\n        int vertexnext_dstpt = vertex(1, chs("bindname1"), vertexnext);\n        if ( vertexnext_dstpt == @ptnum ) {\n            // å»é\n            return;\n        }\n    }\n}\n// è½ä»å¾ªç¯åºæ¥ï¼è¯´æä¸æ¯unshared edgeï¼ä¸ä¸æ¯éå¤ç\n\nvertexnext = pointvertex(0, @ptnum);\nfor (; vertexnext != -1; vertexnext = vertexnext(0, vertexnext)) {\n    if ( vertexnext >= @vtxnum ) continue;\n    int vertexnext_dstpt = vertex(1, chs("bindname1"), vertexnext);\n    if ( vertexnext_dstpt == i@opinput1_`chs("dstpt_attribname")` ) {\n        // å»é\n        return;\n    }\n}\n\nvector srcpos = @P;\nvector dstpos = point(0, \'P\', i@opinput1_`chs("dstpt_attribname")`);\n' ) vex_inplace ( on )
 chautoscope $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1 +group
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1
 opexprlanguage -s hscript $_obj_geo1_block_gen1_longestedge_fee1_minHedgeNum_fee1_subnet1_hedgewrangle1
@@ -7845,7 +7844,7 @@ opcf $arg1
 set _obj_pointnebs1 = `run("opadd -e -n -v attribwrangle pointnebs1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_pointnebs1
 opparm $_obj_pointnebs1  bindings ( 1 ) groupbindings ( 0 )
-opparm $_obj_pointnebs1 snippet ( '\ni[]@nebs = neighbours(0, @ptnum);\n' ) bindings ( 1 ) vex_inplace ( on ) bindname1 ( nebs ) bindparm1 ( nebs )
+opparm $_obj_pointnebs1 snippet ( '\ni[]@nebs = neighbours(0, @ptnum);\n' ) bindings ( 1 ) vex_matchattrib ( "" ) vex_inplace ( on ) bindname1 ( nebs ) bindparm1 ( nebs )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_pointnebs1
 opexprlanguage -s hscript $_obj_pointnebs1
 opuserdata -n '___Version___' -v '' $_obj_pointnebs1
@@ -11545,154 +11544,6 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="copyPy1" label="Copy Py1" icon="SOP_attribwrangle">
-    <helpURL>operator:Sop/attribwrangle</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/attribwrangle</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'attribwrangle' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $copyPy1 (Sop/attribwrangle)
-set copyPy1 = `run("opadd -e -n -v attribwrangle copyPy1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $copyPy1
-opparm $copyPy1  bindings ( 2 ) groupbindings ( 0 )
-opparm $copyPy1 snippet ( '\n@P.y = v@opinput1_P.y;\n' ) autobind ( off ) bindings ( 2 ) groupautobind ( off ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P ) bindname2 ( P ) bindparm2 ( opinput1_P )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $copyPy1
-opexprlanguage -s hscript $copyPy1
-opuserdata -n '___Version___' -v '' $copyPy1
-opset -p on $copyPy1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $copyPy1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $copyPy1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
   <tool name="attribcreate::2.0" label="Attribute Create Color Cd" icon="SOP_attribcreate-2.0">
     <helpURL>operator:Sop/attribcreate?version=2.0</helpURL>
     <toolMenuContext name="network">
@@ -13613,7 +13464,7 @@ opcf $arg1
 set restPy1 = `run("opadd -e -n -v attribwrangle restPy1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $restPy1
 opparm $restPy1  bindings ( 2 ) groupbindings ( 0 )
-opparm $restPy1 snippet ( '\nf@restPy = v@P.y;\n' ) autobind ( off ) bindings ( 2 ) groupautobind ( off ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P ) bindname2 ( restPy ) bindparm2 ( restPy )
+opparm $restPy1 snippet ( '\nf@restPy = v@P.y;\nv@P.y = 0;\n' ) autobind ( off ) bindings ( 2 ) vex_matchattrib ( "" ) groupautobind ( off ) vex_inplace ( on ) bindname1 ( P ) bindparm1 ( P ) bindname2 ( restPy ) bindparm2 ( restPy )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $restPy1
 opexprlanguage -s hscript $restPy1
 opuserdata -n '___Version___' -v '' $restPy1

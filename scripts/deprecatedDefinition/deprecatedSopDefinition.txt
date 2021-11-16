@@ -266,6 +266,29 @@ FeE::transformUE4Space
 transformbysrt_fee
 FeE::transformPolyExtrude::2.0
 FeE::transformPolyExtrude
+FeE::attribdelete
+curveSmooth_attribblur_fee
+deoverlap_graph_fee
+FeE::deleteAllAttribsGroups
+
+reverse_matchDir_fee
+
+
+
+
+
+FeE::mergeWithPack
+
+expandUnsharedEdge2d_fee
+
+
+
+
+
+
+
+
+sort_reversevertex_fee
 
 
 
