@@ -192,6 +192,7 @@
                     "$FeELib/otls/Morph/Time",
                     "$FeELib/otls/Operation/Blast",
                     "$FeELib/otls/Operation/Cache",
+                    "$FeELib/otls/Operation/Delete",
                     "$FeELib/otls/Operation/Filter",
                     "$FeELib/otls/Operation/Merge",
                     "$FeELib/otls/Operation/Update",

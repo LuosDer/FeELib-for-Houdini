@@ -270,7 +270,9 @@ FeE::attribdelete
 curveSmooth_attribblur_fee
 deoverlap_graph_fee
 FeE::deleteAllAttribsGroups
-
+extractallpoints_fee
+blastgroup_fee
+FeE::polyReduce2d
 reverse_matchDir_fee
 
 
