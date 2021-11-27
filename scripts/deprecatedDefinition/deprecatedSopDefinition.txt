@@ -278,7 +278,8 @@ inlinepts_prim_fee::3.0
 inlinepts_prim_fee::2.0
 inlinepts_prim_fee::1.0
 ptgenfromelems_fee
-
+longestedge_fee
+longestedge_fee::1.0
 
 FeE::mergeWithPack
 
