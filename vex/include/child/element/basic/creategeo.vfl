@@ -2,7 +2,28 @@
 #ifndef __CREATEGEO_VFL__
 #define __CREATEGEO_VFL__
 
-#include <creategeo.vfl>
+#if 1
+    #include <creategeo.vfl>
+#else
+    function
+    int addprim(
+        int geo;
+        string type;
+        vector pos0;
+        vector pos1;
+        vector pos2;
+        vector pos3;
+        ) {
+        int
+            pt0 = addpoint(0, pos0),
+            pt1 = addpoint(0, pos1),
+            pt2 = addpoint(0, pos2),
+            pt3 = addpoint(0, pos3);
+        return addprim(geo, type, pt0, pt1, pt2, pt3);
+    }
+#endif
+
+
 
 
 

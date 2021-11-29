@@ -4,7 +4,7 @@
 
 #include <precompile.vfl>
 
-#if 0
+#if 1
     #include <constant.vfl>
 #else
 #endif
@@ -179,6 +179,32 @@ DEFINEFUNCif(FUNClinearnumber0002)
 
 DEFINEFUNCif(FUNClinearnumber0003)
 
+
+// function
+// void linearnumber(
+//     export float arr[];
+//     float start, end, increment;
+//     ) {
+//     if ( increment == 0 ) {
+//         error("fee linearnumber death cycle");
+//         return;
+//     }
+
+//     int len = int(ceil((end - start) / increment));
+//     if ( len < 0 ) {
+//         resize(arr, 0);
+//         return;
+//     }
+    
+//     resize(arr, len);
+//     float lastValue = start;
+//     arr[0] = lastValue;
+//     for (int i = 1; i < len; ++i) {
+//         lastValue += increment;
+//         arr[i] = lastValue;
+//     }
+// }
+
 #define FUNClinearnumber(type)\
         function\
         void linearnumber(\
@@ -198,8 +224,10 @@ DEFINEFUNCif(FUNClinearnumber0003)
                 \
             resize(arr, len);\
             arr[0] = start;\
+            type lastValue = start;\
             for (int i = 1; i < len; ++i) {\
-                arr[i] = arr[i-1] + increment;\
+                lastValue += increment;\
+                arr[i] = lastValue;\
             }\
         }\
 

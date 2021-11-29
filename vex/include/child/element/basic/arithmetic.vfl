@@ -4,7 +4,7 @@
 
 #include <precompile.vfl>
 
-#if 0
+#if 1
     #include <arithmetic.vfl>
 #else
 #endif

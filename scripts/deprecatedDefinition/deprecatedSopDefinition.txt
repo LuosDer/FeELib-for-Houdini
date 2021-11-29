@@ -280,6 +280,20 @@ inlinepts_prim_fee::1.0
 ptgenfromelems_fee
 longestedge_fee
 longestedge_fee::1.0
+polyexpand2d_intersect_fee
+
+polyexpand2d_prim_fee
+FeE::polyExpand2d_debug::1.0
+FeE::polyExpand2d_debug_resolveMesh_autoDetect::1.0
+FeE::polyExpand2d_debug_resolveMesh_autoDetect::2.0
+FeE::polyExpand2d_debug_autoDetect::1.0
+polyexpand2d_section_fee
+polyexpand2d_extrude_fee
+polyexpand2d_extrude_fee::1.0
+polyexpand2d_fee::2.0
+polyexpand2d_fee
+FeE::polyExpand2d_curve::1.0
+FeE::polyExpand2d_closedCurve::1.0
 
 FeE::mergeWithPack
 
