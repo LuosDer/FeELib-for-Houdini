@@ -299,9 +299,9 @@ FeE::mergeWithPack
 
 expandUnsharedEdge2d_fee
 
-
-
-
+polylinenormal_fee
+FeE::polyCap_miniSurf
+polycap_wn_fee
 
 
 
