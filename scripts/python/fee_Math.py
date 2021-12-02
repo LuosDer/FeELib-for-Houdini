@@ -23,3 +23,26 @@ def valueType(strInput):
         pass
 
     return 2
+
+
+
+def findValueByKey(arg, key):
+    if not isinstance(key, str):
+        raise TypeError('key is not string')
+
+    resultValues = []
+
+    if isinstance(arg, dict):
+        for subkey in arg.keys():
+            if subkey == key:
+                resultValues.append(arg[key])
+            else:
+                resultValues.extend(findValueByKey(arg[subkey], key))
+
+    
+    if isinstance(arg, list) or isinstance(arg, tuple):
+        for subelem in arg:
+            resultValues.extend(findValueByKey(subelem, key))
+
+    return resultValues
+ 
