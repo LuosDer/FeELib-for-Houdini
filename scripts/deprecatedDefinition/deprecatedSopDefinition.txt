@@ -303,7 +303,7 @@ polylinenormal_fee
 FeE::polyCap_miniSurf
 polycap_wn_fee
 getPackedTransform_fee
-
+FeE::attribDel
 
 
 sort_reversevertex_fee
