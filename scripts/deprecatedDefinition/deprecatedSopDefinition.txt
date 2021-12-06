@@ -294,17 +294,16 @@ polyexpand2d_fee::2.0
 polyexpand2d_fee
 FeE::polyExpand2d_curve::1.0
 FeE::polyExpand2d_closedCurve::1.0
-
+FeE::isClosedSharedPts
 FeE::mergeWithPack
-
-expandUnsharedEdge2d_fee
+convexpoly_minarea_fee
 
 polylinenormal_fee
 FeE::polyCap_miniSurf
 polycap_wn_fee
 getPackedTransform_fee
 FeE::attribDel
-
+matchPolyWinding_fee
 
 sort_reversevertex_fee
 
