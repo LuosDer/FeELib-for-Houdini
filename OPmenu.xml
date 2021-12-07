@@ -34,7 +34,7 @@ fee_Utils.setClipboardText(path)
 import fee_Node
 kwargsNode = kwargs["node"]
 selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
-print(selectedNodes[0].path() + ' Sub Node Count is ' + str(fee_Node.subNodeCount(selectedNodes)))
+print(selectedNodes[0].path() + '\n Sub Node Count is ' + str(fee_Node.subNodeCount(selectedNodes)))
       ]]></scriptCode>
       </scriptItem>
 

@@ -297,6 +297,13 @@ FeE::polyExpand2d_closedCurve::1.0
 FeE::isClosedSharedPts
 FeE::mergeWithPack
 convexpoly_minarea_fee
+packeachprim_fee
+attribdelete_emptyclass_fee
+attribdelete_emptyclass_fee::2.0
+
+
+
+
 
 polylinenormal_fee
 FeE::polyCap_miniSurf
