@@ -300,9 +300,9 @@ convexpoly_minarea_fee
 packeachprim_fee
 attribdelete_emptyclass_fee
 attribdelete_emptyclass_fee::2.0
+uvrectify_fee
 
-
-
+FeE::keepGroupElems::1.0
 
 
 polylinenormal_fee
@@ -313,6 +313,39 @@ FeE::attribDel
 matchPolyWinding_fee
 
 sort_reversevertex_fee
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FeE::extrudeBorder
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
