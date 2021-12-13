@@ -302,8 +302,8 @@ attribdelete_emptyclass_fee
 attribdelete_emptyclass_fee::2.0
 uvrectify_fee
 
-FeE::keepGroupElems::1.0
-
+FeE::groupCopy::1.0
+FeE::attribCopy::1.0
 
 polylinenormal_fee
 FeE::polyCap_miniSurf
@@ -314,15 +314,15 @@ matchPolyWinding_fee
 
 sort_reversevertex_fee
 
+plexus_fee
 
 
+scatterinside_fee
+FeE::extractIntrinsicAttrib
 
-
-
-
-
-
-
+FeE::polyPath::0.5
+FeE::polyPath
+uvScaletoWorldSize_fee
 
 
 
