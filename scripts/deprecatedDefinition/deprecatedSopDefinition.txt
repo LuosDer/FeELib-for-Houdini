@@ -324,6 +324,17 @@ FeE::polyPath::0.5
 FeE::polyPath
 uvScaletoWorldSize_fee
 timeinvariantattrib_fee
+fenceposts_fee
+FeE::groupEdgewithPointOn_fee
+FeE::transformAttrib_byDeform
+guardrail_ss_fee::1.0
+FeE::guardrail_ds::1.0
+
+softboolean_fee
+
+
+
+
 
 
 
