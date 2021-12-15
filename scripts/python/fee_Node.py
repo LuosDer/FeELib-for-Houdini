@@ -2335,7 +2335,27 @@ def findChildNodeMatchesType(inputNodes, matchNodeTypeName):
         print(childNode)
 
 
+def searchParmsValue(inputNodes, searchValue):
+    returnParms = []
+    nodes = convertNodeTuple(inputNodes)
+    for inputNode in nodes:
+        for child in inputNode.allSubChildren(recurse_in_locked_nodes=False):
+            for parm in child.parms():
+                if searchValue in parm.rawValue():
+                    returnParms.append(parm)
+    return returnParms
 
+
+def searchParmsValue_print(inputNodes, searchValue):
+    if inputNodes:
+        print('\n')
+    nodes = convertNodeTuple(inputNodes)
+    for inputNode in nodes:
+        for child in inputNode.allSubChildren(recurse_in_locked_nodes=False):
+            for parm in child.parms():
+                if searchValue in parm.rawValue():
+                    # raise SystemError('a', parm)
+                    print(parm)
 
 
 

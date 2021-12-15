@@ -191,6 +191,20 @@ for selectedNode in selectedNodes:
       ]]></scriptCode>
       </scriptItem>
 
+      <scriptItem id="searchParmsStringValue">
+        <label>Search Parms String Value</label>
+        <scriptCode><![CDATA[
+searchValue = hou.ui.readInput('Search Value', buttons=(''), initial_contents='')[1]
+import fee_Node
+# from importlib import reload
+# reload(fee_Node)
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getUserWantedSelectedNodes(kwargsNode)
+fee_Node.searchParmsValue_print(selectedNodes, searchValue)
+      ]]></scriptCode>
+      </scriptItem>
+
+
 
       <scriptItem id="setNodeAsOutput">
         <label>Set Node as Output</label>
