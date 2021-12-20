@@ -334,11 +334,15 @@ softboolean_fee
 
 
 softboolean_bevel_fee
-
-
-
-
-
+FeE::uvScaletoWorldSize::1.0
+normalizeSweepSopUV_fee
+uvTileSize_fee
+uvReverse_fee
+uvSwap_fee
+uvTile_fee
+insertpoint_curve_fee
+complementgraph_fee
+completegraph_fee
 
 FeE::extrudeBorder
 
