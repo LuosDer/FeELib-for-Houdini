@@ -604,6 +604,8 @@ DEFINEFUNCv(FUNCargsort)
 
 */
 
+
+
 function
 int minidx(
     const vector arg;
@@ -617,7 +619,6 @@ int minidx(
     }
     return idx;
 }
-
 function
 int minidx(
     const vector arg;
@@ -632,6 +633,7 @@ int minidx(
     }
     return idx;
 }
+
 
 function
 int mididx(
@@ -683,6 +685,7 @@ int mididx(
     return idx;
 }
 
+
 function
 int maxidx(
     const vector arg;
@@ -711,6 +714,7 @@ int maxidx(
     }
     return idx;
 }
+
 
 #define FUNCmaxidx0(type)\
         function\

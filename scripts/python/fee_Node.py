@@ -1841,7 +1841,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     subMenuOriginalPrefix = '', subMenuTargetPrefix = '', 
     nodeTypeNameFromLabel = False, hdaNameFromNodeTypeName = False, 
     name_lower = False, name_convertSpacetoUnderscore = False, 
-    deleteNodeType = (), bypassNodeType = (), 
+    deleteNodeType = (), bypassNodeType = (), bypassNode = {},
     strictNodeNameDict = {}, subMenuDict = {}, changeNodeTypeDict = {}, 
     strictNodeParmDefaultValueDict = {}, hideParmNodeDict = {},
     debugMode = 0):
@@ -1859,9 +1859,11 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
         raise TypeError('must be str', subMenuTargetPrefix)
 
     if not isinstance(deleteNodeType, tuple):
-        raise TypeError('must be str', deleteNodeType)
+        raise TypeError('must be tuple', deleteNodeType)
     if not isinstance(bypassNodeType, tuple):
-        raise TypeError('must be str', bypassNodeType)
+        raise TypeError('must be tuple', bypassNodeType)
+    if not isinstance(bypassNode, dict):
+        raise TypeError('must be dict', bypassNode)
 
     if not isinstance(strictNodeNameDict, dict):
         raise TypeError('must be dict', strictNodeNameDict)
@@ -1921,8 +1923,21 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     if 1:
         # initial node name
         if nodeTypeName in strictNodeNameDict:
-            newNodeTypeName = strictNodeNameDict[nodeTypeName][0]
+            if isinstance(strictNodeNameDict[nodeTypeName], list):
+                choiceNodeType = []
+                for strictNodeNameDictSubElem in strictNodeNameDict[nodeTypeName]:
+                    choiceNodeType.append(strictNodeNameDictSubElem[0])
+                choiceNodeType = tuple(choiceNodeType)
+                # print(choiceNodeType)
+                choiceNodeTypeidx = hou.ui.displayMessage('Choice Node Type', buttons = choiceNodeType, default_choice = 0, close_choice = 0)
+                newNodeTypeName = strictNodeNameDict[nodeTypeName][choiceNodeTypeidx][0]
+                # print(newNodeTypeName)
+                # return 0
+            else:
+                newNodeTypeName = strictNodeNameDict[nodeTypeName][0]
+            bypassNodeIdentifyString = newNodeTypeName
         else:
+            bypassNodeIdentifyString = nodeTypeName
             if namespaceTarget != '':
                 nodeNameComponents[1] = namespaceTarget
             elif nodeNameComponents[1] == namespaceOriginal:
@@ -1944,6 +1959,14 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
 
             nodeNameComponents[2] = newNodeTypeName
             newNodeTypeName = fee_HDA.combineNameComponents(nodeNameComponents)
+            
+
+
+    if bypassNodeIdentifyString in bypassNode:
+        nodePath = selectedNode.path() + '/'
+        for bypassNodeSubElem in bypassNode[bypassNodeIdentifyString]:
+            print(nodePath + bypassNodeSubElem)
+            hou.node(nodePath + bypassNodeSubElem).bypass(True)
 
 
     if targetHDAPath == '':
