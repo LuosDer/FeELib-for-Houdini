@@ -347,9 +347,10 @@ FeE::blastVertices::1.0
 FeE::extrudeBorder
 dirsoftrotate_uv_fee
 
-
-
-
+FeE::attribCopy::1.0
+FeE::attribCopy::0.1
+FeE::groupCopy::1.0
+FeE::groupCopy::0.1
 
 
 

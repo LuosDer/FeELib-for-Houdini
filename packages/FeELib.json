@@ -102,6 +102,7 @@
                     "$FeELib/otls/Filter/Interpolate",
                     "$FeELib/otls/Filter/Match",
                     "$FeELib/otls/Filter/Noise",
+                    "$FeELib/otls/Filter/Project",
                     "$FeELib/otls/Filter/Ref",
                     "$FeELib/otls/Filter/Rewrite",
                     "$FeELib/otls/Filter/Smooth",
