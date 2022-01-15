@@ -7,39 +7,39 @@
 
   <toolshelf name="fee_SOP" label="FeE SOP">
     <memberTool name="null_python1"/>
-    <memberTool name="attribcreateMaterial"/>
+    <memberTool name="attribCreateMaterial"/>
     <memberTool name="attribPromote_min_max1"/>
-    <memberTool name="attribdelete_all"/>
-    <memberTool name="attribute delete"/>
-    <memberTool name="attribute delete UV layout"/>
-    <memberTool name="attribrename_ue4material1"/>
-    <memberTool name="attribrename1"/>
+    <memberTool name="attribDelAll"/>
+    <memberTool name="attribDel"/>
+    <memberTool name="attribDel UV layout"/>
+    <memberTool name="attribRename_ue4Mat1"/>
+    <memberTool name="attribRename1"/>
     <memberTool name="attribute1"/>
-    <memberTool name="attribswap_uvP1"/>
-    <memberTool name="attribcopy_allDetail1"/>
-    <memberTool name="attribrest1"/>
-    <memberTool name="attribdelete_uvautoseam1"/>
-    <memberTool name="attribdelete_fbx1"/>
-    <memberTool name="attribmove_uvP1"/>
+    <memberTool name="attribSwap_uvP1"/>
+    <memberTool name="attribCopy_allDetail1"/>
+    <memberTool name="attribRest1"/>
+    <memberTool name="attribDel_uvAutoSeam1"/>
+    <memberTool name="attribDel_fbx1"/>
+    <memberTool name="attribMove_uvP1"/>
     <memberTool name="pieceAttribPromote1"/>
-    <memberTool name="group_unsharededge1"/>
+    <memberTool name="groupUnsharedEdge1"/>
     <memberTool name="groupReverse"/>
     <memberTool name="groupClosed1"/>
-    <memberTool name="groupdelete_all"/>
-    <memberTool name="groupvisualize1"/>
+    <memberTool name="groupDelAll"/>
+    <memberTool name="groupViz1"/>
     <memberTool name="transform_centroid1"/>
-    <memberTool name="xformaxis_centroid1"/>
+    <memberTool name="xformAxisCentroid1"/>
     <memberTool name="rest_to_P1"/>
-    <memberTool name="removeSharedEdges1"/>
-    <memberTool name="remove inline points1"/>
-    <memberTool name="blast closed"/>
-    <memberTool name="blastbyEnum1"/>
+    <memberTool name="deleteSharedEdges1"/>
+    <memberTool name="delete inline points1"/>
+    <memberTool name="deleteClosed"/>
+    <memberTool name="deleteByEnum1"/>
     <memberTool name="unusedPts1"/>
     <memberTool name="split_nurbCurve1"/>
     <memberTool name="polycut_allpts1"/>
-    <memberTool name="Sort by Attrib"/>
-    <memberTool name="sort by Vertex Order"/>
-    <memberTool name="timefreeze1"/>
+    <memberTool name="sortByAttrib"/>
+    <memberTool name="sortByVertexOrder"/>
+    <memberTool name="timeFreeze1"/>
     <memberTool name="brickerPolys1"/>
     <memberTool name="openu"/>
     <memberTool name="unrollu"/>
@@ -50,15 +50,13 @@
     <memberTool name="hedgewrangle1"/>
     <memberTool name="hedgewrangle_runOver1"/>
     <memberTool name="detailwrangle_workset1"/>
-    <memberTool name="pointnebs1"/>
+    <memberTool name="pointNebs1"/>
     <memberTool name="setPy1"/>
-    <memberTool name="primpoints_fee1"/>
-    <memberTool name="pointprims_fee1"/>
     <memberTool name="unionSurface1"/>
     <memberTool name="unionSolid1"/>
     <memberTool name="subtractSolid1"/>
     <memberTool name="intersectSolid1"/>
-    <memberTool name="attribcreate_RBDFoundOverlap1"/>
+    <memberTool name="attribCreate_RBDFoundOverlap1"/>
     <memberTool name="attribdelete_uvLayout1"/>
     <memberTool name="voronoifracture_nodesPackage"/>
     <memberTool name="switchif_enable1"/>
@@ -67,7 +65,7 @@
     <memberTool name="switchif_hasPrimGroup"/>
     <memberTool name="switchif_hasprims1"/>
     <memberTool name="switchif_haspts1"/>
-    <memberTool name="switchif_isclosed1"/>
+    <memberTool name="switchif_isClosed1"/>
     <memberTool name="performanceTest_nodes_script"/>
     <memberTool name="has0Input1"/>
     <memberTool name="has1Input1"/>
@@ -80,26 +78,25 @@
     <memberTool name="IN3"/>
     <memberTool name="IN4"/>
     <memberTool name="attribcopy_PtoUV1"/>
-    <memberTool name="vertexprim_fee1"/>
     <memberTool name="setPz1"/>
-    <memberTool name="removeUnusedPoints1"/>
+    <memberTool name="deleteUnusedPoints1"/>
     <memberTool name="surfaceShatter1"/>
-    <memberTool name="attribcreate::2.0"/>
+    <memberTool name="attribCreate::2.0"/>
     <memberTool name="triangulate"/>
     <memberTool name="attribrest"/>
-    <memberTool name="attribdelete_pop1"/>
+    <memberTool name="attribDel_pop1"/>
     <memberTool name="pointGenPerPrim1"/>
     <memberTool name="groupRest1"/>
     <memberTool name="switchif_hasGeo1"/>
     <memberTool name="packHiddenOrigin"/>
     <memberTool name="packOrigin"/>
-    <memberTool name="attribmove_restP"/>
-    <memberTool name="blastSkipNElem"/>
+    <memberTool name="attribMove_restP"/>
+    <memberTool name="deleteSkipNElem"/>
     <memberTool name="restPy"/>
     <memberTool name="setPyfromRest"/>
     <memberTool name="copyPy2"/>
     <memberTool name="splitPacked1"/>
-    <memberTool name="Attribute Move"/>
+    <memberTool name="AttribMove"/>
     <memberTool name="quadragulate"/>
     <memberTool name="convexHull"/>
     <memberTool name="switchif_isPacked1"/>
@@ -254,7 +251,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="groupvisualize1" label="Group Visualize" icon="SOP_groupcreate">
+  <tool name="groupViz1" label="Group Visualize" icon="SOP_groupcreate">
     <helpURL>operator:Sop/groupcreate</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/groupcreate</contextOpType>
@@ -367,14 +364,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_groupvisualize1 (Sop/groupcreate)
-set _obj_groupvisualize1 = `run("opadd -e -n -v groupcreate groupvisualize1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupvisualize1
-opparm -V 18.5.408 $_obj_groupvisualize1 groupname ( "" ) grouptype ( point ) mergeop ( union ) groupbase ( off )
-opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupvisualize1
-opexprlanguage -s hscript $_obj_groupvisualize1
-opuserdata -n '___Version___' -v '18.5.408' $_obj_groupvisualize1
-opset -p on $_obj_groupvisualize1
+# Node $_obj_groupViz1 (Sop/groupcreate)
+set _obj_groupViz1 = `run("opadd -e -n -v groupcreate groupViz1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupViz1
+opparm -V 18.5.408 $_obj_groupViz1 groupname ( "" ) grouptype ( point ) mergeop ( union ) groupbase ( off )
+opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupViz1
+opexprlanguage -s hscript $_obj_groupViz1
+opuserdata -n '___Version___' -v '18.5.408' $_obj_groupViz1
+opset -p on $_obj_groupViz1
 
 opcf $arg1
 
@@ -384,11 +381,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_groupvisualize1
+    set output = $_obj_groupViz1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_groupvisualize1
+    set input = $_obj_groupViz1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -401,7 +398,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="group_unsharededge1" label="Group Unshared Edge" icon="SOP_groupcreate">
+  <tool name="groupUnsharedEdge1" label="Group Unshared Edge" icon="SOP_groupcreate">
     <helpURL>operator:Sop/groupcreate</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/groupcreate</contextOpType>
@@ -514,14 +511,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_group_unsharededge1 (Sop/groupcreate)
-set _obj_group_unsharededge1 = `run("opadd -e -n -v groupcreate group_unsharededge1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_group_unsharededge1
-opparm -V 18.5.408 $_obj_group_unsharededge1 groupname ( unshared ) grouptype ( edge ) groupbase ( off ) groupedges ( on ) unshared ( on )
-opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_group_unsharededge1
-opexprlanguage -s hscript $_obj_group_unsharededge1
-opuserdata -n '___Version___' -v '18.5.408' $_obj_group_unsharededge1
-opset -p on $_obj_group_unsharededge1
+# Node $_obj_groupUnsharedEdge1 (Sop/groupcreate)
+set _obj_groupUnsharedEdge1 = `run("opadd -e -n -v groupcreate groupUnsharedEdge1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupUnsharedEdge1
+opparm -V 18.5.408 $_obj_groupUnsharedEdge1 groupname ( unshared ) grouptype ( edge ) groupbase ( off ) groupedges ( on ) unshared ( on )
+opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupUnsharedEdge1
+opexprlanguage -s hscript $_obj_groupUnsharedEdge1
+opuserdata -n '___Version___' -v '18.5.408' $_obj_groupUnsharedEdge1
+opset -p on $_obj_groupUnsharedEdge1
 
 opcf $arg1
 
@@ -531,11 +528,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_group_unsharededge1
+    set output = $_obj_groupUnsharedEdge1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_group_unsharededge1
+    set input = $_obj_groupUnsharedEdge1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -1898,10 +1895,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribute delete" label="Attribute Delete" icon="SOP_attribute">
+  <tool name="attribDel" label="AttribDel" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -2044,7 +2041,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="sort by Vertex Order" label="Sort by Vertex Order" icon="SOP_sort">
+  <tool name="sortByVertexOrder" label="Sort by Vertex Order" icon="SOP_sort">
     <helpURL>operator:Sop/sort</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/sort</contextOpType>
@@ -2157,17 +2154,16 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_sortby_vtxorder1 (Sop/sort)
-set _obj_sortby_vtxorder1 = `run("opadd -e -n -v sort sortby_vtxorder1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_sortby_vtxorder1
-opparm -V 18.5.499 $_obj_sortby_vtxorder1 ptsort ( vtxord )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_sortby_vtxorder1
-opexprlanguage -s hscript $_obj_sortby_vtxorder1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_sortby_vtxorder1
-opset -p on $_obj_sortby_vtxorder1
+# Node $_obj_sortByVertexOrder1 (Sop/sort)
+set _obj_sortByVertexOrder1 = `run("opadd -e -n -v sort sortByVertexOrder1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_sortByVertexOrder1
+opparm -V 18.5.499 $_obj_sortByVertexOrder1 ptsort ( vtxord )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_sortByVertexOrder1
+opexprlanguage -s hscript $_obj_sortByVertexOrder1
+opuserdata -n '___Version___' -v '18.5.499' $_obj_sortByVertexOrder1
+opset -p on $_obj_sortByVertexOrder1
 
 opcf $arg1
-opwire -n $_obj_remove_inline_pts -0 $_obj_sortby_vtxorder1
 
 set oidx = 0
 if ($argc >= 9 && "$arg9" != "") then
@@ -2175,11 +2171,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_sortby_vtxorder1
+    set output = $_obj_sortByVertexOrder1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_sortby_vtxorder1
+    set input = $_obj_sortByVertexOrder1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -2192,7 +2188,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="blast closed" label="Blast Closed" icon="SOP_blast">
+  <tool name="deleteClosed" label="Delete Closed" icon="SOP_blast">
     <helpURL>operator:Sop/blast</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/blast</contextOpType>
@@ -2305,17 +2301,17 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_blast_closed1 (Sop/blast)
-set _obj_blast_closed1 = `run("opadd -e -n -v blast blast_closed1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_blast_closed1
-opparm -V 18.5.499 $_obj_blast_closed1 group ( '@intrinsic:closed==0' ) grouptype ( prims )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_blast_closed1
-opexprlanguage -s hscript $_obj_blast_closed1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_blast_closed1
-opset -p on $_obj_blast_closed1
+# Node $_obj_deleteClosed1 (Sop/blast)
+set _obj_deleteClosed1 = `run("opadd -e -n -v blast deleteClosed1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_deleteClosed1
+opparm -V 18.5.499 $_obj_deleteClosed1 group ( '@intrinsic:closed==0' ) grouptype ( prims )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_deleteClosed1
+opexprlanguage -s hscript $_obj_deleteClosed1
+opuserdata -n '___Version___' -v '18.5.499' $_obj_deleteClosed1
+opset -p on $_obj_deleteClosed1
 
 opcf $arg1
-opwire -n $_obj_polydoctor1 -0 $_obj_blast_closed1
+opwire -n $_obj_polydoctor1 -0 $_obj_deleteClosed1
 
 set oidx = 0
 if ($argc >= 9 && "$arg9" != "") then
@@ -2323,11 +2319,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_blast_closed1
+    set output = $_obj_deleteClosed1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_blast_closed1
+    set input = $_obj_deleteClosed1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -2340,10 +2336,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribdelete_all" label="Attribute Delete All" icon="SOP_attribute">
+  <tool name="attribDelAll" label="Attribute Delete All" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -2453,15 +2449,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_attribdelete_all1 (Sop/attribute)
-set _obj_attribdelete_all1 = `run("opadd -e -n -v attribute attribdelete_all1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribdelete_all1
-opparm $_obj_attribdelete_all1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.462 $_obj_attribdelete_all1 ptdel ( * ) vtxdel ( * ) primdel ( * ) dtldel ( * )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribdelete_all1
-opexprlanguage -s hscript $_obj_attribdelete_all1
-opuserdata -n '___Version___' -v '18.5.462' $_obj_attribdelete_all1
-opset -p on $_obj_attribdelete_all1
+# Node $_obj_attribDelAll1 (Sop/attribute)
+set _obj_attribDelAll1 = `run("opadd -e -n -v attribute attribDelAll1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribDelAll1
+opparm $_obj_attribDelAll1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.462 $_obj_attribDelAll1 ptdel ( * ) vtxdel ( * ) primdel ( * ) dtldel ( * )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribDelAll1
+opexprlanguage -s hscript $_obj_attribDelAll1
+opuserdata -n '___Version___' -v '18.5.462' $_obj_attribDelAll1
+opset -p on $_obj_attribDelAll1
 
 opcf $arg1
 
@@ -2471,11 +2467,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_attribdelete_all1
+    set output = $_obj_attribDelAll1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_attribdelete_all1
+    set input = $_obj_attribDelAll1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -2488,7 +2484,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="groupdelete_all" label="Group Delete All" icon="SOP_groupdelete">
+  <tool name="groupDelAll" label="Group Delete All" icon="SOP_groupdelete">
     <helpURL>operator:Sop/groupdelete</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/groupdelete</contextOpType>
@@ -2601,14 +2597,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_groupdelete_all1 (Sop/groupdelete)
-set _obj_groupdelete_all1 = `run("opadd -e -n -v groupdelete groupdelete_all1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupdelete_all1
-opparm $_obj_groupdelete_all1  deletions ( 1 )
-opparm -V 18.5.499 $_obj_groupdelete_all1 group1 ( * )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupdelete_all1
-opexprlanguage -s hscript $_obj_groupdelete_all1
-opset -p on $_obj_groupdelete_all1
+# Node $_obj_groupDelAll1 (Sop/groupdelete)
+set _obj_groupDelAll1 = `run("opadd -e -n -v groupdelete groupDelAll1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupDelAll1
+opparm $_obj_groupDelAll1  deletions ( 1 )
+opparm -V 18.5.499 $_obj_groupDelAll1 group1 ( * )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupDelAll1
+opexprlanguage -s hscript $_obj_groupDelAll1
+opset -p on $_obj_groupDelAll1
 
 opcf $arg1
 
@@ -2618,11 +2614,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_groupdelete_all1
+    set output = $_obj_groupDelAll1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_groupdelete_all1
+    set input = $_obj_groupDelAll1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -3075,7 +3071,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="remove inline points1" label="Remove Inline Points" icon="SOP_facet">
+  <tool name="delete inline points1" label="Delete Inline Points" icon="SOP_facet">
     <helpURL>operator:Sop/facet</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/facet</contextOpType>
@@ -3189,14 +3185,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_remove_inline_pts1 (Sop/facet)
-set _obj_remove_inline_pts1 = `run("opadd -e -n -v facet remove_inline_pts1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_remove_inline_pts1
-opparm -V 18.5.499 $_obj_remove_inline_pts1 inline ( on ) inlinedist ( 1.0000000000000001e-05 )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_remove_inline_pts1
-opexprlanguage -s hscript $_obj_remove_inline_pts1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_remove_inline_pts1
-opset -p on $_obj_remove_inline_pts1
+# Node $_obj_deleteInlinePoints1 (Sop/facet)
+set _obj_deleteInlinePoints1 = `run("opadd -e -n -v facet deleteInlinePoints1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_deleteInlinePoints1
+opparm -V 18.5.499 $_obj_deleteInlinePoints1 inline ( on ) inlinedist ( 1.0000000000000001e-05 )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_deleteInlinePoints1
+opexprlanguage -s hscript $_obj_deleteInlinePoints1
+opuserdata -n '___Version___' -v '18.5.499' $_obj_deleteInlinePoints1
+opset -p on $_obj_deleteInlinePoints1
 
 opcf $arg1
 
@@ -3206,11 +3202,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_remove_inline_pts1
+    set output = $_obj_deleteInlinePoints1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_remove_inline_pts1
+    set input = $_obj_deleteInlinePoints1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -3814,7 +3810,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="Sort by Attrib" label="Sort by Attrib" icon="SOP_sort">
+  <tool name="sortByAttrib" label="Sort by Attrib" icon="SOP_sort">
     <helpURL>operator:Sop/sort</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/sort</contextOpType>
@@ -3927,14 +3923,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_sort_byattrib1 (Sop/sort)
-set _obj_sort_byattrib1 = `run("opadd -e -n -v sort sort_byattrib1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_sort_byattrib1
-opparm -V 18.5.499 $_obj_sort_byattrib1 ptsort ( attribute ) primsort ( attribute )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_sort_byattrib1
-opexprlanguage -s hscript $_obj_sort_byattrib1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_sort_byattrib1
-opset -p on $_obj_sort_byattrib1
+# Node $_obj_sortByAttrib1 (Sop/sort)
+set _obj_sortByAttrib1 = `run("opadd -e -n -v sort sortByAttrib1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_sortByAttrib1
+opparm -V 18.5.499 $_obj_sortByAttrib1 ptsort ( attribute ) primsort ( attribute )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_sortByAttrib1
+opexprlanguage -s hscript $_obj_sortByAttrib1
+opuserdata -n '___Version___' -v '18.5.499' $_obj_sortByAttrib1
+opset -p on $_obj_sortByAttrib1
 
 opcf $arg1
 
@@ -3944,11 +3940,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_sort_byattrib1
+    set output = $_obj_sortByAttrib1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_sort_byattrib1
+    set input = $_obj_sortByAttrib1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -4725,303 +4721,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="primpoints_fee1" label="FeE Prim Points" icon="SOP_enumerate">
-    <helpURL>operator:Sop/enumeratepromote_fee?version=1.0</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/FeE::enumeratePromote</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'enumeratepromote_fee::1.0' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $_obj_primpoints_fee1 (Sop/enumeratepromote_fee::1.0)
-set _obj_primpoints_fee1 = `run("opadd -e -n -v enumeratepromote_fee::1.0 primpoints_fee1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_primpoints_fee1
-opparm $_obj_primpoints_fee1 attribto ( prim ) attribfrom ( point ) outasarray ( on ) attribname ( primpoints )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_primpoints_fee1
-opexprlanguage -s hscript $_obj_primpoints_fee1
-opuserdata -n '___Version___' -v '' $_obj_primpoints_fee1
-opuserdata -n 'nodeshape' -v 'tilted' $_obj_primpoints_fee1
-opset -p on $_obj_primpoints_fee1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_primpoints_fee1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_primpoints_fee1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
-  <tool name="pointprims_fee1" label="FeE Point Prims" icon="SOP_enumerate">
-    <helpURL>operator:Sop/enumeratepromote_fee?version=1.0</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/enumeratepromote_fee::1.0</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'enumeratepromote_fee::1.0' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $_obj_pointprims_fee1 (Sop/enumeratepromote_fee::1.0)
-set _obj_pointprims_fee1 = `run("opadd -e -n -v enumeratepromote_fee::1.0 pointprims_fee1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_pointprims_fee1
-opparm $_obj_pointprims_fee1 outasarray ( on ) attribname ( pointprims )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_pointprims_fee1
-opexprlanguage -s hscript $_obj_pointprims_fee1
-opuserdata -n '___Version___' -v '' $_obj_pointprims_fee1
-opuserdata -n 'nodeshape' -v 'tilted' $_obj_pointprims_fee1
-opset -p on $_obj_pointprims_fee1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_pointprims_fee1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_pointprims_fee1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
-  <tool name="switchif_isclosed1" label="Switch-If is Closed" icon="SOP_switchif">
+  <tool name="switchif_isClosed1" label="Switch-If is Closed" icon="SOP_switchif">
     <helpURL>operator:Sop/switchif</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/switchif</contextOpType>
@@ -5134,20 +4834,20 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_switchif_isclosed1 (Sop/switchif)
-set _obj_switchif_isclosed1 = `run("opadd -e -n -v switchif switchif_isclosed1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_switchif_isclosed1
-opspareds '    parm {         name    "mergecondition"         baseparm         label   "Use Second Input If"         export  none     }     parm {         name    "testinput"         baseparm         label   "Test Input"         export  none     }     multiparm {         name    "tests"         label    "Number of Tests"         baseparm         default 1          parm {             name    "enable#"             baseparm             label   "enable#"             nolabel             export  none         }         parm {             name    "type#"             baseparm             label   "Test Type"             export  none         }         parm {             name    "expr#"             baseparm             label   "Enable"             export  none         }         parm {             name    "attribtype#"             baseparm             label   "Enable When"             export  none         }         parm {             name    "attribowner#"             baseparm             label   "Class"             export  none         }         parm {             name    "attributes#"             baseparm             label   "Attributes"             export  none         }         parm {             name    "attribvaltype#"             baseparm             label   "Of Type"             export  none         }         parm {             name    "attribfloatcomp#"             baseparm             label   "Is"             export  none         }         parm {             name    "attribstringcomp#"             baseparm             label   "Is"             export  none         }         parm {             name    "attribval#"             baseparm             label   "Value"             export  none         }         parm {             name    "attribsval#"             baseparm             label   "Value"             export  none         }         parm {             name    "counttype#"             baseparm             label   "Enable When"             export  none         }         parm {             name    "countgroup#"             baseparm             label   "In Group"             export  none         }         parm {             name    "countcomp#"             baseparm             label   "Is"             export  none         }         parm {             name    "countval#"             baseparm             label   "Value"             export  none         }     }      parm {         name    "spare_input0"         label   "Spare Input 0"         type    oppath         default { "" }         help    "Refer to this in expressions as -1, such as: npoints(-1)"         parmtag { "opfilter" "!!SOP!!" }         parmtag { "oprelative" "." }     } ' $_obj_switchif_isclosed1
-opparm $_obj_switchif_isclosed1  tests ( 1 )
+# Node $_obj_switchif_isClosed1 (Sop/switchif)
+set _obj_switchif_isClosed1 = `run("opadd -e -n -v switchif switchif_isClosed1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_switchif_isClosed1
+opspareds '    parm {         name    "mergecondition"         baseparm         label   "Use Second Input If"         export  none     }     parm {         name    "testinput"         baseparm         label   "Test Input"         export  none     }     multiparm {         name    "tests"         label    "Number of Tests"         baseparm         default 1          parm {             name    "enable#"             baseparm             label   "enable#"             nolabel             export  none         }         parm {             name    "type#"             baseparm             label   "Test Type"             export  none         }         parm {             name    "expr#"             baseparm             label   "Enable"             export  none         }         parm {             name    "attribtype#"             baseparm             label   "Enable When"             export  none         }         parm {             name    "attribowner#"             baseparm             label   "Class"             export  none         }         parm {             name    "attributes#"             baseparm             label   "Attributes"             export  none         }         parm {             name    "attribvaltype#"             baseparm             label   "Of Type"             export  none         }         parm {             name    "attribfloatcomp#"             baseparm             label   "Is"             export  none         }         parm {             name    "attribstringcomp#"             baseparm             label   "Is"             export  none         }         parm {             name    "attribval#"             baseparm             label   "Value"             export  none         }         parm {             name    "attribsval#"             baseparm             label   "Value"             export  none         }         parm {             name    "counttype#"             baseparm             label   "Enable When"             export  none         }         parm {             name    "countgroup#"             baseparm             label   "In Group"             export  none         }         parm {             name    "countcomp#"             baseparm             label   "Is"             export  none         }         parm {             name    "countval#"             baseparm             label   "Value"             export  none         }     }      parm {         name    "spare_input0"         label   "Spare Input 0"         type    oppath         default { "" }         help    "Refer to this in expressions as -1, such as: npoints(-1)"         parmtag { "opfilter" "!!SOP!!" }         parmtag { "oprelative" "." }     } ' $_obj_switchif_isClosed1
+opparm $_obj_switchif_isClosed1  tests ( 1 )
 chblockbegin
-chadd -t 0 0 $_obj_switchif_isclosed1 expr1
-chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'prim(-1, 0, \'intrinsic:closed\', 0) == 1' $_obj_switchif_isclosed1/expr1
+chadd -t 0 0 $_obj_switchif_isClosed1 expr1
+chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'prim(-1, 0, \'intrinsic:closed\', 0) == 1' $_obj_switchif_isClosed1/expr1
 chblockend
-opparm -V 18.5.532 $_obj_switchif_isclosed1 testinput ( spare ) expr1 ( expr1 ) spare_input0 ( '../`opinput(".", 0)`' )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_switchif_isclosed1
-opexprlanguage -s hscript $_obj_switchif_isclosed1
-opuserdata -n '___Version___' -v '18.5.532' $_obj_switchif_isclosed1
-opset -p on $_obj_switchif_isclosed1
+opparm -V 18.5.532 $_obj_switchif_isClosed1 testinput ( spare ) expr1 ( expr1 ) spare_input0 ( '../`opinput(".", 0)`' )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_switchif_isClosed1
+opexprlanguage -s hscript $_obj_switchif_isClosed1
+opuserdata -n '___Version___' -v '18.5.532' $_obj_switchif_isClosed1
+opset -p on $_obj_switchif_isClosed1
 
 opcf $arg1
 
@@ -5157,11 +4857,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_switchif_isclosed1
+    set output = $_obj_switchif_isClosed1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_switchif_isclosed1
+    set input = $_obj_switchif_isClosed1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -5617,7 +5317,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="xformaxis_centroid1" label="Transform Axis Centroid" icon="SOP_xformaxis">
+  <tool name="xformAxisCentroid1" label="Transform Axis Centroid" icon="SOP_xformaxis">
     <helpURL>operator:Sop/xformaxis</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/xformaxis</contextOpType>
@@ -5729,23 +5429,23 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_transformaxis_centroid1 (Sop/xformaxis)
-set _obj_transformaxis_centroid1 = `run("opadd -e -n -v xformaxis transformaxis_centroid1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_transformaxis_centroid1
-opspareds '    parm {         name    "group"         baseparm         label   "Group"         export  none         bindselector everything "Transform Geometry"             "Select the geometry to transform and press Enter to complete. Middle mouse to select. Left mouse to select and drag."             0 1 0xffffffff 1 grouptype 0     }     parm {         name    "grouptype"         baseparm         label   "Group Type"         export  none     }     parm {         name    "orig"         baseparm         label   "Origin"         export  none     }     parm {         name    "dir"         baseparm         label   "Direction"         export  none     }     parm {         name    "trans"         baseparm         label   "Translate"         export  all     }     parm {         name    "rot"         baseparm         label   "Rotate"         export  all     }     parm {         name    "scale"         baseparm         label   "Scale"         export  all     }     parm {         name    "updatenmls"         baseparm         label   "Recompute Point Normals"         export  none     }     parm {         name    "updateaffectednmls"         baseparm         label   "Recompute Affected Normals"         export  none     }     parm {         name    "vlength"         baseparm         label   "Preserve Normal Length"         export  none     }     parm {         name    "invertxform"         baseparm         label   "Invert Transformation"         export  none     }     parm {         name    "addattrib"         baseparm         label   "Output Attribute"         nolabel         joinnext         export  none     }     parm {         name    "outputattrib"         baseparm         label   "Output Attribute"         joinnext         export  none     }     parm {         name    "outputmerge"         baseparm         label   "Combine"         nolabel         export  none     }     parm {         name    "spare_input0"         label   "Spare Input 0"         type    oppath         default { "" }         help    "Refer to this in expressions as -1, such as: npoints(-1)"         parmtag { "opfilter" "!!SOP!!" }         parmtag { "oprelative" "." }     } ' $_obj_transformaxis_centroid1
+# Node $_obj_xformAxisCentroid1 (Sop/xformaxis)
+set _obj_xformAxisCentroid1 = `run("opadd -e -n -v xformaxis xformAxisCentroid1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_xformAxisCentroid1
+opspareds '    parm {         name    "group"         baseparm         label   "Group"         export  none         bindselector everything "Transform Geometry"             "Select the geometry to transform and press Enter to complete. Middle mouse to select. Left mouse to select and drag."             0 1 0xffffffff 1 grouptype 0     }     parm {         name    "grouptype"         baseparm         label   "Group Type"         export  none     }     parm {         name    "orig"         baseparm         label   "Origin"         export  none     }     parm {         name    "dir"         baseparm         label   "Direction"         export  none     }     parm {         name    "trans"         baseparm         label   "Translate"         export  all     }     parm {         name    "rot"         baseparm         label   "Rotate"         export  all     }     parm {         name    "scale"         baseparm         label   "Scale"         export  all     }     parm {         name    "updatenmls"         baseparm         label   "Recompute Point Normals"         export  none     }     parm {         name    "updateaffectednmls"         baseparm         label   "Recompute Affected Normals"         export  none     }     parm {         name    "vlength"         baseparm         label   "Preserve Normal Length"         export  none     }     parm {         name    "invertxform"         baseparm         label   "Invert Transformation"         export  none     }     parm {         name    "addattrib"         baseparm         label   "Output Attribute"         nolabel         joinnext         export  none     }     parm {         name    "outputattrib"         baseparm         label   "Output Attribute"         joinnext         export  none     }     parm {         name    "outputmerge"         baseparm         label   "Combine"         nolabel         export  none     }     parm {         name    "spare_input0"         label   "Spare Input 0"         type    oppath         default { "" }         help    "Refer to this in expressions as -1, such as: npoints(-1)"         parmtag { "opfilter" "!!SOP!!" }         parmtag { "oprelative" "." }     } ' $_obj_xformAxisCentroid1
 chblockbegin
-chadd -t 0 0 $_obj_transformaxis_centroid1 origx
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'centroid(-1, 0)' $_obj_transformaxis_centroid1/origx
-chadd -t 0 0 $_obj_transformaxis_centroid1 origy
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'centroid(-1, 1)' $_obj_transformaxis_centroid1/origy
-chadd -t 0 0 $_obj_transformaxis_centroid1 origz
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'centroid(-1, 2)' $_obj_transformaxis_centroid1/origz
+chadd -t 0 0 $_obj_xformAxisCentroid1 origx
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'centroid(-1, 0)' $_obj_xformAxisCentroid1/origx
+chadd -t 0 0 $_obj_xformAxisCentroid1 origy
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'centroid(-1, 1)' $_obj_xformAxisCentroid1/origy
+chadd -t 0 0 $_obj_xformAxisCentroid1 origz
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'centroid(-1, 2)' $_obj_xformAxisCentroid1/origz
 chblockend
-opparm -V 18.5.532 $_obj_transformaxis_centroid1 orig ( origx origy origz ) spare_input0 ( '../`opinput(".", 0)`' )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_transformaxis_centroid1
-opexprlanguage -s hscript $_obj_transformaxis_centroid1
-opuserdata -n '___Version___' -v '18.5.532' $_obj_transformaxis_centroid1
-opset -p on $_obj_transformaxis_centroid1
+opparm -V 18.5.532 $_obj_xformAxisCentroid1 orig ( origx origy origz ) spare_input0 ( '../`opinput(".", 0)`' )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_xformAxisCentroid1
+opexprlanguage -s hscript $_obj_xformAxisCentroid1
+opuserdata -n '___Version___' -v '18.5.532' $_obj_xformAxisCentroid1
+opset -p on $_obj_xformAxisCentroid1
 
 opcf $arg1
 
@@ -5755,11 +5455,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_transformaxis_centroid1
+    set output = $_obj_xformAxisCentroid1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_transformaxis_centroid1
+    set input = $_obj_xformAxisCentroid1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -5772,10 +5472,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribrename_ue4material1" label="Attribute Rename Unreal Engine 4 Material" icon="SOP_attribute">
+  <tool name="attribRename_ue4Mat1" label="Attribute Rename Unreal Engine 4 Material" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -5885,14 +5585,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_attribrename_ue4material1 (Sop/attribute)
-set _obj_attribrename_ue4material1 = `run("opadd -e -n -v attribute attribrename_ue4material1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribrename_ue4material1
-opparm $_obj_attribrename_ue4material1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.532 $_obj_attribrename_ue4material1 stdswitcher ( 2 2 2 2 2 ) frompr0 ( shop_materialpath ) topr0 ( unreal_material )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribrename_ue4material1
-opexprlanguage -s hscript $_obj_attribrename_ue4material1
-opset -p on $_obj_attribrename_ue4material1
+# Node $_obj_attribRename_ue4Mat1 (Sop/attribute)
+set _obj_attribRename_ue4Mat1 = `run("opadd -e -n -v attribute attribRename_ue4Mat1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribRename_ue4Mat1
+opparm $_obj_attribRename_ue4Mat1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.532 $_obj_attribRename_ue4Mat1 stdswitcher ( 2 2 2 2 2 ) frompr0 ( shop_materialpath ) topr0 ( unreal_material )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribRename_ue4Mat1
+opexprlanguage -s hscript $_obj_attribRename_ue4Mat1
+opset -p on $_obj_attribRename_ue4Mat1
 
 opcf $arg1
 
@@ -5902,11 +5602,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_attribrename_ue4material1
+    set output = $_obj_attribRename_ue4Mat1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_attribrename_ue4material1
+    set input = $_obj_attribRename_ue4Mat1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -6068,10 +5768,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribrename1" label="Attribute Rename" icon="SOP_attribute">
+  <tool name="attribRename1" label="Attribute Rename" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -6181,15 +5881,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_attribrename1 (Sop/attribute)
-set _obj_attribrename1 = `run("opadd -e -n -v attribute attribrename1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribrename1
-opparm $_obj_attribrename1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.532 $_obj_attribrename1 stdswitcher ( 2 2 2 2 2 )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribrename1
-opexprlanguage -s hscript $_obj_attribrename1
-opuserdata -n '___Version___' -v '18.5.532' $_obj_attribrename1
-opset -p on $_obj_attribrename1
+# Node $_obj_attribRename1 (Sop/attribute)
+set _obj_attribRename1 = `run("opadd -e -n -v attribute attribRename1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribRename1
+opparm $_obj_attribRename1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.532 $_obj_attribRename1 stdswitcher ( 2 2 2 2 2 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribRename1
+opexprlanguage -s hscript $_obj_attribRename1
+opuserdata -n '___Version___' -v '18.5.532' $_obj_attribRename1
+opset -p on $_obj_attribRename1
 
 opcf $arg1
 
@@ -6199,11 +5899,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_attribrename1
+    set output = $_obj_attribRename1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_attribrename1
+    set input = $_obj_attribRename1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -6546,7 +6246,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="timefreeze1" label="Time Freeze" icon="SOP_timeshift">
+  <tool name="timeFreeze1" label="Time Freeze" icon="SOP_timeshift">
     <helpURL>operator:Sop/timeshift</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/timeshift</contextOpType>
@@ -6659,25 +6359,25 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_timefreeze1 (Sop/timeshift)
-set _obj_timefreeze1 = `run("opadd -e -n -v timeshift timefreeze1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_timefreeze1
+# Node $_obj_timeFreeze1 (Sop/timeshift)
+set _obj_timeFreeze1 = `run("opadd -e -n -v timeshift timeFreeze1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_timeFreeze1
 chblockbegin
-chadd -t 0 0 $_obj_timefreeze1 time
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$T' $_obj_timefreeze1/time
-chadd -t 0 0 $_obj_timefreeze1 frange1
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$FSTART' $_obj_timefreeze1/frange1
-chadd -t 0 0 $_obj_timefreeze1 frange2
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$FEND' $_obj_timefreeze1/frange2
-chadd -t 0 0 $_obj_timefreeze1 trange1
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$TSTART' $_obj_timefreeze1/trange1
-chadd -t 0 0 $_obj_timefreeze1 trange2
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$TEND' $_obj_timefreeze1/trange2
+chadd -t 0 0 $_obj_timeFreeze1 time
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$T' $_obj_timeFreeze1/time
+chadd -t 0 0 $_obj_timeFreeze1 frange1
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$FSTART' $_obj_timeFreeze1/frange1
+chadd -t 0 0 $_obj_timeFreeze1 frange2
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$FEND' $_obj_timeFreeze1/frange2
+chadd -t 0 0 $_obj_timeFreeze1 trange1
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$TSTART' $_obj_timeFreeze1/trange1
+chadd -t 0 0 $_obj_timeFreeze1 trange2
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F '$TEND' $_obj_timeFreeze1/trange2
 chblockend
-opparm -V 18.5.532 $_obj_timefreeze1 frame ( 1 )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_timefreeze1
-opexprlanguage -s hscript $_obj_timefreeze1
-opset -p on $_obj_timefreeze1
+opparm -V 18.5.532 $_obj_timeFreeze1 frame ( 1 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_timeFreeze1
+opexprlanguage -s hscript $_obj_timeFreeze1
+opset -p on $_obj_timeFreeze1
 
 opcf $arg1
 
@@ -6687,11 +6387,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_timefreeze1
+    set output = $_obj_timeFreeze1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_timefreeze1
+    set input = $_obj_timeFreeze1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -7003,7 +6703,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
   <tool name="attribute1" label="Attribute" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -7438,10 +7138,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribcreate_RBDFoundOverlap1" label="Attribute Create RBD Found Overlap" icon="SOP_attribcreate-2.0">
-    <helpURL>operator:Sop/attribcreate?version=2.0</helpURL>
+  <tool name="attribCreate_RBDFoundOverlap1" label="Attribute Create RBD Found Overlap" icon="SOP_attribCreate-2.0">
+    <helpURL>operator:Sop/attribCreate?version=2.0</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -7519,7 +7219,7 @@ h_extra_args += 'set argc = "' + str(num_args) + '"\n'
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
-if 'attribcreate::2.0' not in child_type:
+if 'attribCreate::2.0' not in child_type:
    hou.ui.displayMessage(
            'Cannot create node: incompatible pane network type')
    sys.exit(0)
@@ -7551,14 +7251,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_attribcreate_RBDFoundOverlap1 (Sop/attribcreate::2.0)
-set _obj_attribcreate_RBDFoundOverlap1 = `run("opadd -e -n -v attribcreate::2.0 attribcreate_RBDFoundOverlap1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribcreate_RBDFoundOverlap1
-opparm $_obj_attribcreate_RBDFoundOverlap1  numattr ( 1 )
-opparm -V 18.5.532 $_obj_attribcreate_RBDFoundOverlap1 name1 ( found_overlap ) type1 ( int ) value1v ( 1 0 0 0 )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribcreate_RBDFoundOverlap1
-opexprlanguage -s hscript $_obj_attribcreate_RBDFoundOverlap1
-opset -p on $_obj_attribcreate_RBDFoundOverlap1
+# Node $_obj_attribCreate_RBDFoundOverlap1 (Sop/attribCreate::2.0)
+set _obj_attribCreate_RBDFoundOverlap1 = `run("opadd -e -n -v attribCreate::2.0 attribCreate_RBDFoundOverlap1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribCreate_RBDFoundOverlap1
+opparm $_obj_attribCreate_RBDFoundOverlap1  numattr ( 1 )
+opparm -V 18.5.532 $_obj_attribCreate_RBDFoundOverlap1 name1 ( found_overlap ) type1 ( int ) value1v ( 1 0 0 0 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribCreate_RBDFoundOverlap1
+opexprlanguage -s hscript $_obj_attribCreate_RBDFoundOverlap1
+opset -p on $_obj_attribCreate_RBDFoundOverlap1
 
 opcf $arg1
 
@@ -7568,11 +7268,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_attribcreate_RBDFoundOverlap1
+    set output = $_obj_attribCreate_RBDFoundOverlap1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_attribcreate_RBDFoundOverlap1
+    set input = $_obj_attribCreate_RBDFoundOverlap1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -7585,7 +7285,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="pointnebs1" label="Point Neighbours" icon="SOP_attribwrangle">
+  <tool name="pointNebs1" label="Point Neighbours" icon="SOP_attribwrangle">
     <helpURL>operator:Sop/attribwrangle</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribwrangle</contextOpType>
@@ -7698,15 +7398,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_pointnebs1 (Sop/attribwrangle)
-set _obj_pointnebs1 = `run("opadd -e -n -v attribwrangle pointnebs1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_pointnebs1
-opparm $_obj_pointnebs1  bindings ( 1 ) groupbindings ( 0 )
-opparm $_obj_pointnebs1 snippet ( '\ni[]@nebs = neighbours(0, @ptnum);\n' ) bindings ( 1 ) vex_matchattrib ( "" ) vex_inplace ( on ) bindname1 ( nebs ) bindparm1 ( nebs )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_pointnebs1
-opexprlanguage -s hscript $_obj_pointnebs1
-opuserdata -n '___Version___' -v '' $_obj_pointnebs1
-opset -p on $_obj_pointnebs1
+# Node $_obj_pointNebs1 (Sop/attribwrangle)
+set _obj_pointNebs1 = `run("opadd -e -n -v attribwrangle pointNebs1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_pointNebs1
+opparm $_obj_pointNebs1  bindings ( 1 ) groupbindings ( 0 )
+opparm $_obj_pointNebs1 snippet ( '\ni[]@nebs = neighbours(0, @ptnum);\n' ) bindings ( 1 ) vex_matchattrib ( "" ) vex_inplace ( on ) bindname1 ( nebs ) bindparm1 ( nebs )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_pointNebs1
+opexprlanguage -s hscript $_obj_pointNebs1
+opuserdata -n '___Version___' -v '' $_obj_pointNebs1
+opset -p on $_obj_pointNebs1
 
 opcf $arg1
 
@@ -7716,11 +7416,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_pointnebs1
+    set output = $_obj_pointNebs1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_pointnebs1
+    set input = $_obj_pointNebs1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -7992,7 +7692,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribswap_uvP1" label="Attribute Swap UV Position" icon="SOP_attribswap">
+  <tool name="attribSwap_uvP1" label="Attribute Swap UV Position" icon="SOP_attribswap">
     <helpURL>operator:Sop/attribswap</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribswap</contextOpType>
@@ -8105,15 +7805,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_attribswap_uvP1 (Sop/attribswap)
-set _obj_attribswap_uvP1 = `run("opadd -e -n -v attribswap attribswap_uvP1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribswap_uvP1
-opparm $_obj_attribswap_uvP1  numswaps ( 1 )
-opparm -V 18.5.532 $_obj_attribswap_uvP1 srcattribs1 ( P ) dstattribs1 ( uv )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribswap_uvP1
-opexprlanguage -s hscript $_obj_attribswap_uvP1
-opuserdata -n '___Version___' -v '18.5.532' $_obj_attribswap_uvP1
-opset -p on $_obj_attribswap_uvP1
+# Node $_obj_attribSwap_uvP1 (Sop/attribswap)
+set _obj_attribSwap_uvP1 = `run("opadd -e -n -v attribswap attribSwap_uvP1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribSwap_uvP1
+opparm $_obj_attribSwap_uvP1  numswaps ( 1 )
+opparm -V 18.5.532 $_obj_attribSwap_uvP1 srcattribs1 ( P ) dstattribs1 ( uv )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribSwap_uvP1
+opexprlanguage -s hscript $_obj_attribSwap_uvP1
+opuserdata -n '___Version___' -v '18.5.532' $_obj_attribSwap_uvP1
+opset -p on $_obj_attribSwap_uvP1
 
 opcf $arg1
 
@@ -8123,11 +7823,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_attribswap_uvP1
+    set output = $_obj_attribSwap_uvP1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_attribswap_uvP1
+    set input = $_obj_attribSwap_uvP1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -8875,7 +8575,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribdelete_fbx1" label="Attribute Delete FBX" icon="SOP_attribute">
+  <tool name="attribDel_fbx1" label="AttribDel FBX" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -8988,15 +8688,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribdelete_fbx1 (Sop/attribute)
-set attribdelete_fbx1 = `run("opadd -e -n -v attribute attribdelete_fbx1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribdelete_fbx1
-opparm $attribdelete_fbx1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.532 $attribdelete_fbx1 ptdel ( 'fbx_rotation fbx_scale fbx_translation' ) primdel ( 'currentUVSet name shop_materialpath' ) dtldel ( varmap )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribdelete_fbx1
-opexprlanguage -s hscript $attribdelete_fbx1
-opuserdata -n '___Version___' -v '18.5.532' $attribdelete_fbx1
-opset -p on $attribdelete_fbx1
+# Node $attribDel_fbx1 (Sop/attribute)
+set attribDel_fbx1 = `run("opadd -e -n -v attribute attribDel_fbx1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribDel_fbx1
+opparm $attribDel_fbx1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.532 $attribDel_fbx1 ptdel ( 'fbx_rotation fbx_scale fbx_translation' ) primdel ( 'currentUVSet name shop_materialpath' ) dtldel ( varmap )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribDel_fbx1
+opexprlanguage -s hscript $attribDel_fbx1
+opuserdata -n '___Version___' -v '18.5.532' $attribDel_fbx1
+opset -p on $attribDel_fbx1
 
 opcf $arg1
 
@@ -9006,11 +8706,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribdelete_fbx1
+    set output = $attribDel_fbx1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribdelete_fbx1
+    set input = $attribDel_fbx1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -9023,7 +8723,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribmove_uvP1" label="Attribute Move UV Position" icon="SOP_attribswap">
+  <tool name="attribMove_uvP1" label="AttribMove UV Position" icon="SOP_attribswap">
     <helpURL>operator:Sop/attribswap</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribswap</contextOpType>
@@ -9136,15 +8836,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribmove_uvP1 (Sop/attribswap)
-set attribmove_uvP1 = `run("opadd -e -n -v attribswap attribmove_uvP1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribmove_uvP1
-opparm $attribmove_uvP1  numswaps ( 1 )
-opparm -V 18.5.532 $attribmove_uvP1 method1 ( move ) srcattribs1 ( uv ) dstattribs1 ( P )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribmove_uvP1
-opexprlanguage -s hscript $attribmove_uvP1
-opuserdata -n '___Version___' -v '18.5.532' $attribmove_uvP1
-opset -p on $attribmove_uvP1
+# Node $attribMove_uvP1 (Sop/attribswap)
+set attribMove_uvP1 = `run("opadd -e -n -v attribswap attribMove_uvP1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribMove_uvP1
+opparm $attribMove_uvP1  numswaps ( 1 )
+opparm -V 18.5.532 $attribMove_uvP1 method1 ( move ) srcattribs1 ( uv ) dstattribs1 ( P )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribMove_uvP1
+opexprlanguage -s hscript $attribMove_uvP1
+opuserdata -n '___Version___' -v '18.5.532' $attribMove_uvP1
+opset -p on $attribMove_uvP1
 
 opcf $arg1
 
@@ -9154,11 +8854,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribmove_uvP1
+    set output = $attribMove_uvP1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribmove_uvP1
+    set input = $attribMove_uvP1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -9171,10 +8871,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribcreateMaterial" label="Attribute Create Material" icon="SOP_attribcreate-2.0">
-    <helpURL>operator:Sop/attribcreate?version=2.0</helpURL>
+  <tool name="attribCreateMaterial" label="Attribute Create Material" icon="SOP_attribCreate-2.0">
+    <helpURL>operator:Sop/attribCreate?version=2.0</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -9252,7 +8952,7 @@ h_extra_args += 'set argc = "' + str(num_args) + '"\n'
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
-if 'attribcreate::2.0' not in child_type:
+if 'attribCreate::2.0' not in child_type:
    hou.ui.displayMessage(
            'Cannot create node: incompatible pane network type')
    sys.exit(0)
@@ -9284,8 +8984,8 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_attribMaterial1 (Sop/attribcreate::2.0)
-set _obj_attribMaterial1 = `run("opadd -e -n -v attribcreate::2.0 attribMaterial1")`
+# Node $_obj_attribMaterial1 (Sop/attribCreate::2.0)
+set _obj_attribMaterial1 = `run("opadd -e -n -v attribCreate::2.0 attribMaterial1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribMaterial1
 opparm $_obj_attribMaterial1  numattr ( 1 )
 opparm -V 18.5.532 $_obj_attribMaterial1 name1 ( shop_materialpath ) class1 ( primitive ) type1 ( index ) precision1 ( 32 )
@@ -9319,7 +9019,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribdelete_uvautoseam1" label="Attribute Delete UV Auto Seam" icon="SOP_attribute">
+  <tool name="attribDel_uvAutoSeam1" label="AttribDel UV Auto Seam" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -9432,18 +9132,18 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribdelete_uvautoseam1 (Sop/attribute)
-set attribdelete_uvautoseam1 = `run("opadd -e -n -v attribute attribdelete_uvautoseam1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribdelete_uvautoseam1
-opparm $attribdelete_uvautoseam1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.532 $attribdelete_uvautoseam1 stdswitcher ( 2 2 2 2 2 ) ptdel ( curvature ) primdel ( __island_num__ )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribdelete_uvautoseam1
-opexprlanguage -s hscript $attribdelete_uvautoseam1
-opuserdata -n '___Version___' -v '18.5.532' $attribdelete_uvautoseam1
-opset -p on $attribdelete_uvautoseam1
+# Node $attribDel_uvAutoSeam1 (Sop/attribute)
+set attribDel_uvAutoSeam1 = `run("opadd -e -n -v attribute attribDel_uvAutoSeam1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribDel_uvAutoSeam1
+opparm $attribDel_uvAutoSeam1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.532 $attribDel_uvAutoSeam1 stdswitcher ( 2 2 2 2 2 ) ptdel ( curvature ) primdel ( __island_num__ )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribDel_uvAutoSeam1
+opexprlanguage -s hscript $attribDel_uvAutoSeam1
+opuserdata -n '___Version___' -v '18.5.532' $attribDel_uvAutoSeam1
+opset -p on $attribDel_uvAutoSeam1
 
 opcf $arg1
-opwire -n $uvautoseam1 -0 $attribdelete_uvautoseam1
+opwire -n $uvautoseam1 -0 $attribDel_uvAutoSeam1
 
 set oidx = 0
 if ($argc >= 9 && "$arg9" != "") then
@@ -9451,11 +9151,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribdelete_uvautoseam1
+    set output = $attribDel_uvAutoSeam1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribdelete_uvautoseam1
+    set input = $attribDel_uvAutoSeam1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -9615,7 +9315,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribcopy_allDetail1" label="Attrib Copy All Detail" icon="SOP_attribcopy">
+  <tool name="attribCopy_allDetail1" label="Attrib Copy All Detail" icon="SOP_attribcopy">
     <helpURL>operator:Sop/attribcopy</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribcopy</contextOpType>
@@ -9728,14 +9428,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribcopy_allDetail1 (Sop/attribcopy)
-set attribcopy_allDetail1 = `run("opadd -e -n -v attribcopy attribcopy_allDetail1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribcopy_allDetail1
-opparm -V 18.5.532 $attribcopy_allDetail1 attribname ( * ) copyp ( off ) class ( detail )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribcopy_allDetail1
-opexprlanguage -s hscript $attribcopy_allDetail1
-opuserdata -n '___Version___' -v '18.5.532' $attribcopy_allDetail1
-opset -p on $attribcopy_allDetail1
+# Node $attribCopy_allDetail1 (Sop/attribcopy)
+set attribCopy_allDetail1 = `run("opadd -e -n -v attribcopy attribCopy_allDetail1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribCopy_allDetail1
+opparm -V 18.5.532 $attribCopy_allDetail1 attribname ( * ) copyp ( off ) class ( detail )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribCopy_allDetail1
+opexprlanguage -s hscript $attribCopy_allDetail1
+opuserdata -n '___Version___' -v '18.5.532' $attribCopy_allDetail1
+opset -p on $attribCopy_allDetail1
 
 opcf $arg1
 
@@ -9745,11 +9445,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribcopy_allDetail1
+    set output = $attribCopy_allDetail1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribcopy_allDetail1
+    set input = $attribCopy_allDetail1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -9762,7 +9462,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="blastbyEnum1" label="Blast by Enumerate" icon="SOP_blast">
+  <tool name="deleteByEnum1" label="Delete by Enumerate" icon="SOP_blast">
     <toolMenuContext name="network">
       <contextOpType>Sop/blast</contextOpType>
     </toolMenuContext>
@@ -9874,15 +9574,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $blastbyEnum1 (Sop/blast)
-set blastbyEnum1 = `run("opadd -e -n -v blast blastbyEnum1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $blastbyEnum1
-opspareds '    parm {         name    "group"         baseparm         label   "Group"         export  none         bindselector everything Delete             "Select the geometry to delete and press Enter to complete."             0 1 0xffffffff 0 grouptype 0     }     parm {         name    "grouptype"         baseparm         label   "Group Type"         export  none     }     parm {         name    "computenorms"         baseparm         label   "Recompute Normals"         export  none     }     parm {         name    "negate"         baseparm         label   "Delete Non Selected"         export  all     }     parm {         name    "fillhole"         baseparm         label   "Fill Simple Holes"         export  all     }     parm {         name    "removegrp"         baseparm         label   "Delete Unused Groups"         export  none     }     parm {         name    "spare_input0"         label   "Spare Input 0"         type    oppath         default { "" }         help    "Refer to this in expressions as -1, such as: npoint(-1)"         parmtag { "opfilter" "!!SOP!!" }         parmtag { "oprelative" "." }     } ' $blastbyEnum1
-opparm -V 18.5.532 $blastbyEnum1 group ( '@`chs("../foreach_end1/attrib")`==`detail(-1, "iteration", 0)`' ) grouptype ( prims ) spare_input0 ( ../foreach_begin1_metadata1 )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $blastbyEnum1
-opexprlanguage -s hscript $blastbyEnum1
-opuserdata -n '___Version___' -v '18.5.532' $blastbyEnum1
-opset -p on $blastbyEnum1
+# Node $deleteByEnum1 (Sop/blast)
+set deleteByEnum1 = `run("opadd -e -n -v blast deleteByEnum1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $deleteByEnum1
+opspareds '    parm {         name    "group"         baseparm         label   "Group"         export  none         bindselector everything Delete             "Select the geometry to delete and press Enter to complete."             0 1 0xffffffff 0 grouptype 0     }     parm {         name    "grouptype"         baseparm         label   "Group Type"         export  none     }     parm {         name    "computenorms"         baseparm         label   "Recompute Normals"         export  none     }     parm {         name    "negate"         baseparm         label   "Delete Non Selected"         export  all     }     parm {         name    "fillhole"         baseparm         label   "Fill Simple Holes"         export  all     }     parm {         name    "removegrp"         baseparm         label   "Delete Unused Groups"         export  none     }     parm {         name    "spare_input0"         label   "Spare Input 0"         type    oppath         default { "" }         help    "Refer to this in expressions as -1, such as: npoint(-1)"         parmtag { "opfilter" "!!SOP!!" }         parmtag { "oprelative" "." }     } ' $deleteByEnum1
+opparm -V 18.5.532 $deleteByEnum1 group ( '@`chs("../foreach_end1/attrib")`==`detail(-1, "iteration", 0)`' ) grouptype ( prims ) spare_input0 ( ../foreach_begin1_metadata1 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $deleteByEnum1
+opexprlanguage -s hscript $deleteByEnum1
+opuserdata -n '___Version___' -v '18.5.532' $deleteByEnum1
+opset -p on $deleteByEnum1
 
 opcf $arg1
 
@@ -9892,11 +9592,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $blastbyEnum1
+    set output = $deleteByEnum1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $blastbyEnum1
+    set input = $deleteByEnum1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -9909,7 +9609,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribrest1" label="Attribute Rest" icon="SOP_attribcopy">
+  <tool name="attribRest1" label="Attribute Rest" icon="SOP_attribcopy">
     <helpURL>operator:Sop/attribcopy</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribcopy</contextOpType>
@@ -10660,154 +10360,6 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="vertexprim_fee1" label="FeE Vertex Prim" icon="SOP_enumerate">
-    <helpURL>operator:Sop/enumeratepromote_fee?version=1.0</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/enumeratepromote_fee::1.0</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'enumeratepromote_fee::1.0' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $vertexprim_fee1 (Sop/enumeratepromote_fee::1.0)
-set vertexprim_fee1 = `run("opadd -e -n -v enumeratepromote_fee::1.0 vertexprim_fee1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $vertexprim_fee1
-opparm $vertexprim_fee1 attribto ( vertex ) attribname ( vertexprim )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $vertexprim_fee1
-opexprlanguage -s hscript $vertexprim_fee1
-opuserdata -n '___Version___' -v '' $vertexprim_fee1
-opuserdata -n 'nodeshape' -v 'tilted' $vertexprim_fee1
-opset -p on $vertexprim_fee1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $vertexprim_fee1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $vertexprim_fee1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
   <tool name="setPz1" label="setPz1" icon="SOP_attribwrangle">
     <helpURL>operator:Sop/attribwrangle</helpURL>
     <toolMenuContext name="network">
@@ -10956,7 +10508,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="removeUnusedPoints1" label="Remove Unused Points" icon="SOP_add">
+  <tool name="deleteUnusedPoints1" label="Delete Unused Points" icon="SOP_add">
     <helpURL>operator:Sop/add</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/add</contextOpType>
@@ -11069,14 +10621,14 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $removeUnusedPts1 (Sop/add)
-set removeUnusedPts1 = `run("opadd -e -n -v add removeUnusedPts1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $removeUnusedPts1
-opparm $removeUnusedPts1  points ( 1 ) prims ( 1 )
-opparm -V 18.5.532 $removeUnusedPts1 stdswitcher ( 1 1 1 ) remove ( on )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $removeUnusedPts1
-opexprlanguage -s hscript $removeUnusedPts1
-opset -p on $removeUnusedPts1
+# Node $deleteUnusedPts1 (Sop/add)
+set deleteUnusedPts1 = `run("opadd -e -n -v add deleteUnusedPts1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $deleteUnusedPts1
+opparm $deleteUnusedPts1  points ( 1 ) prims ( 1 )
+opparm -V 18.5.532 $deleteUnusedPts1 stdswitcher ( 1 1 1 ) remove ( on )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $deleteUnusedPts1
+opexprlanguage -s hscript $deleteUnusedPts1
+opset -p on $deleteUnusedPts1
 
 opcf $arg1
 
@@ -11086,11 +10638,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $removeUnusedPts1
+    set output = $deleteUnusedPts1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $removeUnusedPts1
+    set input = $deleteUnusedPts1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -11252,10 +10804,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribcreate::2.0" label="Attribute Create Color Cd" icon="SOP_attribcreate-2.0">
-    <helpURL>operator:Sop/attribcreate?version=2.0</helpURL>
+  <tool name="attribCreate::2.0" label="Attribute Create Color Cd" icon="SOP_attribCreate-2.0">
+    <helpURL>operator:Sop/attribCreate?version=2.0</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -11333,7 +10885,7 @@ h_extra_args += 'set argc = "' + str(num_args) + '"\n'
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
-if 'attribcreate::2.0' not in child_type:
+if 'attribCreate::2.0' not in child_type:
    hou.ui.displayMessage(
            'Cannot create node: incompatible pane network type')
    sys.exit(0)
@@ -11365,8 +10917,8 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribCd1 (Sop/attribcreate::2.0)
-set attribCd1 = `run("opadd -e -n -v attribcreate::2.0 attribCd1")`
+# Node $attribCd1 (Sop/attribCreate::2.0)
+set attribCd1 = `run("opadd -e -n -v attribCreate::2.0 attribCd1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribCd1
 opparm $attribCd1  numattr ( 1 )
 opparm -V 18.5.532 $attribCd1 name1 ( Cd ) typeinfo1 ( color ) size1 ( 3 ) default1v ( 1 1 1 0 )
@@ -11660,19 +11212,19 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribrest1 (Sop/attribswap)
-set attribrest1 = `run("opadd -e -n -v attribswap attribrest1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribrest1
-opparm $attribrest1  numswaps ( 1 )
+# Node $attribRest1 (Sop/attribswap)
+set attribRest1 = `run("opadd -e -n -v attribswap attribRest1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribRest1
+opparm $attribRest1  numswaps ( 1 )
 chblockbegin
-chadd -t 0 0 $attribrest1 enable1
-chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribrest1/enable1
+chadd -t 0 0 $attribRest1 enable1
+chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribRest1/enable1
 chblockend
-opparm -V 18.5.532 $attribrest1 enable1 ( enable1 ) dstattribs1 ( 'rest_`chs("srcattribs1")`' )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribrest1
-opexprlanguage -s hscript $attribrest1
-opuserdata -n '___Version___' -v '18.5.532' $attribrest1
-opset -p on $attribrest1
+opparm -V 18.5.532 $attribRest1 enable1 ( enable1 ) dstattribs1 ( 'rest_`chs("srcattribs1")`' )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribRest1
+opexprlanguage -s hscript $attribRest1
+opuserdata -n '___Version___' -v '18.5.532' $attribRest1
+opset -p on $attribRest1
 
 opcf $arg1
 
@@ -11682,11 +11234,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribrest1
+    set output = $attribRest1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribrest1
+    set input = $attribRest1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -11852,7 +11404,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribdelete_pop1" label="Attribute Delete POP" icon="SOP_attribute">
+  <tool name="attribDel_pop1" label="AttribDel POP" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -11965,18 +11517,18 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribdelete_pop1 (Sop/attribute)
-set attribdelete_pop1 = `run("opadd -e -n -v attribute attribdelete_pop1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribdelete_pop1
-opparm $attribdelete_pop1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.532 $attribdelete_pop1 ptdel ( 'deactivation_time dead force has_pprevious pprevious stopped' )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribdelete_pop1
-opexprlanguage -s hscript $attribdelete_pop1
-opuserdata -n '___Version___' -v '18.5.532' $attribdelete_pop1
-opset -p on $attribdelete_pop1
+# Node $attribDel_pop1 (Sop/attribute)
+set attribDel_pop1 = `run("opadd -e -n -v attribute attribDel_pop1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribDel_pop1
+opparm $attribDel_pop1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.532 $attribDel_pop1 ptdel ( 'deactivation_time dead force has_pprevious pprevious stopped' )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribDel_pop1
+opexprlanguage -s hscript $attribDel_pop1
+opuserdata -n '___Version___' -v '18.5.532' $attribDel_pop1
+opset -p on $attribDel_pop1
 
 opcf $arg1
-opwire -n $dopnet1 -0 $attribdelete_pop1
+opwire -n $dopnet1 -0 $attribDel_pop1
 
 set oidx = 0
 if ($argc >= 9 && "$arg9" != "") then
@@ -11984,11 +11536,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribdelete_pop1
+    set output = $attribDel_pop1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribdelete_pop1
+    set input = $attribDel_pop1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -12748,7 +12300,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribmove_restP" label="Attrib Move Rest P" icon="SOP_attribswap">
+  <tool name="attribMove_restP" label="Attrib Move Rest P" icon="SOP_attribswap">
     <helpURL>operator:Sop/attribswap</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribswap</contextOpType>
@@ -12861,19 +12413,19 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribmove_restP1 (Sop/attribswap)
-set attribmove_restP1 = `run("opadd -e -n -v attribswap attribmove_restP1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribmove_restP1
-opparm $attribmove_restP1  numswaps ( 1 )
+# Node $attribMove_restP1 (Sop/attribswap)
+set attribMove_restP1 = `run("opadd -e -n -v attribswap attribMove_restP1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribMove_restP1
+opparm $attribMove_restP1  numswaps ( 1 )
 chblockbegin
-chadd -t 0 0 $attribmove_restP1 enable1
-chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribmove_restP1/enable1
+chadd -t 0 0 $attribMove_restP1 enable1
+chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribMove_restP1/enable1
 chblockend
-opparm -V 18.5.532 $attribmove_restP1 enable1 ( enable1 ) method1 ( move ) srcattribs1 ( rest ) dstattribs1 ( P )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribmove_restP1
-opexprlanguage -s hscript $attribmove_restP1
-opuserdata -n '___Version___' -v '18.5.532' $attribmove_restP1
-opset -p on $attribmove_restP1
+opparm -V 18.5.532 $attribMove_restP1 enable1 ( enable1 ) method1 ( move ) srcattribs1 ( rest ) dstattribs1 ( P )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribMove_restP1
+opexprlanguage -s hscript $attribMove_restP1
+opuserdata -n '___Version___' -v '18.5.532' $attribMove_restP1
+opset -p on $attribMove_restP1
 
 opcf $arg1
 
@@ -12883,11 +12435,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribmove_restP1
+    set output = $attribMove_restP1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribmove_restP1
+    set input = $attribMove_restP1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -12900,7 +12452,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="blastSkipNElem" label="Blast Skip N Elem" icon="SOP_blast">
+  <tool name="deleteSkipNElem" label="Blast Skip N Elem" icon="SOP_blast">
     <helpURL>operator:Sop/blast</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/blast</contextOpType>
@@ -13013,22 +12565,22 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $blastSkipNElem0 (Sop/blast)
-set blastSkipNElem0 = `run("opadd -e -n -v blast blastSkipNElem0")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $blastSkipNElem0
-opspareds '    parm {         name    "group"         baseparm         label   "Group"         export  none         bindselector everything Delete             "Select the geometry to delete and press Enter to complete."             0 1 0xffffffff 0 grouptype 0     }     parm {         name    "grouptype"         baseparm         label   "Group Type"         export  none     }     parm {         name    "computenorms"         baseparm         label   "Recompute Normals"         export  none     }     parm {         name    "negate"         baseparm         label   "Delete Non Selected"         export  all     }     parm {         name    "fillhole"         baseparm         label   "Fill Simple Holes"         export  all     }     parm {         name    "removegrp"         baseparm         label   "Delete Unused Groups"         export  none     }     parm {         name    "primnum"         label   "Primnum"         type    integer         default { "0" }         range   { 0! 10 }         parmtag { "script_callback_language" "python" }     }     parm {         name    "skipNPrim"         label   "Skip N Prim"         type    integer         default { "2" }         range   { 2! 10 }         parmtag { "script_callback_language" "python" }     } ' $blastSkipNElem0
+# Node $deleteSkipNElem0 (Sop/blast)
+set deleteSkipNElem0 = `run("opadd -e -n -v blast deleteSkipNElem0")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $deleteSkipNElem0
+opspareds '    parm {         name    "group"         baseparm         label   "Group"         export  none         bindselector everything Delete             "Select the geometry to delete and press Enter to complete."             0 1 0xffffffff 0 grouptype 0     }     parm {         name    "grouptype"         baseparm         label   "Group Type"         export  none     }     parm {         name    "computenorms"         baseparm         label   "Recompute Normals"         export  none     }     parm {         name    "negate"         baseparm         label   "Delete Non Selected"         export  all     }     parm {         name    "fillhole"         baseparm         label   "Fill Simple Holes"         export  all     }     parm {         name    "removegrp"         baseparm         label   "Delete Unused Groups"         export  none     }     parm {         name    "primnum"         label   "Primnum"         type    integer         default { "0" }         range   { 0! 10 }         parmtag { "script_callback_language" "python" }     }     parm {         name    "skipNPrim"         label   "Skip N Prim"         type    integer         default { "2" }         range   { 2! 10 }         parmtag { "script_callback_language" "python" }     } ' $deleteSkipNElem0
 chblockbegin
-chadd -t 3.625 3.625 $blastSkipNElem0 group
-chkey -t 3.625 -v 0 -m 0 -a 0.33333333333333331 -A 0.33333333333333331 -T a  -o mM  -F 'chs("primnum") + \'-9999999999999:\' + chs("skipNPrim")' $blastSkipNElem0/group
-chadd -t 0 0 $blastSkipNElem0 primnum
-chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'opdigits($OS)' $blastSkipNElem0/primnum
+chadd -t 3.625 3.625 $deleteSkipNElem0 group
+chkey -t 3.625 -v 0 -m 0 -a 0.33333333333333331 -A 0.33333333333333331 -T a  -o mM  -F 'chs("primnum") + \'-9999999999999:\' + chs("skipNPrim")' $deleteSkipNElem0/group
+chadd -t 0 0 $deleteSkipNElem0 primnum
+chkey -t 0 -v 0 -m 0 -a 0 -A 0 -T a  -F 'opdigits($OS)' $deleteSkipNElem0/primnum
 chblockend
-opparm -V 18.5.532 $blastSkipNElem0 group ( group ) grouptype ( prims ) negate ( on ) primnum ( primnum )
-chautoscope $blastSkipNElem0 +group
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $blastSkipNElem0
-opexprlanguage -s hscript $blastSkipNElem0
-opuserdata -n '___Version___' -v '18.5.532' $blastSkipNElem0
-opset -p on $blastSkipNElem0
+opparm -V 18.5.532 $deleteSkipNElem0 group ( group ) grouptype ( prims ) negate ( on ) primnum ( primnum )
+chautoscope $deleteSkipNElem0 +group
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $deleteSkipNElem0
+opexprlanguage -s hscript $deleteSkipNElem0
+opuserdata -n '___Version___' -v '18.5.532' $deleteSkipNElem0
+opset -p on $deleteSkipNElem0
 
 opcf $arg1
 
@@ -13038,11 +12590,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $blastSkipNElem0
+    set output = $deleteSkipNElem0
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $blastSkipNElem0
+    set input = $deleteSkipNElem0
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -13499,153 +13051,6 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="removeSharedEdges1" label="Remove Shared Edges" icon="SOP_divide">
-    <helpURL>operator:Sop/divide</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/divide</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'divide' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $_obj_removeSharedEdges1 (Sop/divide)
-set _obj_removeSharedEdges1 = `run("opadd -e -n -v divide removeSharedEdges1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_removeSharedEdges1
-opparm -V 18.5.499 $_obj_removeSharedEdges1 convex ( off ) removesh ( on )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_removeSharedEdges1
-opexprlanguage -s hscript $_obj_removeSharedEdges1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_removeSharedEdges1
-opset -p on $_obj_removeSharedEdges1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_removeSharedEdges1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_removeSharedEdges1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
   <tool name="splitPacked1" label="Split Packed" icon="SOP_split">
     <helpURL>operator:Sop/split</helpURL>
     <toolMenuContext name="network">
@@ -13940,7 +13345,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="Attribute Move" label="Attribute Move" icon="SOP_attribswap">
+  <tool name="AttribMove" label="AttribMove" icon="SOP_attribswap">
     <helpURL>operator:Sop/attribswap</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribswap</contextOpType>
@@ -14092,7 +13497,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribdelete_uvLayout1" label="Attribute Delete UV Layout" icon="SOP_attribute">
+  <tool name="attribdelete_uvLayout1" label="AttribDel UV Layout" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -14688,10 +14093,10 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribCreateUP1" label="Attribute Create UP" icon="SOP_attribcreate-2.0">
-    <helpURL>operator:Sop/attribcreate?version=2.0</helpURL>
+  <tool name="attribCreateUP1" label="Attribute Create UP" icon="SOP_attribCreate-2.0">
+    <helpURL>operator:Sop/attribCreate?version=2.0</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+      <contextOpType>Sop/attribCreate::2.0</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -14769,7 +14174,7 @@ h_extra_args += 'set argc = "' + str(num_args) + '"\n'
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
-if 'attribcreate::2.0' not in child_type:
+if 'attribCreate::2.0' not in child_type:
    hou.ui.displayMessage(
            'Cannot create node: incompatible pane network type')
    sys.exit(0)
@@ -14801,8 +14206,8 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $attribCreateUP1 (Sop/attribcreate::2.0)
-set attribCreateUP1 = `run("opadd -e -n -v attribcreate::2.0 attribCreateUP1")`
+# Node $attribCreateUP1 (Sop/attribCreate::2.0)
+set attribCreateUP1 = `run("opadd -e -n -v attribCreate::2.0 attribCreateUP1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribCreateUP1
 opparm $attribCreateUP1  numattr ( 1 )
 opparm -V 19.0.455 $attribCreateUP1 name1 ( up ) typeinfo1 ( normal ) size1 ( 3 ) value1v ( 0 1 0 0 )
@@ -14823,6 +14228,153 @@ if ($argc >= 5 && "$arg4" != "") then
 endif
 if ($argc >= 6 && "$arg6" != "") then
     set input = $attribCreateUP1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="deleteSharedEdges1" label="Delete Shared Edges" icon="SOP_divide">
+    <helpURL>operator:Sop/divide</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/divide</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9 
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+            
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'divide' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r''' 
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $_obj_deleteSharedEdges1 (Sop/divide)
+set _obj_deleteSharedEdges1 = `run("opadd -e -n -v divide deleteSharedEdges1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_deleteSharedEdges1
+opparm -V 18.5.499 $_obj_deleteSharedEdges1 convex ( off ) removesh ( on )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_deleteSharedEdges1
+opexprlanguage -s hscript $_obj_deleteSharedEdges1
+opuserdata -n '___Version___' -v '18.5.499' $_obj_deleteSharedEdges1
+opset -p on $_obj_deleteSharedEdges1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $_obj_deleteSharedEdges1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $_obj_deleteSharedEdges1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
