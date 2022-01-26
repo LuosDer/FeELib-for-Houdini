@@ -101,6 +101,7 @@
     <memberTool name="convexHull"/>
     <memberTool name="switchif_isPacked1"/>
     <memberTool name="attribCreateUP1"/>
+    <memberTool name="attribwranglecore"/>
   </toolshelf>
 
   <tool name="detailwrangle1" label="Detail Wrangle" icon="SOP_attribwrangle">
@@ -1895,7 +1896,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribDel" label="AttribDel" icon="SOP_attribute">
+  <tool name="attribDel" label="Attribute Delete" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribCreate::2.0</contextOpType>
