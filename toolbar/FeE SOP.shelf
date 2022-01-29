@@ -11,7 +11,7 @@
     <memberTool name="attribPromote_min_max1"/>
     <memberTool name="attribDelAll"/>
     <memberTool name="attribDel"/>
-    <memberTool name="attribDel UV layout"/>
+    <memberTool name="attribDel_UVLayout"/>
     <memberTool name="attribRename_ue4Mat1"/>
     <memberTool name="attribRename1"/>
     <memberTool name="attribute1"/>
@@ -101,7 +101,6 @@
     <memberTool name="convexHull"/>
     <memberTool name="switchif_isPacked1"/>
     <memberTool name="attribCreateUP1"/>
-    <memberTool name="attribwranglecore"/>
   </toolshelf>
 
   <tool name="detailwrangle1" label="Detail Wrangle" icon="SOP_attribwrangle">
@@ -1899,7 +1898,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
   <tool name="attribDel" label="Attribute Delete" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribCreate::2.0</contextOpType>
+      <contextOpType>Sop/attribute</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -2340,7 +2339,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
   <tool name="attribDelAll" label="Attribute Delete All" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
-      <contextOpType>Sop/attribCreate::2.0</contextOpType>
+      <contextOpType>Sop/attribute</contextOpType>
     </toolMenuContext>
     <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
     <script scriptType="python"><![CDATA[
@@ -13498,7 +13497,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribdelete_uvLayout1" label="AttribDel UV Layout" icon="SOP_attribute">
+  <tool name="attribDel_UVLayout" label="Attribute Delete UV Layout" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -13913,7 +13912,7 @@ opspareds '    parm {         name    "mergecondition"         baseparm         
 opparm $switchif_isPacked1  tests ( 1 )
 chblockbegin
 chadd -t 0 0 $switchif_isPacked1 expr1
-chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'prim(-1, 0, \'intrinsic:typeid\', 0)!=24 && prim(-1, 0, \'intrinsic:typeid\', 0)!=26' $switchif_isPacked1/expr1
+chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'prim(-1, 0, \'intrinsic:typeid\', 0)==24 || prim(-1, 0, \'intrinsic:typeid\', 0)==26' $switchif_isPacked1/expr1
 chblockend
 opparm -V 19.0.383 $switchif_isPacked1 expr1 ( expr1 ) spare_input0 ( '`opinputpath("..", 0)`' )
 opcolor -c 0.80000001192092896 1 0.69999998807907104 $switchif_isPacked1
