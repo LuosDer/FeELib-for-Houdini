@@ -2381,4 +2381,39 @@ def searchParmsValue_print(inputNodes, searchValue):
                     print(parm)
 
 
+def getAllUsedHDKNode(node):
+    ignoreNames = (
+        'output',
+        'subnet',
+        'block_end',
+        'block_begin_if',
+        'compile_begin',
+        'compile_end',
+        'invoke',
+        'matnet',
+        'material',
+        'materialbuilder',
+        'topobuild',
+        'parameter',
+        'subinput',
+        'suboutput',
+        'snippet',
+    )
+    usedNodeType = []
+    for subNode in node.allSubChildren():
+        nodeType = subNode.type()
+        defi = nodeType.definition()
+        if defi is not None:
+            continue
+        if nodeType in usedNodeType:
+            continue
+        usedNodeType.append(nodeType)
+        
+    for nodeType in usedNodeType:
+        name = nodeType.name()
+        if name in ignoreNames:
+            continue
+        print(name)
 
+    for name in ignoreNames:
+        print(name)

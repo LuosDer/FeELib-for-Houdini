@@ -39,6 +39,18 @@ print(selectedNodes[0].path() + '\n Sub Node Count is ' + str(fee_Node.subNodeCo
       </scriptItem>
 
 
+      <scriptItem id="getAllUsedHDKNode">
+        <label>Get All Used HDK Node</label>
+        <scriptCode><![CDATA[
+import fee_Node
+# from importlib import reload
+# reload(fee_Node)
+kwargsNode = kwargs["node"]
+selectedNodes = fee_Node.getAllUsedHDKNode(kwargsNode)
+      ]]></scriptCode>
+      </scriptItem>
+
+
 
 
       <scriptItem id="bakeAllParms">
