@@ -358,6 +358,9 @@ FeE::insertPointCurve_debug::1.0
 insertpoint_poly_fee
 insertpoint_poly_fee::2.0
 normalizePolyDir_fee
+FeE::normalizePolyDir2d::2.0
+FeE::normalizePolyDir2d::1.0
+
 
 FeE::removeSharedEdges_splitOutside::0.5
 FeE::removeSharedEdges_splitOutside::1.0
