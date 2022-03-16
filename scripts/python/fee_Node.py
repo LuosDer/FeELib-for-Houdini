@@ -1842,7 +1842,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     nodeTypeNameFromLabel = False, hdaNameFromNodeTypeName = False, 
     name_lower = False, name_convertSpacetoUnderscore = False, 
     deleteNodeType = (), bypassNodeType = (), bypassNode = {},
-    strictNodeNameDict = {}, subMenuDict = {}, changeNodeTypeDict = {}, 
+    strictNodeNameDict = {}, strictNodeLabelDict = {}, subMenuDict = {}, changeNodeTypeDict = {}, 
     strictNodeParmDefaultValueDict = {}, hideParmNodeDict = {},
     debugMode = 0):
 
@@ -1915,9 +1915,12 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
     if 1:
         # initial node label
         newNodeLabel = nodeType.description()
-        if namespaceOriginal != '':
-            newNodeLabel = newNodeLabel.lstrip(namespaceOriginal)
-        newNodeLabel = newNodeLabel.lstrip(' ')
+        if nodeTypeName in strictNodeLabelDict:
+            newNodeLabel = strictNodeLabelDict[nodeTypeName]
+        else:
+            if namespaceOriginal != '':
+                newNodeLabel = newNodeLabel.lstrip(namespaceOriginal)
+            newNodeLabel = newNodeLabel.lstrip(' ')
 
 
     if 1:
@@ -1936,6 +1939,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
             else:
                 newNodeTypeName = strictNodeNameDict[nodeTypeName][0]
             bypassNodeIdentifyString = newNodeTypeName
+            nodeNameComponents[2] = newNodeTypeName
         else:
             bypassNodeIdentifyString = nodeTypeName
             if namespaceTarget != '':
