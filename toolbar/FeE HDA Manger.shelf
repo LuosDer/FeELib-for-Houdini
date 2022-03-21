@@ -15,6 +15,7 @@
     <memberTool name="recoverNodesFromSubnet"/>
     <memberTool name="convertHDA_to_Subnet_Melt"/>
     <memberTool name="Git pull And Push Sample Code"/>
+    <memberTool name="Set os HFSS Env"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -325,6 +326,25 @@ if updateGit:
     fee_Utils.gitPushByBat(gitDir)
 
     #os.system('D:/Houdini/FeEProjectHoudini/otls/gitpush.bat')
+]]></script>
+  </tool>
+
+  <tool name="Set os HFSS Env" label="Set os HFSS Env" icon="SOP_sort">
+    <script scriptType="python"><![CDATA[
+import os
+import hou
+
+hfs = hou.getenv("HFS")
+
+need_set = True
+if "HFSS" in os.environ:
+    if os.environ["HFSS"] == hfs:
+        need_set = False
+        
+if need_set:
+    cmd = '''setx HFSS "{}"'''.format(hfs)
+    os.system(cmd)
+
 ]]></script>
   </tool>
 </shelfDocument>
