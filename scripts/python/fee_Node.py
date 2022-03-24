@@ -1939,7 +1939,7 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
             else:
                 newNodeTypeName = strictNodeNameDict[nodeTypeName][0]
             bypassNodeIdentifyString = newNodeTypeName
-            nodeNameComponents[2] = newNodeTypeName
+            nodeNameComponents[2] = fee_HDA.splitTypeNametoNameComponents(newNodeTypeName)[2]
         else:
             bypassNodeIdentifyString = nodeTypeName
             if namespaceTarget != '':
@@ -1990,7 +1990,8 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
             hdaName = hdaName.replace(' ', '_')
         if name_lower:
             hdaName = hdaName.lower()
-
+            
+        # print(hdaName)
         targetHDAPath = hou.getenv('TEMP') + '/' + hdaName
         
         #defi.save(targetHDAPath, selectedNode)
