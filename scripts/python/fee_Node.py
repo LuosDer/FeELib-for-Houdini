@@ -1777,6 +1777,12 @@ def correctWrangleParmeter(selectedNodes):
         
         snippet = node.evalParm('snippet')
         
+        ######################### vex_matchattrib ##########################
+        parm_vex_matchattrib = node.parm('vex_matchattrib')
+        vex_matchattrib = parm_vex_matchattrib.eval()
+        if vex_matchattrib == 'id':
+            parm_vex_matchattrib.set('')
+
         ######################### vex_inplace ##########################
         vex_inplace = node.parm('vex_inplace')
         vex_inplaceVal = True
