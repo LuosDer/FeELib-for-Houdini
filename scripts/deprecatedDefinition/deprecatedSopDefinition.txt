@@ -370,7 +370,7 @@ removesharededge_fee
 FeE::polyCutRemove::1.0
 groupexpand_border_fee
 FeE::extractCurveEnds::1.0
-
+FeE::inlinePoints
 
 
 FeE::groupEdgeWithPointOn::1.0
