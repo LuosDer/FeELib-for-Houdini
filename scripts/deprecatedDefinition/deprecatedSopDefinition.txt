@@ -375,7 +375,7 @@ FeE::inlinePoints
 
 FeE::groupEdgeWithPointOn::1.0
 extendcurve_fee
-
+FeE::bound2d
 
 
 
