@@ -128,7 +128,7 @@ def buildMultiClassGroupsMenu(node, input_num=0, groupClasses=['point']):
 
 def buildGroupsMenu(node, input_num=0, groupClass='point'):
     if isinstance(groupClass, list) or isinstance(groupClass, tuple):
-        return buildMultiClassAttribsMenu(node, input_num, groupClass)
+        return buildMultiClassGroupsMenu(node, input_num, groupClass)
     else:
         return buildGroupsMenu_sub(node, input_num, groupClass)
 
