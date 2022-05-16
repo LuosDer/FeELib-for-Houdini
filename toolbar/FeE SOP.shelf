@@ -26,7 +26,7 @@
     <memberTool name="groupReverse"/>
     <memberTool name="groupClosed1"/>
     <memberTool name="groupDelAll"/>
-    <memberTool name="groupViz1"/>
+    <memberTool name="groupVis1"/>
     <memberTool name="transform_centroid1"/>
     <memberTool name="xformAxisCentroid1"/>
     <memberTool name="rest_to_P1"/>
@@ -102,6 +102,9 @@
     <memberTool name="switchif_isPacked1"/>
     <memberTool name="attribCreateUP1"/>
     <memberTool name="extractCurveEnds"/>
+    <memberTool name="extractAllPoints"/>
+    <memberTool name="attribDel1"/>
+    <memberTool name="groupDel1"/>
   </toolshelf>
 
   <tool name="detailwrangle1" label="Detail Wrangle" icon="SOP_attribwrangle">
@@ -240,153 +243,6 @@ if ($argc >= 5 && "$arg4" != "") then
 endif
 if ($argc >= 6 && "$arg6" != "") then
     set input = $detailwrangle1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
-  <tool name="groupViz1" label="Group Visualize" icon="SOP_groupcreate">
-    <helpURL>operator:Sop/groupcreate</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/groupcreate</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'groupcreate' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $_obj_groupViz1 (Sop/groupcreate)
-set _obj_groupViz1 = `run("opadd -e -n -v groupcreate groupViz1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupViz1
-opparm -V 18.5.408 $_obj_groupViz1 groupname ( "" ) grouptype ( point ) mergeop ( union ) groupbase ( off )
-opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupViz1
-opexprlanguage -s hscript $_obj_groupViz1
-opuserdata -n '___Version___' -v '18.5.408' $_obj_groupViz1
-opset -p on $_obj_groupViz1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_groupViz1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_groupViz1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -11743,7 +11599,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -11783,7 +11639,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -11797,7 +11653,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -11822,10 +11678,11 @@ opcf $arg1
 # Node $groupRest1 (Sop/groupcreate)
 set groupRest1 = `run("opadd -e -n -v groupcreate groupRest1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $groupRest1
-opparm -V 18.5.532 $groupRest1 groupname ( _rest )
+opparm -V 19.0.531 $groupRest1 groupname ( _rest )
 opset -d off -r off -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $groupRest1
 opexprlanguage -s hscript $groupRest1
 opuserdata -n '___Version___' -v '18.5.532' $groupRest1
+opuserdata -n 'nodeshape' -v 'tilted' $groupRest1
 opset -p on $groupRest1
 
 opcf $arg1
@@ -13236,7 +13093,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -13276,7 +13133,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -13290,7 +13147,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -13312,14 +13169,16 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_groupReverse1 (Sop/groupcombine)
-set _obj_groupReverse1 = `run("opadd -e -n -v groupcombine groupReverse1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_groupReverse1
-opparm $_obj_groupReverse1  numcombine ( 1 )
-opparm -V 18.5.408 $_obj_groupReverse1 negate_a1 ( on ) group_a1 ( '`chs("group1")`' )
-opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_groupReverse1
-opexprlanguage -s hscript $_obj_groupReverse1
-opset -p on $_obj_groupReverse1
+# Node $groupReverse1 (Sop/groupcombine)
+set groupReverse1 = `run("opadd -e -n -v groupcombine groupReverse1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $groupReverse1
+opparm $groupReverse1  numcombine ( 1 )
+opparm -V 19.0.531 $groupReverse1 negate_a1 ( on ) group_a1 ( '`chs("group1")`' )
+opset -d off -r off -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $groupReverse1
+opexprlanguage -s hscript $groupReverse1
+opuserdata -n '___Version___' -v '19.0.531' $groupReverse1
+opuserdata -n 'nodeshape' -v 'tilted' $groupReverse1
+opset -p on $groupReverse1
 
 opcf $arg1
 
@@ -13329,11 +13188,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_groupReverse1
+    set output = $groupReverse1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_groupReverse1
+    set input = $groupReverse1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -14524,6 +14383,595 @@ if ($argc >= 5 && "$arg4" != "") then
 endif
 if ($argc >= 6 && "$arg6" != "") then
     set input = $extractCurveEnds1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="extractAllPoints" label="Extract All Points FeE" icon="SOP_add">
+    <helpURL>operator:Sop/add</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/add</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'add' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r'''
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1 (Sop/add)
+set _obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1 = `run("opadd -e -n -v add extractAllPoints1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+opparm $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1  points ( 1 ) prims ( 1 )
+opparm -V 19.0.531 $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1 keep ( on )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+opexprlanguage -s hscript $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+opuserdata -n 'nodeshape' -v 'trapezoid_down' $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+opset -p on $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $_obj_foundetion_cityLotAndRoad_fromRoadCurveQuaternary_gen1_extractAllPoints1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="groupVis1" label="Group Visualize" icon="SOP_groupcreate">
+    <helpURL>operator:Sop/groupcreate</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/groupcreate</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'groupcreate' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r'''
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $groupVis1 (Sop/groupcreate)
+set groupVis1 = `run("opadd -e -n -v groupcreate groupVis1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $groupVis1
+opparm -V 19.0.531 $groupVis1 groupname ( "" ) grouptype ( point ) mergeop ( union ) groupbase ( off )
+opset -d on -r on -h on -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $groupVis1
+opexprlanguage -s hscript $groupVis1
+opuserdata -n '___Version___' -v '18.5.408' $groupVis1
+opuserdata -n 'nodeshape' -v 'light' $groupVis1
+opset -p on $groupVis1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $groupVis1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $groupVis1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="attribDel1" label="Attribute Delete FeE" icon="SOP_attribute">
+    <helpURL>operator:Sop/attribute</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/attribute</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'attribute' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r'''
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $attribDel1 (Sop/attribute)
+set attribDel1 = `run("opadd -e -n -v attribute attribDel1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribDel1
+opparm $attribDel1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribDel1
+opexprlanguage -s hscript $attribDel1
+opset -p on $attribDel1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $attribDel1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $attribDel1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="groupDel1" label="Group Delete FeE" icon="SOP_groupdelete">
+    <helpURL>operator:Sop/groupdelete</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/groupdelete</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'groupdelete' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r'''
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $groupDel1 (Sop/groupdelete)
+set groupDel1 = `run("opadd -e -n -v groupdelete groupDel1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $groupDel1
+opparm $groupDel1  deletions ( 1 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $groupDel1
+opexprlanguage -s hscript $groupDel1
+opuserdata -n 'nodeshape' -v 'tilted' $groupDel1
+opset -p on $groupDel1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $groupDel1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $groupDel1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else

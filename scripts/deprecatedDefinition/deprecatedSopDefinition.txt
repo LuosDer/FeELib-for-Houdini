@@ -371,6 +371,22 @@ FeE::polyCutRemove::1.0
 groupexpand_border_fee
 FeE::extractCurveEnds::1.0
 FeE::inlinePoints
+groupvisualize_fee
+FeE::vizDir::1.0
+FeE::vizGeo
+visualizevector_fee
+visualize_mat_fee
+FeE::vectorVolumeViz::1.0
+vectorfieldvisualize_fee
+FeE::hfViz::1.0
+FeE::vizQueueGeo
+FeE::particleFluidAttribViz::1.0
+visualerror_copysphere_fee
+visualizevtxnum_fee
+
+vdbvisualize_fee
+
+
 
 
 FeE::groupEdgeWithPointOn::1.0
