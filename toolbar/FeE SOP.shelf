@@ -2531,7 +2531,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -2571,7 +2571,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -2585,7 +2585,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -2607,13 +2607,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_openu1 (Sop/ends)
-set _obj_openu1 = `run("opadd -e -n -v ends openu1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_openu1
-opparm -V 18.5.499 $_obj_openu1 closeu ( open )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_openu1
-opexprlanguage -s hscript $_obj_openu1
-opset -p on $_obj_openu1
+# Node $openu1 (Sop/ends)
+set openu1 = `run("opadd -e -n -v ends openu1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $openu1
+opparm -V 19.0.531 $openu1 closeu ( open )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $openu1
+opexprlanguage -s hscript $openu1
+opuserdata -n '___Version___' -v '19.0.531' $openu1
+opuserdata -n 'nodeshape' -v 'tilted' $openu1
+opset -p on $openu1
 
 opcf $arg1
 
@@ -2623,11 +2625,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_openu1
+    set output = $openu1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_openu1
+    set input = $openu1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -2677,7 +2679,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -2717,7 +2719,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -2731,7 +2733,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -2753,16 +2755,18 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_closeu1 (Sop/ends)
-set _obj_closeu1 = `run("opadd -e -n -v ends closeu1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_closeu1
-opparm -V 18.5.499 $_obj_closeu1 closeu ( closesharp )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_closeu1
-opexprlanguage -s hscript $_obj_closeu1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_closeu1
-opset -p on $_obj_closeu1
+# Node $closeu1 (Sop/ends)
+set closeu1 = `run("opadd -e -n -v ends closeu1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $closeu1
+opparm -V 19.0.531 $closeu1 closeu ( closesharp )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $closeu1
+opexprlanguage -s hscript $closeu1
+opuserdata -n '___Version___' -v '19.0.531' $closeu1
+opuserdata -n 'nodeshape' -v 'tilted' $closeu1
+opset -p on $closeu1
 
 opcf $arg1
+opwire -n $blast1 -0 $closeu1
 
 set oidx = 0
 if ($argc >= 9 && "$arg9" != "") then
@@ -2770,11 +2774,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_closeu1
+    set output = $closeu1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_closeu1
+    set input = $closeu1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -2824,7 +2828,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -2864,7 +2868,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -2878,7 +2882,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -2900,14 +2904,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_unrollu1 (Sop/ends)
-set _obj_unrollu1 = `run("opadd -e -n -v ends unrollu1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_unrollu1
-opparm -V 18.5.499 $_obj_unrollu1 closeu ( unrollshared )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_unrollu1
-opexprlanguage -s hscript $_obj_unrollu1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_unrollu1
-opset -p on $_obj_unrollu1
+# Node $unrollu1 (Sop/ends)
+set unrollu1 = `run("opadd -e -n -v ends unrollu1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $unrollu1
+opparm -V 19.0.531 $unrollu1 closeu ( unrollshared )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $unrollu1
+opexprlanguage -s hscript $unrollu1
+opuserdata -n '___Version___' -v '18.5.499' $unrollu1
+opuserdata -n 'nodeshape' -v 'tilted' $unrollu1
+opset -p on $unrollu1
 
 opcf $arg1
 
@@ -2917,11 +2922,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_unrollu1
+    set output = $unrollu1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_unrollu1
+    set input = $unrollu1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -5071,7 +5076,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -5111,7 +5116,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -5125,7 +5130,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -5147,14 +5152,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_brickerPolys1 (Sop/divide)
-set _obj_brickerPolys1 = `run("opadd -e -n -v divide brickerPolys1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_brickerPolys1
-opparm -V 18.5.532 $_obj_brickerPolys1 convex ( off ) brick ( on )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_brickerPolys1
-opexprlanguage -s hscript $_obj_brickerPolys1
-opuserdata -n '___Version___' -v '18.5.532' $_obj_brickerPolys1
-opset -p on $_obj_brickerPolys1
+# Node $brickerPolys1 (Sop/divide)
+set brickerPolys1 = `run("opadd -e -n -v divide brickerPolys1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $brickerPolys1
+opparm -V 19.0.531 $brickerPolys1 convex ( off ) brick ( on )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $brickerPolys1
+opexprlanguage -s hscript $brickerPolys1
+opuserdata -n '___Version___' -v '18.5.532' $brickerPolys1
+opuserdata -n 'nodeshape' -v 'tilted' $brickerPolys1
+opset -p on $brickerPolys1
 
 opcf $arg1
 
@@ -5164,11 +5170,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_brickerPolys1
+    set output = $brickerPolys1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_brickerPolys1
+    set input = $brickerPolys1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
