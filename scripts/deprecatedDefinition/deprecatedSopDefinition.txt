@@ -383,10 +383,17 @@ FeE::vizQueueGeo
 FeE::particleFluidAttribViz::1.0
 visualerror_copysphere_fee
 visualizevtxnum_fee
-
+bboxbounding_fee
 vdbvisualize_fee
 
 
+
+
+
+
+polybounding_wn_fee
+polybounding_groupsop_fee
+polybounding_bbox_fee
 
 
 FeE::groupEdgeWithPointOn::1.0
