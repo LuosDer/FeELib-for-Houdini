@@ -385,8 +385,8 @@ visualerror_copysphere_fee
 visualizevtxnum_fee
 bboxbounding_fee
 vdbvisualize_fee
-
-
+icp_fee
+sortvertex_fee
 
 
 
