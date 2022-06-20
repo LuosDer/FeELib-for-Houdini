@@ -409,5 +409,5 @@ FeE::blastMultiPiece::1.0
 
 
 
-
+FeE::closedCurveExpand2d::2.0
 
