@@ -10569,7 +10569,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -10609,7 +10609,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -10623,7 +10623,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -10648,10 +10648,11 @@ opcf $arg1
 # Node $triangulate1 (Sop/divide)
 set triangulate1 = `run("opadd -e -n -v divide triangulate1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $triangulate1
-opparm -V 18.5.532 $triangulate1 avoidsmallangles ( on )
+opparm -V 19.0.531 $triangulate1 avoidsmallangles ( on )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $triangulate1
 opexprlanguage -s hscript $triangulate1
 opuserdata -n '___Version___' -v '18.5.532' $triangulate1
+opuserdata -n 'nodeshape' -v 'tilted' $triangulate1
 opset -p on $triangulate1
 
 opcf $arg1
@@ -13344,10 +13345,11 @@ opcf $arg1
 # Node $quadragulate1 (Sop/divide)
 set quadragulate1 = `run("opadd -e -n -v divide quadragulate1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $quadragulate1
-opparm -V 19.0.383 $quadragulate1 numsides ( 4 ) avoidsmallangles ( on )
+opparm -V 19.0.531 $quadragulate1 numsides ( 4 ) avoidsmallangles ( on )
 opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $quadragulate1
 opexprlanguage -s hscript $quadragulate1
 opuserdata -n '___Version___' -v '19.0.383' $quadragulate1
+opuserdata -n 'nodeshape' -v 'tilted' $quadragulate1
 opset -p on $quadragulate1
 
 opcf $arg1
