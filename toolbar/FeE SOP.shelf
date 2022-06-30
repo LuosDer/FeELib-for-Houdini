@@ -55,7 +55,6 @@
     <memberTool name="unionSolid1"/>
     <memberTool name="subtractSolid1"/>
     <memberTool name="intersectSolid1"/>
-    <memberTool name="attribCreate_RBDFoundOverlap1"/>
     <memberTool name="attribdelete_uvLayout1"/>
     <memberTool name="voronoifracture_nodesPackage"/>
     <memberTool name="switchif_enable1"/>
@@ -81,8 +80,8 @@
     <memberTool name="deleteUnusedPoints1"/>
     <memberTool name="surfaceShatter1"/>
     <memberTool name="triangulate"/>
-    <memberTool name="attribrest"/>
-    <memberTool name="attribDel_pop1"/>
+    <memberTool name="attribRest2"/>
+    <memberTool name="attribDelPOP1"/>
     <memberTool name="pointGenPerPrim1"/>
     <memberTool name="groupRest1"/>
     <memberTool name="switchif_hasGeo1"/>
@@ -94,7 +93,7 @@
     <memberTool name="setPyfromRest"/>
     <memberTool name="copyPy2"/>
     <memberTool name="splitPacked1"/>
-    <memberTool name="AttribMove"/>
+    <memberTool name="attribMove1"/>
     <memberTool name="quadragulate"/>
     <memberTool name="convexHull"/>
     <memberTool name="switchif_isPacked1"/>
@@ -113,6 +112,7 @@
     <memberTool name="attribCreateMat"/>
     <memberTool name="attribCreateCd1"/>
     <memberTool name="attribCreateUp1"/>
+    <memberTool name="attribCreate_RBDFoundOverlap2"/>
   </toolshelf>
 
   <tool name="detailwrangle1" label="Detail Wrangle" icon="SOP_attribwrangle">
@@ -3684,7 +3684,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="sortByAttrib" label="Sort by Attrib" icon="SOP_sort">
+  <tool name="sortByAttrib" label="Sort by Attribute" icon="SOP_sort">
     <helpURL>operator:Sop/sort</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/sort</contextOpType>
@@ -7014,153 +7014,6 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribCreate_RBDFoundOverlap1" label="Attribute Create RBD Found Overlap" icon="SOP_attribCreate-2.0">
-    <helpURL>operator:Sop/attribCreate?version=2.0</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/attribCreate::2.0</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'attribCreate::2.0' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $_obj_attribCreate_RBDFoundOverlap1 (Sop/attribCreate::2.0)
-set _obj_attribCreate_RBDFoundOverlap1 = `run("opadd -e -n -v attribCreate::2.0 attribCreate_RBDFoundOverlap1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_attribCreate_RBDFoundOverlap1
-opparm $_obj_attribCreate_RBDFoundOverlap1  numattr ( 1 )
-opparm -V 18.5.532 $_obj_attribCreate_RBDFoundOverlap1 name1 ( found_overlap ) type1 ( int ) value1v ( 1 0 0 0 )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_attribCreate_RBDFoundOverlap1
-opexprlanguage -s hscript $_obj_attribCreate_RBDFoundOverlap1
-opset -p on $_obj_attribCreate_RBDFoundOverlap1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_attribCreate_RBDFoundOverlap1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_attribCreate_RBDFoundOverlap1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
   <tool name="pointNebs1" label="Point Neighbours" icon="SOP_attribwrangle">
     <helpURL>operator:Sop/attribwrangle</helpURL>
     <toolMenuContext name="network">
@@ -8451,7 +8304,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribDel_fbx1" label="AttribDel FBX" icon="SOP_attribute">
+  <tool name="attribDel_fbx1" label="Attribute Delete FBX" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -8599,7 +8452,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribMove_uvP1" label="AttribMove UV Position" icon="SOP_attribswap">
+  <tool name="attribMove_uvP1" label="Attribute Move UV Position" icon="SOP_attribswap">
     <helpURL>operator:Sop/attribswap</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribswap</contextOpType>
@@ -8747,7 +8600,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribDel_uvAutoSeam1" label="AttribDel UV Auto Seam" icon="SOP_attribute">
+  <tool name="attribDel_uvAutoSeam1" label="Attribute Delete UV Auto Seam" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribute</contextOpType>
@@ -9043,7 +8896,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribCopy_allDetail1" label="Attrib Copy All Detail" icon="SOP_attribcopy">
+  <tool name="attribCopy_allDetail1" label="Attribute Copy All Detail" icon="SOP_attribcopy">
     <helpURL>operator:Sop/attribcopy</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribcopy</contextOpType>
@@ -9493,7 +9346,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="pieceAttribPromote1" label="Piece Attrib Promote" icon="SOP_attribpromote">
+  <tool name="pieceAttribPromote1" label="Piece Attribute Promote" icon="SOP_attribpromote">
     <helpURL>operator:Sop/attribpromote</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribpromote</contextOpType>
@@ -10680,158 +10533,6 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribrest" label="Attrib Rest" icon="SOP_attribswap">
-    <helpURL>operator:Sop/attribswap</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/attribswap</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'attribswap' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $attribRest1 (Sop/attribswap)
-set attribRest1 = `run("opadd -e -n -v attribswap attribRest1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribRest1
-opparm $attribRest1  numswaps ( 1 )
-chblockbegin
-chadd -t 0 0 $attribRest1 enable1
-chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribRest1/enable1
-chblockend
-opparm -V 18.5.532 $attribRest1 enable1 ( enable1 ) dstattribs1 ( 'rest_`chs("srcattribs1")`' )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribRest1
-opexprlanguage -s hscript $attribRest1
-opuserdata -n '___Version___' -v '18.5.532' $attribRest1
-opset -p on $attribRest1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribRest1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribRest1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
   <tool name="switchif_hasPrimGroup" label="Switch If Has Prim Group" icon="SOP_switchif">
     <helpURL>operator:Sop/switchif</helpURL>
     <toolMenuContext name="network">
@@ -10973,155 +10674,6 @@ if ($argc >= 5 && "$arg4" != "") then
 endif
 if ($argc >= 6 && "$arg6" != "") then
     set input = $switchif_hasPrimGroup1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
-  <tool name="attribDel_pop1" label="AttribDel POP" icon="SOP_attribute">
-    <helpURL>operator:Sop/attribute</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/attribute</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'attribute' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $attribDel_pop1 (Sop/attribute)
-set attribDel_pop1 = `run("opadd -e -n -v attribute attribDel_pop1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribDel_pop1
-opparm $attribDel_pop1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
-opparm -V 18.5.532 $attribDel_pop1 ptdel ( 'deactivation_time dead force has_pprevious pprevious stopped' )
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribDel_pop1
-opexprlanguage -s hscript $attribDel_pop1
-opuserdata -n '___Version___' -v '18.5.532' $attribDel_pop1
-opset -p on $attribDel_pop1
-
-opcf $arg1
-opwire -n $dopnet1 -0 $attribDel_pop1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribDel_pop1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribDel_pop1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -11882,7 +11434,7 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="attribMove_restP" label="Attrib Move Rest P" icon="SOP_attribswap">
+  <tool name="attribMove_restP" label="Attribute Move Rest P" icon="SOP_attribswap">
     <helpURL>operator:Sop/attribswap</helpURL>
     <toolMenuContext name="network">
       <contextOpType>Sop/attribswap</contextOpType>
@@ -12929,158 +12481,6 @@ hou.hscript(h_preamble + h_extra_args + h_cmd)
 ]]></script>
   </tool>
 
-  <tool name="AttribMove" label="AttribMove" icon="SOP_attribswap">
-    <helpURL>operator:Sop/attribswap</helpURL>
-    <toolMenuContext name="network">
-      <contextOpType>Sop/attribswap</contextOpType>
-    </toolMenuContext>
-    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if "outputnodename" in kwargs and "inputindex" in kwargs:
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if "inputnodename" in kwargs and "outputindex" in kwargs:
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9
-    if "autoplace" in kwargs:
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if "shiftclick" in kwargs and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if "node_bbox" in kwargs:
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if 'attribswap' not in child_type:
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r'''
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $attribmove1 (Sop/attribswap)
-set attribmove1 = `run("opadd -e -n -v attribswap attribmove1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribmove1
-opparm $attribmove1  numswaps ( 1 )
-chblockbegin
-chadd -t 0 0 $attribmove1 enable1
-chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribmove1/enable1
-chblockend
-opparm -V 19.0.383 $attribmove1 enable1 ( enable1 ) method1 ( move ) srcattribs1 ( up ) dstattribs1 ( N )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribmove1
-opexprlanguage -s hscript $attribmove1
-opuserdata -n '___Version___' -v '19.0.383' $attribmove1
-opset -p on $attribmove1
-
-opcf $arg1
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $attribmove1
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $attribmove1
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-]]></script>
-  </tool>
-
   <tool name="attribDel_UVLayout" label="Attribute Delete UV Layout" icon="SOP_attribute">
     <helpURL>operator:Sop/attribute</helpURL>
     <toolMenuContext name="network">
@@ -13715,7 +13115,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         outputindex = kwargs["outputindex"]
         h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
         h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
+        num_args = 9
     if "autoplace" in kwargs:
         autoplace = kwargs["autoplace"]
     else:
@@ -13755,7 +13155,7 @@ else: # We're creating this tool from the TAB menu inside a network editor
         h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
         h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
 h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
+
 pane_node = pane.pwd()
 child_type = pane_node.childTypeCategory().nodeTypes()
 
@@ -13769,7 +13169,7 @@ pane_node.setSelected(False, True)
 
 h_path = pane_node.path()
 h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
+h_cmd = r'''
 if ($argc < 2 || "$arg2" == "") then
    set arg2 = 0
 endif
@@ -13791,14 +13191,15 @@ endif
 set saved_path = `execute("oppwf")`
 opcf $arg1
 
-# Node $_obj_deleteSharedEdges1 (Sop/divide)
-set _obj_deleteSharedEdges1 = `run("opadd -e -n -v divide deleteSharedEdges1")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_deleteSharedEdges1
-opparm -V 18.5.499 $_obj_deleteSharedEdges1 convex ( off ) removesh ( on )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_deleteSharedEdges1
-opexprlanguage -s hscript $_obj_deleteSharedEdges1
-opuserdata -n '___Version___' -v '18.5.499' $_obj_deleteSharedEdges1
-opset -p on $_obj_deleteSharedEdges1
+# Node $deleteSharedEdges1 (Sop/divide)
+set deleteSharedEdges1 = `run("opadd -e -n -v divide deleteSharedEdges1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $deleteSharedEdges1
+opparm -V 19.0.531 $deleteSharedEdges1 convex ( off ) removesh ( on )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $deleteSharedEdges1
+opexprlanguage -s hscript $deleteSharedEdges1
+opuserdata -n '___Version___' -v '18.5.499' $deleteSharedEdges1
+opuserdata -n 'nodeshape' -v 'tilted' $deleteSharedEdges1
+opset -p on $deleteSharedEdges1
 
 opcf $arg1
 
@@ -13808,11 +13209,11 @@ if ($argc >= 9 && "$arg9" != "") then
 endif
 
 if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_deleteSharedEdges1
+    set output = $deleteSharedEdges1
     opwire -n $output -$arg5 $arg4
 endif
 if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_deleteSharedEdges1
+    set input = $deleteSharedEdges1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
@@ -15275,8 +14676,8 @@ opcf $arg1
 set groupRename1 = `run("opadd -e -n -v grouprename groupRename1")`
 oplocate -x `$arg2 + 0` -y `$arg3 + 0` $groupRename1
 opparm $groupRename1  renames ( 1 )
-opparm -V 19.0.531 $groupRename1 grouptype1 ( points )
-opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $groupRename1
+opparm -V 19.0.531 $groupRename1 grouptype1 ( prims )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $groupRename1
 opexprlanguage -s hscript $groupRename1
 opuserdata -n '___Version___' -v '19.0.531' $groupRename1
 opuserdata -n 'nodeshape' -v 'tilted' $groupRename1
@@ -16183,6 +15584,606 @@ if ($argc >= 5 && "$arg4" != "") then
 endif
 if ($argc >= 6 && "$arg6" != "") then
     set input = $attribCreateUp1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="attribCreate_RBDFoundOverlap2" label="Attribute Create RBD Found Overlap" icon="SOP_attribcreate-2.0">
+    <helpURL>operator:Sop/attribcreate?version=2.0</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/attribcreate::2.0</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'attribcreate::2.0' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r'''
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1 (Sop/attribcreate::2.0)
+set _obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1 = `run("opadd -e -n -v attribcreate::2.0 attribCreateRBDFoundOverlap1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+opparm $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1  numattr ( 1 )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+opexprlanguage -s hscript $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+opuserdata -n '___Version___' -v '19.0.531' $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+opset -p on $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $_obj_foundetion_cityBlockBorderFromRoad1_attribCreateRBDFoundOverlap1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="attribDelPOP1" label="Attribute Delete POP" icon="SOP_attribute">
+    <helpURL>operator:Sop/attribute</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/attribute</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9 
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+            
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'attribute' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r''' 
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $attribDel_pop1 (Sop/attribute)
+set attribDel_pop1 = `run("opadd -e -n -v attribute attribDel_pop1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribDel_pop1
+opparm $attribDel_pop1  ptrenames ( 5 ) vtxrenames ( 5 ) primrenames ( 5 ) detailrenames ( 5 ) rmanconversions ( 5 )
+opparm -V 18.5.532 $attribDel_pop1 ptdel ( 'deactivation_time dead force has_pprevious pprevious stopped' )
+opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribDel_pop1
+opexprlanguage -s hscript $attribDel_pop1
+opuserdata -n '___Version___' -v '18.5.532' $attribDel_pop1
+opset -p on $attribDel_pop1
+
+opcf $arg1
+opwire -n $dopnet1 -0 $attribDel_pop1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $attribDel_pop1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $attribDel_pop1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="attribMove1" label="Attribute Move" icon="SOP_attribswap">
+    <helpURL>operator:Sop/attribswap</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/attribswap</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'attribswap' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r'''
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $attribmove1 (Sop/attribswap)
+set attribmove1 = `run("opadd -e -n -v attribswap attribmove1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribmove1
+opparm $attribmove1  numswaps ( 1 )
+chblockbegin
+chadd -t 0 0 $attribmove1 enable1
+chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribmove1/enable1
+chblockend
+opparm -V 19.0.383 $attribmove1 enable1 ( enable1 ) method1 ( move ) srcattribs1 ( up ) dstattribs1 ( N )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribmove1
+opexprlanguage -s hscript $attribmove1
+opuserdata -n '___Version___' -v '19.0.383' $attribmove1
+opset -p on $attribmove1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $attribmove1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $attribmove1
+    if ($arg8) then
+        opwire -n -i $arg6 -0 $input
+    else
+        opwire -n -o $oidx $arg6 -0 $input
+    endif
+endif
+opcf $saved_path
+'''
+hou.hscript(h_preamble + h_extra_args + h_cmd)
+]]></script>
+  </tool>
+
+  <tool name="attribRest2" label="Attribute Rest" icon="SOP_attribswap">
+    <helpURL>operator:Sop/attribswap</helpURL>
+    <toolMenuContext name="network">
+      <contextOpType>Sop/attribswap</contextOpType>
+    </toolMenuContext>
+    <toolSubmenu>Five elements Elf/Preset</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+import sys
+import toolutils
+
+outputitem = None
+inputindex = -1
+inputitem = None
+outputindex = -1
+
+num_args = 1
+h_extra_args = ''
+pane = toolutils.activePane(kwargs)
+if not isinstance(pane, hou.NetworkEditor):
+    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+    if pane is None:
+       hou.ui.displayMessage(
+               'Cannot create node: cannot find any network pane')
+       sys.exit(0)
+else: # We're creating this tool from the TAB menu inside a network editor
+    pane_node = pane.pwd()
+    if "outputnodename" in kwargs and "inputindex" in kwargs:
+        outputitem = pane_node.item(kwargs["outputnodename"])
+        inputindex = kwargs["inputindex"]
+        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
+        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
+        num_args = 6
+    if "inputnodename" in kwargs and "outputindex" in kwargs:
+        inputitem = pane_node.item(kwargs["inputnodename"])
+        outputindex = kwargs["outputindex"]
+        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
+        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
+        num_args = 9 
+    if "autoplace" in kwargs:
+        autoplace = kwargs["autoplace"]
+    else:
+        autoplace = False
+    # If shift-clicked we want to auto append to the current
+    # node
+    if "shiftclick" in kwargs and kwargs["shiftclick"]:
+        if inputitem is None:
+            inputitem = pane.currentNode()
+            outputindex = 0
+    if "nodepositionx" in kwargs and             "nodepositiony" in kwargs:
+        try:
+            pos = [ float( kwargs["nodepositionx"] ),
+                    float( kwargs["nodepositiony"] )]
+        except:
+            pos = None
+    else:
+        pos = None
+
+    if not autoplace and not pane.listMode():
+        if pos is not None:
+            pass
+        elif outputitem is None:
+            pos = pane.selectPosition(inputitem, outputindex, None, -1)
+        else:
+            pos = pane.selectPosition(inputitem, outputindex,
+                                      outputitem, inputindex)
+
+    if pos is not None:
+        if "node_bbox" in kwargs:
+            size = kwargs["node_bbox"]
+            pos[0] -= size[0] / 2
+            pos[1] -= size[1] / 2
+        else:
+            pos[0] -= 0.573625
+            pos[1] -= 0.220625
+        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
+        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
+h_extra_args += 'set argc = "' + str(num_args) + '"\n'
+            
+pane_node = pane.pwd()
+child_type = pane_node.childTypeCategory().nodeTypes()
+
+if 'attribswap' not in child_type:
+   hou.ui.displayMessage(
+           'Cannot create node: incompatible pane network type')
+   sys.exit(0)
+
+# First clear the node selection
+pane_node.setSelected(False, True)
+
+h_path = pane_node.path()
+h_preamble = 'set arg1 = "' + h_path + '"\n'
+h_cmd = r''' 
+if ($argc < 2 || "$arg2" == "") then
+   set arg2 = 0
+endif
+if ($argc < 3 || "$arg3" == "") then
+   set arg3 = 0
+endif
+# Automatically generated script
+# $arg1 - the path to add this node
+# $arg2 - x position of the tile
+# $arg3 - y position of the tile
+# $arg4 - input node to wire to
+# $arg5 - which input to wire to
+# $arg6 - output node to wire to
+# $arg7 - the type of this node
+# $arg8 - the node is an indirect input
+# $arg9 - index of output from $arg6
+
+\set noalias = 1
+set saved_path = `execute("oppwf")`
+opcf $arg1
+
+# Node $attribRest1 (Sop/attribswap)
+set attribRest1 = `run("opadd -e -n -v attribswap attribRest1")`
+oplocate -x `$arg2 + 0` -y `$arg3 + 0` $attribRest1
+opparm $attribRest1  numswaps ( 1 )
+chblockbegin
+chadd -t 0 0 $attribRest1 enable1
+chkey -t 0 -v 1 -m 0 -a 0 -A 0 -T a  -F 'if(strcmp(chs("dstattribs1"), chs("srcattribs1"))==0, 0, 1)' $attribRest1/enable1
+chblockend
+opparm -V 18.5.532 $attribRest1 enable1 ( enable1 ) dstattribs1 ( 'rest_`chs("srcattribs1")`' )
+opset -d on -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $attribRest1
+opexprlanguage -s hscript $attribRest1
+opuserdata -n '___Version___' -v '18.5.532' $attribRest1
+opset -p on $attribRest1
+
+opcf $arg1
+
+set oidx = 0
+if ($argc >= 9 && "$arg9" != "") then
+    set oidx = $arg9
+endif
+
+if ($argc >= 5 && "$arg4" != "") then
+    set output = $attribRest1
+    opwire -n $output -$arg5 $arg4
+endif
+if ($argc >= 6 && "$arg6" != "") then
+    set input = $attribRest1
     if ($arg8) then
         opwire -n -i $arg6 -0 $input
     else
