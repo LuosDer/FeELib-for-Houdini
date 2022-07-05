@@ -390,6 +390,9 @@ sortvertex_fee
 polycut_nebcount_fee
 attribextremum_fee
 attribextremum_fee::2.0
+maximumclique_fee
+maximumclique_fee::2.0
+
 
 polybounding_wn_fee
 polybounding_groupsop_fee
