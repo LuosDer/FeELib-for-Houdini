@@ -295,7 +295,6 @@ polyexpand2d_fee::2.0
 polyexpand2d_fee
 FeE::polyExpand2d_curve::1.0
 FeE::polyExpand2d_closedCurve::1.0
-FeE::isClosedSharedPts
 FeE::mergeWithPack
 convexpoly_minarea_fee
 packeachprim_fee
@@ -392,6 +391,19 @@ attribextremum_fee
 attribextremum_fee::2.0
 maximumclique_fee
 maximumclique_fee::2.0
+pack_connectivity_fee
+FeE::isClosedSharedPts
+FeE::isClosedSharedPts::1.0
+curveuv_fee
+curveuv_uvtexture_fee
+resample_origpt_fee
+resample_preserve_origpts_fee
+
+
+
+
+
+
 
 
 polybounding_wn_fee

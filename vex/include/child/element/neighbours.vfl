@@ -158,23 +158,42 @@ int[] neighbours_pointgroup(
     return result;
 }
 
+// function
+// int[] neighbours_edgegroup(
+//     const int geo;
+//     const string groupname;
+//     const int ptnum;
+//     ) {
+//     int result[], nebcount = neighbourcount(geo, ptnum);
+//     resize(result, nebcount);
+//     int len = 0;
+//     for (int i = 0; i < nebcount; ++i) {
+//         int neb = neighbour(geo, ptnum, i);
+//         if ( !inedgegroup(geo, groupname, ptnum, neb) ) continue;
+//         result[len] = neb;
+//         ++len;
+//     }
+//     resize(result, len);
+//     return result;
+// }
+
 function
 int[] neighbours_edgegroup(
     const int geo;
     const string groupname;
     const int ptnum;
     ) {
-    int result[], nebcount = neighbourcount(geo, ptnum);
-    resize(result, nebcount);
+    int nebs[] = neighbours(geo, ptnum);
+    int nebcount = len(nebs);
     int len = 0;
     for (int i = 0; i < nebcount; ++i) {
-        int neb = neighbour(geo, ptnum, i);
+        int neb = nebs[i];
         if ( !inedgegroup(geo, groupname, ptnum, neb) ) continue;
-        result[len] = neb;
+        nebs[len] = neb;
         ++len;
     }
-    resize(result, len);
-    return result;
+    resize(nebs, len);
+    return nebs;
 }
 
 function
