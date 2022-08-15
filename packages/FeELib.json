@@ -95,6 +95,7 @@
                     "$FeELib/otls/Filter/Deform/Curve",
                     "$FeELib/otls/Filter/Deform/Morph",
                     "$FeELib/otls/Filter/Deform/NDC",
+                    "$FeELib/otls/Filter/Delete",
                     "$FeELib/otls/Filter/Enumerate",
                     "$FeELib/otls/Filter/Fracture",
                     "$FeELib/otls/Filter/Generator",

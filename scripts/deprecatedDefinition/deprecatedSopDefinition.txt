@@ -398,7 +398,7 @@ curveuv_fee
 curveuv_uvtexture_fee
 resample_origpt_fee
 resample_preserve_origpts_fee
-
+FeE::volumeFromPoints::1.0
 
 
 
