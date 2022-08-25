@@ -21,7 +21,6 @@
     <memberTool name="attribDel_fbx1"/>
     <memberTool name="attribMove_uvP1"/>
     <memberTool name="pieceAttribPromote1"/>
-    <memberTool name="attribNoise"/>
     <memberTool name="attribCreateMat"/>
     <memberTool name="attribCreateCd1"/>
     <memberTool name="attribCreateUp1"/>
@@ -36,13 +35,8 @@
     <memberTool name="groupClosed1"/>
     <memberTool name="groupDelAll"/>
     <memberTool name="groupVis1"/>
-    <memberTool name="groupCopy FeE"/>
-    <memberTool name="groupDel1"/>
-    <memberTool name="groupExpand"/>
-    <memberTool name="groupPromote1"/>
     <memberTool name="groupSubtract"/>
     <memberTool name="groupUnion1"/>
-    <memberTool name="groupRename1"/>
     <memberTool name="groupIntersect1"/>
     <memberTool name="groupByVertexCount1"/>
     <memberTool name="transform_centroid1"/>
@@ -106,7 +100,6 @@
     <memberTool name="pointGenPerPrim1"/>
     <memberTool name="extractCurveEnds"/>
     <memberTool name="brickerPolys1"/>
-    <memberTool name="extractAllPoints"/>
     <memberTool name="surfaceShatter1"/>
     <memberTool name="groupRest1"/>
     <memberTool name="packHiddenOrigin"/>
