@@ -399,10 +399,11 @@ curveuv_uvtexture_fee
 resample_origpt_fee
 resample_preserve_origpts_fee
 FeE::volumeFromPoints::1.0
-
-
-
-
+explodeview_fee
+FeE::delLastPoints::1.0
+polycut_fee
+FeE::polyCut::1.0
+FeE::polyCut::2.0
 
 
 
