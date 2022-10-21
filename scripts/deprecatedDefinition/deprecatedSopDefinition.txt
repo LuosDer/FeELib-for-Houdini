@@ -8,7 +8,6 @@ FeE::box
 
 
 
-
 file_fbx_fee
 packintrinsics_fee
 groupbybearing_fee
@@ -404,6 +403,8 @@ FeE::delLastPoints::1.0
 polycut_fee
 FeE::polyCut::1.0
 FeE::polyCut::2.0
+curvesubtract_fee
+curvesubtract_fee::1.0
 
 
 
