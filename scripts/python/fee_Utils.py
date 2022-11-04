@@ -74,12 +74,15 @@ def getAbsPath(path):
 
 
 
-def gitPullByBat(repositoryPath, reloadAllFiles = False):
+def gitPullByBat(repositoryPath, reloadAllFiles = False, echoOff = True):
     absRepositoryPath = getAbsPath(repositoryPath)
 
-    command = repositoryPath[:2] + '\n'
-    command += 'cd ' + repositoryPath + '\n'
-    command += 'git pull'
+    command = repositoryPath[:2]
+    command += '\n' + 'cd ' + repositoryPath
+    command += '\n' + 'git pull'
+    if not echoOff:
+        command += '\n' + 'pause'
+
     #print(command)
 
     createAndRunBat_HoudiniTEMP(command, 'feE_Utils_GitPull.bat')
