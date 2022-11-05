@@ -429,3 +429,6 @@ FeE::blastMultiPiece::1.0
 FeE::closedCurveExpand2d::2.0
 
 attribscale_fee::1.0
+FeE::uvScaletoWorldSize::1.0
+FeE::uvScaletoWorldSize::1.5
+FeE::uvScaletoWorldSize::2.0
