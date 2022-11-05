@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\Houdini\FeELib-for-Houdini\cpp\SOP_FeE\SOP_FeE.C">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\Houdini\FeELib-for-Houdini\cpp\SOP_FeE\SOP_FeE.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\Houdini\FeELib-for-Houdini\cpp\SOP_FeE\build\CMakeFiles\2f36c38d6b08f91a423b5612305e639f\SOP_FeE.proto.h.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\Houdini\FeELib-for-Houdini\cpp\SOP_FeE\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{8517080F-9E62-384A-9101-2A8B169EE2A2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{AD14B312-97BE-357F-9011-2D0AC28A5E94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{BACA1ABA-498A-3468-8519-752EDF670285}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

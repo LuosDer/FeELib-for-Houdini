@@ -1,0 +1,10 @@
+^D:\HOUDINI\FEELIB-FOR-HOUDINI\CPP\SOP_FEE\BUILD\CMAKEFILES\5AD23C3AB25EBE5FC18BA9B713526FCA\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Houdini/FeELib-for-Houdini/cpp/SOP_FeE -BD:/Houdini/FeELib-for-Houdini/cpp/SOP_FeE/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/Houdini/FeELib-for-Houdini/cpp/SOP_FeE/build/HDK_SOP_FeE_Project.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

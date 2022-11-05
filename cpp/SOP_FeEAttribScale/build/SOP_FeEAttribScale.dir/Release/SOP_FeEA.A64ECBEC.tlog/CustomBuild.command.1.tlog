@@ -1,0 +1,24 @@
+^D:\HOUDINI\FEELIB-FOR-HOUDINI\CPP\SOP_FEEATTRIBSCALE\BUILD\CMAKEFILES\29D888CD9545F7C76004B6A0942CFFC8\SOP_FEEATTRIBSCALE.PROTO.H.RULE
+setlocal
+cd D:\Houdini\FeELib-for-Houdini\cpp\SOP_FeEAttribScale
+if %errorlevel% neq 0 goto :cmEnd
+D:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\Side Effects Software\Houdini 19.0.531\python37\python3.7" "C:/Program Files/Side Effects Software/Houdini 19.0.531/houdini/python3.7libs/generate_proto.py" SOP_FeEAttribScale.C D:/Houdini/FeELib-for-Houdini/cpp/SOP_FeEAttribScale/build/SOP_FeEAttribScale.proto.h
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^D:\HOUDINI\FEELIB-FOR-HOUDINI\CPP\SOP_FEEATTRIBSCALE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Houdini/FeELib-for-Houdini/cpp/SOP_FeEAttribScale -BD:/Houdini/FeELib-for-Houdini/cpp/SOP_FeEAttribScale/build --check-stamp-file D:/Houdini/FeELib-for-Houdini/cpp/SOP_FeEAttribScale/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

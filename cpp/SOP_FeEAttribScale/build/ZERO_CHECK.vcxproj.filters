@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\Houdini\FeELib-for-Houdini\cpp\SOP_FeEAttribScale\build\CMakeFiles\92a73d0b0157bca34506488d28c87c66\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{B8A68D7A-83A7-33B3-8EA3-F0D32AA7FFBF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
