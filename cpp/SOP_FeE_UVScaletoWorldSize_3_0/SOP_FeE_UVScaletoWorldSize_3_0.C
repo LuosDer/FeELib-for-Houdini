@@ -20,14 +20,23 @@
 #include <SYS/SYS_Math.h>
 #include <limits.h>
 
+#include <GA/GA_Primitive.h>
+
 
 #include <UT/UT_UniquePtr.h>
 #include <GA/GA_SplittableRange.h>
 #include <HOM/HOM_SopNode.h>
 
 
+#include <GU/GU_Measure.h>
+#include <GEO/GEO_SplitPoints.h>
+
+#include "GU_FeE_measure.h"
 
 using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
+
+using attribPrecisonF = fpreal32;
+using TAttribTypeV = UT_Vector3F;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -38,7 +47,7 @@ using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
 
 /// This is the internal name of the SOP type.
 /// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName("FeE::attribScale::1.0"_sh);
+const UT_StringHolder SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName("FeE::uvScaletoWorldSize::3.0"_sh);
 
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case, we add ourselves
@@ -48,7 +57,7 @@ newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
         SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName,   // Internal name
-        "FeE Attribute Scale",     // UI name
+        "FeE UV Scale to World Size",                     // UI name
         SOP_FeE_UVScaletoWorldSize_3_0::myConstructor,    // How to build the SOP
         SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates(), // My parameters
         1,                         // Min # of sources
@@ -166,8 +175,29 @@ static const char *theDsFile = R"THEDSFILE(
         default { 1 }
         range   { 0! 10 }
     }
+    parm {
+        name    "uvSplitDistThreshold"
+        cppname "UVSplitDistThreshold"
+        label   "UV Split Distance Threshold"
+        type    float
+        default { 1 }
+        range   { 0! 10 }
+    }
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 16 }
+        range   { 0! 256 }
+    }
 }
 )THEDSFILE";
+
+
+
+
+
 
 PRM_Template*
 SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
@@ -176,6 +206,19 @@ SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
     return templ.templates();
 }
 
+
+//class SOP_FeE_UVScaletoWorldSize_3_0Cache : public SOP_NodeCache
+//{
+//public:
+//    SOP_FeE_UVScaletoWorldSize_3_0Cache() : SOP_NodeCache(),
+//        myPrevOutputDetailID(-1)
+//    {}
+//    ~SOP_FeE_UVScaletoWorldSize_3_0Cache() override {}
+//
+//    int64 myPrevOutputDetailID;
+//};
+
+
 class SOP_FeE_UVScaletoWorldSize_3_0Verb : public SOP_NodeVerb
 {
 public:
@@ -183,14 +226,15 @@ public:
     virtual ~SOP_FeE_UVScaletoWorldSize_3_0Verb() {}
 
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_UVScaletoWorldSize_3_0Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_UVScaletoWorldSize_3_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
     virtual void cook(const CookParms &cookparms) const;
-    
+
     /// This static data member automatically registers
-    /// this verb class at library load time.
+    /// this verb class at library ldir0d time.
     static const SOP_NodeVerb::Register<SOP_FeE_UVScaletoWorldSize_3_0Verb> theVerb;
 };
 
@@ -238,17 +282,22 @@ sopGroupType(SOP_FeE_UVScaletoWorldSize_3_0Parms::GroupType parmgrouptype)
 }
 
 
+
+
+
 void
 SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_UVScaletoWorldSize_3_0Parms>();
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    //auto sopcache = (SOP_FeE_UVScaletoWorldSize_3_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
 
+    //outGeo0 = sopNodeProcess(*inGeo0);
 
 
     const bool doUVScalex = sopparms.getDoUVScalex();
@@ -265,9 +314,26 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     GOP_Manager gop;
-    fpreal uniScale = sopparms.getUVScale();
+    attribPrecisonF uniScale = sopparms.getUVScale();
+    attribPrecisonF uvScalex = sopparms.getUVScalex();
+    attribPrecisonF uvScaley = sopparms.getUVScaley();
+    attribPrecisonF uvScalez = sopparms.getUVScalez();
     GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getUVAttribClass());
-    const int minGrainSize = pow(2, 13);
+    //const int minGrainSize = pow(2, 8);
+    const int minGrainSize = pow(2, 4);
+    //fpreal uvSplitDistThreshold = sopparms.getUVSplitDistThreshold();
+    attribPrecisonF uvSplitDistThreshold = 1e-05;
+    exint subscribeRatio = sopparms.getSubscribeRatio();
+
+
+    //const GA_Storage fpreal_storage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
+    const GA_Storage fpreal_storage = GA_STORE_REAL32;
+
+
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
+
 
 
 
@@ -306,11 +372,6 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
 
-    UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
-        return;
-
-
 
 
 
@@ -332,25 +393,72 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
                 geo0AttribClassFinal = GA_ATTRIB_POINT;
             else
                 return;
-                //continue;
+            //continue;
         }
     }
     else
     {
         attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub);
         if (!attribPtr)
+        {
             return;
             //continue;
+        }
         geo0AttribClassFinal = geo0AttribClass;
     }
+    GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
+
+
+
+    //UT_StringHolder measuredperimeterName("measuredperimeter");
+    //outGeo0->clearAndDestroy();
+    // 
+    //GA_Attribute* areaIntrinsicAttribPtr = outGeo0->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PRIVATE, "intrinsic:measuredarea");
+    //if (!areaIntrinsicAttribPtr)
+    //{
+    //    GA_Offset newpt = outGeo0->appendPoint();
+
+    //    outGeo0->setPos3(newpt, 0, 1, 0);
+    //    //outGeo0->setPos3(newpt, { 0,0,0 });
+    //    areaIntrinsicAttribPtr = outGeo0->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, "intrinsic:measuredarea");
+    //    if (!areaIntrinsicAttribPtr)
+    //    {
+    //        newpt = outGeo0->appendPoint();
+    //        outGeo0->setPos3(newpt, 0, 2, 0);
+    //        //outGeo0->setPos3(newpt, { 0,0,0 });
+    //        return;
+    //    }
+    //    return;
+    //}
+    //GA_RWHandleT<fpreal> areaIntrinsicAttribHandle(areaIntrinsicAttribPtr);
+
+
+
+
+    //GU_Detail* tmpGeo0 = outGeo0;
+    //GEOsplitPointsByAttrib(tmpGeo0, nullptr, attribPtr, uvSplitDistThreshold);
+
+#if 1
+    GA_ATINumericUPtr areaATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, fpreal_storage, 1);
+    GA_ATINumeric* areaATIPtr = areaATI_deleter.get();
+    GA_RWHandleT<attribPrecisonF> areaAttribHandle(areaATIPtr);
+#else
+    GA_Attribute* areaAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, "area", 1, GA_Defaults(0.0), 0, 0, fpreal_storage);
+    GA_RWHandleT<attribPrecisonF> areaAttribHandle(areaAttribPtr);
+#endif
+
+
+
+    GU_FeE_measure::polyArea(outGeo0, areaAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio);
+
+
 
     int attribSize = attribPtr->getTupleSize();
 
 
-    using TAttribType = UT_Vector3F;
 
 
-    GA_RWHandleT<TAttribType> attribHandle(attribPtr);
+
 
     //template <typename T>
     switch (attribSize)
@@ -363,6 +471,10 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
 
+    return;
+
+
+    /*
 
     switch (geo0AttribClassFinal)
     {
@@ -394,7 +506,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        TAttribType attribValue = attribHandle.get(elemoff);
+                        TAttribTypeV attribValue = attribHandle.get(elemoff);
                         attribValue.normalize();
                         attribValue *= uniScale;
                         attribHandle.set(elemoff, attribValue);
@@ -431,7 +543,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        TAttribType attribValue = attribHandle.get(elemoff);
+                        TAttribTypeV attribValue = attribHandle.get(elemoff);
                         attribValue.normalize();
                         attribValue *= uniScale;
                         attribHandle.set(elemoff, attribValue);
@@ -445,8 +557,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         UT_ASSERT_MSG(0, "Unhandled outGeo0 class type!");
     }
 
-
     attribHandle->bumpDataId();
+    */
     //why bumpDataId() while winding number.c did it
 
 

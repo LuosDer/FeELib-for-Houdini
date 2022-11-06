@@ -34,11 +34,28 @@ protected:
     
     ~SOP_FeE_AttribScale_1_0() override {}
 
+
     /// Since this SOP implements a verb, cookMySop just delegates to the verb.
     OP_ERROR cookMySop(OP_Context &context) override
     {
         return cookMyselfAsVerb(context);
     }
+    const char* inputLabel(unsigned idx) const override
+    {
+        switch (idx)
+        {
+        case 0:     return "Geo";
+        default:    return "Invalid Source";
+        }
+    }
+
+    int isRefInput(unsigned i) const override
+    {
+        // First or second input both use dotted lines
+        return (i != 0);
+    }
+
+
 };
 } // End SOP_FeE_AttribScale_1_0_Namespace namespace
 

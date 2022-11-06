@@ -39,6 +39,23 @@ protected:
     {
         return cookMyselfAsVerb(context);
     }
+
+    const char* inputLabel(unsigned idx) const override
+    {
+        switch (idx)
+        {
+        case 0:     return "Mesh with UV";
+        default:    return "Invalid Source";
+        }
+    }
+
+    int isRefInput(unsigned i) const override
+    {
+        // First or second input both use dotted lines
+        return (i != 0);
+    }
+
+
 };
 } // End SOP_FeE_UVScaletoWorldSize_3_0_Namespace namespace
 

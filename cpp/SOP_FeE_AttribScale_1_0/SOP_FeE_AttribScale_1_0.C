@@ -208,6 +208,12 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     fpreal uniScale = sopparms.getUniScale();
     const int minGrainSize = pow(2, 13);
 
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
+
+    using TAttribTypeV = UT_Vector3F;
+
 
 
 
@@ -244,10 +250,6 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
-        return;
-
 
 
 
@@ -269,12 +271,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         return;
 
     int attribSize = attribPtr->getTupleSize();
-
-
-    using TAttribType = UT_Vector3F;
-
-
-    GA_RWHandleT<TAttribType> attribHandle(attribPtr);
+    GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
 
     //template <typename T>
     switch (attribSize)
@@ -349,7 +346,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    TAttribType attribValue = attribHandle.get(elemoff);
+                    TAttribTypeV attribValue = attribHandle.get(elemoff);
                     attribValue.normalize();
                     attribValue *= uniScale;
                     attribHandle.set(elemoff, attribValue);
@@ -385,7 +382,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                TAttribType attribValue = attribHandle.get(elemoff);
+                TAttribTypeV attribValue = attribHandle.get(elemoff);
                 attribValue.normalize();
                 attribValue *= uniScale;
                 attribHandle.set(elemoff, attribValue);
@@ -403,7 +400,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    TAttribType attribValue = attribHandle.get(elemoff);
+                    TAttribTypeV attribValue = attribHandle.get(elemoff);
                     attribValue.normalize();
                     attribValue *= uniScale;
                     attribHandle.set(elemoff, attribValue);
@@ -442,7 +439,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    TAttribType attribValue = attribHandle.get(elemoff);
+                    TAttribTypeV attribValue = attribHandle.get(elemoff);
                     attribValue.normalize();
                     attribValue *= uniScale;
                     attribHandle.set(elemoff, attribValue);

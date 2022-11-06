@@ -19,6 +19,7 @@ houdini_generate_proto_headers( FILES SOP_FeE_UVScaletoWorldSize_3_0.C )
 
 # Add a library and its source files.
 add_library( ${library_name} SHARED
+    GU_FeE_measure.h
     SOP_FeE_UVScaletoWorldSize_3_0.C
     SOP_FeE_UVScaletoWorldSize_3_0.h
 )
