@@ -24,7 +24,7 @@ namespace GU_FeE_measure {
 
 
 using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3F;
+using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 
 
