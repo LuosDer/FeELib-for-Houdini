@@ -432,3 +432,5 @@ attribscale_fee::1.0
 FeE::uvScaletoWorldSize::1.0
 FeE::uvScaletoWorldSize::1.5
 FeE::uvScaletoWorldSize::2.0
+attribrescale_fee::2.0
+attribrescale_fee::1.0

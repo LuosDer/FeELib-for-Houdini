@@ -1,4 +1,4 @@
 
 @echo off
 
-start %HFSS%\toolkit\include
+start "" "%HFSS%\toolkit\include"

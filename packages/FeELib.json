@@ -3,7 +3,7 @@
     "path": [
         {        
             "value" : "$LibPath/FeELib-for-Houdini",
-            "method" : "prepend",
+            "method" : "prepend"
         },
     ],
     "env": [
@@ -14,32 +14,30 @@
             "HOUDINI_SCRIPT_PATH": {
                 "method": "prepend",
                 "value": [
-                    "$FeELib/scripts",
+                    "$FeELib/scripts"
                 ]
             }
         },
         {
             "HOUDINI_DSO_PATH": {
-                "method": "append", 
                 "value": [
                     {
-                        "houdini_version >= '18.5' and houdini_version < '19.0'": "$FeELib/dso/18.5"
+                        "houdini_version >= '18.5' and houdini_version < '19.0'": "$FeELib/dso/18.5",
                     },
                     {
-                        "houdini_version >= '19.0' and houdini_version < '19.5'": "$FeELib/dso/19.0"
+                        "houdini_version >= '19.0' and houdini_version < '19.5'": "$FeELib/dso/19.0",
                     },
                     {
-                        "houdini_version >= '19.5' and houdini_version < '20.0'": "$FeELib/dso/19.5"
+                        "houdini_version >= '19.5' and houdini_version < '20.0'": "$FeELib/dso/19.5",
                     },
                     {
-                        "houdini_version >= '20.0' and houdini_version < '20.5'": "$FeELib/dso/20.0"
-                    },
-                ]
-            }
+                        "houdini_version >= '20.0' and houdini_version < '20.5'": "$FeELib/dso/20.0",
+                    }
+                ],
+            },
         },
         {
             "HOUDINI_VEX_DSO_PATH": {
-                "method": "append", 
                 "value": [
                     {
                         "houdini_version >= '18.5' and houdini_version < '19.0'": "$FeELib/dso/18.5/vex"
