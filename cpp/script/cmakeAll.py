@@ -6,17 +6,19 @@ import os
 
 doCreate = True
 
-inputVSVersion = input('plz input your Visual Studio Version like 19 or 20 (default is 19)')
+inputVSVersion = input('plz input your Visual Studio Version like 19 or 22 (default is 19)')
 inputVSVersion = inputVSVersion.strip()
 
 try:
     inputVSVersion = int(inputVSVersion)
-    if inputVSVersion == 18:
-        parm_VSVersion = "Visual Studio 15 2018"
+    if inputVSVersion == 15:
+        parm_VSVersion = "Visual Studio 14 2015"
+    elif inputVSVersion == 17:
+        parm_VSVersion = "Visual Studio 15 2017"
     elif inputVSVersion == 19:
         parm_VSVersion = "Visual Studio 16 2019"
-    elif inputVSVersion == 20:
-        parm_VSVersion = "Visual Studio 17 2020"
+    elif inputVSVersion == 22:
+        parm_VSVersion = "Visual Studio 17 2022"
     else:
         parm_VSVersion = "Visual Studio 16 2019"
 except:
@@ -26,18 +28,24 @@ except:
 
 
 
-HFS_envKey = "HFSS"
+
+HFS_envKey = "HFS"
 
 if HFS_envKey in os.environ:
     parm_DCMAKE_PREFIX_PATH = os.environ[HFS_envKey] + "\\toolkit\\cmake"
     parm_DCMAKE_PREFIX_PATH = os.path.realpath(parm_DCMAKE_PREFIX_PATH)
 else:
+    HFS_envKey = "HFSS"
+    if HFS_envKey in os.environ:
+        parm_DCMAKE_PREFIX_PATH = os.environ[HFS_envKey] + "\\toolkit\\cmake"
+        parm_DCMAKE_PREFIX_PATH = os.path.realpath(parm_DCMAKE_PREFIX_PATH)
+    else:
+        doCreate = False
 
-    parm_DCMAKE_PREFIX_PATH = "C:\\Program Files\\Side Effects Software\\Houdini 19.0.498\\toolkit\\cmake"
 
 
 # print(parm_DCMAKE_PREFIX_PATH)
-if not os.path.exists(parm_DCMAKE_PREFIX_PATH):
+if doCreate and not os.path.exists(parm_DCMAKE_PREFIX_PATH):
     doCreate = False
 
 

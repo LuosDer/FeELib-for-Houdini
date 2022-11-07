@@ -6,23 +6,6 @@ import os
 
 doCreate = True
 
-inputVSVersion = input('plz input your Visual Studio Version like 19 or 20 (default is 19)')
-inputVSVersion = inputVSVersion.strip()
-
-try:
-    inputVSVersion = int(inputVSVersion)
-    if inputVSVersion == 18:
-        parm_VSVersion = "Visual Studio 15 2018"
-    elif inputVSVersion == 19:
-        parm_VSVersion = "Visual Studio 16 2019"
-    elif inputVSVersion == 20:
-        parm_VSVersion = "Visual Studio 17 2020"
-    else:
-        parm_VSVersion = "Visual Studio 16 2019"
-except:
-    parm_VSVersion = "Visual Studio 16 2019"
-
-
 
 
 
