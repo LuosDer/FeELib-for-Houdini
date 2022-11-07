@@ -58,7 +58,7 @@ if doCreate:
             # continue
             os.chdir(devenvPath)
             command = "devenv.exe \"{0}\" /rebuild \"{1}|x64\"".format(slnAbsFilePath, publishMode)
-            print(command)
+            # print(command)
             os.system(command)
             # os.system("pause")
 
