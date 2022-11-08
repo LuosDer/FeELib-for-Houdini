@@ -1,8 +1,8 @@
 
 #pragma once
 
-#ifndef __GU_FeE_measure_h__
-#define __GU_FeE_measure_h__
+#ifndef __GU_FeE_Measure_h__
+#define __GU_FeE_Measure_h__
 
 
 #include <GU/GU_Detail.h>
@@ -19,7 +19,7 @@
 
 
 
-namespace GU_FeE_measure {
+namespace GU_FeE_Measure {
 
 
 
@@ -358,7 +358,7 @@ polyArea(
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                //attribPrecisonF attribValue = GU_FeE_measure::polyArea(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
+                //attribPrecisonF attribValue = GU_FeE_Measure::polyArea(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
                 attribPrecisonF attribValue = polyArea(geo, elemoff, posAttribHandle);
                 areaAttribHandle.set(elemoff, attribValue);
             }
@@ -394,7 +394,7 @@ polyArea(
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                //attribPrecisonF attribValue = GU_FeE_measure::polyArea(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
+                //attribPrecisonF attribValue = GU_FeE_Measure::polyArea(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
                 attribPrecisonF attribValue = polyArea(geo, elemoff);
                 areaAttribHandle.set(elemoff, attribValue);
             }
@@ -407,6 +407,6 @@ polyArea(
 
 
 
-} // End of namespace GU_FeE_measure
+} // End of namespace GU_FeE_Measure
 
 #endif

@@ -1,12 +1,12 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_UVScaletoWorldSize_3_0.h"
+#include "SOP_FeE_UVScaletoWorldSize_0_5.h"
 
 
 // This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_UVScaletoWorldSize_3_0Parms, an easy way to access parameter values from
-// SOP_FeE_UVScaletoWorldSize_3_0Verb::cook with the correct type.
-#include "SOP_FeE_UVScaletoWorldSize_3_0.proto.h"
+// to provide SOP_FeE_UVScaletoWorldSize_0_5Parms, an easy way to access parameter values from
+// SOP_FeE_UVScaletoWorldSize_0_5Verb::cook with the correct type.
+#include "SOP_FeE_UVScaletoWorldSize_0_5.proto.h"
 
 #include <GU/GU_Detail.h>
 #include <GEO/GEO_PrimPoly.h>
@@ -36,7 +36,7 @@
 #include "GU_FeE/GU_FeE_Connectivity.h"
 
 
-using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
+using namespace SOP_FeE_UVScaletoWorldSize_0_5_Namespace;
 
 using attribPrecisonF = fpreal32;
 using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
@@ -50,7 +50,7 @@ using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 /// This is the internal name of the SOP type.
 /// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName("FeE::uvScaletoWorldSize::3.0"_sh);
+const UT_StringHolder SOP_FeE_UVScaletoWorldSize_0_5::theSOPTypeName("FeE::uvScaletoWorldSize::0.5"_sh);
 
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case, we add ourselves
@@ -59,10 +59,10 @@ void
 newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
-        SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName,   // Internal name
+        SOP_FeE_UVScaletoWorldSize_0_5::theSOPTypeName,   // Internal name
         "FeE UV Scale to World Size",                     // UI name
-        SOP_FeE_UVScaletoWorldSize_3_0::myConstructor,    // How to build the SOP
-        SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates(), // My parameters
+        SOP_FeE_UVScaletoWorldSize_0_5::myConstructor,    // How to build the SOP
+        SOP_FeE_UVScaletoWorldSize_0_5::buildTemplates(), // My parameters
         1,                         // Min # of sources
         1,                         // Max # of sources
         nullptr,                   // Custom local variables (none)
@@ -203,34 +203,34 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 PRM_Template*
-SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
+SOP_FeE_UVScaletoWorldSize_0_5::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_UVScaletoWorldSize_3_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_UVScaletoWorldSize_0_5.C"_sh, theDsFile);
     return templ.templates();
 }
 
 
-//class SOP_FeE_UVScaletoWorldSize_3_0Cache : public SOP_NodeCache
+//class SOP_FeE_UVScaletoWorldSize_0_5Cache : public SOP_NodeCache
 //{
 //public:
-//    SOP_FeE_UVScaletoWorldSize_3_0Cache() : SOP_NodeCache(),
+//    SOP_FeE_UVScaletoWorldSize_0_5Cache() : SOP_NodeCache(),
 //        myPrevOutputDetailID(-1)
 //    {}
-//    ~SOP_FeE_UVScaletoWorldSize_3_0Cache() override {}
+//    ~SOP_FeE_UVScaletoWorldSize_0_5Cache() override {}
 //
 //    int64 myPrevOutputDetailID;
 //};
 
 
-class SOP_FeE_UVScaletoWorldSize_3_0Verb : public SOP_NodeVerb
+class SOP_FeE_UVScaletoWorldSize_0_5Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_UVScaletoWorldSize_3_0Verb() {}
-    virtual ~SOP_FeE_UVScaletoWorldSize_3_0Verb() {}
+    SOP_FeE_UVScaletoWorldSize_0_5Verb() {}
+    virtual ~SOP_FeE_UVScaletoWorldSize_0_5Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_UVScaletoWorldSize_3_0Parms(); }
-    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_UVScaletoWorldSize_3_0Cache(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_UVScaletoWorldSize_3_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_UVScaletoWorldSize_0_5Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_UVScaletoWorldSize_0_5Cache(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_UVScaletoWorldSize_0_5::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -238,26 +238,26 @@ public:
 
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
-    static const SOP_NodeVerb::Register<SOP_FeE_UVScaletoWorldSize_3_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_UVScaletoWorldSize_0_5Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_UVScaletoWorldSize_3_0Verb> SOP_FeE_UVScaletoWorldSize_3_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_UVScaletoWorldSize_0_5Verb> SOP_FeE_UVScaletoWorldSize_0_5Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_UVScaletoWorldSize_3_0::cookVerb() const 
+SOP_FeE_UVScaletoWorldSize_0_5::cookVerb() const 
 { 
-    return SOP_FeE_UVScaletoWorldSize_3_0Verb::theVerb.get();
+    return SOP_FeE_UVScaletoWorldSize_0_5Verb::theVerb.get();
 }
 
 
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_UVScaletoWorldSize_3_0Parms::UVAttribClass attribClass)
+sopAttribOwner(SOP_FeE_UVScaletoWorldSize_0_5Parms::UVAttribClass attribClass)
 {
-    using namespace SOP_FeE_UVScaletoWorldSize_3_0Enums;
+    using namespace SOP_FeE_UVScaletoWorldSize_0_5Enums;
     switch (attribClass)
     {
     case UVAttribClass::AUTO:      return GA_ATTRIB_DETAIL;     break;//not detail but means Auto
@@ -269,9 +269,9 @@ sopAttribOwner(SOP_FeE_UVScaletoWorldSize_3_0Parms::UVAttribClass attribClass)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_UVScaletoWorldSize_3_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_UVScaletoWorldSize_0_5Parms::GroupType parmgrouptype)
 {
-    using namespace SOP_FeE_UVScaletoWorldSize_3_0Enums;
+    using namespace SOP_FeE_UVScaletoWorldSize_0_5Enums;
     switch (parmgrouptype)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
@@ -289,11 +289,11 @@ sopGroupType(SOP_FeE_UVScaletoWorldSize_3_0Parms::GroupType parmgrouptype)
 
 
 void
-SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_UVScaletoWorldSize_3_0Parms>();
+    auto &&sopparms = cookparms.parms<SOP_FeE_UVScaletoWorldSize_0_5Parms>();
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_UVScaletoWorldSize_3_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_UVScaletoWorldSize_0_5Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
@@ -593,6 +593,6 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
 
-namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace {
+namespace SOP_FeE_UVScaletoWorldSize_0_5_Namespace {
 
-} // End SOP_FeE_UVScaletoWorldSize_3_0_Namespace namespace
+} // End SOP_FeE_UVScaletoWorldSize_0_5_Namespace namespace

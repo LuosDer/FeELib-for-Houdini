@@ -66,9 +66,10 @@ if doCreate:
             # print(os.listdir(absBuildPath))
             if os.listdir(absBuildPath):
                 continue
+        else:
+            os.mkdir(absBuildPath)
 
-        os.mkdir(absBuildPath)
-        print(absBuildPath)
+        # print(absBuildPath)
         os.chdir(absBuildPath)
         os.system("cmake -G \"{0}\" .. -DCMAKE_PREFIX_PATH=\"{1}\"".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH))
         # os.system("pause")
