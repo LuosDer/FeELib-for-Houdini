@@ -242,7 +242,6 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-
     const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
     if (!geo0AttribNames.isstring())
         return;
@@ -338,7 +337,6 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     GU_FeE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
-
 
 
 
