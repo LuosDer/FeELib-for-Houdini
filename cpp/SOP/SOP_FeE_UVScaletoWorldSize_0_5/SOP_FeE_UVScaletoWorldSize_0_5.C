@@ -63,7 +63,7 @@ newSopOperator(OP_OperatorTable *table)
         "FeE UV Scale to World Size",                     // UI name
         SOP_FeE_UVScaletoWorldSize_0_5::myConstructor,    // How to build the SOP
         SOP_FeE_UVScaletoWorldSize_0_5::buildTemplates(), // My parameters
-        1,                         // Min # of sources
+        2,                         // Min # of sources
         1,                         // Max # of sources
         nullptr,                   // Custom local variables (none)
         OP_FLAG_GENERATOR));       // Flag it as generator
@@ -295,7 +295,8 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVScaletoWorldSize_0_5Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GU_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GU_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();

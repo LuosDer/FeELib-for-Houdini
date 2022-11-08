@@ -37,7 +37,7 @@ using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 
 template <typename T>
-static GA_Attribute*
+static void
 connectivity(
     const GU_Detail* geo,
     const GA_RWHandleT<T>& attribHandle,
@@ -50,11 +50,10 @@ connectivity(
     const GA_StorageClass storageClass = attrib->getStorageClass();
     const GA_Storage storage = attrib->getStorage();
     const GA_AttributeOwner attribOwner = attrib->getOwner();
-    const GA_AttributeOwner attribOwner = attrib->getOwner();
     //GU_FeE_Connectivity::connectivity(*geo, areaAttribHandle, geoPrimGroup);
 
 #if 1
-    attribHandle->makeConstant(UNREACHED_NUMBER);
+    //attribHandle->makeConstant(UNREACHED_NUMBER);
 #else
     attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
     GU_FeE_Attribute::setToDefault(attribHandle);
@@ -75,7 +74,7 @@ connectivity(
     //    }
     //}
 
-
+    /*
     UT_Array<GA_Offset> processHeap;
     for (GA_Iterator it(r); it.fullBlockAdvance(start, end); )
     {
@@ -100,7 +99,7 @@ connectivity(
             }
             ++classnum;
         }
-    }
+    }*/
 
     attribHandle->bumpDataId();
 }
