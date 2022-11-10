@@ -44,7 +44,7 @@ protected:
     {
         switch (idx)
         {
-        case 0:     return "Mesh with UV";
+        case 0:     return "Geo";
         default:    return "Invalid Source";
         }
     }

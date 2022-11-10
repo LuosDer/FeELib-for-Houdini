@@ -4,6 +4,7 @@
 #ifndef __GU_FeE_Measure_h__
 #define __GU_FeE_Measure_h__
 
+//#include <GU_FeE/GU_FeE_Measure.h>
 
 #include <GU/GU_Detail.h>
 #include <GEO/GEO_PrimPoly.h>
@@ -340,8 +341,8 @@ polyArea(
     const GA_RWHandleF& areaAttribHandle,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
-    const int& subscribeRatio = 16,
-    const int& minGrainSize = 1024
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
 )
 {
     //GU_Measure::computeArea(*geo, areaAttribHandle, geoPrimGroup);
@@ -376,8 +377,8 @@ polyArea(
     const GU_Detail* geo,
     const GA_RWHandleF& areaAttribHandle,
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
-    const int& subscribeRatio = 16,
-    const int& minGrainSize = 1024
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
 )
 {
     //GU_Measure::computeArea(*geo, areaAttribHandle, geoPrimGroup);

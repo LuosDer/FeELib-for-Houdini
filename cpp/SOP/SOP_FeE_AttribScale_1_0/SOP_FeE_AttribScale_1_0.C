@@ -107,12 +107,35 @@ static const char *theDsFile = R"THEDSFILE(
         default { "N" }
     }
     parm {
+        name    "normalize"
+        cppname "Normalize"
+        label   "Normalize"
+        type    toggle
+        default { "1" }
+    }
+    parm {
         name    "uniScale"
         cppname "UniScale"
         label   "Uniform Scale"
         type    float
         default { 1 }
-        range   { 0! 10 }
+        range   { -100 100 }
+    }
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 16 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -205,8 +228,12 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     GOP_Manager gop;
-    fpreal uniScale = sopparms.getUniScale();
-    const int minGrainSize = pow(2, 13);
+
+    const fpreal uniScale = sopparms.getUniScale();
+    const bool doNormalize = sopparms.getNormalize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+    //const int minGrainSize = pow(2, 13);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -336,7 +363,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         }
 
         const GA_SplittableRange geo0SplittableRange(outGeo0->getPrimitiveRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [&attribHandle, &boss, uniScale](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange, [&attribHandle, &boss, doNormalize, uniScale](const GA_SplittableRange& r)
         {
             if (boss.wasInterrupted())
                 return;
@@ -347,12 +374,13 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     TAttribTypeV attribValue = attribHandle.get(elemoff);
-                    attribValue.normalize();
+                    if (doNormalize)
+                        attribValue.normalize();
                     attribValue *= uniScale;
                     attribHandle.set(elemoff, attribValue);
                 }
             }
-        }, 1, minGrainSize);
+        }, subscribeRatio, minGrainSize);
     }
     break;
     case GA_ATTRIB_POINT:
@@ -383,14 +411,15 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 TAttribTypeV attribValue = attribHandle.get(elemoff);
-                attribValue.normalize();
+                if (doNormalize)
+                    attribValue.normalize();
                 attribValue *= uniScale;
                 attribHandle.set(elemoff, attribValue);
             }
         }
 #else
         const GA_SplittableRange geo0SplittableRange(outGeo0->getPointRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [&attribHandle, &boss, uniScale](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange, [&attribHandle, &boss, doNormalize, uniScale](const GA_SplittableRange& r)
         {
             if (boss.wasInterrupted())
                 return;
@@ -401,12 +430,13 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     TAttribTypeV attribValue = attribHandle.get(elemoff);
-                    attribValue.normalize();
+                    if (doNormalize)
+                        attribValue.normalize();
                     attribValue *= uniScale;
                     attribHandle.set(elemoff, attribValue);
                 }
             }
-        }, 1, minGrainSize);
+        }, subscribeRatio, minGrainSize);
 #endif
     }
 
@@ -429,7 +459,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         }
 
         const GA_SplittableRange geo0SplittableRange(outGeo0->getVertexRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [&attribHandle, &boss, uniScale](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange, [&attribHandle, &boss, doNormalize, uniScale](const GA_SplittableRange& r)
         {
             if (boss.wasInterrupted())
                 return;
@@ -440,12 +470,13 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     TAttribTypeV attribValue = attribHandle.get(elemoff);
-                    attribValue.normalize();
+                    if (doNormalize)
+                        attribValue.normalize();
                     attribValue *= uniScale;
                     attribHandle.set(elemoff, attribValue);
                 }
             }
-        }, 1, minGrainSize);
+        }, subscribeRatio, minGrainSize);
     }
 
     break;

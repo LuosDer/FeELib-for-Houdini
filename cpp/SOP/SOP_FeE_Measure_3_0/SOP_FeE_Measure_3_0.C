@@ -31,8 +31,8 @@
 #include <GU/GU_Measure.h>
 #include <GEO/GEO_SplitPoints.h>
 
-#include <GU_FeE_measure.h>
-//#include "GU_FeE_measure.h"
+#include <GU_FeE/GU_FeE_measure.h>
+
 
 using namespace SOP_FeE_Measure_3_0_Namespace;
 
@@ -140,7 +140,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Uniform Scale"
         type    float
         default { 1 }
-        range   { 0! 10 }
+        range   { -10! 10 }
     }
     parm {
         name    "subscribeRatio"
@@ -149,6 +149,14 @@ static const char *theDsFile = R"THEDSFILE(
         type    integer
         default { 16 }
         range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -273,11 +281,15 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     GOP_Manager gop;
     SOP_FeE_Measure_3_0Parms::MeasureType measureType = sopparms.getMeasureType();
-    attribPrecisonF uniScale = sopparms.getUniScale();
+
     GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getPAttribClass());
-    //const int minGrainSize = pow(2, 8);
-    const int minGrainSize = pow(2, 4);
-    exint subscribeRatio = sopparms.getSubscribeRatio();
+    const fpreal uniScale = sopparms.getUniScale();
+
+
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+    //const exint minGrainSize = pow(2, 8);
+    //const exint minGrainSize = pow(2, 4);
 
 
     //const GA_Storage fpreal_storage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
@@ -342,7 +354,7 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (measureType)
         {
         case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-            GU_FeE_measure::polyArea(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio);
+            GU_FeE_Measure::polyArea(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
             break;
@@ -387,10 +399,10 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (measureType)
         {
         case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-            GU_FeE_measure::polyArea(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio);
+            GU_FeE_Measure::polyArea(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-            //GU_FeE_measure::polyPerimeter(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio);
+            //GU_FeE_measure::polyPerimeter(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         default:
             cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");

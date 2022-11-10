@@ -32,8 +32,7 @@
 #include <GU/GU_Promote.h>
 #include <GEO/GEO_SplitPoints.h>
 
-#include "GU_FeE/GU_FeE_Measure.h"
-#include "GU_FeE/GU_FeE_Connectivity.h"
+#include <GU_FeE/GU_FeE_Connectivity.h>
 
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
@@ -60,7 +59,7 @@ newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
         SOP_FeE_Connectivity_1_0::theSOPTypeName,   // Internal name
-        "FeE UV Scale to World Size",                     // UI name
+        "FeE Connectivity",                     // UI name
         SOP_FeE_Connectivity_1_0::myConstructor,    // How to build the SOP
         SOP_FeE_Connectivity_1_0::buildTemplates(), // My parameters
         1,                         // Min # of sources
@@ -100,100 +99,79 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "uvAttribClass"
-        cppname "UVAttribClass"
-        label   "UV Attribute Class"
+        name    "connectivityAttribClass"
+        cppname "ConnectivityAttribClass"
+        label   "Connectivity Attribute Class"
         type    ordinal
-        default { "auto" }
+        default { "prim" }
         menu {
-            "auto"      "Auto"
+            "prim"      "Primitive"
             "point"     "Point"
-            "vertex"    "Vertex"
         }
     }
     parm {
-        name    "uvAttribNames"
-        cppname "UVAttribNames"
-        label   "UV Attribute Names"
+        name    "connectivityAttribName"
+        cppname "ConnectivityAttribName"
+        label   "Connectivity Attribute Name"
+        type    string
+        default { "class" }
+    }
+    parm {
+        name    "connectivityAttribType"
+        cppname "ConnectivityAttribType"
+        label   "Connectivity Attribute Type"
+        type    ordinal
+        default { "int" }
+        menu {
+            "int"        "Integer"
+            "string"     "String"
+        }
+    }
+    parm {
+        name    "seamGroup"
+        cppname "SeamGroup"
+        label   "Seam Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "useUVConnectivity"
+        cppname "UseUVConnectivity"
+        label   "Use UV Connectivity"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "uvAttribName"
+        cppname "UVAttribName"
+        label   "UV Attrib Name"
         type    string
         default { "uv" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
     }
-    parm {
-        name    "computeUVAreaInPiece"
-        cppname "ComputeUVAreaInPiece"
-        label   "Compute UV Area In Pieces"
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "doUVScalex"
-        cppname "DoUVScalex"
-        label   "Do Scale X"
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "doUVScaley"
-        cppname "DoUVScaley"
-        label   "Do Scale Y"
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "doUVScalez"
-        cppname "DoUVScalez"
-        label   "Do Scale Z"
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "uvScalex"
-        cppname "UVScalex"
-        label   "UV Scale X"
-        type    float
-        default { 1 }
-        range   { 0! 10 }
-    }
-    parm {
-        name    "uvScaley"
-        cppname "UVScaley"
-        label   "UV Scale Y"
-        type    float
-        default { 1 }
-        range   { 0! 10 }
-    }
-    parm {
-        name    "uvScalez"
-        cppname "UVScalez"
-        label   "UV Scale Z"
-        type    float
-        default { 1 }
-        range   { 0! 10 }
-    }
-    parm {
-        name    "uvScale"
-        cppname "UVScale"
-        label   "UV Scale"
-        type    float
-        default { 1 }
-        range   { 0! 10 }
-    }
-    parm {
-        name    "uvSplitDistThreshold"
-        cppname "UVSplitDistThreshold"
-        label   "UV Split Distance Threshold"
-        type    float
-        default { 1 }
-        range   { 0! 10 }
-    }
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 16 }
-        range   { 0! 256 }
-    }
+    //parm {
+    //    name    "subscribeRatio"
+    //    cppname "SubscribeRatio"
+    //    label   "Subscribe Ratio"
+    //    type    integer
+    //    default { 16 }
+    //    range   { 0!256 }
+    //}
+    //parm {
+    //    name    "minGrainSize"
+    //    cppname "MinGrainSize"
+    //    label   "Min Grain Size"
+    //    type    intlog
+    //    default { 1024 }
+    //    range   { 0!2048 }
+    //}
 }
 )THEDSFILE";
 
@@ -253,16 +231,28 @@ SOP_FeE_Connectivity_1_0::cookVerb() const
 
 
 
+static exint
+sopAttribType(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
+{
+    using namespace SOP_FeE_Connectivity_1_0Enums;
+    switch (attribType)
+    {
+    case ConnectivityAttribType::INT:        return 0;      break;
+    case ConnectivityAttribType::STRING:     return 1;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Attrib Type!");
+    return -1;
+}
+
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Connectivity_1_0Parms::UVAttribClass attribClass)
+sopAttribOwner(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attribClass)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (attribClass)
     {
-    case UVAttribClass::AUTO:      return GA_ATTRIB_DETAIL;     break;//not detail but means Auto
-    case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case UVAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case ConnectivityAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case ConnectivityAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -287,7 +277,6 @@ sopGroupType(SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
 
 
 
-
 void
 SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -302,38 +291,33 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-
-    const bool doUVScalex = sopparms.getDoUVScalex();
-    const bool doUVScaley = sopparms.getDoUVScaley();
-    const bool doUVScalez = sopparms.getDoUVScalez();
-    if (!doUVScalex && !doUVScaley && !doUVScalez)
-        return;
-
-
-    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttribNames();
+    const UT_StringHolder& geo0AttribNames = sopparms.getConnectivityAttribName();
     if (!geo0AttribNames.isstring())
         return;
 
+    const bool useUVConnectivity = sopparms.getUseUVConnectivity();
+
+    const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
+    if (useUVConnectivity && !uvAttribName.isstring())
+        return;
+
+    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
+    const bool useSeamGroup = seamGroupName.isstring();
 
 
     GOP_Manager gop;
-    const attribPrecisonF uniScale = sopparms.getUVScale();
-    const attribPrecisonF uvScalex = sopparms.getUVScalex();
-    const attribPrecisonF uvScaley = sopparms.getUVScaley();
-    const attribPrecisonF uvScalez = sopparms.getUVScalez();
-    TAttribTypeV uvScale(uvScalex, uvScaley, uvScalez);
-    uvScale *= uniScale;
-    const bool computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getUVAttribClass());
-    //const int minGrainSize = pow(2, 8);
-    const int minGrainSize = pow(2, 4);
-    //fpreal uvSplitDistThreshold = sopparms.getUVSplitDistThreshold();
-    const attribPrecisonF uvSplitDistThreshold = 1e-05;
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
+    const exint connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
+    //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
+
+    //const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = pow(2, 8);
+    //const exint minGrainSize = pow(2, 4);
+    //const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage fpreal_storage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage fpreal_storage = GA_STORE_REAL32;
+    //const GA_Storage inStorage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
+    const GA_Storage inStorage = GA_STORE_INT64;
 
 
     UT_AutoInterrupt boss("Processing");
@@ -367,6 +351,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     }
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
+    /*
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -376,217 +361,14 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     else
         geo0finalGroupType = GA_GROUP_INVALID;
 
+    */
+
+    GA_Attribute* attribPtr = outGeo0->addIntTuple(geo0AttribClass, geo0AttribNames, 1, GA_Defaults(0), 0, 0, inStorage);
+    GA_RWHandleT<exint> attribHandle(attribPtr);
 
 
+    GU_FeE_Connectivity::connectivity(outGeo0, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
 
-
-
-
-
-    UT_StringHolder geo0AttribNameSub = geo0AttribNames;
-
-    GA_AttributeOwner geo0AttribClassFinal;
-    GA_Attribute* attribPtr;
-    if (geo0AttribClass == GA_ATTRIB_DETAIL)//detail means Auto
-    {
-        attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-        if (attribPtr)
-            geo0AttribClassFinal = GA_ATTRIB_VERTEX;
-        else
-        {
-            attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-            if (attribPtr)
-                geo0AttribClassFinal = GA_ATTRIB_POINT;
-            else
-                return;
-            //continue;
-        }
-    }
-    else
-    {
-        attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-        if (!attribPtr)
-        {
-            return;
-            //continue;
-        }
-        geo0AttribClassFinal = geo0AttribClass;
-    }
-    GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
-
-
-
-    //UT_StringHolder measuredperimeterName("measuredperimeter");
-    //outGeo0->clearAndDestroy();
-    // 
-    //GA_Attribute* areaIntrinsicAttribPtr = outGeo0->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PRIVATE, "intrinsic:measuredarea");
-    //if (!areaIntrinsicAttribPtr)
-    //{
-    //    GA_Offset newpt = outGeo0->appendPoint();
-
-    //    outGeo0->setPos3(newpt, 0, 1, 0);
-    //    //outGeo0->setPos3(newpt, { 0,0,0 });
-    //    areaIntrinsicAttribPtr = outGeo0->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, "intrinsic:measuredarea");
-    //    if (!areaIntrinsicAttribPtr)
-    //    {
-    //        newpt = outGeo0->appendPoint();
-    //        outGeo0->setPos3(newpt, 0, 2, 0);
-    //        //outGeo0->setPos3(newpt, { 0,0,0 });
-    //        return;
-    //    }
-    //    return;
-    //}
-    //GA_RWHandleT<fpreal> areaIntrinsicAttribHandle(areaIntrinsicAttribPtr);
-
-
-
-
-    //GU_Detail* tmpGeo0 = outGeo0;
-    //GEOsplitPointsByAttrib(tmpGeo0, nullptr, attribPtr, uvSplitDistThreshold);
-
-#if 1
-    GA_ATINumericUPtr areaATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, fpreal_storage, 1);
-    GA_ATINumeric* areaATIPtr = areaATI_deleter.get();
-    GA_RWHandleT<attribPrecisonF> areaAttribHandle(areaATIPtr);
-    
-    GA_ATINumericUPtr areaUVATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, fpreal_storage, 1);
-    GA_ATINumeric* areaUVATIPtr = areaUVATI_deleter.get();
-    GA_RWHandleT<attribPrecisonF> areaUVAttribHandle(areaUVATIPtr);
-#else
-    GA_Attribute* areaAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, "area", 1, GA_Defaults(0.0), 0, 0, fpreal_storage);
-    GA_RWHandleT<attribPrecisonF> areaAttribHandle(areaAttribPtr);
-#endif
-
-
-
-    //GU_FeE_Measure::polyArea(outGeo0, areaAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
-    //GU_FeE_Measure::polyArea(outGeo0, areaUVAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
-    GU_FeE_Measure::polyArea(outGeo0, areaAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
-    GU_FeE_Measure::polyArea(outGeo0, areaUVAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
-
-    if (computeUVAreaInPiece)
-    {
-        GA_ATINumericUPtr connectivityATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, fpreal_storage, 1);
-        GA_ATINumeric* connectivityATIPtr = connectivityATI_deleter.get();
-        GA_RWHandleT<GA_Size> connectivityAttribHandle(connectivityATIPtr);
-        GU_FeE_Connectivity::connectivity(outGeo0, connectivityAttribHandle);
-#if 1
-        areaAttribHandle = GU_Promote::promote(*outGeo0, areaATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-        areaUVAttribHandle = GU_Promote::promote(*outGeo0, areaUVATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-#else
-        GA_Attribute* areaATIPtr_promote = GU_Promote::promote(*outGeo0, areaATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, nullptr);
-        GA_Attribute* areaUVATIPtr_promote = GU_Promote::promote(*outGeo0, areaUVATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, nullptr);
-
-        areaAttribHandle = areaATIPtr_promote;
-        areaUVAttribHandle = areaUVATIPtr_promote;
-#endif
-    }
-
-
-
-
-    int attribSize = attribPtr->getTupleSize();
-    //template <typename T>
-    switch (attribSize)
-    {
-    case 3:
-        break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled outGeo0 Attrib Size");
-    }
-
-
-
-    switch (geo0AttribClassFinal)
-    {
-    case GA_ATTRIB_POINT:
-    {
-        const GA_PointGroup* geo0PromotedGroup = nullptr;
-        GA_PointGroupUPtr groupDeleter;
-        if (geo0Group)
-        {
-            if (geo0finalGroupType == GA_GROUP_POINT)
-                geo0PromotedGroup = static_cast<const GA_PointGroup*>(geo0Group);
-            else if (geo0finalGroupType == GA_GROUP_VERTEX || geo0finalGroupType == GA_GROUP_PRIMITIVE || geo0finalGroupType == GA_GROUP_EDGE)
-            {
-                GA_PointGroup* newDetachedGroup = new GA_PointGroup(*outGeo0);
-                groupDeleter.reset(newDetachedGroup);
-                newDetachedGroup->combine(geo0Group);
-                geo0PromotedGroup = newDetachedGroup;
-            }
-        }
-
-        const GA_SplittableRange geo0SplittableRange(outGeo0->getPointRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [outGeo0, attribHandle, areaUVAttribHandle, areaAttribHandle, &boss, uvScale](const GA_SplittableRange& r)
-        {
-            if (boss.wasInterrupted())
-                return;
-            GA_Offset start;
-            GA_Offset end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    GA_Offset pointprim = outGeo0->vertexPrimitive(outGeo0->pointVertex(elemoff));
-                    attribPrecisonF areaUV = areaUVAttribHandle.get(pointprim);
-                    attribPrecisonF area = areaAttribHandle.get(pointprim);
-                        
-                    TAttribTypeV attribValue = attribHandle.get(elemoff);
-                    attribValue *= uvScale * area / areaUV;
-                    attribHandle.set(elemoff, attribValue);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-    break;
-    case GA_ATTRIB_VERTEX:
-    {
-        const GA_VertexGroup* geo0PromotedGroup = nullptr;
-        GA_VertexGroupUPtr groupDeleter;
-        if (geo0Group)
-        {
-            if (geo0finalGroupType == GA_GROUP_VERTEX)
-                geo0PromotedGroup = static_cast<const GA_VertexGroup*>(geo0Group);
-            else if (geo0finalGroupType == GA_GROUP_PRIMITIVE || geo0finalGroupType == GA_GROUP_POINT || geo0finalGroupType == GA_GROUP_EDGE)
-            {
-                GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
-                groupDeleter.reset(newDetachedGroup);
-                newDetachedGroup->combine(geo0Group);
-                geo0PromotedGroup = newDetachedGroup;
-            }
-        }
-
-        const GA_SplittableRange geo0SplittableRange(outGeo0->getVertexRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [outGeo0, attribHandle, areaUVAttribHandle, areaAttribHandle, &boss, uvScale](const GA_SplittableRange& r)
-            {
-                if (boss.wasInterrupted())
-                    return;
-                GA_Offset start;
-                GA_Offset end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        GA_Offset pointprim = outGeo0->vertexPrimitive(elemoff);
-                        attribPrecisonF areaUV = areaUVAttribHandle.get(pointprim);
-                        attribPrecisonF area = areaAttribHandle.get(pointprim);
-
-                        TAttribTypeV attribValue = attribHandle.get(elemoff);
-                        attribValue *= uvScale * area / areaUV;
-                        attribHandle.set(elemoff, attribValue);
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-    }
-
-    break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled outGeo0 class type!");
-    }
-
-    attribHandle->bumpDataId();
-    
-    //why bumpDataId() while winding number.c did it
 
 
 }

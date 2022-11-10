@@ -134,6 +134,14 @@ static const char *theDsFile = R"THEDSFILE(
         default { 16 }
         range   { 0! 256 }
     }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
+    }
 }
 )THEDSFILE";
 
@@ -251,8 +259,11 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GOP_Manager gop;
     //const attribPrecisonF uniScale = sopparms.getUniScale();
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-    const int minGrainSize = pow(2, 4);
+
+
     const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+    //const int minGrainSize = pow(2, 4);
 
 
     //const GA_Storage fpreal_storage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
@@ -264,6 +275,11 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
 
 
+    if (geo0AttribClass == GA_ATTRIB_DETAIL)
+    {
+        //GU_FeE_Attribute::setToDefault(outGeo0, attribHandle);
+        return;
+    }
 
 
 
@@ -306,37 +322,35 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     UT_StringHolder geo0AttribNameSub = geo0AttribNames;
 
-    GA_AttributeOwner geo0AttribClassFinal;
-    GA_Attribute* attribPtr;
-    if (geo0AttribClass == GA_ATTRIB_DETAIL)//detail means Auto
-    {
-        attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-        if (attribPtr)
-            geo0AttribClassFinal = GA_ATTRIB_VERTEX;
-        else
-        {
-            attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-            if (attribPtr)
-                geo0AttribClassFinal = GA_ATTRIB_POINT;
-            else
-                return;
-            //continue;
-        }
-    }
-    else
-    {
-        attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-        if (!attribPtr)
-        {
-            return;
-            //continue;
-        }
-        geo0AttribClassFinal = geo0AttribClass;
-    }
+    GA_Attribute* attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub);
+    if (!attribPtr)
+        return;
+
+#if 0
+    GU_FeE_Attribute::setToDefault(outGeo0, attribPtr, geo0Group);
+#else
     GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
-
-
     GU_FeE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
+#endif  
+    //GA_Attribute* attribPtr;
+    //switch (geo0AttribClass)
+    //{
+    //case GA_ATTRIB_VERTEX:
+    //    attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, geo0AttribNameSub);
+    //    if (!attribPtr)
+    //        return;
+    //    break;
+    //case GA_ATTRIB_POINT:
+    //    break;
+    //case GA_ATTRIB_PRIMITIVE:
+    //    break;
+    //default:
+    //    return;
+    //}
+    //
+
+
+    
 
 
 
