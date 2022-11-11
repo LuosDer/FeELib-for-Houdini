@@ -52,24 +52,25 @@ heronsFormula(
 
 
 
-static attribPrecisonF
+template<typename T>
+static T
 bretschneidersFormula0(
-    const TAttribTypeV& pos0,
-    const TAttribTypeV& pos1,
-    const TAttribTypeV& pos2,
-    const TAttribTypeV& pos3
+    const UT_Vector3T<T>& pos0,
+    const UT_Vector3T<T>& pos1,
+    const UT_Vector3T<T>& pos2,
+    const UT_Vector3T<T>& pos3
 )
 {
     //Bretschneider's formula 0
     //https://en.wikipedia.org/wiki/Bretschneider's_formula
     //https://zhuanlan.zhihu.com/p/101219058
     //https://zhuanlan.zhihu.com/p/110025234
-    attribPrecisonF length0 = pos0.distance2(pos1);
-    attribPrecisonF length1 = pos1.distance2(pos2);
-    attribPrecisonF length2 = pos2.distance2(pos3);
-    attribPrecisonF length3 = pos3.distance2(pos0);
-    attribPrecisonF e = pos0.distance2(pos2);
-    attribPrecisonF f = pos1.distance2(pos3);
+    T length0 = pos0.distance2(pos1);
+    T length1 = pos1.distance2(pos2);
+    T length2 = pos2.distance2(pos3);
+    T length3 = pos3.distance2(pos0);
+    T e = pos0.distance2(pos2);
+    T f = pos1.distance2(pos3);
     e *= f;//e == (ef)
     f = length1 + length3 - length0 - length2;
     f *= f;
@@ -81,35 +82,35 @@ bretschneidersFormula0(
 //typedef bretschneidersFormula0 quadrangleArea;
 
 
-static attribPrecisonF
+template<typename T>
+static T
 bretschneidersFormula1(
-    const TAttribTypeV& pos0,
-    const TAttribTypeV& pos1,
-    const TAttribTypeV& pos2,
-    const TAttribTypeV& pos3
+    const UT_Vector3T<T>& pos0,
+    const UT_Vector3T<T>& pos1,
+    const UT_Vector3T<T>& pos2,
+    const UT_Vector3T<T>& pos3
 )
 {
     //Bretschneider's formula 1
-    attribPrecisonF area;
-    attribPrecisonF length0 = pos0.distance(pos1);
-    attribPrecisonF length1 = pos1.distance(pos2);
-    attribPrecisonF length2 = pos2.distance(pos3);
-    attribPrecisonF length3 = pos3.distance(pos0);
+    T area;
+    T length0 = pos0.distance(pos1);
+    T length1 = pos1.distance(pos2);
+    T length2 = pos2.distance(pos3);
+    T length3 = pos3.distance(pos0);
 
-    attribPrecisonF length4 = pos0.distance(pos2);
-    attribPrecisonF length5 = pos1.distance(pos3);
+    T length4 = pos0.distance(pos2);
+    T length5 = pos1.distance(pos3);
 
     length5 *= length4;
     length4 = length0 * length2 + length1 * length3;
 
-    attribPrecisonF halfP = (length0 + length1 + length2 + length3) * 0.5;
+    T halfP = (length0 + length1 + length2 + length3) * 0.5;
     //areaSum = sqrt((halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
     //        - length0 * length1 * length2 * length3 * (cos(angle) + 1) * 0.5);
     area = (halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
         - (length4 + length5) * (length4 - length5) * 0.25;
     return sqrt(area);
 }
-
 
 
 

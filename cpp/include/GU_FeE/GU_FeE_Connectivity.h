@@ -22,7 +22,7 @@
 //#include <GA/GA_Handle.h>
 //#include <GA/GA_ATINumeric.h>
 
-//#include <GEO_FeE/GEO_FeE_Adjacent.h>
+//#include <GEO_FeE/GEO_FeE_Adjacency.h>
 #include <GU_FeE/GU_FeE_Attribute.h>
 
 #include <time.h>
@@ -85,7 +85,7 @@ connectivity(
     //    }
     //}
 
-    using timeTtype = std::milli;
+    //using timeTtype = std::milli;
     //time_t timeTotal, timeSub, timeStart, timeEnd;
 
     //time(&timeTotal);
@@ -101,7 +101,7 @@ connectivity(
 
 
 
-#if 1
+#if 0
     geo->forEachPrimitive([&geo, &attribHandle, &classnum, &adjElems, &adjElem, &timeTotal, &elemHeap](const GA_Offset& elemoff)
     {
         auto start = std::chrono::steady_clock::now();
@@ -166,23 +166,15 @@ connectivity(
                 continue;
             //if (elemHeap.size() == 0)
             //elemHeap.append(elemoff);
-            auto start = std::chrono::steady_clock::now();
 
             elemHeap.emplace_back(elemoff);
 
-            auto end = std::chrono::steady_clock::now();
-            timeTotal += std::chrono::duration_cast<timeTtype>(end - start).count();
 
             //while (elemHeap.capacity() > 0)
             while (elemHeap.size() > 0)
             {
-                start = std::chrono::steady_clock::now();
-
                 elemHeapLast = elemHeap.last();
                 elemHeap.removeLast();
-
-                end = std::chrono::steady_clock::now();
-                timeTotal += std::chrono::duration_cast<timeTtype>(end - start).count();
 
                 attribHandle.set(elemHeapLast, classnum);
 
@@ -193,7 +185,6 @@ connectivity(
                 
                 //difftime(timeEnd, timeStart);
                 //GA_Offset* nebs = getPointPointEdgeAdjacent();
-                start = std::chrono::steady_clock::now();
                 for (GA_Size i = 0; i < numAdj; ++i)
                 {
                     //GEO_Detail::EdgeAdjacencyData adjElem = adjElems[i];
@@ -207,19 +198,18 @@ connectivity(
                     elemHeap.emplace_back(adjElem);
 
                 }
-                end = std::chrono::steady_clock::now();
-                timeTotal += std::chrono::duration_cast<timeTtype>(end - start).count();
             } // after this while loop, elemHeap.size() == 0
             ++classnum;
         }
     }
 #endif
     attribHandle->bumpDataId();
+
 #if 1
 #if 1
     //GA_Attribute* attribPtrDebug = geo->createAttribute(GA_ATTRIB_DETAIL, "time", nullptr, nullptr, nullptr);
     //GA_RWHandleT<fpreal> attribHandleDebug(attribPtrDebug);
-    geo->setDetailAttributeF("time", timeTotal);
+    //geo->setDetailAttributeF("time", timeTotal);
     //char *asStr2;
     //sprintf(asStr2, "%lf", timeTotal);
     //geo->setDetailAttributeS("timestr", asStr2);

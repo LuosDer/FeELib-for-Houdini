@@ -34,6 +34,7 @@
 
 #include <GU_FeE/GU_FeE_Connectivity.h>
 
+#include <GEO_FeE/GEO_FeE_Adjacency.h>
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
 
