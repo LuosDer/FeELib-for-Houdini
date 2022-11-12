@@ -564,19 +564,29 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_RWHandleT<exint> intAttribHandle;
     if (calPointPointEdge)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
+        
+        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
+        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorage);
         attribHandle.bind(attribPtr);
+        GEO_FeE_Adjacency::pointPointEdge(outGeo0, attribHandle,
+            static_cast<const GA_PointGroup*>(geo0Group), nullptr,
+            subscribeRatio, minGrainSize);
     }
 
     if (calPointPointPrim)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
+        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, 0, 0, inStorage);
+        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
         attribHandle.bind(attribPtr);
+        //GEO_FeE_Adjacency::pointPointPrim(outGeo0, attribHandle,
+        //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
+        //    subscribeRatio, minGrainSize);
     }
 
     if (calPrimPrimEdge)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
+        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, 0, 0, inStorage);
+        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
         attribHandle.bind(attribPtr);
         GEO_FeE_Adjacency::primPrimEdge(outGeo0, attribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
@@ -585,7 +595,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calPrimPrimPoint)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
+        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, 0, 0, inStorage);
+        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(-1), 0, 0, inStorage);
         attribHandle.bind(attribPtr);
     }
     
