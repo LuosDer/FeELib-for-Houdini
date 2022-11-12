@@ -342,8 +342,14 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     if (boss.wasInterrupted())
         return;
 
+    GA_ATINumericUPtr  a = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, )
     
-
+    GA_RWHandleT<UT_ValArray<exint>> attribHandle;
+    GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorage);
+    attribHandle.bind(attribPtr);
+    GEO_FeE_Adjacency::pointPointEdge(outGeo0, attribHandle,
+        static_cast<const GA_PointGroup*>(geo0Group), nullptr,
+        subscribeRatio, minGrainSize);
 
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
