@@ -160,13 +160,14 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
-
     parm {
        name    "outSrcPrims"
        cppname "OutSrcPrims"
        label   "Source Prims"
        type    toggle
        default { 0 }
+        nolabel
+        joinnext
     }
     parm {
         name    "srcPrimsAttribName"
@@ -174,6 +175,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Source Prims Attrib Name"
         type    string
         default { "srcPrims" }
+        disablewhen "{ outSrcPrims == 0 }"
     }
 
 
@@ -284,6 +286,119 @@ sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmgrouptype)
 
 
 
+
+//// Calls functor on every active offset in this index map.
+//template<typename FUNCTOR>
+//SYS_FORCE_INLINE
+//void forEachOffset(GA_IndexMap& idxmap, FUNCTOR&& functor)
+//{
+//    if (idxmap.isTrivialMap())
+//    {
+//        const GA_Offset end = GA_Offset(GA_Size(idxmap.indexSize()));
+//        for (GA_Offset off(0); off != end; ++off)
+//        {
+//            functor(off, off);
+//        }
+//    }
+//    else
+//    {
+//        const GA_Offset veryend(idxmap.myMaxOccupiedOffset + 1);
+//        GA_Size idx(0);
+//        GA_Offset off(0);
+//        while (true)
+//        {
+//            off = idxmap.findActiveOffset(off, veryend);
+//            GA_Offset end = idxmap.findInactiveOffset(off, veryend);
+//            if (off == end)
+//                break;
+//            do
+//            {
+//                functor(off, idx);
+//                ++off;
+//                ++idx;
+//            } while (off != end);
+//        }
+//    }
+//}
+
+
+template<typename FUNCTOR>
+static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const GA_ElementGroup* group = nullptr, bool complement = false)
+{
+    // Fall back to regular case if no group.
+    //if (!group)
+    //{
+    //    if (!complement)
+    //        index_map.forEachOffset(functor);
+    //    return;
+    //}
+
+    // Group order is only relevant if not complemented.
+    if (!complement)
+    {
+        const GA_ElementGroupOrder* order = group->getOrdered();
+        if (order)
+        {
+            GA_Size idx(0);
+            for (GA_ElementGroupOrderIndex i(0), n(order->entries()); i != n; ++i)
+            {
+                GA_Offset off = order->getElement(i);
+				functor(off, idx);
+                ++idx;
+            }
+            return;
+        }
+    }
+
+    // We have a group, treated as unordered.
+    const GA_Offset veryend = index_map.offsetSize();
+    GA_Size idx(0);
+    GA_Offset off(0);
+    while (true)
+    {
+        bool value;
+        GA_Size span_size;
+        group->getConstantSpan(off, veryend, span_size, value);
+        if (span_size == 0)
+            break;
+        if (value == complement)
+        {
+            off += span_size;
+            continue;
+        }
+        const GA_Offset span_end = off + span_size;
+        while (true)
+        {
+            off = index_map.findActiveOffset(off, span_end);
+            GA_Offset end = index_map.findInactiveOffset(off, span_end);
+            if (off == end)
+                break;
+            do
+            {
+                functor(off, idx);
+                ++off;
+                ++idx;
+            } while (off != end);
+        }
+    }
+}
+
+template<typename FUNCTOR>
+SYS_FORCE_INLINE
+void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool complement, FUNCTOR&& functor)
+{
+    forEachOffset(functor, geo->getPrimitiveMap(), group, complement);
+}
+
+//template<typename FUNCTOR>
+//SYS_FORCE_INLINE
+//void forEachVertex(GA_Detail* geo, const GA_VertexGroup* group, bool complement, FUNCTOR&& functor)
+//{
+//    forEachOffset(functor, geo->getVertexMap(), group, complement);
+//}
+
+
+
 void
 SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -293,7 +408,8 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWithPoints(*inGeo0);
+    //outGeo0->replaceWithPoints(*inGeo0);
+    outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
 
     //outGeo0 = sopNodeProcess(*inGeo0);
@@ -305,6 +421,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     const GA_PointGroupUPtr groupDeleter = outGeo0->createDetachedPointGroup();
     //const GA_PointGroup group = outGeo0->newDetachedPointGroup();
+    const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
     if (primGroupName.isstring())
     {
 
@@ -335,26 +452,130 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     //const exint minGrainSize = pow(2, 4);
 
     //const GA_Storage inStorage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage inStorage = GA_STORE_INT64;
+    const GA_Storage inStorageI = GA_STORE_INT64;
+    const GA_Storage inStorageF = GA_STORE_REAL64;
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_ATINumericUPtr  a = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, )
-    
-    GA_RWHandleT<UT_ValArray<exint>> attribHandle;
-    GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorage);
-    attribHandle.bind(attribPtr);
-    GEO_FeE_Adjacency::pointPointEdge(outGeo0, attribHandle,
-        static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-        subscribeRatio, minGrainSize);
 
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+    GA_VertexGroup* geo0VtxGroup = nullptr;
+    GA_VertexGroupUPtr geo0vtxGroupUPtr;
+    if (hasInputGroup)
+    {
+        geo0vtxGroupUPtr = outGeo0->createDetachedVertexGroup();
+        geo0VtxGroup = geo0vtxGroupUPtr.get();
+    }
 
 
-    outGeo0->appendPrimitiveBlock();
+#if 0
+    const GA_VertexGroupUPtr creatingGroupUPtr = outGeo0->createDetachedVertexGroup();
+    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
+#else
+    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
+#endif
+
+
+
+#if 0
+    const GA_ATINumericUPtr vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
+#else
+    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
+#endif
+    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
+    vtxpnumAttribHandle.bind(vtxpnumATI);
+
+    GEO_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, geo0VtxGroup);
+
+
+
+    //    GA_RWHandleT<UT_ValArray<GA_Offset>> intArrayAttribHandle;
+    //#if 0
+    //    UT_Options attribOption;
+    //    attribOption.setOptionFArray();
+    //    GA_AttributeUPtr deleter = outGeo0->createDetachedAttribute(GA_ATTRIB_PRIMITIVE, "", &attribOption)
+    //#else
+    //    const UT_StringHolder pointPointEdgeAttribName = "__pointPointEdge_SOP_FeE_ConvertLine_1_0";
+    //    GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorageI);
+    //#endif
+
+
+    //GEO_FeE_Adjacency::vertexVertexNextEquiv(outGeo0, , vtxpnumAttribHandle,
+    //    static_cast<const GA_VertexGroup*>(geo0VtxGroup));
+
+
+
+    const GA_SplittableRange geo0SplittableRange0(outGeo0->getVertexRange(geo0VtxGroup));
+    UTparallelFor(geo0SplittableRange0, [&outGeo0, &vtxpnumAttribHandle, &creatingGroup, &boss](const GA_SplittableRange& r)
+    {
+        if (boss.wasInterrupted())
+            return;
+        GA_Offset start;
+        GA_Offset end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                //GA_Offset dstvtx = GEO_FeE_Adjacency::vertexVertexDst(outGeo0, outGeo0->vertexPrimitive(elemoff), vtxpnumAttribHandle.get(elemoff));
+                GA_Offset dstpt = GEO_FeE_Adjacency::vertexPointDst(outGeo0, outGeo0->vertexPrimitive(elemoff), vtxpnumAttribHandle.get(elemoff));
+                GA_Offset vtxNextEquiv = GEO_FeE_Adjacency::vertexVertexNextEquiv(outGeo0, elemoff, dstpt);
+
+                if (vtxNextEquiv < 0)
+                {
+                    creatingGroup->setElement(elemoff, true);
+                    vtxpnumAttribHandle.set(elemoff, dstpt);
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+
+    //attribHandle->bumpDataId();
+    creatingGroup->invalidateGroupEntries();
+    GA_Size entries = creatingGroup->getGroupEntries();
+
+
+    outGeo0->setDetailAttributeI("entries", entries);
+
+
+    GA_Offset vtxoff_first;
+    GA_Offset primoff_first = outGeo0->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+#if 0
+    GA_Topology& topo = outGeo0->getTopology();
+    forEachVertex(outGeo0, creatingGroup, false, [&outGeo0, &topo, &vtxoff_first, &vtxpnumAttribHandle](GA_Offset vtxoff, GA_Size elemidx)
+    {
+        GA_Offset vtxoff_cur = vtxoff_first + elemidx;
+        topo.wireVertexPoint(vtxoff_cur, outGeo0->vertexPoint(vtxoff));
+        topo.wireVertexPoint(vtxoff_cur+1, vtxpnumAttribHandle.get(vtxoff));
+    });
+#else
+    GA_Topology& topo = outGeo0->getTopology();
+
+    GA_Size elemidx = 0;
+    GA_Offset start;
+    GA_Offset end;
+    for (GA_Iterator it(outGeo0->getVertexRange(creatingGroup)); it.blockAdvance(start, end); )
+    {
+        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
+        {
+#if 1
+            topo.wireVertexPoint(vtxoff_first, outGeo0->vertexPoint(vtxoff));
+            ++vtxoff_first;
+            topo.wireVertexPoint(vtxoff_first, vtxpnumAttribHandle.get(vtxoff));
+            ++vtxoff_first;
+#else
+            topo.wireVertexPoint(vtxoff_first + elemidx, outGeo0->vertexPoint(vtxoff));
+            ++elemidx;
+            topo.wireVertexPoint(vtxoff_first + elemidx, vtxpnumAttribHandle.get(vtxoff));
+            ++elemidx;
+#endif
+        }
+    }
+#endif
+
+
 
 
 }
