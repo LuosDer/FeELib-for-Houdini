@@ -575,7 +575,28 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     }
 #endif
 
+#if 1
+    outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
+#else
+    //copy in GEO_SplitPoints.C
+    outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
+    outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_VERTEX);
 
+    GA_ATITopology* topoATI = topo.getPointRef();
+    if (topoATI)
+        topoATI->bumpDataId();
+    topoATI = topo.getVertexNextRef();
+    if (topoATI)
+        topoATI->bumpDataId();
+    topoATI = topo.getVertexPrevRef();
+    if (topoATI)
+        topoATI->bumpDataId();
+    // Edge groups might also be affected, if any edges
+    // were on points that were split, so we bump their
+    // data IDs, just in case.
+    //outGeo0->edgeGroups().bumpAllDataIds();
+    outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
+#endif
 
 
 }
