@@ -199,13 +199,17 @@ namespace GEO_FeE_Adjacency {
             nextVtx = geo->vertexToNextVertex(nextVtx);
         }
 
-        nextVtx = geo->pointVertex(dstpt);
         GA_Offset ptnum = geo->vertexPoint(vtxoff);
+        nextVtx = geo->pointVertex(dstpt);
         while (nextVtx != GA_INVALID_OFFSET)
         {
             nextVtxDstpt = vertexPointDst(geo, nextVtx);
             if (nextVtxDstpt == ptnum)
+            {
+                if (dstpt < ptnum)
+                    return -1;
                 return nextVtx;
+            }
             nextVtx = geo->vertexToNextVertex(nextVtx);
         }
         return -1;
@@ -649,57 +653,18 @@ namespace GEO_FeE_Adjacency {
                     }
                 }
             }, subscribeRatio, minGrainSize);
-
         attribHandle->bumpDataId();
-
     }
 
 
 
+
     //Get all vertices NextEquiv Vertex
-    template<typename T>
     static void
         vertexVertexNextEquiv(
             const GA_Detail* geo,
-            const GA_RWHandleT<T>& attribHandle,
-            const GA_ROHandleT<T>& vtxpnumAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 16,
-            const exint& minGrainSize = 1024
-        )
-    {
-        UT_AutoInterrupt boss("vertexVertexNextEquiv");
-
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &vtxpnumAttribHandle, &boss](const GA_SplittableRange& r)
-            {
-                if (boss.wasInterrupted())
-                    return;
-                GA_Offset start;
-                GA_Offset end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attribHandle.set(elemoff, vertexVertexNextEquiv(geo, elemoff, geo->vertexPrimitive(elemoff), vtxpnumAttribHandle.get(elemoff)));
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-
-        attribHandle->bumpDataId();
-
-    }
-
-
-
-
-    //Get all vertices NextEquiv Vertex
-    template<typename T>
-    static void
-        vertexVertexNextEquivDstpt(
-            const GA_Detail* geo,
-            const GA_RWHandleT<T>& attribHandle,
-            const GA_ROHandleT<T>& dstptAttribHandle,
+            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
             const GA_VertexGroup* geoGroup = nullptr,
             const exint& subscribeRatio = 16,
             const exint& minGrainSize = 1024
@@ -712,19 +677,137 @@ namespace GEO_FeE_Adjacency {
             {
                 if (boss.wasInterrupted())
                     return;
+
                 GA_Offset start;
                 GA_Offset end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attribHandle.set(elemoff, vertexVertexNextEquiv(geo, elemoff, dstptAttribHandle.get(elemoff)));
+                        GA_Offset dstpt = dstptAttribHandle.get(elemoff);
+                        if (dstpt < 0)
+                        {
+                            attribHandle.set(elemoff, -1);
+                            continue;
+                        }
+
+
+                        GA_Offset nextVtx = geo->vertexToNextVertex(elemoff);
+                        while (nextVtx != GA_INVALID_OFFSET)
+                        {
+                            if (dstptAttribHandle.get(nextVtx) == dstpt)
+                            {
+                                dstpt = -1;
+                                break;
+                            }
+                            nextVtx = geo->vertexToNextVertex(nextVtx);
+                        }
+
+                        if (dstpt < 0)
+                        {
+                            attribHandle.set(elemoff, -1);
+                            continue;
+                        }
+
+                        nextVtx = geo->pointVertex(dstpt);
+                        GA_Offset ptnum = geo->vertexPoint(elemoff);
+                        while (nextVtx != GA_INVALID_OFFSET)
+                        {
+                            if (dstptAttribHandle.get(nextVtx) == ptnum)
+                            {
+                                if (dstpt < ptnum)
+                                {
+                                    break;
+                                }
+                                attribHandle.set(elemoff, nextVtx);
+                            }
+                            nextVtx = geo->vertexToNextVertex(nextVtx);
+                        }
+                        attribHandle.set(elemoff, -1);
                     }
                 }
             }, subscribeRatio, minGrainSize);
 
         attribHandle->bumpDataId();
+    }
 
+
+
+    //Get all vertices NextEquiv Vertex
+    static void
+        vertexVertexNextEquiv(
+            const GA_Detail* geo,
+            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            GA_VertexGroup* validGroup,
+            const GA_VertexGroup* geoGroup = nullptr,
+            const exint& subscribeRatio = 16,
+            const exint& minGrainSize = 1024
+        )
+    {
+        UT_AutoInterrupt boss("vertexVertexNextEquiv");
+
+        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle, &validGroup, &boss](const GA_SplittableRange& r)
+        {
+            if (boss.wasInterrupted())
+                return;
+
+            GA_Offset start;
+            GA_Offset end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    GA_Offset dstpt = dstptAttribHandle.get(elemoff);
+                    if (dstpt < 0)
+                    {
+                        attribHandle.set(elemoff, -1);
+                        validGroup->setElement(elemoff, true);
+                        continue;
+                    }
+
+
+                    GA_Offset nextVtx = geo->vertexToNextVertex(elemoff);
+                    while (nextVtx != GA_INVALID_OFFSET)
+                    {
+                        if (dstptAttribHandle.get(nextVtx) == dstpt)
+                        {
+                            dstpt = -1;
+                            break;
+                        }
+                        nextVtx = geo->vertexToNextVertex(nextVtx);
+                    }
+
+                    if (dstpt < 0)
+                    {
+                        attribHandle.set(elemoff, -1);
+                        validGroup->setElement(elemoff, true);
+                        continue;
+                    }
+
+                    nextVtx = geo->pointVertex(dstpt);
+                    GA_Offset ptnum = geo->vertexPoint(elemoff);
+                    while (nextVtx != GA_INVALID_OFFSET)
+                    {
+                        if (dstptAttribHandle.get(nextVtx) == ptnum)
+                        {
+                            if (dstpt < ptnum)
+                            {
+                                break;
+                            }
+                            attribHandle.set(elemoff, nextVtx);
+                        }
+                        nextVtx = geo->vertexToNextVertex(nextVtx);
+                    }
+                    attribHandle.set(elemoff, -1);
+                    validGroup->setElement(elemoff, true);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+
+        attribHandle->bumpDataId();
+        validGroup->invalidateGroupEntries();
     }
 
 

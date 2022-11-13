@@ -408,9 +408,14 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    //outGeo0->replaceWithPoints(*inGeo0);
-    outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
+    outGeo0->replaceWithPoints(*inGeo0);
+
+
+    GU_DetailHandle tmpGeoH0;
+    GU_Detail* tmpGeo0 = new GU_Detail();
+    tmpGeoH0.allocateAndSet(tmpGeo0);
+    tmpGeo0->replaceWith(*inGeo0);
+
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
@@ -419,30 +424,34 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     const UT_StringHolder& vertexGroupName = sopparms.getVertexGroup();
     const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
 
-    const GA_PointGroupUPtr groupDeleter = outGeo0->createDetachedPointGroup();
-    //const GA_PointGroup group = outGeo0->newDetachedPointGroup();
+
     const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
-    if (primGroupName.isstring())
+    GA_VertexGroup* geo0VtxGroup = nullptr;
+    GA_VertexGroupUPtr geo0vtxGroupUPtr;
+    if (hasInputGroup)
     {
+        geo0vtxGroupUPtr = tmpGeo0->createDetachedVertexGroup();
+        geo0VtxGroup = geo0vtxGroupUPtr.get();
+        if (primGroupName.isstring())
+        {
 
+        }
+
+        if (pointGroupName.isstring())
+        {
+
+        }
+
+        if (vertexGroupName.isstring())
+        {
+
+        }
+
+        if (edgeGroupName.isstring())
+        {
+
+        }
     }
-
-    if (pointGroupName.isstring())
-    {
-
-    }
-
-    if (vertexGroupName.isstring())
-    {
-
-    }
-
-    if (edgeGroupName.isstring())
-    {
-
-    }
-
-    GOP_Manager gop;
 
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
 
@@ -461,17 +470,10 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
         return;
 
 
-    GA_VertexGroup* geo0VtxGroup = nullptr;
-    GA_VertexGroupUPtr geo0vtxGroupUPtr;
-    if (hasInputGroup)
-    {
-        geo0vtxGroupUPtr = outGeo0->createDetachedVertexGroup();
-        geo0VtxGroup = geo0vtxGroupUPtr.get();
-    }
+    
 
-
-#if 0
-    const GA_VertexGroupUPtr creatingGroupUPtr = outGeo0->createDetachedVertexGroup();
+#if 1
+    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
     GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
 #else
     GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
@@ -479,98 +481,71 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
 
 
-#if 0
-    const GA_ATINumericUPtr vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+#if 1
+    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
     GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
+
+    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
 #else
     GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
 #endif
+
     GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
+    GA_RWHandleT<GA_Size> dstptAttribHandle;
     vtxpnumAttribHandle.bind(vtxpnumATI);
+    dstptAttribHandle.bind(vtxpnumATI);
 
-    GEO_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, geo0VtxGroup);
+    GEO_FeE_Adjacency::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
 
+    GEO_FeE_Adjacency::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
+
+    GEO_FeE_Adjacency::vertexVertexNextEquiv(tmpGeo0, vtxpnumAttribHandle, dstptAttribHandle, creatingGroup, geo0VtxGroup);
 
 
     //    GA_RWHandleT<UT_ValArray<GA_Offset>> intArrayAttribHandle;
     //#if 0
     //    UT_Options attribOption;
     //    attribOption.setOptionFArray();
-    //    GA_AttributeUPtr deleter = outGeo0->createDetachedAttribute(GA_ATTRIB_PRIMITIVE, "", &attribOption)
+    //    GA_AttributeUPtr deleter = tmpGeo0->createDetachedAttribute(GA_ATTRIB_PRIMITIVE, "", &attribOption)
     //#else
     //    const UT_StringHolder pointPointEdgeAttribName = "__pointPointEdge_SOP_FeE_ConvertLine_1_0";
-    //    GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorageI);
+    //    GA_Attribute* attribPtr = tmpGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorageI);
     //#endif
 
 
-    //GEO_FeE_Adjacency::vertexVertexNextEquiv(outGeo0, , vtxpnumAttribHandle,
-    //    static_cast<const GA_VertexGroup*>(geo0VtxGroup));
+    //outGeo0->setDetailAttributeI("entries", entries);
 
 
-
-    const GA_SplittableRange geo0SplittableRange0(outGeo0->getVertexRange(geo0VtxGroup));
-    UTparallelFor(geo0SplittableRange0, [&outGeo0, &vtxpnumAttribHandle, &creatingGroup, &boss](const GA_SplittableRange& r)
-    {
-        if (boss.wasInterrupted())
-            return;
-        GA_Offset start;
-        GA_Offset end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
-        {
-            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-            {
-                //GA_Offset dstvtx = GEO_FeE_Adjacency::vertexVertexDst(outGeo0, outGeo0->vertexPrimitive(elemoff), vtxpnumAttribHandle.get(elemoff));
-                GA_Offset dstpt = GEO_FeE_Adjacency::vertexPointDst(outGeo0, outGeo0->vertexPrimitive(elemoff), vtxpnumAttribHandle.get(elemoff));
-                GA_Offset vtxNextEquiv = GEO_FeE_Adjacency::vertexVertexNextEquiv(outGeo0, elemoff, dstpt);
-
-                if (vtxNextEquiv < 0)
-                {
-                    creatingGroup->setElement(elemoff, true);
-                    vtxpnumAttribHandle.set(elemoff, dstpt);
-                }
-            }
-        }
-    }, subscribeRatio, minGrainSize);
-
-    //attribHandle->bumpDataId();
-    creatingGroup->invalidateGroupEntries();
     GA_Size entries = creatingGroup->getGroupEntries();
-
-
-    outGeo0->setDetailAttributeI("entries", entries);
-
 
     GA_Offset vtxoff_first;
     GA_Offset primoff_first = outGeo0->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+
+
+    GA_Topology& topo = outGeo0->getTopology();
+
 #if 0
     GA_Topology& topo = outGeo0->getTopology();
-    forEachVertex(outGeo0, creatingGroup, false, [&outGeo0, &topo, &vtxoff_first, &vtxpnumAttribHandle](GA_Offset vtxoff, GA_Size elemidx)
+    forEachVertex(tmpGeo0, creatingGroup, false, [&tmpGeo0, &topo, &vtxoff_first, &vtxpnumAttribHandle](GA_Offset vtxoff, GA_Size elemidx)
     {
         GA_Offset vtxoff_cur = vtxoff_first + elemidx;
         topo.wireVertexPoint(vtxoff_cur, outGeo0->vertexPoint(vtxoff));
         topo.wireVertexPoint(vtxoff_cur+1, vtxpnumAttribHandle.get(vtxoff));
     });
 #else
-    GA_Topology& topo = outGeo0->getTopology();
 
     GA_Size elemidx = 0;
     GA_Offset start;
     GA_Offset end;
-    for (GA_Iterator it(outGeo0->getVertexRange(creatingGroup)); it.blockAdvance(start, end); )
+    for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.blockAdvance(start, end); )
     {
         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
         {
-#if 1
-            topo.wireVertexPoint(vtxoff_first, outGeo0->vertexPoint(vtxoff));
+            topo.wireVertexPoint(vtxoff_first, tmpGeo0->vertexPoint(vtxoff));
             ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, vtxpnumAttribHandle.get(vtxoff));
+            topo.wireVertexPoint(vtxoff_first, dstptAttribHandle.get(vtxoff));
             ++vtxoff_first;
-#else
-            topo.wireVertexPoint(vtxoff_first + elemidx, outGeo0->vertexPoint(vtxoff));
-            ++elemidx;
-            topo.wireVertexPoint(vtxoff_first + elemidx, vtxpnumAttribHandle.get(vtxoff));
-            ++elemidx;
-#endif
         }
     }
 #endif
@@ -598,8 +573,9 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
 #endif
 
-
+    //tmpGeoH0.deleteGdp();
 }
+
 
 
 
