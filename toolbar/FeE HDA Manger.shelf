@@ -16,6 +16,7 @@
     <memberTool name="convertHDA_to_Subnet_Melt"/>
     <memberTool name="Git pull And Push Sample Code"/>
     <memberTool name="Set os HFSS Env"/>
+    <memberTool name="expandToTemp"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -345,6 +346,28 @@ if need_set:
     cmd = '''setx HFSS "{}"'''.format(hfs)
     os.system(cmd)
 
+]]></script>
+  </tool>
+
+  <tool name="expandToTemp" label="Expand To Temp" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import hou
+import os
+
+selectedNodes = hou.selectedNodes()
+for selectedNode in selectedNodes:
+    nodeType = selectedNode.type()
+    defi = nodeType.definition()
+    
+    sourceHDA = defi.libraryFilePath()
+    _ , hdaName = os.path.split(sourceHDA)
+    targetPath = hou.getenv("TEMP").replace("\\","/") + "/" +  hdaName;
+    hou.hda.expandToDirectory(sourceHDA, targetPath)
+    
+    command = r'start "" "' + targetPath.replace("/","\\") + r'"'
+    os.system(command)
+    print(command)
+    #start "" "..\hda\"
 ]]></script>
   </tool>
 </shelfDocument>
