@@ -46,53 +46,48 @@ using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 
 
+//GU_FeE_Connectivity::connectivity(*geo, areaAttribHandle, geoPrimGroup);
 //template <typename T>
+
 static void
 connectivity(
     GU_Detail* geo,
-    const GA_RWHandleT<exint>& attribHandle,
-    const GA_PrimitiveGroup* geoPrimGroup = nullptr
+    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
+    const GA_PrimitiveGroup* geoGroup = nullptr,
+    const bool makeConstant = false
 )
 {
-    UT_AutoInterrupt boss("Compute Connectivity");
+    //const GA_ATINumeric* attrib = adjElemsAttribHandle.getAttribute();
+    //const GA_StorageClass storageClass = attrib->getStorageClass();
+    //const GA_Storage storage = attrib->getStorage();
+    //const GA_AttributeOwner attribOwner = attrib->getOwner();
 
-    const GA_ATINumeric* attrib = attribHandle.getAttribute();
-    const GA_StorageClass storageClass = attrib->getStorageClass();
-    const GA_Storage storage = attrib->getStorage();
-    const GA_AttributeOwner attribOwner = attrib->getOwner();
-    //GU_FeE_Connectivity::connectivity(*geo, areaAttribHandle, geoPrimGroup);
-
+    if (makeConstant)
+    {
 #if 1
-    attribHandle.makeConstant(UNREACHED_NUMBER);
+        attribHandle.makeConstant(UNREACHED_NUMBER);
 #else
-    attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
-    GU_FeE_Attribute::setToDefault(attribHandle);
+        attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
+        GU_FeE_Attribute::setToDefault(attribHandle);
 #endif
+    }
     
     GA_Size classnum = 0;
-    const GA_Range range = geo->getPrimitiveRange(geoPrimGroup);
+    const GA_Range range = geo->getPrimitiveRange(geoGroup);
+
+
     const GA_SplittableRange geo0SplittableRange(range);
+
+
 
     GA_Offset start;
     GA_Offset end;
 
 
-    //for (GA_Iterator it(range); it.blockAdvance(start, end); )
-    //{
-    //    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-    //    {
-    //        attribHandle.set(elemoff, UNREACHED_NUMBER);
-    //    }
-    //}
-
-    //using timeTtype = std::milli;
-    //time_t timeTotal, timeSub, timeStart, timeEnd;
-
-    //time(&timeTotal);
-    double timeTotal = 0;
-    //_CHRONO time_point<steady_clock> timeTotal = 0;
-    GEO_Detail::GEO_EdgeAdjArray adjElems;
+    UT_ValArray<GA_Offset> adjElems;
     GA_Offset adjElem;
+
 #if 1
     UT_ValArray<GA_Offset> elemHeap;
 #else
@@ -100,60 +95,6 @@ connectivity(
 #endif
 
 
-
-#if 0
-    geo->forEachPrimitive([&geo, &attribHandle, &classnum, &adjElems, &adjElem, &timeTotal, &elemHeap](const GA_Offset& elemoff)
-    {
-        auto start = std::chrono::steady_clock::now();
-        auto end = std::chrono::steady_clock::now();
-        start = std::chrono::steady_clock::now();
-        GA_Offset attribValue = attribHandle.get(elemoff);
-        if (attribValue != UNREACHED_NUMBER)
-            return;
-        //if (elemHeap.size() == 0)
-        //elemHeap.append(elemoff);
-
-        elemHeap.emplace_back(elemoff);
-
-        end = std::chrono::steady_clock::now();
-        //timeTotal += std::chrono::duration<double, timeTtype>(end - start).count();
-
-        //while (elemHeap.capacity() > 0)
-        while (elemHeap.size() > 0)
-        {
-
-            GA_Offset elemHeapLast = elemHeap.last();
-            elemHeap.removeLast();
-
-            attribHandle.set(elemHeapLast, classnum);
-
-            //time(&timeStart);
-            start = std::chrono::steady_clock::now();
-            GA_Size numAdj = geo->getEdgeAdjacentPolygons(adjElems, elemHeapLast);
-            end = std::chrono::steady_clock::now();
-            timeTotal += std::chrono::duration<double, timeTtype>(end - start).count();
-
-            //time(&timeEnd);
-
-            //difftime(timeEnd, timeStart);
-            //GA_Offset* nebs = getPointPointEdgeAdjacent();
-            for (GA_Size i = 0; i < numAdj; ++i)
-            {
-                //GEO_Detail::EdgeAdjacencyData adjElem = adjElems[i];
-                //GA_Offset adjElem = adjElem.myAdjacentPolygon;
-                adjElem = adjElems[i].myAdjacentPolygon;
-                attribValue = attribHandle.get(adjElem);
-                if (attribValue != UNREACHED_NUMBER)
-                    continue;
-                //elemHeap.append(adjElem);
-
-                elemHeap.emplace_back(adjElem);
-
-            }
-        } // after this while loop, elemHeap.size() == 0
-        ++classnum;
-    });
-#else
     GA_Offset attribValue;
     GA_Offset elemHeapLast;
     //for (GA_Iterator it(range); it.blockAdvance(start, end); )
@@ -164,46 +105,30 @@ connectivity(
             attribValue = attribHandle.get(elemoff);
             if (attribValue != UNREACHED_NUMBER)
                 continue;
-            //if (elemHeap.size() == 0)
-            //elemHeap.append(elemoff);
 
             elemHeap.emplace_back(elemoff);
 
-
-            //while (elemHeap.capacity() > 0)
             while (elemHeap.size() > 0)
             {
                 elemHeapLast = elemHeap.last();
                 elemHeap.removeLast();
 
                 attribHandle.set(elemHeapLast, classnum);
-
-                //time(&timeStart);
-                GA_Size numAdj = geo->getEdgeAdjacentPolygons(adjElems, elemHeapLast);
-
-                //time(&timeEnd);
-                
-                //difftime(timeEnd, timeStart);
-                //GA_Offset* nebs = getPointPointEdgeAdjacent();
+                adjElemsAttribHandle.get(elemHeapLast, adjElems);
+                GA_Size numAdj = adjElems.size();
                 for (GA_Size i = 0; i < numAdj; ++i)
                 {
-                    //GEO_Detail::EdgeAdjacencyData adjElem = adjElems[i];
-                    //GA_Offset adjElem = adjElem.myAdjacentPolygon;
-                    adjElem = adjElems[i].myAdjacentPolygon;
+                    adjElem = adjElems[i];
                     attribValue = attribHandle.get(adjElem);
                     if (attribValue != UNREACHED_NUMBER)
                         continue;
-                    //elemHeap.append(adjElem);
-
                     elemHeap.emplace_back(adjElem);
-
                 }
             } // after this while loop, elemHeap.size() == 0
             ++classnum;
         }
     }
-#endif
-    attribHandle->bumpDataId();
+
 
 #if 1
 #if 1
@@ -223,7 +148,206 @@ connectivity(
     attribHandleDebug.set(0, timeTotal);
     attribHandleDebug->bumpDataId();
 #endif
+
+
 }
+
+
+
+
+
+
+
+
+
+static void
+connectivity(
+    GU_Detail* geo,
+    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
+    const GA_PointGroup* geoGroup = nullptr,
+    const bool makeConstant = false
+)
+{
+    //const GA_ATINumeric* attrib = adjElemsAttribHandle.getAttribute();
+    //const GA_StorageClass storageClass = attrib->getStorageClass();
+    //const GA_Storage storage = attrib->getStorage();
+    //const GA_AttributeOwner attribOwner = attrib->getOwner();
+
+    if (makeConstant)
+    {
+#if 1
+        attribHandle.makeConstant(UNREACHED_NUMBER);
+#else
+        attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
+        GU_FeE_Attribute::setToDefault(attribHandle);
+#endif
+    }
+
+    double timeTotal = 0;
+    auto timeStart = std::chrono::steady_clock::now();
+    auto timeEnd = std::chrono::steady_clock::now();
+    timeStart = std::chrono::steady_clock::now();
+    timeEnd = std::chrono::steady_clock::now();
+
+
+
+    GA_Size classnum = 0;
+    UT_ValArray<GA_Offset> adjElems(64, 0);
+    ::std::vector<GA_Offset> elemHeap;
+    //UT_ValArray<GAOffsetStorageType> elemHeap;
+    GA_Offset elemHeapLast;
+    GA_Size numAdj;
+
+    const int elemHeapSize = pow(2, 15);
+    elemHeap.reserve(elemHeapSize);
+    //adjElems.reserve(16);
+
+    if (1)
+    {
+        const GA_Range range = geo->getPointRange(geoGroup);
+        GA_Offset start;
+        GA_Offset end;
+        for (GA_Iterator it(range); it.fullBlockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                if (attribHandle.get(elemoff) != UNREACHED_NUMBER)
+                    continue;
+                elemHeap.emplace_back(elemoff);
+                while (!elemHeap.empty())
+                {
+                    //elemHeapLast = elemHeap.erase();
+                    elemHeapLast = elemHeap[elemHeap.size() - 1];
+                    elemHeap.pop_back();
+
+                    attribHandle.set(elemHeapLast, classnum);
+
+
+                    timeStart = std::chrono::steady_clock::now();
+
+                    adjElemsAttribHandle.get(elemHeapLast, adjElems);
+
+                    timeEnd = std::chrono::steady_clock::now();
+                    std::chrono::duration<double> diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
+                    timeTotal += diff.count() * 1000;
+
+
+                    numAdj = adjElems.size();
+                    for (GA_Size i = 0; i < numAdj; ++i)
+                    {
+                        if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
+                            continue;
+                        elemHeap.emplace_back(adjElems[i]);
+                    }
+                } // after this while loop, elemHeap.size() == 0
+                ++classnum;
+            }
+        }
+    }
+    else
+    {
+        geo->forEachPoint([&](GA_Offset elemoff) {
+            if (attribHandle.get(elemoff) == UNREACHED_NUMBER)
+            {
+                elemHeap.emplace_back(elemoff);
+                while (!elemHeap.empty())
+                {
+                    //elemHeapLast = elemHeap.erase();
+                    elemHeapLast = elemHeap[elemHeap.size() - 1];
+                    elemHeap.pop_back();
+
+                    attribHandle.set(elemHeapLast, classnum);
+
+                    timeStart = std::chrono::steady_clock::now();
+
+
+                    adjElemsAttribHandle.get(elemHeapLast, adjElems);
+
+                    timeEnd = std::chrono::steady_clock::now();
+                    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+                    timeTotal += diff.count();
+
+                    numAdj = adjElems.size();
+                    for (GA_Size i = 0; i < numAdj; ++i)
+                    {
+                        if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
+                            continue;
+                        elemHeap.emplace_back(adjElems[i]);
+                    }
+
+                } // after this while loop, elemHeap.size() == 0
+                ++classnum;
+            }
+        });
+    }
+
+    geo->setDetailAttributeF("time", timeTotal);
+
+}
+
+
+
+static void
+connectivity1(
+    GU_Detail* geo,
+    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
+    const GA_PointGroup* geoGroup = nullptr,
+    const bool makeConstant = false
+)
+{
+    //const GA_ATINumeric* attrib = adjElemsAttribHandle.getAttribute();
+    //const GA_StorageClass storageClass = attrib->getStorageClass();
+    //const GA_Storage storage = attrib->getStorage();
+    //const GA_AttributeOwner attribOwner = attrib->getOwner();
+
+    if (makeConstant)
+    {
+#if 1
+        attribHandle.makeConstant(UNREACHED_NUMBER);
+#else
+        attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
+        GU_FeE_Attribute::setToDefault(attribHandle);
+#endif
+    }
+
+    GA_Size classnum = 0;
+    UT_ValArray<GA_Offset> adjElems;
+    UT_ValArray<GA_Offset> elemHeap;
+    GA_Offset elemHeapLast;
+    GA_Size numAdj;
+
+
+    const GA_Range range = geo->getPointRange(geoGroup);
+    GA_Offset start;
+    GA_Offset end;
+    for (GA_Iterator it(range); it.fullBlockAdvance(start, end); )
+    {
+        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        {
+            if (attribHandle.get(elemoff) != UNREACHED_NUMBER)
+                continue;
+            elemHeap.emplace_back(elemoff);
+            while (elemHeap.size() > 0)
+            {
+                attribHandle.set(elemHeap.last(), classnum);
+                adjElemsAttribHandle.get(elemHeap.last(), adjElems);
+                elemHeap.removeLast();
+
+                numAdj = adjElems.size();
+                for (GA_Size i = 0; i < numAdj; ++i)
+                {
+                    if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
+                        continue;
+                    elemHeap.emplace_back(adjElems[i]);
+                }
+            } // after this while loop, elemHeap.size() == 0
+            ++classnum;
+        }
+    }
+}
+
 
 
 
