@@ -185,6 +185,7 @@ connectivity(
     }
 
     double timeTotal = 0;
+    double timeTotal1 = 0;
     auto timeStart = std::chrono::steady_clock::now();
     auto timeEnd = std::chrono::steady_clock::now();
     timeStart = std::chrono::steady_clock::now();
@@ -193,11 +194,12 @@ connectivity(
 
 
     GA_Size classnum = 0;
-    UT_ValArray<GA_Offset> adjElems(64, 0);
+    //UT_ValArray<GA_Offset> adjElems(64, 0);
     ::std::vector<GA_Offset> elemHeap;
     //UT_ValArray<GAOffsetStorageType> elemHeap;
     GA_Offset elemHeapLast;
     GA_Size numAdj;
+    std::chrono::duration<double> diff;
 
     const int elemHeapSize = pow(2, 15);
     elemHeap.reserve(elemHeapSize);
@@ -205,6 +207,9 @@ connectivity(
 
     if (1)
     {
+
+        timeStart = std::chrono::steady_clock::now();
+
         const GA_Range range = geo->getPointRange(geoGroup);
         GA_Offset start;
         GA_Offset end;
@@ -214,6 +219,7 @@ connectivity(
             {
                 if (attribHandle.get(elemoff) != UNREACHED_NUMBER)
                     continue;
+
                 elemHeap.emplace_back(elemoff);
                 while (!elemHeap.empty())
                 {
@@ -224,13 +230,15 @@ connectivity(
                     attribHandle.set(elemHeapLast, classnum);
 
 
-                    timeStart = std::chrono::steady_clock::now();
+                    //timeStart = std::chrono::steady_clock::now();
 
+                    UT_ValArray<GA_Offset> adjElems;
                     adjElemsAttribHandle.get(elemHeapLast, adjElems);
 
-                    timeEnd = std::chrono::steady_clock::now();
-                    std::chrono::duration<double> diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
-                    timeTotal += diff.count() * 1000;
+                    //timeEnd = std::chrono::steady_clock::now();
+                    //diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
+                    //timeTotal += diff.count() * 1000;
+
 
 
                     numAdj = adjElems.size();
@@ -240,13 +248,19 @@ connectivity(
                             continue;
                         elemHeap.emplace_back(adjElems[i]);
                     }
+
                 } // after this while loop, elemHeap.size() == 0
                 ++classnum;
             }
         }
+        timeEnd = std::chrono::steady_clock::now();
+        diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
+        timeTotal1 += diff.count() * 1000;
+
     }
     else
     {
+        UT_ValArray<GA_Offset> adjElems(64, 0);
         geo->forEachPoint([&](GA_Offset elemoff) {
             if (attribHandle.get(elemoff) == UNREACHED_NUMBER)
             {
@@ -283,6 +297,7 @@ connectivity(
     }
 
     geo->setDetailAttributeF("time", timeTotal);
+    geo->setDetailAttributeF("time1", timeTotal1);
 
 }
 
