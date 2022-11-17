@@ -115,6 +115,9 @@ parseGroupDetached(
     const UT_StringHolder& groupName
 )
 {
+    if (!groupName.length())
+        return nullptr;
+    
     if (!groupName.isstring())
     {
         cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
@@ -150,8 +153,17 @@ groupPromoteRange(
     const GA_GroupType& groupType
 )
 {
-    //if (!group)
-    //    return nullptr;
+    if (!group)
+    {
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE: return geo->getPrimitiveRange(nullptr); break;
+        case GA_GROUP_POINT:     return geo->getPointRange(nullptr);     break;
+        case GA_GROUP_VERTEX:    return geo->getVertexRange(nullptr);    break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Group Type!");
+        return GA_Range();
+    }
 
     //if (groupType != GA_GROUP_PRIMITIVE &&
     //    groupType != GA_GROUP_POINT     &&

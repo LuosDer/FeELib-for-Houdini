@@ -261,8 +261,7 @@ namespace GEO_FeE_Adjacency {
             const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(promotedGroup));
             UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_prev, &attribHandle_next, &geoGroup](const GA_SplittableRange& r)
             {
-                GA_Offset start;
-                GA_Offset end;
+                GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -299,8 +298,7 @@ namespace GEO_FeE_Adjacency {
             const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(nullptr));
             UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_prev, &attribHandle_next](const GA_SplittableRange& r)
             {
-                GA_Offset start;
-                GA_Offset end;
+                GA_Offset start,  end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -350,10 +348,8 @@ namespace GEO_FeE_Adjacency {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0, [&geo, &topo, &attribHandle_prev, &attribHandle_next, &geoGroup](const GA_SplittableRange& r)
         {
-            GA_Offset start;
-            GA_Offset end;
-            GA_Offset vtxoff_prev;
-            GA_Offset vtxoff_next;
+            GA_Offset start, end;
+            GA_Offset vtxoff_prev, vtxoff_next;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -402,8 +398,7 @@ namespace GEO_FeE_Adjacency {
             {
                 if (boss.wasInterrupted())
                     return;
-                GA_Offset start;
-                GA_Offset end;
+                GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -428,8 +423,7 @@ namespace GEO_FeE_Adjacency {
             {
                 if (boss.wasInterrupted())
                     return;
-                GA_Offset start;
-                GA_Offset end;
+                GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -465,8 +459,7 @@ namespace GEO_FeE_Adjacency {
         {
             if (boss.wasInterrupted())
                 return;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -501,8 +494,7 @@ namespace GEO_FeE_Adjacency {
         {
             if (boss.wasInterrupted())
                 return;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -536,8 +528,7 @@ namespace GEO_FeE_Adjacency {
         {
             if (boss.wasInterrupted())
                 return;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -571,8 +562,7 @@ namespace GEO_FeE_Adjacency {
         {
             if (boss.wasInterrupted())
                 return;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -607,8 +597,7 @@ namespace GEO_FeE_Adjacency {
         {
             if (boss.wasInterrupted())
                 return;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -645,8 +634,7 @@ namespace GEO_FeE_Adjacency {
                 return;
 
             GA_Offset vtxoff_next;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -717,8 +705,7 @@ namespace GEO_FeE_Adjacency {
                 return;
 
             GA_Offset vtxoff_next;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -783,8 +770,7 @@ namespace GEO_FeE_Adjacency {
                 return;
 
             GA_Offset vtxoff_next;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -916,8 +902,7 @@ namespace GEO_FeE_Adjacency {
             if (boss.wasInterrupted())
                 return;
             UT_ValArray<GA_Offset> ptoffArray;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -996,8 +981,7 @@ namespace GEO_FeE_Adjacency {
             if (boss.wasInterrupted())
                 return;
             UT_ValArray<GA_Offset> adjElems;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -1038,8 +1022,7 @@ namespace GEO_FeE_Adjacency {
             GA_Offset vtxoff_next;
             GA_Size numvtx;
             GA_OffsetListRef vertices;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             if (seamGroup)
             {
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -1153,8 +1136,7 @@ namespace GEO_FeE_Adjacency {
             GA_Offset vtxoff_next;
             GA_Size numvtx;
             GA_OffsetListRef vertices;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             if (seamGroup)
             {
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -1271,8 +1253,7 @@ namespace GEO_FeE_Adjacency {
             GA_Offset vtxoff_next;
             GA_Size numvtx;
             GA_OffsetListRef vertices;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             if (seamGroup)
             {
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -1381,8 +1362,7 @@ namespace GEO_FeE_Adjacency {
                 return;
             GEO_Detail::GEO_EdgeAdjArray adjElemStruct;
             UT_ValArray<GA_Offset> adjElems;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 if (seamGroup)
@@ -1435,8 +1415,7 @@ namespace GEO_FeE_Adjacency {
             if (boss.wasInterrupted())
                 return;
             //UT_ValArray<GA_Offset> adjElems;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             if (seamGroup)
             {
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )

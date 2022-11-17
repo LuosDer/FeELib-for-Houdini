@@ -24,6 +24,7 @@
 #include <UT/UT_UniquePtr.h>
 #include <GA/GA_SplittableRange.h>
 #include <GA/GA_PageHandle.h>
+#include <GA/GA_PageIterator.h>
 
 
 #include <GA_FeE/GA_FeE_Group.h>
@@ -125,6 +126,15 @@ static const char *theDsFile = R"THEDSFILE(
         range   { -100 100 }
     }
 
+
+    parm {
+        name    "kernel"
+        cppname "Kernel"
+        label   "Kernel"
+        type    integer
+        default { 0 }
+        range   { 0! 2 }
+    }
 
 
     parm {
@@ -243,12 +253,15 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         return;
 
 
-    GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+
+    const exint& kernel = sopparms.getKernel();
+
 
     const exint& subscribeRatio = sopparms.getSubscribeRatio();
     const exint& minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 13);
-
+    
 
 
     const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
@@ -256,16 +269,15 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-
-    //const GA_SplittableRange geo0SplittableRange(GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, groupType));
-    const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, groupType);
-
-
+    const GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass);
+    //const GA_SplittableRange geo0SplittableRange(GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass));
+    const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClass);
 
 
 
 
-    UT_StringHolder geo0AttribNameSub = geo0AttribNames;
+
+    const UT_StringHolder geo0AttribNameSub = geo0AttribNames;
 
 
 
@@ -274,8 +286,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (!attribPtr)
         return;
 
-    int attribSize = attribPtr->getTupleSize();
-    GA_RWHandleT<UT_Vector3F> attribHandle(attribPtr);
+    const int attribSize = attribPtr->getTupleSize();
 
     //template <typename T>
     switch (attribSize)
@@ -286,31 +297,82 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         UT_ASSERT_MSG(0, "Unhandled outGeo0 Attrib Size");
     }
 
-
-    GA_RWPageHandleV3 attrib_ph(attribPtr);
-    if (!attrib_ph.isValid())
-        return;
-
-
-
-    UTparallelFor(geo0SplittableRange, [&attrib_ph, doNormalize, uniScale](const GA_SplittableRange& r)
+    switch (kernel)
     {
-        GA_Offset start, end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+    case 0:
+    {
+        //const GA_RWAttributeRef attrib_rwRef(attribPtr);
+        UTparallelFor(geo0SplittableRange, [&attribPtr, &doNormalize, &uniScale](const GA_SplittableRange& r)
         {
-            attrib_ph.setPage(start);
-            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            GA_PageHandleV<UT_Vector3F>::RWType attrib_ph(attribPtr);
+            //GA_RWPageHandleV3 attrib_ph(attrib_rwRef.getAttribute());
+
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                //UT_Vector3F attribValue = attribHandle.get(elemoff);
-                if (doNormalize)
-                    attrib_ph.value(elemoff).normalize();
-                //if (doNormalize)
-                //    attribValue.normalize();
-                //attribValue *= uniScale;
-                //attribHandle.set(elemoff, attribValue);
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (doNormalize)
+                            attrib_ph.value(elemoff).normalize();
+                        attrib_ph.value(elemoff) *= uniScale;
+                    }
+                }
             }
-        }
-    }, subscribeRatio, minGrainSize);
+        }, subscribeRatio, minGrainSize);
+    }
+    break;
+    case 1:
+    {
+        GA_RWHandleT<UT_Vector3F> attribHandle(attribPtr);
+        UTparallelFor(geo0SplittableRange, [&attribHandle, doNormalize, uniScale](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    UT_Vector3F attribValue = attribHandle.get(elemoff);
+                    if (doNormalize)
+                        attribValue.normalize();
+                    attribValue *= uniScale;
+                    attribHandle.set(elemoff, attribValue);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    break;
+    case 2:
+    {
+        //const GA_RWAttributeRef attrib_rwRef(attribPtr);
+
+        //GAparallelForEachPage(geo0Range, true, [&attrib_rwRef, &doNormalize, &uniScale](GA_PageIterator pit)
+        //{
+        //    GA_RWPageHandleV3 attrib_ph(attrib_rwRef.getAttribute());
+
+        //    GAforEachPageBlock(pit, [&](GA_Offset start, GA_Offset end)
+        //    {
+        //        attrib_ph.setPage(start);
+        //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        //        {
+        //            //UT_Vector3F attribValue = attribHandle.get(elemoff);
+        //            if (doNormalize)
+        //                attrib_ph.value(elemoff).normalize();
+        //            //UT_Vector3 N = v_ph.get(i);
+        //            //N.normalize();
+        //            //v_ph.set(i, N);
+        //        }
+        //    }
+        //});
+    }
+    break;
+    }
+
+
+
+
 
 
 
