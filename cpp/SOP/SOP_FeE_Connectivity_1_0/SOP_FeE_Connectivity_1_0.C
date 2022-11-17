@@ -21,7 +21,8 @@
 #include <limits.h>
 
 #include <GA/GA_Primitive.h>
-
+#include <GA/GA_PageHandle.h>
+#include <GA/GA_AIFNumericArray.h>
 
 #include <UT/UT_UniquePtr.h>
 #include <GA/GA_SplittableRange.h>
@@ -30,7 +31,6 @@
 
 #include <GU/GU_Measure.h>
 #include <GU/GU_Promote.h>
-#include <GEO/GEO_SplitPoints.h>
 
 #include <GU_FeE/GU_FeE_Connectivity.h>
 
@@ -479,6 +479,82 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         GU_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
 
 
+
+
+    GA_Attribute* attrib = outGeo0->findFloatTuple(GA_ATTRIB_POINT, "N", 3);
+    const GA_AIFTuple* tuple = attrib->getAIFTuple();
+    if (tuple)
+    {
+        UT_Vector3 N;
+        for (GA_Iterator it(outGeo0->getPointRange()); !it.atEnd(); it.advance())
+        {
+            GA_Offset offset = it.getOffset();
+            tuple->get(attrib; offset, N.data(), 3);
+            N.normalize();
+            tuple->set(attrib, offset, N.data(), 3);
+        }
+    }
+    // Blind data struct
+    class Struct { int a; };
+    // Add a "Struct" object for every point
+    // Note that we set the scope to GA_SCOPE_PRIVATE so that the
+    // attribute isn't visible to users or saved/loaded.
+    GA_RWAttributeRef   blind_gah = outGeo0->createAttribute(
+        GA_ATTRIB_POINT,
+        GA_SCOPE_PRIVATE,
+        "attrib_name",
+        NULL, NULL,
+        "blinddata");
+
+    if (blind_gah.isValid())
+    {
+        GA_Attribute* a = blind_gah.getAttribute();
+        const GA_AIFBlindData* aif = a->getAIFBlindData();
+        if (aif)
+        {
+            Struct      default_value();        // Default value
+            aif->setDataSize(a, sizeof(Struct), &default_value);
+        }
+    }
+
+    GA_RWAttributeRef    blind_gah = outGeo0->findPointAttribute(
+        GA_SCOPE_PRIVATE,
+        "attrib_name");
+    const GA_Attribute* a = blind_gah.getAttribute();
+    const GA_AIFBlindData* aif;
+    if (aif = a->getAIFBlindData())
+    {
+        for (GA_Iterator it = range.begin(); !it.atEnd(); ++it)
+        {
+            const Struct& pt_value = aif->getValue<GA_SCOPE_PRIVATE>(a, *it);
+            ...
+        }
+    }
+
+
+
+    GA_ROPageHandleV3 v_ph(outGeo0, GA_ATTRIB_POINT, "v");
+    GA_RWPageHandleV3 p_ph(outGeo0->getP());
+    if (v_ph.isValid() && p_ph.isValid())
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(outGeo0->getPointRange()); it.blockAdvance(start, end); )
+        {
+            v_ph.setPage(start);
+            p_ph.setPage(start);
+#if 1
+            // Use Vector Math library
+            VM_Math::madd((fpreal32*)&p_ph.value(start),
+                (const fpreal32*)&v_ph.value(start),
+                0.1, (end - start) * 3);
+#else
+            for (GA_Offset pt = start; pt < end; ++pt)
+            {
+                p_ph.value(pt) += v_ph.get(pt) * 0.1;
+            }
+#endif
+        }
+    }
 
 }
 

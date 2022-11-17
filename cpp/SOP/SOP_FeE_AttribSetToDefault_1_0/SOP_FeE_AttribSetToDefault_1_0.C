@@ -282,8 +282,9 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     }
 
 
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::groupFromString(cookparms, sopparms.getGroup());
 
-
+    
 
     const GA_ElementGroup* geo0Group = nullptr;
     const UT_StringHolder& groupName0 = sopparms.getGroup();

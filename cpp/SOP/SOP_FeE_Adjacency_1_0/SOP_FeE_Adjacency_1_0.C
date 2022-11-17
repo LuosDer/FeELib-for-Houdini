@@ -28,6 +28,8 @@
 #include <HOM/HOM_SopNode.h>
 
 
+#include <chrono>
+
 #include <GEO_FeE/GEO_FeE_Adjacency.h>
 
 using namespace SOP_FeE_Adjacency_1_0_Namespace;
@@ -502,7 +504,6 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& edgeSeamGroupName = sopparms.getEdgeSeamGroup();
     const bool useEdgeSeamGroup = edgeSeamGroupName.isstring() && calPrimPrimEdge;
 
-    GOP_Manager gop;
 
 
     const exint& kernel = sopparms.getKernel();
@@ -531,6 +532,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (groupName0.isstring())
     {
+        GOP_Manager gop;
         GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
         bool ok = true;

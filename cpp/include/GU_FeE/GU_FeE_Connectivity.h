@@ -198,18 +198,23 @@ connectivity(
     ::std::vector<GA_Offset> elemHeap;
     //UT_ValArray<GAOffsetStorageType> elemHeap;
     GA_Offset elemHeapLast;
-    GA_Size numAdj;
     std::chrono::duration<double> diff;
+
+
+
+    timeStart = std::chrono::steady_clock::now();
 
     const int elemHeapSize = pow(2, 15);
     elemHeap.reserve(elemHeapSize);
     //adjElems.reserve(16);
 
+
+    timeEnd = std::chrono::steady_clock::now();
+    diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
+    timeTotal1 += diff.count();
+
     if (1)
     {
-
-        timeStart = std::chrono::steady_clock::now();
-
         const GA_Range range = geo->getPointRange(geoGroup);
         GA_Offset start;
         GA_Offset end;
@@ -220,43 +225,33 @@ connectivity(
                 if (attribHandle.get(elemoff) != UNREACHED_NUMBER)
                     continue;
 
+                attribHandle.set(elemoff, classnum);
+
                 elemHeap.emplace_back(elemoff);
                 while (!elemHeap.empty())
                 {
-                    //elemHeapLast = elemHeap.erase();
-                    elemHeapLast = elemHeap[elemHeap.size() - 1];
-                    elemHeap.pop_back();
-
-                    attribHandle.set(elemHeapLast, classnum);
-
-
-                    //timeStart = std::chrono::steady_clock::now();
+                    timeStart = std::chrono::steady_clock::now();
 
                     UT_ValArray<GA_Offset> adjElems;
-                    adjElemsAttribHandle.get(elemHeapLast, adjElems);
+                    adjElemsAttribHandle.get(elemHeap[elemHeap.size()-1], adjElems);
 
-                    //timeEnd = std::chrono::steady_clock::now();
-                    //diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
-                    //timeTotal += diff.count() * 1000;
+                    timeEnd = std::chrono::steady_clock::now();
+                    diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
+                    timeTotal += diff.count();
 
+                    elemHeap.pop_back();
 
-
-                    numAdj = adjElems.size();
-                    for (GA_Size i = 0; i < numAdj; ++i)
+                    for (GA_Size i = 0; i < adjElems.size(); ++i)
                     {
                         if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
                             continue;
+                        attribHandle.set(adjElems[i], classnum);
                         elemHeap.emplace_back(adjElems[i]);
                     }
-
-                } // after this while loop, elemHeap.size() == 0
+                }
                 ++classnum;
             }
         }
-        timeEnd = std::chrono::steady_clock::now();
-        diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
-        timeTotal1 += diff.count() * 1000;
-
     }
     else
     {
@@ -282,22 +277,21 @@ connectivity(
                     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
                     timeTotal += diff.count();
 
-                    numAdj = adjElems.size();
-                    for (GA_Size i = 0; i < numAdj; ++i)
+                    for (GA_Size i = 0; i < adjElems.size(); ++i)
                     {
                         if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
                             continue;
                         elemHeap.emplace_back(adjElems[i]);
                     }
 
-                } // after this while loop, elemHeap.size() == 0
+                }
                 ++classnum;
             }
         });
     }
 
-    geo->setDetailAttributeF("time", timeTotal);
-    geo->setDetailAttributeF("time1", timeTotal1);
+    geo->setDetailAttributeF("time", timeTotal * 1000);
+    geo->setDetailAttributeF("time1", timeTotal1 * 1000);
 
 }
 
