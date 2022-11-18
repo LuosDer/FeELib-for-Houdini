@@ -31,7 +31,8 @@
 #include <GU/GU_Measure.h>
 #include <GEO/GEO_SplitPoints.h>
 
-#include <GU_FeE/GU_FeE_measure.h>
+#include <GA_FeE/GA_FeE_Group.h>
+#include <GA_FeE/GA_FeE_Measure.h>
 
 
 using namespace SOP_FeE_Measure_3_0_Namespace;
@@ -256,19 +257,14 @@ void
 SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Measure_3_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Measure_3_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
 
     //outGeo0 = sopNodeProcess(*inGeo0);
-
-
-
-
 
     const UT_StringHolder& geo0AttribName = sopparms.getPAttribName();
     if (!geo0AttribName.isstring())
@@ -279,73 +275,44 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
 
-    GOP_Manager gop;
-    SOP_FeE_Measure_3_0Parms::MeasureType measureType = sopparms.getMeasureType();
-
-    GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getPAttribClass());
-    const fpreal uniScale = sopparms.getUniScale();
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
-
-
-    //const GA_Storage fpreal_storage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage fpreal_storage = GA_STORE_REAL32;
-
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-
-
-
-
-
-    const GA_ElementGroup* geo0Group = nullptr;
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
-
-    if (groupName0.isstring())
-    {
-        GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-        bool ok = true;
-        const GA_Group* anyGroup = gop.parseGroupDetached(groupName0, groupType, outGeo0, true, false, ok);
-
-        if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName0);
-        }
-        if (anyGroup && anyGroup->isElementGroup())
-        {
-            geo0Group = UTverify_cast<const GA_ElementGroup*>(anyGroup);
-        }
-    }
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
+    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    GA_GroupType geo0finalGroupType;
-    if (geo0Group)
-        geo0finalGroupType = geo0Group->classType();
-    else
-        geo0finalGroupType = GA_GROUP_INVALID;
+    const GA_GroupType& geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
 
 
 
 
+    const SOP_FeE_Measure_3_0Parms::MeasureType& measureType = sopparms.getMeasureType();
 
-    GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, fpreal_storage);
+    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getPAttribClass());
+    const fpreal& uniScale = sopparms.getUniScale();
+
+
+    const exint& subscribeRatio = sopparms.getSubscribeRatio();
+    const exint& minGrainSize = sopparms.getMinGrainSize();
+    //const exint minGrainSize = pow(2, 8);
+    //const exint minGrainSize = pow(2, 4);
+    // 
+    //const GA_Storage inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
+    const GA_Storage& inStorageF = GA_STORE_REAL32;
+
+
+    GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);
     GA_RWHandleT<attribPrecisonF> measureAttribHandle(measureAttribPtr);
 
 
 
-    UT_StringHolder geo0AttribNameSub = geo0AttribName;
+
+
+    const UT_StringHolder& geo0AttribNameSub = geo0AttribName;
 
 
     //if (geo0AttribNameSub == UT_StringHolder("P"))
@@ -354,7 +321,7 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (measureType)
         {
         case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-            GU_FeE_Measure::polyArea(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
+            GA_FeE_Measure::polyArea(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
             break;
@@ -399,10 +366,10 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (measureType)
         {
         case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-            GU_FeE_Measure::polyArea(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
+            GA_FeE_Measure::polyArea(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-            //GU_FeE_measure::polyPerimeter(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
+            //GA_FeE_Measure::polyPerimeter(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         default:
             cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");

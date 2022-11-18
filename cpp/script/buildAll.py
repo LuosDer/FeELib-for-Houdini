@@ -4,6 +4,11 @@ import os
 
 #cmake -G "Visual Studio 16 2019" .. -DCMAKE_PREFIX_PATH="C:\Program Files\Side Effects Software\Houdini 19.0.498\toolkit\cmake"
 
+bypassNodeName = (
+'SOP_FeE_AttribSetToDefault_1_0',
+'SOP_FeE_UVScaletoWorldSize_3_0',
+)
+
 doCreate = True
 
 
@@ -34,6 +39,9 @@ if doCreate:
     fileRootPath = os.path.realpath(fileRootPath) + '/'
 
     for folderName in os.listdir(fileRootPath):
+        if folderName in bypassNodeName:
+            continue
+
         relFilePath = fileRootPath + folderName
         absFilePath = os.path.realpath(relFilePath)
         if os.path.isfile(absFilePath):

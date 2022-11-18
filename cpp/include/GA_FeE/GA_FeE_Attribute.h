@@ -26,8 +26,63 @@
 namespace GA_FeE_Attribute {
 
 
+//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribName, attribOwner, attribPtr, attribOwnerFianl);
 
+static bool
+    findFloatTuplePointVertex(
+        const GEO_Detail* geo,
+        const GA_AttributeOwner& attribOwner,
+        const GA_AttributeScope& scope,
+        const UT_StringRef& attribName,
+        const GA_Attribute* attribPtr,
+        GA_AttributeOwner& attribOwnerFinal,
+        const int& min_size = 1,
+        const int& max_size = -1
+    )
+{
+    if (attribOwner == GA_ATTRIB_DETAIL)//detail means Auto
+    {
+        attribPtr = geo->findFloatTuple(GA_ATTRIB_VERTEX, scope, attribName, min_size, max_size);
+        if (attribPtr)
+            attribOwnerFinal = GA_ATTRIB_VERTEX;
+        else
+        {
+            attribPtr = geo->findFloatTuple(GA_ATTRIB_POINT, scope, attribName, min_size, max_size);
+            if (!attribPtr)
+            {
+                attribOwnerFinal = GA_ATTRIB_INVALID;
+                return false;
+            }
+            attribOwnerFinal = GA_ATTRIB_POINT;
+        }
+    }
+    else
+    {
+        attribPtr = geo->findFloatTuple(attribOwner, scope, attribName, min_size, max_size);
+        if (!attribPtr)
+        {
+            attribOwnerFinal = GA_ATTRIB_INVALID;
+            return false;
+        }
+        attribOwnerFinal = attribOwner;
+    }
+    return true;
+}
 
+//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, attribName, attribPtr, attribOwnerFianl);
+static bool
+findFloatTuplePointVertex(
+    const GEO_Detail* const geo,
+    const GA_AttributeOwner& attribOwner,
+    const UT_StringRef& attribName,
+    const GA_Attribute* attribPtr,
+    GA_AttributeOwner& attribOwnerFianl,
+    const int& min_size = 1,
+    const int& max_size = -1
+)
+{
+    return GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribPtr, attribOwnerFianl, min_size, max_size);
+}
 
 
 

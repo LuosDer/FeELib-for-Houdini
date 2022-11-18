@@ -105,14 +105,15 @@ isInvalid(
            groupType != GA_GROUP_EDGE;
 }
 
-
+//const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
 
 static const GA_ElementGroup*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GEO_Detail* geo,
     const GA_GroupType& groupType,
-    const UT_StringHolder& groupName
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
 )
 {
     if (!groupName.length())
@@ -124,7 +125,6 @@ parseGroupDetached(
         return nullptr;
     }
 
-    GOP_Manager gop;
     bool ok = true;
     const GA_Group* anyGroup = gop.parseGroupDetached(groupName, groupType, geo, true, false, ok);
 
@@ -141,6 +141,17 @@ parseGroupDetached(
 }
 
 
+static const GA_ElementGroup*
+parseGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const GA_GroupType& groupType,
+    const UT_StringHolder& groupName
+)
+{
+    GOP_Manager gop;
+    return GA_FeE_Group::parseGroupDetached(cookparms, geo, groupType, groupName, gop);
+}
 
 
 //GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, groupType);

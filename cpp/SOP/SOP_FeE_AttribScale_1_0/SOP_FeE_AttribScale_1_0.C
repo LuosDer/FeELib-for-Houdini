@@ -247,27 +247,27 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     const fpreal& uniScale = sopparms.getUniScale();
     const bool& doNormalize = sopparms.getNormalize();
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     if (!doNormalize && uniScale==1)
         return;
 
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+
+    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    if (geo0Group && geo0Group->isEmpty())
+        return;
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+
+
+
+    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
 
     const exint& kernel = sopparms.getKernel();
-
-
     const exint& subscribeRatio = sopparms.getSubscribeRatio();
     const exint& minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 13);
-    
 
-
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
 
     const GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass);
     //const GA_SplittableRange geo0SplittableRange(GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass));
@@ -277,7 +277,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    const UT_StringHolder geo0AttribNameSub = geo0AttribNames;
+    const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
 
 
 

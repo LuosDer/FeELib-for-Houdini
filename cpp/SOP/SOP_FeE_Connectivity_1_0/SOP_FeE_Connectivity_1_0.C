@@ -32,9 +32,9 @@
 #include <GU/GU_Measure.h>
 #include <GU/GU_Promote.h>
 
-#include <GU_FeE/GU_FeE_Connectivity.h>
-
-#include <GEO_FeE/GEO_FeE_Adjacency.h>
+#include <GA_FeE/GA_FeE_Group.h>
+#include <GA_FeE/GA_FeE_Adjacency.h>
+#include <GA_FeE/GA_FeE_Connectivity.h>
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
 
@@ -172,6 +172,8 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action_icon" "BUTTONS_reselect" }
         parmtag { "sop_input" "0" }
     }
+
+
 
 
     parm {
@@ -316,7 +318,7 @@ void
 SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Connectivity_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -330,30 +332,17 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (!geo0AttribNames.isstring())
         return;
 
-    const bool useUVConnectivity = sopparms.getUseUVConnectivity();
+    const bool& useUVConnectivity = sopparms.getUseUVConnectivity();
 
     const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
     if (useUVConnectivity && !uvAttribName.isstring())
         return;
 
-    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
-    const bool useSeamGroup = seamGroupName.isstring();
 
-
-    GOP_Manager gop;
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
-    const exint connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
-    //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
-    const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage inStorageI = GA_STORE_INT32;
+    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    if (geo0Group && geo0Group->isEmpty())
+        return;
 
 
     UT_AutoInterrupt boss("Processing");
@@ -363,28 +352,31 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
 
+    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
+    const bool& useSeamGroup = seamGroupName.isstring();
+
+
+    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
+    const exint& connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
+    //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
+    const bool& connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
+
+    const exint& subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint& minGrainSize = pow(2, 8);
+    //const exint& minGrainSize = pow(2, 4);
+    const exint& minGrainSize = sopparms.getMinGrainSize();
+
+
+    //const GA_Storage inStorageI = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
+    const GA_Storage& inStorageI = GA_STORE_INT32;
 
 
 
-    const GA_ElementGroup* geo0Group = nullptr;
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
 
-    if (groupName0.isstring())
-    {
-        GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-        bool ok = true;
-        const GA_Group* anyGroup = gop.parseGroupDetached(groupName0, groupType, outGeo0, true, false, ok);
 
-        if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName0);
-        }
-        if (anyGroup && anyGroup->isElementGroup())
-        {
-            geo0Group = UTverify_cast<const GA_ElementGroup*>(anyGroup);
-        }
-    }
+
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
     /// <summary>
@@ -399,7 +391,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
     vtxpnumAttribHandle.bind(vtxpnumAttribUPtr.get());
 
-    GEO_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
+    GA_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
         static_cast<const GA_VertexGroup*>(geo0Group),
         subscribeRatio, minGrainSize);
 
@@ -419,7 +411,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
 
         dstptAttribHandle.bind(dstptAttribUPtr.get());
-        GEO_FeE_Adjacency::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
+        GA_FeE_Adjacency::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
     }
@@ -450,11 +442,11 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 #endif
 
     if (connectivityConstraint)
-        GEO_FeE_Adjacency::primPrimEdge(outGeo0, adjElemsAttribHandle, dstptAttribHandle,
+        GA_FeE_Adjacency::primPrimEdge(outGeo0, adjElemsAttribHandle, dstptAttribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), nullptr,
             subscribeRatio, minGrainSize);
     else
-        GEO_FeE_Adjacency::pointPointEdge(outGeo0, adjElemsAttribHandle, vtxpnumAttribHandle,
+        GA_FeE_Adjacency::pointPointEdge(outGeo0, adjElemsAttribHandle, vtxpnumAttribHandle,
             static_cast<const GA_PointGroup*>(geo0Group), nullptr,
             subscribeRatio, minGrainSize);
 
@@ -474,65 +466,14 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<GA_Size> attribHandle(attribPtr);
 
     if (connectivityConstraint)
-        GU_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
+        GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
     else
-        GU_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
+        GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
 
 
 
 
-    GA_Attribute* attrib = outGeo0->findFloatTuple(GA_ATTRIB_POINT, "N", 3);
-    const GA_AIFTuple* tuple = attrib->getAIFTuple();
-    if (tuple)
-    {
-        UT_Vector3 N;
-        for (GA_Iterator it(outGeo0->getPointRange()); !it.atEnd(); it.advance())
-        {
-            GA_Offset offset = it.getOffset();
-            tuple->get(attrib; offset, N.data(), 3);
-            N.normalize();
-            tuple->set(attrib, offset, N.data(), 3);
-        }
-    }
-    // Blind data struct
-    class Struct { int a; };
-    // Add a "Struct" object for every point
-    // Note that we set the scope to GA_SCOPE_PRIVATE so that the
-    // attribute isn't visible to users or saved/loaded.
-    GA_RWAttributeRef   blind_gah = outGeo0->createAttribute(
-        GA_ATTRIB_POINT,
-        GA_SCOPE_PRIVATE,
-        "attrib_name",
-        NULL, NULL,
-        "blinddata");
-
-    if (blind_gah.isValid())
-    {
-        GA_Attribute* a = blind_gah.getAttribute();
-        const GA_AIFBlindData* aif = a->getAIFBlindData();
-        if (aif)
-        {
-            Struct      default_value();        // Default value
-            aif->setDataSize(a, sizeof(Struct), &default_value);
-        }
-    }
-
-    GA_RWAttributeRef    blind_gah = outGeo0->findPointAttribute(
-        GA_SCOPE_PRIVATE,
-        "attrib_name");
-    const GA_Attribute* a = blind_gah.getAttribute();
-    const GA_AIFBlindData* aif;
-    if (aif = a->getAIFBlindData())
-    {
-        for (GA_Iterator it = range.begin(); !it.atEnd(); ++it)
-        {
-            const Struct& pt_value = aif->getValue<GA_SCOPE_PRIVATE>(a, *it);
-            ...
-        }
-    }
-
-
-
+    /*
     GA_ROPageHandleV3 v_ph(outGeo0, GA_ATTRIB_POINT, "v");
     GA_RWPageHandleV3 p_ph(outGeo0->getP());
     if (v_ph.isValid() && p_ph.isValid())
@@ -555,6 +496,10 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 #endif
         }
     }
+    */
+
+
+
 
 }
 

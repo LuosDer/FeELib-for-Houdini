@@ -28,12 +28,11 @@
 #include <HOM/HOM_SopNode.h>
 
 
-#include <GU/GU_Measure.h>
 #include <GU/GU_Promote.h>
-#include <GEO/GEO_SplitPoints.h>
 
-#include "GU_FeE/GU_FeE_Measure.h"
-#include "GU_FeE/GU_FeE_Connectivity.h"
+
+#include <GA_FeE/GA_FeE_Group.h>
+#include <GA_FeE/GA_FeE_Adjacency.h>
 
 
 using namespace SOP_FeE_Group_Unshared_1_0_Namespace;
@@ -217,6 +216,24 @@ SOP_FeE_Group_Unshared_1_0::cookVerb() const
 
 
 
+
+static GA_GroupType
+sopUnsharedAttribClass(SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribClass parmgrouptype)
+{
+    using namespace SOP_FeE_Group_Unshared_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case UnsharedAttribClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case UnsharedAttribClass::POINT:     return GA_GROUP_POINT;      break;
+    case UnsharedAttribClass::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case UnsharedAttribClass::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
 static GA_GroupType
 sopGroupType(SOP_FeE_Group_Unshared_1_0Parms::GroupType parmgrouptype)
 {
@@ -239,7 +256,7 @@ void
 SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Group_Unshared_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Group_Unshared_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -250,24 +267,15 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     //outGeo0 = sopNodeProcess(*inGeo0);
 
 
-
-
     const UT_StringHolder& geo0AttribNames = sopparms.getUnsharedAttribName();
     if (!geo0AttribNames.isstring())
         return;
 
-    GOP_Manager gop;
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
-
-
-
-    //const GA_Storage inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_STORE_INT32;
+    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    if (geo0Group && geo0Group->isEmpty())
+        return;
 
 
     UT_AutoInterrupt boss("Processing");
@@ -275,8 +283,24 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         return;
 
 
+    const exint& subscribeRatio = sopparms.getSubscribeRatio();
+    const exint& minGrainSize = sopparms.getMinGrainSize();
+    //const exint minGrainSize = pow(2, 8);
+    //const exint minGrainSize = pow(2, 4);
 
-    const SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribType unsharedAttribType = sopparms.getUnsharedAttribType();
+
+    //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
+    const GA_Storage& inStorgeF = GA_STORE_REAL32;
+    const GA_Storage& inStorgeI = GA_STORE_INT32;
+
+
+
+    GA_FeE_Adjacency::
+
+
+
+
+    const SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribType& unsharedAttribType = sopparms.getUnsharedAttribType();
 
     switch (unsharedAttribType)
     {
@@ -304,8 +328,23 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     }
 
 
-
-    const SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribClass unsharedAttribClass = sopparms.getUnsharedAttribClass();
+#if 1
+    const GA_GroupType& unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
+    switch (unsharedAttribClass)
+    {
+    case GA_GROUP_PRIMITIVE:
+        break;
+    case GA_GROUP_POINT:
+        break;
+    case GA_GROUP_VERTEX:
+        break;
+    case GA_GROUP_EDGE:
+        break;
+    default:
+        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
+    }
+#else
+    const SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribClass& unsharedAttribClass = sopparms.getUnsharedAttribClass();
     switch (unsharedAttribClass)
     {
     case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribClass::PRIM:
@@ -319,113 +358,9 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     default:
         UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
     }
+#endif
 
 
-
-
-
-
-    const GA_ElementGroup* geo0Group = nullptr;
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
-
-    if (groupName0.isstring())
-    {
-        GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-        bool ok = true;
-        const GA_Group* anyGroup = gop.parseGroupDetached(groupName0, groupType, outGeo0, true, false, ok);
-
-        if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName0);
-        }
-        if (anyGroup && anyGroup->isElementGroup())
-        {
-            geo0Group = UTverify_cast<const GA_ElementGroup*>(anyGroup);
-        }
-    }
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    GA_GroupType geo0finalGroupType;
-    if (geo0Group)
-        geo0finalGroupType = geo0Group->classType();
-    else
-        geo0finalGroupType = GA_GROUP_INVALID;
-
-
-
-    //UT_StringHolder geo0AttribNameSub = geo0AttribNames;
-
-    GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(geo0AttribClass, geo0AttribNames, 3, GA_Defaults(0.0), 0, 0, GA_STORE_REAL32);
-    GA_RWHandleT<TAttribTypeV> attribHandle(n2dAttrib);
-
-    switch (geo0AttribClass)
-    {
-    case GA_ATTRIB_POINT:
-    {
-        const GA_PointGroup* geo0PromotedGroup = nullptr;
-        GA_PointGroupUPtr groupDeleter;
-        if (geo0Group)
-        {
-            if (geo0finalGroupType == GA_GROUP_POINT)
-                geo0PromotedGroup = static_cast<const GA_PointGroup*>(geo0Group);
-            else if (geo0finalGroupType == GA_GROUP_VERTEX || geo0finalGroupType == GA_GROUP_PRIMITIVE || geo0finalGroupType == GA_GROUP_EDGE)
-            {
-                GA_PointGroup* newDetachedGroup = new GA_PointGroup(*outGeo0);
-                groupDeleter.reset(newDetachedGroup);
-                newDetachedGroup->combine(geo0Group);
-                geo0PromotedGroup = newDetachedGroup;
-            }
-        }
-
-        const GA_SplittableRange geo0SplittableRange(outGeo0->getPointRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [outGeo0, &boss, attribHandle, &uniScale](const GA_SplittableRange& r)
-        {
-            if (boss.wasInterrupted())
-                return;
-            GA_Offset start;
-            GA_Offset end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    GA_Offset pointprim = outGeo0->vertexPrimitive(outGeo0->pointVertex(elemoff));
-
-                    TAttribTypeV attribValue = attribHandle.get(elemoff);
-                    attribValue *= uniScale;
-                    attribHandle.set(elemoff, attribValue);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-    break;
-    case GA_ATTRIB_VERTEX:
-    {
-        const GA_VertexGroup* geo0PromotedGroup = nullptr;
-        GA_VertexGroupUPtr groupDeleter;
-        if (geo0Group)
-        {
-            if (geo0finalGroupType == GA_GROUP_VERTEX)
-                geo0PromotedGroup = static_cast<const GA_VertexGroup*>(geo0Group);
-            else if (geo0finalGroupType == GA_GROUP_PRIMITIVE || geo0finalGroupType == GA_GROUP_POINT || geo0finalGroupType == GA_GROUP_EDGE)
-            {
-                GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
-                groupDeleter.reset(newDetachedGroup);
-                newDetachedGroup->combine(geo0Group);
-                geo0PromotedGroup = newDetachedGroup;
-            }
-        }
-
-        const GA_SplittableRange geo0SplittableRange(outGeo0->getVertexRange(geo0PromotedGroup));
-    }
-
-    break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled outGeo0 class type!");
-    }
 
 
 

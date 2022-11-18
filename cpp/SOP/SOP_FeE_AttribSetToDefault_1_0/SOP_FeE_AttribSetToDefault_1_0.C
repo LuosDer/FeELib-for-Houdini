@@ -32,6 +32,7 @@
 #include <GU/GU_Promote.h>
 #include <GEO/GEO_SplitPoints.h>
 
+#include "GA_FeE/GA_FeE_Group.h"
 #include "GU_FeE/GU_FeE_Attribute.h"
 
 
@@ -240,7 +241,7 @@ void
 SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_AttribSetToDefault_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_AttribSetToDefault_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -255,24 +256,30 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
 
 
+    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    if (geo0Group && geo0Group->isEmpty())
+        return;
+    const GA_GroupType& geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
 
-    GOP_Manager gop;
-    //const attribPrecisonF uniScale = sopparms.getUniScale();
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-    //const int minGrainSize = pow(2, 4);
-
-
-    //const GA_Storage fpreal_storage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage fpreal_storage = GA_STORE_REAL32;
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+
+
+
+    //const attribPrecisonF& uniScale = sopparms.getUniScale();
+    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+
+
+    const exint& subscribeRatio = sopparms.getSubscribeRatio();
+    const exint& minGrainSize = sopparms.getMinGrainSize();
+    //const int minGrainSize = pow(2, 4);
+
+    //const GA_Storage& inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
+    const GA_Storage& inStorageF = GA_STORE_REAL32;
 
 
     if (geo0AttribClass == GA_ATTRIB_DETAIL)
@@ -282,46 +289,8 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     }
 
 
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::groupFromString(cookparms, sopparms.getGroup());
 
-    
-
-    const GA_ElementGroup* geo0Group = nullptr;
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
-
-    if (groupName0.isstring())
-    {
-        GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-        bool ok = true;
-        const GA_Group* anyGroup = gop.parseGroupDetached(groupName0, groupType, outGeo0, true, false, ok);
-
-        if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName0);
-        }
-        if (anyGroup && anyGroup->isElementGroup())
-        {
-            geo0Group = UTverify_cast<const GA_ElementGroup*>(anyGroup);
-        }
-    }
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    GA_GroupType geo0finalGroupType;
-    if (geo0Group)
-        geo0finalGroupType = geo0Group->classType();
-    else
-        geo0finalGroupType = GA_GROUP_INVALID;
-
-
-
-
-
-
-    UT_StringHolder geo0AttribNameSub = geo0AttribNames;
+    const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
 
     GA_Attribute* attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub);
     if (!attribPtr)
