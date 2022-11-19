@@ -6,7 +6,7 @@
 
 //#include <GA_FeE/GA_FeE_Attribute.h>
 
-#include <GU/GU_Detail.h>
+#include <GEO/GEO_Detail.h>
 #include <GEO/GEO_PrimPoly.h>
 #include <OP/OP_Operator.h>
 #include <OP/OP_OperatorTable.h>
@@ -30,17 +30,17 @@ namespace GA_FeE_Attribute {
 
 static bool
     findFloatTuplePointVertex(
-        const GEO_Detail* geo,
+        GEO_Detail* const geo,
         const GA_AttributeOwner& attribOwner,
         const GA_AttributeScope& scope,
         const UT_StringRef& attribName,
-        const GA_Attribute* attribPtr,
+        GA_Attribute*& attribPtr,
         GA_AttributeOwner& attribOwnerFinal,
         const int& min_size = 1,
         const int& max_size = -1
     )
 {
-    if (attribOwner == GA_ATTRIB_DETAIL)//detail means Auto
+    if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
     {
         attribPtr = geo->findFloatTuple(GA_ATTRIB_VERTEX, scope, attribName, min_size, max_size);
         if (attribPtr)
@@ -72,10 +72,10 @@ static bool
 //GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, attribName, attribPtr, attribOwnerFianl);
 static bool
 findFloatTuplePointVertex(
-    const GEO_Detail* const geo,
+    GEO_Detail* const geo,
     const GA_AttributeOwner& attribOwner,
     const UT_StringRef& attribName,
-    const GA_Attribute* attribPtr,
+    GA_Attribute*& attribPtr,
     GA_AttributeOwner& attribOwnerFianl,
     const int& min_size = 1,
     const int& max_size = -1

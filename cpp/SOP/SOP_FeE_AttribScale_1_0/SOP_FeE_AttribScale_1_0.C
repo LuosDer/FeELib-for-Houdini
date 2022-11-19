@@ -286,7 +286,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (!attribPtr)
         return;
 
-    const int attribSize = attribPtr->getTupleSize();
+    const int& attribSize = attribPtr->getTupleSize();
 
     //template <typename T>
     switch (attribSize)
@@ -327,7 +327,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     case 1:
     {
         GA_RWHandleT<UT_Vector3F> attribHandle(attribPtr);
-        UTparallelFor(geo0SplittableRange, [&attribHandle, doNormalize, uniScale](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange, [&attribHandle, &doNormalize, &uniScale](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -369,7 +369,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     }
     break;
     }
-
+    attribPtr->bumpDataId();
 
 
 

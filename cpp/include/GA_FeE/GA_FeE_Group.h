@@ -154,7 +154,10 @@ parseGroupDetached(
 }
 
 
-//GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, groupType);
+
+
+
+//GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, groupType);
 //using GA_ElementGroupUPtr = ::std::unique_ptr<GA_ElementGroup, ::std::default_delete<GA_ElementGroup>>;
 
 static GA_Range

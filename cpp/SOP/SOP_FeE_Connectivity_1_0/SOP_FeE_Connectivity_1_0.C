@@ -268,17 +268,17 @@ sopConnectivityConstraint(SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint 
 }
 
 
-static exint
+static bool
 sopAttribType(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (attribType)
     {
-    case ConnectivityAttribType::INT:        return 0;      break;
-    case ConnectivityAttribType::STRING:     return 1;      break;
+    case ConnectivityAttribType::INT:        return false;      break;
+    case ConnectivityAttribType::STRING:     return true;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Attrib Type!");
-    return -1;
+    return false;
 }
 
 
@@ -357,7 +357,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
-    const exint& connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
+    const bool& connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
     //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
     const bool& connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
 
@@ -415,7 +415,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
     }
-    
+
 
 
 
@@ -437,19 +437,31 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle(adjElemsAttribPtr.get());
 
 #else
-    GA_Attribute* adjElemsAttribPtr = outGeo0->addIntArray(connectivityConstraint ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT, "__adjElems_SOP_FeE_Connectivity_1_0", 1, 0, 0, inStorageI);
+    GA_Attribute* adjElemsAttribPtr = outGeo0->addIntArray((connectivityConstraint || geo0AttribClass == GA_ATTRIB_PRIMITIVE) ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT, "__adjElems_SOP_FeE_Connectivity_1_0", 1, 0, 0, inStorageI);
     GA_RWHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle(adjElemsAttribPtr);
 #endif
 
     if (connectivityConstraint)
+    {
         GA_FeE_Adjacency::primPrimEdge(outGeo0, adjElemsAttribHandle, dstptAttribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), nullptr,
             subscribeRatio, minGrainSize);
+    }
     else
-        GA_FeE_Adjacency::pointPointEdge(outGeo0, adjElemsAttribHandle, vtxpnumAttribHandle,
-            static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-            subscribeRatio, minGrainSize);
-
+    {
+        if (geo0AttribClass == GA_ATTRIB_PRIMITIVE)
+        {
+            GA_FeE_Adjacency::primPrimPoint(outGeo0, adjElemsAttribHandle,
+                static_cast<const GA_PrimitiveGroup*>(geo0Group), nullptr,
+                subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            GA_FeE_Adjacency::pointPointEdge(outGeo0, adjElemsAttribHandle, vtxpnumAttribHandle,
+                static_cast<const GA_PointGroup*>(geo0Group), nullptr,
+                subscribeRatio, minGrainSize);
+        }
+    }
 
 
 
@@ -466,12 +478,27 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<GA_Size> attribHandle(attribPtr);
 
     if (connectivityConstraint)
-        GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
+    {
+        //GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
+    }
     else
-        GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
+    {
+        if (geo0AttribClass == GA_ATTRIB_PRIMITIVE)
+        {
+            GA_FeE_Connectivity::connectivityPrim(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
+        }
+        else
+        {
+            GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
+        }
+    }
 
+    if (connectivityAttribType)
+    {
 
-
+        //GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
+    }
+    
 
     /*
     GA_ROPageHandleV3 v_ph(outGeo0, GA_ATTRIB_POINT, "v");

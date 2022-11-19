@@ -106,10 +106,13 @@ bretschneidersFormula1(
     length4 = length0 * length2 + length1 * length3;
 
     const T& halfP = (length0 + length1 + length2 + length3) * 0.5;
-    //areaSum = sqrt((halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
-    //        - length0 * length1 * length2 * length3 * (cos(angle) + 1) * 0.5);
+#if 1
     const T& area = (halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
                   - (length4 + length5) * (length4 - length5) * 0.25;
+#else
+    const T& area = sqrt((halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
+                  - length0 * length1 * length2 * length3 * (cos(angle) + 1) * 0.5);
+#endif
     return sqrt(area);
 }
 
@@ -126,29 +129,33 @@ polyArea(
     const GA_Offset& primoff
 )
 {
-    const int& primtype = geo->getPrimitiveTypeId(primoff);
-    if (primtype != GA_PRIMPOLY)
-        return 0.0;
-
     const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-    const bool& closed = vertices.getExtraFlag();
 
-    //if (!geo->getPrimitiveClosedFlag(primoff))
+    const bool& closed = vertices.getExtraFlag();
     if (!closed)
         return 0.0;
 
     const GA_Size& numvtx = vertices.size();
-
-
     if (numvtx < 3)
         return 0.0;
 
-    attribPrecisonF areaSum = 0.0;
 
 
-    TAttribTypeV pos0 = geo->getPos3(geo->vertexPoint(vertices(0)));
-    TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices(1)));
-    const TAttribTypeV& pos2 = geo->getPos3(geo->vertexPoint(vertices(2)));
+    switch (geo->getPrimitiveTypeId(primoff))
+    {
+    case GA_PRIMPOLY:
+    {
+    }
+    break;
+    default:
+        return 0.0;
+    }
+
+
+
+    TAttribTypeV pos0 = geo->getPos3(geo->vertexPoint(vertices[0]));
+    TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices[1]));
+    const TAttribTypeV& pos2 = geo->getPos3(geo->vertexPoint(vertices[2]));
 
     //GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
 
@@ -161,9 +168,7 @@ polyArea(
     break;
     case 4:
     {
-        //Bretschneider's formula
-
-        const TAttribTypeV& pos3 = geo->getPos3(geo->vertexPoint(vertices(3)));
+        const TAttribTypeV& pos3 = geo->getPos3(geo->vertexPoint(vertices[3]));
         return bretschneidersFormula0(pos0, pos1, pos2, pos3);
     }
     break;
@@ -181,10 +186,11 @@ polyArea(
     const attribPrecisonF& cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
     const attribPrecisonF& cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
-    pos0 = geo->getPos3(geo->vertexPoint(vertices(numvtx - 1)));
+    attribPrecisonF areaSum = 0.0;
+    pos0 = geo->getPos3(geo->vertexPoint(vertices[numvtx - 1]));
     for (GA_Size i(0); i < numvtx; ++i)
     {
-        pos1 = geo->getPos3(geo->vertexPoint(vertices(i)));
+        pos1 = geo->getPos3(geo->vertexPoint(vertices[i]));
         areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
             + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
             + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
@@ -204,27 +210,33 @@ static attribPrecisonF
 polyArea(
     const GA_Detail* geo,
     const GA_Offset& primoff,
-    const GA_ROHandleT<TAttribTypeV>& posAttribHandle)
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle
+)
 {
-    const int& primtype = geo->getPrimitiveTypeId(primoff);
-    if (primtype != GA_PRIMPOLY)
-        return 0.0;
-
     const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-    const bool& closed = vertices.getExtraFlag();
 
-    //if (!geo->getPrimitiveClosedFlag(primoff))
+    const bool& closed = vertices.getExtraFlag();
     if (!closed)
         return 0.0;
 
     const GA_Size& numvtx = vertices.size();
-
-
     if (numvtx < 3)
         return 0.0;
 
+
+
+    switch (geo->getPrimitiveTypeId(primoff))
+    {
+    case GA_PRIMPOLY:
+    {
+    }
+    break;
+    default:
+        return 0.0;
+    }
+
+
     const GA_AttributeOwner& attribOwner = posAttribHandle.getAttribute()->getOwner();
-    attribPrecisonF areaSum = 0.0;
 
     TAttribTypeV pos0, pos1, pos2;
 
@@ -232,24 +244,24 @@ polyArea(
     {
     case GA_ATTRIB_VERTEX:
     {
-        pos0 = posAttribHandle.get(vertices(0));
-        pos1 = posAttribHandle.get(vertices(1));
-        pos2 = posAttribHandle.get(vertices(2));
+        pos0 = posAttribHandle.get(vertices[0]);
+        pos1 = posAttribHandle.get(vertices[1]);
+        pos2 = posAttribHandle.get(vertices[2]);
     }
     break;
     case GA_ATTRIB_POINT:
     {
-        pos0 = posAttribHandle.get(geo->vertexPoint(vertices(0)));
-        pos1 = posAttribHandle.get(geo->vertexPoint(vertices(1)));
-        pos2 = posAttribHandle.get(geo->vertexPoint(vertices(2)));
+        pos0 = posAttribHandle.get(geo->vertexPoint(vertices[0]));
+        pos1 = posAttribHandle.get(geo->vertexPoint(vertices[1]));
+        pos2 = posAttribHandle.get(geo->vertexPoint(vertices[2]));
     }
     break;
     default:
         return 0.0;
     }
-    //TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices(0)));
-    //TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices(1)));
-    //TAttribTypeV pos2 = geo->getPos3(geo->vertexPoint(vertices(2)));
+    //TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices[0]));
+    //TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices[1]));
+    //TAttribTypeV pos2 = geo->getPos3(geo->vertexPoint(vertices[2]));
 
     //GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
 
@@ -262,18 +274,18 @@ polyArea(
     break;
     case 4:
     {
-        //TAttribTypeV pos3 = geo->getPos3(geo->vertexPoint(vertices(3)));
+        //TAttribTypeV pos3 = geo->getPos3(geo->vertexPoint(vertices[3]));
         TAttribTypeV pos3;
         switch (attribOwner)
         {
         case GA_ATTRIB_VERTEX:
         {
-            pos3 = posAttribHandle.get(vertices(3));
+            pos3 = posAttribHandle.get(vertices[3]);
         }
         break;
         case GA_ATTRIB_POINT:
         {
-            pos3 = posAttribHandle.get(geo->vertexPoint(vertices(3)));
+            pos3 = posAttribHandle.get(geo->vertexPoint(vertices[3]));
         }
         break;
         default:
@@ -296,16 +308,17 @@ polyArea(
     const attribPrecisonF& cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
     const attribPrecisonF& cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
-    //pos0 = geo->getPos3(geo->vertexPoint(vertices(numvtx - 1)));
+    attribPrecisonF areaSum = 0.0;
+    //pos0 = geo->getPos3(geo->vertexPoint(vertices[numvtx - 1]));
     switch (attribOwner)
     {
     case GA_ATTRIB_VERTEX:
     {
-        pos0 = posAttribHandle.get(vertices(numvtx - 1));
+        pos0 = posAttribHandle.get(vertices[numvtx - 1]);
         for (GA_Size vtxpnum(0); vtxpnum < numvtx; ++vtxpnum)
         {
-            //pos1 = geo->getPos3(geo->vertexPoint(vertices(vtxpnum)));
-            pos1 = posAttribHandle.get(vertices(vtxpnum));
+            //pos1 = geo->getPos3(geo->vertexPoint(vertices[vtxpnum]));
+            pos1 = posAttribHandle.get(vertices[vtxpnum]);
             areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
                      + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
                      + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
@@ -315,11 +328,11 @@ polyArea(
     break;
     case GA_ATTRIB_POINT:
     {
-        pos0 = posAttribHandle.get(geo->vertexPoint(vertices(numvtx - 1)));
+        pos0 = posAttribHandle.get(geo->vertexPoint(vertices[numvtx - 1]));
         for (GA_Size vtxpnum(0); vtxpnum < numvtx; ++vtxpnum)
         {
-            //pos1 = geo->getPos3(geo->vertexPoint(vertices(vtxpnum)));
-            pos1 = posAttribHandle.get(geo->vertexPoint(vertices(vtxpnum)));
+            //pos1 = geo->getPos3(geo->vertexPoint(vertices[vtxpnum]));
+            pos1 = posAttribHandle.get(geo->vertexPoint(vertices[vtxpnum]));
             areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
                      + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
                      + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
@@ -351,8 +364,7 @@ polyArea(
     const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
     UTparallelFor(geo0SplittableRange0, [&geo, &areaAttribHandle, &posAttribHandle](const GA_SplittableRange& r)
     {
-        GA_Offset start;
-        GA_Offset end;
+        GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -392,6 +404,470 @@ polyArea(
         }
     }, subscribeRatio, minGrainSize);
 }
+
+
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+static GA_Attribute*
+addAttribPolyArea(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "area",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const UT_Options* creation_args = 0,
+    const GA_AttributeOptions* attribute_options = 0,
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint & subscribeRatio = 16,
+    const exint & minGrainSize = 1024
+)
+{
+    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+    GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
+    polyArea(geo, attribPtr, geoPrimGroup);
+    return attribPtr;
+}
+
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+static GA_Attribute*
+addAttribPolyArea(
+    GEO_Detail* geo,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const UT_StringHolder& name = "area",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const UT_Options* creation_args = 0,
+    const GA_AttributeOptions* attribute_options = 0,
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+    GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
+    polyArea(geo, attribPtr, posAttribHandle, geoPrimGroup);
+    return attribPtr;
+}
+
+
+#define DEF_FUNC_AddAttrib(DEF_FUNC_Parm_FuncName, DEF_FUNC_Parm_ParmPack, DEF_FUNC_Parm_AttribName, DEF_FUNC_Parm_Defaults, DEF_FUNC_Parm_Storage, DEF_FUNC_Parm_SubscribeRatio, DEF_FUNC_Parm_MinGrainSize)     \
+        SYS_FORCE_INLINE                                                                                                                                                                                          \
+        static GA_Attribute*                                                                                                                                                                                      \
+        DEF_FUNC_Parm_FuncName(                                                                                                                                                                                   \
+            GEO_Detail* geo,                                                                                                                                                                                      \
+            DEF_FUNC_Parm_ParmPack                                                                                                                                                                                \
+            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
+            const GA_PrimitiveGroup* geoPrimGroup = nullptr,                                                                                                                                                      \
+            const GA_Defaults& defaults = GA_Defaults(DEF_FUNC_Parm_Defaults),                                                                                                                                    \
+            const GA_Storage& storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),                                                                                                                                                   \
+            const exint& subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
+            const exint& minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
+        )                                                                                                                                                                                                         \
+        {                                                                                                                                                                                                         \
+            return DEF_FUNC_Parm_FuncName(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);                                                                                 \
+        }                                                                                                                                                                                                         \
+        SYS_FORCE_INLINE                                                                                                                                                                                          \
+        static GA_Attribute*                                                                                                                                                                                      \
+        DEF_FUNC_Parm_FuncName(                                                                                                                                                                                   \
+            GEO_Detail* geo,                                                                                                                                                                                      \
+            DEF_FUNC_Parm_ParmPack                                                                                                                                                                                \
+            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
+            const GA_PrimitiveGroup* geoPrimGroup = nullptr,                                                                                                                                                      \
+            const GA_Defaults& defaults = GA_Defaults(DEF_FUNC_Parm_Defaults),                                                                                                                                    \
+            const GA_Storage& storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
+            const exint& subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
+            const exint& minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
+        )                                                                                                                                                                                                         \
+        {                                                                                                                                                                                                         \
+            return DEF_FUNC_Parm_FuncName(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);                                                                    \
+        }                                                                                                                                                                                                         \
+
+
+
+
+DEF_FUNC_AddAttrib(addAttribPolyArea,          , area, -1.0, GA_STORE_REAL32, 16, 1024)
+
+
+//using parmPack1 = const GA_ROHandleT<TAttribTypeV>& posAttribHandle;
+//DEF_FUNC_AddAttrib(addAttribPolyArea, parmPack1, area, -1.0, GA_STORE_REAL32, 16, 1024)
+
+//DEF_FUNC_AddAttrib(addAttribPolyPerimeter, , perimeter, -1.0, GA_STORE_REAL32, 16, 1024)
+
+//GA_FeE_Measure::addAttribPolyArea(geo, name, geoPrimGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+/*
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyArea(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "area",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyArea(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+}
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, name, geoPrimGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyArea(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "area",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyArea(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+}
+*/
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyArea(
+    GEO_Detail* geo,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const UT_StringHolder& name = "area",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+}
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyArea(
+    GEO_Detail* geo,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const UT_StringHolder& name = "area",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+}
+
+
+
+
+
+
+
+static attribPrecisonF
+//GU_Detail::compute3DArea(const GA_Offset primoff)
+polyPerimeter(
+    const GA_Detail* geo,
+    const GA_Offset& primoff
+)
+{
+    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+    const GA_Size& numvtx = vertices.size();
+    if (numvtx < 2)
+        return 0.0;
+
+    const bool& closed = vertices.getExtraFlag();
+    attribPrecisonF pSum = 0.0;
+
+    switch (geo->getPrimitiveTypeId(primoff))
+    {
+    case GA_PRIMPOLY:
+    {
+    }
+    break;
+    default:
+        return 0.0;
+    }
+
+    TAttribTypeV pos0 = geo->getPos3(geo->vertexPoint(vertices[closed ? numvtx-1 : 0]));
+    for (GA_Size i(closed); i < numvtx; ++i)
+    {
+        TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices[i]));
+        pSum += (pos1 - pos0).length();
+        pos0 = pos1;
+    }
+
+    return pSum;
+}
+
+
+static attribPrecisonF
+//GU_Detail::compute3DArea(const GA_Offset primoff)
+polyPerimeter(
+    const GA_Detail* geo,
+    const GA_Offset& primoff,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle
+)
+{
+    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+    const GA_Size& numvtx = vertices.size();
+    if (numvtx < 2)
+        return 0.0;
+
+    const bool& closed = vertices.getExtraFlag();
+    attribPrecisonF pSum = 0.0;
+
+    switch (geo->getPrimitiveTypeId(primoff))
+    {
+    case GA_PRIMPOLY:
+    {
+    }
+    break;
+    default:
+        return 0.0;
+    }
+
+
+    const GA_AttributeOwner& attribOwner = posAttribHandle.getAttribute()->getOwner();
+
+    TAttribTypeV pos0, pos1;
+    switch (attribOwner)
+    {
+    case GA_ATTRIB_VERTEX:
+    {
+        pos0 = posAttribHandle.get(vertices[closed ? numvtx - 1 : 0]);
+        for (GA_Size i(closed); i < numvtx; ++i)
+        {
+            pos1 = posAttribHandle.get(vertices[i]);
+            pSum += (pos1 - pos0).length();
+            pos0 = pos1;
+        }
+    }
+    break;
+    case GA_ATTRIB_POINT:
+    {
+        pos0 = posAttribHandle.get(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
+        for (GA_Size i(closed); i < numvtx; ++i)
+        {
+            pos1 = posAttribHandle.get(geo->vertexPoint(vertices[i]));
+            pSum += (pos1 - pos0).length();
+            pos0 = pos1;
+        }
+    }
+    break;
+    default:
+        return 0.0;
+    }
+
+    return pSum;
+}
+
+
+
+
+static void
+polyPerimeter(
+    const GA_Detail* geo,
+    const GA_RWHandleF& pAttribHandle,
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    //GU_Measure::computePerimeter(*geo, pAttribHandle, geoPrimGroup);
+    const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
+    UTparallelFor(geo0SplittableRange0, [&geo, &pAttribHandle](const GA_SplittableRange& r)
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                //attribPrecisonF attribValue = GA_FeE_Measure::polyPerimeter(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
+                pAttribHandle.set(elemoff, polyPerimeter(geo, elemoff));
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+static void
+polyPerimeter(
+    const GA_Detail* geo,
+    const GA_RWHandleF& pAttribHandle,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    //GU_Measure::computePerimeter(*geo, pAttribHandle, geoPrimGroup);
+    const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
+    UTparallelFor(geo0SplittableRange0, [&geo, &pAttribHandle, &posAttribHandle](const GA_SplittableRange& r)
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                //attribPrecisonF attribValue = GA_FeE_Measure::polyPerimeter(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
+                pAttribHandle.set(elemoff, polyPerimeter(geo, elemoff, posAttribHandle));
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+static GA_Attribute*
+addAttribPolyPerimeter(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "perimeter",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const UT_Options* creation_args = 0,
+    const GA_AttributeOptions* attribute_options = 0,
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+    GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
+    polyPerimeter(geo, attribPtr, geoPrimGroup);
+    return attribPtr;
+}
+
+//GA_FeE_Measure::addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+static GA_Attribute*
+addAttribPolyPerimeter(
+    GEO_Detail* geo,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const UT_StringHolder& name = "perimeter",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const UT_Options* creation_args = 0,
+    const GA_AttributeOptions* attribute_options = 0,
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+    GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
+    polyPerimeter(geo, attribPtr, posAttribHandle, geoPrimGroup);
+    return attribPtr;
+}
+
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, name, geoPrimGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyPerimeter(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "perimeter",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyPerimeter(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+}
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, name, geoPrimGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyPerimeter(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "perimeter",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyPerimeter(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+}
+
+
+
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyPerimeter(
+    GEO_Detail* geo,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const UT_StringHolder& name = "perimeter",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyPerimeter(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+}
+
+
+//GA_FeE_Measure::addAttribPolyArea(geo, posAttribHandle, name, geoPrimGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+addAttribPolyPerimeter(
+    GEO_Detail* geo,
+    const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
+    const UT_StringHolder& name = "perimeter",
+    const GA_PrimitiveGroup* geoPrimGroup = nullptr,
+    const GA_Defaults& defaults = GA_Defaults(-1.0),
+    const GA_Storage& storage = GA_STORE_REAL32,
+    const exint& subscribeRatio = 16,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribPolyPerimeter(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+}
+
+
+
+
+
+
 
 
 
