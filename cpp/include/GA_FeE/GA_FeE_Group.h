@@ -107,6 +107,9 @@ isInvalid(
 
 //const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
 
+
+
+
 static const GA_ElementGroup*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
@@ -152,6 +155,56 @@ parseGroupDetached(
     GOP_Manager gop;
     return GA_FeE_Group::parseGroupDetached(cookparms, geo, groupType, groupName, gop);
 }
+
+
+
+
+
+
+static const GA_EdgeGroup*
+parseEdgeGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    if (!groupName.length())
+        return nullptr;
+
+    if (!groupName.isstring())
+    {
+        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+        return nullptr;
+    }
+
+    bool ok = true;
+    const GA_Group* anyGroup = gop.parseGroupDetached(groupName, GA_GROUP_EDGE, geo, true, false, ok);
+
+    if (!ok || (anyGroup && !anyGroup->isElementGroup()))
+    {
+        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+        return nullptr;
+    }
+    if (anyGroup && anyGroup->isElementGroup())
+    {
+        return UTverify_cast<const GA_EdgeGroup*>(anyGroup);
+    }
+    return nullptr;
+}
+
+
+static const GA_EdgeGroup*
+parseEdgeGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName
+)
+{
+    GOP_Manager gop;
+    return GA_FeE_Group::parseEdgeGroupDetached(cookparms, geo, groupName, gop);
+}
+
 
 
 
@@ -290,6 +343,40 @@ groupPromoteSplittableRange(
 }
 
 
+static void
+combineVertexFromEdgeGroup(
+    const GA_Detail* outGeo0,
+    const GA_VertexGroup* group,
+    const GA_EdgeGroup* groupToCombine
+)
+{
+    if (!group)
+        return;
+    UT_UniquePtr<GA_VertexGroup> groupDeleter;
+    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
+    groupDeleter.reset(newDetachedGroup);
+    newDetachedGroup->combine(groupToCombine);
+    group = newDetachedGroup;
+}
+
+/*
+template<typename T, typename T1>
+static void
+combineGroup(
+    const GA_Detail* outGeo0,
+    const T* group,
+    const T1* groupToCombine
+)
+{
+    if (!group)
+        return;
+    UT_UniquePtr<T> groupDeleter;
+    T* newDetachedGroup = new T(*outGeo0);
+    groupDeleter.reset(newDetachedGroup);
+    newDetachedGroup->combine(groupToCombine);
+    group = newDetachedGroup;
+}
+*/
 
 
 

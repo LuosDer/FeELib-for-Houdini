@@ -550,34 +550,9 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_PointGroup* pointSeamGroup = nullptr;
     //const GA_ElementGroup* edgeSeamGroup = nullptr;
 
-    if (edgeSeamGroupName.isstring())
-    {
-        bool ok = true;
-        const GA_Group* anyGroup = gop.parseGroupDetached(edgeSeamGroupName, GA_GROUP_EDGE, outGeo0, true, false, ok);
-
-        if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, edgeSeamGroupName);
-        }
-        if (anyGroup && anyGroup->isElementGroup())
-        {
-            if (vertexEdgeSeamGroup)
-            {
-                GA_VertexGroupUPtr groupDeleter;
-                if (vertexEdgeSeamGroup)
-                {
-                    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
-                    groupDeleter.reset(newDetachedGroup);
-                    newDetachedGroup->combine(vertexEdgeSeamGroup);
-                    vertexEdgeSeamGroup = newDetachedGroup;
-                }
-            }
-            else
-            {
-                vertexEdgeSeamGroup = UTverify_cast<const GA_VertexGroup*>(anyGroup);
-            }
-        }
-    }
+    const GA_EdgeGroup* edgeSeamGroup = GA_FeE_Group::parseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
+    //GA_FeE_Group::combineGroup<GA_VertexGroup, GA_EdgeGroup>(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
+    GA_FeE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
 
 
 
@@ -661,6 +636,11 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
             break;
         case 1:
             GA_FeE_Adjacency::vertexVertexPrim1(outGeo0, intAttribHandle, intAttribHandle1,
+                static_cast<const GA_VertexGroup*>(geo0Group),
+                subscribeRatio, minGrainSize);
+            break;
+        case 2:
+            GA_FeE_Adjacency::vertexVertexPrim2(outGeo0, intAttribHandle, intAttribHandle1,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;

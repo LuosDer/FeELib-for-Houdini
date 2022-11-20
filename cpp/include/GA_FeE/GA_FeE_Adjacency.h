@@ -953,6 +953,40 @@ namespace GA_FeE_Adjacency {
     }
 
 
+
+    //Get Vertex Destination Point
+    static void
+    pointPointEdge(
+        GA_Detail* geo,
+        const GA_RWHandleT<GA_Size>& attribHandle_prev,
+        const GA_RWHandleT<GA_Size>& attribHandle_next,
+        const GA_VertexGroup* geoGroup = nullptr,
+        const exint& subscribeRatio = 32,
+        const exint& minGrainSize = 1024
+    )
+    {
+        GA_Topology& topo = geo->getTopology();
+        topo.makeVertexRef();
+        const GA_ATITopology* vtxPrevRef = topo.getVertexPrevRef();
+        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &topo, &attribHandle_prev, &attribHandle_next, &geoGroup, &vtxPrevRef, &vtxNextRef](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        attribHandle_prev.set(elemoff, vtxPrevRef->getLink(elemoff));
+                        attribHandle_next.set(elemoff, vtxNextRef->getLink(elemoff));
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+
+
     //Get all prims neighbours prims with adjacent by edge
     static void
         primPrimEdge(
