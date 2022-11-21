@@ -424,8 +424,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GA_ATINumeric* uvScaleATIPtr = uvScaleATI_deleter.get();
 #else
 
-    GA_Attribute* areaATIPtr   = GA_FeE_Measure::addAttribPolyArea(outGeo0,               "__area_SOP_FeE_UVScaletoWorldSize_3_0",   static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
-    GA_Attribute* areaUVATIPtr = GA_FeE_Measure::addAttribPolyArea(outGeo0, attribHandle, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0", static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
+    GA_Attribute* areaATIPtr   = GA_FeE_Measure::addAttribPrimArea(outGeo0,               "__area_SOP_FeE_UVScaletoWorldSize_3_0",   static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
+    GA_Attribute* areaUVATIPtr = GA_FeE_Measure::addAttribPrimArea(outGeo0, attribHandle, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0", static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
 
     //GA_Attribute* areaATIPtr   = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__area_SOP_FeE_UVScaletoWorldSize_3_0",   1, GA_Defaults(0.0), 0, 0, inStorageF);
     //GA_Attribute* areaUVATIPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0", 1, GA_Defaults(0.0), 0, 0, inStorageF);
@@ -441,9 +441,6 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GA_RWHandleT<attribPrecisonF> areaAttribHandle(areaATIPtr);
     GA_RWHandleT<attribPrecisonF> areaUVAttribHandle(areaUVATIPtr);
     GA_RWHandleT<TAttribTypeV> uvScaleAttribHandle(uvScaleATIPtr);
-
-    //GA_FeE_Measure::polyArea(outGeo0, areaAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
-    //GA_FeE_Measure::polyArea(outGeo0, areaUVAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
 
     if (computeUVAreaInPiece)
     {
@@ -539,8 +536,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     }
 
     {
-        //const GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClassFinal);
-        const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClassFinal);
+        //const GA_Range geo0Range = GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
+        const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
         UTparallelFor(geo0SplittableRange, [&outGeo0, &attribHandle, &uvScaleAttribHandle, &geo0AttribClassFinal](const GA_SplittableRange& r)
         {
             GA_Offset start, end;

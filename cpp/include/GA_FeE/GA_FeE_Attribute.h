@@ -25,8 +25,8 @@
 
 namespace GA_FeE_Attribute {
 
-
-//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribName, attribOwner, attribPtr, attribOwnerFianl);
+//GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, attribPtr, geo0AttribClassFinal)
+//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribPtr, attribOwnerFianl);
 
 static bool
     findFloatTuplePointVertex(
@@ -69,6 +69,7 @@ static bool
     return true;
 }
 
+//GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, attribPtr, geo0AttribClassFinal)
 //GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, attribName, attribPtr, attribOwnerFianl);
 static bool
 findFloatTuplePointVertex(

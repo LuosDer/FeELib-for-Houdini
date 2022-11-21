@@ -158,7 +158,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexPrimIndexAttribName"
         label   "Vertex Prim Index Attribute Name"
         type    string
-        default { "vertexPrimIndex" }
+        default { "vtxpnum" }
         disablewhen "{ calVertexPrimIndex == 0 }"
     }
 
@@ -174,7 +174,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexPrimPrevAttribName"
         label   "Vertex Vertex Prim Prev Attribute Name"
         type    string
-        default { "vertexPrev" }
+        default { "vtxPrimPrev" }
         disablewhen "{ calVertexVertexPrim == 0 }"
     }
     parm {
@@ -182,7 +182,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexPrimNextAttribName"
         label   "Vertex Vertex Prim Next Attribute Name"
         type    string
-        default { "vertexNext" }
+        default { "vtxPrimNext" }
         disablewhen "{ calVertexVertexPrim == 0 }"
     }
 
@@ -202,7 +202,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexPointDstAttribName"
         label   "Vertex Point Destination Attribute Name"
         type    string
-        default { "vertexPointDst" }
+        default { "dstpt" }
         disablewhen "{ calVertexPointDst == 0 }"
     }
 
@@ -220,7 +220,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexNextEquivAttribName"
         label   "Vertex Vertex Next Equiv Attribute Name"
         type    string
-        default { "vertexVertexNextEquiv" }
+        default { "vtxNextEquiv" }
         disablewhen "{ calVertexVertexNextEquiv == 0 }"
     }
 
@@ -238,7 +238,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PointPointEdgeAttribName"
         label   "Point Point Edge Attribute Name"
         type    string
-        default { "pointPointEdge" }
+        default { "nebs" }
         disablewhen "{ calPointPointEdge == 0 }"
     }
 
@@ -256,7 +256,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PointPointPrimAttribName"
         label   "Point Point Prim Attribute Name"
         type    string
-        default { "pointPointPrim" }
+        default { "nebsPrim" }
         disablewhen "{ calPointPointPrim == 0 }"
     }
 
@@ -274,7 +274,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PrimPrimEdgeAttribName"
         label   "Prim Prim Edge Attribute Name"
         type    string
-        default { "primPrimEdge" }
+        default { "nebs" }
         disablewhen "{ calPrimPrimEdge == 0 }"
     }
 
@@ -292,7 +292,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PrimPrimPointAttribName"
         label   "Prim Prim Point Attribute Name"
         type    string
-        default { "primPrimPoint" }
+        default { "nebsPoint" }
         disablewhen "{ calPrimPrimPoint == 0 }"
     }
 
@@ -428,16 +428,17 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //outGeo0 = sopNodeProcess(*inGeo0);
 
     bool calVertexPrimIndex = sopparms.getCalVertexPrimIndex();
+    bool calVertexVertexPrim = sopparms.getCalVertexVertexPrim();
     bool calVertexPointDst = sopparms.getCalVertexPointDst();
     bool calVertexVertexNextEquiv = sopparms.getCalVertexVertexNextEquiv();
     bool calPointPointEdge = sopparms.getCalPointPointEdge();
     bool calPointPointPrim = sopparms.getCalPointPointPrim();
     bool calPrimPrimEdge = sopparms.getCalPrimPrimEdge();
     bool calPrimPrimPoint = sopparms.getCalPrimPrimPoint();
-    bool calVertexVertexPrim = sopparms.getCalVertexVertexPrim();
 
 #if 1
     const UT_StringHolder& vertexPrimIndexAttribName = sopparms.getVertexPrimIndexAttribName();
+    const UT_StringHolder& vertexVertexPrimNextAttribName = sopparms.getVertexVertexPrimNextAttribName();
     const UT_StringHolder& vertexPointDstAttribName = sopparms.getVertexPointDstAttribName();
     const UT_StringHolder& vertexVertexNextEquivAttribName = sopparms.getVertexVertexNextEquivAttribName();
     const UT_StringHolder& pointPointEdgeAttribName = sopparms.getPointPointEdgeAttribName();
@@ -445,16 +446,15 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& primPrimEdgeAttribName = sopparms.getPrimPrimEdgeAttribName();
     const UT_StringHolder& primPrimPointAttribName = sopparms.getPrimPrimPointAttribName();
     const UT_StringHolder& vertexVertexPrimPrevAttribName = sopparms.getVertexVertexPrimPrevAttribName();
-    const UT_StringHolder& vertexVertexPrimNextAttribName = sopparms.getVertexVertexPrimNextAttribName();
 
     calVertexPrimIndex = calVertexPrimIndex && vertexPrimIndexAttribName.isstring();
+    calVertexVertexPrim = calVertexVertexPrim && (vertexVertexPrimPrevAttribName.isstring() || vertexVertexPrimNextAttribName.isstring());
     calVertexPointDst = calVertexPointDst && vertexVertexNextEquivAttribName.isstring();
     calVertexVertexNextEquiv = calVertexVertexNextEquiv && vertexPointDstAttribName.isstring();
     calPointPointEdge = calPointPointEdge && pointPointEdgeAttribName.isstring();
     calPointPointPrim = calPointPointPrim && pointPointPrimAttribName.isstring();
     calPrimPrimEdge = calPrimPrimEdge && primPrimEdgeAttribName.isstring();
     calPrimPrimPoint = calPrimPrimPoint && primPrimPointAttribName.isstring();
-    calVertexVertexPrim = calVertexVertexPrim && (vertexVertexPrimPrevAttribName.isstring() || vertexVertexPrimNextAttribName.isstring());
 #else
     UT_StringHolder& pointPointEdgeAttribName;
     UT_StringHolder& pointPointPrimAttribName;
@@ -490,13 +490,13 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (
         !calVertexPrimIndex &&
+        !calVertexVertexPrim &&
         !calVertexPointDst &&
         !calVertexVertexNextEquiv &&
         !calPointPointEdge &&
         !calPointPointPrim &&
         !calPrimPrimEdge &&
-        !calPrimPrimPoint &&
-        !calVertexVertexPrim
+        !calPrimPrimPoint
         )
         return;
 
@@ -594,8 +594,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
     if (calVertexPointDst || calVertexVertexNextEquiv || calPrimPrimEdge)
     {
-        const exint& kernelDstpt = calVertexVertexNextEquiv || calPrimPrimEdge ? 0 : kernel;
-        switch (kernelDstpt)
+        switch (calVertexVertexNextEquiv || calPrimPrimEdge ? 0 : kernel)
         {
         case 0:
             GA_FeE_Adjacency::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
@@ -614,33 +613,32 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
-    GA_RWHandleT<GA_Offset> intAttribHandle;
-    GA_RWHandleT<UT_ValArray<GA_Offset>> attribHandle;
-
-
+    GA_ATINumericUPtr vtxPrevAttribUPtr, vtxNextAttribUPtr;
+    GA_RWHandleT<GA_Offset> vtxPrevAttribHandle, vtxNextAttribHandle;
     if (calVertexVertexPrim)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-        intAttribHandle.bind(attribPtr);
-
-        attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-        GA_RWHandleT<GA_Offset> intAttribHandle1;
-        intAttribHandle1.bind(attribPtr);
-
-        switch (kernel)
+        vtxPrevAttribHandle = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        vtxNextAttribHandle = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+    }
+    else if (calPointPointEdge)
+    {
+        vtxPrevAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        vtxNextAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
+        vtxPrevAttribHandle = vtxPrevAttribUPtr.get();
+        vtxNextAttribHandle = vtxNextAttribUPtr.get();
+    }
+    if (calVertexVertexPrim || calPointPointEdge)
+    {
+        switch (calPointPointEdge ? 0 : kernel)
         {
         case 0:
-            GA_FeE_Adjacency::vertexVertexPrim(outGeo0, intAttribHandle, intAttribHandle1,
+            GA_FeE_Adjacency::vertexVertexPrim(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;
         case 1:
-            GA_FeE_Adjacency::vertexVertexPrim1(outGeo0, intAttribHandle, intAttribHandle1,
-                static_cast<const GA_VertexGroup*>(geo0Group),
-                subscribeRatio, minGrainSize);
-            break;
-        case 2:
-            GA_FeE_Adjacency::vertexVertexPrim2(outGeo0, intAttribHandle, intAttribHandle1,
+            GA_FeE_Adjacency::vertexVertexPrim1(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;
@@ -649,6 +647,38 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         }
     }
 
+
+
+    GA_RWHandleT<GA_Offset> intAttribHandle;
+    GA_RWHandleT<UT_ValArray<GA_Offset>> attribHandle;
+
+    
+    //if (calVertexVertexPrim)
+    //{
+    //    GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+    //    intAttribHandle.bind(attribPtr);
+
+    //    attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+    //    GA_RWHandleT<GA_Offset> intAttribHandle1;
+    //    intAttribHandle1.bind(attribPtr);
+
+    //    switch (kernel)
+    //    {
+    //    case 0:
+    //        GA_FeE_Adjacency::vertexVertexPrim(outGeo0, intAttribHandle, intAttribHandle1,
+    //            static_cast<const GA_VertexGroup*>(geo0Group),
+    //            subscribeRatio, minGrainSize);
+    //        break;
+    //    case 1:
+    //        GA_FeE_Adjacency::vertexVertexPrim1(outGeo0, intAttribHandle, intAttribHandle1,
+    //            static_cast<const GA_VertexGroup*>(geo0Group),
+    //            subscribeRatio, minGrainSize);
+    //        break;
+    //    default:
+    //        break;
+    //    }
+    //}
+    
 
     if (calVertexVertexNextEquiv)
     {
@@ -672,6 +702,11 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
                 subscribeRatio, minGrainSize);
             break;
         case 1:
+            GA_FeE_Adjacency::pointPointEdge(outGeo0, attribHandle, vtxPrevAttribHandle, vtxNextAttribHandle,
+                static_cast<const GA_PointGroup*>(geo0Group), nullptr,
+                subscribeRatio, minGrainSize);
+            break;
+        case 2:
             GA_FeE_Adjacency::pointPointEdge(outGeo0, attribHandle,
                 static_cast<const GA_PointGroup*>(geo0Group), nullptr,
                 subscribeRatio, minGrainSize);

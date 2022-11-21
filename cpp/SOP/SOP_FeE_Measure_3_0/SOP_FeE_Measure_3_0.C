@@ -31,6 +31,7 @@
 #include <GU/GU_Measure.h>
 #include <GEO/GEO_SplitPoints.h>
 
+#include <GA_FeE/GA_FeE_Attribute.h>
 #include <GA_FeE/GA_FeE_Group.h>
 #include <GA_FeE/GA_FeE_Measure.h>
 
@@ -302,63 +303,49 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //const exint minGrainSize = pow(2, 4);
     // 
     //const GA_Storage inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorageF = GA_STORE_REAL32;
+    //const GA_Storage& inStorageF = GA_STORE_REAL32;
+    const GA_Storage& inStorageF = GA_STORE_INVALID;
+    
 
+    //GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);
+    //GA_RWHandleT<attribPrecisonF> measureAttribHandle(measureAttribPtr);
 
-    GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);
-    GA_RWHandleT<attribPrecisonF> measureAttribHandle(measureAttribPtr);
-
-
-
-
-
-    const UT_StringHolder& geo0AttribNameSub = geo0AttribName;
-
-
-    //if (geo0AttribNameSub == UT_StringHolder("P"))
-    if (geo0AttribNameSub == "P")
+    switch (measureType)
+    {
+    case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
+        GA_FeE_Measure::addAttribPrimArea(     outGeo0, geo0AttribClass, geo0AttribName, measureAttribName, static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
+        break;
+    case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
+        GA_FeE_Measure::addAttribPrimPerimeter(outGeo0, geo0AttribClass, geo0AttribName, measureAttribName, static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
+        break;
+    default:
+        cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");
+        return;
+    }
+    /*
+    if (geo0AttribName == "P")
     {
         switch (measureType)
         {
         case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-            GA_FeE_Measure::polyArea(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
+            GA_FeE_Measure::primArea(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
+            GA_FeE_Measure::primPerimeter(outGeo0, measureAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         default:
             cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");
             return;
         }
-
     }
     else
     {
         GA_AttributeOwner geo0AttribClassFinal;
         GA_Attribute* attribPtr;
-        if (geo0AttribClass == GA_ATTRIB_DETAIL)//not detail but means Auto
+        if (!GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribName, attribPtr, geo0AttribClassFinal))
         {
-            attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-            if (attribPtr)
-                geo0AttribClassFinal = GA_ATTRIB_VERTEX;
-            else
-            {
-                attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-                if (attribPtr)
-                    geo0AttribClassFinal = GA_ATTRIB_POINT;
-                else
-                    return;
-                //continue;
-            }
-        }
-        else
-        {
-            attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-            if (!attribPtr)
-            {
-                return;
-                //continue;
-            }
-            geo0AttribClassFinal = geo0AttribClass;
+            cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport pos attrib");
+            return;
         }
         GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
 
@@ -366,20 +353,17 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (measureType)
         {
         case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-            GA_FeE_Measure::polyArea(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
+            GA_FeE_Measure::primArea(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-            //GA_FeE_Measure::polyPerimeter(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
+            GA_FeE_Measure::primPerimeter(outGeo0, measureAttribHandle, attribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group), subscribeRatio, minGrainSize);
             break;
         default:
             cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");
             return;
         }
-
-
-
     }
-
+    */
 
 
     

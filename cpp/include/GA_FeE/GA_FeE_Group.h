@@ -214,7 +214,7 @@ parseEdgeGroupDetached(
 //using GA_ElementGroupUPtr = ::std::unique_ptr<GA_ElementGroup, ::std::default_delete<GA_ElementGroup>>;
 
 static GA_Range
-groupPromoteRange(
+getRangeByAnyGroup(
     const GA_Detail* geo,
     const GA_ElementGroup* group,
     const GA_GroupType& groupType
@@ -224,9 +224,9 @@ groupPromoteRange(
     {
         switch (groupType)
         {
-        case GA_GROUP_PRIMITIVE: return geo->getPrimitiveRange(nullptr); break;
-        case GA_GROUP_POINT:     return geo->getPointRange(nullptr);     break;
-        case GA_GROUP_VERTEX:    return geo->getVertexRange(nullptr);    break;
+        case GA_GROUP_PRIMITIVE: return geo->getPrimitiveRange(); break;
+        case GA_GROUP_POINT:     return geo->getPointRange();     break;
+        case GA_GROUP_VERTEX:    return geo->getVertexRange();    break;
         }
         UT_ASSERT_MSG(0, "Unhandled Group Type!");
         return GA_Range();
@@ -312,34 +312,34 @@ groupPromoteRange(
 
 
 static GA_Range
-groupPromoteRange(
+getRangeByAnyGroup(
     const GA_Detail* geo,
     const GA_ElementGroup* group,
     const GA_AttributeOwner& attribOwner
     )
 {
-    return groupPromoteRange(geo, group, attributeOwner_groupType(attribOwner));
+    return getRangeByAnyGroup(geo, group, attributeOwner_groupType(attribOwner));
 }
 
 
 static GA_SplittableRange
-groupPromoteSplittableRange(
+getSplittableRangeByAnyGroup(
     const GA_Detail* geo,
     const GA_ElementGroup* group,
     const GA_GroupType& groupType
 )
 {
-    return GA_SplittableRange(groupPromoteRange(geo, group, groupType));
+    return GA_SplittableRange(getRangeByAnyGroup(geo, group, groupType));
 }
 
 static GA_SplittableRange
-groupPromoteSplittableRange(
+getSplittableRangeByAnyGroup(
     const GA_Detail* geo,
     const GA_ElementGroup* group,
     const GA_AttributeOwner& attribOwner
 )
 {
-    return GA_SplittableRange(groupPromoteRange(geo, group, attribOwner));
+    return GA_SplittableRange(getRangeByAnyGroup(geo, group, attribOwner));
 }
 
 

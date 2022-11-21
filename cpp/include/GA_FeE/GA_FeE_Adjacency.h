@@ -4,7 +4,7 @@
 #ifndef __GA_FeE_Adjacency_h__
 #define __GA_FeE_Adjacency_h__
 
-//#include <GEO_FeE/GA_FeE_Adjacency.h>
+//#include <GA_FeE/GA_FeE_Adjacency.h>
 
 #include <GEO/GEO_Detail.h>
 #include <GEO/GEO_PrimPoly.h>
@@ -276,9 +276,9 @@ namespace GA_FeE_Adjacency {
                         GA_Offset vtxoff_next;
                         for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
                         {
-                            //if (!geoGroup->contains(vtxoff))
-                            //    continue;
                             vtxoff_next = vertices[vtxpnum];
+                            if (!geoGroup->contains(vtxoff_next))
+                                continue;
                             attribHandle_next.set(vtxoff_prev, vtxoff_next);
                             attribHandle_prev.set(vtxoff_next, vtxoff_prev);
                             vtxoff_prev = vtxoff_next;
@@ -289,7 +289,7 @@ namespace GA_FeE_Adjacency {
         }
         else
         {
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(nullptr));
+            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
             UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_prev, &attribHandle_next](const GA_SplittableRange& r)
             {
                 GA_Offset start,  end;
@@ -313,8 +313,6 @@ namespace GA_FeE_Adjacency {
                         GA_Offset vtxoff_next;
                         for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
                         {
-                            //if (!geoGroup->contains(vtxoff))
-                            //    continue;
                             vtxoff_next = vertices[vtxpnum];
                             attribHandle_next.set(vtxoff_prev, vtxoff_next);
                             attribHandle_prev.set(vtxoff_next, vtxoff_prev);
@@ -958,30 +956,53 @@ namespace GA_FeE_Adjacency {
     static void
     pointPointEdge(
         GA_Detail* geo,
-        const GA_RWHandleT<GA_Size>& attribHandle_prev,
-        const GA_RWHandleT<GA_Size>& attribHandle_next,
-        const GA_VertexGroup* geoGroup = nullptr,
-        const exint& subscribeRatio = 32,
+        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
+        const GA_ROHandleT<GA_Offset>& vtxPrevH,
+        const GA_ROHandleT<GA_Offset>& vtxNextH,
+        const GA_PointGroup* geoGroup = nullptr,
+        const GA_PointGroup* seamGroup = nullptr,
+        const exint& subscribeRatio = 16,
         const exint& minGrainSize = 1024
     )
     {
         GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
-        const GA_ATITopology* vtxPrevRef = topo.getVertexPrevRef();
+        topo.makeFull();
+        //topo.makeVertexRef();
+        //const GA_ATITopology* vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+        //const GA_ATITopology* vtxPrevRef = topo.getVertexPrevRef();
         const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &topo, &attribHandle_prev, &attribHandle_next, &geoGroup, &vtxPrevRef, &vtxNextRef](const GA_SplittableRange& r)
+        const GA_SplittableRange geo0SplittableRange0(geo->getPointRange(geoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &vtxPrevH, &vtxNextH, &pointVtxRef, &vtxNextRef, &seamGroup](const GA_SplittableRange& r)
+        {
+            UT_ValArray<GA_Offset> ptoffArray;
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    ptoffArray.clear();
+                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        attribHandle_prev.set(elemoff, vtxPrevRef->getLink(elemoff));
-                        attribHandle_next.set(elemoff, vtxNextRef->getLink(elemoff));
+                        const GA_Size& vtxPrev = vtxPrevH.get(vtxoff_next);
+                        if (vtxPrev != GA_INVALID_OFFSET)
+                        {
+                            const GA_Offset& pt_next = geo->vertexPoint(vtxPrev);
+                            if (ptoffArray.find(pt_next) == -1)
+                                ptoffArray.emplace_back(pt_next);
+                        }
+                        const GA_Size& vtxNext = vtxNextH.get(vtxoff_next);
+                        if (vtxNext != GA_INVALID_OFFSET)
+                        {
+                            const GA_Offset& pt_next = geo->vertexPoint(vtxNext);
+                            if (ptoffArray.find(pt_next) == -1)
+                                ptoffArray.emplace_back(pt_next);
+                        }
                     }
+                    attribHandle.set(elemoff, ptoffArray);
                 }
-            }, subscribeRatio, minGrainSize);
+            }
+        }, subscribeRatio, minGrainSize);
     }
 
 
@@ -1411,6 +1432,505 @@ namespace GA_FeE_Adjacency {
             }
         }, subscribeRatio, minGrainSize);
     }
+
+
+
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribVertexPrimIndex(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+    static GA_Attribute*
+        addAttribVertexPrimIndex(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "vtxpnum",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const UT_Options* creation_args = 0,
+            const GA_AttributeOptions* attribute_options = 0,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        if (attribPtr)
+            return attribPtr;
+        attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        GA_RWHandleT<GA_Size> attribHandle(attribPtr);
+        vertexPrimIndex(geo, attribHandle, geoGroup, subscribeRatio, minGrainSize);
+        return attribPtr;
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexPrimIndex(geo, posAttribHandle, name, geoGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexPrimIndex(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "vtxpnum",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexPrimIndex(geo, name, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexPrimIndex(geo, posAttribHandle, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexPrimIndex(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "vtxpnum",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexPrimIndex(geo, name, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribVertexVertexPrim(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+    static bool
+        addAttribVertexVertexPrim(
+            GEO_Detail* geo,
+            GA_Attribute* attribPtr_prev,
+            GA_Attribute* attribPtr_next,
+            const UT_StringHolder& namePrev = "vtxPrimPrev",
+            const UT_StringHolder& nameNext = "vtxPrimNext",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const UT_Options* creation_args = 0,
+            const GA_AttributeOptions* attribute_options = 0,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        attribPtr_prev = geo->findVertexAttribute(namePrev);
+        attribPtr_next = geo->findVertexAttribute(nameNext);
+        if (attribPtr_prev && attribPtr_next)
+            return false;
+        attribPtr_prev = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, namePrev, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr_next = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+        GA_RWHandleT<GA_Offset> attribHandle_prev(attribPtr_prev);
+        GA_RWHandleT<GA_Offset> attribHandle_next(attribPtr_next);
+        vertexVertexPrim(geo, attribHandle_prev, attribHandle_next, geoGroup, subscribeRatio, minGrainSize);
+        return true;
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static bool
+        addAttribVertexVertexPrim(
+            GEO_Detail* geo,
+            GA_Attribute* attribPtr_prev,
+            GA_Attribute* attribPtr_next,
+            const UT_StringHolder& namePrev = "vtxPrimPrev",
+            const UT_StringHolder& nameNext = "vtxPrimNext",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static bool
+        addAttribVertexVertexPrim(
+            GEO_Detail* geo,
+            GA_Attribute* attribPtr_prev,
+            GA_Attribute* attribPtr_next,
+            const UT_StringHolder& namePrev = "vtxPrimPrev",
+            const UT_StringHolder& nameNext = "vtxPrimNext",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribVertexPointDst(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+    static GA_Attribute*
+        addAttribVertexPointDst(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "dstpt",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const UT_Options* creation_args = 0,
+            const GA_AttributeOptions* attribute_options = 0,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        if (attribPtr)
+            return attribPtr;
+        attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        GA_RWHandleT<GA_Offset> attribHandle(attribPtr);
+        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPrimIndex(geo, "vtxpnum", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        vertexPointDst(geo, attribHandle, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
+        return attribPtr;
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexPointDst(geo, posAttribHandle, name, geoGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexPointDst(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "dstpt",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexPointDst(geo, name, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexPointDst(geo, posAttribHandle, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexPointDst(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "dstpt",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexPointDst(geo, name, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, name, groupName, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+    static GA_Attribute*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            GA_VertexGroup* validGroup,
+            const UT_StringHolder& name = "nextEquiv",
+            const UT_StringHolder& groupName = "nextEquivValid",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const UT_Options* creation_args = 0,
+            const GA_AttributeOptions* attribute_options = 0,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        if (attribPtr && geo->findVertexGroup(name))
+            return attribPtr;
+
+        GA_RWHandleT<GA_Offset> attribHandle(attribPtr);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+
+        validGroup = geo->newVertexGroup(groupName);
+        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        vertexVertexNextEquiv(geo, attribHandle, validGroup, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
+        return attribPtr;
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, validGroup, name, groupName, posAttribHandle, name, geoGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            GA_VertexGroup* validGroup,
+            const UT_StringHolder& name = "nextEquiv",
+            const UT_StringHolder& groupName = "nextEquivValid",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexVertexNextEquiv(geo, validGroup, name, groupName, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, validGroup, name, groupName, posAttribHandle, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            GA_VertexGroup* validGroup,
+            const UT_StringHolder& name = "nextEquiv",
+            const UT_StringHolder& groupName = "nextEquivValid",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexVertexNextEquiv(geo, validGroup, name, groupName, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+    static GA_Attribute*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nextEquiv",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const UT_Options* creation_args = 0,
+            const GA_AttributeOptions* attribute_options = 0,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        if (attribPtr)
+            return attribPtr;
+        attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        GA_RWHandleT<GA_Offset> attribHandle(attribPtr);
+        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        vertexVertexNextEquiv(geo, attribHandle, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
+        return attribPtr;
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, posAttribHandle, name, geoGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nextEquiv",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexVertexNextEquiv(geo, name, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+    }
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, posAttribHandle, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nextEquiv",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribVertexVertexNextEquiv(geo, name, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribVertexVertexNextEquiv(geo, name, geoGroup, storage, subscribeRatio, minGrainSize);
+
+    static GA_VertexGroup*
+        addAttribVertexVertexNextEquiv(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nextEquivValid",
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        GA_VertexGroup* groupPtr = geo->findVertexGroup(name);
+        if (groupPtr)
+            return groupPtr;
+
+        groupPtr = geo->newVertexGroup(name);
+        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        vertexVertexNextEquiv(geo, groupPtr, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
+        return groupPtr;
+    }
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //GA_FeE_Adjacency::addAttribPointPointEdge(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+
+    static GA_Attribute*
+        addAttribPointPointEdge(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nebs",
+            const GA_PointGroup* geoGroup = nullptr,
+            const GA_PointGroup* seamGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const UT_Options* creation_args = 0,
+            const GA_AttributeOptions* attribute_options = 0,
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        if (attribPtr)
+            return attribPtr;
+
+        GA_Attribute* vtxPrevAttrib, *vtxNextAttrib;
+        addAttribVertexVertexPrim(geo, vtxPrevAttrib, vtxNextAttrib, "vtxPrimPrev", "vtxPrimNext", nullptr, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+
+        GA_RWHandleT<GA_Offset> vtxPrevH(vtxPrevAttrib);
+        GA_RWHandleT<GA_Offset> vtxNextH(vtxNextAttrib);
+
+        attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        GA_RWHandleT<UT_ValArray<GA_Offset>> attribHandle(attribPtr);
+        pointPointEdge(geo, attribHandle, vtxPrevH, vtxNextH, geoGroup, seamGroup, subscribeRatio, minGrainSize);
+        return attribPtr;
+    }
+
+    //GA_FeE_Adjacency::addAttribPointPointEdge(geo, posAttribHandle, name, geoGroup, seamGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribPointPointEdge(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nebs",
+            const GA_PointGroup* geoGroup = nullptr,
+            const GA_PointGroup* seamGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribPointPointEdge(geo, name, geoGroup, seamGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+    }
+
+    //GA_FeE_Adjacency::addAttribPointPointEdge(geo, posAttribHandle, name, geoGroup, seamGroup, defaults, storage, subscribeRatio, minGrainSize);
+
+    SYS_FORCE_INLINE
+        static GA_Attribute*
+        addAttribPointPointEdge(
+            GEO_Detail* geo,
+            const UT_StringHolder& name = "nebs",
+            const GA_PointGroup* geoGroup = nullptr,
+            const GA_PointGroup* seamGroup = nullptr,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_Storage& storage = GA_STORE_INT64,
+            const exint& subscribeRatio = 32,
+            const exint& minGrainSize = 1024
+        )
+    {
+        return addAttribPointPointEdge(geo, name, geoGroup, seamGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    }
+
+
+
 
 
 

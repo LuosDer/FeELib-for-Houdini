@@ -66,8 +66,8 @@ newSopOperator(OP_OperatorTable *table)
         "FeE UV Scale to World Size",                     // UI name
         SOP_FeE_UVScaletoWorldSize_0_5::myConstructor,    // How to build the SOP
         SOP_FeE_UVScaletoWorldSize_0_5::buildTemplates(), // My parameters
-        2,                         // Min # of sources
-        2,                         // Max # of sources
+        1,                         // Min # of sources
+        3,                         // Max # of sources
         nullptr,                   // Custom local variables (none)
         OP_FLAG_GENERATOR));       // Flag it as generator
 }
@@ -120,6 +120,13 @@ static const char *theDsFile = R"THEDSFILE(
         label   "UV Attribute Names"
         type    string
         default { "uv" }
+    }
+    parm {
+        name    "computeUVAreaInPiece"
+        cppname "ComputeUVAreaInPiece"
+        label   "Compute UV Area In Pieces"
+        type    toggle
+        default { "1" }
     }
 
 
@@ -273,6 +280,25 @@ public:
 
     virtual void cook(const CookParms &cookparms) const;
 
+    //virtual bool doPartialInputCook() const { return true; }
+    virtual bool cookInputs(const InputParms& parms) const
+    {
+        if (parms.inputs().hasInput(0))
+        {
+            if (!parms.inputs().cookInput(0))
+                return false;
+        }
+        auto&& sopparms = parms.parms<SOP_FeE_UVScaletoWorldSize_0_5Parms>();
+        const bool& computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
+        const exint& refInputnum = computeUVAreaInPiece ? 2 : 1;
+        if (parms.inputs().hasInput(refInputnum))
+        {
+            if (!parms.inputs().cookInput(refInputnum))
+                return false;
+        }
+        return true;
+    }
+
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
     static const SOP_NodeVerb::Register<SOP_FeE_UVScaletoWorldSize_0_5Verb> theVerb;
@@ -322,9 +348,6 @@ sopGroupType(SOP_FeE_UVScaletoWorldSize_0_5Parms::GroupType parmgrouptype)
 }
 
 
-
-
-
 void
 SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -332,9 +355,17 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVScaletoWorldSize_0_5Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GEO_Detail* const inGeo1 = cookparms.inputGeo(1);
+    const bool& computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
 
+    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GEO_Detail* const inGeo1 = cookparms.inputGeo(computeUVAreaInPiece ? 2 : 1);
+
+    if (!inGeo1)
+    {
+        cookparms.sopAddError(SOP_MESSAGE, "no ref input");
+        outGeo0->clearAndDestroy();
+        return;
+    }
     if (inGeo0->getNumPrimitives() != inGeo1->getNumPrimitives())
     {
         cookparms.sopAddError(SOP_MESSAGE, "NON MATCH Prim Count");
@@ -347,7 +378,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-
+    
     const bool& doUVScalex = sopparms.getDoUVScalex();
     const bool& doUVScaley = sopparms.getDoUVScaley();
     const bool& doUVScalez = sopparms.getDoUVScalez();
@@ -477,8 +508,8 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     }
 
     {
-        //const GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClassFinal);
-        const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClassFinal);
+        //const GA_Range geo0Range = GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
+        const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
         UTparallelFor(geo0SplittableRange, [&outGeo0, &attribHandle, &uvScaleAttribHandle, &geo0AttribClassFinal](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
