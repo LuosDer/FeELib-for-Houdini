@@ -368,7 +368,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     //const GA_Storage inStorageI = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorageI = GA_STORE_INT32;
+    const GA_Storage& inStorageI = GA_STORE_INT64;
 
 
 

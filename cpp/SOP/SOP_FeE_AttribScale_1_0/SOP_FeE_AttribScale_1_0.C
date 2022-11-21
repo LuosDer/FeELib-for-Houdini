@@ -269,9 +269,9 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //const exint minGrainSize = pow(2, 13);
 
 
-    const GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass);
-    //const GA_SplittableRange geo0SplittableRange(GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass));
-    const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClass);
+    const GA_Range geo0Range = GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
+    //const GA_SplittableRange geo0SplittableRange(GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass));
+    const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
 
 
 

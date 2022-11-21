@@ -33,7 +33,7 @@
 #include <GEO/GEO_SplitPoints.h>
 
 #include "GA_FeE/GA_FeE_Group.h"
-#include "GU_FeE/GU_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_Attribute.h"
 
 
 using namespace SOP_FeE_AttribSetToDefault_1_0_Namespace;
@@ -284,7 +284,7 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     if (geo0AttribClass == GA_ATTRIB_DETAIL)
     {
-        //GU_FeE_Attribute::setToDefault(outGeo0, attribHandle);
+        //GA_FeE_Attribute::setToDefault(outGeo0, attribHandle);
         return;
     }
 
@@ -297,10 +297,10 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
 
 #if 0
-    GU_FeE_Attribute::setToDefault(outGeo0, attribPtr, geo0Group);
+    GA_FeE_Attribute::setToDefault(outGeo0, attribPtr, geo0Group);
 #else
     GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
-    GU_FeE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
+    GA_FeE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
 #endif  
     //GA_Attribute* attribPtr;
     //switch (geo0AttribClass)

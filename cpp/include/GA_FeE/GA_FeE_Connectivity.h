@@ -201,6 +201,40 @@ connectivityPrim(
 
 
 
+
+
+
+
+//addAttribConnectivity
+static void
+addAttribConnectivity(
+    GEO_Detail* geo,
+    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
+    const GA_PrimitiveGroup* geoGroup = nullptr,
+    const bool makeConstant = false
+)
+{
+    return;
+}
+
+
+static void
+addAttribConnectivityPrim(
+    GEO_Detail* geo,
+    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
+    const GA_PrimitiveGroup* geoGroup = nullptr,
+    const bool makeConstant = false
+)
+{
+    return;
+}
+
+
+
+
+
 } // End of namespace GA_FeE_Connectivity
 
 #endif
