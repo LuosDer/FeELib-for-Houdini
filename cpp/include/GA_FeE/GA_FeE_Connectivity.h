@@ -6,7 +6,7 @@
 
 //#include <GU_FeE/GA_FeE_Connectivity.h>
 
-#include <GU/GU_Detail.h>
+#include <GEO/GEO_Detail.h>
 #include <GEO/GEO_PrimPoly.h>
 #include <OP/OP_Operator.h>
 #include <OP/OP_OperatorTable.h>
@@ -27,6 +27,7 @@
 
 #include <time.h>
 #include <chrono>
+#include <array>
 
 
 namespace GA_FeE_Connectivity
@@ -40,195 +41,302 @@ namespace GA_FeE_Connectivity
 #endif
 
 
-//#define FUNC_DEFINE_connectivity(DEFParm_GA_ElementGroup, DEFParm_GA_Range)
 static void
-connectivity(
-    GEO_Detail* geo,
+connectivityPoint(
+    const GEO_Detail* geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PointGroup* geoGroup = nullptr,
-    const bool makeConstant = false
+    const GA_PointGroup* geoGroup = nullptr
 )
 {
-    //const GA_ATINumeric* attrib = adjElemsAttribHandle.getAttribute();
-    //const GA_StorageClass storageClass = attrib->getStorageClass();
-    //const GA_Storage storage = attrib->getStorage();
-    //const GA_AttributeOwner attribOwner = attrib->getOwner();
+    //double timeTotal = 0;
+    //double timeTotal1 = 0;
+    //auto timeStart = std::chrono::steady_clock::now();
+    //auto timeEnd = std::chrono::steady_clock::now();
+    //timeStart = std::chrono::steady_clock::now();
+    //timeEnd = std::chrono::steady_clock::now();
+    //std::chrono::duration<double> diff;
 
-    if (makeConstant)
-    {
-#if 1
-        attribHandle.makeConstant(UNREACHED_NUMBER);
-#else
-        attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
-        GU_FeE_Attribute::setToDefault(attribHandle);
-#endif
-    }
-
-    double timeTotal = 0;
-    double timeTotal1 = 0;
-    auto timeStart = std::chrono::steady_clock::now();
-    auto timeEnd = std::chrono::steady_clock::now();
-    timeStart = std::chrono::steady_clock::now();
-    timeEnd = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff;
-
-    const GA_Range range = geo->getPointRange(geoGroup);
-    GA_Size classnum = 0;
     //::std::vector<::std::vector<GA_Offset>> adjElems;
-    UT_ValArray<GA_Offset> adjElems(32);
     ::std::vector<GA_Offset> elemHeap;
     elemHeap.reserve(pow(2, 15));
-    //adjElems.reserve(16);
+
+    GA_Size nelems = geo->getNumPoints();
+    ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
+
+    UT_PackedArrayOfArrays<GA_Offset> packedArray;
+    adjElemsAttribHandle->getAIFNumericArray()->getPackedArrayFromIndices(adjElemsAttribHandle.getAttribute(), 0, nelems, packedArray);
+
+    const UT_Array<GA_Size>& rawOffsets = packedArray.rawOffsets();
+    UT_Array<GA_Offset>& rawData = packedArray.rawData();
 
 
-    GA_Offset start, end;
-    for (GA_Iterator it(range); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+        for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
         {
-            if (attribHandle.get(elemoff) != UNREACHED_NUMBER)
-                continue;
-            attribHandle.set(elemoff, classnum);
-            elemHeap.emplace_back(elemoff);
-            while (!elemHeap.empty())
-            {
-                //timeStart = std::chrono::steady_clock::now();
-
-                adjElemsAttribHandle.get(elemHeap[elemHeap.size() - 1], adjElems);
-                //adjElems = adjElemsAttribHandle.get(elemHeap[elemHeap.size() - 1]);
-
-                //timeEnd = std::chrono::steady_clock::now();
-                //diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
-                //timeTotal += diff.count();
-
-                elemHeap.pop_back();
-                for (GA_Size i = 0; i < adjElems.size(); ++i)
-                {
-                    if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
-                        continue;
-                    attribHandle.set(adjElems[i], classnum);
-                    elemHeap.emplace_back(adjElems[i]);
-                }
-            }
-            ++classnum;
+            rawData[elemoff] = geo->pointIndex(rawData[elemoff]);
         }
+    }, 8, 2048);
+
+
+
+    GA_Size classnum = 0;
+    for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
+    {
+        if (classnumArray[elemoff] != UNREACHED_NUMBER)
+            continue;
+        classnumArray[elemoff] = classnum;
+        elemHeap.emplace_back(elemoff);
+        while (!elemHeap.empty())
+        {
+            GA_Size lastElem = elemHeap[elemHeap.size() - 1];
+            elemHeap.pop_back();
+            GA_Size rawOffsetEnd = rawOffsets[lastElem + 1];
+            for (GA_Size i = rawOffsets[lastElem]; i < rawOffsetEnd; ++i)
+            {
+                GA_Offset rawDataVal = rawData[i];
+                if (classnumArray[rawDataVal] != UNREACHED_NUMBER)
+                    continue;
+                classnumArray[rawDataVal] = classnum;
+                elemHeap.emplace_back(rawDataVal);
+            }
+        }
+        ++classnum;
     }
-    //geo->setDetailAttributeF("time", timeTotal * 1000);
-    //geo->setDetailAttributeF("time1", timeTotal1 * 1000);
+
+    const GA_SplittableRange geoSplittableRange0(geo->getPointRange());
+    //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
+    UTparallelFor(geoSplittableRange0, [&geo, &attribHandle, &classnumArray](const GA_SplittableRange& r) {
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                attribHandle.set(elemoff, classnumArray[geo->pointIndex(elemoff)]);
+            }
+        }
+    }, 8, 2048);
 }
 
 
-//#define FUNC_DEFINE_connectivity(DEFParm_GA_ElementGroup, DEFParm_GA_Range)
+
 static void
 connectivityPrim(
-    GEO_Detail* geo,
+    const GEO_Detail* geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PrimitiveGroup* geoGroup = nullptr,
-    const bool makeConstant = false
+    const GA_PrimitiveGroup* geoGroup = nullptr
 )
 {
-    //const GA_ATINumeric* attrib = adjElemsAttribHandle.getAttribute();
-    //const GA_StorageClass storageClass = attrib->getStorageClass();
-    //const GA_Storage storage = attrib->getStorage();
-    //const GA_AttributeOwner attribOwner = attrib->getOwner();
+    //double timeTotal = 0;
+    //double timeTotal1 = 0;
+    //auto timeStart = std::chrono::steady_clock::now();
+    //auto timeEnd = std::chrono::steady_clock::now();
+    //timeStart = std::chrono::steady_clock::now();
+    //timeEnd = std::chrono::steady_clock::now();
+    //std::chrono::duration<double> diff;
 
-    if (makeConstant)
-    {
-#if 1
-        attribHandle.makeConstant(UNREACHED_NUMBER);
-#else
-        attrib->myDefaults = GA_Defaults(UNREACHED_NUMBER);
-        GU_FeE_Attribute::setToDefault(attribHandle);
-#endif
-    }
-
-    double timeTotal = 0;
-    double timeTotal1 = 0;
-    auto timeStart = std::chrono::steady_clock::now();
-    auto timeEnd   = std::chrono::steady_clock::now();
-    timeStart = std::chrono::steady_clock::now();
-    timeEnd = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff;
-
-    const GA_Range range = geo->getPrimitiveRange(geoGroup);
-    GA_Size classnum = 0;
     //::std::vector<::std::vector<GA_Offset>> adjElems;
-    UT_ValArray<GA_Offset> adjElems(32);
     ::std::vector<GA_Offset> elemHeap;
     elemHeap.reserve(pow(2, 15));
-    //adjElems.reserve(16);
+
+    GA_Size nelems = geo->getNumPrimitives();
+    ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
+
+    UT_PackedArrayOfArrays<GA_Offset> packedArray;
+    adjElemsAttribHandle->getAIFNumericArray()->getPackedArrayFromIndices(adjElemsAttribHandle.getAttribute(), 0, nelems, packedArray);
+
+    const UT_Array<GA_Size>& rawOffsets = packedArray.rawOffsets();
+    UT_Array<GA_Offset>& rawData = packedArray.rawData();
 
 
-    GA_Offset start, end;
-    for (GA_Iterator it(range); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+        for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
         {
-            if (attribHandle.get(elemoff) != UNREACHED_NUMBER)
-                continue;
-            attribHandle.set(elemoff, classnum);
-            elemHeap.emplace_back(elemoff);
-            while (!elemHeap.empty())
-            {
-                //timeStart = std::chrono::steady_clock::now();
-
-                adjElemsAttribHandle.get(elemHeap[elemHeap.size() - 1], adjElems);
-                //adjElems = adjElemsAttribHandle.get(elemHeap[elemHeap.size() - 1]);
-
-                //timeEnd = std::chrono::steady_clock::now();
-                //diff = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeStart);
-                //timeTotal += diff.count();
-
-                elemHeap.pop_back();
-                for (GA_Size i = 0; i < adjElems.size(); ++i)
-                {
-                    if (attribHandle.get(adjElems[i]) != UNREACHED_NUMBER)
-                        continue;
-                    attribHandle.set(adjElems[i], classnum);
-                    elemHeap.emplace_back(adjElems[i]);
-                }
-            }
-            ++classnum;
+            rawData[elemoff] = geo->primitiveIndex(rawData[elemoff]);
         }
+    }, 8, 2048);
+
+
+
+    GA_Size classnum = 0;
+    for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
+    {
+        if (classnumArray[elemoff] != UNREACHED_NUMBER)
+            continue;
+        classnumArray[elemoff] = classnum;
+        elemHeap.emplace_back(elemoff);
+        while (!elemHeap.empty())
+        {
+            GA_Size lastElem = elemHeap[elemHeap.size() - 1];
+            elemHeap.pop_back();
+            GA_Size rawOffsetEnd = rawOffsets[lastElem + 1];
+            for (GA_Size i = rawOffsets[lastElem]; i < rawOffsetEnd; ++i)
+            {
+                GA_Offset rawDataVal = rawData[i];
+                if (classnumArray[rawDataVal] != UNREACHED_NUMBER)
+                    continue;
+                classnumArray[rawDataVal] = classnum;
+                elemHeap.emplace_back(rawDataVal);
+            }
+        }
+        ++classnum;
     }
-    //geo->setDetailAttributeF("time", timeTotal * 1000);
-    //geo->setDetailAttributeF("time1", timeTotal1 * 1000);
+
+    const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
+    //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
+    UTparallelFor(geoSplittableRange0, [&geo, &attribHandle, &classnumArray](const GA_SplittableRange& r) {
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                attribHandle.set(elemoff, classnumArray[geo->primitiveIndex(elemoff)]);
+            }
+        }
+    }, 8, 2048);
 }
 
-//FUNC_DEFINE_connectivity(GA_PointGroup, GA_PointGroup)
 
 
 
 
 
-
+//return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
 
 //addAttribConnectivity
-static void
-addAttribConnectivity(
+static GA_Attribute*
+addAttribConnectivityPoint(
     GEO_Detail* geo,
-    const GA_RWHandleT<GA_Size>& attribHandle,
-    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PrimitiveGroup* geoGroup = nullptr,
-    const bool makeConstant = false
+    const UT_StringHolder& name = "connectivity",
+    const GA_PointGroup* geoGroup = nullptr,
+    const GA_PointGroup* geoSeamGroup = nullptr,
+    const UT_Options* creation_args = 0,
+    const GA_AttributeOptions* attribute_options = 0,
+    const GA_Storage& storage = GA_STORE_INT64,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 32,
+    const exint& minGrainSize = 1024
 )
 {
-    return;
+    GA_Attribute* attribPtr = geo->findPointAttribute(name);
+    if (attribPtr)
+        return attribPtr;
+
+    attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
+    const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = GA_FeE_Adjacency::addAttribPointPointEdge(geo, "nebs", geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
+    connectivityPoint(geo, attribPtr, adjElemsAttribHandle, geoGroup);
+    return attribPtr;
+}
+
+//return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, reuse, subscribeRatio, minGrainSize);
+
+//addAttribConnectivity
+static GA_Attribute*
+addAttribConnectivityPoint(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "connectivity",
+    const GA_PointGroup* geoGroup = nullptr,
+    const GA_PointGroup* geoSeamGroup = nullptr,
+    const GA_Storage& storage = GA_STORE_INT64,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 32,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
 }
 
 
-static void
-addAttribConnectivityPrim(
+//return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
+
+//addAttribConnectivity
+static GA_Attribute*
+addAttribConnectivityPoint(
     GEO_Detail* geo,
-    const GA_RWHandleT<GA_Size>& attribHandle,
-    const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PrimitiveGroup* geoGroup = nullptr,
-    const bool makeConstant = false
+    const UT_StringHolder& name = "connectivity",
+    const GA_PointGroup* geoGroup = nullptr,
+    const GA_PointGroup* geoSeamGroup = nullptr,
+    const GA_Storage& storage = GA_STORE_INT64,
+    const exint& subscribeRatio = 32,
+    const exint& minGrainSize = 1024
 )
 {
-    return;
+    return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+}
+
+
+
+
+
+
+
+
+
+
+
+//return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+
+//addAttribConnectivity
+static GA_Attribute*
+addAttribConnectivityPrim(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "connectivity",
+    const GA_PrimitiveGroup* geoGroup = nullptr,
+    const GA_VertexGroup* geoSeamGroup = nullptr,
+    const UT_Options* creation_args = 0,
+    const GA_AttributeOptions* attribute_options = 0,
+    const GA_Storage& storage = GA_STORE_INT64,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 32,
+    const exint& minGrainSize = 1024
+)
+{
+    GA_Attribute* attribPtr = geo->findPrimitiveAttribute(name);
+    if (attribPtr)
+        return attribPtr;
+
+    attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
+    const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, "nebs", geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
+    connectivityPrim(geo, attribPtr, adjElemsAttribHandle, geoGroup);
+    return attribPtr;
+}
+
+
+//return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, reuse, subscribeRatio, minGrainSize);
+
+//addAttribConnectivity
+static GA_Attribute*
+addAttribConnectivityPrim(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "connectivity",
+    const GA_PrimitiveGroup* geoGroup = nullptr,
+    const GA_VertexGroup* geoSeamGroup = nullptr,
+    const GA_Storage& storage = GA_STORE_INT64,
+    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
+    const exint& subscribeRatio = 32,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
+}
+
+
+//return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
+
+//addAttribConnectivity
+static GA_Attribute*
+addAttribConnectivityPrim(
+    GEO_Detail* geo,
+    const UT_StringHolder& name = "connectivity",
+    const GA_PrimitiveGroup* geoGroup = nullptr,
+    const GA_VertexGroup* geoSeamGroup = nullptr,
+    const GA_Storage& storage = GA_STORE_INT64,
+    const exint& subscribeRatio = 32,
+    const exint& minGrainSize = 1024
+)
+{
+    return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 }
 
 

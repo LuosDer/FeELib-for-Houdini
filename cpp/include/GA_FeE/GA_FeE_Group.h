@@ -359,6 +359,52 @@ combineVertexFromEdgeGroup(
     group = newDetachedGroup;
 }
 
+
+static UT_UniquePtr<GA_PrimitiveGroup>
+groupPromotePrimitiveDetached(
+    const GA_Detail* outGeo0,
+    const GA_ElementGroup* group
+)
+{
+    if (!group)
+        return nullptr;
+    UT_UniquePtr<GA_PrimitiveGroup> groupDeleter;
+    GA_PrimitiveGroup* newDetachedGroup = new GA_PrimitiveGroup(*outGeo0);
+    groupDeleter.reset(newDetachedGroup);
+    newDetachedGroup->combine(group);
+    return groupDeleter;
+}
+
+static UT_UniquePtr<GA_PointGroup>
+groupPromotePointDetached(
+    const GA_Detail* outGeo0,
+    const GA_ElementGroup* group
+)
+{
+    if (!group)
+        return nullptr;
+    UT_UniquePtr<GA_PointGroup> groupDeleter;
+    GA_PointGroup* newDetachedGroup = new GA_PointGroup(*outGeo0);
+    groupDeleter.reset(newDetachedGroup);
+    newDetachedGroup->combine(group);
+    return groupDeleter;
+}
+
+static UT_UniquePtr<GA_VertexGroup>
+groupPromoteVertexDetached(
+    const GA_Detail* outGeo0,
+    const GA_ElementGroup* group
+)
+{
+    if (!group)
+        return nullptr;
+    UT_UniquePtr<GA_VertexGroup> groupDeleter;
+    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
+    groupDeleter.reset(newDetachedGroup);
+    newDetachedGroup->combine(group);
+    return groupDeleter;
+}
+
 /*
 template<typename T, typename T1>
 static void
