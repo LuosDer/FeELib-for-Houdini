@@ -8,35 +8,25 @@
 // SOP_FeE_Adjacency_1_0Verb::cook with the correct type.
 #include "SOP_FeE_Adjacency_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
+#include <GEO/GEO_Detail.h>
 
-#include <GA/GA_Primitive.h>
+//#include <GA/GA_Primitive.h>
+
+//#include <UT/UT_UniquePtr.h>
+//#include <GA/GA_SplittableRange.h>
+//#include <HOM/HOM_SopNode.h>
 
 
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
+//#include <chrono>
 
 
-#include <chrono>
+//#include <GA/GA_PageHandle.h>
+//#include <GA/GA_PageIterator.h>
 
 
-#include <GA/GA_PageHandle.h>
-#include <GA/GA_PageIterator.h>
-
-
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GA_FeE/GA_FeE_TopologyReference.h>
 #include <GA_FeE/GA_FeE_Adjacency.h>
+#include <GA_FeE/GA_FeE_Group.h>
 
 
 
@@ -571,10 +561,10 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
     if (calVertexPrimIndex || calVertexPointDst || calVertexVertexNextEquiv || calPointPointEdge || calPrimPrimEdge)
     {
-        GA_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
+        GA_FeE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
-        //GA_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, static_cast<const GA_VertexGroup*>(geo0Group), subscribeRatio, minGrainSize);
+        //GA_FeE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, static_cast<const GA_VertexGroup*>(geo0Group), subscribeRatio, minGrainSize);
     }
 
 
@@ -597,12 +587,12 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         switch (calVertexVertexNextEquiv || calPrimPrimEdge ? 0 : kernel)
         {
         case 0:
-            GA_FeE_Adjacency::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
+            GA_FeE_TopologyReference::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;
         case 1:
-            GA_FeE_Adjacency::vertexPointDst(outGeo0, dstptAttribHandle.getAttribute(), vtxpnumAttribHandle.getAttribute(),
+            GA_FeE_TopologyReference::vertexPointDst(outGeo0, dstptAttribHandle.getAttribute(), vtxpnumAttribHandle.getAttribute(),
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;
@@ -633,12 +623,12 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         switch (calPointPointEdge ? 0 : kernel)
         {
         case 0:
-            GA_FeE_Adjacency::vertexVertexPrim(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
+            GA_FeE_TopologyReference::vertexVertexPrim(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;
         case 1:
-            GA_FeE_Adjacency::vertexVertexPrim1(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
+            GA_FeE_TopologyReference::vertexVertexPrim1(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;
@@ -684,7 +674,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     {
         GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexNextEquivAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
         intAttribHandle.bind(attribPtr);
-        GA_FeE_Adjacency::vertexVertexNextEquiv(outGeo0, intAttribHandle, dstptAttribHandle,
+        GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
     }

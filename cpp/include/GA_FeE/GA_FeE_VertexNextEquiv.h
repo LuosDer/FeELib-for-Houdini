@@ -8,6 +8,8 @@
 
 #include <GEO/GEO_Detail.h>
 
+#include <GA_FeE/GA_FeE_TopologyReference.h>
+
 namespace GA_FeE_VertexNextEquiv {
 
 
@@ -26,7 +28,7 @@ namespace GA_FeE_VertexNextEquiv {
         GA_Offset nextVtxDstpt;
         for (vtxoff_next = geo->vertexToNextVertex(vtxoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
         {
-            nextVtxDstpt = vertexPointDst(geo, vtxoff_next);
+            nextVtxDstpt = GA_FeE_TopologyReference::vertexPointDst(geo, vtxoff_next);
             if (nextVtxDstpt == dstpt)
                 return vtxoff_next;
         }
@@ -34,7 +36,7 @@ namespace GA_FeE_VertexNextEquiv {
         const GA_Offset& ptnum = geo->vertexPoint(vtxoff);
         for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
         {
-            nextVtxDstpt = vertexPointDst(geo, vtxoff_next);
+            nextVtxDstpt = GA_FeE_TopologyReference::vertexPointDst(geo, vtxoff_next);
             if (nextVtxDstpt == ptnum)
             {
                 if (dstpt < ptnum)
@@ -53,7 +55,7 @@ namespace GA_FeE_VertexNextEquiv {
             const GA_Size& vtxpnum
         )
     {
-        return vertexNextEquivNoLoop(geo, vtxoff, vertexPointDst(geo, primoff, vtxpnum));
+        return vertexNextEquivNoLoop(geo, vtxoff, GA_FeE_TopologyReference::vertexPointDst(geo, primoff, vtxpnum));
     }
 
     static GA_Offset
@@ -62,9 +64,12 @@ namespace GA_FeE_VertexNextEquiv {
             const GA_Offset & vtxoff
         )
     {
-        const GA_Offset& dstpt = vertexPointDst(geo, vtxoff);
+        const GA_Offset& dstpt = GA_FeE_TopologyReference::vertexPointDst(geo, vtxoff);
         return vertexNextEquivNoLoop(geo, vtxoff, dstpt);
     }
+
+
+
 
 
 
@@ -84,7 +89,7 @@ namespace GA_FeE_VertexNextEquiv {
         GA_Offset nextVtxDstpt;
         for (vtxoff_next = geo->vertexToNextVertex(vtxoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
         {
-            nextVtxDstpt = vertexPointDst(geo, vtxoff_next);
+            nextVtxDstpt = GA_FeE_TopologyReference::vertexPointDst(geo, vtxoff_next);
             if (nextVtxDstpt == dstpt)
                 return vtxoff_next;
         }
@@ -92,7 +97,7 @@ namespace GA_FeE_VertexNextEquiv {
         const GA_Offset& ptnum = geo->vertexPoint(vtxoff);
         for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
         {
-            nextVtxDstpt = vertexPointDst(geo, vtxoff_next);
+            nextVtxDstpt = GA_FeE_TopologyReference::vertexPointDst(geo, vtxoff_next);
             if (nextVtxDstpt == ptnum)
             {
                 if (dstpt < ptnum)
@@ -111,16 +116,16 @@ namespace GA_FeE_VertexNextEquiv {
             const GA_Size& vtxpnum
         )
     {
-        return vertexNextEquiv(geo, vtxoff, vertexPointDst(geo, primoff, vtxpnum));
+        return vertexNextEquiv(geo, vtxoff, GA_FeE_TopologyReference::vertexPointDst(geo, primoff, vtxpnum));
     }
 
     static GA_Offset
-        vertexNextEquivNoLoop(
+        vertexNextEquiv(
             const GA_Detail* geo,
             const GA_Offset& vtxoff
         )
     {
-        const GA_Offset& dstpt = vertexPointDst(geo, vtxoff);
+        const GA_Offset& dstpt = GA_FeE_TopologyReference::vertexPointDst(geo, vtxoff);
         return vertexNextEquiv(geo, vtxoff, dstpt);
     }
 
@@ -168,6 +173,36 @@ namespace GA_FeE_VertexNextEquiv {
 
 
 
+    //Get all vertices NextEquiv Vertex
+    //template<typename T>
+    static void
+        vertexNextEquiv(
+            const GA_Detail* geo,
+            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_VertexGroup* geoGroup = nullptr,
+            const exint& subscribeRatio = 16,
+            const exint& minGrainSize = 1024
+        )
+    {
+        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        attribHandle.set(elemoff, vertexNextEquiv(geo, elemoff));
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
 
     //Get all vertices NextEquiv Vertex
     static void
@@ -181,14 +216,9 @@ namespace GA_FeE_VertexNextEquiv {
             const exint& minGrainSize = 1024
         )
     {
-        UT_AutoInterrupt boss("vertexNextEquivNoLoop");
-
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle, &validGroup, &boss](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle, &validGroup](const GA_SplittableRange& r)
         {
-            if (boss.wasInterrupted())
-                return;
-
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -250,14 +280,9 @@ namespace GA_FeE_VertexNextEquiv {
             const exint& minGrainSize = 1024
         )
     {
-        UT_AutoInterrupt boss("vertexNextEquivNoLoop");
-
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle, &boss](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle](const GA_SplittableRange& r)
         {
-            if (boss.wasInterrupted())
-                return;
-
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -313,14 +338,9 @@ namespace GA_FeE_VertexNextEquiv {
             const exint& minGrainSize = 1024
         )
     {
-        UT_AutoInterrupt boss("vertexNextEquivNoLoop");
-
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &dstptAttribHandle, &validGroup, &boss](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [&geo, &dstptAttribHandle, &validGroup](const GA_SplittableRange& r)
         {
-            if (boss.wasInterrupted())
-                return;
-
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -398,7 +418,7 @@ namespace GA_FeE_VertexNextEquiv {
         attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
 
         validGroup = geo->newVertexGroup(groupName);
-        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        GA_RWHandleT<GA_Size> refAttribHandle = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
         vertexNextEquivNoLoop(geo, attribPtr, validGroup, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -473,7 +493,7 @@ namespace GA_FeE_VertexNextEquiv {
         if (attribPtr)
             return attribPtr;
         attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
-        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        GA_RWHandleT<GA_Size> refAttribHandle = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
         vertexNextEquivNoLoop(geo, attribPtr, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -539,7 +559,7 @@ namespace GA_FeE_VertexNextEquiv {
             return groupPtr;
 
         groupPtr = geo->newVertexGroup(name);
-        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        GA_RWHandleT<GA_Size> refAttribHandle = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "dstpt", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
         vertexNextEquivNoLoop(geo, groupPtr, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
     }
