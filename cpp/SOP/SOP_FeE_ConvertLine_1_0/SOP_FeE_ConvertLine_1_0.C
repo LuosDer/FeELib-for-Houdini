@@ -27,8 +27,10 @@
 #include <GA/GA_SplittableRange.h>
 #include <HOM/HOM_SopNode.h>
 
-
-#include <GEO_FeE/GEO_FeE_Adjacency.h>
+#include <GA_FeE/GA_FeE_ConvertLine.h>
+#include <GA_FeE/GA_FeE_Adjacency.h>
+#include <GA_FeE/GA_FeE_TopologyReference.h>
+#include <GA_FeE/GA_FeE_VertexNextEquiv.h>
 
 using namespace SOP_FeE_ConvertLine_1_0_Namespace;
 
@@ -199,7 +201,7 @@ static const char *theDsFile = R"THEDSFILE(
        cppname "SubscribeRatio"
        label   "Subscribe Ratio"
        type    integer
-       default { 16 }
+       default { 64 }
        range   { 0! 256 }
     }
     parm {
@@ -207,7 +209,7 @@ static const char *theDsFile = R"THEDSFILE(
        cppname "MinGrainSize"
        label   "Min Grain Size"
        type    intlog
-       default { 1024 }
+       default { 64 }
        range   { 0! 2048 }
     }
 }
@@ -496,11 +498,20 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     vtxpnumAttribHandle.bind(vtxpnumATI);
     dstptAttribHandle.bind(vtxpnumATI);
 
-    GEO_FeE_Adjacency::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
+    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
 
-    GEO_FeE_Adjacency::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
+    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
 
-    GEO_FeE_Adjacency::vertexVertexNextEquiv(tmpGeo0, vtxpnumAttribHandle, dstptAttribHandle, creatingGroup, geo0VtxGroup);
+    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
+    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
+
+
+
+
+    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
+
+
+
 
 
     //    GA_RWHandleT<UT_ValArray<GA_Offset>> intArrayAttribHandle;
@@ -536,8 +547,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 #else
 
     GA_Size elemidx = 0;
-    GA_Offset start;
-    GA_Offset end;
+    GA_Offset start, end;
     for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.blockAdvance(start, end); )
     {
         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)

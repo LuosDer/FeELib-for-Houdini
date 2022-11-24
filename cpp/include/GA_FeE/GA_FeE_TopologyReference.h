@@ -170,8 +170,8 @@ namespace GA_FeE_TopologyReference {
             const GA_RWHandleT<GA_Offset>& attribHandle_prev,
             const GA_RWHandleT<GA_Offset>& attribHandle_next,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 128
         )
     {
         if (geoGroup)
@@ -263,8 +263,8 @@ namespace GA_FeE_TopologyReference {
         const GA_Detail* geo,
         const GA_RWHandleT<GA_Offset>& attribHandle_next,
         const GA_VertexGroup* geoGroup = nullptr,
-        const exint& subscribeRatio = 32,
-        const exint& minGrainSize = 1024
+        const exint& subscribeRatio = 64,
+        const exint& minGrainSize = 256
     )
     {
         if (geoGroup)
@@ -356,8 +356,8 @@ namespace GA_FeE_TopologyReference {
             const GA_RWHandleT<GA_Size>& attribHandle_prev,
             const GA_RWHandleT<GA_Size>& attribHandle_next,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 128
         )
     {
         GA_Topology& topo = geo->getTopology();
@@ -387,8 +387,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Detail* geo,
             const GA_RWHandleT<GA_Size>& attribHandle,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 16
         )
     {
         if (geoGroup)
@@ -446,8 +446,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Detail* geo,
             const GA_RWHandleT<GA_Size>& attribHandle,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 16,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 16
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
@@ -475,8 +475,8 @@ namespace GA_FeE_TopologyReference {
             const GA_RWHandleT<GA_Offset>& attribHandle,
             const GA_ROHandleT<GA_Size>& vtxpnumAttribHandle,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 16,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
@@ -505,8 +505,8 @@ namespace GA_FeE_TopologyReference {
             GA_Attribute*& attribPtr,
             const GA_Attribute* vtxpnumAttribPtr,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 16,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
@@ -539,8 +539,8 @@ namespace GA_FeE_TopologyReference {
             const GA_RWHandleT<GA_Offset>& attribHandle,
             const GA_ROHandleT<GA_Size>& vtxpnumAttribHandle,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 16,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
@@ -567,8 +567,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Detail* geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
             const GA_VertexGroup* geoGroup = nullptr,
-            const exint& subscribeRatio = 16,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
@@ -612,8 +612,8 @@ namespace GA_FeE_TopologyReference {
             const GA_AttributeOptions* attribute_options = 0,
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 16
         )
     {
         GA_Attribute* attribPtr = geo->findVertexAttribute(name);
@@ -636,8 +636,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 16
         )
     {
         return addAttribVertexPrimIndex(geo, name, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -653,8 +653,8 @@ namespace GA_FeE_TopologyReference {
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 16
         )
     {
         return addAttribVertexPrimIndex(geo, name, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -686,8 +686,8 @@ namespace GA_FeE_TopologyReference {
             const GA_AttributeOptions* attribute_options = 0,
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 128
         )
     {
         attribPtr_prev = geo->findVertexAttribute(namePrev);
@@ -719,8 +719,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 128
         )
     {
         return addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -739,8 +739,8 @@ namespace GA_FeE_TopologyReference {
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 128
         )
     {
         return addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -767,8 +767,8 @@ namespace GA_FeE_TopologyReference {
             const GA_AttributeOptions* attribute_options = 0,
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 256
         )
     {
         GA_Attribute* attribPtr_next = geo->findVertexAttribute(nameNext);
@@ -793,8 +793,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 256
         )
     {
         return addAttribVertexVertexPrimNext(geo, nameNext, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -810,8 +810,8 @@ namespace GA_FeE_TopologyReference {
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 256
         )
     {
         return addAttribVertexVertexPrimNext(geo, nameNext, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -836,8 +836,8 @@ namespace GA_FeE_TopologyReference {
             const GA_AttributeOptions* attribute_options = 0,
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         GA_Attribute* attribPtr = geo->findVertexAttribute(name);
@@ -845,7 +845,7 @@ namespace GA_FeE_TopologyReference {
             return attribPtr;
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         //GA_RWHandleT<GA_Offset> attribHandle(attribPtr);
-        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPrimIndex(geo, "vtxpnum", geoGroup, GA_Defaults(-1), storage, subscribeRatio, minGrainSize);
+        GA_RWHandleT<GA_Size> refAttribHandle = addAttribVertexPrimIndex(geo, "vtxpnum", geoGroup, GA_Defaults(-1), storage, reuse);
         vertexPointDst(geo, attribPtr, refAttribHandle, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -861,8 +861,8 @@ namespace GA_FeE_TopologyReference {
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         return addAttribVertexPointDst(geo, name, geoGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -878,8 +878,8 @@ namespace GA_FeE_TopologyReference {
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage& storage = GA_STORE_INT64,
-            const exint& subscribeRatio = 32,
-            const exint& minGrainSize = 1024
+            const exint& subscribeRatio = 64,
+            const exint& minGrainSize = 64
         )
     {
         return addAttribVertexPointDst(geo, name, geoGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);

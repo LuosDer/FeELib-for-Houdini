@@ -7,27 +7,10 @@
 //#include <GU_FeE/GA_FeE_Connectivity.h>
 
 #include <GEO/GEO_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
 
-#include <GEO/GEO_AdjPolyIterator.h>
-//#include <GA/GA_Handle.h>
-//#include <GA/GA_ATINumeric.h>
+#include <GA_FeE/GA_FeE_Adjacency.h>
 
-//#include <GA_FeE/GA_FeE_Adjacency.h>
-#include <GU_FeE/GU_FeE_Attribute.h>
-
-#include <time.h>
 #include <chrono>
-#include <array>
 
 
 namespace GA_FeE_Connectivity
@@ -43,7 +26,7 @@ namespace GA_FeE_Connectivity
 
 static void
 connectivityPoint(
-    const GEO_Detail* geo,
+    const GA_Detail* geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
     const GA_PointGroup* geoGroup = nullptr
@@ -58,10 +41,11 @@ connectivityPoint(
     //std::chrono::duration<double> diff;
 
     //::std::vector<::std::vector<GA_Offset>> adjElems;
-    ::std::vector<GA_Offset> elemHeap;
-    elemHeap.reserve(pow(2, 15));
-
     GA_Size nelems = geo->getNumPoints();
+
+    ::std::vector<GA_Offset> elemHeap;
+    elemHeap.reserve(__min(pow(2, 15), nelems));
+
     ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
 
     UT_PackedArrayOfArrays<GA_Offset> packedArray;
@@ -70,14 +54,28 @@ connectivityPoint(
     const UT_Array<GA_Size>& rawOffsets = packedArray.rawOffsets();
     UT_Array<GA_Offset>& rawData = packedArray.rawData();
 
-
-    UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
-        for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
+    if (rawData.size() < pow(2, 12))
+    {
+        for (GA_Offset elemoff = 0; elemoff < rawData.size(); ++elemoff)
         {
             rawData[elemoff] = geo->pointIndex(rawData[elemoff]);
         }
-    }, 8, 2048);
+    }
+    else
+    {
+        UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+            for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
+            {
+                rawData[elemoff] = geo->pointIndex(rawData[elemoff]);
+            }
+        }, 16, 1024);
+    }
 
+
+    //timeEnd = std::chrono::steady_clock::now();
+    //diff = timeEnd - timeStart;
+    //timeTotal += diff.count();
+    //timeStart = std::chrono::steady_clock::now();
 
 
     GA_Size classnum = 0;
@@ -115,14 +113,24 @@ connectivityPoint(
                 attribHandle.set(elemoff, classnumArray[geo->pointIndex(elemoff)]);
             }
         }
-    }, 8, 2048);
+    }, 16, 1024);
+
+
+
+    //timeEnd = std::chrono::steady_clock::now();
+    //diff = timeEnd - timeStart;
+    //timeTotal1 += diff.count();
+    //timeStart = std::chrono::steady_clock::now();
+
+    //geo->setDetailAttributeF("time", timeTotal * 1000);
+    //geo->setDetailAttributeF("time1", timeTotal1 * 1000);
 }
 
 
 
 static void
 connectivityPrim(
-    const GEO_Detail* geo,
+    const GA_Detail* geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
     const GA_PrimitiveGroup* geoGroup = nullptr
@@ -137,10 +145,11 @@ connectivityPrim(
     //std::chrono::duration<double> diff;
 
     //::std::vector<::std::vector<GA_Offset>> adjElems;
-    ::std::vector<GA_Offset> elemHeap;
-    elemHeap.reserve(pow(2, 15));
-
     GA_Size nelems = geo->getNumPrimitives();
+
+    ::std::vector<GA_Offset> elemHeap;
+    elemHeap.reserve(__min(pow(2, 15), nelems));
+
     ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
 
     UT_PackedArrayOfArrays<GA_Offset> packedArray;
@@ -150,13 +159,22 @@ connectivityPrim(
     UT_Array<GA_Offset>& rawData = packedArray.rawData();
 
 
-    UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
-        for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
+    if (rawData.size() < pow(2, 12))
+    {
+        for (GA_Offset elemoff = 0; elemoff < rawData.size(); ++elemoff)
         {
             rawData[elemoff] = geo->primitiveIndex(rawData[elemoff]);
         }
-    }, 8, 2048);
-
+    }
+    else
+    {
+        UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+            for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
+            {
+                rawData[elemoff] = geo->primitiveIndex(rawData[elemoff]);
+            }
+        }, 16, 1024);
+    }
 
 
     GA_Size classnum = 0;
@@ -194,9 +212,8 @@ connectivityPrim(
                 attribHandle.set(elemoff, classnumArray[geo->primitiveIndex(elemoff)]);
             }
         }
-    }, 8, 2048);
+    }, 16, 1024);
 }
-
 
 
 
@@ -215,8 +232,8 @@ addAttribConnectivityPoint(
     const GA_AttributeOptions* attribute_options = 0,
     const GA_Storage& storage = GA_STORE_INT64,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 32,
-    const exint& minGrainSize = 1024
+    const exint& subscribeRatio = 64,
+    const exint& minGrainSize = 64
 )
 {
     GA_Attribute* attribPtr = geo->findPointAttribute(name);
@@ -240,8 +257,8 @@ addAttribConnectivityPoint(
     const GA_PointGroup* geoSeamGroup = nullptr,
     const GA_Storage& storage = GA_STORE_INT64,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 32,
-    const exint& minGrainSize = 1024
+    const exint& subscribeRatio = 64,
+    const exint& minGrainSize = 64
 )
 {
     return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -295,9 +312,11 @@ addAttribConnectivityPrim(
     GA_Attribute* attribPtr = geo->findPrimitiveAttribute(name);
     if (attribPtr)
         return attribPtr;
-
+    const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle =
+        GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, "nebs", geoGroup, geoSeamGroup,
+            storage, subscribeRatio, minGrainSize);
+    
     attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
-    const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, "nebs", geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
     connectivityPrim(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
 }

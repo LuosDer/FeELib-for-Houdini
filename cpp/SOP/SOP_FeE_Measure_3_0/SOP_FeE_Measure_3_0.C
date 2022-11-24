@@ -149,7 +149,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "SubscribeRatio"
         label   "Subscribe Ratio"
         type    integer
-        default { 16 }
+        default { 64 }
         range   { 0! 256 }
     }
     parm {
@@ -157,7 +157,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 1024 }
+        default { 64 }
         range   { 0! 2048 }
     }
 }

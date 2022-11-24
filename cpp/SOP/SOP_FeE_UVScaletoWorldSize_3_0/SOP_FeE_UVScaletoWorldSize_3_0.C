@@ -38,6 +38,7 @@
 #include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_Measure.h>
 #include <GA_FeE/GA_FeE_Connectivity.h>
+#include <GA_FeE/GA_FeE_TopologyReference.h>
 
 
 using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
@@ -228,7 +229,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "SubscribeRatio"
         label   "Subscribe Ratio"
         type    integer
-        default { 16 }
+        default { 64 }
         range   { 0! 256 }
     }
     parm {
@@ -236,7 +237,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 1024 }
+        default { 64 }
         range   { 0! 2048 }
     }
 }
@@ -451,7 +452,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         //GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
         vtxpnumAttribHandle.bind(vtxpnumAttribUPtr.get());
 
-        GA_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
+        GA_FeE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
 
@@ -477,7 +478,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         GA_Attribute* connectivityATIPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, "__connectivity_SOP_FeE_UVScaletoWorldSize_3_0", 1, GA_Defaults(-1), 0, 0, inStorageI);
 #endif
         GA_RWHandleT<GA_Size> connectivityAttribHandle(connectivityATIPtr);
-        GA_FeE_Connectivity::connectivity(outGeo0, connectivityAttribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
+        GA_FeE_Connectivity::connectivityPoint(outGeo0, connectivityAttribHandle, adjElemsAttribHandle, static_cast<const GA_PointGroup*>(geo0Group));
 
 
 

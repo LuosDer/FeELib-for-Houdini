@@ -197,21 +197,39 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "calVertexVertexNextEquiv"
-        cppname "CalVertexVertexNextEquiv"
-        label   "Calculate Vertex Vertex Next Equiv"
+        name    "calVertexNextEquiv"
+        cppname "CalVertexNextEquiv"
+        label   "Calculate Vertex Next Equiv"
         type    toggle
         default { "0" }
         nolabel
         joinnext
     }
     parm {
-        name    "vertexVertexNextEquivAttribName"
-        cppname "VertexVertexNextEquivAttribName"
-        label   "Vertex Vertex Next Equiv Attribute Name"
+        name    "vertexNextEquivAttribName"
+        cppname "VertexNextEquivAttribName"
+        label   "Vertex Next Equiv Attribute Name"
         type    string
-        default { "vtxNextEquiv" }
-        disablewhen "{ calVertexVertexNextEquiv == 0 }"
+        default { "nextEquiv" }
+        disablewhen "{ calVertexNextEquiv == 0 }"
+    }
+
+    parm {
+        name    "calVertexNextEquivNoLoop"
+        cppname "CalVertexNextEquivNoLoop"
+        label   "Calculate Vertex Next Equiv No Loop"
+        type    toggle
+        default { "0" }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "vertexNextEquivNoLoopAttribName"
+        cppname "VertexNextEquivNoLoopAttribName"
+        label   "Vertex Next Equiv No Loop Attribute Name"
+        type    string
+        default { "nextEquivNoLoop" }
+        disablewhen "{ calVertexNextEquivNoLoop == 0 }"
     }
 
     parm {
@@ -312,7 +330,7 @@ static const char *theDsFile = R"THEDSFILE(
        cppname "SubscribeRatio"
        label   "Subscribe Ratio"
        type    integer
-       default { 16 }
+       default { 64 }
        range   { 0! 256 }
     }
     parm {
@@ -320,7 +338,7 @@ static const char *theDsFile = R"THEDSFILE(
        cppname "MinGrainSize"
        label   "Min Grain Size"
        type    intlog
-       default { 1024 }
+       default { 64 }
        range   { 0! 2048 }
     }
 }
@@ -417,40 +435,43 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-    bool calVertexPrimIndex = sopparms.getCalVertexPrimIndex();
-    bool calVertexVertexPrim = sopparms.getCalVertexVertexPrim();
-    bool calVertexPointDst = sopparms.getCalVertexPointDst();
-    bool calVertexVertexNextEquiv = sopparms.getCalVertexVertexNextEquiv();
-    bool calPointPointEdge = sopparms.getCalPointPointEdge();
-    bool calPointPointPrim = sopparms.getCalPointPointPrim();
-    bool calPrimPrimEdge = sopparms.getCalPrimPrimEdge();
-    bool calPrimPrimPoint = sopparms.getCalPrimPrimPoint();
+    bool calVertexPrimIndex       = sopparms.getCalVertexPrimIndex();
+    bool calVertexVertexPrim      = sopparms.getCalVertexVertexPrim();
+    bool calVertexPointDst        = sopparms.getCalVertexPointDst();
+    bool calVertexNextEquiv       = sopparms.getCalVertexNextEquiv();
+    bool calVertexNextEquivNoLoop = sopparms.getCalVertexNextEquivNoLoop();
+    bool calPointPointEdge        = sopparms.getCalPointPointEdge();
+    bool calPointPointPrim        = sopparms.getCalPointPointPrim();
+    bool calPrimPrimEdge          = sopparms.getCalPrimPrimEdge();
+    bool calPrimPrimPoint         = sopparms.getCalPrimPrimPoint();
 
 #if 1
-    const UT_StringHolder& vertexPrimIndexAttribName = sopparms.getVertexPrimIndexAttribName();
-    const UT_StringHolder& vertexVertexPrimNextAttribName = sopparms.getVertexVertexPrimNextAttribName();
-    const UT_StringHolder& vertexPointDstAttribName = sopparms.getVertexPointDstAttribName();
-    const UT_StringHolder& vertexVertexNextEquivAttribName = sopparms.getVertexVertexNextEquivAttribName();
-    const UT_StringHolder& pointPointEdgeAttribName = sopparms.getPointPointEdgeAttribName();
-    const UT_StringHolder& pointPointPrimAttribName = sopparms.getPointPointPrimAttribName();
-    const UT_StringHolder& primPrimEdgeAttribName = sopparms.getPrimPrimEdgeAttribName();
-    const UT_StringHolder& primPrimPointAttribName = sopparms.getPrimPrimPointAttribName();
-    const UT_StringHolder& vertexVertexPrimPrevAttribName = sopparms.getVertexVertexPrimPrevAttribName();
+    const UT_StringHolder& vertexPrimIndexAttribName             = sopparms.getVertexPrimIndexAttribName();
+    const UT_StringHolder& vertexVertexPrimNextAttribName        = sopparms.getVertexVertexPrimNextAttribName();
+    const UT_StringHolder& vertexPointDstAttribName              = sopparms.getVertexPointDstAttribName();
+    const UT_StringHolder& vertexNextEquivAttribName             = sopparms.getVertexNextEquivAttribName();
+    const UT_StringHolder& vertexNextEquivNoLoopAttribName       = sopparms.getVertexNextEquivNoLoopAttribName();
+    const UT_StringHolder& pointPointEdgeAttribName              = sopparms.getPointPointEdgeAttribName();
+    const UT_StringHolder& pointPointPrimAttribName              = sopparms.getPointPointPrimAttribName();
+    const UT_StringHolder& primPrimEdgeAttribName                = sopparms.getPrimPrimEdgeAttribName();
+    const UT_StringHolder& primPrimPointAttribName               = sopparms.getPrimPrimPointAttribName();
+    const UT_StringHolder& vertexVertexPrimPrevAttribName        = sopparms.getVertexVertexPrimPrevAttribName();
 
-    calVertexPrimIndex = calVertexPrimIndex && vertexPrimIndexAttribName.isstring();
-    calVertexVertexPrim = calVertexVertexPrim && (vertexVertexPrimPrevAttribName.isstring() || vertexVertexPrimNextAttribName.isstring());
-    calVertexPointDst = calVertexPointDst && vertexVertexNextEquivAttribName.isstring();
-    calVertexVertexNextEquiv = calVertexVertexNextEquiv && vertexPointDstAttribName.isstring();
-    calPointPointEdge = calPointPointEdge && pointPointEdgeAttribName.isstring();
-    calPointPointPrim = calPointPointPrim && pointPointPrimAttribName.isstring();
-    calPrimPrimEdge = calPrimPrimEdge && primPrimEdgeAttribName.isstring();
-    calPrimPrimPoint = calPrimPrimPoint && primPrimPointAttribName.isstring();
+    calVertexPrimIndex         = calVertexPrimIndex       && vertexPrimIndexAttribName.isstring();
+    calVertexVertexPrim        = calVertexVertexPrim      && (vertexVertexPrimPrevAttribName.isstring() || vertexVertexPrimNextAttribName.isstring());
+    calVertexPointDst          = calVertexPointDst        && vertexNextEquivAttribName.isstring();
+    calVertexNextEquiv         = calVertexNextEquiv       && vertexPointDstAttribName.isstring();
+    calVertexNextEquivNoLoop   = calVertexNextEquivNoLoop && vertexPointDstAttribName.isstring();
+    calPointPointEdge          = calPointPointEdge        && pointPointEdgeAttribName.isstring();
+    calPointPointPrim          = calPointPointPrim        && pointPointPrimAttribName.isstring();
+    calPrimPrimEdge            = calPrimPrimEdge          && primPrimEdgeAttribName.isstring();
+    calPrimPrimPoint           = calPrimPrimPoint         && primPrimPointAttribName.isstring();
 #else
     UT_StringHolder& pointPointEdgeAttribName;
     UT_StringHolder& pointPointPrimAttribName;
     UT_StringHolder& primPrimEdgeAttribName;
     UT_StringHolder& primPrimPointAttribName;
-    UT_StringHolder& vertexVertexNextEquivAttribName;
+    UT_StringHolder& vertexNextEquivAttribName;
     if (calPointPointEdge)
     {
         pointPointEdgeAttribName = sopparms.getPointPointEdgeAttribName();
@@ -471,18 +492,18 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         primPrimPointAttribName = sopparms.getPrimPrimPointAttribName();
         calPrimPrimPoint = primPrimPointAttribName.isstring();
     }
-    if (calVertexVertexNextEquiv)
+    if (calVertexNextEquiv)
     {
-        calVertexVertexNextEquiv = sopparms.getVertexVertexNextEquivAttribName();
-        calVertexVertexNextEquiv = calVertexVertexNextEquiv.isstring();
+        calVertexNextEquiv = sopparms.getVertexNextEquivAttribName();
+        calVertexNextEquiv = calVertexNextEquiv.isstring();
     }
 #endif
-
     if (
         !calVertexPrimIndex &&
         !calVertexVertexPrim &&
         !calVertexPointDst &&
-        !calVertexVertexNextEquiv &&
+        !calVertexNextEquiv &&
+        !calVertexNextEquivNoLoop &&
         !calPointPointEdge &&
         !calPointPointPrim &&
         !calPrimPrimEdge &&
@@ -553,13 +574,13 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexPrimIndexAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
         vtxpnumAttribHandle.bind(attribPtr);
     }
-    else if (calVertexPointDst || calVertexVertexNextEquiv || calPointPointEdge || calPrimPrimEdge)
+    else if (calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
     {
         vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
         //GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
         vtxpnumAttribHandle.bind(vtxpnumAttribUPtr.get());
     }
-    if (calVertexPrimIndex || calVertexPointDst || calVertexVertexNextEquiv || calPointPointEdge || calPrimPrimEdge)
+    if (calVertexPrimIndex || calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
     {
         GA_FeE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
@@ -576,15 +597,15 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexPointDstAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
         dstptAttribHandle.bind(attribPtr);
     }
-    else if (calVertexVertexNextEquiv || calPrimPrimEdge)
+    else if (calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge)
     {
         dstptAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
         //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
         dstptAttribHandle.bind(dstptAttribUPtr.get());
     }
-    if (calVertexPointDst || calVertexVertexNextEquiv || calPrimPrimEdge)
+    if (calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge)
     {
-        switch (calVertexVertexNextEquiv || calPrimPrimEdge ? 0 : kernel)
+        switch ((calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge) ? 0 : kernel)
         {
         case 0:
             GA_FeE_TopologyReference::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
@@ -639,40 +660,34 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
+
+    GA_ATINumericUPtr vtxNextEquivAttribUPtr;
+    GA_RWHandleT<GA_Offset> vtxNextEquivAttribHandle;
+    if (calVertexNextEquiv)
+    {
+        vtxNextEquivAttribHandle = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+    }
+    else if (calPrimPrimEdge)
+    {
+        vtxNextEquivAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        vtxNextEquivAttribHandle = vtxNextEquivAttribUPtr.get();
+    }
+    if (calVertexNextEquiv || calPrimPrimEdge)
+    {
+        GA_FeE_VertexNextEquiv::vertexNextEquiv(outGeo0, vtxNextEquivAttribHandle, dstptAttribHandle,
+            static_cast<const GA_VertexGroup*>(geo0Group),
+            subscribeRatio, minGrainSize);
+    }
+
+
+
+
     GA_RWHandleT<GA_Offset> intAttribHandle;
     GA_RWHandleT<UT_ValArray<GA_Offset>> attribHandle;
 
-    
-    //if (calVertexVertexPrim)
-    //{
-    //    GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-    //    intAttribHandle.bind(attribPtr);
-
-    //    attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-    //    GA_RWHandleT<GA_Offset> intAttribHandle1;
-    //    intAttribHandle1.bind(attribPtr);
-
-    //    switch (kernel)
-    //    {
-    //    case 0:
-    //        GA_FeE_Adjacency::vertexVertexPrim(outGeo0, intAttribHandle, intAttribHandle1,
-    //            static_cast<const GA_VertexGroup*>(geo0Group),
-    //            subscribeRatio, minGrainSize);
-    //        break;
-    //    case 1:
-    //        GA_FeE_Adjacency::vertexVertexPrim1(outGeo0, intAttribHandle, intAttribHandle1,
-    //            static_cast<const GA_VertexGroup*>(geo0Group),
-    //            subscribeRatio, minGrainSize);
-    //        break;
-    //    default:
-    //        break;
-    //    }
-    //}
-    
-
-    if (calVertexVertexNextEquiv)
+    if (calVertexNextEquivNoLoop)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexNextEquivAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
         intAttribHandle.bind(attribPtr);
         GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
@@ -718,33 +733,47 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calPrimPrimEdge)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, 0, 0, inStorageI);
-        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-        attribHandle.bind(attribPtr);
-        switch (kernel)
+        if (0 && kernel==0)
         {
-        case 0:
-            GA_FeE_Adjacency::primPrimEdge(outGeo0, attribHandle, dstptAttribHandle,
+            GA_FeE_Adjacency::addAttribPrimPrimEdge(outGeo0, primPrimEdgeAttribName,
                 static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                subscribeRatio, minGrainSize);
-            break;
-        case 1:
-            GA_FeE_Adjacency::primPrimEdge1(outGeo0, attribHandle, dstptAttribHandle,
-                static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                subscribeRatio, minGrainSize);
-            break;
-        case 2:
-            GA_FeE_Adjacency::primPrimEdge2(outGeo0, attribHandle, dstptAttribHandle,
-                static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                subscribeRatio, minGrainSize);
-            break;
-        case 3:
-            GA_FeE_Adjacency::primPrimEdge3(outGeo0, attribHandle,
-                static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                subscribeRatio, minGrainSize);
-            break;
-        default:
-            break;
+                inStorageI, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, 0, 0, inStorageI);
+            //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+            attribHandle.bind(attribPtr);
+            switch (kernel)
+            {
+            case 0:
+                GA_FeE_Adjacency::primPrimEdge(outGeo0, attribHandle, vtxNextEquivAttribHandle,
+                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
+                    subscribeRatio, minGrainSize);
+                break;
+            case 1:
+                GA_FeE_Adjacency::primPrimEdge1(outGeo0, attribHandle, dstptAttribHandle,
+                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
+                    subscribeRatio, minGrainSize);
+                break;
+            case 2:
+                GA_FeE_Adjacency::primPrimEdge2(outGeo0, attribHandle, dstptAttribHandle,
+                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
+                    subscribeRatio, minGrainSize);
+                break;
+            case 3:
+                GA_FeE_Adjacency::primPrimEdge3(outGeo0, attribHandle, dstptAttribHandle,
+                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
+                    subscribeRatio, minGrainSize);
+                break;
+            case 4:
+                GA_FeE_Adjacency::primPrimEdge4(outGeo0, attribHandle,
+                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
+                    subscribeRatio, minGrainSize);
+                break;
+            default:
+                break;
+            }
         }
     }
 

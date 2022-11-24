@@ -29,6 +29,8 @@
 #include <HOM/HOM_SopNode.h>
 
 
+#include <chrono>
+
 #include <GU/GU_Measure.h>
 #include <GU/GU_Promote.h>
 
@@ -181,7 +183,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "SubscribeRatio"
         label   "Subscribe Ratio"
         type    integer
-        default { 16 }
+        default { 128 }
         range   { 0! 256 }
     }
     parm {
@@ -189,7 +191,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 1024 }
+        default { 64 }
         range   { 0! 2048 }
     }
 }
@@ -317,6 +319,15 @@ sopGroupType(SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
 void
 SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
+    //double timeTotal = 0;
+    //double timeTotal1 = 0;
+    //auto timeStart = std::chrono::steady_clock::now();
+    //auto timeEnd = std::chrono::steady_clock::now();
+    //timeStart = std::chrono::steady_clock::now();
+    //timeEnd = std::chrono::steady_clock::now();
+    //std::chrono::duration<double> diff;
+
+
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Connectivity_1_0Cache*)cookparms.cache();
@@ -428,6 +439,13 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     */
 
+    //timeEnd = std::chrono::steady_clock::now();
+    //diff = timeEnd - timeStart;
+    //timeTotal += diff.count();
+    //timeStart = std::chrono::steady_clock::now();
+
+
+
     GA_Attribute* attribPtr;
     if (connectivityConstraint)
     {
@@ -454,6 +472,13 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         }
     }
 
+
+    //timeEnd = std::chrono::steady_clock::now();
+    //diff = timeEnd - timeStart;
+    //timeTotal1 += diff.count();
+
+    //outGeo0->setDetailAttributeF("timeTotal", timeTotal * 1000);
+    //outGeo0->setDetailAttributeF("timeTotal1", timeTotal1 * 1000);
 
     //GA_Attribute* adjElemsAttribPtr;
     //GA_Attribute* adjElemsAttribPtr = outGeo0->addIntArray((connectivityConstraint || geo0AttribClass == GA_ATTRIB_PRIMITIVE) ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT, "__adjElems_SOP_FeE_Connectivity_1_0", 1, 0, 0, inStorageI);
