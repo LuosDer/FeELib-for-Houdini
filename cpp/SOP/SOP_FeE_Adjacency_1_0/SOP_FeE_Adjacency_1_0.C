@@ -148,7 +148,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexPrimIndexAttribName"
         label   "Vertex Prim Index Attribute Name"
         type    string
-        default { "vtxpnum" }
+        default { "__topo_vtxpnum" }
         disablewhen "{ calVertexPrimIndex == 0 }"
     }
 
@@ -164,7 +164,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexPrimPrevAttribName"
         label   "Vertex Vertex Prim Prev Attribute Name"
         type    string
-        default { "vtxPrimPrev" }
+        default { "__topo_vtxPrimPrev" }
         disablewhen "{ calVertexVertexPrim == 0 }"
     }
     parm {
@@ -172,7 +172,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexPrimNextAttribName"
         label   "Vertex Vertex Prim Next Attribute Name"
         type    string
-        default { "vtxPrimNext" }
+        default { "__topo_vtxPrimNext" }
         disablewhen "{ calVertexVertexPrim == 0 }"
     }
 
@@ -192,7 +192,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexPointDstAttribName"
         label   "Vertex Point Destination Attribute Name"
         type    string
-        default { "dstpt" }
+        default { "__topo_dstpt" }
         disablewhen "{ calVertexPointDst == 0 }"
     }
 
@@ -210,7 +210,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexNextEquivAttribName"
         label   "Vertex Next Equiv Attribute Name"
         type    string
-        default { "nextEquiv" }
+        default { "__topo_nextEquiv" }
         disablewhen "{ calVertexNextEquiv == 0 }"
     }
 
@@ -228,7 +228,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexNextEquivNoLoopAttribName"
         label   "Vertex Next Equiv No Loop Attribute Name"
         type    string
-        default { "nextEquivNoLoop" }
+        default { "__topo_nextEquivNoLoop" }
         disablewhen "{ calVertexNextEquivNoLoop == 0 }"
     }
 
@@ -246,7 +246,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PointPointEdgeAttribName"
         label   "Point Point Edge Attribute Name"
         type    string
-        default { "nebs" }
+        default { "__topo_nebs" }
         disablewhen "{ calPointPointEdge == 0 }"
     }
 
@@ -264,7 +264,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PointPointPrimAttribName"
         label   "Point Point Prim Attribute Name"
         type    string
-        default { "nebsPrim" }
+        default { "__topo_nebsPrim" }
         disablewhen "{ calPointPointPrim == 0 }"
     }
 
@@ -282,7 +282,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PrimPrimEdgeAttribName"
         label   "Prim Prim Edge Attribute Name"
         type    string
-        default { "nebs" }
+        default { "__topo_nebs" }
         disablewhen "{ calPrimPrimEdge == 0 }"
     }
 
@@ -300,7 +300,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PrimPrimPointAttribName"
         label   "Prim Prim Point Attribute Name"
         type    string
-        default { "nebsPoint" }
+        default { "__topo_nebsPoint" }
         disablewhen "{ calPrimPrimPoint == 0 }"
     }
 
@@ -608,7 +608,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         switch ((calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge) ? 0 : kernel)
         {
         case 0:
-            GA_FeE_TopologyReference::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
+            GA_FeE_TopologyReference::vertexPointDstByVtxpnum(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
                 static_cast<const GA_VertexGroup*>(geo0Group),
                 subscribeRatio, minGrainSize);
             break;

@@ -1,12 +1,12 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_Group_Unshared_1_0.h"
+#include "SOP_FeE_GroupUnshared_1_0.h"
 
 
 // This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_Group_Unshared_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_Group_Unshared_1_0Verb::cook with the correct type.
-#include "SOP_FeE_Group_Unshared_1_0.proto.h"
+// to provide SOP_FeE_GroupUnshared_1_0Parms, an easy way to access parameter values from
+// SOP_FeE_GroupUnshared_1_0Verb::cook with the correct type.
+#include "SOP_FeE_GroupUnshared_1_0.proto.h"
 
 #include <GU/GU_Detail.h>
 #include <GEO/GEO_PrimPoly.h>
@@ -32,10 +32,11 @@
 
 
 #include <GA_FeE/GA_FeE_Group.h>
-#include <GA_FeE/GA_FeE_Adjacency.h>
+//#include <GA_FeE/GA_FeE_Adjacency.h>
+#include <GA_FeE/GA_FeE_VertexNextEquiv.h>
 
 
-using namespace SOP_FeE_Group_Unshared_1_0_Namespace;
+using namespace SOP_FeE_GroupUnshared_1_0_Namespace;
 
 using attribPrecisonF = fpreal32;
 using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
@@ -49,7 +50,7 @@ using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 /// This is the internal name of the SOP type.
 /// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_Group_Unshared_1_0::theSOPTypeName("FeE::groupUnshared::1.0"_sh);
+const UT_StringHolder SOP_FeE_GroupUnshared_1_0::theSOPTypeName("FeE::groupUnshared::1.0"_sh);
 
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case, we add ourselves
@@ -58,10 +59,10 @@ void
 newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
-        SOP_FeE_Group_Unshared_1_0::theSOPTypeName,   // Internal name
-        "FeE Group Unshared",                     // UI name
-        SOP_FeE_Group_Unshared_1_0::myConstructor,    // How to build the SOP
-        SOP_FeE_Group_Unshared_1_0::buildTemplates(), // My parameters
+        SOP_FeE_GroupUnshared_1_0::theSOPTypeName,   // Internal name
+        "FeE Group Unshared",                        // UI name
+        SOP_FeE_GroupUnshared_1_0::myConstructor,    // How to build the SOP
+        SOP_FeE_GroupUnshared_1_0::buildTemplates(), // My parameters
         1,                         // Min # of sources
         1,                         // Max # of sources
         nullptr,                   // Custom local variables (none)
@@ -162,34 +163,34 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 PRM_Template*
-SOP_FeE_Group_Unshared_1_0::buildTemplates()
+SOP_FeE_GroupUnshared_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_Group_Unshared_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_GroupUnshared_1_0.C"_sh, theDsFile);
     return templ.templates();
 }
 
 
-//class SOP_FeE_Group_Unshared_1_0Cache : public SOP_NodeCache
+//class SOP_FeE_GroupUnshared_1_0Cache : public SOP_NodeCache
 //{
 //public:
-//    SOP_FeE_Group_Unshared_1_0Cache() : SOP_NodeCache(),
+//    SOP_FeE_GroupUnshared_1_0Cache() : SOP_NodeCache(),
 //        myPrevOutputDetailID(-1)
 //    {}
-//    ~SOP_FeE_Group_Unshared_1_0Cache() override {}
+//    ~SOP_FeE_GroupUnshared_1_0Cache() override {}
 //
 //    int64 myPrevOutputDetailID;
 //};
 
 
-class SOP_FeE_Group_Unshared_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_GroupUnshared_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_Group_Unshared_1_0Verb() {}
-    virtual ~SOP_FeE_Group_Unshared_1_0Verb() {}
+    SOP_FeE_GroupUnshared_1_0Verb() {}
+    virtual ~SOP_FeE_GroupUnshared_1_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_Group_Unshared_1_0Parms(); }
-    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_Group_Unshared_1_0Cache(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_Group_Unshared_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupUnshared_1_0Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupUnshared_1_0Cache(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_GroupUnshared_1_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -197,17 +198,17 @@ public:
 
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
-    static const SOP_NodeVerb::Register<SOP_FeE_Group_Unshared_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_GroupUnshared_1_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_Group_Unshared_1_0Verb> SOP_FeE_Group_Unshared_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_GroupUnshared_1_0Verb> SOP_FeE_GroupUnshared_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_Group_Unshared_1_0::cookVerb() const 
+SOP_FeE_GroupUnshared_1_0::cookVerb() const 
 { 
-    return SOP_FeE_Group_Unshared_1_0Verb::theVerb.get();
+    return SOP_FeE_GroupUnshared_1_0Verb::theVerb.get();
 }
 
 
@@ -215,12 +216,25 @@ SOP_FeE_Group_Unshared_1_0::cookVerb() const
 
 
 
+static int
+sopUnsharedAttribType(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmgrouptype)
+{
+    using namespace SOP_FeE_GroupUnshared_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case UnsharedAttribType::GROUP:   return 0;  break;
+    case UnsharedAttribType::INT:     return 1;  break;
+    case UnsharedAttribType::FLOAT:   return 2;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return -1;
+}
 
 
 static GA_GroupType
-sopUnsharedAttribClass(SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribClass parmgrouptype)
+sopUnsharedAttribClass(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribClass parmgrouptype)
 {
-    using namespace SOP_FeE_Group_Unshared_1_0Enums;
+    using namespace SOP_FeE_GroupUnshared_1_0Enums;
     switch (parmgrouptype)
     {
     case UnsharedAttribClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -235,9 +249,9 @@ sopUnsharedAttribClass(SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribClass parm
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Group_Unshared_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupUnshared_1_0Parms::GroupType parmgrouptype)
 {
-    using namespace SOP_FeE_Group_Unshared_1_0Enums;
+    using namespace SOP_FeE_GroupUnshared_1_0Enums;
     switch (parmgrouptype)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
@@ -253,11 +267,11 @@ sopGroupType(SOP_FeE_Group_Unshared_1_0Parms::GroupType parmgrouptype)
 
 
 void
-SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_Group_Unshared_1_0Parms>();
+    auto &&sopparms = cookparms.parms<SOP_FeE_GroupUnshared_1_0Parms>();
     GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_Group_Unshared_1_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_GroupUnshared_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
@@ -272,10 +286,13 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         return;
 
 
-    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
     if (geo0Group && geo0Group->isEmpty())
         return;
+
+    UT_UniquePtr<GA_ElementGroup> geo0VtxGroupUPtr = GA_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group);
+    GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -283,41 +300,44 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         return;
 
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 8);
     //const exint minGrainSize = pow(2, 4);
 
 
     //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorgeF = GA_STORE_REAL32;
-    const GA_Storage& inStorgeI = GA_STORE_INT32;
+    //const GA_Storage inStorgeF = GA_STORE_REAL32;
+    const GA_Storage inStorgeI = GA_STORE_INT32;
+
+
+    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup);
+
+
+    GA_ElementGroup* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
+
+
+    const int unsharedAttribType = sopUnsharedAttribType(sopparms.getUnsharedAttribType());
+
+    //const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType& unsharedAttribType = sopparms.getUnsharedAttribType();
+
+    //switch (unsharedAttribType)
+    //{
+    //case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribType::GROUP:
+    //    break;
+    //case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribType::INT:
+    //    break;
+    //case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribType::FLOAT:
+    //    break;
+    //default:
+    //    UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
+    //}
 
 
 
-    GA_FeE_Adjacency::
 
-
-
-
-    const SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribType& unsharedAttribType = sopparms.getUnsharedAttribType();
-
-    switch (unsharedAttribType)
-    {
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribType::GROUP:
-        break;
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribType::INT:
-        break;
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribType::FLOAT:
-        break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
-    }
-
-
-
-
-    if (unsharedAttribType == SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribType::GROUP)
+    if (unsharedAttribType == 0)
     {
 
     }
@@ -329,7 +349,7 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
 
 #if 1
-    const GA_GroupType& unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
+    //const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
     switch (unsharedAttribClass)
     {
     case GA_GROUP_PRIMITIVE:
@@ -344,16 +364,16 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
     }
 #else
-    const SOP_FeE_Group_Unshared_1_0Parms::UnsharedAttribClass& unsharedAttribClass = sopparms.getUnsharedAttribClass();
+    const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribClass& unsharedAttribClass = sopparms.getUnsharedAttribClass();
     switch (unsharedAttribClass)
     {
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribClass::PRIM:
+    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::PRIM:
         break;
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribClass::POINT:
+    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::POINT:
         break;
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribClass::VERTEX:
+    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::VERTEX:
         break;
-    case SOP_FeE_Group_Unshared_1_0Enums::UnsharedAttribClass::EDGE:
+    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::EDGE:
         break;
     default:
         UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
@@ -370,6 +390,6 @@ SOP_FeE_Group_Unshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
 
 
-namespace SOP_FeE_Group_Unshared_1_0_Namespace {
+namespace SOP_FeE_GroupUnshared_1_0_Namespace {
 
-} // End SOP_FeE_Group_Unshared_1_0_Namespace namespace
+} // End SOP_FeE_GroupUnshared_1_0_Namespace namespace

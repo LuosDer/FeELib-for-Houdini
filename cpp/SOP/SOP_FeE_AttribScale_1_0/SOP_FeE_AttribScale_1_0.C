@@ -27,6 +27,7 @@
 #include <GA/GA_PageIterator.h>
 
 
+#include <GA_FeE/GA_FeE_Attribute.h>
 #include <GA_FeE/GA_FeE_Group.h>
 
 
@@ -245,15 +246,15 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         return;
 
 
-    const fpreal& uniScale = sopparms.getUniScale();
-    const bool& doNormalize = sopparms.getNormalize();
+    const fpreal uniScale = sopparms.getUniScale();
+    const bool doNormalize = sopparms.getNormalize();
 
     if (!doNormalize && uniScale==1)
         return;
 
 
 
-    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
     if (geo0Group && geo0Group->isEmpty())
         return;
@@ -261,11 +262,11 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
 
-    const exint& kernel = sopparms.getKernel();
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const exint kernel = sopparms.getKernel();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 13);
 
 
@@ -301,27 +302,13 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     {
     case 0:
     {
-        //const GA_RWAttributeRef attrib_rwRef(attribPtr);
-        UTparallelFor(geo0SplittableRange, [&attribPtr, &doNormalize, &uniScale](const GA_SplittableRange& r)
-        {
-            GA_PageHandleV<UT_Vector3F>::RWType attrib_ph(attribPtr);
-            //GA_RWPageHandleV3 attrib_ph(attrib_rwRef.getAttribute());
+        GA_FeE_Attribute::normalizeElementAttrib(geo0SplittableRange, attribPtr,
+            doNormalize, uniScale,
+            subscribeRatio, minGrainSize);
 
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    attrib_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        if (doNormalize)
-                            attrib_ph.value(elemoff).normalize();
-                        attrib_ph.value(elemoff) *= uniScale;
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
+        //GEO_FeE_Attribute::normalizeElementAttrib(outGeo0, geo0Group, geo0AttribClass, attribPtr,
+        //    doNormalize, uniScale,
+        //    subscribeRatio, minGrainSize);
     }
     break;
     case 1:

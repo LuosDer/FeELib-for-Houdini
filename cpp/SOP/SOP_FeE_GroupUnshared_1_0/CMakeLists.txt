@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.6 )
 
-project( HDK_SOP_FeE_Group_Unshared_1_0_Project )
+project( HDK_SOP_FeE_GroupUnshared_1_0_Project )
 
 # CMAKE_PREFIX_PATH must contain the path to the toolkit/cmake subdirectory of
 # the Houdini installation. See the "Compiling with CMake" section of the HDK
@@ -12,15 +12,15 @@ list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
 # Registers an imported library target named 'Houdini'.
 find_package( Houdini REQUIRED )
 
-set( library_name SOP_FeE_Group_Unshared_1_0 )
+set( library_name SOP_FeE_GroupUnshared_1_0 )
 
-# Code generation for the embedded DS file in SOP_FeE_Group_Unshared_1_0.C.
-houdini_generate_proto_headers( FILES SOP_FeE_Group_Unshared_1_0.C )
+# Code generation for the embedded DS file in SOP_FeE_GroupUnshared_1_0.C.
+houdini_generate_proto_headers( FILES SOP_FeE_GroupUnshared_1_0.C )
 
 # Add a library and its source files.
 add_library( ${library_name} SHARED
-    SOP_FeE_Group_Unshared_1_0.C
-    SOP_FeE_Group_Unshared_1_0.h
+    SOP_FeE_GroupUnshared_1_0.C
+    SOP_FeE_GroupUnshared_1_0.h
 )
 
 # Link against the Houdini libraries, and add required include directories and

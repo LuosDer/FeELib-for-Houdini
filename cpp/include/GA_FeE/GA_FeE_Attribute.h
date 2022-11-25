@@ -6,21 +6,7 @@
 
 //#include <GA_FeE/GA_FeE_Attribute.h>
 
-#include <GEO/GEO_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
-
-
-#include <GA/GA_Defaults.h>
-
+#include <GA/GA_Detail.h>
 
 
 namespace GA_FeE_Attribute {
@@ -31,13 +17,13 @@ namespace GA_FeE_Attribute {
 static bool
     findFloatTuplePointVertex(
         GEO_Detail* const geo,
-        const GA_AttributeOwner& attribOwner,
-        const GA_AttributeScope& scope,
+        const GA_AttributeOwner attribOwner,
+        const GA_AttributeScope scope,
         const UT_StringRef& attribName,
         GA_Attribute*& attribPtr,
         GA_AttributeOwner& attribOwnerFinal,
-        const int& min_size = 1,
-        const int& max_size = -1
+        const int min_size = 1,
+        const int max_size = -1
     )
 {
     if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
@@ -74,15 +60,51 @@ static bool
 static bool
 findFloatTuplePointVertex(
     GEO_Detail* const geo,
-    const GA_AttributeOwner& attribOwner,
+    const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
     GA_Attribute*& attribPtr,
     GA_AttributeOwner& attribOwnerFianl,
-    const int& min_size = 1,
-    const int& max_size = -1
+    const int min_size = 1,
+    const int max_size = -1
 )
 {
     return GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribPtr, attribOwnerFianl, min_size, max_size);
+}
+
+
+//GA_FeE_Attribute::normalizeElementAttrib(geo0SplittableRange, attribPtr,
+//    doNormalize, uniScale,
+//    subscribeRatio, minGrainSize);
+
+
+static void
+normalizeElementAttrib(
+    const GA_SplittableRange geoSplittableRange,
+    GA_Attribute* attribPtr,
+    const bool doNormalize = 1,
+    const fpreal64 uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    UTparallelFor(geoSplittableRange, [&attribPtr, &doNormalize, &uniScale](const GA_SplittableRange& r)
+    {
+        GA_PageHandleV<UT_Vector3F>::RWType attrib_ph(attribPtr);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                attrib_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    if (doNormalize)
+                        attrib_ph.value(elemoff).normalize();
+                    attrib_ph.value(elemoff) *= uniScale;
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
 }
 
 

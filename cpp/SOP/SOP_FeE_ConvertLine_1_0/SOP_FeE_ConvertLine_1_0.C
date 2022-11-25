@@ -496,7 +496,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
     GA_RWHandleT<GA_Size> dstptAttribHandle;
     vtxpnumAttribHandle.bind(vtxpnumATI);
-    dstptAttribHandle.bind(vtxpnumATI);
+    dstptAttribHandle.bind(dstptATI);
 
     GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
 
@@ -504,8 +504,6 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
     ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
-
-
 
 
     GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
@@ -583,7 +581,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
 #endif
 
-    //tmpGeoH0.deleteGdp();
+    tmpGeoH0.deleteGdp();
 }
 
 

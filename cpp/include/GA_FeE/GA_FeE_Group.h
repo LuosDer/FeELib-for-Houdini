@@ -105,7 +105,7 @@ isInvalid(
            groupType != GA_GROUP_EDGE;
 }
 
-//const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+//const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, geo, groupType, sopparms.getGroup(), gop);
 
 
 
@@ -210,7 +210,7 @@ parseEdgeGroupDetached(
 
 
 
-//GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(outGeo0, geo0Group, groupType);
+//GA_Range geo0Range = GA_FeE_Group::groupPromoteRange(geo, geo0Group, groupType);
 //using GA_ElementGroupUPtr = ::std::unique_ptr<GA_ElementGroup, ::std::default_delete<GA_ElementGroup>>;
 
 static GA_Range
@@ -343,86 +343,291 @@ getSplittableRangeByAnyGroup(
 }
 
 
-static void
-combineVertexFromEdgeGroup(
-    const GA_Detail* outGeo0,
-    const GA_VertexGroup* group,
-    const GA_EdgeGroup* groupToCombine
+//static void
+//combineVertexFromEdgeGroup(
+//    const GA_Detail* geo,
+//    const GA_VertexGroup* group,
+//    const GA_EdgeGroup* groupToCombine
+//)
+//{
+//    if (!group)
+//        return;
+//    UT_UniquePtr<GA_VertexGroup> groupDeleter;
+//    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*geo);
+//    groupDeleter.reset(newDetachedGroup);
+//    newDetachedGroup->combine(groupToCombine);
+//    group = newDetachedGroup;
+//}
+
+
+
+static GA_ElementGroup*
+groupPromote(
+    GA_Detail* geo,
+    GA_ElementGroup* group,
+    const GA_GroupType newType,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
 )
 {
-    if (!group)
-        return;
-    UT_UniquePtr<GA_VertexGroup> groupDeleter;
-    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
-    groupDeleter.reset(newDetachedGroup);
-    newDetachedGroup->combine(groupToCombine);
-    group = newDetachedGroup;
+    if (!geo || !group)
+        return nullptr;
+
+    if (group->classType() == newType)
+        return group;
+
+    GA_GroupTable* groupTable = geo->getGroupTable(newType);
+    if (!groupTable)
+        return nullptr;
+
+    GA_ElementGroup* newGroup = static_cast<GA_ElementGroup*>(groupTable->newGroup(newName, internal));
+    newGroup->combine(group);
+    if (delOriginal)
+    {
+        delete group;
+        group = nullptr;
+    }
+    return newGroup;
+}
+
+static GA_ElementGroup*
+groupPromotePrimitive(
+    GA_Detail* geo,
+    GA_ElementGroup* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, internal, delOriginal);
+}
+
+static GA_ElementGroup*
+groupPromotePoint(
+    GA_Detail* geo,
+    GA_ElementGroup* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_POINT, newName, internal, delOriginal);
+}
+
+static GA_ElementGroup*
+groupPromoteVertex(
+    GA_Detail* geo,
+    GA_ElementGroup* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_VERTEX, newName, internal, delOriginal);
+}
+
+static GA_ElementGroup*
+groupPromoteEdge(
+    GA_Detail* geo,
+    GA_ElementGroup* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_EDGE, newName, internal, delOriginal);
 }
 
 
-static UT_UniquePtr<GA_PrimitiveGroup>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static GA_Group*
+groupPromote(
+    GA_Detail* geo,
+    GA_Group* group,
+    const GA_GroupType newType,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    if (!geo || !group)
+        return nullptr;
+
+    if (group->classType() == newType)
+        return group;
+
+    GA_GroupTable* groupTable = geo->getGroupTable(newType);
+    if (!groupTable)
+        return nullptr;
+
+
+    GA_Group* newGroup = groupTable->newGroup(newName, internal);
+    newGroup->combine(group);
+    if (delOriginal)
+    {
+        delete group;
+        group = nullptr;
+    }
+    return newGroup;
+}
+
+static GA_Group*
+groupPromotePrimitive(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, internal, delOriginal);
+}
+
+static GA_Group*
+groupPromotePoint(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_POINT, newName, internal, delOriginal);
+}
+
+static GA_Group*
+groupPromoteVertex(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_VERTEX, newName, internal, delOriginal);
+}
+
+static GA_Group*
+groupPromoteEdge(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool internal = false,
+    const bool delOriginal = true
+)
+{
+    return groupPromote(geo, group, GA_GROUP_EDGE, newName, internal, delOriginal);
+}
+
+
+
+
+static UT_UniquePtr<GA_ElementGroup>
+groupPromoteDetached(
+    const GA_Detail* geo,
+    const GA_ElementGroup* group,
+    const GA_AttributeOwner newType
+)
+{
+    if (!geo || !group)
+        return nullptr;
+    UT_UniquePtr<GA_ElementGroup> groupDeleter;
+    GA_ElementGroup* newDetachedGroup = new GA_ElementGroup(*geo, newType);
+    groupDeleter.reset(newDetachedGroup);
+    newDetachedGroup->combine(group);
+    return groupDeleter;
+}
+
+static UT_UniquePtr<GA_ElementGroup>
 groupPromotePrimitiveDetached(
-    const GA_Detail* outGeo0,
+    const GA_Detail* geo,
     const GA_ElementGroup* group
 )
 {
-    if (!group)
-        return nullptr;
-    UT_UniquePtr<GA_PrimitiveGroup> groupDeleter;
-    GA_PrimitiveGroup* newDetachedGroup = new GA_PrimitiveGroup(*outGeo0);
-    groupDeleter.reset(newDetachedGroup);
-    newDetachedGroup->combine(group);
-    return groupDeleter;
+    return groupPromoteDetached(geo, group, GA_ATTRIB_PRIMITIVE);
 }
 
-static UT_UniquePtr<GA_PointGroup>
+static UT_UniquePtr<GA_ElementGroup>
 groupPromotePointDetached(
-    const GA_Detail* outGeo0,
+    const GA_Detail* geo,
     const GA_ElementGroup* group
 )
 {
-    if (!group)
-        return nullptr;
-    UT_UniquePtr<GA_PointGroup> groupDeleter;
-    GA_PointGroup* newDetachedGroup = new GA_PointGroup(*outGeo0);
-    groupDeleter.reset(newDetachedGroup);
-    newDetachedGroup->combine(group);
-    return groupDeleter;
+    return groupPromoteDetached(geo, group, GA_ATTRIB_POINT);
 }
 
-static UT_UniquePtr<GA_VertexGroup>
+static UT_UniquePtr<GA_ElementGroup>
 groupPromoteVertexDetached(
-    const GA_Detail* outGeo0,
+    const GA_Detail* geo,
     const GA_ElementGroup* group
 )
 {
-    if (!group)
-        return nullptr;
-    UT_UniquePtr<GA_VertexGroup> groupDeleter;
-    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
-    groupDeleter.reset(newDetachedGroup);
-    newDetachedGroup->combine(group);
-    return groupDeleter;
+    return groupPromoteDetached(geo, group, GA_ATTRIB_VERTEX);
 }
 
-/*
-template<typename T, typename T1>
-static void
-combineGroup(
-    const GA_Detail* outGeo0,
-    const T* group,
-    const T1* groupToCombine
-)
-{
-    if (!group)
-        return;
-    UT_UniquePtr<T> groupDeleter;
-    T* newDetachedGroup = new T(*outGeo0);
-    groupDeleter.reset(newDetachedGroup);
-    newDetachedGroup->combine(groupToCombine);
-    group = newDetachedGroup;
-}
-*/
+
+
+
+//static UT_UniquePtr<GA_PrimitiveGroup>
+//groupPromotePrimitiveDetached(
+//    const GA_Detail* geo,
+//    const GA_ElementGroup* group
+//)
+//{
+//    if (!group)
+//        return nullptr;
+//    UT_UniquePtr<GA_PrimitiveGroup> groupDeleter;
+//    GA_PrimitiveGroup* newDetachedGroup = new GA_PrimitiveGroup(*geo);
+//    groupDeleter.reset(newDetachedGroup);
+//    newDetachedGroup->combine(group);
+//    return groupDeleter;
+//}
+//
+//static UT_UniquePtr<GA_PointGroup>
+//groupPromotePointDetached(
+//    const GA_Detail* geo,
+//    const GA_ElementGroup* group
+//)
+//{
+//    if (!group)
+//        return nullptr;
+//    UT_UniquePtr<GA_PointGroup> groupDeleter;
+//    GA_PointGroup* newDetachedGroup = new GA_PointGroup(*geo);
+//    groupDeleter.reset(newDetachedGroup);
+//    newDetachedGroup->combine(group);
+//    return groupDeleter;
+//}
+//
+//static UT_UniquePtr<GA_VertexGroup>
+//groupPromoteVertexDetached(
+//    const GA_Detail* geo,
+//    const GA_ElementGroup* group
+//)
+//{
+//    if (!group)
+//        return nullptr;
+//    UT_UniquePtr<GA_VertexGroup> groupDeleter;
+//    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*geo);
+//    groupDeleter.reset(newDetachedGroup);
+//    newDetachedGroup->combine(group);
+//    return groupDeleter;
+//}
+
+
 
 
 
