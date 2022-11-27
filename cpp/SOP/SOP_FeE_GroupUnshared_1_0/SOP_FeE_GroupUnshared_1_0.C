@@ -287,12 +287,12 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    UT_UniquePtr<GA_ElementGroup> geo0VtxGroupUPtr = GA_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group);
-    GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
+    const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GA_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group));
+    //GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -313,9 +313,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
 
     GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup);
-
-
-    GA_ElementGroup* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
+    GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
 
     const int unsharedAttribType = sopUnsharedAttribType(sopparms.getUnsharedAttribType());

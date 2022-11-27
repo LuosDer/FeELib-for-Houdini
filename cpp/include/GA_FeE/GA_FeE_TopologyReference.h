@@ -189,20 +189,20 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
+                        const GA_Size numvtx = vertices.size();
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            attribHandle_prev.set(vertices[0], vertices[size-1]);
-                            attribHandle_next.set(vertices[size-1], vertices[0]);
+                            attribHandle_prev.set(vertices[0], vertices[numvtx -1]);
+                            attribHandle_next.set(vertices[numvtx -1], vertices[0]);
                         }
                         else
                         {
                             attribHandle_prev.set(vertices[0], -1);
-                            attribHandle_next.set(vertices[size-1], -1);
+                            attribHandle_next.set(vertices[numvtx -1], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             if (!geoGroup->contains(vtxoff_next))
@@ -226,20 +226,20 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
+                        const GA_Size numvtx = vertices.size();
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            attribHandle_prev.set(vertices[0], vertices[size - 1]);
-                            attribHandle_next.set(vertices[size - 1], vertices[0]);
+                            attribHandle_prev.set(vertices[0], vertices[numvtx - 1]);
+                            attribHandle_next.set(vertices[numvtx - 1], vertices[0]);
                         }
                         else
                         {
                             attribHandle_prev.set(vertices[0], -1);
-                            attribHandle_next.set(vertices[size - 1], -1);
+                            attribHandle_next.set(vertices[numvtx - 1], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             attribHandle_next.set(vtxoff_prev, vtxoff_next);
@@ -282,20 +282,20 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
+                        const GA_Size numvtx = vertices.size();
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribHandle_prev.set(vertices[0], vertices[size - 1]);
-                            attribHandle_next.set(vertices[size - 1], vertices[0]);
+                            //attribHandle_prev.set(vertices[0], vertices[numvtx - 1]);
+                            attribHandle_next.set(vertices[numvtx - 1], vertices[0]);
                         }
                         else
                         {
                             //attribHandle_prev.set(vertices[0], -1);
-                            attribHandle_next.set(vertices[size - 1], -1);
+                            attribHandle_next.set(vertices[numvtx - 1], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             if (!geoGroup->contains(vtxoff_next))
@@ -319,20 +319,20 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
+                        const GA_Size numvtx = vertices.size();
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribHandle_prev.set(vertices[0], vertices[size - 1]);
-                            attribHandle_next.set(vertices[size - 1], vertices[0]);
+                            //attribHandle_prev.set(vertices[0], vertices[numvtx - 1]);
+                            attribHandle_next.set(vertices[numvtx - 1], vertices[0]);
                         }
                         else
                         {
                             //attribHandle_prev.set(vertices[0], -1);
-                            attribHandle_next.set(vertices[size - 1], -1);
+                            attribHandle_next.set(vertices[numvtx - 1], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             attribHandle_next.set(vtxoff_prev, vtxoff_next);
@@ -410,8 +410,8 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
-                        for (GA_Size vtxpnum = 0; vtxpnum < size; ++vtxpnum)
+                        const GA_Size numvtx = vertices.size();
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
                             if (!geoGroup->contains(vertices[vtxpnum]))
                                 continue;
@@ -432,8 +432,8 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
-                        for (GA_Size vtxpnum = 0; vtxpnum < size; ++vtxpnum)
+                        const GA_Size numvtx = vertices.size();
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
                             attribHandle.set(vertices[vtxpnum], vtxpnum);
                         }
@@ -528,13 +528,15 @@ namespace GA_FeE_TopologyReference {
     //template<typename T>
     static void
         vertexPointDst(
-            const GA_Detail* geo,
+            GA_Detail* geo,
             const GA_RWHandleT<GA_Offset>& attribHandle_next,
             const GA_VertexGroup* geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
+        GA_Topology& topo = geo->getTopology();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
         if (geoGroup)
         {
             const GA_PrimitiveGroupUPtr promotedGroupUPtr = geo->createDetachedPrimitiveGroup();
@@ -542,7 +544,7 @@ namespace GA_FeE_TopologyReference {
             promotedGroup->combine(geoGroup);
 
             const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(promotedGroup));
-            UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_next, &geoGroup](const GA_SplittableRange& r)
+            UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_next, &geoGroup, &vtxPointRef](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -550,26 +552,26 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
+                        const GA_Size numvtx = vertices.size();
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribHandle_prev.set(vertices[0], vertices[size - 1]);
-                            attribHandle_next.set(vertices[size - 1], vertices[0]);
+                            //attribHandle_prev.set(vertices[0], vtxPointRef->getLink(vertices[numvtx - 1]));
+                            attribHandle_next.set(vertices[numvtx - 1], vtxPointRef->getLink(vertices[0]));
                         }
                         else
                         {
                             //attribHandle_prev.set(vertices[0], -1);
-                            attribHandle_next.set(vertices[size - 1], -1);
+                            attribHandle_next.set(vertices[numvtx - 1], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             if (!geoGroup->contains(vtxoff_next))
                                 continue;
-                            attribHandle_next.set(vtxoff_prev, vtxoff_next);
-                            //attribHandle_prev.set(vtxoff_next, vtxoff_prev);
+                            attribHandle_next.set(vtxoff_prev, vtxPointRef->getLink(vtxoff_next));
+                            //attribHandle_prev.set(vtxoff_next, vtxPointRef->getLink(vtxoff_prev));
                             vtxoff_prev = vtxoff_next;
                         }
                     }
@@ -579,7 +581,7 @@ namespace GA_FeE_TopologyReference {
         else
         {
             const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
-            UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_next](const GA_SplittableRange& r)
+            UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_next, &vtxPointRef](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -587,24 +589,24 @@ namespace GA_FeE_TopologyReference {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size size = vertices.size();
+                        const GA_Size numvtx = vertices.size();
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribHandle_prev.set(vertices[0], vertices[size - 1]);
-                            attribHandle_next.set(vertices[size - 1], vertices[0]);
+                            //attribHandle_prev.set(vertices[0], vtxPointRef->getLink(vertices[numvtx - 1]));
+                            attribHandle_next.set(vertices[numvtx - 1], vtxPointRef->getLink(vertices[0]));
                         }
                         else
                         {
                             //attribHandle_prev.set(vertices[0], -1);
-                            attribHandle_next.set(vertices[size - 1], -1);
+                            attribHandle_next.set(vertices[numvtx - 1], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < size; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
-                            attribHandle_next.set(vtxoff_prev, vtxoff_next);
-                            //attribHandle_prev.set(vtxoff_next, vtxoff_prev);
+                            attribHandle_next.set(vtxoff_prev, vtxPointRef->getLink(vtxoff_next));
+                            //attribHandle_prev.set(vtxoff_next, vtxPointRef->getLink(vtxoff_prev));
                             vtxoff_prev = vtxoff_next;
                         }
                     }

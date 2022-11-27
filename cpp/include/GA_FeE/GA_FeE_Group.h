@@ -9,18 +9,10 @@
 //#include <GA/GA_Detail.h>
 #include <GEO/GEO_Detail.h>
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
 
+#include <GU/GU_EdgeGroup.h>
+
+#include <GA_FeE/GA_FeE_TopologyReference.h>
 
 namespace GA_FeE_Group {
 
@@ -108,9 +100,291 @@ isInvalid(
 //const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, geo, groupType, sopparms.getGroup(), gop);
 
 
+static GA_Group*
+findGroup(
+    GA_Detail* geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    switch (groupType)
+    {
+    case GA_GROUP_PRIMITIVE:
+        return geo->primitiveGroups().find(groupName);
+    break;
+    case GA_GROUP_POINT:
+        return geo->pointGroups().find(groupName);
+    break;
+    case GA_GROUP_VERTEX:
+        return geo->vertexGroups().find(groupName);
+    break;
+    case GA_GROUP_EDGE:
+        return geo->edgeGroups().find(groupName);
+        break;
+    default:
+        break;
+    }
+    return nullptr;
+
+    //if (groupType == GA_GROUP_EDGE)
+    //{
+    //    return geo->edgeGroups().find(groupName);
+    //}
+    //else
+    //{
+    //    return geo->findElementGroup(attributeOwner_groupType(groupType), groupName);
+    //}
+}
+
+static GA_ElementGroup*
+findElementGroup(
+    GA_Detail* geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    if(groupType == GA_GROUP_EDGE)
+        return nullptr;
+    return geo->findElementGroup(attributeOwner_groupType(groupType), groupName);
+}
+
+static bool
+isEmpty(
+    const GA_Group* group,
+    const GA_GroupType groupType
+)
+{
+    if (!group)
+        return true;
+    if (groupType == GA_GROUP_EDGE)
+    {
+        return static_cast<const GA_EdgeGroup*>(group)->isEmpty();
+    }
+    else
+    {
+        return static_cast<const GA_ElementGroup*>(group)->isEmpty();
+    }
+}
+
+static bool
+isEmpty(
+    GA_Group* group,
+    const GA_GroupType groupType
+)
+{
+    if (groupType == GA_GROUP_EDGE)
+    {
+        return static_cast<GA_EdgeGroup*>(group)->isEmpty();
+    }
+    else
+    {
+        return static_cast<GA_ElementGroup*>(group)->isEmpty();
+    }
+}
+
+static void
+bumpDataId(
+    GA_Group* group,
+    const GA_GroupType groupType
+)
+{
+    if (groupType == GA_GROUP_EDGE)
+    {
+        static_cast<GA_EdgeGroup*>(group)->bumpDataId();
+    }
+    else
+    {
+        static_cast<GA_ElementGroup*>(group)->bumpDataId();
+    }
+}
+
+static void
+edgeGroupCombine(
+    GA_Detail* geo,
+    GA_EdgeGroup* group,
+    const GA_Group* groupRef,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 128
+)
+{
+    GA_GroupType groupTypeRef = groupRef->classType();
+    switch (groupTypeRef)
+    {
+    case GA_GROUP_PRIMITIVE:
+    {
+        const GA_Topology& topo = geo->getTopology();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+
+        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(static_cast<const GA_PrimitiveGroup*>(groupRef)));
+        UTparallelFor(geoSplittableRange, [&geo, &group, &vtxPointRef](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+                        const GA_Size numvtx = vertices.size();
+
+                        GA_Offset vtxoff_prev = vtxPointRef->getLink(vertices[0]);
+                        GA_Offset vtxoff_next;
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        {
+                            vtxoff_next = vtxPointRef->getLink(vertices[vtxpnum]);
+                            static_cast<GA_EdgeGroup*>(group)->add(vtxoff_prev, vtxoff_next);
+                            vtxoff_prev = vtxoff_next;
+                        }
+                        if (geo->getPrimitiveClosedFlag(elemoff))
+                        {
+                            vtxoff_next = vtxPointRef->getLink(vertices[0]);
+                            static_cast<GA_EdgeGroup*>(group)->add(vtxoff_prev, vtxoff_next);
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+    break;
+    case GA_GROUP_POINT:
+    {
+        const GA_SplittableRange geoSplittableRange(geo->getPointRange(static_cast<const GA_PointGroup*>(groupRef)));
+        UTparallelFor(geoSplittableRange, [&geo, &group](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    GA_Offset pt_next;
+                    for (GA_Offset vtxoff_next = geo->pointVertex(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                    {
+                        const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                        const GA_Size vtxpnum = GA_FeE_TopologyReference::vertexPrimIndex(geo, primoff, vtxoff_next);
+
+                        if (vtxpnum == 0)
+                        {
+                            if (geo->getPrimitiveClosedFlag(primoff))
+                            {
+                                pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, numvtx - 1));
+                                static_cast<GA_EdgeGroup*>(group)->add(elemoff, pt_next);
+                            }
+                        }
+                        else
+                        {
+                            pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum - 1));
+                            static_cast<GA_EdgeGroup*>(group)->add(elemoff, pt_next);
+                        }
+
+                        const GA_Size vtxpnum_next = vtxpnum + 1;
+                        if (vtxpnum_next == numvtx) {
+                            if (geo->getPrimitiveClosedFlag(primoff))
+                            {
+                                pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
+                                static_cast<GA_EdgeGroup*>(group)->add(elemoff, pt_next);
+                            }
+                        }
+                        else
+                        {
+                            pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum_next));
+                            static_cast<GA_EdgeGroup*>(group)->add(elemoff, pt_next);
+                        }
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    break;
+    case GA_GROUP_VERTEX:
+    {
+        //const GA_SplittableRange geoSplittableRange(geo->getVertexRange(static_cast<const GA_VertexGroup*>(groupRef)));
+        //UTparallelFor(geoSplittableRange, [&geo, &group](const GA_SplittableRange& r)
+        //{
+        //    GA_Offset start, end;
+        //    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        //    {
+        //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        //        {
+        //            const GA_Offset dstpt = GA_FeE_TopologyReference::vertexPointDst(geo, elemoff);
+        //            static_cast<GA_EdgeGroup*>(group)->add(geo->vertexPoint(elemoff), dstpt);
+        //        }
+        //    }
+        //}, subscribeRatio, minGrainSize);
+
+        GA_Range range = geo->getVertexRange(static_cast<const GA_VertexGroup*>(groupRef));
+        GA_AttributeOwner getOwner = range.getOwner();
+        GA_Size getEntries = range.getEntries();
+        ;
+        ;
+
+        GA_Offset start = 0;
+        GA_Offset end = 0;
+        for (GA_Iterator it(range); it.fullBlockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                const GA_Offset dstpt = GA_FeE_TopologyReference::vertexPointDst(geo, elemoff);
+                static_cast<GA_EdgeGroup*>(group)->add(geo->vertexPoint(elemoff), dstpt);
+            }
+        }
+    }
+        break;
+    case GA_GROUP_EDGE:
+        static_cast<GA_EdgeGroup*>(group)->combine(groupRef);
+        break;
+    default:
+        break;
+    }
+}
+
+static void
+edgeGroupCombine(
+    GA_Detail* geo,
+    GA_Group* group,
+    const GA_Group* groupRef,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 128
+)
+{
+    edgeGroupCombine(geo, static_cast<GA_EdgeGroup*>(group), groupRef, subscribeRatio, minGrainSize);
+}
 
 
-static const GA_ElementGroup*
+static void
+combine(
+    GA_Detail* geo,
+    GA_Group* group,
+    const GA_GroupType groupType,
+    const GA_Group* groupRef
+)
+{
+    if (groupType == GA_GROUP_EDGE)
+    {
+        edgeGroupCombine(geo, group, groupRef);
+        return;
+        GA_GroupType groupTypeRef = groupRef->classType();
+        if (groupTypeRef == GA_GROUP_EDGE)
+        {
+            static_cast<GA_EdgeGroup*>(group)->combine(groupRef);
+            return;
+        }
+        else
+        {
+            edgeGroupCombine(geo, group, groupRef);
+            //GU_EdgeGroup::boolean(GU_GROUP_BOOLOP_AND, group, false, groupRef, false);
+            //const GU_EdgeGroup edgeGroup(static_cast<GU_Detail*>(geo), static_cast<GA_EdgeGroup*>(group));
+            //edgeGroup.boolean(GU_GROUP_BOOLOP_AND, group, false, groupRef, false);
+        }
+    }
+    else
+    {
+        static_cast<GA_ElementGroup*>(group)->combine(groupRef);
+    }
+}
+
+
+
+
+static const GA_Group*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GEO_Detail* geo,
@@ -131,20 +405,21 @@ parseGroupDetached(
     bool ok = true;
     const GA_Group* anyGroup = gop.parseGroupDetached(groupName, groupType, geo, true, false, ok);
 
-    if (!ok || (anyGroup && !anyGroup->isElementGroup()))
+    //if (!ok || (anyGroup && !anyGroup->isElementGroup()))
+    if (!ok)
     {
         cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
         return nullptr;
     }
-    if (anyGroup && anyGroup->isElementGroup())
+    if (anyGroup)
     {
-        return UTverify_cast<const GA_ElementGroup*>(anyGroup);
+        return anyGroup;
     }
     return nullptr;
 }
 
 
-static const GA_ElementGroup*
+static const GA_Group*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GEO_Detail* geo,
@@ -153,57 +428,57 @@ parseGroupDetached(
 )
 {
     GOP_Manager gop;
-    return GA_FeE_Group::parseGroupDetached(cookparms, geo, groupType, groupName, gop);
+    return parseGroupDetached(cookparms, geo, groupType, groupName, gop);
 }
 
 
 
 
 
-
-static const GA_EdgeGroup*
-parseEdgeGroupDetached(
-    const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
-    const UT_StringHolder& groupName,
-    GOP_Manager& gop
-)
-{
-    if (!groupName.length())
-        return nullptr;
-
-    if (!groupName.isstring())
-    {
-        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
-        return nullptr;
-    }
-
-    bool ok = true;
-    const GA_Group* anyGroup = gop.parseGroupDetached(groupName, GA_GROUP_EDGE, geo, true, false, ok);
-
-    if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-    {
-        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
-        return nullptr;
-    }
-    if (anyGroup && anyGroup->isElementGroup())
-    {
-        return UTverify_cast<const GA_EdgeGroup*>(anyGroup);
-    }
-    return nullptr;
-}
-
-
-static const GA_EdgeGroup*
-parseEdgeGroupDetached(
-    const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
-    const UT_StringHolder& groupName
-)
-{
-    GOP_Manager gop;
-    return GA_FeE_Group::parseEdgeGroupDetached(cookparms, geo, groupName, gop);
-}
+//
+//static const GA_EdgeGroup*
+//parseEdgeGroupDetached(
+//    const SOP_NodeVerb::CookParms& cookparms,
+//    const GEO_Detail* geo,
+//    const UT_StringHolder& groupName,
+//    GOP_Manager& gop
+//)
+//{
+//    if (!groupName.length())
+//        return nullptr;
+//
+//    if (!groupName.isstring())
+//    {
+//        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+//        return nullptr;
+//    }
+//
+//    bool ok = true;
+//    const GA_Group* anyGroup = gop.parseGroupDetached(groupName, GA_GROUP_EDGE, geo, true, false, ok);
+//
+//    if (!ok || (anyGroup && !anyGroup->isElementGroup()))
+//    {
+//        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+//        return nullptr;
+//    }
+//    if (anyGroup && anyGroup->isElementGroup())
+//    {
+//        return UTverify_cast<const GA_EdgeGroup*>(anyGroup);
+//    }
+//    return nullptr;
+//}
+//
+//
+//static const GA_EdgeGroup*
+//parseEdgeGroupDetached(
+//    const SOP_NodeVerb::CookParms& cookparms,
+//    const GEO_Detail* geo,
+//    const UT_StringHolder& groupName
+//)
+//{
+//    GOP_Manager gop;
+//    return GA_FeE_Group::parseEdgeGroupDetached(cookparms, geo, groupName, gop);
+//}
 
 
 
@@ -216,7 +491,7 @@ parseEdgeGroupDetached(
 static GA_Range
 getRangeByAnyGroup(
     const GA_Detail* geo,
-    const GA_ElementGroup* group,
+    const GA_Group* group,
     const GA_GroupType& groupType
 )
 {
@@ -237,7 +512,7 @@ getRangeByAnyGroup(
     //    groupType != GA_GROUP_VERTEX)
     //    return nullptr;
 
-    const GA_GroupType& inGroupType = group->classType();
+    const GA_GroupType inGroupType = group->classType();
 
     //if (isInvalid(inGroupType))
     //    return nullptr;
@@ -314,7 +589,7 @@ getRangeByAnyGroup(
 static GA_Range
 getRangeByAnyGroup(
     const GA_Detail* geo,
-    const GA_ElementGroup* group,
+    const GA_Group* group,
     const GA_AttributeOwner& attribOwner
     )
 {
@@ -325,7 +600,7 @@ getRangeByAnyGroup(
 static GA_SplittableRange
 getSplittableRangeByAnyGroup(
     const GA_Detail* geo,
-    const GA_ElementGroup* group,
+    const GA_Group* group,
     const GA_GroupType& groupType
 )
 {
@@ -335,7 +610,7 @@ getSplittableRangeByAnyGroup(
 static GA_SplittableRange
 getSplittableRangeByAnyGroup(
     const GA_Detail* geo,
-    const GA_ElementGroup* group,
+    const GA_Group* group,
     const GA_AttributeOwner& attribOwner
 )
 {
@@ -361,14 +636,12 @@ getSplittableRangeByAnyGroup(
 
 
 
-static GA_ElementGroup*
-groupPromote(
+
+static const GA_Group*
+groupPromoteDetached(
     GA_Detail* geo,
-    GA_ElementGroup* group,
-    const GA_GroupType newType,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const GA_Group* group,
+    const GA_GroupType newType
 )
 {
     if (!geo || !group)
@@ -381,87 +654,63 @@ groupPromote(
     if (!groupTable)
         return nullptr;
 
-    GA_ElementGroup* newGroup = static_cast<GA_ElementGroup*>(groupTable->newGroup(newName, internal));
+    GA_Group* newGroup = groupTable->newDetachedGroup();
     newGroup->combine(group);
-    if (delOriginal)
-    {
-        delete group;
-        group = nullptr;
-    }
     return newGroup;
 }
 
-static GA_ElementGroup*
-groupPromotePrimitive(
+static const GA_Group*
+groupPromoteDetached(
     GA_Detail* geo,
-    GA_ElementGroup* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const GA_Group* group,
+    const GA_AttributeOwner newType
 )
 {
-    return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, attributeOwner_groupType(newType));
 }
 
-static GA_ElementGroup*
-groupPromotePoint(
+
+static const GA_Group*
+groupPromotePrimitiveDetached(
     GA_Detail* geo,
-    GA_ElementGroup* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const GA_Group* group
 )
 {
-    return groupPromote(geo, group, GA_GROUP_POINT, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE);
 }
 
-static GA_ElementGroup*
-groupPromoteVertex(
+static const GA_Group*
+groupPromotePointDetached(
     GA_Detail* geo,
-    GA_ElementGroup* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const GA_Group* group
 )
 {
-    return groupPromote(geo, group, GA_GROUP_VERTEX, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, GA_GROUP_POINT);
 }
 
-static GA_ElementGroup*
-groupPromoteEdge(
+static const GA_Group*
+groupPromoteVertexDetached(
     GA_Detail* geo,
-    GA_ElementGroup* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const GA_Group* group
 )
 {
-    return groupPromote(geo, group, GA_GROUP_EDGE, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, GA_GROUP_VERTEX);
 }
 
 
 
 
 
-
-
-
-
-
-
-
-
+#if 1
 
 
 
 static GA_Group*
-groupPromote(
+groupPromoteDetached(
     GA_Detail* geo,
     GA_Group* group,
     const GA_GroupType newType,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const bool delOriginal = false
 )
 {
     if (!geo || !group)
@@ -474,67 +723,60 @@ groupPromote(
     if (!groupTable)
         return nullptr;
 
-
-    GA_Group* newGroup = groupTable->newGroup(newName, internal);
+    GA_Group* newGroup = static_cast<GA_Group*>(groupTable->newDetachedGroup());
     newGroup->combine(group);
     if (delOriginal)
     {
-        delete group;
-        group = nullptr;
+        geo->getGroupTable(group->classType())->destroy(group);
     }
     return newGroup;
 }
 
 static GA_Group*
-groupPromotePrimitive(
+groupPromoteDetached(
     GA_Detail* geo,
     GA_Group* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const GA_AttributeOwner newType,
+    const bool delOriginal = false
 )
 {
-    return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, attributeOwner_groupType(newType), delOriginal);
+}
+
+
+static GA_Group*
+groupPromotePrimitiveDetached(
+    GA_Detail* geo,
+    GA_Group* group,
+    const bool delOriginal = false
+)
+{
+    return groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, delOriginal);
 }
 
 static GA_Group*
-groupPromotePoint(
+groupPromotePointDetached(
     GA_Detail* geo,
     GA_Group* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const bool delOriginal = false
 )
 {
-    return groupPromote(geo, group, GA_GROUP_POINT, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, GA_GROUP_POINT, delOriginal);
 }
 
 static GA_Group*
-groupPromoteVertex(
+groupPromoteVertexDetached(
     GA_Detail* geo,
     GA_Group* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
+    const bool delOriginal = false
 )
 {
-    return groupPromote(geo, group, GA_GROUP_VERTEX, newName, internal, delOriginal);
-}
-
-static GA_Group*
-groupPromoteEdge(
-    GA_Detail* geo,
-    GA_Group* group,
-    const UT_StringHolder& newName,
-    const bool internal = false,
-    const bool delOriginal = true
-)
-{
-    return groupPromote(geo, group, GA_GROUP_EDGE, newName, internal, delOriginal);
+    return groupPromoteDetached(geo, group, GA_GROUP_VERTEX, delOriginal);
 }
 
 
 
+#else
 
 static UT_UniquePtr<GA_ElementGroup>
 groupPromoteDetached(
@@ -577,6 +819,211 @@ groupPromoteVertexDetached(
 )
 {
     return groupPromoteDetached(geo, group, GA_ATTRIB_VERTEX);
+}
+
+
+
+#endif
+
+static GA_Group*
+groupPromote(
+    GA_Detail* geo,
+    GA_Group* group,
+    const GA_GroupType newType,
+    const UT_StringHolder& newName,
+    const bool detached = false,
+    const bool delOriginal = false
+)
+{
+    if (!geo || !group)
+        return nullptr;
+
+    if (group->classType() == newType)
+        return group;
+
+    GA_GroupTable* groupTable = geo->getGroupTable(newType);
+    if (!groupTable)
+        return nullptr;
+
+#if 1
+    GA_Group* newGroup = detached ? groupTable->newDetachedGroup() : groupTable->newGroup(newName);
+#else
+    GA_Group* newGroup = nullptr;
+    if (detached)
+    {
+        newGroup = groupTable->newDetachedGroup();
+    }
+    else
+    {
+        newGroup = groupTable->newGroup(newName);
+    }
+#endif
+
+    newGroup->combine(group);
+    if (delOriginal)
+    {
+        geo->getGroupTable(group->classType())->destroy(group);
+    }
+    return newGroup;
+}
+
+static GA_Group*
+groupPromote(
+    GA_Detail* geo,
+    GA_Group* group,
+    const GA_AttributeOwner newType,
+    const UT_StringHolder& newName,
+    const bool detached = false,
+    const bool delOriginal = false
+)
+{
+    return groupPromote(geo, group, attributeOwner_groupType(newType), newName, detached, delOriginal);
+}
+
+
+//static GA_ElementGroup*
+//groupPromote(
+//    GA_Detail* geo,
+//    GA_ElementGroup* group,
+//    const GA_GroupType newType,
+//    const UT_StringHolder& newName,
+//    const bool detached = false,
+//    const bool delOriginal = false
+//)
+//{
+//    if (!geo || !group)
+//        return nullptr;
+//
+//    if (group->classType() == newType)
+//        return group;
+//
+//    GA_GroupTable* groupTable = geo->getGroupTable(newType);
+//    if (!groupTable)
+//        return nullptr;
+//
+//    GA_ElementGroup* newGroup = static_cast<GA_ElementGroup*>(detached ? groupTable->newDetachedGroup() : groupTable->newGroup(newName));
+//    newGroup->combine(group);
+//    if (delOriginal)
+//    {
+//        geo->getGroupTable(group->classType())->destroy(group);
+//    }
+//    return newGroup;
+//}
+//
+//
+//
+//
+//static GA_ElementGroup*
+//groupPromotePrimitive(
+//    GA_Detail* geo,
+//    GA_ElementGroup* group,
+//    const UT_StringHolder& newName,
+//    const bool detached = false,
+//    const bool delOriginal = false
+//)
+//{
+//    return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, detached, delOriginal);
+//}
+//
+//static GA_ElementGroup*
+//groupPromotePoint(
+//    GA_Detail* geo,
+//    GA_ElementGroup* group,
+//    const UT_StringHolder& newName,
+//    const bool detached = false,
+//    const bool delOriginal = false
+//)
+//{
+//    return groupPromote(geo, group, GA_GROUP_POINT, newName, detached, delOriginal);
+//}
+//
+//static GA_ElementGroup*
+//groupPromoteVertex(
+//    GA_Detail* geo,
+//    GA_ElementGroup* group,
+//    const UT_StringHolder& newName,
+//    const bool detached = false,
+//    const bool delOriginal = false
+//)
+//{
+//    return groupPromote(geo, group, GA_GROUP_VERTEX, newName, detached, delOriginal);
+//}
+//
+//static GA_ElementGroup*
+//groupPromoteEdge(
+//    GA_Detail* geo,
+//    GA_ElementGroup* group,
+//    const UT_StringHolder& newName,
+//    const bool detached = false,
+//    const bool delOriginal = false
+//)
+//{
+//    return groupPromote(geo, group, GA_GROUP_EDGE, newName, detached, delOriginal);
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static GA_Group*
+groupPromotePrimitive(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool detached = false,
+    const bool delOriginal = false
+)
+{
+    return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, detached, delOriginal);
+}
+
+static GA_Group*
+groupPromotePoint(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool detached = false,
+    const bool delOriginal = false
+)
+{
+    return groupPromote(geo, group, GA_GROUP_POINT, newName, detached, delOriginal);
+}
+
+static GA_Group*
+groupPromoteVertex(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool detached = false,
+    const bool delOriginal = false
+)
+{
+    return groupPromote(geo, group, GA_GROUP_VERTEX, newName, detached, delOriginal);
+}
+
+static GA_Group*
+groupPromoteEdge(
+    GA_Detail* geo,
+    GA_Group* group,
+    const UT_StringHolder& newName,
+    const bool detached = false,
+    const bool delOriginal = false
+)
+{
+    return groupPromote(geo, group, GA_GROUP_EDGE, newName, detached, delOriginal);
 }
 
 
