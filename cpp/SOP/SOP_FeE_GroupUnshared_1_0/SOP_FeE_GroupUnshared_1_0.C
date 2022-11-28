@@ -24,15 +24,16 @@
 
 
 #include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
+//#include <GA/GA_SplittableRange.h>
 #include <HOM/HOM_SopNode.h>
 
 
-#include <GU/GU_Promote.h>
+//#include <GU/GU_Promote.h>
 
 
 #include <GA_FeE/GA_FeE_Attribute.h>
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Attribute.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 //#include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_VertexNextEquiv.h>
 
@@ -219,7 +220,7 @@ SOP_FeE_GroupUnshared_1_0::cookVerb() const
 
 
 static GA_StorageClass
-sopUnsharedAttribType(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmgrouptype)
+sopUnsharedStorageClass(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmgrouptype)
 {
     using namespace SOP_FeE_GroupUnshared_1_0Enums;
     switch (parmgrouptype)
@@ -295,8 +296,11 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GA_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group));
+    const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GEO_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group));
     //GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
+
+    //static_cast<GA_Group*>(geo0Group);
+    const_cast<GA_Group*>(geo0Group);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -304,7 +308,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
         return;
 
 
-    const int unsharedAttribType = sopUnsharedAttribType(sopparms.getUnsharedAttribType());
+    const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -314,31 +318,31 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_FeE_Attribute::getPreferredStorageI(outGeo0);
+    const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
+    const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
     
 
     GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup, inStorgeI);
-    GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
+    GA_Group* unshared_promoGroup = GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
 
-    //const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType& unsharedAttribType = sopparms.getUnsharedAttribType();
-    GA_FeE_Attribute::attribCast(unsharedGroup, unsharedAttribClass);
+    GEO_FeE_Attribute::attribCast(outGeo0, unshared_promoGroup, unsharedAttribStorageClass, "", PreferredPrecision, false, true);
 
-    if (unsharedAttribClass != GA_GROUP_EDGE)
-    {
-        switch (unsharedAttribType)
-        {
-        case 0://Group
-            break;
-        case 1://Integer
-            break;
-        case 2://Float
-            break;
-        default:
-            UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
-        }
-    }
+    //if (unsharedAttribClass != GA_GROUP_EDGE)
+    //{
+    //    switch (unsharedAttribType)
+    //    {
+    //    case 0://Group
+    //        break;
+    //    case 1://Integer
+    //        break;
+    //    case 2://Float
+    //        break;
+    //    default:
+    //        UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
+    //    }
+    //}
 
     //switch (unsharedAttribType)
     //{
