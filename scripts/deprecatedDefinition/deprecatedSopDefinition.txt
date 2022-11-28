@@ -416,8 +416,8 @@ FeE::attribAdd::1.0
 FeE::groupEdgeWithPointOn::1.0
 extendcurve_fee
 FeE::bound2d
-
-
+groupunsharededge_fee
+FeE::groupUnsharedPoints::1.0
 
 blastpoints_fee
 blastprim_fee
@@ -434,3 +434,10 @@ FeE::uvScaletoWorldSize::1.5
 FeE::uvScaletoWorldSize::2.0
 attribrescale_fee::2.0
 attribrescale_fee::1.0
+
+
+
+
+
+
+

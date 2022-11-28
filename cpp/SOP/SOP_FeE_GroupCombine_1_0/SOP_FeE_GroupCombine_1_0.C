@@ -261,8 +261,9 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
         return;
 
 
+    GOP_Manager gop;
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (!geo0Group)
         return;
     
@@ -296,23 +297,29 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //GA_ElementGroup* combineGroup = outGeo0->findElementGroup(combineAttribType, geo0AttribNames);
     //combineGroup->combine(geo0Group);
 
-    if (combineGroupType == GA_GROUP_EDGE)
-    {
-        GA_GroupType classType = combineGroup->classType();
-        bool ok = static_cast<GA_EdgeGroup*>(combineGroup)->combine(geo0Group);
-        //combineGroup->combine(geo0Group);
-        outGeo0->bumpAllDataIds();
-        return;
-    }
-    GA_FeE_Group::combine(outGeo0, combineGroup, combineGroupType, static_cast<const GA_Group*>(geo0Group));
+    //bool success = true;
+    //GOP_Manager gop;
+    //const GA_Group* geo0EdgeGroup = gop.parseEdgeDetached(sopparms.getGroup(), outGeo0, true, success);
+
+    //const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
+    GA_FeE_Group::combine(outGeo0, combineGroup, geo0Group);
+
+    //for (auto it = static_cast<const GA_EdgeGroup*>(geo0EdgeGroup)->begin(); !it.atEnd(); it.advance())
+    //{
+    //    const GA_Edge& edge = it.getEdge();
+    //    static_cast<GA_EdgeGroup*>(combineGroup)->add(edge.p0(), edge.p1());
+    //}
+
+
     //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupCombine_1_0", geo0VtxGroup);
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
-    
+
+    //combineGroup->bumpDataId();
+    GA_FeE_Group::bumpDataId(combineGroup);
+
     //GA_EdgeGroup* combineEdgeGroup = static_cast<GA_EdgeGroup*>(combineGroup);
-    outGeo0->bumpAllDataIds();
-    //combineEdgeGroup->bumpDataId();
-    //static_cast<GA_EdgeGroup*>(combineGroup)->bumpDataId();
-    //GA_FeE_Group::bumpDataId(combineGroup, combineGroupType);
+    // 
+    //static_cast<GA_EdgeGroup*>(combineGroup)->makeAllEdgesValid();
     
 
 

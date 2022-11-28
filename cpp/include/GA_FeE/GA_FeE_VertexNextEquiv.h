@@ -890,6 +890,7 @@ namespace GA_FeE_VertexNextEquiv {
             GEO_Detail* geo,
             const UT_StringHolder& name = "__topo_unshared",
             const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INT32,
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
         )
@@ -897,7 +898,7 @@ namespace GA_FeE_VertexNextEquiv {
         GA_VertexGroup* groupPtr = geo->findVertexGroup(name);
         if (groupPtr)
             return groupPtr;
-        GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+        GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
         groupPtr = geo->newVertexGroup(name);
         vertexNextEquiv(geo, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;

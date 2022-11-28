@@ -31,6 +31,7 @@
 #include <GU/GU_Promote.h>
 
 
+#include <GA_FeE/GA_FeE_Attribute.h>
 #include <GA_FeE/GA_FeE_Group.h>
 //#include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_VertexNextEquiv.h>
@@ -120,6 +121,7 @@ static const char *theDsFile = R"THEDSFILE(
             "group"     "Group"
             "int"       "Integer"
             "float"     "Float"
+            "string"    "String"
         }
     }
     parm {
@@ -216,18 +218,19 @@ SOP_FeE_GroupUnshared_1_0::cookVerb() const
 
 
 
-static int
+static GA_StorageClass
 sopUnsharedAttribType(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmgrouptype)
 {
     using namespace SOP_FeE_GroupUnshared_1_0Enums;
     switch (parmgrouptype)
     {
-    case UnsharedAttribType::GROUP:   return 0;  break;
-    case UnsharedAttribType::INT:     return 1;  break;
-    case UnsharedAttribType::FLOAT:   return 2;  break;
+    case UnsharedAttribType::GROUP:   return GA_STORECLASS_OTHER;    break;
+    case UnsharedAttribType::INT:     return GA_STORECLASS_INT;      break;
+    case UnsharedAttribType::FLOAT:   return GA_STORECLASS_REAL;     break;
+    case UnsharedAttribType::STRING:  return GA_STORECLASS_STRING;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return -1;
+    return GA_STORECLASS_INVALID;
 }
 
 
@@ -287,7 +290,8 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    GOP_Manager gop;
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -300,6 +304,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
         return;
 
 
+    const int unsharedAttribType = sopUnsharedAttribType(sopparms.getUnsharedAttribType());
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -309,16 +314,31 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_STORE_INT32;
+    const GA_Storage inStorgeI = GA_FeE_Attribute::getPreferredStorageI(outGeo0);
+    
 
-
-    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup);
+    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup, inStorgeI);
     GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
+    //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
-
-    const int unsharedAttribType = sopUnsharedAttribType(sopparms.getUnsharedAttribType());
 
     //const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType& unsharedAttribType = sopparms.getUnsharedAttribType();
+    GA_FeE_Attribute::attribCast(unsharedGroup, unsharedAttribClass);
+
+    if (unsharedAttribClass != GA_GROUP_EDGE)
+    {
+        switch (unsharedAttribType)
+        {
+        case 0://Group
+            break;
+        case 1://Integer
+            break;
+        case 2://Float
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
+        }
+    }
 
     //switch (unsharedAttribType)
     //{
@@ -335,50 +355,40 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
 
 
-    if (unsharedAttribType == 0)
-    {
-
-    }
-    else
-    {
-
-
-    }
-
-
-#if 1
-    //const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
-    switch (unsharedAttribClass)
-    {
-    case GA_GROUP_PRIMITIVE:
-        break;
-    case GA_GROUP_POINT:
-        break;
-    case GA_GROUP_VERTEX:
-        break;
-    case GA_GROUP_EDGE:
-        break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
-    }
-#else
-    const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribClass& unsharedAttribClass = sopparms.getUnsharedAttribClass();
-    switch (unsharedAttribClass)
-    {
-    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::PRIM:
-        break;
-    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::POINT:
-        break;
-    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::VERTEX:
-        break;
-    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::EDGE:
-        break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
-    }
-#endif
+//#if 1
+//    //const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
+//    switch (unsharedAttribClass)
+//    {
+//    case GA_GROUP_PRIMITIVE:
+//        break;
+//    case GA_GROUP_POINT:
+//        break;
+//    case GA_GROUP_VERTEX:
+//        break;
+//    case GA_GROUP_EDGE:
+//        break;
+//    default:
+//        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
+//    }
+//#else
+//    const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribClass& unsharedAttribClass = sopparms.getUnsharedAttribClass();
+//    switch (unsharedAttribClass)
+//    {
+//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::PRIM:
+//        break;
+//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::POINT:
+//        break;
+//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::VERTEX:
+//        break;
+//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::EDGE:
+//        break;
+//    default:
+//        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
+//    }
+//#endif
 
 
+    GA_FeE_Group::bumpDataId(unshared_promoGroup);
 
 
 
