@@ -28,7 +28,7 @@
 
 
 #include <GA_FeE/GA_FeE_Attribute.h>
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 
 
 using namespace SOP_FeE_AttribScale_1_0_Namespace;
@@ -242,7 +242,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
-    if (!geo0AttribNames.isstring())
+    if (!geo0AttribNames.isstring() || geo0AttribNames.length()==0)
         return;
 
 
@@ -255,7 +255,8 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    GOP_Manager gop;
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
@@ -270,65 +271,32 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //const exint minGrainSize = pow(2, 13);
 
 
-    const GA_Range geo0Range = GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
-    //const GA_SplittableRange geo0SplittableRange(GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass));
-    const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
-
-
+    //const GA_Range geo0Range = GEO_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
+    const GA_SplittableRange geo0SplittableRange = GEO_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
 
 
 
     const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
 
-
-
-    GA_Attribute* attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub, 3, 3);
-
+    GA_Attribute* attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub, 2, 4);
     if (!attribPtr)
         return;
-
-    const int& attribSize = attribPtr->getTupleSize();
-
-    //template <typename T>
-    switch (attribSize)
-    {
-    case 3:
-        break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled outGeo0 Attrib Size");
-    }
 
     switch (kernel)
     {
     case 0:
     {
-        GA_FeE_Attribute::normalizeElementAttrib(geo0SplittableRange, attribPtr,
+        GA_FeE_Attribute::normalizeAttribElement(geo0SplittableRange, attribPtr,
             doNormalize, uniScale,
             subscribeRatio, minGrainSize);
-
-        //GEO_FeE_Attribute::normalizeElementAttrib(outGeo0, geo0Group, geo0AttribClass, attribPtr,
-        //    doNormalize, uniScale,
-        //    subscribeRatio, minGrainSize);
     }
     break;
     case 1:
     {
-        GA_RWHandleT<UT_Vector3F> attribHandle(attribPtr);
-        UTparallelFor(geo0SplittableRange, [&attribHandle, &doNormalize, &uniScale](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    UT_Vector3F attribValue = attribHandle.get(elemoff);
-                    if (doNormalize)
-                        attribValue.normalize();
-                    attribValue *= uniScale;
-                    attribHandle.set(elemoff, attribValue);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
+        GA_RWHandleT<UT_Vector3F> attribH(attribPtr);
+        GA_FeE_Attribute::normalizeAttribElement(geo0SplittableRange, attribH,
+            doNormalize, uniScale,
+            subscribeRatio, minGrainSize);
     }
     break;
     case 2:

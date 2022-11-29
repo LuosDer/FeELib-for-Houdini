@@ -8,25 +8,13 @@
 // SOP_FeE_ConvertLine_1_0Verb::cook with the correct type.
 #include "SOP_FeE_ConvertLine_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
-
-#include <GA/GA_Primitive.h>
 
 
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
 
+#include <GA_FeE/GA_FeE_Type.h>
 #include <GA_FeE/GA_FeE_ConvertLine.h>
 #include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_TopologyReference.h>
@@ -459,12 +447,9 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
 
-    //const GA_Storage inStorage = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage inStorageI = GA_STORE_INT64;
-    const GA_Storage inStorageF = GA_STORE_REAL64;
+
+    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -473,57 +458,46 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
 
     
+//
+//#if 1
+//    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
+//    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
+//#else
+//    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
+//#endif
+//
+//
+//
+//#if 1
+//    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+//    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
+//
+//    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+//    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
+//#else
+//    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
+//#endif
+//
+//    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
+//    GA_RWHandleT<GA_Size> dstptAttribHandle;
+//    vtxpnumAttribHandle.bind(vtxpnumATI);
+//    dstptAttribHandle.bind(dstptATI);
+//
+//    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
+//
+//    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
+//
+//    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
+//    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
+//
+//
+//    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
 
-#if 1
-    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
-    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
-#else
-    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
-#endif
+    const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
+    //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
+    const GA_RWHandleT<GA_Offset> dstptAttribH = outGeo0->findVertexAttribute("__topo_dstpt");
 
-
-
-#if 1
-    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
-
-    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-#else
-    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
-#endif
-
-    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
-    GA_RWHandleT<GA_Size> dstptAttribHandle;
-    vtxpnumAttribHandle.bind(vtxpnumATI);
-    dstptAttribHandle.bind(dstptATI);
-
-    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
-
-    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
-
-    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
-    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
-
-
-    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
-
-
-
-
-
-    //    GA_RWHandleT<UT_ValArray<GA_Offset>> intArrayAttribHandle;
-    //#if 0
-    //    UT_Options attribOption;
-    //    attribOption.setOptionFArray();
-    //    GA_AttributeUPtr deleter = tmpGeo0->createDetachedAttribute(GA_ATTRIB_PRIMITIVE, "", &attribOption)
-    //#else
-    //    const UT_StringHolder pointPointEdgeAttribName = "__pointPointEdge_SOP_FeE_ConvertLine_1_0";
-    //    GA_Attribute* attribPtr = tmpGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorageI);
-    //#endif
-
-
-    //outGeo0->setDetailAttributeI("entries", entries);
+    UT_ASSERT_P(dstptAttribH.getAttribute());
 
 
     GA_Size entries = creatingGroup->getGroupEntries();
@@ -533,53 +507,21 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
 
     GA_Topology& topo = outGeo0->getTopology();
+    const GA_ATITopology* vtxPointRef = topo.getPointRef();
 
-#if 0
-    GA_Topology& topo = outGeo0->getTopology();
-    forEachVertex(tmpGeo0, creatingGroup, false, [&tmpGeo0, &topo, &vtxoff_first, &vtxpnumAttribHandle](GA_Offset vtxoff, GA_Size elemidx)
-    {
-        GA_Offset vtxoff_cur = vtxoff_first + elemidx;
-        topo.wireVertexPoint(vtxoff_cur, outGeo0->vertexPoint(vtxoff));
-        topo.wireVertexPoint(vtxoff_cur+1, vtxpnumAttribHandle.get(vtxoff));
-    });
-#else
-
-    GA_Size elemidx = 0;
     GA_Offset start, end;
-    for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.blockAdvance(start, end); )
+    for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
     {
         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
         {
-            topo.wireVertexPoint(vtxoff_first, tmpGeo0->vertexPoint(vtxoff));
+            topo.wireVertexPoint(vtxoff_first, vtxPointRef->getLink(vtxoff));
             ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, dstptAttribHandle.get(vtxoff));
+            topo.wireVertexPoint(vtxoff_first, dstptAttribH.get(vtxoff));
             ++vtxoff_first;
         }
     }
-#endif
 
-#if 1
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
-#else
-    //copy in GEO_SplitPoints.C
-    outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
-    outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_VERTEX);
-
-    GA_ATITopology* topoATI = topo.getPointRef();
-    if (topoATI)
-        topoATI->bumpDataId();
-    topoATI = topo.getVertexNextRef();
-    if (topoATI)
-        topoATI->bumpDataId();
-    topoATI = topo.getVertexPrevRef();
-    if (topoATI)
-        topoATI->bumpDataId();
-    // Edge groups might also be affected, if any edges
-    // were on points that were split, so we bump their
-    // data IDs, just in case.
-    //outGeo0->edgeGroups().bumpAllDataIds();
-    outGeo0->getAttributes().bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
-#endif
 
     tmpGeoH0.deleteGdp();
 }

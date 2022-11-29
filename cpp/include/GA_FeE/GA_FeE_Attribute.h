@@ -28,11 +28,11 @@ namespace GA_FeE_Attribute {
 
 static bool
     findFloatTuplePointVertex(
-        GEO_Detail* const geo,
+        const GEO_Detail* const geo,
         const GA_AttributeOwner attribOwner,
         const GA_AttributeScope scope,
         const UT_StringRef& attribName,
-        GA_Attribute*& attribPtr,
+        const GA_Attribute*& attribPtr,
         GA_AttributeOwner& attribOwnerFinal,
         const int min_size = 1,
         const int max_size = -1
@@ -71,10 +71,10 @@ static bool
 //GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, attribName, attribPtr, attribOwnerFianl);
 static bool
 findFloatTuplePointVertex(
-    GEO_Detail* const geo,
+    const GEO_Detail* const geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
-    GA_Attribute*& attribPtr,
+    const GA_Attribute*& attribPtr,
     GA_AttributeOwner& attribOwnerFianl,
     const int min_size = 1,
     const int max_size = -1
@@ -90,8 +90,8 @@ findFloatTuplePointVertex(
 
 
 static void
-normalizeElementAttrib(
-    const GA_SplittableRange geoSplittableRange,
+normalizeAttribElement(
+    const GA_SplittableRange& geoSplittableRange,
     GA_Attribute* attribPtr,
     const bool doNormalize = 1,
     const fpreal64 uniScale = 1,
@@ -114,6 +114,34 @@ normalizeElementAttrib(
                         attrib_ph.value(elemoff).normalize();
                     attrib_ph.value(elemoff) *= uniScale;
                 }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+
+static void
+normalizeAttribElement(
+    const GA_SplittableRange& geoSplittableRange,
+    const GA_RWHandleT<UT_Vector3F>& attribHandle,
+    const bool doNormalize = 1,
+    const fpreal64 uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    UTparallelFor(geoSplittableRange, [&attribHandle, &doNormalize, &uniScale](const GA_SplittableRange& r)
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                UT_Vector3F attribValue = attribHandle.get(elemoff);
+                if (doNormalize)
+                    attribValue.normalize();
+                attribValue *= uniScale;
+                attribHandle.set(elemoff, attribValue);
             }
         }
     }, subscribeRatio, minGrainSize);

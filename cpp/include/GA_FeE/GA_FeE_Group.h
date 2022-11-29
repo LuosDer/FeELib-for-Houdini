@@ -8,7 +8,7 @@
 
 //#include <GA/GA_Detail.h>
 #include <GEO/GEO_Detail.h>
-
+#include <GA/GA_SplittableRange.h>
 
 #include <GA_FeE/GA_FeE_Type.h>
 
@@ -16,46 +16,41 @@ namespace GA_FeE_Group {
 
 
 
-
 static GA_Group*
 findGroup(
+    const GA_Detail* geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    UT_ASSERT_P(geo);
+    const GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+    if (!groupTable)
+        return nullptr;
+    return groupTable->find(groupName);
+}
+
+static GA_Group*
+findOrCreateGroup(
     GA_Detail* geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName
 )
 {
     UT_ASSERT_P(geo);
-    return geo->getGroupTable(groupType)->find(groupName);
-
-    //switch (groupType)
-    //{
-    //case GA_GROUP_PRIMITIVE:
-    //    return geo->primitiveGroups().find(groupName);
-    //break;
-    //case GA_GROUP_POINT:
-    //    return geo->pointGroups().find(groupName);
-    //break;
-    //case GA_GROUP_VERTEX:
-    //    return geo->vertexGroups().find(groupName);
-    //break;
-    //case GA_GROUP_EDGE:
-    //    return geo->edgeGroups().find(groupName);
-    //    break;
-    //default:
-    //    break;
-    //}
-    //return nullptr;
-
-    //if (groupType == GA_GROUP_EDGE)
-    //{
-    //    return geo->edgeGroups().find(groupName);
-    //}
-    //else
-    //{
-    //    return geo->findElementGroup(GA_FeE_Type::attributeOwner_groupType(groupType), groupName);
-    //}
+    GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+    if (!groupTable)
+        return nullptr;
+    GA_Group* group = groupTable->find(groupName);
+    if (!group)
+        return groupTable->newGroup(groupName);
+    return nullptr;
 }
 
+
+
+
+SYS_FORCE_INLINE
 static GA_ElementGroup*
 findElementGroup(
     GA_Detail* geo,
@@ -68,14 +63,27 @@ findElementGroup(
     return geo->findElementGroup(GA_FeE_Type::attributeOwner_groupType(groupType), groupName);
 }
 
+SYS_FORCE_INLINE
+static const GA_ElementGroup*
+findElementGroup(
+    const GA_Detail* geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(groupType != GA_GROUP_EDGE);
+    return geo->findElementGroup(GA_FeE_Type::attributeOwner_groupType(groupType), groupName);
+}
+
+SYS_FORCE_INLINE
 static bool
-isEmpty(
-    const GA_Group* group,
-    const GA_GroupType groupType
+groupIsEmpty(
+    const GA_Group* group
 )
 {
     UT_ASSERT_P(group);
-    if (groupType == GA_GROUP_EDGE)
+    if (group->classType() == GA_GROUP_EDGE)
     {
         return UTverify_cast<const GA_EdgeGroup*>(group)->isEmpty();
     }
@@ -85,27 +93,11 @@ isEmpty(
     }
 }
 
-static bool
-isEmpty(
-    GA_Group* group,
-    const GA_GroupType groupType
-)
-{
-    if (groupType == GA_GROUP_EDGE)
-    {
-        return UTverify_cast<GA_EdgeGroup*>(group)->isEmpty();
-    }
-    else
-    {
-        return UTverify_cast<GA_ElementGroup*>(group)->isEmpty();
-    }
-}
-
-
+SYS_FORCE_INLINE
 static bool
 groupRename(
     GA_Detail* geo,
-    GA_Group* group,
+    const GA_Group* group,
     const UT_StringHolder& newName
 )
 {
@@ -114,32 +106,30 @@ groupRename(
     return geo->getGroupTable(group->classType())->renameGroup(group->getName(), newName);
 }
 
-static void
-groupDestroy(
-    GA_Detail* geo,
-    GA_Group* group
-)
-{
-    UT_ASSERT_P(geo);
-    UT_ASSERT_P(group);
-    geo->getGroupTable(group->classType())->destroy(group);
-}
+//SYS_FORCE_INLINE
+//static void
+//groupDestroy(
+//    GA_Detail* geo,
+//    GA_Group* group
+//)
+//{
+//    UT_ASSERT_P(geo);
+//    UT_ASSERT_P(group);
+//    geo->destroyGroup(group);
+//    //geo->getGroupTable(group->classType())->destroy(group);
+//}
 
-
+SYS_FORCE_INLINE
 static void
-bumpDataId(
+groupBumpDataId(
     GA_Group* group
 )
 {
     UT_ASSERT_P(group);
     if (group->classType() == GA_GROUP_EDGE)
-    {
         static_cast<GA_EdgeGroup*>(group)->bumpDataId();
-    }
     else
-    {
         static_cast<GA_ElementGroup*>(group)->bumpDataId();
-    }
 }
 
 
@@ -187,9 +177,54 @@ parseGroupDetached(
 }
 
 
+SYS_FORCE_INLINE
+static const GA_PrimitiveGroup*
+parsePrimitiveGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_PrimitiveGroup*>(parseGroupDetached(cookparms, geo, GA_GROUP_PRIMITIVE, groupName, gop));
+}
 
 
+SYS_FORCE_INLINE
+static const GA_PointGroup*
+parsePointGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_PointGroup*>(parseGroupDetached(cookparms, geo, GA_GROUP_POINT, groupName, gop));
+}
 
+SYS_FORCE_INLINE
+static const GA_VertexGroup*
+parseVertexGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_VertexGroup*>(parseGroupDetached(cookparms, geo, GA_GROUP_VERTEX, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static const GA_EdgeGroup*
+parseEdgeGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_EdgeGroup*>(parseGroupDetached(cookparms, geo, GA_GROUP_EDGE, groupName, gop));
+}
 
 
 
@@ -209,7 +244,7 @@ parseGroupDetached(
 static GA_Range
 getRangeByAnyGroup(
     const GA_Detail* geo,
-    const GA_Group* group
+    const GA_ElementGroup* group
 )
 {
     UT_ASSERT_P(geo);
@@ -218,17 +253,37 @@ getRangeByAnyGroup(
 
     const GA_GroupType inGroupType = group->classType();
     const GA_AttributeOwner attribOwner = GA_FeE_Type::attributeOwner_groupType(inGroupType);
-    return GA_Range(geo->getIndexMap(attribOwner), static_cast<const GA_ElementGroup*>(group));
+    return GA_Range(geo->getIndexMap(attribOwner), group);
 }
 
+SYS_FORCE_INLINE
+static GA_Range
+getRangeByAnyGroup(
+    const GA_Detail* geo,
+    const GA_Group* group
+)
+{
+    return getRangeByAnyGroup(geo, static_cast<const GA_ElementGroup*>(group));
+}
+
+SYS_FORCE_INLINE
+static GA_SplittableRange
+getSplittableRangeByAnyGroup(
+    const GA_Detail* geo,
+    const GA_ElementGroup* group
+)
+{
+    return GA_SplittableRange(getRangeByAnyGroup(geo, group));
+}
+
+SYS_FORCE_INLINE
 static GA_SplittableRange
 getSplittableRangeByAnyGroup(
     const GA_Detail* geo,
     const GA_Group* group
 )
 {
-    UT_ASSERT_P(geo);
-    return GA_SplittableRange(getRangeByAnyGroup(geo, group));
+    return getSplittableRangeByAnyGroup(geo, static_cast<const GA_ElementGroup*>(group));
 }
 
 

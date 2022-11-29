@@ -228,12 +228,12 @@ addAttribConnectivityPoint(
     const UT_StringHolder& name = "connectivity",
     const GA_PointGroup* geoGroup = nullptr,
     const GA_PointGroup* geoSeamGroup = nullptr,
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INT64,
+    const GA_Storage storage = GA_STORE_INT32,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 64,
-    const exint& minGrainSize = 64
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
 )
 {
     GA_Attribute* attribPtr = geo->findPointAttribute(name);
@@ -246,25 +246,6 @@ addAttribConnectivityPoint(
     return attribPtr;
 }
 
-//return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, reuse, subscribeRatio, minGrainSize);
-
-//addAttribConnectivity
-static GA_Attribute*
-addAttribConnectivityPoint(
-    GEO_Detail* geo,
-    const UT_StringHolder& name = "connectivity",
-    const GA_PointGroup* geoGroup = nullptr,
-    const GA_PointGroup* geoSeamGroup = nullptr,
-    const GA_Storage& storage = GA_STORE_INT64,
-    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 64,
-    const exint& minGrainSize = 64
-)
-{
-    return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
-}
-
-
 //return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
 
 //addAttribConnectivity
@@ -274,13 +255,14 @@ addAttribConnectivityPoint(
     const UT_StringHolder& name = "connectivity",
     const GA_PointGroup* geoGroup = nullptr,
     const GA_PointGroup* geoSeamGroup = nullptr,
-    const GA_Storage& storage = GA_STORE_INT64,
-    const exint& subscribeRatio = 32,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INT32,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
 )
 {
-    return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 }
+
 
 
 
@@ -301,12 +283,12 @@ addAttribConnectivityPrim(
     const UT_StringHolder& name = "connectivity",
     const GA_PrimitiveGroup* geoGroup = nullptr,
     const GA_VertexGroup* geoSeamGroup = nullptr,
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INT64,
+    const GA_Storage storage = GA_STORE_INT32,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 32,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 32,
+    const exint minGrainSize = 1024
 )
 {
     GA_Attribute* attribPtr = geo->findPrimitiveAttribute(name);
@@ -321,26 +303,6 @@ addAttribConnectivityPrim(
     return attribPtr;
 }
 
-
-//return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, reuse, subscribeRatio, minGrainSize);
-
-//addAttribConnectivity
-static GA_Attribute*
-addAttribConnectivityPrim(
-    GEO_Detail* geo,
-    const UT_StringHolder& name = "connectivity",
-    const GA_PrimitiveGroup* geoGroup = nullptr,
-    const GA_VertexGroup* geoSeamGroup = nullptr,
-    const GA_Storage& storage = GA_STORE_INT64,
-    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 32,
-    const exint& minGrainSize = 1024
-)
-{
-    return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
-}
-
-
 //return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
 
 //addAttribConnectivity
@@ -350,12 +312,12 @@ addAttribConnectivityPrim(
     const UT_StringHolder& name = "connectivity",
     const GA_PrimitiveGroup* geoGroup = nullptr,
     const GA_VertexGroup* geoSeamGroup = nullptr,
-    const GA_Storage& storage = GA_STORE_INT64,
-    const exint& subscribeRatio = 32,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INT32,
+    const exint subscribeRatio = 32,
+    const exint minGrainSize = 1024
 )
 {
-    return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 }
 
 

@@ -31,10 +31,10 @@ heronsFormula(
 )
 {
     //Heron's formula
-    const T& length0 = pos0.distance(pos1);
-    const T& length1 = pos1.distance(pos2);
-    const T& length2 = pos2.distance(pos0);
-    const T& halfP = (length0 + length1 + length2) * 0.5;
+    const T length0 = pos0.distance(pos1);
+    const T length1 = pos1.distance(pos2);
+    const T length2 = pos2.distance(pos0);
+    const T halfP = (length0 + length1 + length2) * 0.5;
     return sqrt(halfP * (halfP - length0) * (halfP - length1) * (halfP - length2));
 }
 
@@ -56,10 +56,10 @@ bretschneidersFormula0(
     //https://en.wikipedia.org/wiki/Bretschneider's_formula
     //https://zhuanlan.zhihu.com/p/101219058
     //https://zhuanlan.zhihu.com/p/110025234
-    const T& length0 = pos0.distance2(pos1);
-    const T& length1 = pos1.distance2(pos2);
-    const T& length2 = pos2.distance2(pos3);
-    const T& length3 = pos3.distance2(pos0);
+    const T length0 = pos0.distance2(pos1);
+    const T length1 = pos1.distance2(pos2);
+    const T length2 = pos2.distance2(pos3);
+    const T length3 = pos3.distance2(pos0);
     T e = pos0.distance2(pos2);
     T f = pos1.distance2(pos3);
     e *= f;//e == (ef)
@@ -83,10 +83,10 @@ bretschneidersFormula1(
 )
 {
     //Bretschneider's formula 1
-    const T& length0 = pos0.distance(pos1);
-    const T& length1 = pos1.distance(pos2);
-    const T& length2 = pos2.distance(pos3);
-    const T& length3 = pos3.distance(pos0);
+    const T length0 = pos0.distance(pos1);
+    const T length1 = pos1.distance(pos2);
+    const T length2 = pos2.distance(pos3);
+    const T length3 = pos3.distance(pos0);
 
     T length4 = pos0.distance(pos2);
     T length5 = pos1.distance(pos3);
@@ -94,12 +94,12 @@ bretschneidersFormula1(
     length5 *= length4;
     length4 = length0 * length2 + length1 * length3;
 
-    const T& halfP = (length0 + length1 + length2 + length3) * 0.5;
+    const T halfP = (length0 + length1 + length2 + length3) * 0.5;
 #if 1
-    const T& area = (halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
+    const T area = (halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
                   - (length4 + length5) * (length4 - length5) * 0.25;
 #else
-    const T& area = sqrt((halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
+    const T area = sqrt((halfP - length0) * (halfP - length1) * (halfP - length2) * (halfP - length3)
                   - length0 * length1 * length2 * length3 * (cos(angle) + 1) * 0.5);
 #endif
     return sqrt(area);
@@ -115,10 +115,10 @@ static attribPrecisonF
 //GU_Detail::compute3DArea(const GA_Offset primoff)
 primArea(
     const GA_Detail* geo,
-    const GA_Offset& primoff
+    const GA_Offset primoff
 )
 {
-    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+    const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(primoff);
 
     const bool& closed = vertices.getExtraFlag();
     if (!closed)
@@ -144,7 +144,7 @@ primArea(
 
     TAttribTypeV pos0 = geo->getPos3(geo->vertexPoint(vertices[0]));
     TAttribTypeV pos1 = geo->getPos3(geo->vertexPoint(vertices[1]));
-    const TAttribTypeV& pos2 = geo->getPos3(geo->vertexPoint(vertices[2]));
+    const TAttribTypeV pos2 = geo->getPos3(geo->vertexPoint(vertices[2]));
 
     //GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
 
@@ -157,7 +157,7 @@ primArea(
     break;
     case 4:
     {
-        const TAttribTypeV& pos3 = geo->getPos3(geo->vertexPoint(vertices[3]));
+        const TAttribTypeV pos3 = geo->getPos3(geo->vertexPoint(vertices[3]));
         return bretschneidersFormula0(pos0, pos1, pos2, pos3);
     }
     break;
@@ -166,14 +166,14 @@ primArea(
 
 
 
-    const TAttribTypeV& dir0 = pos1 - pos0;
-    const TAttribTypeV& dir1 = pos2 - pos1;
-    const TAttribTypeV& crossdir0B = cross(dir0, dir1);
+    const TAttribTypeV dir0 = pos1 - pos0;
+    const TAttribTypeV dir1 = pos2 - pos1;
+    const TAttribTypeV crossdir0B = cross(dir0, dir1);
     attribPrecisonF lengthdir0B = crossdir0B.length();
     lengthdir0B = 1.0 / lengthdir0B;
-    const attribPrecisonF& cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
-    const attribPrecisonF& cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
-    const attribPrecisonF& cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
+    const attribPrecisonF cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
+    const attribPrecisonF cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
+    const attribPrecisonF cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
     attribPrecisonF areaSum = 0.0;
     pos0 = geo->getPos3(geo->vertexPoint(vertices[numvtx - 1]));
@@ -202,7 +202,7 @@ primArea(
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle
 )
 {
-    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+    const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(primoff);
 
     const bool& closed = vertices.getExtraFlag();
     if (!closed)
@@ -225,7 +225,7 @@ primArea(
     }
 
 
-    const GA_AttributeOwner& attribOwner = posAttribHandle.getAttribute()->getOwner();
+    const GA_AttributeOwner attribOwner = posAttribHandle.getAttribute()->getOwner();
 
     TAttribTypeV pos0, pos1, pos2;
 
@@ -288,14 +288,14 @@ primArea(
 
 
 
-    const TAttribTypeV& dir0 = pos1 - pos0;
-    const TAttribTypeV& dir1 = pos2 - pos1;
-    const TAttribTypeV& crossdir0B = cross(dir0, dir1);
+    const TAttribTypeV dir0 = pos1 - pos0;
+    const TAttribTypeV dir1 = pos2 - pos1;
+    const TAttribTypeV crossdir0B = cross(dir0, dir1);
     attribPrecisonF lengthdir0B = crossdir0B.length();
     lengthdir0B = 1.0 / lengthdir0B;
-    const attribPrecisonF& cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
-    const attribPrecisonF& cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
-    const attribPrecisonF& cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
+    const attribPrecisonF cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
+    const attribPrecisonF cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
+    const attribPrecisonF cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
     attribPrecisonF areaSum = 0.0;
     //pos0 = geo->getPos3(geo->vertexPoint(vertices[numvtx - 1]));
@@ -345,8 +345,8 @@ primArea(
     const GA_RWHandleF& areaAttribHandle,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     //GU_Measure::computeArea(*geo, areaAttribHandle, geoPrimGroup);
@@ -373,8 +373,8 @@ primArea(
     const GA_Detail* geo,
     const GA_RWHandleF& areaAttribHandle,
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     //GU_Measure::computeArea(*geo, areaAttribHandle, geoPrimGroup);poly
@@ -408,10 +408,10 @@ primArea(
 //            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
 //            const GA_PrimitiveGroup* geoPrimGroup = nullptr,                                                                                                                                                      \
 //            const GA_Defaults& defaults = GA_Defaults(DEF_FUNC_Parm_Defaults),                                                                                                                                    \
-//            const GA_Storage& storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
+//            const GA_Storage storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
 //            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),                                                                                                                                                   \
-//            const exint& subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
-//            const exint& minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
+//            const exint subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
+//            const exint minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
 //        )                                                                                                                                                                                                         \
 //        {                                                                                                                                                                                                         \
 //            return DEF_FUNC_Parm_FuncName(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);                                                                                 \
@@ -424,9 +424,9 @@ primArea(
 //            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
 //            const GA_PrimitiveGroup* geoPrimGroup = nullptr,                                                                                                                                                      \
 //            const GA_Defaults& defaults = GA_Defaults(DEF_FUNC_Parm_Defaults),                                                                                                                                    \
-//            const GA_Storage& storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
-//            const exint& subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
-//            const exint& minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
+//            const GA_Storage storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
+//            const exint subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
+//            const exint minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
 //        )                                                                                                                                                                                                         \
 //        {                                                                                                                                                                                                         \
 //            return DEF_FUNC_Parm_FuncName(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);                                                                    \
@@ -457,15 +457,15 @@ addAttribPrimArea(
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
-    const GA_Storage& finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
     GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primArea(geo, attribHandle, geoPrimGroup, subscribeRatio, minGrainSize);
@@ -481,10 +481,10 @@ addAttribPrimArea(
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimArea(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -499,9 +499,9 @@ addAttribPrimArea(
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INVALID,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimArea(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -526,15 +526,15 @@ addAttribPrimArea(
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
-    const GA_Storage& finalStorage = storage == GA_STORE_INVALID ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
     GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primArea(geo, attribHandle, posAttribHandle, geoPrimGroup, subscribeRatio, minGrainSize);
@@ -550,10 +550,10 @@ addAttribPrimArea(
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimArea(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -570,9 +570,9 @@ addAttribPrimArea(
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INVALID,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimArea(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -603,17 +603,17 @@ addAttribPrimArea(
 static GA_Attribute*
 addAttribPrimArea(
     GEO_Detail* geo,
-    const GA_AttributeOwner& posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     if (posAttribName == "P")
@@ -637,15 +637,15 @@ SYS_FORCE_INLINE
 static GA_Attribute*
 addAttribPrimArea(
     GEO_Detail* geo,
-    const GA_AttributeOwner& posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimArea(geo, posAttribOwner, posAttribName, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -658,14 +658,14 @@ SYS_FORCE_INLINE
 static GA_Attribute*
 addAttribPrimArea(
     GEO_Detail* geo,
-    const GA_AttributeOwner& posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const UT_StringHolder& name = "area",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INVALID,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimArea(geo, posAttribOwner, posAttribName, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -686,7 +686,7 @@ primPerimeter(
     const GA_Offset& primoff
 )
 {
-    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+    const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(primoff);
     const GA_Size& numvtx = vertices.size();
     if (numvtx < 2)
         return 0.0;
@@ -724,7 +724,7 @@ primPerimeter(
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle
 )
 {
-    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+    const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(primoff);
     const GA_Size& numvtx = vertices.size();
     if (numvtx < 2)
         return 0.0;
@@ -743,7 +743,7 @@ primPerimeter(
     }
 
 
-    const GA_AttributeOwner& attribOwner = posAttribHandle.getAttribute()->getOwner();
+    const GA_AttributeOwner attribOwner = posAttribHandle.getAttribute()->getOwner();
 
     TAttribTypeV pos0, pos1;
     switch (attribOwner)
@@ -785,8 +785,8 @@ primPerimeter(
     const GA_Detail* geo,
     const GA_RWHandleF& pAttribHandle,
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     //GU_Measure::computePerimeter(*geo, pAttribHandle, geoPrimGroup);
@@ -811,8 +811,8 @@ primPerimeter(
     const GA_RWHandleF& pAttribHandle,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     //GU_Measure::computePerimeter(*geo, pAttribHandle, geoPrimGroup);
@@ -845,15 +845,15 @@ addAttribPrimPerimeter(
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
-    const GA_Storage& finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
     GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primPerimeter(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
@@ -869,10 +869,10 @@ addAttribPrimPerimeter(
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimPerimeter(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -888,9 +888,9 @@ addAttribPrimPerimeter(
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INVALID,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimPerimeter(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -920,15 +920,15 @@ addAttribPrimPerimeter(
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
-    const GA_Storage& finalStorage = storage == GA_STORE_INVALID ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
     GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primPerimeter(geo, attribPtr, posAttribHandle, geoPrimGroup, subscribeRatio, minGrainSize);
@@ -946,10 +946,10 @@ addAttribPrimPerimeter(
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimPerimeter(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -966,9 +966,9 @@ addAttribPrimPerimeter(
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INVALID,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimPerimeter(geo, posAttribHandle, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
@@ -985,17 +985,17 @@ addAttribPrimPerimeter(
 static GA_Attribute*
 addAttribPrimPerimeter(
     GEO_Detail* geo,
-    const GA_AttributeOwner& posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const UT_Options* creation_args = 0,
-    const GA_AttributeOptions* attribute_options = 0,
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const UT_Options* creation_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     if (posAttribName == "P")
@@ -1019,15 +1019,15 @@ SYS_FORCE_INLINE
 static GA_Attribute*
 addAttribPrimPerimeter(
     GEO_Detail* geo,
-    const GA_AttributeOwner& posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimPerimeter(geo, posAttribOwner, posAttribName, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);
@@ -1040,14 +1040,14 @@ SYS_FORCE_INLINE
 static GA_Attribute*
 addAttribPrimPerimeter(
     GEO_Detail* geo,
-    const GA_AttributeOwner& posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const UT_StringHolder& name = "perimeter",
     const GA_PrimitiveGroup* geoPrimGroup = nullptr,
     const GA_Defaults& defaults = GA_Defaults(-1.0),
-    const GA_Storage& storage = GA_STORE_INVALID,
-    const exint& subscribeRatio = 16,
-    const exint& minGrainSize = 1024
+    const GA_Storage storage = GA_STORE_INVALID,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
 )
 {
     return addAttribPrimPerimeter(geo, posAttribOwner, posAttribName, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);

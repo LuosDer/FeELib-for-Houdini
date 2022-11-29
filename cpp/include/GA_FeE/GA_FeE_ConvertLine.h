@@ -6,11 +6,8 @@
 
 //#include <GA_FeE/GA_FeE_ConvertLine.h>
 
-#include <GEO/GEO_Detail.h>
+#include <GA/GA_Detail.h>
 
-//#include <GA_FeE/GA_FeE_ConvertLine.h>
-
-#include <chrono>
 
 
 namespace GA_FeE_ConvertLine

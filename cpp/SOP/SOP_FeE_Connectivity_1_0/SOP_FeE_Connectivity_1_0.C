@@ -8,33 +8,37 @@
 // SOP_FeE_Connectivity_1_0Verb::cook with the correct type.
 #include "SOP_FeE_Connectivity_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
 
-#include <GA/GA_Primitive.h>
-#include <GA/GA_PageHandle.h>
-#include <GA/GA_AIFNumericArray.h>
+//#include <GU/GU_Detail.h>
+//#include <GEO/GEO_PrimPoly.h>
+//#include <OP/OP_Operator.h>
+//#include <OP/OP_OperatorTable.h>
+//#include <PRM/PRM_Include.h>
+//#include <PRM/PRM_TemplateBuilder.h>
+//#include <UT/UT_DSOVersion.h>
+//#include <UT/UT_Interrupt.h>
+//#include <UT/UT_StringHolder.h>
+//#include <SYS/SYS_Math.h>
+//#include <limits.h>
+//
+//#include <GA/GA_Primitive.h>
+//#include <GA/GA_PageHandle.h>
+//#include <GA/GA_AIFNumericArray.h>
+//
+//#include <UT/UT_UniquePtr.h>
+//#include <GA/GA_SplittableRange.h>
+//#include <HOM/HOM_SopNode.h>
 
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
 
+//#include <chrono>
 
-#include <chrono>
-
-#include <GU/GU_Measure.h>
+//#include <GU/GU_Measure.h>
 #include <GU/GU_Promote.h>
 
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 #include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_Connectivity.h>
 
@@ -327,9 +331,8 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //timeEnd = std::chrono::steady_clock::now();
     //std::chrono::duration<double> diff;
 
-
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Connectivity_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -351,7 +354,9 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+
+    GOP_Manager gop;
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -385,14 +390,14 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     if (connectivityConstraint)
     {
-        geo0PrimGroupUPtr = GA_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group);
+        geo0PrimGroupUPtr = GEO_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group);
     }
     else
     {
-        geo0PointGroupUPtr = GA_FeE_Group::groupPromotePointDetached(outGeo0, geo0Group);
+        geo0PointGroupUPtr = GEO_FeE_Group::groupPromotePointDetached(outGeo0, geo0Group);
     }
 
-    const GA_ElementGroup* geo0SeamGroup = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup());
+    const GA_Group* geo0SeamGroup = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
 
 
 

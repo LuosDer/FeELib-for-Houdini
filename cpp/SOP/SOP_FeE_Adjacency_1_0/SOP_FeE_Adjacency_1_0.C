@@ -9,31 +9,18 @@
 #include "SOP_FeE_Adjacency_1_0.proto.h"
 
 #include <GEO/GEO_Detail.h>
-
-//#include <GA/GA_Primitive.h>
-
-//#include <UT/UT_UniquePtr.h>
-//#include <GA/GA_SplittableRange.h>
-//#include <HOM/HOM_SopNode.h>
-
-
-//#include <chrono>
-
-
-//#include <GA/GA_PageHandle.h>
-//#include <GA/GA_PageIterator.h>
+#include <PRM/PRM_TemplateBuilder.h>
+#include <UT/UT_Interrupt.h>
 
 
 #include <GA_FeE/GA_FeE_TopologyReference.h>
 #include <GA_FeE/GA_FeE_Adjacency.h>
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 
 
 
 using namespace SOP_FeE_Adjacency_1_0_Namespace;
 
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -457,15 +444,15 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& primPrimPointAttribName               = sopparms.getPrimPrimPointAttribName();
     const UT_StringHolder& vertexVertexPrimPrevAttribName        = sopparms.getVertexVertexPrimPrevAttribName();
 
-    calVertexPrimIndex         = calVertexPrimIndex       && vertexPrimIndexAttribName.isstring();
-    calVertexVertexPrim        = calVertexVertexPrim      && (vertexVertexPrimPrevAttribName.isstring() || vertexVertexPrimNextAttribName.isstring());
-    calVertexPointDst          = calVertexPointDst        && vertexNextEquivAttribName.isstring();
-    calVertexNextEquiv         = calVertexNextEquiv       && vertexPointDstAttribName.isstring();
-    calVertexNextEquivNoLoop   = calVertexNextEquivNoLoop && vertexPointDstAttribName.isstring();
-    calPointPointEdge          = calPointPointEdge        && pointPointEdgeAttribName.isstring();
-    calPointPointPrim          = calPointPointPrim        && pointPointPrimAttribName.isstring();
-    calPrimPrimEdge            = calPrimPrimEdge          && primPrimEdgeAttribName.isstring();
-    calPrimPrimPoint           = calPrimPrimPoint         && primPrimPointAttribName.isstring();
+    calVertexPrimIndex         = calVertexPrimIndex       && vertexPrimIndexAttribName.isstring()        && vertexPrimIndexAttribName.length() != 0;
+    calVertexVertexPrim        = calVertexVertexPrim      && ((vertexVertexPrimPrevAttribName.isstring() && vertexVertexPrimPrevAttribName.length() != 0) || (vertexVertexPrimNextAttribName.isstring() && vertexVertexPrimNextAttribName.length() != 0));
+    calVertexPointDst          = calVertexPointDst        && vertexPointDstAttribName.isstring()         && vertexPointDstAttribName.length() != 0;
+    calVertexNextEquiv         = calVertexNextEquiv       && vertexNextEquivAttribName.isstring()        && vertexNextEquivAttribName.length() != 0;
+    calVertexNextEquivNoLoop   = calVertexNextEquivNoLoop && vertexNextEquivNoLoopAttribName.isstring()  && vertexNextEquivNoLoopAttribName.length() != 0;
+    calPointPointEdge          = calPointPointEdge        && pointPointEdgeAttribName.isstring()         && pointPointEdgeAttribName.length() != 0;
+    calPointPointPrim          = calPointPointPrim        && pointPointPrimAttribName.isstring()         && pointPointPrimAttribName.length() != 0;
+    calPrimPrimEdge            = calPrimPrimEdge          && primPrimEdgeAttribName.isstring()           && primPrimEdgeAttribName.length() != 0;
+    calPrimPrimPoint           = calPrimPrimPoint         && primPrimPointAttribName.isstring()          && primPrimPointAttribName.length() != 0;
 #else
     UT_StringHolder& pointPointEdgeAttribName;
     UT_StringHolder& pointPointPrimAttribName;
@@ -515,25 +502,25 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     const UT_StringHolder& pointSeamGroupName = sopparms.getPointSeamGroup();
-    const bool& usepointSeamGroup = pointSeamGroupName.isstring() && (calPointPointEdge || calPointPointPrim || calPrimPrimPoint);
+    //const bool& usepointSeamGroup = pointSeamGroupName.isstring() && (calPointPointEdge || calPointPointPrim || calPrimPrimPoint);
 
     const UT_StringHolder& vertexEdgeSeamGroupName = sopparms.getVertexEdgeSeamGroup();
-    const bool& useVertexEdgeSeamGroup = vertexEdgeSeamGroupName.isstring() && calPrimPrimEdge;
+    //const bool& useVertexEdgeSeamGroup = vertexEdgeSeamGroupName.isstring() && calPrimPrimEdge;
 
     const UT_StringHolder& edgeSeamGroupName = sopparms.getEdgeSeamGroup();
-    const bool& useEdgeSeamGroup = edgeSeamGroupName.isstring() && calPrimPrimEdge;
+    //const bool& useEdgeSeamGroup = edgeSeamGroupName.isstring() && calPrimPrimEdge;
 
 
 
-    const exint& kernel = sopparms.getKernel();
+    const exint kernel = sopparms.getKernel();
     //const bool& outAsOffset = sopparms.getOutAsOffset();
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 8);
     //const exint minGrainSize = pow(2, 4);
 
     //const GA_Storage inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorageI = GA_STORE_INT32;
+    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -544,8 +531,10 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
-    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
+    GOP_Manager gop;
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
     if (geo0Group && geo0Group->isEmpty())
         return;
@@ -555,15 +544,15 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClass);
 
 
-    GOP_Manager gop;
-    const GA_VertexGroup* vertexEdgeSeamGroup = static_cast<const GA_VertexGroup*>(GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, GA_GROUP_VERTEX, vertexEdgeSeamGroupName, gop));
+    GA_VertexGroup* vertexEdgeSeamGroup = const_cast<GA_VertexGroup*>(GA_FeE_Group::parseVertexGroupDetached(cookparms, outGeo0, vertexEdgeSeamGroupName, gop));
 
-    const GA_PointGroup* pointSeamGroup = nullptr;
+    const GA_PointGroup* pointSeamGroup = GA_FeE_Group::parsePointGroupDetached(cookparms, outGeo0, pointSeamGroupName, gop);
     //const GA_ElementGroup* edgeSeamGroup = nullptr;
 
     const GA_EdgeGroup* edgeSeamGroup = GA_FeE_Group::parseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
     //GA_FeE_Group::combineGroup<GA_VertexGroup, GA_EdgeGroup>(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
-    GA_FeE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
+    //GA_FeE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
+    GEO_FeE_Group::groupCombine(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
 
 
 

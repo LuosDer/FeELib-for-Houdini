@@ -13,11 +13,10 @@ namespace GA_FeE_Type {
 
 
 
-
 static GA_GroupType
-    attributeOwner_groupType(
-        const GA_AttributeOwner attribOwner
-    )
+attributeOwner_groupType(
+    const GA_AttributeOwner attribOwner
+)
 {
     switch (attribOwner)
     {
@@ -31,9 +30,9 @@ static GA_GroupType
 }
 
 static GA_AttributeOwner
-    attributeOwner_groupType(
-        const GA_GroupType groupType
-    )
+attributeOwner_groupType(
+    const GA_GroupType groupType
+)
 {
     switch (groupType)
     {
@@ -93,6 +92,26 @@ isInvalid(
 }
 
 
+static bool
+isElementGroup(
+    const GA_AttributeOwner attribOwner
+)
+{
+    return attribOwner == GA_ATTRIB_PRIMITIVE || attribOwner == GA_ATTRIB_POINT || attribOwner == GA_ATTRIB_VERTEX;
+}
+static bool
+isElementGroup(
+    const GA_GroupType groupType
+)
+{
+    return groupType == GA_GROUP_PRIMITIVE || groupType == GA_GROUP_POINT || groupType == GA_GROUP_VERTEX;
+}
+
+
+
+
+
+
 
 static GA_Storage
 getPreferredStorageI(
@@ -101,10 +120,6 @@ getPreferredStorageI(
 {
     switch (precision)
     {
-    case GA_PRECISION_INVALID:
-        break;
-    case GA_PRECISION_1:
-        break;
     case GA_PRECISION_8:    return  GA_STORE_INT8;    break;
     case GA_PRECISION_16:   return  GA_STORE_INT16;   break;
     case GA_PRECISION_32:   return  GA_STORE_INT32;   break;
@@ -115,8 +130,6 @@ getPreferredStorageI(
     UT_ASSERT_MSG(0, "Unhandled Precision!");
     return GA_STORE_INVALID;
 }
-
-
 
 static GA_Storage
 getPreferredStorageI(
@@ -135,9 +148,6 @@ getPreferredStorageF(
 {
     switch (precision)
     {
-    case GA_PRECISION_INVALID:   break;
-    case GA_PRECISION_1:         break;
-    case GA_PRECISION_8:         break;
     case GA_PRECISION_16:        return  GA_STORE_REAL16;   break;
     case GA_PRECISION_32:        return  GA_STORE_REAL32;   break;
     case GA_PRECISION_64:        return  GA_STORE_REAL64;   break;

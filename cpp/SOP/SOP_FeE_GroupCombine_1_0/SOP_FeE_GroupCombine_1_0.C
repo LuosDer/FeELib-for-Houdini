@@ -32,7 +32,7 @@
 
 #include <GA/GA_EdgeGroup.h>
 
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 //#include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_VertexNextEquiv.h>
 
@@ -268,12 +268,12 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
         return;
     
     //if (!geo0Group || geo0Group->isEmpty())
-    if (!geo0Group || GA_FeE_Group::isEmpty(geo0Group, groupType))
+    if (!geo0Group || GA_FeE_Group::isEmpty(geo0Group))
         return;
 
 
     const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
-    GA_Group* combineGroup = GA_FeE_Group::findGroup(outGeo0, combineGroupType, geo0AttribNames);
+    GA_Group* combineGroup = GA_FeE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
     if (!combineGroup)
         return;
 
@@ -302,7 +302,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //const GA_Group* geo0EdgeGroup = gop.parseEdgeDetached(sopparms.getGroup(), outGeo0, true, success);
 
     //const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
-    GA_FeE_Group::combine(outGeo0, combineGroup, geo0Group);
+    GEO_FeE_Group::groupCombine(outGeo0, combineGroup, geo0Group);
 
     //for (auto it = static_cast<const GA_EdgeGroup*>(geo0EdgeGroup)->begin(); !it.atEnd(); it.advance())
     //{

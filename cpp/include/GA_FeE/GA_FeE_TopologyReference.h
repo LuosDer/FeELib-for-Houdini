@@ -638,7 +638,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& name = "__topo_vtxpnum",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -663,7 +663,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& name = "__topo_vtxpnum",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 16
         )
@@ -693,7 +693,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -724,7 +724,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
         )
@@ -749,7 +749,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -774,7 +774,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
@@ -797,7 +797,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& name = "__topo_dstpt",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -840,7 +840,7 @@ namespace GA_FeE_TopologyReference {
             const UT_StringHolder& name = "__topo_dstpt",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage& storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INT32,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )

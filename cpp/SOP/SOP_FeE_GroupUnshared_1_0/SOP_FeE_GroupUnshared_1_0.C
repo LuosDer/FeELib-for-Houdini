@@ -327,7 +327,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
 
-    GEO_FeE_Attribute::attribCast(outGeo0, unshared_promoGroup, unsharedAttribStorageClass, "", PreferredPrecision, false, true);
+    GEO_FeE_Attribute::attribCast(outGeo0, unshared_promoGroup, unsharedAttribStorageClass, "", PreferredPrecision);
 
     //if (unsharedAttribClass != GA_GROUP_EDGE)
     //{

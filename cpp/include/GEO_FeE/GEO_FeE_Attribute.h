@@ -22,7 +22,7 @@ namespace GEO_FeE_Attribute {
         setAttribValue1(
             GA_Detail* geo,
             GA_Attribute* attrib,
-            GA_SplittableRange& geoSplittableRange,
+            const GA_SplittableRange& geoSplittableRange,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
         )
@@ -45,23 +45,23 @@ namespace GEO_FeE_Attribute {
         setAttribStringValue1(
             GA_Detail* geo,
             GA_Attribute* attrib,
-            GA_SplittableRange& geoSplittableRange,
+            const GA_SplittableRange& geoSplittableRange,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
         )
     {
         const GA_RWHandleS attribH(attrib);
         UTparallelFor(geoSplittableRange, [&geo, &attribH](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attribH.set(elemoff, "1");
-                    }
+                    attribH.set(elemoff, "1");
                 }
-            }, subscribeRatio, minGrainSize);
+            }
+        }, subscribeRatio, minGrainSize);
     }
 
 
@@ -73,8 +73,6 @@ namespace GEO_FeE_Attribute {
             const GA_StorageClass newStorageClass,
             const UT_StringHolder& newName,
             const GA_Precision precision = GA_PRECISION_32,
-            const bool detached = false,
-            const bool delOriginal = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
         )
@@ -94,11 +92,13 @@ namespace GEO_FeE_Attribute {
 
         GA_SplittableRange geoSplittableRange = GA_FeE_Group::getSplittableRangeByAnyGroup(geo, group);
 
+        GA_Attribute* attrib = nullptr;
         switch (newStorageClass)
         {
         case GA_STORECLASS_INT:
         {
-            GA_Attribute* attrib = geo->addIntTuple(attribClass, newName, 1, GA_Defaults(0), 0, 0, GA_FeE_Type::getPreferredStorageI(precision));
+            attrib = geo->addIntTuple(attribClass, newName, 1, GA_Defaults(0), 0, 0, GA_FeE_Type::getPreferredStorageI(precision));
+            
             switch (precision)
             {
             case GA_PRECISION_8:
@@ -156,17 +156,35 @@ namespace GEO_FeE_Attribute {
         return false;
     }
 
+    SYS_FORCE_INLINE
+    static bool
+    attribCast(
+        GEO_Detail* geo,
+        GA_Group* group,
+        const GA_StorageClass newStorageClass,
+        const UT_StringHolder& newName,
+        const GA_Precision precision = GA_PRECISION_32,
+        const bool delOriginal = false,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 128
+    )
+    {
+        const bool success = attribCast(geo, static_cast<const GA_Group*>(group), newStorageClass, newName, precision, subscribeRatio, minGrainSize);
+        if (delOriginal) {
+            GA_FeE_Group::groupDestroy(geo, group);
+        }
+        return success;
+    }
 
 
 
 
-
-    //GEO_FeE_Attribute::normalizeElementAttrib(outGeo0, geo0Group, geo0AttribClass, attribPtr,
+    //GEO_FeE_Attribute::normalizeAttribElement(outGeo0, geo0Group, geo0AttribClass, attribPtr,
     //    doNormalize, uniScale,
     //    subscribeRatio, minGrainSize);
 
     static void
-        normalizeElementAttrib(
+        normalizeAttribElement(
             const GA_Detail* geo,
             const GA_Group* geoGroup,
             const GA_AttributeOwner attribOwner,
@@ -180,7 +198,7 @@ namespace GEO_FeE_Attribute {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(geoGroup);
         const GA_SplittableRange geoSplittableRange = GEO_FeE_Group::getSplittableRangeByAnyGroup(geo, geoGroup, attribOwner);
-        GA_FeE_Attribute::normalizeElementAttrib(geoSplittableRange, attribPtr,
+        GA_FeE_Attribute::normalizeAttribElement(geoSplittableRange, attribPtr,
             doNormalize, uniScale,
             subscribeRatio, minGrainSize);
     }
