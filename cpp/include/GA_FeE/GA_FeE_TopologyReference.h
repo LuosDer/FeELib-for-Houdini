@@ -808,7 +808,7 @@ namespace GA_FeE_TopologyReference {
         GA_Attribute* attribPtr = geo->findVertexAttribute(name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
 
         GA_Attribute* vtxPrimNextAttrib = geo->findVertexAttribute("__topo_vtxPrimNext");
         if (vtxPrimNextAttrib)

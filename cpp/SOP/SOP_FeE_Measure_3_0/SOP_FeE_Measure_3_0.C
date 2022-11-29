@@ -31,15 +31,13 @@
 #include <GU/GU_Measure.h>
 #include <GEO/GEO_SplitPoints.h>
 
+#include <GA_FeE/GA_FeE_Type.h>
 #include <GA_FeE/GA_FeE_Attribute.h>
 #include <GA_FeE/GA_FeE_Group.h>
 #include <GA_FeE/GA_FeE_Measure.h>
 
 
 using namespace SOP_FeE_Measure_3_0_Namespace;
-
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3F;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -281,30 +279,31 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
 
-    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    GOP_Manager gop;
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_GroupType& geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
+    const GA_GroupType geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
 
 
 
 
-    const SOP_FeE_Measure_3_0Parms::MeasureType& measureType = sopparms.getMeasureType();
+    const SOP_FeE_Measure_3_0Parms::MeasureType measureType = sopparms.getMeasureType();
 
-    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getPAttribClass());
-    const fpreal& uniScale = sopparms.getUniScale();
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getPAttribClass());
+    const fpreal uniScale = sopparms.getUniScale();
 
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 8);
     //const exint minGrainSize = pow(2, 4);
     // 
     //const GA_Storage inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    //const GA_Storage& inStorageF = GA_STORE_REAL32;
-    const GA_Storage& inStorageF = GA_STORE_INVALID;
+    //const GA_Storage inStorageF = GA_STORE_REAL32;
+    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
     
 
     //GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);

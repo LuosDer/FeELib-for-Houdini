@@ -8,9 +8,10 @@
 // SOP_FeE_ConvertLine_1_0Verb::cook with the correct type.
 #include "SOP_FeE_ConvertLine_1_0.proto.h"
 
-#include <GEO/GEO_Detail.h>
+#include <GA/GA_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
 #include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
 
 
 
@@ -21,9 +22,6 @@
 #include <GA_FeE/GA_FeE_VertexNextEquiv.h>
 
 using namespace SOP_FeE_ConvertLine_1_0_Namespace;
-
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -156,8 +154,8 @@ static const char *theDsFile = R"THEDSFILE(
        label   "Source Prims"
        type    toggle
        default { 0 }
-        nolabel
-        joinnext
+       nolabel
+       joinnext
     }
     parm {
         name    "srcPrimsAttribName"
@@ -312,6 +310,9 @@ sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmgrouptype)
 //}
 
 
+
+
+/*
 template<typename FUNCTOR>
 static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const GA_ElementGroup* group = nullptr, bool complement = false)
 {
@@ -379,6 +380,9 @@ void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool compl
 {
     forEachOffset(functor, geo->getPrimitiveMap(), group, complement);
 }
+
+*/
+
 
 //template<typename FUNCTOR>
 //SYS_FORCE_INLINE

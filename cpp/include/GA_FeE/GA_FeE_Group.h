@@ -139,13 +139,59 @@ groupBumpDataId(
 
 
 
+static const GA_Group*
+findOrParseGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    UT_ASSERT_P(geo);
+    if (!groupName.length())
+        return nullptr;
+
+    if (!groupName.isstring())
+    {
+        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+        return nullptr;
+    }
+    
+    const GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+    if (groupTable)
+    {
+        const GA_Group* anyGroup = groupTable->find(groupName);
+        if (anyGroup)
+            return anyGroup;
+    }
+
+    bool success = true;
+    const GA_Group* anyGroup = gop.parseGroupDetached(groupName, groupType, geo, true, false, success);
+
+    //if (!success || (anyGroup && !anyGroup->isElementGroup()))
+    if (!success)
+    {
+        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+        return nullptr;
+    }
+    if (anyGroup)
+    {
+        return anyGroup;
+    }
+    return nullptr;
+}
+
+
+
+
 
 
 static const GA_Group*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GEO_Detail* geo,
-    const GA_GroupType& groupType,
+    const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
