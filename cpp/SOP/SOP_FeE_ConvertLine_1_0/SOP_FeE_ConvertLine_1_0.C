@@ -499,7 +499,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
     //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstptAttribH = outGeo0->findVertexAttribute("__topo_dstpt");
+    const GA_RWHandleT<GA_Offset> dstptAttribH = tmpGeo0->findVertexAttribute(GA_SCOPE_PRIVATE, "__topo_dstpt");
 
     UT_ASSERT_P(dstptAttribH.getAttribute());
 
@@ -511,14 +511,16 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
 
     GA_Topology& topo = outGeo0->getTopology();
-    const GA_ATITopology* vtxPointRef = topo.getPointRef();
+
+    GA_Topology& topo_tmpGeo0 = tmpGeo0->getTopology();
+    const GA_ATITopology* vtxPointRef_tmpGeo0 = topo_tmpGeo0.getPointRef();
 
     GA_Offset start, end;
     for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
     {
         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
         {
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef->getLink(vtxoff));
+            topo.wireVertexPoint(vtxoff_first, vtxPointRef_tmpGeo0->getLink(vtxoff));
             ++vtxoff_first;
             topo.wireVertexPoint(vtxoff_first, dstptAttribH.get(vtxoff));
             ++vtxoff_first;

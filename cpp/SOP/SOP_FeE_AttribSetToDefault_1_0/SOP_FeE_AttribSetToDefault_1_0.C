@@ -8,38 +8,18 @@
 // SOP_FeE_AttribSetToDefault_1_0Verb::cook with the correct type.
 #include "SOP_FeE_AttribSetToDefault_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
+#include <UT/UT_DSOVersion.h>
 
-#include <GA/GA_Primitive.h>
-
-
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
-
-
-#include <GU/GU_Measure.h>
-#include <GU/GU_Promote.h>
-#include <GEO/GEO_SplitPoints.h>
-
+#include "GA_FeE/GA_FeE_Type.h"
 #include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_Attribute.h"
 
 
 using namespace SOP_FeE_AttribSetToDefault_1_0_Namespace;
 
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -257,7 +237,9 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+
+    GOP_Manager gop;
+    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
     const GA_GroupType& geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
@@ -270,16 +252,16 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
 
-    //const attribPrecisonF& uniScale = sopparms.getUniScale();
-    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    //const fpreal& uniScale = sopparms.getUniScale();
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
 
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
     //const int minGrainSize = pow(2, 4);
 
     //const GA_Storage& inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorageF = GA_STORE_REAL32;
+    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
 
 
     if (geo0AttribClass == GA_ATTRIB_DETAIL)
@@ -299,7 +281,7 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 #if 0
     GA_FeE_Attribute::setToDefault(outGeo0, attribPtr, geo0Group);
 #else
-    GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
+    GA_RWHandleT<UT_Vector3T<fpreal32>> attribHandle(attribPtr);
     GA_FeE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
 #endif  
     //GA_Attribute* attribPtr;

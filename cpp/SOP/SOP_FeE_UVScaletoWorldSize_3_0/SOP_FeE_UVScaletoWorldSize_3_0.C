@@ -8,33 +8,16 @@
 // SOP_FeE_UVScaletoWorldSize_3_0Verb::cook with the correct type.
 #include "SOP_FeE_UVScaletoWorldSize_3_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
+#include <UT/UT_DSOVersion.h>
 
-#include <GA/GA_Primitive.h>
-
-
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
-
-
-#include <GU/GU_Measure.h>
 #include <GU/GU_Promote.h>
-#include <GEO/GEO_SplitPoints.h>
 
 
 #include <GA_FeE/GA_FeE_Attribute.h>
-#include <GA_FeE/GA_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 #include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_Measure.h>
 #include <GA_FeE/GA_FeE_Connectivity.h>
@@ -361,7 +344,9 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
-    const GA_ElementGroup* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup());
+
+    GOP_Manager gop;
+    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -408,8 +393,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
     GA_AttributeOwner geo0AttribClassFinal;
-    GA_Attribute* attribPtr = nullptr;
-    if (!GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, attribPtr, geo0AttribClassFinal))
+    GA_Attribute* attribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal);
+    if (!attribPtr)
         return;
 
     GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
@@ -428,6 +413,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GA_Attribute* areaATIPtr   = GA_FeE_Measure::addAttribPrimArea(outGeo0,               "__area_SOP_FeE_UVScaletoWorldSize_3_0",   static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
     GA_Attribute* areaUVATIPtr = GA_FeE_Measure::addAttribPrimArea(outGeo0, attribHandle, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0", static_cast<const GA_PrimitiveGroup*>(geo0Group), GA_Defaults(-1.0), inStorageF, subscribeRatio, minGrainSize);
 
+    if (!areaUVATIPtr)
+        return;
     //GA_Attribute* areaATIPtr   = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__area_SOP_FeE_UVScaletoWorldSize_3_0",   1, GA_Defaults(0.0), 0, 0, inStorageF);
     //GA_Attribute* areaUVATIPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0", 1, GA_Defaults(0.0), 0, 0, inStorageF);
     GA_ATINumericUPtr uvScaleATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 3);
@@ -538,7 +525,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     {
         //const GA_Range geo0Range = GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
-        const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
+        const GA_SplittableRange geo0SplittableRange = GEO_FeE_Group::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
         UTparallelFor(geo0SplittableRange, [&outGeo0, &attribHandle, &uvScaleAttribHandle, &geo0AttribClassFinal](const GA_SplittableRange& r)
         {
             GA_Offset start, end;

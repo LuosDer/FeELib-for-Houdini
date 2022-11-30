@@ -663,10 +663,10 @@ namespace GA_FeE_VertexNextEquiv {
             const exint minGrainSize = 1024
         )
     {
-        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        GA_Attribute* attribPtr = geo->findVertexAttribute(GA_SCOPE_PRIVATE, name);
         if (attribPtr && geo->findVertexGroup(name))
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
 
         validGroup = geo->newVertexGroup(groupName);
         const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
@@ -746,7 +746,7 @@ namespace GA_FeE_VertexNextEquiv {
         GA_Attribute* attribPtr = geo->findVertexAttribute(name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
         vertexNextEquivNoLoop(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
@@ -803,7 +803,7 @@ namespace GA_FeE_VertexNextEquiv {
         if (attribPtr)
             return attribPtr;
         const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         groupPtr = geo->newVertexGroup(groupName);
         vertexNextEquiv(geo, attribPtr, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
@@ -854,7 +854,7 @@ namespace GA_FeE_VertexNextEquiv {
         GA_Attribute* attribPtr = geo->findVertexAttribute(name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
         vertexNextEquiv(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;

@@ -11,6 +11,7 @@
 #include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
 #include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
 
 
 #include <GA_FeE/GA_FeE_TopologyReference.h>
@@ -552,7 +553,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_EdgeGroup* edgeSeamGroup = GA_FeE_Group::parseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
     //GA_FeE_Group::combineGroup<GA_VertexGroup, GA_EdgeGroup>(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
     //GA_FeE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
-    GEO_FeE_Group::groupCombine(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
+    if(vertexEdgeSeamGroup)
+        GEO_FeE_Group::groupCombine(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
 
 
 

@@ -150,6 +150,7 @@ namespace GEO_FeE_Group {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+
         GA_GroupType groupTypeRef = groupRef->classType();
         switch (groupTypeRef)
         {
@@ -311,275 +312,26 @@ namespace GEO_FeE_Group {
 
 
 
-    static GA_Group*
-        groupPromote(
-            GA_Detail* geo,
-            GA_Group* group,
-            const GA_GroupType newType,
-            const UT_StringHolder& newName,
-            const bool detached = false,
-            const bool delOriginal = false
-        )
-    {
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
-
-        if (group->classType() == newType)
-        {
-            GA_FeE_Group::groupRename(geo, group, newName);
-            return group;
-        }
-
-        GA_GroupTable* groupTable = geo->getGroupTable(newType);
-        if (!groupTable)
-            return nullptr;
-
-        GA_Group* newGroup = detached ? groupTable->newDetachedGroup() : groupTable->newGroup(newName);
-
-        groupCombine(geo, newGroup, group);
-        if (delOriginal)
-            geo->destroyGroup(group);
-
-        return newGroup;
-    }
-
     static const GA_Group*
-        groupPromote(
-            GA_Detail* geo,
-            const GA_Group* group,
-            const GA_GroupType newType,
-            const UT_StringHolder& newName,
-            const bool detached = false
-        )
+    groupPromote(
+        GA_Detail* geo,
+        const GA_Group* group,
+        const GA_GroupType newType,
+        const UT_StringHolder& newName
+    )
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
 
         if (group->classType() == newType)
-        {
             return group;
-        }
 
         GA_GroupTable* groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = detached ? groupTable->newDetachedGroup() : groupTable->newGroup(newName);
-
+        GA_Group* newGroup = groupTable->newGroup(newName);
         groupCombine(geo, newGroup, group);
-
-        return newGroup;
-    }
-
-
-
-
-
-
-    SYS_FORCE_INLINE
-    static GA_Group*
-        groupPromote(
-            GA_Detail* geo,
-            GA_Group* group,
-            const GA_AttributeOwner newType,
-            const UT_StringHolder& newName,
-            const bool detached = false,
-            const bool delOriginal = false
-        )
-    {
-        return groupPromote(geo, group, GA_FeE_Type::attributeOwner_groupType(newType), newName, detached, delOriginal);
-    }
-
-    SYS_FORCE_INLINE
-    static GA_Group*
-        groupPromotePrimitive(
-            GA_Detail* geo,
-            GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false,
-            const bool delOriginal = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, detached, delOriginal);
-    }
-
-    SYS_FORCE_INLINE
-    static GA_Group*
-        groupPromotePoint(
-            GA_Detail* geo,
-            GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false,
-            const bool delOriginal = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_POINT, newName, detached, delOriginal);
-    }
-
-    SYS_FORCE_INLINE
-    static GA_Group*
-        groupPromoteVertex(
-            GA_Detail* geo,
-            GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false,
-            const bool delOriginal = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_VERTEX, newName, detached, delOriginal);
-    }
-
-    SYS_FORCE_INLINE
-    static GA_Group*
-        groupPromoteEdge(
-            GA_Detail* geo,
-            GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false,
-            const bool delOriginal = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_EDGE, newName, detached, delOriginal);
-    }
-
-
-
-
-
-    SYS_FORCE_INLINE
-        static const GA_Group*
-        groupPromote(
-            GA_Detail* geo,
-            const GA_Group* group,
-            const GA_AttributeOwner newType,
-            const UT_StringHolder& newName,
-            const bool detached = false
-        )
-    {
-        return groupPromote(geo, group, GA_FeE_Type::attributeOwner_groupType(newType), newName, detached);
-    }
-
-    SYS_FORCE_INLINE
-        static const GA_Group*
-        groupPromotePrimitive(
-            GA_Detail* geo,
-            const GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, detached);
-    }
-
-    SYS_FORCE_INLINE
-        static const GA_Group*
-        groupPromotePoint(
-            GA_Detail* geo,
-            const GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_POINT, newName, detached);
-    }
-
-    SYS_FORCE_INLINE
-        static const GA_Group*
-        groupPromoteVertex(
-            GA_Detail* geo,
-            const GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_VERTEX, newName, detached);
-    }
-
-    SYS_FORCE_INLINE
-        static GA_Group*
-        groupPromoteEdge(
-            GA_Detail* geo,
-            GA_Group* group,
-            const UT_StringHolder& newName,
-            const bool detached = false
-        )
-    {
-        return groupPromote(geo, group, GA_GROUP_EDGE, newName, detached);
-    }
-
-
-    //static UT_UniquePtr<GA_PrimitiveGroup>
-    //groupPromotePrimitiveDetached(
-    //    const GA_Detail* geo,
-    //    const GA_ElementGroup* group
-    //)
-    //{
-    //    if (!group)
-    //        return nullptr;
-    //    UT_UniquePtr<GA_PrimitiveGroup> groupDeleter;
-    //    GA_PrimitiveGroup* newDetachedGroup = new GA_PrimitiveGroup(*geo);
-    //    groupDeleter.reset(newDetachedGroup);
-    //    newDetachedGroup->combine(group);
-    //    return groupDeleter;
-    //}
-    //
-    //static UT_UniquePtr<GA_PointGroup>
-    //groupPromotePointDetached(
-    //    const GA_Detail* geo,
-    //    const GA_ElementGroup* group
-    //)
-    //{
-    //    if (!group)
-    //        return nullptr;
-    //    UT_UniquePtr<GA_PointGroup> groupDeleter;
-    //    GA_PointGroup* newDetachedGroup = new GA_PointGroup(*geo);
-    //    groupDeleter.reset(newDetachedGroup);
-    //    newDetachedGroup->combine(group);
-    //    return groupDeleter;
-    //}
-    //
-    //static UT_UniquePtr<GA_VertexGroup>
-    //groupPromoteVertexDetached(
-    //    const GA_Detail* geo,
-    //    const GA_ElementGroup* group
-    //)
-    //{
-    //    if (!group)
-    //        return nullptr;
-    //    UT_UniquePtr<GA_VertexGroup> groupDeleter;
-    //    GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*geo);
-    //    groupDeleter.reset(newDetachedGroup);
-    //    newDetachedGroup->combine(group);
-    //    return groupDeleter;
-    //}
-
-
-
-    static GA_Group*
-        groupPromoteDetached(
-            GA_Detail* geo,
-            GA_Group* group,
-            const GA_GroupType newType,
-            const bool delOriginal = false
-        )
-    {
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
-
-        if (group->classType() == newType)
-        {
-            return group;
-        }
-
-        GA_GroupTable* groupTable = geo->getGroupTable(newType);
-        if (!groupTable)
-            return nullptr;
-
-        GA_Group* newGroup = groupTable->newDetachedGroup();
-
-        groupCombine(geo, newGroup, group);
-        if (delOriginal)
-            geo->destroyGroup(group);
 
         return newGroup;
     }
@@ -594,11 +346,6 @@ namespace GEO_FeE_Group {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
 
-        if (group->classType() == newType)
-        {
-            return group;
-        }
-
         const GA_GroupTable* groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
@@ -610,23 +357,170 @@ namespace GEO_FeE_Group {
         return newGroup;
     }
 
-
-
-    SYS_FORCE_INLINE
-    static GA_Group*
-        groupPromoteDetached(
-            GA_Detail* geo,
-            GA_Group* group,
-            const GA_AttributeOwner newType,
-            const bool delOriginal = false
-        )
+    static const GA_Group*
+    groupFindPromoteDetached(
+        const GA_Detail* geo,
+        const GA_Group* group,
+        const GA_GroupType newType
+    )
     {
-        return groupPromoteDetached(geo, group, GA_FeE_Type::attributeOwner_groupType(newType), delOriginal);
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+
+        if (group->classType() == newType)
+            return group;
+
+        const GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        if (!groupTable)
+            return nullptr;
+
+        GA_Group* newGroup = groupTable->newDetachedGroup();
+        groupCombine(geo, newGroup, group);
+
+        return newGroup;
     }
 
 
+
+
     SYS_FORCE_INLINE
-    static GA_Group*
+    static const GA_Group*
+    groupPromote(
+        GA_Detail* geo,
+        const GA_Group* group,
+        const GA_AttributeOwner newType,
+        const UT_StringHolder& newName
+    )
+    {
+        return groupPromote(geo, group, GA_FeE_Type::attributeOwner_groupType(newType), newName);
+    }
+
+    SYS_FORCE_INLINE
+    static const GA_Group*
+        groupPromoteDetached(
+            const GA_Detail* geo,
+            const GA_Group* group,
+            const GA_AttributeOwner newType
+        )
+    {
+        return groupPromoteDetached(geo, group, GA_FeE_Type::attributeOwner_groupType(newType));
+    }
+
+    SYS_FORCE_INLINE
+    static const GA_Group*
+        groupFindPromoteDetached(
+            const GA_Detail* geo,
+            const GA_Group* group,
+            const GA_AttributeOwner newType
+        )
+    {
+        return groupFindPromoteDetached(geo, group, GA_FeE_Type::attributeOwner_groupType(newType));
+    }
+
+
+
+
+    SYS_FORCE_INLINE
+    static const GA_Group*
+    groupPromote(
+        GA_Detail* geo,
+        GA_Group* group,
+        const GA_GroupType newType,
+        const UT_StringHolder& newName,
+        const bool delOriginal = false
+    )
+    {
+        const GA_Group* newGroup = groupPromote(geo, static_cast<const GA_Group*>(group), newType, newName);
+        if (delOriginal)
+            geo->destroyGroup(group);
+        return newGroup;
+    }
+
+    SYS_FORCE_INLINE
+    static const GA_Group*
+    groupPromoteDetached(
+        GA_Detail* geo,
+        GA_Group* group,
+        const GA_GroupType newType,
+        const bool delOriginal = false
+    )
+    {
+        const GA_Group* newGroup = groupPromoteDetached(geo, group, newType);
+        if (delOriginal)
+            geo->destroyGroup(group);
+        return newGroup;
+    }
+
+    SYS_FORCE_INLINE
+    static const GA_Group*
+    groupFindPromoteDetached(
+        GA_Detail* geo,
+        GA_Group* group,
+        const GA_GroupType newType,
+        const bool delOriginal = false
+    )
+    {
+        const GA_Group* newGroup = groupFindPromoteDetached(geo, group, newType);
+        if (delOriginal)
+            geo->destroyGroup(group);
+        return newGroup;
+    }
+
+
+
+
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupPromotePrimitive(
+            GA_Detail* geo,
+            const GA_Group* group,
+            const UT_StringHolder& newName
+        )
+    {
+        return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupPromotePoint(
+            GA_Detail* geo,
+            const GA_Group* group,
+            const UT_StringHolder& newName
+        )
+    {
+        return groupPromote(geo, group, GA_GROUP_POINT, newName);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupPromoteVertex(
+            GA_Detail* geo,
+            const GA_Group* group,
+            const UT_StringHolder& newName
+        )
+    {
+        return groupPromote(geo, group, GA_GROUP_VERTEX, newName);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupPromoteEdge(
+            GA_Detail* geo,
+            const GA_Group* group,
+            const UT_StringHolder& newName
+        )
+    {
+        return groupPromote(geo, group, GA_GROUP_EDGE, newName);
+    }
+
+
+
+
+
+
+    SYS_FORCE_INLINE
+    static const GA_Group*
         groupPromotePrimitiveDetached(
             GA_Detail* geo,
             GA_Group* group,
@@ -637,7 +531,7 @@ namespace GEO_FeE_Group {
     }
 
     SYS_FORCE_INLINE
-    static GA_Group*
+    static const GA_Group*
         groupPromotePointDetached(
             GA_Detail* geo,
             GA_Group* group,
@@ -648,7 +542,7 @@ namespace GEO_FeE_Group {
     }
 
     SYS_FORCE_INLINE
-    static GA_Group*
+        static const GA_Group*
         groupPromoteVertexDetached(
             GA_Detail* geo,
             GA_Group* group,
@@ -658,20 +552,20 @@ namespace GEO_FeE_Group {
         return groupPromoteDetached(geo, group, GA_GROUP_VERTEX, delOriginal);
     }
 
-
-
-
-
     SYS_FORCE_INLINE
         static const GA_Group*
-        groupPromoteDetached(
-            const GA_Detail* geo,
-            const GA_Group* group,
-            const GA_AttributeOwner newType
+        groupPromoteEdgeDetached(
+            GA_Detail* geo,
+            GA_Group* group,
+            const bool delOriginal = false
         )
     {
-        return groupPromoteDetached(geo, group, GA_FeE_Type::attributeOwner_groupType(newType));
+        return groupPromoteDetached(geo, group, GA_GROUP_EDGE, delOriginal);
     }
+
+
+
+
     SYS_FORCE_INLINE
         static const GA_Group*
         groupPromotePrimitiveDetached(
@@ -702,6 +596,59 @@ namespace GEO_FeE_Group {
         return groupPromoteDetached(geo, group, GA_GROUP_VERTEX);
     }
 
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupPromoteEdgeDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return groupPromoteDetached(geo, group, GA_GROUP_EDGE);
+    }
+
+
+
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupFindPromotePrimitiveDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return groupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupFindPromotePointDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return groupFindPromoteDetached(geo, group, GA_GROUP_POINT);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupFindPromoteVertexDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return groupFindPromoteDetached(geo, group, GA_GROUP_VERTEX);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_Group*
+        groupFindPromoteEdgeDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return groupFindPromoteDetached(geo, group, GA_GROUP_EDGE);
+    }
+
 
 
 
@@ -715,60 +662,90 @@ namespace GEO_FeE_Group {
 
 
     SYS_FORCE_INLINE
-    static GA_ElementGroup*
-        elementGroupPromoteDetached(
+        static const GA_ElementGroup*
+        elementGroupFindPromoteDetached(
+            const GA_Detail* geo,
+            const GA_Group* group,
+            const GA_GroupType newType
+        )
+    {
+        return static_cast<const GA_ElementGroup*>(groupFindPromoteDetached(geo, group, newType));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_ElementGroup*
+        elementGroupFindPromotePrimitiveDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return elementGroupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_ElementGroup*
+        elementGroupFindPromotePointDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return elementGroupFindPromoteDetached(geo, group, GA_GROUP_POINT);
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_ElementGroup*
+        elementGroupFindPromoteVertexDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return elementGroupFindPromoteDetached(geo, group, GA_GROUP_VERTEX);
+    }
+
+
+    SYS_FORCE_INLINE
+    static const GA_ElementGroup*
+        elementGroupFindPromoteDetached(
             GA_Detail* geo,
             GA_Group* group,
             const GA_GroupType newType,
             const bool delOriginal = false
         )
     {
-        return static_cast<GA_ElementGroup*>(groupPromoteDetached(geo, group, newType, delOriginal));
+        return static_cast<const GA_ElementGroup*>(groupFindPromoteDetached(geo, group, newType, delOriginal));
     }
 
     SYS_FORCE_INLINE
-    static GA_ElementGroup*
-        elementGroupPromoteDetached(
-            GA_Detail* geo,
-            GA_Group* group,
-            const GA_AttributeOwner newType,
-            const bool delOriginal = false
-        )
-    {
-        return elementGroupPromoteDetached(geo, group, GA_FeE_Type::attributeOwner_groupType(newType), delOriginal);
-    }
-
-    SYS_FORCE_INLINE
-        static GA_ElementGroup*
-        elementGroupPromotePrimitiveDetached(
+        static const GA_ElementGroup*
+        elementGroupFindPromotePrimitiveDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return elementGroupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, delOriginal);
+        return elementGroupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, delOriginal);
     }
 
     SYS_FORCE_INLINE
-        static GA_ElementGroup*
-        elementGroupPromotePointDetached(
+        static const GA_ElementGroup*
+        elementGroupFindPromotePointDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return elementGroupPromoteDetached(geo, group, GA_GROUP_POINT, delOriginal);
+        return elementGroupFindPromoteDetached(geo, group, GA_GROUP_POINT, delOriginal);
     }
 
     SYS_FORCE_INLINE
-        static GA_ElementGroup*
-        elementGroupPromoteVertexDetached(
+        static const GA_ElementGroup*
+        elementGroupFindPromoteVertexDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return elementGroupPromoteDetached(geo, group, GA_GROUP_VERTEX, delOriginal);
+        return elementGroupFindPromoteDetached(geo, group, GA_GROUP_VERTEX, delOriginal);
     }
 
 
@@ -784,17 +761,6 @@ namespace GEO_FeE_Group {
         )
     {
         return static_cast<const GA_ElementGroup*>(groupPromoteDetached(geo, group, newType));
-    }
-
-    SYS_FORCE_INLINE
-        static const GA_ElementGroup*
-        elementGroupPromoteDetached(
-            const GA_Detail* geo,
-            const GA_Group* group,
-            const GA_AttributeOwner newType
-        )
-    {
-        return elementGroupPromoteDetached(geo, group, GA_FeE_Type::attributeOwner_groupType(newType));
     }
 
     SYS_FORCE_INLINE

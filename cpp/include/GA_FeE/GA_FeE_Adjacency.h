@@ -776,7 +776,7 @@ namespace GA_FeE_Adjacency {
             const exint minGrainSize = 64
         )
     {
-        GA_Attribute* attribPtr = geo->findPointAttribute(name);
+        GA_Attribute* attribPtr = geo->findPointAttribute(GA_SCOPE_PRIVATE, name);
         if (attribPtr)
             return attribPtr;
         GA_Attribute* vtxPrevAttrib = nullptr;
@@ -784,7 +784,7 @@ namespace GA_FeE_Adjacency {
         GA_FeE_TopologyReference::addAttribVertexVertexPrim(geo, vtxPrevAttrib, vtxNextAttrib, "vtxPrimPrev", "vtxPrimNext", nullptr, GA_Defaults(-1), storage, nullptr);
 
         //attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, name, 1, defaults, creation_args, attribute_options, storage, reuse);
-        attribPtr = geo->addIntArray(GA_ATTRIB_POINT, name, 1, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntArray(GA_ATTRIB_POINT, GA_SCOPE_PRIVATE, name, 1, creation_args, attribute_options, storage, reuse);
 
         pointPointEdge(geo, attribPtr, vtxPrevAttrib, vtxNextAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         //UT_ASSERT_P(vtxPrevAttrib);
@@ -835,7 +835,7 @@ namespace GA_FeE_Adjacency {
             const exint minGrainSize = 64
         )
     {
-        GA_Attribute* attribPtr = geo->findPrimitiveAttribute(name);
+        GA_Attribute* attribPtr = geo->findPrimitiveAttribute(GA_SCOPE_PRIVATE, name);
         if (attribPtr)
             return attribPtr;
 
@@ -845,7 +845,7 @@ namespace GA_FeE_Adjacency {
 
         GA_Attribute* vtxNextEquivAttrib = GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, "__topo_nextEquiv", nullptr, GA_Defaults(-1), storage, nullptr);
 
-        attribPtr = geo->addIntArray(GA_ATTRIB_PRIMITIVE, name, 1, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntArray(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PRIVATE, name, 1, creation_args, attribute_options, storage, reuse);
         //GA_ROHandleT<UT_ValArray<GA_Offset>> attribHandle(attribPtr);
         primPrimEdge(geo, attribPtr, vtxNextEquivAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         return attribPtr;

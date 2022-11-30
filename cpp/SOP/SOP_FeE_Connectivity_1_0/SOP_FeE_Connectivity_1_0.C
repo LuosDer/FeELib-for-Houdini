@@ -11,6 +11,7 @@
 #include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
 #include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
 
 //#include <GU/GU_Detail.h>
 //#include <GEO/GEO_PrimPoly.h>
@@ -39,13 +40,11 @@
 #include <GU/GU_Promote.h>
 
 #include <GEO_FeE/GEO_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_Attribute.h>
 #include <GA_FeE/GA_FeE_Adjacency.h>
 #include <GA_FeE/GA_FeE_Connectivity.h>
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
-
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -332,7 +331,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //std::chrono::duration<double> diff;
 
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Connectivity_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -346,14 +345,14 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (!geo0AttribNames.isstring())
         return;
 
-    const bool& useUVConnectivity = sopparms.getUseUVConnectivity();
+    const bool useUVConnectivity = sopparms.getUseUVConnectivity();
 
     const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
     if (useUVConnectivity && !uvAttribName.isstring())
         return;
 
 
-    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
     const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
@@ -367,37 +366,29 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
-    const bool& useSeamGroup = seamGroupName.isstring();
+    const bool useSeamGroup = seamGroupName.isstring();
 
 
-    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
-    const bool& connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
+    const bool connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
     //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
-    const bool& connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
+    const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint& minGrainSize = pow(2, 8);
-    //const exint& minGrainSize = pow(2, 4);
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = pow(2, 8);
+    //const exint minGrainSize = pow(2, 4);
+    const exint minGrainSize = sopparms.getMinGrainSize();
 
 
     //const GA_Storage inStorageI = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorageI = GA_STORE_INT32;
+    const GA_Precision preferedPrecision = outGeo0->getPreferredPrecision();
+    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferedPrecision);
 
 
-    UT_UniquePtr<GA_PrimitiveGroup> geo0PrimGroupUPtr;
-    UT_UniquePtr<GA_PointGroup> geo0PointGroupUPtr;
+    const GA_Group* geo0GroupPromoted = GEO_FeE_Group::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
+    UT_UniquePtr<const GA_Group> geo0GroupUPtr(geo0GroupPromoted);
 
-    if (connectivityConstraint)
-    {
-        geo0PrimGroupUPtr = GEO_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group);
-    }
-    else
-    {
-        geo0PointGroupUPtr = GEO_FeE_Group::groupPromotePointDetached(outGeo0, geo0Group);
-    }
-
-    const GA_Group* geo0SeamGroup = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
+    const GA_Group* geo0SeamGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
 
 
 
@@ -455,7 +446,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (connectivityConstraint)
     {
         attribPtr = GA_FeE_Connectivity::addAttribConnectivityPrim(outGeo0, geo0AttribNames,
-            static_cast<const GA_PrimitiveGroup*>(geo0Group),
+            static_cast<const GA_PrimitiveGroup*>(geo0GroupPromoted),
             static_cast<const GA_VertexGroup*>(geo0SeamGroup),
             inStorageI, subscribeRatio, minGrainSize);
         //GA_FeE_Connectivity::connectivityPrim(outGeo0, attribHandle, adjElemsAttribPtr, static_cast<const GA_PrimitiveGroup*>(geo0Group));
@@ -467,7 +458,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     else
     {
         attribPtr = GA_FeE_Connectivity::addAttribConnectivityPoint(outGeo0, geo0AttribNames,
-            static_cast<const GA_PointGroup*>(geo0Group),
+            static_cast<const GA_PointGroup*>(geo0GroupPromoted),
             static_cast<const GA_PointGroup*>(geo0SeamGroup),
             inStorageI, subscribeRatio, minGrainSize);
         //GA_FeE_Connectivity::connectivityPoint(outGeo0, attribHandle, adjElemsAttribPtr, static_cast<const GA_PointGroup*>(geo0Group));
@@ -475,6 +466,13 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         {
             GU_Promote::promote(*outGeo0, attribPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_FIRST);
         }
+    }
+
+
+
+    if (connectivityAttribType) // string type
+    {
+        GEO_FeE_Attribute::attribCast(outGeo0, attribPtr, GA_STORECLASS_STRING, "", preferedPrecision);
     }
 
 
@@ -532,14 +530,6 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //        GU_Promote::promote(*outGeo0, attribPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_FIRST);
     //    }
     //}
-    
-
-
-    if (connectivityAttribType) // string type
-    {
-
-        //GA_FeE_Connectivity::connectivity(outGeo0, attribHandle, adjElemsAttribHandle, static_cast<const GA_PrimitiveGroup*>(geo0Group));
-    }
     
 
     /*

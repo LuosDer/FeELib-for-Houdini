@@ -8,29 +8,12 @@
 // SOP_FeE_GroupCombine_1_0Verb::cook with the correct type.
 #include "SOP_FeE_GroupCombine_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
+#include <UT/UT_DSOVersion.h>
 
-#include <GA/GA_Primitive.h>
-
-
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
-
-
-#include <GU/GU_Promote.h>
-
-#include <GA/GA_EdgeGroup.h>
+//#include <GA/GA_EdgeGroup.h>
 
 #include <GEO_FeE/GEO_FeE_Group.h>
 //#include <GA_FeE/GA_FeE_Adjacency.h>
@@ -268,7 +251,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
         return;
     
     //if (!geo0Group || geo0Group->isEmpty())
-    if (!geo0Group || GA_FeE_Group::isEmpty(geo0Group))
+    if (!geo0Group || GA_FeE_Group::groupIsEmpty(geo0Group))
         return;
 
 
@@ -290,7 +273,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
     //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_STORE_INT32;
+    const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     //const GA_AttributeOwner combineAttribType = GA_FeE_Group::attributeOwner_groupType(combineGroupType);
@@ -315,7 +298,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
     //combineGroup->bumpDataId();
-    GA_FeE_Group::bumpDataId(combineGroup);
+    GA_FeE_Group::groupBumpDataId(combineGroup);
 
     //GA_EdgeGroup* combineEdgeGroup = static_cast<GA_EdgeGroup*>(combineGroup);
     // 

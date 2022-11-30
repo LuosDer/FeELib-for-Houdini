@@ -646,10 +646,10 @@ namespace GA_FeE_TopologyReference {
             const exint minGrainSize = 16
         )
     {
-        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        GA_Attribute* attribPtr = geo->findVertexAttribute(GA_SCOPE_PRIVATE, name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexPrimIndex(geo, attribPtr, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -701,12 +701,12 @@ namespace GA_FeE_TopologyReference {
             const exint minGrainSize = 128
         )
     {
-        attribPtr_prev = geo->findVertexAttribute(namePrev);
-        attribPtr_next = geo->findVertexAttribute(nameNext);
+        attribPtr_prev = geo->findVertexAttribute(GA_SCOPE_PRIVATE, namePrev);
+        attribPtr_next = geo->findVertexAttribute(GA_SCOPE_PRIVATE, nameNext);
         if (attribPtr_prev && attribPtr_next)
             return false;
-        attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, namePrev, 1, defaults, creation_args, attribute_options, storage, reuse);
-        attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, namePrev, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexVertexPrim(geo, attribPtr_prev, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
         return true;
     }
@@ -757,10 +757,10 @@ namespace GA_FeE_TopologyReference {
             const exint minGrainSize = 256
         )
     {
-        GA_Attribute* attribPtr_next = geo->findVertexAttribute(nameNext);
+        GA_Attribute* attribPtr_next = geo->findVertexAttribute(GA_SCOPE_PRIVATE, nameNext);
         if (attribPtr_next)
             return attribPtr_next;
-        attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexVertexPrimNext(geo, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr_next;
     }
@@ -805,24 +805,24 @@ namespace GA_FeE_TopologyReference {
             const exint minGrainSize = 64
         )
     {
-        GA_Attribute* attribPtr = geo->findVertexAttribute(name);
+        GA_Attribute* attribPtr = geo->findVertexAttribute(GA_SCOPE_PRIVATE, name);
         if (attribPtr)
             return attribPtr;
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PRIVATE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
 
-        GA_Attribute* vtxPrimNextAttrib = geo->findVertexAttribute("__topo_vtxPrimNext");
-        if (vtxPrimNextAttrib)
+        GA_Attribute* refAttrib = geo->findVertexAttribute(GA_SCOPE_PRIVATE, "__topo_vtxPrimNext");
+        if (refAttrib)
         {
             //GA_Attribute* vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), storage, nullptr);
-            vertexPointDst(geo, attribPtr, vtxPrimNextAttrib, geoGroup, subscribeRatio, minGrainSize);
+            vertexPointDst(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
             return attribPtr;
         }
 
-        vtxPrimNextAttrib = geo->findVertexAttribute("__topo_vtxpnum");
-        if (vtxPrimNextAttrib)
+        refAttrib = geo->findVertexAttribute(GA_SCOPE_PRIVATE, "__topo_vtxpnum");
+        if (refAttrib)
         {
             //GA_Attribute* vtxPrimNextAttrib = addAttribVertexPrimIndex(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), storage, nullptr);
-            vertexPointDstByVtxpnum(geo, attribPtr, vtxPrimNextAttrib, geoGroup, subscribeRatio, minGrainSize);
+            vertexPointDstByVtxpnum(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
             return attribPtr;
         }
 

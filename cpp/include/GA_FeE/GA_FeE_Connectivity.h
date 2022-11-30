@@ -114,6 +114,7 @@ connectivityPoint(
             }
         }
     }, 16, 1024);
+    //geo->setAttributeFromArray(attribHandle.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
 
 
 
@@ -213,6 +214,7 @@ connectivityPrim(
             }
         }
     }, 16, 1024);
+    //geo->setAttributeFromArray(attribHandle.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
 }
 
 
@@ -240,7 +242,7 @@ addAttribConnectivityPoint(
     if (attribPtr)
         return attribPtr;
 
-    attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
+    attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, GA_SCOPE_PRIVATE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = GA_FeE_Adjacency::addAttribPointPointEdge(geo, "nebs", geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
     connectivityPoint(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
@@ -298,7 +300,7 @@ addAttribConnectivityPrim(
         GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, "nebs", geoGroup, geoSeamGroup,
             storage, subscribeRatio, minGrainSize);
     
-    attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
+    attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PRIVATE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
     connectivityPrim(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
 }

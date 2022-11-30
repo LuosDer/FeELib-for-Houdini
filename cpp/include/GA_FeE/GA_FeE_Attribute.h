@@ -19,25 +19,35 @@ namespace GA_FeE_Attribute {
 
 
 
-
-
-
-
-//GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, attribPtr, geo0AttribClassFinal)
-//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribPtr, attribOwnerFianl);
-
+SYS_FORCE_INLINE
 static bool
-    findFloatTuplePointVertex(
-        const GEO_Detail* const geo,
-        const GA_AttributeOwner attribOwner,
-        const GA_AttributeScope scope,
-        const UT_StringRef& attribName,
-        const GA_Attribute*& attribPtr,
-        GA_AttributeOwner& attribOwnerFinal,
-        const int min_size = 1,
-        const int max_size = -1
+    destroyAttribute(
+        GA_Attribute* attrib
     )
 {
+    return attrib->getDetail().getAttributes().destroyAttribute(attrib);
+}
+
+
+
+
+
+
+//GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal)
+//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
+
+static const GA_Attribute*
+findFloatTuplePointVertex(
+    const GEO_Detail* geo,
+    const GA_AttributeOwner attribOwner,
+    const GA_AttributeScope scope,
+    const UT_StringRef& attribName,
+    GA_AttributeOwner& attribOwnerFinal,
+    const int min_size = 1,
+    const int max_size = -1
+)
+{
+    const GA_Attribute* attribPtr = nullptr;
     if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
     {
         attribPtr = geo->findFloatTuple(GA_ATTRIB_VERTEX, scope, attribName, min_size, max_size);
@@ -49,7 +59,7 @@ static bool
             if (!attribPtr)
             {
                 attribOwnerFinal = GA_ATTRIB_INVALID;
-                return false;
+                return nullptr;
             }
             attribOwnerFinal = GA_ATTRIB_POINT;
         }
@@ -60,28 +70,94 @@ static bool
         if (!attribPtr)
         {
             attribOwnerFinal = GA_ATTRIB_INVALID;
-            return false;
+            return nullptr;
         }
         attribOwnerFinal = attribOwner;
     }
-    return true;
+    return attribPtr;
 }
 
-//GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, attribPtr, geo0AttribClassFinal)
-//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, attribName, attribPtr, attribOwnerFianl);
-static bool
+
+static GA_Attribute*
 findFloatTuplePointVertex(
-    const GEO_Detail* const geo,
+    GEO_Detail* geo,
+    const GA_AttributeOwner attribOwner,
+    const GA_AttributeScope scope,
+    const UT_StringRef& attribName,
+    GA_AttributeOwner& attribOwnerFinal,
+    const int min_size = 1,
+    const int max_size = -1
+)
+{
+    GA_Attribute* attribPtr = nullptr;
+    if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
+    {
+        attribPtr = geo->findFloatTuple(GA_ATTRIB_VERTEX, scope, attribName, min_size, max_size);
+        if (attribPtr)
+            attribOwnerFinal = GA_ATTRIB_VERTEX;
+        else
+        {
+            attribPtr = geo->findFloatTuple(GA_ATTRIB_POINT, scope, attribName, min_size, max_size);
+            if (!attribPtr)
+            {
+                attribOwnerFinal = GA_ATTRIB_INVALID;
+                return nullptr;
+            }
+            attribOwnerFinal = GA_ATTRIB_POINT;
+        }
+    }
+    else
+    {
+        attribPtr = geo->findFloatTuple(attribOwner, scope, attribName, min_size, max_size);
+        if (!attribPtr)
+        {
+            attribOwnerFinal = GA_ATTRIB_INVALID;
+            return nullptr;
+        }
+        attribOwnerFinal = attribOwner;
+    }
+    return attribPtr;
+}
+
+
+
+
+//GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal)
+//GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, attribName, attribOwnerFianl);
+
+
+
+SYS_FORCE_INLINE
+static const GA_Attribute*
+findFloatTuplePointVertex(
+    const GEO_Detail* geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
-    const GA_Attribute*& attribPtr,
     GA_AttributeOwner& attribOwnerFianl,
     const int min_size = 1,
     const int max_size = -1
 )
 {
-    return GA_FeE_Attribute::findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribPtr, attribOwnerFianl, min_size, max_size);
+    return findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl, min_size, max_size);
 }
+
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+findFloatTuplePointVertex(
+    GEO_Detail* geo,
+    const GA_AttributeOwner attribOwner,
+    const UT_StringRef& attribName,
+    GA_AttributeOwner& attribOwnerFianl,
+    const int min_size = 1,
+    const int max_size = -1
+)
+{
+    return findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl, min_size, max_size);
+}
+
+
+
 
 
 //GA_FeE_Attribute::normalizeElementAttrib(geo0SplittableRange, attribPtr,
