@@ -268,25 +268,25 @@ namespace GEO_FeE_Attribute {
         return false;
     }
 
-    SYS_FORCE_INLINE
-        static bool
-        attribCast(
-            GEO_Detail* geo,
-            GA_Attribute* attribPtr,
-            const GA_StorageClass newStorageClass,
-            const UT_StringHolder& newName,
-            const GA_Precision precision = GA_PRECISION_32,
-            const bool delOriginal = false,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 128
-        )
-    {
-        const bool success = attribCast(geo, static_cast<const GA_Attribute*>(attribPtr), newStorageClass, newName, precision, subscribeRatio, minGrainSize);
-        if (delOriginal) {
-            GA_FeE_Attribute::destroyAttribute(attribPtr);
-        }
-        return success;
-    }
+    //SYS_FORCE_INLINE
+    //    static bool
+    //    attribCast(
+    //        GEO_Detail* geo,
+    //        GA_Attribute* attribPtr,
+    //        const GA_StorageClass newStorageClass,
+    //        const UT_StringHolder& newName,
+    //        const GA_Precision precision = GA_PRECISION_32,
+    //        const bool delOriginal = false,
+    //        const exint subscribeRatio = 64,
+    //        const exint minGrainSize = 128
+    //    )
+    //{
+    //    const bool success = attribCast(geo, static_cast<const GA_Attribute*>(attribPtr), newStorageClass, newName, precision, subscribeRatio, minGrainSize);
+    //    if (delOriginal) {
+    //        GA_FeE_Attribute::destroyAttribute(attribPtr);
+    //    }
+    //    return success;
+    //}
 
 
 

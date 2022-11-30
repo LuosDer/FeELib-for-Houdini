@@ -321,7 +321,8 @@ namespace GEO_FeE_Group {
     )
     {
         UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
+        if (!group)
+            return nullptr;
 
         if (group->classType() == newType)
             return group;
@@ -344,7 +345,8 @@ namespace GEO_FeE_Group {
         )
     {
         UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
+        if (!group)
+            return nullptr;
 
         const GA_GroupTable* groupTable = geo->getGroupTable(newType);
         if (!groupTable)
@@ -365,7 +367,8 @@ namespace GEO_FeE_Group {
     )
     {
         UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
+        if (!group)
+            return nullptr;
 
         if (group->classType() == newType)
             return group;
@@ -431,7 +434,7 @@ namespace GEO_FeE_Group {
     )
     {
         const GA_Group* newGroup = groupPromote(geo, static_cast<const GA_Group*>(group), newType, newName);
-        if (delOriginal)
+        if (delOriginal && group != newGroup)
             geo->destroyGroup(group);
         return newGroup;
     }
@@ -446,7 +449,7 @@ namespace GEO_FeE_Group {
     )
     {
         const GA_Group* newGroup = groupPromoteDetached(geo, group, newType);
-        if (delOriginal)
+        if (delOriginal && group != newGroup)
             geo->destroyGroup(group);
         return newGroup;
     }
@@ -461,7 +464,7 @@ namespace GEO_FeE_Group {
     )
     {
         const GA_Group* newGroup = groupFindPromoteDetached(geo, group, newType);
-        if (delOriginal)
+        if (delOriginal && group != newGroup)
             geo->destroyGroup(group);
         return newGroup;
     }
@@ -471,47 +474,47 @@ namespace GEO_FeE_Group {
 
 
     SYS_FORCE_INLINE
-        static const GA_Group*
-        groupPromotePrimitive(
-            GA_Detail* geo,
-            const GA_Group* group,
-            const UT_StringHolder& newName
-        )
+    static const GA_PrimitiveGroup*
+    groupPromotePrimitive(
+        GA_Detail* geo,
+        const GA_Group* group,
+        const UT_StringHolder& newName
+    )
     {
-        return groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName);
+        return static_cast<const GA_PrimitiveGroup*>(groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_PointGroup*
         groupPromotePoint(
             GA_Detail* geo,
             const GA_Group* group,
             const UT_StringHolder& newName
         )
     {
-        return groupPromote(geo, group, GA_GROUP_POINT, newName);
+        return static_cast<const GA_PointGroup*>(groupPromote(geo, group, GA_GROUP_POINT, newName));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_VertexGroup*
         groupPromoteVertex(
             GA_Detail* geo,
             const GA_Group* group,
             const UT_StringHolder& newName
         )
     {
-        return groupPromote(geo, group, GA_GROUP_VERTEX, newName);
+        return static_cast<const GA_VertexGroup*>(groupPromote(geo, group, GA_GROUP_VERTEX, newName));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_EdgeGroup*
         groupPromoteEdge(
             GA_Detail* geo,
             const GA_Group* group,
             const UT_StringHolder& newName
         )
     {
-        return groupPromote(geo, group, GA_GROUP_EDGE, newName);
+        return static_cast<const GA_EdgeGroup*>(groupPromote(geo, group, GA_GROUP_EDGE, newName));
     }
 
 
@@ -520,133 +523,133 @@ namespace GEO_FeE_Group {
 
 
     SYS_FORCE_INLINE
-    static const GA_Group*
+    static const GA_PrimitiveGroup*
         groupPromotePrimitiveDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, delOriginal);
+        return static_cast<const GA_PrimitiveGroup*>(groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, delOriginal));
     }
 
     SYS_FORCE_INLINE
-    static const GA_Group*
+    static const GA_PointGroup*
         groupPromotePointDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_POINT, delOriginal);
+        return static_cast<const GA_PointGroup*>(groupPromoteDetached(geo, group, GA_GROUP_POINT, delOriginal));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_VertexGroup*
         groupPromoteVertexDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_VERTEX, delOriginal);
+        return static_cast<const GA_VertexGroup*>(groupPromoteDetached(geo, group, GA_GROUP_VERTEX, delOriginal));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_EdgeGroup*
         groupPromoteEdgeDetached(
             GA_Detail* geo,
             GA_Group* group,
             const bool delOriginal = false
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_EDGE, delOriginal);
+        return static_cast<const GA_EdgeGroup*>(groupPromoteDetached(geo, group, GA_GROUP_EDGE, delOriginal));
     }
 
 
 
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_PrimitiveGroup*
         groupPromotePrimitiveDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE);
+        return static_cast<const GA_PrimitiveGroup*>(groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_PointGroup*
         groupPromotePointDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_POINT);
+        return static_cast<const GA_PointGroup*>(groupPromoteDetached(geo, group, GA_GROUP_POINT));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_VertexGroup*
         groupPromoteVertexDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_VERTEX);
+        return static_cast<const GA_VertexGroup*>(groupPromoteDetached(geo, group, GA_GROUP_VERTEX));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_EdgeGroup*
         groupPromoteEdgeDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupPromoteDetached(geo, group, GA_GROUP_EDGE);
+        return static_cast<const GA_EdgeGroup*>(groupPromoteDetached(geo, group, GA_GROUP_EDGE));
     }
 
 
 
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_PrimitiveGroup*
         groupFindPromotePrimitiveDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE);
+        return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_PointGroup*
         groupFindPromotePointDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupFindPromoteDetached(geo, group, GA_GROUP_POINT);
+        return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_POINT));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_VertexGroup*
         groupFindPromoteVertexDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupFindPromoteDetached(geo, group, GA_GROUP_VERTEX);
+        return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_VERTEX));
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static const GA_EdgeGroup*
         groupFindPromoteEdgeDetached(
             const GA_Detail* geo,
             const GA_Group* group
         )
     {
-        return groupFindPromoteDetached(geo, group, GA_GROUP_EDGE);
+        return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_EDGE));
     }
 
 

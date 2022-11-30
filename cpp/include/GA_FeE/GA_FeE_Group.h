@@ -286,7 +286,7 @@ parseEdgeGroupDetached(
 
 
 
-
+SYS_FORCE_INLINE
 static GA_Range
 getRangeByAnyGroup(
     const GA_Detail* geo,
@@ -297,8 +297,7 @@ getRangeByAnyGroup(
     if (!group)
         return GA_Range();
 
-    const GA_GroupType inGroupType = group->classType();
-    const GA_AttributeOwner attribOwner = GA_FeE_Type::attributeOwner_groupType(inGroupType);
+    const GA_AttributeOwner attribOwner = GA_FeE_Type::attributeOwner_groupType(group->classType());
     return GA_Range(geo->getIndexMap(attribOwner), group);
 }
 

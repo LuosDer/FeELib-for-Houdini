@@ -8,24 +8,29 @@
 // SOP_FeE_GroupUnshared_1_0Verb::cook with the correct type.
 #include "SOP_FeE_GroupUnshared_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
-
-#include <GA/GA_Primitive.h>
+#include <UT/UT_DSOVersion.h>
 
 
-#include <UT/UT_UniquePtr.h>
-//#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
+//#include <GU/GU_Detail.h>
+//#include <GEO/GEO_PrimPoly.h>
+//#include <OP/OP_Operator.h>
+//#include <OP/OP_OperatorTable.h>
+//#include <PRM/PRM_Include.h>
+//#include <PRM/PRM_TemplateBuilder.h>
+//#include <UT/UT_DSOVersion.h>
+//#include <UT/UT_Interrupt.h>
+//#include <UT/UT_StringHolder.h>
+//#include <SYS/SYS_Math.h>
+//#include <limits.h>
+//
+//#include <GA/GA_Primitive.h>
+//
+//
+//#include <UT/UT_UniquePtr.h>
+//#include <HOM/HOM_SopNode.h>
 
 
 //#include <GU/GU_Promote.h>
@@ -39,9 +44,6 @@
 
 
 using namespace SOP_FeE_GroupUnshared_1_0_Namespace;
-
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -139,6 +141,14 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+
+    parm {
+        name    "outTopoAttrib"
+        cppname "OutTopoAttrib"
+        label   "Output Topo Attribute"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
        name    "subscribeRatio"
@@ -299,8 +309,6 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GEO_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group));
     //GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
 
-    //static_cast<GA_Group*>(geo0Group);
-    const_cast<GA_Group*>(geo0Group);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -319,11 +327,11 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
     const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
+    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
     
 
-    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup, inStorgeI);
-    GA_Group* unshared_promoGroup = GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
+    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup, inStorageI);
+    GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true));
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
 
@@ -392,7 +400,9 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 //#endif
 
 
-    GA_FeE_Group::bumpDataId(unshared_promoGroup);
+    GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
+
+    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 

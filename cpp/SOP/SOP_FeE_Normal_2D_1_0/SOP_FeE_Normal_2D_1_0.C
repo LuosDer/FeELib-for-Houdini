@@ -8,38 +8,23 @@
 // SOP_FeE_Normal_2D_1_0Verb::cook with the correct type.
 #include "SOP_FeE_Normal_2D_1_0.proto.h"
 
-#include <GU/GU_Detail.h>
-#include <GEO/GEO_PrimPoly.h>
-#include <OP/OP_Operator.h>
-#include <OP/OP_OperatorTable.h>
-#include <PRM/PRM_Include.h>
+
+#include <GA/GA_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
 #include <UT/UT_Interrupt.h>
-#include <UT/UT_StringHolder.h>
-#include <SYS/SYS_Math.h>
-#include <limits.h>
-
-#include <GA/GA_Primitive.h>
+#include <UT/UT_DSOVersion.h>
 
 
-#include <UT/UT_UniquePtr.h>
-#include <GA/GA_SplittableRange.h>
-#include <HOM/HOM_SopNode.h>
-
-
-#include <GU/GU_Measure.h>
-#include <GU/GU_Promote.h>
-#include <GEO/GEO_SplitPoints.h>
-
-#include "GU_FeE/GU_FeE_Measure.h"
-#include "GU_FeE/GU_FeE_Connectivity.h"
+#include <GEO_FeE/GEO_FeE_GroupExpand.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
+#include <GA_FeE/GA_FeE_Group.h>
+#include <GA_FeE/GA_FeE_Measure.h>
+#include <GA_FeE/GA_FeE_Connectivity.h>
+#include <GA_FeE/GA_FeE_TopologyReference.h>
 
 
 using namespace SOP_FeE_Normal_2D_1_0_Namespace;
 
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -209,6 +194,15 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
+
+    parm {
+        name    "outTopoAttrib"
+        cppname "OutTopoAttrib"
+        label   "Output Topo Attribute"
+        type    toggle
+        default { "0" }
+    }
+
     parm {
        name    "subscribeRatio"
        cppname "SubscribeRatio"
@@ -338,43 +332,54 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-
-
-
     const UT_StringHolder& geo0AttribNames = sopparms.getNormal2DAttribName();
     if (!geo0AttribNames.isstring())
         return;
 
 
-    const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
+
+    const UT_StringHolder& groupName0 = sopparms.getGroup();
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
     GOP_Manager gop;
 
-    const bool& scaleByTurns = sopparms.getScaleByTurns();
-    const bool& normalize = sopparms.getNormalize();
-    const bool& extrapolateEnds = sopparms.getExtrapolateEnds();
-    const bool& input3DNormal = sopparms.getInput3DNormal();
-    const bool& inputConstant3DNormal = sopparms.getInputConstant3DNormal();
+    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
+    GA_PointGroup* geo0PointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromotePointDetached(outGeo0, geo0Group));
+    UT_UniquePtr<GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
+
+    GEO_FeE_GroupExpand::pointGroupExpand(outGeo0, geo0PointGroup, 1);
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+
+    if (geo0Group && geo0Group->isEmpty())
+        return;
+
+    const GA_GroupType geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
 
 
-    const TAttribTypeV& constant3DNormal = sopparms.getConstant3DNormal();
-    const attribPrecisonF& uniScale = sopparms.getUniScale();
-    const attribPrecisonF& blend = sopparms.getBlend();
+    const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
+
+
+    const bool scaleByTurns = sopparms.getScaleByTurns();
+    const bool normalize = sopparms.getNormalize();
+    const bool extrapolateEnds = sopparms.getExtrapolateEnds();
+    const bool input3DNormal = sopparms.getInput3DNormal();
+    const bool inputConstant3DNormal = sopparms.getInputConstant3DNormal();
+
+
+    const UT_Vector3T<fpreal64> constant3DNormal = sopparms.getConstant3DNormal();
+    const fpreal64 uniScale = sopparms.getUniScale();
+    const fpreal64 blend = sopparms.getBlend();
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getNormal2DAttribClass());
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-
-    //const GA_Storage inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_STORE_INT32;
-
+    const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
+    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
+    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(PreferredPrecision);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -383,45 +388,19 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
+    GA_VertexGroup* geo0VtxGroup = nullptr;
+    GA_VertexGroup* geo0VtxSeamGroup = nullptr;
+
+    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
+    GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
+
+    const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
 
 
+    //outGeo0->setPrimitiveClosedFlag(elemoff);
 
-    const GA_ElementGroup* geo0Group = nullptr;
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
-
-    if (groupName0.isstring())
-    {
-        GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-        bool ok = true;
-        const GA_Group* anyGroup = gop.parseGroupDetached(groupName0, groupType, outGeo0, true, false, ok);
-
-        if (!ok || (anyGroup && !anyGroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName0);
-        }
-        if (anyGroup && anyGroup->isElementGroup())
-        {
-            geo0Group = UTverify_cast<const GA_ElementGroup*>(anyGroup);
-        }
-    }
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    GA_GroupType geo0finalGroupType;
-    if (geo0Group)
-        geo0finalGroupType = geo0Group->classType();
-    else
-        geo0finalGroupType = GA_GROUP_INVALID;
-
-
-
-    //UT_StringHolder geo0AttribNameSub = geo0AttribNames;
-
-    GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(geo0AttribClass, geo0AttribNames, 3, GA_Defaults(0.0), 0, 0, GA_STORE_REAL32);
-    GA_RWHandleT<TAttribTypeV> attribHandle(n2dAttrib);
+    GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(geo0AttribClass, geo0AttribNames, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
+    GA_RWHandleT<UT_Vector3T<fpreal64>> n2dAttribH(n2dAttrib);
 
     switch (geo0AttribClass)
     {
@@ -443,21 +422,20 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         }
 
         const GA_SplittableRange geo0SplittableRange(outGeo0->getPointRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [outGeo0, &boss, attribHandle, &uniScale](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange, [outGeo0, &boss, n2dAttribH, &uniScale](const GA_SplittableRange& r)
         {
             if (boss.wasInterrupted())
                 return;
-            GA_Offset start;
-            GA_Offset end;
+            GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     GA_Offset pointprim = outGeo0->vertexPrimitive(outGeo0->pointVertex(elemoff));
 
-                    TAttribTypeV attribValue = attribHandle.get(elemoff);
+                    UT_Vector3T<fpreal64> attribValue = n2dAttribH.get(elemoff);
                     attribValue *= uniScale;
-                    attribHandle.set(elemoff, attribValue);
+                    n2dAttribH.set(elemoff, attribValue);
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -488,6 +466,10 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         UT_ASSERT_MSG(0, "Unhandled outGeo0 class type!");
     }
 
+
+    GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
+
+    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 

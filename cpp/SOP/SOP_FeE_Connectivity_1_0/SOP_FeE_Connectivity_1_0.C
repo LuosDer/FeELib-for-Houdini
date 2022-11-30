@@ -180,6 +180,13 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
+    parm {
+        name    "outTopoAttrib"
+        cppname "OutTopoAttrib"
+        label   "Output Topo Attribute"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -391,84 +398,15 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const GA_Group* geo0SeamGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
 
 
-
-
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
-    /*
-    /// <summary>
-    /// ///////////////////////////////
-    /// </summary>
-    /// <param name="cookparms"></param>
-
-    GA_ATINumericUPtr vtxpnumAttribUPtr;
-    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
-
-    vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
-    //GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
-    vtxpnumAttribHandle.bind(vtxpnumAttribUPtr.get());
-
-    GA_FeE_Adjacency::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
-        static_cast<const GA_VertexGroup*>(geo0Group),
-        subscribeRatio, minGrainSize);
 
 
 
-
-    /// <summary>
-    /// ///////////////////////////////
-    /// </summary>
-    /// <param name="cookparms"></param>
-
-    GA_ATINumericUPtr dstptAttribUPtr;
-    GA_RWHandleT<GA_Offset> dstptAttribHandle;
-    if (connectivityConstraint)
-    {
-        dstptAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
-        //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-
-        dstptAttribHandle.bind(dstptAttribUPtr.get());
-        GA_FeE_Adjacency::vertexPointDst(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
-            static_cast<const GA_VertexGroup*>(geo0Group),
-            subscribeRatio, minGrainSize);
-    }
-
-    */
-
-    //timeEnd = std::chrono::steady_clock::now();
-    //diff = timeEnd - timeStart;
-    //timeTotal += diff.count();
-    //timeStart = std::chrono::steady_clock::now();
-
-
-
-    GA_Attribute* attribPtr;
-    if (connectivityConstraint)
-    {
-        attribPtr = GA_FeE_Connectivity::addAttribConnectivityPrim(outGeo0, geo0AttribNames,
-            static_cast<const GA_PrimitiveGroup*>(geo0GroupPromoted),
-            static_cast<const GA_VertexGroup*>(geo0SeamGroup),
-            inStorageI, subscribeRatio, minGrainSize);
-        //GA_FeE_Connectivity::connectivityPrim(outGeo0, attribHandle, adjElemsAttribPtr, static_cast<const GA_PrimitiveGroup*>(geo0Group));
-        if (geo0AttribClass == GA_ATTRIB_POINT)
-        {
-            GU_Promote::promote(*outGeo0, attribPtr, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-        }
-    }
-    else
-    {
-        attribPtr = GA_FeE_Connectivity::addAttribConnectivityPoint(outGeo0, geo0AttribNames,
-            static_cast<const GA_PointGroup*>(geo0GroupPromoted),
-            static_cast<const GA_PointGroup*>(geo0SeamGroup),
-            inStorageI, subscribeRatio, minGrainSize);
-        //GA_FeE_Connectivity::connectivityPoint(outGeo0, attribHandle, adjElemsAttribPtr, static_cast<const GA_PointGroup*>(geo0Group));
-        if (geo0AttribClass == GA_ATTRIB_PRIMITIVE)
-        {
-            GU_Promote::promote(*outGeo0, attribPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_FIRST);
-        }
-    }
-
-
+    GA_Attribute* attribPtr = GA_FeE_Connectivity::addAttribConnectivity(outGeo0, geo0AttribNames,
+        geo0GroupPromoted, geo0SeamGroup,
+        connectivityConstraint, geo0AttribClass,
+        inStorageI, subscribeRatio, minGrainSize);
 
     if (connectivityAttribType) // string type
     {
@@ -483,81 +421,8 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //outGeo0->setDetailAttributeF("timeTotal", timeTotal * 1000);
     //outGeo0->setDetailAttributeF("timeTotal1", timeTotal1 * 1000);
 
-    //GA_Attribute* adjElemsAttribPtr;
-    //GA_Attribute* adjElemsAttribPtr = outGeo0->addIntArray((connectivityConstraint || geo0AttribClass == GA_ATTRIB_PRIMITIVE) ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT, "__adjElems_SOP_FeE_Connectivity_1_0", 1, 0, 0, inStorageI);
-    //GA_RWHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle(adjElemsAttribPtr);
 
-
-
-
-
-
-
-
-    //if (connectivityConstraint)
-    //{
-    //    adjElemsAttribPtr = GA_FeE_Adjacency::addAttribPrimPrimEdge(outGeo0, "nebs", geo0PrimGroupUPtr.get(), static_cast<const GA_VertexGroup*>(geo0SeamGroup), GA_STORE_INT64, subscribeRatio, minGrainSize);
-    //    //GA_FeE_Adjacency::primPrimEdge(outGeo0, adjElemsAttribHandle, dstptAttribHandle,
-    //    //    static_cast<const GA_PrimitiveGroup*>(geo0Group), nullptr,
-    //    //    subscribeRatio, minGrainSize);
-    //}
-    //else
-    //{
-    //    adjElemsAttribPtr = GA_FeE_Adjacency::addAttribPointPointEdge(outGeo0, "nebs", geo0PointGroupUPtr.get(), static_cast<const GA_PointGroup*>(geo0SeamGroup), GA_STORE_INT64, subscribeRatio, minGrainSize);
-    //    //GA_FeE_Adjacency::pointPointEdge(outGeo0, adjElemsAttribHandle, vtxpnumAttribHandle,
-    //    //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-    //    //    subscribeRatio, minGrainSize);
-    //}
-
-
-
-    //GA_Attribute* attribPtr = outGeo0->addIntTuple(geo0AttribClass, geo0AttribNames, 1, GA_Defaults(-1), 0, 0, inStorageI);
-    //GA_RWHandleT<GA_Size> attribHandle(attribPtr);
-
-    //if (connectivityConstraint)
-    //{
-    //    GA_FeE_Connectivity::connectivityPrim(outGeo0, attribHandle, adjElemsAttribPtr, static_cast<const GA_PrimitiveGroup*>(geo0Group));
-    //    if (geo0AttribClass == GA_ATTRIB_POINT)
-    //    {
-    //        GU_Promote::promote(*outGeo0, attribPtr, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-    //    }
-    //}
-    //else
-    //{
-    //    GA_FeE_Connectivity::connectivityPoint(outGeo0, attribHandle, adjElemsAttribPtr, static_cast<const GA_PointGroup*>(geo0Group));
-    //    if (geo0AttribClass == GA_ATTRIB_PRIMITIVE)
-    //    {
-    //        GU_Promote::promote(*outGeo0, attribPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_FIRST);
-    //    }
-    //}
-    
-
-    /*
-    GA_ROPageHandleV3 v_ph(outGeo0, GA_ATTRIB_POINT, "v");
-    GA_RWPageHandleV3 p_ph(outGeo0->getP());
-    if (v_ph.isValid() && p_ph.isValid())
-    {
-        GA_Offset start, end;
-        for (GA_Iterator it(outGeo0->getPointRange()); it.blockAdvance(start, end); )
-        {
-            v_ph.setPage(start);
-            p_ph.setPage(start);
-#if 1
-            // Use Vector Math library
-            VM_Math::madd((fpreal32*)&p_ph.value(start),
-                (const fpreal32*)&v_ph.value(start),
-                0.1, (end - start) * 3);
-#else
-            for (GA_Offset pt = start; pt < end; ++pt)
-            {
-                p_ph.value(pt) += v_ph.get(pt) * 0.1;
-            }
-#endif
-        }
-    }
-    */
-
-
+    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 }

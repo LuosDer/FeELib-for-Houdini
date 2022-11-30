@@ -13,6 +13,17 @@ namespace GA_FeE_Type {
 
 
 
+#ifndef GA_FEE_TOPO_SCOPE
+
+#if 0
+#define GA_FEE_TOPO_SCOPE GA_FEE_SCOPE_PRIVATE
+#else
+#define GA_FEE_TOPO_SCOPE GA_SCOPE_PUBLIC
+#endif
+
+
+#endif
+
 static GA_GroupType
 attributeOwner_groupType(
     const GA_AttributeOwner attribOwner
@@ -47,6 +58,7 @@ attributeOwner_groupType(
 }
 
 
+SYS_FORCE_INLINE
 static bool
 isValid(
     const GA_AttributeOwner attribOwner
@@ -58,6 +70,7 @@ isValid(
            attribOwner == GA_ATTRIB_GLOBAL    ;
 }
 
+SYS_FORCE_INLINE
 static bool
 isValid(
     const GA_GroupType groupType
@@ -69,6 +82,7 @@ isValid(
            groupType == GA_GROUP_EDGE;
 }
 
+SYS_FORCE_INLINE
 static bool
 isInvalid(
     const GA_AttributeOwner attribOwner
@@ -80,6 +94,7 @@ isInvalid(
            attribOwner != GA_ATTRIB_GLOBAL;
 }
 
+SYS_FORCE_INLINE
 static bool
 isInvalid(
     const GA_GroupType groupType
@@ -92,6 +107,7 @@ isInvalid(
 }
 
 
+SYS_FORCE_INLINE
 static bool
 isElementGroup(
     const GA_AttributeOwner attribOwner
@@ -99,6 +115,9 @@ isElementGroup(
 {
     return attribOwner == GA_ATTRIB_PRIMITIVE || attribOwner == GA_ATTRIB_POINT || attribOwner == GA_ATTRIB_VERTEX;
 }
+
+
+SYS_FORCE_INLINE
 static bool
 isElementGroup(
     const GA_GroupType groupType
@@ -131,6 +150,7 @@ getPreferredStorageI(
     return GA_STORE_INVALID;
 }
 
+SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorageI(
     const GA_Detail* geo
@@ -157,6 +177,7 @@ getPreferredStorageF(
     return GA_STORE_INVALID;
 }
 
+SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorageF(
     const GA_Detail* geo
