@@ -670,31 +670,10 @@ namespace GA_FeE_VertexNextEquiv {
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
 
         validGroup = geo->newVertexGroup(groupName);
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
+        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         vertexNextEquivNoLoop(geo, attribPtr, validGroup, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
-
-
-    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquivNoLoop(geo, validGroup, name, groupName, posAttribHandle, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static GA_Attribute*
-        addAttribVertexNextEquivNoLoop(
-            GEO_Detail* geo,
-            GA_VertexGroup*& validGroup,
-            const UT_StringHolder& name = "__topo_nextEquivNoLoop",
-            const UT_StringHolder& groupName = "__topo_nextEquivValid",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 32,
-            const exint minGrainSize = 1024
-        )
-    {
-        return addAttribVertexNextEquivNoLoop(geo, validGroup, name, groupName, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
-
 
 
 
@@ -707,8 +686,9 @@ namespace GA_FeE_VertexNextEquiv {
     static GA_VertexGroup*
         addGroupVertexNextEquivNoLoop(
             GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_nextEquivValid",
             const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INT32,
+            const UT_StringHolder& name = "__topo_nextEquivValid",
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
         )
@@ -718,7 +698,7 @@ namespace GA_FeE_VertexNextEquiv {
             return groupPtr;
 
         groupPtr = geo->newVertexGroup(name);
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         vertexNextEquivNoLoop(geo, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
     }
@@ -733,10 +713,10 @@ namespace GA_FeE_VertexNextEquiv {
     static GA_Attribute*
         addAttribVertexNextEquivNoLoop(
             GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_nextEquivNoLoop",
             const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage storage = GA_STORE_INT32,
+            const UT_StringHolder& name = "__topo_nextEquivNoLoop",
+            const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -748,28 +728,10 @@ namespace GA_FeE_VertexNextEquiv {
         if (attribPtr)
             return attribPtr;
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
+        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         vertexNextEquivNoLoop(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
-
-    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static GA_Attribute*
-        addAttribVertexNextEquivNoLoop(
-            GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_nextEquivNoLoop",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 32,
-            const exint minGrainSize = 1024
-        )
-    {
-        return addAttribVertexNextEquivNoLoop(geo, name, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
-
 
 
 
@@ -788,11 +750,11 @@ namespace GA_FeE_VertexNextEquiv {
         addAttribVertexNextEquiv(
             GEO_Detail* geo,
             GA_VertexGroup*& groupPtr,
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nextEquiv",
             const UT_StringHolder& groupName = "__topo_unshared",
-            const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -803,7 +765,7 @@ namespace GA_FeE_VertexNextEquiv {
         GA_Attribute* attribPtr = geo->findVertexAttribute(name);
         if (attribPtr)
             return attribPtr;
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
+        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         groupPtr = geo->newVertexGroup(groupName);
         vertexNextEquiv(geo, attribPtr, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
@@ -811,40 +773,18 @@ namespace GA_FeE_VertexNextEquiv {
     }
 
 
-    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, groupPtr, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
 
+
+
+    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    
     static GA_Attribute*
         addAttribVertexNextEquiv(
             GEO_Detail* geo,
-            GA_VertexGroup*& groupPtr,
-            const UT_StringHolder& name = "__topo_nextEquiv",
-            const UT_StringHolder& groupName = "__topo_unshared",
             const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 32,
-            const exint minGrainSize = 1024
-        )
-    {
-        return addAttribVertexNextEquiv(geo, groupPtr, name, groupName, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
-
-
-
-
-
-
-
-
-    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, defaults, storage, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-
-    static GA_Attribute*
-        addAttribVertexNextEquiv(
-            GEO_Detail* geo,
             const UT_StringHolder& name = "__topo_nextEquiv",
-            const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -856,31 +796,11 @@ namespace GA_FeE_VertexNextEquiv {
         if (attribPtr)
             return attribPtr;
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
+        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         vertexNextEquiv(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
 
-    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    static GA_Attribute*
-        addAttribVertexNextEquiv(
-            GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_nextEquiv",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 32,
-            const exint minGrainSize = 1024
-        )
-    {
-        return addAttribVertexNextEquiv(geo, name, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
-
-
-
-
-
 
 
     //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, subscribeRatio, minGrainSize);
@@ -889,33 +809,9 @@ namespace GA_FeE_VertexNextEquiv {
         static GA_VertexGroup*
         addGroupVertexNextEquiv(
             GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_unshared",
             const GA_VertexGroup* geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 32,
-            const exint minGrainSize = 1024
-        )
-    {
-        GA_VertexGroup* groupPtr = geo->findVertexGroup(name);
-        if (groupPtr)
-            return groupPtr;
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), storage, nullptr);
-        groupPtr = geo->newVertexGroup(name);
-        vertexNextEquiv(geo, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
-        return groupPtr;
-    }
-
-
-    
-    /*
-    //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static GA_VertexGroup*
-        addGroupVertexNextEquiv(
-            GEO_Detail* geo,
             const UT_StringHolder& name = "__topo_unshared",
-            const GA_VertexGroup* geoGroup = nullptr,
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
         )
@@ -923,12 +819,13 @@ namespace GA_FeE_VertexNextEquiv {
         GA_VertexGroup* groupPtr = geo->findVertexGroup(name);
         if (groupPtr)
             return groupPtr;
-        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "__topo_dstpt", geoGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+        const GA_Attribute* refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         groupPtr = geo->newVertexGroup(name);
         vertexNextEquiv(geo, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
     }
-    */
+
+
 
 } // End of namespace GA_FeE_VertexNextEquiv
 

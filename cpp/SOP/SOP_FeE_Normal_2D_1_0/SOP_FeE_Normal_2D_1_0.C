@@ -15,12 +15,11 @@
 #include <UT/UT_DSOVersion.h>
 
 
-#include <GEO_FeE/GEO_FeE_GroupExpand.h>
-#include <GEO_FeE/GEO_FeE_Group.h>
-#include <GA_FeE/GA_FeE_Group.h>
 #include <GA_FeE/GA_FeE_Measure.h>
 #include <GA_FeE/GA_FeE_Connectivity.h>
 #include <GA_FeE/GA_FeE_TopologyReference.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
+#include <GEO_FeE/GEO_FeE_GroupExpand.h>
 
 
 using namespace SOP_FeE_Normal_2D_1_0_Namespace;
@@ -335,30 +334,13 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& geo0AttribNames = sopparms.getNormal2DAttribName();
     if (!geo0AttribNames.isstring())
         return;
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getNormal2DAttribClass());
 
 
 
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
-    GOP_Manager gop;
-
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
-    GA_PointGroup* geo0PointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromotePointDetached(outGeo0, geo0Group));
-    UT_UniquePtr<GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
-
-    GEO_FeE_GroupExpand::pointGroupExpand(outGeo0, geo0PointGroup, 1);
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    const GA_GroupType geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
 
 
     const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
-
 
     const bool scaleByTurns = sopparms.getScaleByTurns();
     const bool normalize = sopparms.getNormalize();
@@ -366,15 +348,15 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool input3DNormal = sopparms.getInput3DNormal();
     const bool inputConstant3DNormal = sopparms.getInputConstant3DNormal();
 
-
     const UT_Vector3T<fpreal64> constant3DNormal = sopparms.getConstant3DNormal();
     const fpreal64 uniScale = sopparms.getUniScale();
     const fpreal64 blend = sopparms.getBlend();
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getNormal2DAttribClass());
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
+
+
 
 
     const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
@@ -387,16 +369,70 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
+    GOP_Manager gop;
+    const UT_StringHolder& groupName0 = sopparms.getGroup();
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
+    const bool hasGroup = !!geo0Group;
 
-    GA_VertexGroup* geo0VtxGroup = nullptr;
-    GA_VertexGroup* geo0VtxSeamGroup = nullptr;
+    if (hasGroup && geo0Group->isEmpty())
+        return;
 
-    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
-    GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
+    GA_PointGroup* geo0PointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromotePointDetached(outGeo0, geo0Group));
+    UT_UniquePtr<GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
 
-    const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+    GA_VertexGroup* geo0VtxGroup = const_cast<GA_VertexGroup*>(GEO_FeE_Group::groupPromoteVertexDetached(outGeo0, geo0Group));
+
+    //GA_PointGroup* expandGroup = GA_FeE_Group::newDetachedGroup(outGeo0, geo0Group);
+    GA_PointGroup* expandGroup = outGeo0->newDetachedPointGroup();
+    UT_UniquePtr<GA_Group> expandGroupUPtr(expandGroup);
+
+    GEO_FeE_GroupExpand::groupExpand(outGeo0, expandGroup, geo0PointGroup, GA_GROUP_EDGE);
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+
+    const GA_GroupType geo0finalGroupType = geo0Group->classType();
 
 
+
+
+
+
+    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup);
+    //GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
+
+    GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromotePoint(outGeo0, unsharedGroup, geo0AttribNames, true));
+
+
+    const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, geo0VtxGroup);
+
+    if (normalize)
+    {
+
+    }
+    if (scaleByTurns)
+    {
+
+    }
+    if (extrapolateEnds)
+    {
+
+    }
+    if (input3DNormal)
+    {
+
+    }
+    if (inputConstant3DNormal)
+    {
+
+    }
+    if (geo0AttribClass)
+    {
+
+    }
+    else
+    {
+
+    }
     //outGeo0->setPrimitiveClosedFlag(elemoff);
 
     GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(geo0AttribClass, geo0AttribNames, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);

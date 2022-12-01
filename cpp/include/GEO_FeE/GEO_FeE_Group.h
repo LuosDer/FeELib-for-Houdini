@@ -295,13 +295,42 @@ namespace GEO_FeE_Group {
         }
         else
         {
-            group->combine(groupRef);
-            //static_cast<GA_ElementGroup*>(group)->combine(groupRef);
+            //group->combine(groupRef);
+            static_cast<GA_ElementGroup*>(group)->combine(groupRef);
         }
     }
 
 
 
+    SYS_FORCE_INLINE
+    static GA_Group*
+        groupDuplicate(
+            GA_Detail* geo,
+            const GA_Group* group,
+            const UT_StringHolder& groupName
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        GA_Group* newGroup = geo->getGroupTable(group->classType())->newGroup(groupName);
+        GEO_FeE_Group::groupCombine(geo, newGroup, group);
+        return newGroup;
+    }
+
+
+    SYS_FORCE_INLINE
+    static GA_Group*
+        groupDuplicateDetached(
+            const GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        GA_Group* newGroup = geo->getGroupTable(group->classType())->newDetachedGroup();
+        GEO_FeE_Group::groupCombine(geo, newGroup, group);
+        return newGroup;
+    }
 
 
 
@@ -518,6 +547,55 @@ namespace GEO_FeE_Group {
     }
 
 
+
+
+    SYS_FORCE_INLINE
+        static const GA_PrimitiveGroup*
+        groupPromotePrimitive(
+            GA_Detail* geo,
+            GA_Group* group,
+            const UT_StringHolder& newName,
+            const bool delOriginal = false
+        )
+    {
+        return static_cast<const GA_PrimitiveGroup*>(groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName, delOriginal));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_PointGroup*
+        groupPromotePoint(
+            GA_Detail* geo,
+            GA_Group* group,
+            const UT_StringHolder& newName,
+            const bool delOriginal = false
+        )
+    {
+        return static_cast<const GA_PointGroup*>(groupPromote(geo, group, GA_GROUP_POINT, newName, delOriginal));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_VertexGroup*
+        groupPromoteVertex(
+            GA_Detail* geo,
+            GA_Group* group,
+            const UT_StringHolder& newName,
+            const bool delOriginal = false
+        )
+    {
+        return static_cast<const GA_VertexGroup*>(groupPromote(geo, group, GA_GROUP_VERTEX, newName, delOriginal));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_EdgeGroup*
+        groupPromoteEdge(
+            GA_Detail* geo,
+            GA_Group* group,
+            const UT_StringHolder& newName,
+            const bool delOriginal = false
+        )
+    {
+        return static_cast<const GA_EdgeGroup*>(groupPromote(geo, group, GA_GROUP_EDGE, newName, delOriginal));
+    }
 
 
 

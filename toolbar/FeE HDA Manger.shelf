@@ -17,6 +17,7 @@
     <memberTool name="Git pull And Push Sample Code"/>
     <memberTool name="Set os HFSS Env"/>
     <memberTool name="expandToTemp"/>
+    <memberTool name="nodeParmsAsCode"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -369,5 +370,32 @@ for selectedNode in selectedNodes:
     print(command)
     #start "" "..\hda\"
 ]]></script>
+  </tool>
+
+  <tool name="nodeParmsAsCode" label="Node Parms As Code" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
+    <script scriptType="python"><![CDATA[
+import hou
+import os
+
+targetPath = hou.getenv("TEMP").replace("\\","/") + "/"
+
+selectedNodes = hou.selectedNodes()
+for selectedNode in selectedNodes:
+    nodeType = selectedNode.type()
+    nodeTypeName = nodeType.name()
+    parmTemplateGroup = selectedNode.parmTemplateGroup()
+    
+    
+    outValue = parmTemplateGroup.asCode()
+    outValue = parmTemplateGroup.asDialogScript(False, True)
+    
+    file = open(targetPath + nodeTypeName + ".txt",'w')
+    file.write(outValue)
+
+    command = r'start "" "' + targetPath.replace("/","\\") + r'"'
+    os.system(command)
+    break
+    
+    ]]></script>
   </tool>
 </shelfDocument>

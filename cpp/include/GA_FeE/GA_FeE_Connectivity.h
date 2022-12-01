@@ -244,7 +244,9 @@ addAttribConnectivityPoint(
         return attribPtr;
 
     attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
-    const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = GA_FeE_Adjacency::addAttribPointPointEdge(geo, "__topo_nebs", geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
+    const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = 
+        GA_FeE_Adjacency::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup,
+            storage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
     connectivityPoint(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
 }
@@ -296,8 +298,8 @@ addAttribConnectivityPrim(
     if (attribPtr)
         return attribPtr;
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle =
-        GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, "__topo_nebs", geoGroup, geoSeamGroup,
-            storage, subscribeRatio, minGrainSize);
+        GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup,
+            storage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
     
     attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
     connectivityPrim(geo, attribPtr, adjElemsAttribHandle, geoGroup);

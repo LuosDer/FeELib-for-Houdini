@@ -659,10 +659,10 @@ namespace GA_FeE_TopologyReference {
     static GA_Attribute*
         addAttribVertexPrimIndex(
             GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_vtxpnum",
             const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage storage = GA_STORE_INT32,
+            const UT_StringHolder& name = "__topo_vtxpnum",
+            const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -676,23 +676,6 @@ namespace GA_FeE_TopologyReference {
         attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexPrimIndex(geo, attribPtr, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
-    }
-
-    //GA_FeE_Adjacency::addAttribVertexPrimIndex(geo, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static GA_Attribute*
-        addAttribVertexPrimIndex(
-            GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_vtxpnum",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 16
-        )
-    {
-        return addAttribVertexPrimIndex(geo, name, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
     }
 
 
@@ -713,11 +696,11 @@ namespace GA_FeE_TopologyReference {
             GEO_Detail* geo,
             GA_Attribute*& attribPtr_prev,
             GA_Attribute*& attribPtr_next,
+            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& namePrev = "__topo_vtxPrimPrev",
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
-            const GA_VertexGroup* geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -736,28 +719,6 @@ namespace GA_FeE_TopologyReference {
     }
 
 
-    //GA_FeE_Adjacency::addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static bool
-        addAttribVertexVertexPrim(
-            GEO_Detail* geo,
-            GA_Attribute*& attribPtr_prev,
-            GA_Attribute*& attribPtr_next,
-            const UT_StringHolder& namePrev = "__topo_vtxPrimPrev",
-            const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 128
-        )
-    {
-        return addAttribVertexVertexPrim(geo, attribPtr_prev, attribPtr_next, namePrev, nameNext, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
-
-
-
 
 
 
@@ -770,10 +731,10 @@ namespace GA_FeE_TopologyReference {
     static GA_Attribute*
         addAttribVertexVertexPrimNext(
             GEO_Detail* geo,
-            const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage storage = GA_STORE_INT32,
+            const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
+            const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -789,23 +750,6 @@ namespace GA_FeE_TopologyReference {
         return attribPtr_next;
     }
 
-    //GA_FeE_Adjacency::addAttribVertexVertexPrimNext(geo, attribPtr_next, nameNext, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static GA_Attribute*
-        addAttribVertexVertexPrimNext(
-            GEO_Detail* geo,
-            const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 256
-        )
-    {
-        return addAttribVertexVertexPrimNext(geo, nameNext, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
-
 
 
 
@@ -818,10 +762,10 @@ namespace GA_FeE_TopologyReference {
     static GA_Attribute*
         addAttribVertexPointDst(
             GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_dstpt",
             const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage storage = GA_STORE_INT32,
+            const UT_StringHolder& name = "__topo_dstpt",
+            const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -854,23 +798,6 @@ namespace GA_FeE_TopologyReference {
         return attribPtr;
     }
 
-
-    //GA_FeE_Adjacency::addAttribVertexPointDst(geo, name, geoGroup, defaults, storage, subscribeRatio, minGrainSize);
-
-    SYS_FORCE_INLINE
-        static GA_Attribute*
-        addAttribVertexPointDst(
-            GEO_Detail* geo,
-            const UT_StringHolder& name = "__topo_dstpt",
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Defaults& defaults = GA_Defaults(-1),
-            const GA_Storage storage = GA_STORE_INT32,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
-        )
-    {
-        return addAttribVertexPointDst(geo, name, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    }
 
 
 

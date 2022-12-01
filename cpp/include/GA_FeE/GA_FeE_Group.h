@@ -14,6 +14,35 @@
 
 namespace GA_FeE_Group {
 
+    
+
+SYS_FORCE_INLINE
+    static GA_Group*
+    newGroup(
+        GA_Detail* geo,
+        const GA_Group* group,
+        const UT_StringHolder& groupName
+    )
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(group);
+    return geo->getGroupTable(group->classType())->newGroup(groupName);
+}
+
+
+SYS_FORCE_INLINE
+    static GA_Group*
+    newDetachedGroup(
+        const GA_Detail* geo,
+        const GA_Group* group
+    )
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(group);
+    return geo->getGroupTable(group->classType())->newDetachedGroup();
+}
+
+
 
 
 static GA_Group*
