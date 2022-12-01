@@ -85,6 +85,25 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+
+
+
+
+    parm {
+        name    "posAttribName"
+        cppname "PosAttribName"
+        label   "Pos Attrib Name"
+        type    string
+        default { "P" }
+        menureplace {
+            [ "" ]
+            [ "import fee_buildMenu" ]
+            [ "" ]
+            [ "node = kwargs['node']" ]
+            [ "return fee_buildMenu.buildAttribsMenu(node, 0, 'point', 'all')" ]
+            language python
+        }
+    }
     parm {
         name    "input3DNormal"
         cppname "Input3DNormal"
@@ -334,13 +353,11 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& geo0AttribNames = sopparms.getNormal2DAttribName();
     if (!geo0AttribNames.isstring())
         return;
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getNormal2DAttribClass());
+    const GA_AttributeOwner geo03dNAttribClass = sopAttribOwner(sopparms.getNormal2DAttribClass());
 
 
 
 
-
-    const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
 
     const bool scaleByTurns = sopparms.getScaleByTurns();
     const bool normalize = sopparms.getNormalize();
@@ -348,7 +365,7 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool input3DNormal = sopparms.getInput3DNormal();
     const bool inputConstant3DNormal = sopparms.getInputConstant3DNormal();
 
-    const UT_Vector3T<fpreal64> constant3DNormal = sopparms.getConstant3DNormal();
+    UT_Vector3T<fpreal64> constant3DNormal = sopparms.getConstant3DNormal();
     const fpreal64 uniScale = sopparms.getUniScale();
     const fpreal64 blend = sopparms.getBlend();
 
@@ -366,6 +383,12 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+
+
+    const GA_Attribute* posHAttrib = outGeo0->findPointAttribute(sopparms.getPosAttribName());
+    if (!posHAttrib)
+        return;
+    const GA_ROHandleT<UT_Vector3T<fpreal64>> posH(posHAttrib);
 
 
 
@@ -404,106 +427,161 @@ SOP_FeE_Normal_2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, geo0VtxGroup);
+    const GA_ROHandleT<GA_Offset> dstptAttribH(dstptAttrib);
 
-    if (normalize)
-    {
-
-    }
-    if (scaleByTurns)
-    {
-
-    }
-    if (extrapolateEnds)
-    {
-
-    }
+    GA_Attribute* normal3DAttrib = nullptr;
     if (input3DNormal)
     {
-
-    }
-    if (inputConstant3DNormal)
-    {
-
-    }
-    if (geo0AttribClass)
-    {
-
+        const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
+        switch (geo03dNAttribClass)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            normal3DAttrib = outGeo0->findPrimitiveAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+                return;
+            break;
+        case GA_ATTRIB_POINT:
+            normal3DAttrib = outGeo0->findPointAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+                return;
+            break;
+        case GA_ATTRIB_VERTEX:
+            normal3DAttrib = outGeo0->findVertexAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+                return;
+            break;
+        case GA_ATTRIB_DETAIL:
+            normal3DAttrib = outGeo0->findGlobalAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+                return;
+            break;
+        case GA_ATTRIB_OWNER_N:
+            normal3DAttrib = outGeo0->findPrimitiveAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+            {
+                normal3DAttrib = outGeo0->findPointAttribute(normal3DAttribName);
+                if (!normal3DAttrib)
+                {
+                    normal3DAttrib = outGeo0->findVertexAttribute(normal3DAttribName);
+                    if (!normal3DAttrib)
+                    {
+                        normal3DAttrib = outGeo0->findGlobalAttribute(normal3DAttribName);
+                        if (!normal3DAttrib)
+                            return;
+                    }
+                }
+            }
+            
+            break;
+        case GA_ATTRIB_INVALID:
+            normal3DAttrib = outGeo0->findPointAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+            {
+                normal3DAttrib = outGeo0->findVertexAttribute(normal3DAttribName);
+                if (!normal3DAttrib)
+                {
+                    return;
+                }
+            }
+            break;
+        default:
+            return;
+            break;
+        }
     }
     else
     {
+        //if(geo03dNAttribClass != )
+        //normal3DAttrib = outGeo0->addFloatTuple(geo03dNAttribClass, "__N_SOP_FeE_Normal2D_1_0", 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
+        //normal3DAttrib = addAttribNormal3D(outGeo0, geo03dNAttribClass, inStorageF, "__N_SOP_FeE_Normal2D_1_0", GA_Defaults(0.0));
+    }
+    const GA_AttributeOwner n3dFinalAttribClass = normal3DAttrib->getOwner();
+    const GA_ROHandleT<UT_Vector3T<fpreal64>> n3dH(normal3DAttrib);
 
+    if (!inputConstant3DNormal && n3dFinalAttribClass == GA_ATTRIB_DETAIL)
+    {
+        constant3DNormal = n3dH.get(0);
     }
     //outGeo0->setPrimitiveClosedFlag(elemoff);
 
-    GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(geo0AttribClass, geo0AttribNames, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
+
+    //GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(geo0AttribClass, geo0AttribNames, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
+    GA_Attribute* n2dAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, geo0AttribNames, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
     GA_RWHandleT<UT_Vector3T<fpreal64>> n2dAttribH(n2dAttrib);
 
-    switch (geo0AttribClass)
-    {
-    case GA_ATTRIB_POINT:
-    {
-        const GA_PointGroup* geo0PromotedGroup = nullptr;
-        GA_PointGroupUPtr groupDeleter;
-        if (geo0Group)
-        {
-            if (geo0finalGroupType == GA_GROUP_POINT)
-                geo0PromotedGroup = static_cast<const GA_PointGroup*>(geo0Group);
-            else if (geo0finalGroupType == GA_GROUP_VERTEX || geo0finalGroupType == GA_GROUP_PRIMITIVE || geo0finalGroupType == GA_GROUP_EDGE)
-            {
-                GA_PointGroup* newDetachedGroup = new GA_PointGroup(*outGeo0);
-                groupDeleter.reset(newDetachedGroup);
-                newDetachedGroup->combine(geo0Group);
-                geo0PromotedGroup = newDetachedGroup;
-            }
-        }
+    GA_Topology& topo = outGeo0->getTopology();
+    const GA_ATITopology* vtxPointRef = topo.getPointRef();
+    const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+    const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
 
-        const GA_SplittableRange geo0SplittableRange(outGeo0->getPointRange(geo0PromotedGroup));
-        UTparallelFor(geo0SplittableRange, [outGeo0, &boss, n2dAttribH, &uniScale](const GA_SplittableRange& r)
+    if (extrapolateEnds)
+    {
+        ;
+    }
+    const GA_SplittableRange geoVertexSplittableRange(outGeo0->getVertexRange(geo0VtxGroup));
+    UTparallelFor(geoVertexSplittableRange, [&outGeo0, &posH, &dstptAttribH, &n2dAttribH, &n3dH,
+        &vtxPointRef, &vtxPrimRef, 
+        &inputConstant3DNormal, &constant3DNormal, &n3dFinalAttribClass](const GA_SplittableRange& r)
+    {
+        UT_Vector3T<fpreal64> dir;
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
-            if (boss.wasInterrupted())
-                return;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                GA_Offset ptoff = vtxPointRef->getLink(elemoff);
+                GA_Offset dstpt = dstptAttribH.get(elemoff);
+                
+                dir = posH.get(dstpt) - posH.get(ptoff);
+                if (!inputConstant3DNormal && n3dFinalAttribClass != GA_ATTRIB_DETAIL)
                 {
-                    GA_Offset pointprim = outGeo0->vertexPrimitive(outGeo0->pointVertex(elemoff));
-
-                    UT_Vector3T<fpreal64> attribValue = n2dAttribH.get(elemoff);
-                    attribValue *= uniScale;
-                    n2dAttribH.set(elemoff, attribValue);
+                    switch (n3dFinalAttribClass)
+                    {
+                    case GA_ATTRIB_PRIMITIVE:
+                        constant3DNormal = n3dH.get(vtxPrimRef->getLink(elemoff));
+                        break;
+                    case GA_ATTRIB_POINT:
+                        constant3DNormal = n3dH.get(ptoff);
+                        break;
+                    case GA_ATTRIB_VERTEX:
+                        constant3DNormal = n3dH.get(elemoff);
+                        break;
+                    }
                 }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-    break;
-    case GA_ATTRIB_VERTEX:
-    {
-        const GA_VertexGroup* geo0PromotedGroup = nullptr;
-        GA_VertexGroupUPtr groupDeleter;
-        if (geo0Group)
-        {
-            if (geo0finalGroupType == GA_GROUP_VERTEX)
-                geo0PromotedGroup = static_cast<const GA_VertexGroup*>(geo0Group);
-            else if (geo0finalGroupType == GA_GROUP_PRIMITIVE || geo0finalGroupType == GA_GROUP_POINT || geo0finalGroupType == GA_GROUP_EDGE)
-            {
-                GA_VertexGroup* newDetachedGroup = new GA_VertexGroup(*outGeo0);
-                groupDeleter.reset(newDetachedGroup);
-                newDetachedGroup->combine(geo0Group);
-                geo0PromotedGroup = newDetachedGroup;
+                dir.cross(constant3DNormal);
+                dir.normalize();
+
+                n2dAttribH.add(ptoff, dir);
+                n2dAttribH.add(dstpt, dir);
             }
         }
-
-        const GA_SplittableRange geo0SplittableRange(outGeo0->getVertexRange(geo0PromotedGroup));
-    }
-
-    break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled outGeo0 class type!");
-    }
+    }, subscribeRatio, minGrainSize);
 
 
-    GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
+    //const GA_SplittableRange geoPointSplittableRange(outGeo0->getPointRange(geo0PointGroup));
+    //UTparallelFor(geoPointSplittableRange, [&outGeo0, &posH, &uniScale, &dstptAttribH, &vtxPointRef, &n2dAttribH, &inputConstant3DNormal, &constant3DNormal, &scaleByTurns, &normalize](const GA_SplittableRange& r)
+    //    {
+    //        UT_Vector3T<fpreal64> dir;
+    //        GA_Offset start, end;
+    //        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+    //        {
+    //            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    //            {
+    //                if (scaleByTurns)
+    //                {
+    //                    n2dAttribPH.value(elemoff) *= 4 * uniScale / n2dAttribPH.value(elemoff).length2();
+    //                }
+    //                else if (normalize)
+    //                {
+    //                    n2dAttribPH.value(elemoff).normalize();
+    //                    n2dAttribPH.value(elemoff) *= uniScale;
+    //                }
+    //            }
+    //        }
+    //    }, subscribeRatio, minGrainSize);
+
+
+
 
     GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
