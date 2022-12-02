@@ -340,6 +340,29 @@ namespace GEO_FeE_Group {
 
 
 
+    static const GA_Group*
+        groupPromote(
+            GA_Detail* geo,
+            const GA_Group* group,
+            const GA_GroupType newType
+        )
+    {
+        UT_ASSERT_P(geo);
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == newType)
+            return group;
+
+        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        if (!groupTable)
+            return nullptr;
+
+        GA_Group* newGroup = groupTable->newGroup(group->getName());
+        groupCombine(geo, newGroup, group);
+
+        return newGroup;
+    }
 
     static const GA_Group*
     groupPromote(
@@ -354,7 +377,10 @@ namespace GEO_FeE_Group {
             return nullptr;
 
         if (group->classType() == newType)
+        {
+            GA_FeE_Group::groupRename(geo, group, newName);
             return group;
+        }
 
         GA_GroupTable* groupTable = geo->getGroupTable(newType);
         if (!groupTable)
@@ -545,6 +571,59 @@ namespace GEO_FeE_Group {
     {
         return static_cast<const GA_EdgeGroup*>(groupPromote(geo, group, GA_GROUP_EDGE, newName));
     }
+
+
+
+
+
+
+
+
+
+    SYS_FORCE_INLINE
+        static const GA_PrimitiveGroup*
+        groupPromotePrimitive(
+            GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return static_cast<const GA_PrimitiveGroup*>(groupPromote(geo, group, GA_GROUP_PRIMITIVE));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_PointGroup*
+        groupPromotePoint(
+            GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return static_cast<const GA_PointGroup*>(groupPromote(geo, group, GA_GROUP_POINT));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_VertexGroup*
+        groupPromoteVertex(
+            GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return static_cast<const GA_VertexGroup*>(groupPromote(geo, group, GA_GROUP_VERTEX));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_EdgeGroup*
+        groupPromoteEdge(
+            GA_Detail* geo,
+            const GA_Group* group
+        )
+    {
+        return static_cast<const GA_EdgeGroup*>(groupPromote(geo, group, GA_GROUP_EDGE));
+    }
+
+
+
+
+
 
 
 

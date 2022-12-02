@@ -25,8 +25,37 @@ static bool
         GA_Attribute* attrib
     )
 {
+    UT_ASSERT_P(attrib);
     return attrib->getDetail().getAttributes().destroyAttribute(attrib);
 }
+
+
+SYS_FORCE_INLINE
+static bool
+renameAttribute(
+    GA_Detail* geo,
+    const GA_Attribute* attrib,
+    const UT_StringHolder& newName
+)
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(attrib);
+    return geo->renameAttribute(attrib->getOwner(), attrib->getScope(), attrib->getName(), newName);
+}
+
+
+
+SYS_FORCE_INLINE
+static bool
+renameAttribute(
+    GA_Attribute* attrib,
+    const UT_StringHolder& newName
+)
+{
+    UT_ASSERT_P(attrib);
+    return attrib->getDetail().renameAttribute(attrib->getOwner(), attrib->getScope(), attrib->getName(), newName);
+}
+
 
 
 

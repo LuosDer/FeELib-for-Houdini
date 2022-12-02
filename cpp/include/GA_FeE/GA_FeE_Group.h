@@ -122,6 +122,7 @@ groupIsEmpty(
     }
 }
 
+//GA_FeE_Group::groupRename(outGeo0, N2DAttrib, geo0AttribNames);
 SYS_FORCE_INLINE
 static bool
 groupRename(
@@ -143,7 +144,8 @@ groupRename(
 //)
 //{
 //    UT_ASSERT_P(geo);
-//    UT_ASSERT_P(group);
+//    if (!group)
+//        return;
 //    geo->destroyGroup(group);
 //    //geo->getGroupTable(group->classType())->destroy(group);
 //}
