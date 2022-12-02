@@ -281,6 +281,26 @@ namespace GEO_FeE_Group {
     }
 
     static void
+        groupBoolean(
+            const GA_Detail* geo,
+            GA_Group* group,
+            const GA_Group* groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (group->classType() == GA_GROUP_EDGE)
+        {
+            edgeGroupCombine(geo, group, groupRef);
+        }
+        else
+        {
+            //group->combine(groupRef);
+            static_cast<GA_ElementGroup*>(group)->combine(groupRef);
+        }
+    }
+
+    static void
         groupCombine(
             const GA_Detail* geo,
             GA_Group* group,
@@ -299,6 +319,33 @@ namespace GEO_FeE_Group {
             static_cast<GA_ElementGroup*>(group)->combine(groupRef);
         }
     }
+
+
+
+
+
+    /*
+    static void
+        groupIntersect(
+            const GA_Detail* geo,
+            GA_Group* group,
+            const GA_Group* groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (group->classType() == GA_GROUP_EDGE)
+        {
+            edgeGroupIntersect(geo, group, groupRef);
+        }
+        else
+        {
+            //group->combine(groupRef);
+            static_cast<GA_ElementGroup*>(group)->intersect(groupRef);
+        }
+    }
+    */
+
 
 
 
