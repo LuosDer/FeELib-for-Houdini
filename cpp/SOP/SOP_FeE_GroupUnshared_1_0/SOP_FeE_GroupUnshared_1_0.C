@@ -306,7 +306,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GEO_FeE_Group::groupPromotePrimitiveDetached(outGeo0, geo0Group));
+    const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
     //GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
 
 
@@ -328,14 +328,16 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
     const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
-    
 
-    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupUnshared_1_0", geo0VtxGroup, inStorageI);
-    GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true));
+    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
+    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI);
+    GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GA_FeE_GroupPromote::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true));
+    
+    
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
 
-    GEO_FeE_Attribute::attribCast(outGeo0, unshared_promoGroup, unsharedAttribStorageClass, "", PreferredPrecision);
+    //GEO_FeE_Attribute::attribCast(outGeo0, unshared_promoGroup, unsharedAttribStorageClass, "", PreferredPrecision);
 
     //if (unsharedAttribClass != GA_GROUP_EDGE)
     //{
@@ -399,8 +401,9 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 //    }
 //#endif
 
-
-    GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
+    //outGeo0->bumpAllDataIds();
+    //GA_FeE_Group::groupBumpDataId(unsharedGroup);
+    //GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
 
     GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 

@@ -34,12 +34,12 @@ protected:
     
     ~SOP_FeE_ConvertLine_1_0() override {}
 
+
     /// Since this SOP implements a verb, cookMySop just delegates to the verb.
     OP_ERROR cookMySop(OP_Context &context) override
     {
         return cookMyselfAsVerb(context);
     }
-
     const char* inputLabel(unsigned idx) const override
     {
         switch (idx)

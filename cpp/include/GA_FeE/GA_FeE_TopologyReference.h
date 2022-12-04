@@ -30,10 +30,28 @@ namespace GA_FeE_TopologyReference {
         if (outTopo)
             return;
         GA_AttributeSet& AttribSet = geo->getAttributes();
-        GA_AttributeFilter filter = GA_AttributeFilter::selectAnd(GA_AttributeFilter::selectPublic(), GA_AttributeFilter::selectByPattern("__topo_*"));
+        GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern("__topo_*");
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectPublic());
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectGroup()));
         AttribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_POINT, filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_VERTEX, filter);
+        AttribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
+        AttribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
+        AttribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
+        
+        for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
+        {
+            GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+            //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
+            for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
+            {
+                GA_Group* group = it.group();
+                if (group->isDetached())
+                    continue;
+                if (!group->getName().startsWith("__topo_"))
+                    continue;
+                groupTable->destroy(group);
+            }
+        }
     }
 
 
@@ -726,7 +744,7 @@ namespace GA_FeE_TopologyReference {
 
 
 
-    //GA_FeE_Adjacency::addAttribVertexVertexPrimNext(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
+    //GA_FeE_TopologyReference::addAttribVertexVertexPrimNext(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
 
     static GA_Attribute*
         addAttribVertexVertexPrimNext(
@@ -757,7 +775,7 @@ namespace GA_FeE_TopologyReference {
 
 
 
-    //GA_FeE_Adjacency::addAttribVertexPointDst(geo, name, geoGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    //GA_FeE_TopologyReference::addAttribVertexPointDst(geo, name, geoGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 
     static GA_Attribute*
         addAttribVertexPointDst(
@@ -796,6 +814,281 @@ namespace GA_FeE_TopologyReference {
 
         vertexPointDst(geo, attribPtr, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
+    }
+
+
+
+
+
+
+
+
+
+    //GA_FeE_TopologyReference::addGroupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
+    static void
+        groupOneNeb(
+            GA_Detail* geo,
+            GA_PointGroup* const outGroup,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        GA_Topology& topo = geo->getTopology();
+        topo.makeVertexRef();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
+
+        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange());
+        UTparallelFor(geoSplittableRange, [&geo, &outGroup,
+            &vtxPointRef, &pointVtxRef, &vtxNextRef, &vtxPrimRef](const GA_SplittableRange& r)
+            {
+                GA_Offset vtxoff, ptoff;
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        if (vtxoff == GA_INVALID_OFFSET)
+                            outGroup->setElement(ptoff, true);
+
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        if (vtxoff == GA_INVALID_OFFSET)
+                            outGroup->setElement(ptoff, true);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+    //GA_FeE_TopologyReference::addGroupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
+    static void
+        groupOneNeb(
+            GA_Detail* geo,
+            GA_PointGroup* outGroup,
+            const GA_PrimitiveGroup* geoGroup,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        if (!geoGroup)
+        {
+            groupOneNeb(geo, outGroup, subscribeRatio, minGrainSize);
+            return;
+        }
+        GA_Topology& topo = geo->getTopology();
+        topo.makeVertexRef();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
+
+        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &outGroup,
+            &vtxPointRef, &pointVtxRef, &vtxNextRef, &vtxPrimRef](const GA_SplittableRange& r)
+            {
+                GA_Offset vtxoff, ptoff;
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        if (vtxoff == GA_INVALID_OFFSET)
+                            outGroup->setElement(ptoff, true);
+
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        if (vtxoff == GA_INVALID_OFFSET)
+                            outGroup->setElement(ptoff, true);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+    //GA_FeE_TopologyReference::addGroupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
+    static void
+        groupOneNeb(
+            GA_Detail* geo,
+            GA_PointGroup* outGroup,
+            const GA_PointGroup* geoGroup,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        if (!geoGroup)
+        {
+            groupOneNeb(geo, outGroup, subscribeRatio, minGrainSize);
+            return;
+        }
+        GA_Topology& topo = geo->getTopology();
+        topo.makeVertexRef();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
+
+        const GA_PrimitiveGroupUPtr geoPromoGroupUPtr = geo->createDetachedPrimitiveGroup();
+        GA_PrimitiveGroup* geoPromoGroup = geoPromoGroupUPtr.get();
+        geoPromoGroup->combine(geoGroup);
+
+        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &outGroup, &geoGroup,
+            &vtxPointRef, &pointVtxRef, &vtxNextRef, &vtxPrimRef](const GA_SplittableRange& r)
+            {
+                GA_Offset vtxoff, ptoff;
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(ptoff))
+                            outGroup->setElement(ptoff, true);
+
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(ptoff))
+                            outGroup->setElement(ptoff, true);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+    //GA_FeE_TopologyReference::addGroupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
+
+    static void
+        groupOneNeb(
+            GA_Detail* geo,
+            GA_PointGroup* outGroup,
+            const GA_VertexGroup* geoGroup,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        if (!geoGroup)
+        {
+            groupOneNeb(geo, outGroup, subscribeRatio, minGrainSize);
+            return;
+        }
+        GA_Topology& topo = geo->getTopology();
+        topo.makeVertexRef();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
+
+        const GA_PrimitiveGroupUPtr geoPromoGroupUPtr = geo->createDetachedPrimitiveGroup();
+        GA_PrimitiveGroup* geoPromoGroup = geoPromoGroupUPtr.get();
+        geoPromoGroup->combine(geoGroup);
+
+        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
+        UTparallelFor(geo0SplittableRange0, [&geo, &outGroup, &geoGroup,
+            &vtxPointRef, &pointVtxRef, &vtxNextRef, &vtxPrimRef](const GA_SplittableRange& r)
+            {
+                GA_Offset vtxoff, ptoff, vtxoff_next;
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff_next = pointVtxRef->getLink(ptoff);
+                        vtxoff_next = vtxNextRef->getLink(vtxoff_next);
+                        if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(vtxoff))
+                            outGroup->setElement(ptoff, true);
+
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff_next = pointVtxRef->getLink(ptoff);
+                        vtxoff_next = vtxNextRef->getLink(vtxoff_next);
+                        if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(vtxoff))
+                            outGroup->setElement(ptoff, true);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+    //GA_FeE_TopologyReference::addGroupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
+    static void
+        groupOneNeb(
+            GA_Detail* geo,
+            GA_PointGroup* outGroup,
+            const GA_Group* geoGroup,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        if (!geoGroup)
+        {
+            groupOneNeb(geo, outGroup, subscribeRatio, minGrainSize);
+            return;
+        }
+        switch (geoGroup->classType())
+        {
+        case GA_GROUP_PRIMITIVE:
+            return groupOneNeb(geo, outGroup, UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
+                subscribeRatio, minGrainSize);
+            break;
+        case GA_GROUP_POINT:
+            return groupOneNeb(geo, outGroup, UTverify_cast<const GA_PointGroup*>(geoGroup),
+                subscribeRatio, minGrainSize);
+            break;
+        case GA_GROUP_VERTEX:
+            return groupOneNeb(geo, outGroup, UTverify_cast<const GA_VertexGroup*>(geoGroup),
+                subscribeRatio, minGrainSize);
+            break;
+        case GA_GROUP_EDGE:
+            return groupOneNeb(geo, outGroup, UTverify_cast<const GA_EdgeGroup*>(geoGroup),
+                subscribeRatio, minGrainSize);
+            break;
+        default:
+            break;
+        }
+    }
+
+
+
+     
+    //GA_FeE_TopologyReference::addGroupOneNeb(geo, geoGroup, name, subscribeRatio, minGrainSize);
+
+    static GA_PointGroup*
+        addGroupOneNeb(
+            GA_Detail* geo,
+            const GA_Group* geoGroup = nullptr,
+            const UT_StringHolder& name = "__topo_oneNeb",
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        GA_PointGroup* outGroup = geo->findPointGroup(name);
+        if (outGroup)
+            return outGroup;
+        outGroup = geo->newPointGroup(name);
+        groupOneNeb(geo, outGroup, geoGroup, subscribeRatio, minGrainSize);
+        return outGroup;
     }
 
 

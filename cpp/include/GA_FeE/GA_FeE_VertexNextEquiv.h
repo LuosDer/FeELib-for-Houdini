@@ -805,16 +805,15 @@ namespace GA_FeE_VertexNextEquiv {
 
     //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, subscribeRatio, minGrainSize);
 
-    SYS_FORCE_INLINE
-        static GA_VertexGroup*
-        addGroupVertexNextEquiv(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INT32,
-            const UT_StringHolder& name = "__topo_unshared",
-            const exint subscribeRatio = 32,
-            const exint minGrainSize = 1024
-        )
+    static GA_VertexGroup*
+    addGroupVertexNextEquiv(
+        GEO_Detail* geo,
+        const GA_VertexGroup* geoGroup = nullptr,
+        const GA_Storage storage = GA_STORE_INT32,
+        const UT_StringHolder& name = "__topo_unshared",
+        const exint subscribeRatio = 32,
+        const exint minGrainSize = 1024
+    )
     {
         GA_VertexGroup* groupPtr = geo->findVertexGroup(name);
         if (groupPtr)

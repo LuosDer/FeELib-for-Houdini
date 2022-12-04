@@ -383,6 +383,7 @@ selectedNodes = hou.selectedNodes()
 for selectedNode in selectedNodes:
     nodeType = selectedNode.type()
     nodeTypeName = nodeType.name()
+    nodeTypeName = nodeTypeName.replace("::", "_")
     parmTemplateGroup = selectedNode.parmTemplateGroup()
     
     

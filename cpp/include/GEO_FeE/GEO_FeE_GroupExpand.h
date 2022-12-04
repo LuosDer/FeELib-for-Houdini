@@ -65,7 +65,7 @@ namespace GEO_FeE_GroupExpand {
 
         const GA_GroupType groupType = baseGroup->classType();
 
-        GEO_FeE_Group::groupCombine(geo, expandGroup, baseGroup);
+        GA_FeE_GroupUnion::groupUnion(geo, expandGroup, baseGroup);
 
         if (groupType == GA_GROUP_EDGE)
         {
@@ -190,13 +190,15 @@ namespace GEO_FeE_GroupExpand {
         }
 
         const GA_GroupType groupType = baseGroup->classType();
+
         UT_ASSERT_P(groupType == expandGroup->classType() && groupType == borderGroup->classType() && groupType == prevBorderGroup->classType());
         
-        GEO_FeE_Group::groupCombine(geo, expandGroup, baseGroup);
-        GEO_FeE_Group::groupCombine(geo, borderGroup, baseGroup);
-
+        //GA_FeE_GroupBoolean::groupUnion(geo, expandGroup, baseGroup);
+        //GA_FeE_GroupBoolean::groupUnion(geo, borderGroup, baseGroup);
         if (groupType == GA_GROUP_EDGE)
         {
+            GA_FeE_GroupUnion::edgeGroupUnion(geo, expandGroup, baseGroup);
+            GA_FeE_GroupUnion::edgeGroupUnion(geo, borderGroup, baseGroup);
             //const GA_EdgeGroup* baseEdgeGroup = UTverify_cast<const GA_EdgeGroup*>(baseGroup);
             switch (connectivityGroupType)
             {
@@ -223,6 +225,8 @@ namespace GEO_FeE_GroupExpand {
             GA_ElementGroup* expandElemGroup     = UTverify_cast<GA_ElementGroup*>(expandGroup);
             GA_ElementGroup* borderElemGroup     = UTverify_cast<GA_ElementGroup*>(borderGroup);
             GA_ElementGroup* prevBorderElemGroup = UTverify_cast<GA_ElementGroup*>(prevBorderGroup);
+            expandElemGroup->combine(baseGroup);
+            borderElemGroup->combine(baseGroup);
 
             GA_Attribute* nebsAttrib = GA_FeE_Adjacency::addAttribAdjacency(geo, groupType, connectivityGroupType);
             if (!nebsAttrib)
@@ -230,7 +234,7 @@ namespace GEO_FeE_GroupExpand {
             GA_RWHandleT<UT_ValArray<GA_Offset>> nebsAttribH(nebsAttrib);
             for (int iternum = 0; iternum < numiter; iternum++)
             {
-                //GEO_FeE_Group::groupCombine(geo, prevBorderGroup, borderGroup);
+                //GEO_FeE_Group::groupUnion(geo, prevBorderGroup, borderGroup);
                 prevBorderGroup->combine(borderGroup);
                 GA_SplittableRange geoSplittableRange(GA_FeE_Group::getRangeByAnyGroup(geo, prevBorderElemGroup));
                 UTparallelFor(geoSplittableRange, [&geo, &expandElemGroup, &borderElemGroup, &prevBorderElemGroup, &nebsAttribH](const GA_SplittableRange& r)

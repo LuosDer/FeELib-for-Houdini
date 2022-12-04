@@ -6,7 +6,10 @@ project( HDK_SOP_FeE_ConvertLine_1_0_Project )
 # the Houdini installation. See the "Compiling with CMake" section of the HDK
 # documentation for more details, which describes several options for
 # specifying this path.
-list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )
+list( APPEND CMAKE_PREFIX_PATH
+    "../cmake"
+    "$ENV{HFS}/toolkit/cmake"
+)
 
 # Locate Houdini's libraries and header files.
 # Registers an imported library target named 'Houdini'.
@@ -30,7 +33,7 @@ target_link_libraries( ${library_name} Houdini )
 # Include ${CMAKE_CURRENT_BINARY_DIR} for the generated header.
 target_include_directories( ${library_name} PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
-    "../../include"
+    "../../include/"
 )
 
 # Sets several common target properties, such as the library's output directory.

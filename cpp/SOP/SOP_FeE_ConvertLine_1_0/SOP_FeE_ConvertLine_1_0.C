@@ -8,18 +8,34 @@
 // SOP_FeE_ConvertLine_1_0Verb::cook with the correct type.
 #include "SOP_FeE_ConvertLine_1_0.proto.h"
 
-#include <GA/GA_Detail.h>
+#include <GEO/GEO_Detail.h>
 #include <PRM/PRM_TemplateBuilder.h>
 #include <UT/UT_Interrupt.h>
 #include <UT/UT_DSOVersion.h>
 
+//#include <GU/GU_Detail.h>
+//#include <GEO/GEO_PrimPoly.h>
+//#include <OP/OP_Operator.h>
+//#include <OP/OP_OperatorTable.h>
+//#include <PRM/PRM_Include.h>
+//#include <PRM/PRM_TemplateBuilder.h>
+//#include <UT/UT_DSOVersion.h>
+//#include <UT/UT_Interrupt.h>
+//#include <UT/UT_StringHolder.h>
+//#include <SYS/SYS_Math.h>
+//#include <limits.h>
+//
+//
+//#include <UT/UT_UniquePtr.h>
+//#include <GA/GA_SplittableRange.h>
+//#include <GA/GA_PageHandle.h>
+//#include <GA/GA_PageIterator.h>
 
 
-#include <GA_FeE/GA_FeE_Type.h>
-#include <GA_FeE/GA_FeE_ConvertLine.h>
-#include <GA_FeE/GA_FeE_Adjacency.h>
-#include <GA_FeE/GA_FeE_TopologyReference.h>
+#include <GA_FeE/GA_FeE_Attribute.h>
+#include <GEO_FeE/GEO_FeE_Group.h>
 #include <GA_FeE/GA_FeE_VertexNextEquiv.h>
+
 
 using namespace SOP_FeE_ConvertLine_1_0_Namespace;
 
@@ -42,7 +58,7 @@ newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
         SOP_FeE_ConvertLine_1_0::theSOPTypeName,   // Internal name
-        "FeE Convert Line",                     // UI name
+        "FeE Convert Line",     // UI name
         SOP_FeE_ConvertLine_1_0::myConstructor,    // How to build the SOP
         SOP_FeE_ConvertLine_1_0::buildTemplates(), // My parameters
         1,                         // Min # of sources
@@ -55,6 +71,7 @@ newSopOperator(OP_OperatorTable *table)
 /// for this SOP.
 static const char *theDsFile = R"THEDSFILE(
 {
+    name        parameters
     parm {
         name    "primGroup"
         cppname "PrimGroup"
@@ -201,30 +218,12 @@ static const char *theDsFile = R"THEDSFILE(
 }
 )THEDSFILE";
 
-
-
-
-
-
 PRM_Template*
 SOP_FeE_ConvertLine_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_ConvertLine_1_0.C"_sh, theDsFile);
     return templ.templates();
 }
-
-
-//class SOP_FeE_ConvertLine_1_0Cache : public SOP_NodeCache
-//{
-//public:
-//    SOP_FeE_ConvertLine_1_0Cache() : SOP_NodeCache(),
-//        myPrevOutputDetailID(-1)
-//    {}
-//    ~SOP_FeE_ConvertLine_1_0Cache() override {}
-//
-//    int64 myPrevOutputDetailID;
-//};
-
 
 class SOP_FeE_ConvertLine_1_0Verb : public SOP_NodeVerb
 {
@@ -233,15 +232,14 @@ public:
     virtual ~SOP_FeE_ConvertLine_1_0Verb() {}
 
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_ConvertLine_1_0Parms(); }
-    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_ConvertLine_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_ConvertLine_1_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
     virtual void cook(const CookParms &cookparms) const;
-
+    
     /// This static data member automatically registers
-    /// this verb class at library ldir0d time.
+    /// this verb class at library load time.
     static const SOP_NodeVerb::Register<SOP_FeE_ConvertLine_1_0Verb> theVerb;
 };
 
@@ -258,7 +256,6 @@ SOP_FeE_ConvertLine_1_0::cookVerb() const
 
 
 
-
 static bool
 sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmgrouptype)
 {
@@ -271,6 +268,7 @@ sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmgrouptype)
     UT_ASSERT_MSG(0, "Unhandled Prim type!");
     return 0;
 }
+
 
 
 
@@ -334,7 +332,7 @@ static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const
             for (GA_ElementGroupOrderIndex i(0), n(order->entries()); i != n; ++i)
             {
                 GA_Offset off = order->getElement(i);
-				functor(off, idx);
+                functor(off, idx);
                 ++idx;
             }
             return;
@@ -393,8 +391,11 @@ void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool compl
 
 
 
+
+
+
 void
-SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
+SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ConvertLine_1_0Parms>();
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
@@ -453,7 +454,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -461,43 +462,44 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
         return;
 
 
-    
-//
-//#if 1
-//    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
-//    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
-//#else
-//    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
-//#endif
-//
-//
-//
-//#if 1
-//    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-//    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
-//
-//    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-//    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-//#else
-//    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
-//#endif
-//
-//    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
-//    GA_RWHandleT<GA_Size> dstptAttribHandle;
-//    vtxpnumAttribHandle.bind(vtxpnumATI);
-//    dstptAttribHandle.bind(dstptATI);
-//
-//    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
-//
-//    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
-//
-//    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
-//    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
-//
-//
-//    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
 
-    const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
+    //
+    //#if 1
+    //    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
+    //    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
+    //#else
+    //    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
+    //#endif
+    //
+    //
+    //
+    //#if 1
+    //    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+    //    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
+    //
+    //    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
+    //    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
+    //#else
+    //    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
+    //#endif
+    //
+    //    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
+    //    GA_RWHandleT<GA_Size> dstptAttribHandle;
+    //    vtxpnumAttribHandle.bind(vtxpnumATI);
+    //    dstptAttribHandle.bind(dstptATI);
+    //
+    //    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
+    //
+    //    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
+    //
+    //    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
+    //    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
+    //
+    //
+    //    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
+
+    //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
+    const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
     //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
     const GA_RWHandleT<GA_Offset> dstptAttribH = tmpGeo0->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
 
@@ -530,8 +532,10 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
     tmpGeoH0.deleteGdp();
-}
 
+
+
+}
 
 
 

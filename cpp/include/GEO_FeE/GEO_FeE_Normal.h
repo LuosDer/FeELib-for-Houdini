@@ -19,11 +19,6 @@ namespace GEO_FeE_Normal {
 
 
 
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
-
-
-
 
 //GEO_FeE_Normal::addAttribNormal3D(outGeo0, nullptr, attribClass, GA_STORE_REAL32, "N", GEO_DEFAULT_ADJUSTED_CUSP_ANGLE, GEO_NormalMethod::ANGLE_WEIGHTED, false, nullptr);
 //GEO_FeE_Normal::addAttribNormal3D(geo, geoGroup, attribClass, storage, N3DAttribName, cuspangledegrees, method, copy_orig_if_zero, posAttrib);
@@ -73,17 +68,31 @@ computeNormal2D(
 {
     const GA_AttributeOwner attribCalssN3D = N3DAttrib ? N3DAttrib->getOwner() : GA_ATTRIB_INVALID;
 
-    const GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(geo, nullptr);
+    GA_VertexGroup* unsharedVertexGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(geo);
     //GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
-    const GA_PointGroup* unsharedPointGroup = GEO_FeE_Group::groupPromotePointDetached(geo, unsharedGroup);
-    GEO_FeE_Group::groupBoolean(geo, unsharedPointGroup, geoPointGroup);
+#if 0
+    GA_PointGroup* unsharedPointGroup = GEO_FeE_Group::groupPromotePointDetached(geo, unsharedGroup);
+#else
+    GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GA_FeE_GroupPromote::groupPromotePoint(geo, unsharedVertexGroup));
+#endif
+    GA_FeE_GroupBoolean::groupIntersect(geo, unsharedPointGroup, geoPointGroup);
 
-    const GA_VertexGroup* geoVertexGroup = const_cast<GA_VertexGroup*>(GEO_FeE_Group::groupPromoteVertexDetached(geo, geoPointGroup));
+
+
+    //unsharedPointGroup->operator&=(*geoPointGroup);
+    //GEO_FeE_Group::groupBoolean(geo, unsharedPointGroup, geoPointGroup, GA_GROUP_BOOLEAN_AND);
+    //unsharedPointGroup->makeUnordered();
+    //unsharedPointGroup->andEqual(geoPointGroup);
+
+
+    //GA_FeE_Group::groupBumpDataId(unsharedVertexGroup);
+    //GA_FeE_Group::groupBumpDataId(unsharedPointGroup);
 
     if(!posAttrib)
         posAttrib = geo->findPointAttribute("P");
 
-    const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoVertexGroup);
+    //const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, unsharedVertexGroup);
+    const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, nullptr);
     const GA_ROHandleT<GA_Offset> dstptAttribH(dstptAttrib);
 
     const GA_ROHandleT<UT_Vector3T<fpreal64>> posH(posAttrib);
@@ -100,7 +109,7 @@ computeNormal2D(
     const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
 
 
-    const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(geoVertexGroup));
+    const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
     UTparallelFor(geoVertexSplittableRange, [&geo, &posH, &dstptAttribH, &N2DH, &N3DH,
         &vtxPointRef, &vtxPrimRef,
         &attribCalssN3D, &defaultN3D](const GA_SplittableRange& r)
@@ -138,7 +147,7 @@ computeNormal2D(
     }, subscribeRatio, minGrainSize);
 
 
-    const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(geoPointGroup));
+    const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
     UTparallelFor(geoPointSplittableRange, [&geo, &N2DAttrib, &uniScale, &defaultN3D, &scaleByTurns, &normalize](const GA_SplittableRange& r)
     {
         GA_PageHandleV<UT_Vector3T<fpreal64>>::RWType N2D_PH(N2DAttrib);

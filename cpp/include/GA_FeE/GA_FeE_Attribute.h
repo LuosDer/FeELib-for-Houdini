@@ -30,6 +30,8 @@ static bool
 }
 
 
+
+
 SYS_FORCE_INLINE
 static bool
 renameAttribute(
@@ -56,6 +58,34 @@ renameAttribute(
     return attrib->getDetail().renameAttribute(attrib->getOwner(), attrib->getScope(), attrib->getName(), newName);
 }
 
+
+
+
+
+static bool
+forceRenameAttribute(
+    GA_Detail* geo,
+    GA_Attribute* attrib,
+    const UT_StringHolder& newName
+)
+{
+    GA_Attribute* existAttribute = geo->findAttribute(attrib->getOwner(), newName);
+    if (existAttribute)
+        geo->getAttributes().destroyAttribute(existAttribute);
+    return geo->renameAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, attrib->getName(), newName);
+}
+
+
+SYS_FORCE_INLINE
+static bool
+forceRenameAttribute(
+    GA_Attribute* attrib,
+    const UT_StringHolder& newName
+)
+{
+    GA_Detail& geo = attrib->getDetail();
+    return forceRenameAttribute(&geo, attrib, newName);
+}
 
 
 
