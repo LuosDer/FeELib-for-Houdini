@@ -825,49 +825,49 @@ namespace GA_FeE_TopologyReference {
 
 
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
-    //static void
-    //    groupOneNeb(
-    //        GA_Detail* geo,
-    //        GA_PointGroup* const outGroup,
-    //        const exint subscribeRatio = 64,
-    //        const exint minGrainSize = 256
-    //    )
-    //{
-    //    GA_Topology& topo = geo->getTopology();
-    //    topo.makeVertexRef();
-    //    const GA_ATITopology* vtxPointRef = topo.getPointRef();
-    //    const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-    //    const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+    static void
+        groupOneNeb(
+            GA_Detail* geo,
+            GA_PointGroup* const outGroup,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        GA_Topology& topo = geo->getTopology();
+        topo.makeVertexRef();
+        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
 
-    //    const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange());
-    //    UTparallelFor(geoSplittableRange, [&geo, &outGroup,
-    //        &vtxPointRef, &pointVtxRef, &vtxNextRef](const GA_SplittableRange& r)
-    //        {
-    //            GA_Offset vtxoff, ptoff;
-    //            GA_Offset start, end;
-    //            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-    //            {
-    //                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-    //                {
-    //                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-    //                    ptoff = vtxPointRef->getLink(vtxoff);
-    //                    vtxoff = pointVtxRef->getLink(ptoff);
-    //                    vtxoff = vtxNextRef->getLink(vtxoff);
-    //                    //if (!topo.isPointShared(ptoff))
-    //                    if (vtxoff == GA_INVALID_OFFSET)
-    //                        outGroup->setElement(ptoff, true);
+        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange());
+        UTparallelFor(geoSplittableRange, [&geo, &outGroup,
+            &vtxPointRef, &pointVtxRef, &vtxNextRef](const GA_SplittableRange& r)
+            {
+                GA_Offset vtxoff, ptoff;
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        //if (!topo.isPointShared(ptoff))
+                        if (vtxoff == GA_INVALID_OFFSET)
+                            outGroup->setElement(ptoff, true);
 
-    //                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-    //                    ptoff = vtxPointRef->getLink(vtxoff);
-    //                    vtxoff = pointVtxRef->getLink(ptoff);
-    //                    vtxoff = vtxNextRef->getLink(vtxoff);
-    //                    //if (!topo.isPointShared(ptoff))
-    //                    if (vtxoff == GA_INVALID_OFFSET)
-    //                        outGroup->setElement(ptoff, true);
-    //                }
-    //            }
-    //        }, subscribeRatio, minGrainSize);
-    //}
+                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
+                        ptoff = vtxPointRef->getLink(vtxoff);
+                        vtxoff = pointVtxRef->getLink(ptoff);
+                        vtxoff = vtxNextRef->getLink(vtxoff);
+                        //if (!topo.isPointShared(ptoff))
+                        if (vtxoff == GA_INVALID_OFFSET)
+                            outGroup->setElement(ptoff, true);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
     
 
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
@@ -875,7 +875,7 @@ namespace GA_FeE_TopologyReference {
         groupOneNeb(
             GA_Detail* geo,
             GA_PointGroup* outGroup,
-            const GA_PrimitiveGroup* geoGroup = nullptr,
+            const GA_PrimitiveGroup* geoGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )

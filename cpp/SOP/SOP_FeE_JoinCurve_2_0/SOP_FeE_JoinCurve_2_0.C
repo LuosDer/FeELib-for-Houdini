@@ -1,13 +1,13 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_JoinCurve_1_0.h"
+#include "SOP_FeE_JoinCurve_2_0.h"
 
 #define MAXLOOPCOUNT 1000000000
 
 // This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_JoinCurve_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_JoinCurve_1_0Verb::cook with the correct type.
-#include "SOP_FeE_JoinCurve_1_0.proto.h"
+// to provide SOP_FeE_JoinCurve_2_0Parms, an easy way to access parameter values from
+// SOP_FeE_JoinCurve_2_0Verb::cook with the correct type.
+#include "SOP_FeE_JoinCurve_2_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -22,7 +22,7 @@
 #include "GA_FeE/GA_FeE_JoinCurve.h"
 
 
-using namespace SOP_FeE_JoinCurve_1_0_Namespace;
+using namespace SOP_FeE_JoinCurve_2_0_Namespace;
 
 //
 // Help is stored in a "wiki" style text file.  This text file should be copied
@@ -33,7 +33,7 @@ using namespace SOP_FeE_JoinCurve_1_0_Namespace;
 
 /// This is the internal name of the SOP type.
 /// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_JoinCurve_1_0::theSOPTypeName("FeE::joinCurve::1.0"_sh);
+const UT_StringHolder SOP_FeE_JoinCurve_2_0::theSOPTypeName("FeE::joinCurve::2.0"_sh);
 
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case, we add ourselves
@@ -42,10 +42,10 @@ void
 newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
-        SOP_FeE_JoinCurve_1_0::theSOPTypeName,   // Internal name
+        SOP_FeE_JoinCurve_2_0::theSOPTypeName,   // Internal name
         "FeE Join Curve",     // UI name
-        SOP_FeE_JoinCurve_1_0::myConstructor,    // How to build the SOP
-        SOP_FeE_JoinCurve_1_0::buildTemplates(), // My parameters
+        SOP_FeE_JoinCurve_2_0::myConstructor,    // How to build the SOP
+        SOP_FeE_JoinCurve_2_0::buildTemplates(), // My parameters
         1,                         // Min # of sources
         1,                         // Max # of sources
         nullptr,                   // Custom local variables (none)
@@ -291,20 +291,20 @@ static const char *theDsFile = R"THEDSFILE(
 )THEDSFILE";
 
 PRM_Template*
-SOP_FeE_JoinCurve_1_0::buildTemplates()
+SOP_FeE_JoinCurve_2_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_JoinCurve_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_JoinCurve_2_0.C"_sh, theDsFile);
     return templ.templates();
 }
 
-class SOP_FeE_JoinCurve_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_JoinCurve_2_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_JoinCurve_1_0Verb() {}
-    virtual ~SOP_FeE_JoinCurve_1_0Verb() {}
+    SOP_FeE_JoinCurve_2_0Verb() {}
+    virtual ~SOP_FeE_JoinCurve_2_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_JoinCurve_1_0Parms(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_JoinCurve_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_JoinCurve_2_0Parms(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_JoinCurve_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -312,26 +312,26 @@ public:
     
     /// This static data member automatically registers
     /// this verb class at library load time.
-    static const SOP_NodeVerb::Register<SOP_FeE_JoinCurve_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_JoinCurve_2_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_JoinCurve_1_0Verb> SOP_FeE_JoinCurve_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_JoinCurve_2_0Verb> SOP_FeE_JoinCurve_2_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_JoinCurve_1_0::cookVerb() const 
+SOP_FeE_JoinCurve_2_0::cookVerb() const 
 { 
-    return SOP_FeE_JoinCurve_1_0Verb::theVerb.get();
+    return SOP_FeE_JoinCurve_2_0Verb::theVerb.get();
 }
 
 
 
 
 static bool
-sopPrimPolyIsClosed(SOP_FeE_JoinCurve_1_0Parms::PrimType parmgrouptype)
+sopPrimPolyIsClosed(SOP_FeE_JoinCurve_2_0Parms::PrimType parmgrouptype)
 {
-    using namespace SOP_FeE_JoinCurve_1_0Enums;
+    using namespace SOP_FeE_JoinCurve_2_0Enums;
     switch (parmgrouptype)
     {
     case PrimType::POLYLINE:   return 0;    break;
@@ -343,11 +343,11 @@ sopPrimPolyIsClosed(SOP_FeE_JoinCurve_1_0Parms::PrimType parmgrouptype)
 
 
 void
-SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
+SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
-    auto&& sopparms = cookparms.parms<SOP_FeE_JoinCurve_1_0Parms>();
+    auto&& sopparms = cookparms.parms<SOP_FeE_JoinCurve_2_0Parms>();
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_JoinCurve_1_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_JoinCurve_2_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
@@ -356,7 +356,7 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (sopparms.getCheckInputError())
     {
-        GA_FeE_JoinCurve::joinCurveCheckInputError(cookparms, inGeo0);
+        GA_FeE_JoinCurve::joinCurveCheckInputError(cookparms, outGeo0);
     }
     //GU_DetailHandle tmpGeoH0;
     //GU_Detail* tmpGeo0 = new GU_Detail();
@@ -376,21 +376,24 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GOP_Manager gop;
     const GA_PointGroup* stopPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getStopPointGroup(), gop);
 
-    const GA_PointGroupUPtr passedPointGroupUPtr = outGeo0->createDetachedPointGroup();
-    GA_PointGroup* passedPointGroup = passedPointGroupUPtr.get();
-
-
-    GA_PrimitiveGroupUPtr passedPrimitiveGroupUPtr;
-    GA_PrimitiveGroup* passedPrimitiveGroup = nullptr;
-
     
     const bool keepOrder = sopparms.getKeepOrder();
     const bool keepLoop = sopparms.getKeepLoop();
-    if (keepLoop)
-    {
-        passedPrimitiveGroupUPtr = outGeo0->createDetachedPrimitiveGroup();
-        passedPrimitiveGroup = passedPrimitiveGroupUPtr.get();
-    }
+
+
+
+    //const GA_PointGroupUPtr passedPointGroupUPtr = outGeo0->createDetachedPointGroup();
+    //GA_PointGroup* passedPointGroup = passedPointGroupUPtr.get();
+
+
+    //GA_PrimitiveGroupUPtr passedPrimitiveGroupUPtr;
+    //GA_PrimitiveGroup* passedPrimitiveGroup = nullptr;
+
+    //if (keepLoop)
+    //{
+    //    passedPrimitiveGroupUPtr = outGeo0->createDetachedPrimitiveGroup();
+    //    passedPrimitiveGroup = passedPrimitiveGroupUPtr.get();
+    //}
     
 
 
@@ -440,6 +443,8 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
+
+
     UT_ValArray<GA_Offset> srcPrims;
     GA_Attribute* srcPrimsAttrib = nullptr;
     if (outSrcPrims)
@@ -451,9 +456,6 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
-
-
-    GA_Offset start, end;
     switch (kernel)
     {
     case 0:
@@ -509,100 +511,18 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
 
 
-    if (keepLoop)
-    {
-        for (GA_Iterator it(outGeo0->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
-        {
-            for (GA_Offset primoff = start; primoff < end; ++primoff)
-            {
-                if (passedPrimitiveGroup->contains(primoff))
-                    continue;
-            }
-        }
-    }
 
-    outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
 
-    //#if 1
-    //    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
-    //    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
-    //#else
-    //    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
-    //#endif
-    //
-    //
-    //
-    //#if 1
-    //    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-    //    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
-    //
-    //    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-    //    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-    //#else
-    //    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
-    //#endif
-    //
-    //    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
-    //    GA_RWHandleT<GA_Size> dstptAttribHandle;
-    //    vtxpnumAttribHandle.bind(vtxpnumATI);
-    //    dstptAttribHandle.bind(dstptATI);
-    //
-    //    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
-    //
-    //    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
-    //
-    //    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
-    //    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
-    //
-    //
-    //    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
+    //outGeo0->bumpDataIdsForRewire();
+    outGeo0->bumpAllDataIds();
+    //outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
 
-    //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
+    //tmpGeoH0.deleteGdp();
     
-    
-    
-    
-    /*
-    
-    const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
-    //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstptAttribH = tmpGeo0->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
-
-    UT_ASSERT_P(dstptAttribH.getAttribute());
-
-
-    GA_Size entries = creatingGroup->getGroupEntries();
-
-    GA_Offset vtxoff_first;
-    GA_Offset primoff_first = outGeo0->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-
-
-    GA_Topology& topo = outGeo0->getTopology();
-
-    GA_Topology& topo_tmpGeo0 = tmpGeo0->getTopology();
-    const GA_ATITopology* vtxPointRef_tmpGeo0 = topo_tmpGeo0.getPointRef();
-
-    GA_Offset start, end;
-    for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
-        {
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef_tmpGeo0->getLink(vtxoff));
-            ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, dstptAttribH.get(vtxoff));
-            ++vtxoff_first;
-        }
-    }
-
-    outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
-
-    tmpGeoH0.deleteGdp();
-
-    */
 }
 
 
 
-namespace SOP_FeE_JoinCurve_1_0_Namespace {
+namespace SOP_FeE_JoinCurve_2_0_Namespace {
 
-} // End SOP_FeE_JoinCurve_1_0_Namespace namespace
+} // End SOP_FeE_JoinCurve_2_0_Namespace namespace

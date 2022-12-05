@@ -18,7 +18,7 @@ namespace GA_FeE_JoinCurve {
 
 static void
     joinCurve(
-        GEO_Detail* const geo,
+        GU_Detail* const geo,
         const GA_PointGroup* const stopPointGroup,
         const bool keepOrder = false,
         const bool keepLoop = true
@@ -26,6 +26,7 @@ static void
 {
     UT_ASSERT_P(geo);
 
+    const GA_Range& primRange = geo->getPrimitiveRange();
 
     const GA_PointGroupUPtr passedPointGroupUPtr = geo->createDetachedPointGroup();
     GA_PointGroup* passedPointGroup = passedPointGroupUPtr.get();
@@ -33,6 +34,10 @@ static void
 
     const GA_PrimitiveGroupUPtr passedPrimitiveGroupUPtr = geo->createDetachedPrimitiveGroup();
     GA_PrimitiveGroup* passedPrimitiveGroup = passedPrimitiveGroupUPtr.get();
+    passedPrimitiveGroup->setElement(primRange, true);
+
+    const GA_PrimitiveGroupUPtr delPrimitiveGroupUPtr = geo->createDetachedPrimitiveGroup();
+    GA_PrimitiveGroup* delPrimitiveGroup = delPrimitiveGroupUPtr.get();
 
     //GA_PrimitiveGroupUPtr passedPrimitiveGroupUPtr;
     //GA_PrimitiveGroup* passedPrimitiveGroup = nullptr;
@@ -55,13 +60,13 @@ static void
     bool isTwoNeb0, isTwoNeb1;
     GA_Offset vtxoff0, ptoff0, vtxoff_next0;
     GA_Offset vtxoff1, ptoff1, vtxoff_next1;
-    GA_Offset primoff_neb, vtxoff_next;
+    GA_Offset primoff_prev, primoff_neb, vtxoff_next, ptoff_next;
     GA_Offset start, end;
-    for (GA_Iterator it(geo->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    for (GA_Iterator it(primRange); it.fullBlockAdvance(start, end); )
     {
         for (GA_Offset primoff = start; primoff < end; ++primoff)
         {
-            if (passedPrimitiveGroup->contains(primoff))
+            if (!passedPrimitiveGroup->contains(primoff))
                 continue;
             vtxoff0 = geo->getPrimitiveVertexOffset(primoff, 0);
             ptoff0  = vtxPointRef->getLink(vtxoff0);
@@ -119,81 +124,129 @@ static void
                 continue;
             }
 
-            for (vtxoff_next = pointVtxRef->getLink(isTwoNeb0 ? ptoff0 : ptoff1); ; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+            if (keepLoop)
             {
-                primoff_neb = vtxPrimRef->getLink(vtxoff_next);
-                if (primoff_neb != primoff)
-                    break;
-                if (vtxoff_next == GA_INVALID_OFFSET)
-                    UT_ASSERT("cant be possible");
+                passedPrimitiveGroup->setElement(primoff, false);
             }
             if (isTwoNeb0)
             {
                 GEO_Primitive* prim = geo->getGEOPrimitive(primoff);
                 prim->reverse();
             }
+            primoff_prev = primoff;
+            ptoff_next = isTwoNeb0 ? ptoff0 : ptoff1;
+            while (ptoff_next != GA_INVALID_OFFSET)
+            {
+                if (stopPointGroup && stopPointGroup->contains(ptoff_next))
+                {
+                    break;
+                }
+                else
+                {
+                    vtxoff_next = pointVtxRef->getLink(ptoff_next);
+                    vtxoff_next = vtxNextRef->getLink(vtxoff_next);
+                    if (vtxoff_next == GA_INVALID_OFFSET)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        if (vtxNextRef->getLink(vtxoff_next) != GA_INVALID_OFFSET)
+                        {
+                            break;
+                        }
 
-            const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff_neb);
-            const GA_Size numvtx = vertices.size();
+                    }
+                }
+                for (vtxoff_next = pointVtxRef->getLink(ptoff_next); ; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    primoff_neb = vtxPrimRef->getLink(vtxoff_next);
+                    if (primoff_neb != primoff_prev)
+                        break;
+                    if (vtxoff_next == GA_INVALID_OFFSET)
+                        UT_ASSERT("cant be possible");
+                }
+
+                const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff_neb);
+                const GA_Size numvtx = vertices.size() - 1;
+                GEO_Primitive* prim_neb = geo->getGEOPrimitive(primoff_neb);
+
+                if (keepLoop)
+                {
+                    passedPrimitiveGroup->setElement(primoff_neb, false);
+                }
+                delPrimitiveGroup->setElement(primoff_neb, true);
+
+                //GA_Offset vtxoff_first = geo->appendVertexBlock(numvtx);
+                if (vtxoff_next == vertices[0])
+                {
+                    for (GA_Size i = 1; i <= numvtx; ++i)
+                    {
+                        topo.wireVertexPrimitive(vertices[i], primoff);
+                        //prim_neb->releaseVertex(vertices[i]);
+                        //geo->copyVertex(vtxoff_first + i - 1, vertices[i], true);
+                        //topo.wireVertexPrimitive(vtxoff_first + i - 1, primoff);
+                    }
+                    prim_neb->releaseVertex(vertices[0]);
+                    //topo.delVertex(vertices[0]);
+                    //topo.wireVertexPoint(vertices[0], );
+                    geo->destroyVertexOffset(vertices[0]);
+                    ptoff_next = vtxPointRef->getLink(vertices[numvtx]);
+                }
+                else
+                {
+                    for (GA_Size i = numvtx - 1; i >= 0; --i)
+                    {
+                        topo.wireVertexPrimitive(vertices[i], primoff);
+                        //prim_neb->releaseVertex(vertices[i]);
+                        //geo->copyVertex(vtxoff_first + numvtx - i - 1, vertices[i], true);
+                        //topo.wireVertexPrimitive(vtxoff_first + numvtx - i - 1, primoff);
+                    }
+                    prim_neb->releaseVertex(vertices[numvtx]);
+                    //topo.delVertex(vertices[numvtx]);
+                    geo->destroyVertexOffset(vertices[numvtx]);
+                    ptoff_next = vtxPointRef->getLink(vertices[0]);
+                }
+
+                primoff_prev = primoff_neb;
+            }
+
             
-            passedPrimitiveGroup->setElement(primoff_neb, true);
-
-            if (vtxoff_next == vertices[0])
-            {
-                geo->destroyVertexOffset(vertices[0]);
-                for (GA_Size i = 1; i < numvtx; ++i)
-                {
-                    topo.wireVertexPrimitive(vertices[i], primoff);
-                }
-            }
-            else
-            {
-                geo->destroyVertexOffset(vertices[numvtx-1]);
-                for (GA_Size i = numvtx - 2; i >= 0; --i)
-                {
-                    topo.wireVertexPrimitive(vertices[i], primoff);
-                }
-            }
-
-
-            //if (passedPointGroup->contains(ptoff))
-            //    continue;
-            const GA_Primitive* newPrim = geo->appendPrimitive(GA_PRIMPOLY);
-
-            GA_Offset newPrimoff = newPrim->getMapOffset();
-
-
-            GA_Offset primoff_neb = newPrim->getMapOffset();
-#if 0
-            while (1) {
-#else
-            for (int LOOPCOUNT = 0; LOOPCOUNT <= MAXLOOPCOUNT; ++LOOPCOUNT) {
-                if (LOOPCOUNT == MAXLOOPCOUNT)
-                {
-                    UT_ASSERT("Unsupport Input Geo so arrive death loop");
-                }
-#endif
-
-
-            }
-            if (keepLoop)
-            {
-                passedPrimitiveGroup->setElement(primoff, true);
-            }
-            passedPointGroup->setElement(ptoff, true);
-            if (outSrcPrims)
-            {
-                srcPrims.emplace_back();
-                srcPrimsAttribH.set(newPrimoff, srcPrims);
-            }
-            if (outSrcPrims)
-            {
-                srcPrims.clear();
-            }
+            //if (outSrcPrims)
+            //{
+            //    srcPrims.emplace_back();
+            //    srcPrimsAttribH.set(newPrimoff, srcPrims);
+            //}
+            //if (outSrcPrims)
+            //{
+            //    srcPrims.clear();
+            //}
+            
         }
     }
+//    return;
+//    for (GA_Iterator it(geo->getPrimitiveRange(passedPrimitiveGroup)); it.fullBlockAdvance(start, end); )
+//    {
+//        for (GA_Offset primoff = start; primoff < end; ++primoff)
+//        {
+//#if 1
+//            if (!passedPrimitiveGroup->contains(primoff))
+//            {
+//                UT_ASSERT("cant be possible");
+//            }
+//            if (delPrimitiveGroup->contains(primoff))
+//            {
+//                UT_ASSERT("cant be possible");
+//            }
+//#endif
+//            passedPrimitiveGroup->setElement(primoff, false);
+//            passedPrimitiveGroup->setElement(primoff_neb, false);
+//            //delPrimitiveGroup->setElement(primoff_neb, false);
+//
+//        }
+//    }
     //geo->destroyPrimitiveOffsets(geo->getPrimitiveRange(passedPrimitiveGroup));
-    geo->destroyPrimitives(geo->getPrimitiveRange(passedPrimitiveGroup));
+    //geo->destroyPrimitives(geo->getPrimitiveRange(delPrimitiveGroup));
 }
 
 
@@ -215,7 +268,7 @@ joinCurveCheckInputError(
     const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
 
     bool breakOut = false;
-    GA_Offset vtxoff, ptoff, vtxoff_next;
+    GA_Offset vtxoff, ptoff;
     GA_Offset primoff_neb, vtxoff_next;
     GA_Offset start, end;
     for (GA_Iterator it(geo->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
