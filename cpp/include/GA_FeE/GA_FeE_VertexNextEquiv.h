@@ -4,11 +4,11 @@
 #ifndef __GA_FeE_VertexNextEquiv_h__
 #define __GA_FeE_VertexNextEquiv_h__
 
-//#include <GA_FeE/GA_FeE_VertexNextEquiv.h>
+//#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
 
-#include <GEO/GEO_Detail.h>
+#include "GEO/GEO_Detail.h"
 
-#include <GA_FeE/GA_FeE_TopologyReference.h>
+#include "GA_FeE/GA_FeE_TopologyReference.h"
 
 namespace GA_FeE_VertexNextEquiv {
 

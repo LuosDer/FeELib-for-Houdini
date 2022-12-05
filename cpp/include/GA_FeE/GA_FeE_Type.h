@@ -4,9 +4,9 @@
 #ifndef __GA_FeE_Type_h__
 #define __GA_FeE_Type_h__
 
-//#include <GA_FeE/GA_FeE_Type.h>
+//#include "GA_FeE/GA_FeE_Type.h"
 
-#include <GA/GA_Detail.h>
+#include "GA/GA_Detail.h"
 
 
 namespace GA_FeE_Type {

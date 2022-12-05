@@ -8,14 +8,14 @@
 // SOP_FeE_UVScaletoWorldSize_0_5Verb::cook with the correct type.
 #include "SOP_FeE_UVScaletoWorldSize_0_5.proto.h"
 
-#include <GEO/GEO_Detail.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_DSOVersion.h>
+#include "GEO/GEO_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
 
-#include <GA_FeE/GA_FeE_Attribute.h>
-#include <GEO_FeE/GEO_FeE_Group.h>
+#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GEO_FeE/GEO_FeE_Group.h"
 #include "GA_FeE/GA_FeE_Measure.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
 

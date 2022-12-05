@@ -4,10 +4,10 @@
 #ifndef __GA_FeE_Measure_h__
 #define __GA_FeE_Measure_h__
 
-//#include <GA_FeE/GA_FeE_Measure.h>
+//#include "GA_FeE/GA_FeE_Measure.h"
 
-#include <GA/GA_Detail.h>
-#include <GA_FeE/GA_FeE_Attribute.h>
+#include "GA/GA_Detail.h"
+#include "GA_FeE/GA_FeE_Attribute.h"
 
 
 namespace GA_FeE_Measure {

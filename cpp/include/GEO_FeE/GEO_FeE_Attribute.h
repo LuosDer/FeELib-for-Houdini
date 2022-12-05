@@ -4,13 +4,13 @@
 #ifndef __GEO_FeE_Attribute_h__
 #define __GEO_FeE_Attribute_h__
 
-//#include <GEO_FeE/GEO_FeE_Attribute.h>
+//#include "GEO_FeE/GEO_FeE_Attribute.h"
 
-#include <GA/GA_Detail.h>
+#include "GA/GA_Detail.h"
 
-#include <GA_FeE/GA_FeE_Attribute.h>
-#include <GA_FeE/GA_FeE_Group.h>
-#include <GEO_FeE/GEO_FeE_Group.h>
+#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GEO_FeE/GEO_FeE_Group.h"
 
 
 namespace GEO_FeE_Attribute {

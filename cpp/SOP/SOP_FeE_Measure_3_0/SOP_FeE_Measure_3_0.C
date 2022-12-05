@@ -8,15 +8,15 @@
 // SOP_FeE_Measure_3_0Verb::cook with the correct type.
 #include "SOP_FeE_Measure_3_0.proto.h"
 
-#include <GEO/GEO_Detail.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_DSOVersion.h>
+#include "GEO/GEO_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
-#include <GA_FeE/GA_FeE_Type.h>
-#include <GA_FeE/GA_FeE_Attribute.h>
-#include <GA_FeE/GA_FeE_Group.h>
-#include <GA_FeE/GA_FeE_Measure.h>
+#include "GA_FeE/GA_FeE_Type.h"
+#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Measure.h"
 
 
 using namespace SOP_FeE_Measure_3_0_Namespace;

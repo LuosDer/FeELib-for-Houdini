@@ -4,11 +4,11 @@
 #ifndef __GA_FeE_GroupUnion_h__
 #define __GA_FeE_GroupUnion_h__
 
-//#include <GA_FeE/GA_FeE_GroupUnion.h>
+//#include "GA_FeE/GA_FeE_GroupUnion.h"
 
-#include <GA/GA_Detail.h>
+#include "GA/GA_Detail.h"
 
-#include <GA_FeE/GA_FeE_TopologyReference.h>
+#include "GA_FeE/GA_FeE_TopologyReference.h"
 
 
 

@@ -4,13 +4,13 @@
 #ifndef __GA_FeE_Group_h__
 #define __GA_FeE_Group_h__
 
-//#include <GA_FeE/GA_FeE_Group.h>
+//#include "GA_FeE/GA_FeE_Group.h"
 
-//#include <GA/GA_Detail.h>
-#include <GEO/GEO_Detail.h>
-#include <GA/GA_SplittableRange.h>
+//#include "GA/GA_Detail.h"
+#include "GEO/GEO_Detail.h"
+#include "GA/GA_SplittableRange.h"
 
-#include <GA_FeE/GA_FeE_Type.h>
+#include "GA_FeE/GA_FeE_Type.h"
 
 namespace GA_FeE_Group {
 
@@ -212,6 +212,55 @@ findOrParseGroupDetached(
     }
     return nullptr;
 }
+
+SYS_FORCE_INLINE
+static const GA_PrimitiveGroup*
+findOrParsePrimitiveGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_PrimitiveGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_PRIMITIVE, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static const GA_PointGroup*
+findOrParsePointGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_PointGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_POINT, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static const GA_VertexGroup*
+findOrParseVertexGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_VertexGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_VERTEX, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static const GA_EdgeGroup*
+findOrParseEdgeGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<const GA_EdgeGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_EDGE, groupName, gop));
+}
+
 
 
 

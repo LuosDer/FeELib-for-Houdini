@@ -4,15 +4,15 @@
 #ifndef __GEO_FeE_Normal_h__
 #define __GEO_FeE_Normal_h__
 
-//#include <GEO_FeE/GEO_FeE_Normal.h>
+//#include "GEO_FeE/GEO_FeE_Normal.h"
 
-#include <GEO/GEO_Detail.h>
+#include "GEO/GEO_Detail.h"
 
-#include <GEO/GEO_Normal.h>
+#include "GEO/GEO_Normal.h"
 
-#include <GA_FeE/GA_FeE_TopologyReference.h>
-#include <GA_FeE/GA_FeE_VertexNextEquiv.h>
-#include <GEO_FeE/GEO_FeE_Group.h>
+#include "GA_FeE/GA_FeE_TopologyReference.h"
+#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
+#include "GEO_FeE/GEO_FeE_Group.h"
 
 
 namespace GEO_FeE_Normal {

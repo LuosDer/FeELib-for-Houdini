@@ -4,16 +4,15 @@
 #ifndef __GA_FeE_GroupPromote_h__
 #define __GA_FeE_GroupPromote_h__
 
-//#include <GA_FeE/GA_FeE_GroupPromote.h>
+//#include "GA_FeE/GA_FeE_GroupPromote.h"
 
-//#include <GA/GA_Detail.h>
-#include <GA/GA_Detail.h>
+#include "GA/GA_Detail.h"
 
-#include <GA_FeE/GA_FeE_Group.h>
-#include <GA_FeE/GA_FeE_GroupUnion.h>
-//#include <GA/GA_SplittableRange.h>
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupUnion.h"
+//#include "GA/GA_SplittableRange.h"
 
-//#include <GA_FeE/GA_FeE_Type.h>
+//#include "GA_FeE/GA_FeE_Type.h"
 
 namespace GA_FeE_GroupPromote {
 

@@ -4,9 +4,9 @@
 #ifndef __GU_FeE_Attribute_h__
 #define __GU_FeE_Attribute_h__
 
-//#include <GU_FeE/GU_FeE_Attribute.h>
+//#include "GU_FeE/GU_FeE_Attribute.h"
 
-#include <GA/GA_Detail.h>
+#include "GA/GA_Detail.h"
 
 
 

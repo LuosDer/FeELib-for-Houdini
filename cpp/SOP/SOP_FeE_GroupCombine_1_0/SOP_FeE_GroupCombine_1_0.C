@@ -8,16 +8,14 @@
 // SOP_FeE_GroupCombine_1_0Verb::cook with the correct type.
 #include "SOP_FeE_GroupCombine_1_0.proto.h"
 
-#include <GEO/GEO_Detail.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_DSOVersion.h>
+#include "GEO/GEO_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
-//#include <GA/GA_EdgeGroup.h>
 
-#include <GEO_FeE/GEO_FeE_Group.h>
-//#include <GA_FeE/GA_FeE_Adjacency.h>
-#include <GA_FeE/GA_FeE_VertexNextEquiv.h>
+#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
 
 
 using namespace SOP_FeE_GroupCombine_1_0_Namespace;

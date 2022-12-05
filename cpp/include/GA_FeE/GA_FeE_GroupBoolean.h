@@ -4,18 +4,18 @@
 #ifndef __GA_FeE_GroupBoolean_h__
 #define __GA_FeE_GroupBoolean_h__
 
-//#include <GA_FeE/GA_FeE_GroupBoolean.h>
+//#include "GA_FeE/GA_FeE_GroupBoolean.h"
 
-//#include <GA/GA_Detail.h>
-#include <GA/GA_Detail.h>
-#include <GA_FeE/GA_FeE_GroupUnion.h>
-#include <GA_FeE/GA_FeE_GroupPromote.h>
+//#include "GA/GA_Detail.h"
+#include "GA/GA_Detail.h"
+#include "GA_FeE/GA_FeE_GroupUnion.h"
+#include "GA_FeE/GA_FeE_GroupPromote.h"
 
-//#include <GA/GA_SplittableRange.h>
+//#include "GA/GA_SplittableRange.h"
 
-//#include <GA_FeE/GA_FeE_Type.h>
+//#include "GA_FeE/GA_FeE_Type.h"
 
-#include <GU/GU_Group.h>
+#include "GU/GU_Group.h"
 
 
 //enum GA_GroupBooleanOp

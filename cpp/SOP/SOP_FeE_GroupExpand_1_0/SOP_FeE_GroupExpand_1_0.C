@@ -9,18 +9,18 @@
 #include "SOP_FeE_GroupExpand_1_0.proto.h"
 
 
-#include <GA/GA_Detail.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_DSOVersion.h>
+#include "GA/GA_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
 
-#include <GEO_FeE/GEO_FeE_GroupExpand.h>
-#include <GEO_FeE/GEO_FeE_Group.h>
-#include <GA_FeE/GA_FeE_Group.h>
-#include <GA_FeE/GA_FeE_Measure.h>
-#include <GA_FeE/GA_FeE_Connectivity.h>
-#include <GA_FeE/GA_FeE_TopologyReference.h>
+#include "GEO_FeE/GEO_FeE_GroupExpand.h"
+#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Measure.h"
+#include "GA_FeE/GA_FeE_Connectivity.h"
+#include "GA_FeE/GA_FeE_TopologyReference.h"
 
 
 using namespace SOP_FeE_GroupExpand_1_0_Namespace;

@@ -8,41 +8,20 @@
 // SOP_FeE_Connectivity_1_0Verb::cook with the correct type.
 #include "SOP_FeE_Connectivity_1_0.proto.h"
 
-#include <GEO/GEO_Detail.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_DSOVersion.h>
-
-//#include <GU/GU_Detail.h>
-//#include <GEO/GEO_PrimPoly.h>
-//#include <OP/OP_Operator.h>
-//#include <OP/OP_OperatorTable.h>
-//#include <PRM/PRM_Include.h>
-//#include <PRM/PRM_TemplateBuilder.h>
-//#include <UT/UT_DSOVersion.h>
-//#include <UT/UT_Interrupt.h>
-//#include <UT/UT_StringHolder.h>
-//#include <SYS/SYS_Math.h>
-//#include <limits.h>
-//
-//#include <GA/GA_Primitive.h>
-//#include <GA/GA_PageHandle.h>
-//#include <GA/GA_AIFNumericArray.h>
-//
-//#include <UT/UT_UniquePtr.h>
-//#include <GA/GA_SplittableRange.h>
-//#include <HOM/HOM_SopNode.h>
+#include "GEO/GEO_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
 
-//#include <chrono>
+#include "GU/GU_Promote.h"
 
-//#include <GU/GU_Measure.h>
-#include <GU/GU_Promote.h>
+#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GEO_FeE/GEO_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_Adjacency.h"
+#include "GA_FeE/GA_FeE_Connectivity.h"
 
-#include <GEO_FeE/GEO_FeE_Group.h>
-#include <GEO_FeE/GEO_FeE_Attribute.h>
-#include <GA_FeE/GA_FeE_Adjacency.h>
-#include <GA_FeE/GA_FeE_Connectivity.h>
+
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
 

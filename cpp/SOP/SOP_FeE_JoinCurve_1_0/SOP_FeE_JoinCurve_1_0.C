@@ -9,33 +9,17 @@
 // SOP_FeE_JoinCurve_1_0Verb::cook with the correct type.
 #include "SOP_FeE_JoinCurve_1_0.proto.h"
 
-#include <GEO/GEO_Detail.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_Interrupt.h>
-#include <UT/UT_DSOVersion.h>
-
-//#include <GU/GU_Detail.h>
-//#include <GEO/GEO_PrimPoly.h>
-//#include <OP/OP_Operator.h>
-//#include <OP/OP_OperatorTable.h>
-//#include <PRM/PRM_Include.h>
-//#include <PRM/PRM_TemplateBuilder.h>
-//#include <UT/UT_DSOVersion.h>
-//#include <UT/UT_Interrupt.h>
-//#include <UT/UT_StringHolder.h>
-//#include <SYS/SYS_Math.h>
-//#include <limits.h>
-//
-//
-//#include <UT/UT_UniquePtr.h>
-//#include <GA/GA_SplittableRange.h>
-//#include <GA/GA_PageHandle.h>
-//#include <GA/GA_PageIterator.h>
+#include "GEO/GEO_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
 
-#include <GA_FeE/GA_FeE_Attribute.h>
-#include <GEO_FeE/GEO_FeE_Group.h>
-#include <GA_FeE/GA_FeE_VertexNextEquiv.h>
+#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
+#include "GEO_FeE/GEO_FeE_Group.h"
+
+#include "GA_FeE/GA_FeE_JoinCurve.h"
 
 
 using namespace SOP_FeE_JoinCurve_1_0_Namespace;
@@ -74,13 +58,11 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "stopGroup"
-        label   "Stop Group"
+        name    "stopPointGroup"
+        cppname "StopPointGroup"
+        label   "Stop Point Group"
         type    string
         default { "" }
-        menutoggle {
-            [ "opmenu -l pointwrangle1 group" ]
-        }
         range   { 0 1 }
         parmtag { "autoscope" "0000000000000000" }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
@@ -95,6 +77,7 @@ static const char *theDsFile = R"THEDSFILE(
     }
     parm {
         name    "keepOrder"
+        cppname "KeepOrder"
         label   "Keep Order"
         type    toggle
         default { "0" }
@@ -261,6 +244,31 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+    parm {
+       name    "keepLoop"
+       cppname "KeepLoop"
+       label   "Keep Loop"
+       type    toggle
+       default { 0 }
+    }
+
+    parm {
+       name    "kernel"
+       cppname "Kernel"
+       label   "Kernel"
+       type    integer
+       default { 0 }
+       range   { 0! 1! }
+    }
+
+
+    parm {
+       name    "checkInputError"
+       cppname "CheckInputError"
+       label   "Check Input Error"
+       type    toggle
+       default { 0 }
+    }
 
 
     parm {
@@ -334,141 +342,22 @@ sopPrimPolyIsClosed(SOP_FeE_JoinCurve_1_0Parms::PrimType parmgrouptype)
 }
 
 
-
-
-
-//// Calls functor on every active offset in this index map.
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachOffset(GA_IndexMap& idxmap, FUNCTOR&& functor)
-//{
-//    if (idxmap.isTrivialMap())
-//    {
-//        const GA_Offset end = GA_Offset(GA_Size(idxmap.indexSize()));
-//        for (GA_Offset off(0); off != end; ++off)
-//        {
-//            functor(off, off);
-//        }
-//    }
-//    else
-//    {
-//        const GA_Offset veryend(idxmap.myMaxOccupiedOffset + 1);
-//        GA_Size idx(0);
-//        GA_Offset off(0);
-//        while (true)
-//        {
-//            off = idxmap.findActiveOffset(off, veryend);
-//            GA_Offset end = idxmap.findInactiveOffset(off, veryend);
-//            if (off == end)
-//                break;
-//            do
-//            {
-//                functor(off, idx);
-//                ++off;
-//                ++idx;
-//            } while (off != end);
-//        }
-//    }
-//}
-
-
-
-
-/*
-template<typename FUNCTOR>
-static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const GA_ElementGroup* group = nullptr, bool complement = false)
-{
-    // Fall back to regular case if no group.
-    //if (!group)
-    //{
-    //    if (!complement)
-    //        index_map.forEachOffset(functor);
-    //    return;
-    //}
-
-    // Group order is only relevant if not complemented.
-    if (!complement)
-    {
-        const GA_ElementGroupOrder* order = group->getOrdered();
-        if (order)
-        {
-            GA_Size idx(0);
-            for (GA_ElementGroupOrderIndex i(0), n(order->entries()); i != n; ++i)
-            {
-                GA_Offset off = order->getElement(i);
-                functor(off, idx);
-                ++idx;
-            }
-            return;
-        }
-    }
-
-    // We have a group, treated as unordered.
-    const GA_Offset veryend = index_map.offsetSize();
-    GA_Size idx(0);
-    GA_Offset off(0);
-    while (true)
-    {
-        bool value;
-        GA_Size span_size;
-        group->getConstantSpan(off, veryend, span_size, value);
-        if (span_size == 0)
-            break;
-        if (value == complement)
-        {
-            off += span_size;
-            continue;
-        }
-        const GA_Offset span_end = off + span_size;
-        while (true)
-        {
-            off = index_map.findActiveOffset(off, span_end);
-            GA_Offset end = index_map.findInactiveOffset(off, span_end);
-            if (off == end)
-                break;
-            do
-            {
-                functor(off, idx);
-                ++off;
-                ++idx;
-            } while (off != end);
-        }
-    }
-}
-
-template<typename FUNCTOR>
-SYS_FORCE_INLINE
-void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool complement, FUNCTOR&& functor)
-{
-    forEachOffset(functor, geo->getPrimitiveMap(), group, complement);
-}
-
-*/
-
-
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachVertex(GA_Detail* geo, const GA_VertexGroup* group, bool complement, FUNCTOR&& functor)
-//{
-//    forEachOffset(functor, geo->getVertexMap(), group, complement);
-//}
-
-
-
-
-
 void
-SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_JoinCurve_1_0Parms>();
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_JoinCurve_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWithPoints(*inGeo0);
+    //outGeo0->replaceWithPoints(*inGeo0);
+    outGeo0->replaceWith(*inGeo0);
 
-
+    if (sopparms.getCheckInputError())
+    {
+        GA_FeE_JoinCurve::joinCurveCheckInputError(cookparms, inGeo0);
+    }
     //GU_DetailHandle tmpGeoH0;
     //GU_Detail* tmpGeo0 = new GU_Detail();
     //tmpGeoH0.allocateAndSet(tmpGeo0);
@@ -484,106 +373,25 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
 
 
+    GOP_Manager gop;
+    const GA_PointGroup* stopPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getStopPointGroup(), gop);
 
-    GA_Offset start, end;
-    for (GA_Iterator it(outGeo0->getPointRange(groupOneNeb)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset primoff = start; primoff < end; ++primoff)
-        {
-        }
-    }
+    const GA_PointGroupUPtr passedPointGroupUPtr = outGeo0->createDetachedPointGroup();
+    GA_PointGroup* passedPointGroup = passedPointGroupUPtr.get();
 
 
-    int passedPoints[];
-    resize(passedPoints, @numpt);
+    GA_PrimitiveGroupUPtr passedPrimitiveGroupUPtr;
+    GA_PrimitiveGroup* passedPrimitiveGroup = nullptr;
+
     
-        for (int ptnum = 0; ptnum < @numpt; ++ptnum) {
-#if 1
-            int vtxnum_neb = pointvertex(1, ptnum);
-            if (vertexnext(1, vtxnum_neb) != -1) continue;
-            int vtxpnum_neb = vertexprimindex(1, vtxnum_neb);
-            if (chi("../keepOrder")) {
-                if (vtxpnum_neb != 0) continue;
-            }
-            else {
-                if (!inpointgroup(1, chs("../tmpGroup_oneNeb"), ptnum)) continue;
-            }
-#else
-            if (!inpointgroup(1, chi("../keepOrder") ? chs("../tmpGroup_start") : chs("../tmpGroup_oneNeb"), ptnum)) continue;
-            int vtxnum_neb = pointvertex(1, ptnum);
-            int vtxpnum_neb = vertexprimindex(1, vtxnum_neb);
-#endif
-
-            if (passedPoints[ptnum]) continue;
-            if (chs("../stopgroup") != '' && inpointgroup(1, chs("../stopgroup"), ptnum)) continue;
-
-
-            int newprim = addprim(0, 'polyline', ptnum);
-            int srcPrim[];
-
-            // int vtxnum_neb = pointvertex(1, ptnum);
-            int primnum_neb = vertexprim(1, vtxnum_neb);
-#if 0
-            while (1) {
-#else
-            for (int LOOPCOUNT = 0; LOOPCOUNT <= MAXLOOPCOUNT; ++LOOPCOUNT) {
-                if (LOOPCOUNT == MAXLOOPCOUNT) {
-                    error('Unsupport Input Geo so arrive death loop');
-                }
-#endif
-                int flag = 0;
-                vtxpnum_neb = vertexprimindex(1, vtxnum_neb);
-
-                int numvtx = primvertexcount(1, primnum_neb);
-                int ptnum_neb;
-                // printf('\n %d', ptnum);
-                if (vtxpnum_neb == 0) {
-                    for (int vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum) {
-                        ptnum_neb = primpoint(1, primnum_neb, vtxpnum);
-                        addvertex(0, newprim, ptnum_neb);
-                        if (inpointgroup(1, chs("../tmpGroup_oneNeb"), ptnum_neb)) {
-                            flag = 1;
-                            break;
-                        }
-                    }
-                }
-                else {
-                    for (int vtxpnum = numvtx - 2; vtxpnum >= 0; --vtxpnum) {
-                        ptnum_neb = primpoint(1, primnum_neb, vtxpnum);
-                        addvertex(0, newprim, ptnum_neb);
-                        if (inpointgroup(1, chs("../tmpGroup_oneNeb"), ptnum_neb)) {
-                            flag = 1;
-                            break;
-                        }
-                    }
-                }
-                if (chi("../outsrcprims")) {
-                    push(srcPrim, primnum_neb);
-                }
-                if (flag) {
-                    passedPoints[ptnum_neb] = 1;
-                    if (chi("../outsrcprims")) {
-                        setprimattrib(0, chs("../srcprimsname"), newprim, srcPrim);
-                    }
-                    break;
-                }
-
-                vtxnum_neb = pointvertex(1, ptnum_neb);
-                // for (vtxnum_neb = pointvertex(1, ptnum); vtxnum_neb != -1; vtxnum_neb = vertexnext(1, vtxnum_neb)) {
-                while (1) {
-                    int primnum_neb_next = vertexprim(1, vtxnum_neb);
-                    if (primnum_neb_next != primnum_neb) {
-                        primnum_neb = primnum_neb_next;
-                        break;
-                    }
-                    vtxnum_neb = vertexnext(1, vtxnum_neb);
-                    if (vtxnum_neb == -1) {
-                        error('cant be possible');
-                        return;
-                    }
-                }
-            }
-            }
+    const bool keepOrder = sopparms.getKeepOrder();
+    const bool keepLoop = sopparms.getKeepLoop();
+    if (keepLoop)
+    {
+        passedPrimitiveGroupUPtr = outGeo0->createDetachedPrimitiveGroup();
+        passedPrimitiveGroup = passedPrimitiveGroupUPtr.get();
+    }
+    
 
 
 
@@ -592,7 +400,7 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_VertexGroupUPtr geo0vtxGroupUPtr;
     if (hasInputGroup)
     {
-        geo0vtxGroupUPtr = tmpGeo0->createDetachedVertexGroup();
+        //geo0vtxGroupUPtr = tmpGeo0->createDetachedVertexGroup();
         geo0VtxGroup = geo0vtxGroupUPtr.get();
         if (primGroupName.isstring())
         {
@@ -616,10 +424,14 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     }
 
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
+    const bool outSrcPrims = sopparms.getOutSrcPrims();
+    const UT_StringHolder& srcPrimsAttribName = sopparms.getSrcPrimsAttribName();
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
+    const exint kernel = sopparms.getKernel();
 
+    //const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = sopparms.getMinGrainSize();
+    
 
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
@@ -628,9 +440,89 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
+    UT_ValArray<GA_Offset> srcPrims;
+    GA_Attribute* srcPrimsAttrib = nullptr;
+    if (outSrcPrims)
+    {
+        srcPrims.setCapacity(1024);
+        srcPrimsAttrib = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, 1, nullptr, nullptr, inStorageI);
+    }
+    GA_RWHandleT<UT_ValArray<GA_Offset>> srcPrimsAttribH(srcPrimsAttrib);
 
 
-    //
+
+
+
+    GA_Offset start, end;
+    switch (kernel)
+    {
+    case 0:
+        GA_FeE_JoinCurve::joinCurve(outGeo0, stopPointGroup);
+        break;
+    case 1:
+//        for (GA_Iterator it(outGeo0->getPointRange(groupOneNeb)); it.fullBlockAdvance(start, end); )
+//        {
+//            for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
+//            {
+//                if (KeepOrder)
+//                {
+//                }
+//                if (passedPointGroup->contains(ptoff))
+//                    continue;
+//                if (stopPointGroup && stopPointGroup->contains(ptoff))
+//                    continue;
+//                const GA_Primitive* newPrim = outGeo0->appendPrimitive(GA_PRIMPOLY);
+//
+//                GA_Offset newPrimoff = newPrim->getMapOffset();
+//
+//
+//                GA_Offset primoff_neb = newPrim->getMapOffset();
+//#if 0
+//                while (1) {
+//#else
+//                for (int LOOPCOUNT = 0; LOOPCOUNT <= MAXLOOPCOUNT; ++LOOPCOUNT) {
+//                    if (LOOPCOUNT == MAXLOOPCOUNT)
+//                    {
+//                        UT_ASSERT("Unsupport Input Geo so arrive death loop");
+//                    }
+//#endif
+//
+//
+//                }
+//                if (keepLoop)
+//                {
+//                    passedPrimitiveGroup->setElement(primoff, true);
+//                }
+//                passedPointGroup->setElement(ptoff, true);
+//                if (outSrcPrims)
+//                {
+//                    srcPrims.emplace_back();
+//                    srcPrimsAttribH.set(newPrimoff, srcPrims);
+//                }
+//                if (outSrcPrims)
+//                {
+//                    srcPrims.clear();
+//                }
+//            }
+//        }
+        break;
+    }
+
+
+    if (keepLoop)
+    {
+        for (GA_Iterator it(outGeo0->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+        {
+            for (GA_Offset primoff = start; primoff < end; ++primoff)
+            {
+                if (passedPrimitiveGroup->contains(primoff))
+                    continue;
+            }
+        }
+    }
+
+    outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
+
     //#if 1
     //    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
     //    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
@@ -666,6 +558,12 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
 
     //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
+    
+    
+    
+    
+    /*
+    
     const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
     //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
     const GA_RWHandleT<GA_Offset> dstptAttribH = tmpGeo0->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
@@ -700,7 +598,7 @@ SOP_FeE_JoinCurve_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     tmpGeoH0.deleteGdp();
 
-
+    */
 }
 
 

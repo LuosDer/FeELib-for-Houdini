@@ -4,14 +4,14 @@
 #ifndef __GA_FeE_Attribute_h__
 #define __GA_FeE_Attribute_h__
 
-//#include <GA_FeE/GA_FeE_Attribute.h>
+//#include "GA_FeE/GA_FeE_Attribute.h"
 
-#include <GA/GA_Detail.h>
+#include "GA/GA_Detail.h"
 
-#include <GA/GA_PageHandle.h>
-#include <GA/GA_PageIterator.h>
+#include "GA/GA_PageHandle.h"
+#include "GA/GA_PageIterator.h"
 
-#include <GA_FeE/GA_FeE_Type.h>
+#include "GA_FeE/GA_FeE_Type.h"
 
 
 namespace GA_FeE_Attribute {

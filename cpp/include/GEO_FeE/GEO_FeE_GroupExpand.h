@@ -4,12 +4,12 @@
 #ifndef __GEO_FeE_GroupExpand_h__
 #define __GEO_FeE_GroupExpand_h__
 
-//#include <GA_FeE/GEO_FeE_GroupExpand.h>
+//#include "GA_FeE/GEO_FeE_GroupExpand.h"
 
-#include <GEO/GEO_Detail.h>
+#include "GEO/GEO_Detail.h"
 
-#include <GEO_FeE/GEO_FeE_Group.h>
-#include <GA_FeE/GA_FeE_Adjacency.h>
+#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Adjacency.h"
 
 
 namespace GEO_FeE_GroupExpand {

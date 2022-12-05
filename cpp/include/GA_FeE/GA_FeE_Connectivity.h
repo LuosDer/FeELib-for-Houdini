@@ -4,14 +4,14 @@
 #ifndef __GA_FeE_Connectivity_h__
 #define __GA_FeE_Connectivity_h__
 
-//#include <GU_FeE/GA_FeE_Connectivity.h>
+//#include "GU_FeE/GA_FeE_Connectivity.h"
 
-#include <GU/GU_Detail.h>
+#include "GU/GU_Detail.h"
 
-#include <GU/GU_Promote.h>
-#include <GA_FeE/GA_FeE_Adjacency.h>
+#include "GU/GU_Promote.h"
+#include "GA_FeE/GA_FeE_Adjacency.h"
 
-//#include <chrono>
+//#include "chrono"
 
 
 namespace GA_FeE_Connectivity
