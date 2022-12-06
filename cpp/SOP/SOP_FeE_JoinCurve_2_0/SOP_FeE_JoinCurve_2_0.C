@@ -2,7 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_JoinCurve_2_0.h"
 
-#define MAXLOOPCOUNT 1000000000
 
 // This is an automatically generated header file based on theDsFile, below,
 // to provide SOP_FeE_JoinCurve_2_0Parms, an easy way to access parameter values from
@@ -64,7 +63,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "" }
         range   { 0 1 }
-        parmtag { "autoscope" "0000000000000000" }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -75,21 +73,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { "0" }
     }
-    parm {
-        name    "keepOrder"
-        cppname "KeepOrder"
-        label   "Keep Order"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "closeLoops"
-        label   "Make Isolated Loops Closed"
-        type    toggle
-        default { "0" }
-        range   { 0 1 }
-    }
-
 
 
     parm {
@@ -245,12 +228,27 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "keepOrder"
+        cppname "KeepOrder"
+        label   "Keep Order"
+        type    toggle
+        default { "0" }
+    }
+    parm {
        name    "keepLoop"
        cppname "KeepLoop"
        label   "Keep Loop"
        type    toggle
-       default { 0 }
+       default { 1 }
     }
+    parm {
+        name    "closeLoop"
+        cppname "CloseLoop"
+        label   "Close Loop"
+        type    toggle
+        default { "0" }
+    }
+
 
     parm {
        name    "kernel"
@@ -346,7 +344,7 @@ void
 SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_JoinCurve_2_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_JoinCurve_2_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -358,14 +356,8 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     {
         GA_FeE_JoinCurve::joinCurveCheckInputError(cookparms, outGeo0);
     }
-    //GU_DetailHandle tmpGeoH0;
-    //GU_Detail* tmpGeo0 = new GU_Detail();
-    //tmpGeoH0.allocateAndSet(tmpGeo0);
-    //tmpGeo0->replaceWith(*inGeo0);
 
-    GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
+    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
     const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
     const UT_StringHolder& pointGroupName = sopparms.getPointGroup();
@@ -379,7 +371,8 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     
     const bool keepOrder = sopparms.getKeepOrder();
     const bool keepLoop = sopparms.getKeepLoop();
-
+    const bool closeLoop = sopparms.getCloseLoop();
+    
 
 
     //const GA_PointGroupUPtr passedPointGroupUPtr = outGeo0->createDetachedPointGroup();
@@ -426,9 +419,9 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         }
     }
 
-    const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
-    const bool outSrcPrims = sopparms.getOutSrcPrims();
+    //const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
     const UT_StringHolder& srcPrimsAttribName = sopparms.getSrcPrimsAttribName();
+    const bool outSrcPrims = sopparms.getOutSrcPrims() && srcPrimsAttribName.isstring();
 
     const exint kernel = sopparms.getKernel();
 
@@ -439,27 +432,22 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
+    GA_Attribute* srcPrimsAttrib = nullptr;
+    if (outSrcPrims)
+    {
+        srcPrimsAttrib = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, 1, nullptr, nullptr, inStorageI);
+    }
+
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
 
-    UT_ValArray<GA_Offset> srcPrims;
-    GA_Attribute* srcPrimsAttrib = nullptr;
-    if (outSrcPrims)
-    {
-        srcPrims.setCapacity(1024);
-        srcPrimsAttrib = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, 1, nullptr, nullptr, inStorageI);
-    }
-    GA_RWHandleT<UT_ValArray<GA_Offset>> srcPrimsAttribH(srcPrimsAttrib);
-
-
-
     switch (kernel)
     {
     case 0:
-        GA_FeE_JoinCurve::joinCurve(outGeo0, stopPointGroup);
+        GA_FeE_JoinCurve::joinCurve(outGeo0, stopPointGroup, keepOrder, keepLoop, closeLoop, srcPrimsAttrib);
         break;
     case 1:
 //        for (GA_Iterator it(outGeo0->getPointRange(groupOneNeb)); it.fullBlockAdvance(start, end); )
@@ -511,11 +499,8 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
 
 
-
-
+    outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
     //outGeo0->bumpDataIdsForRewire();
-    outGeo0->bumpAllDataIds();
-    //outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
 
     //tmpGeoH0.deleteGdp();
     

@@ -535,7 +535,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
     if (geo0Group && geo0Group->isEmpty())
         return;
@@ -545,12 +545,12 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //const GA_SplittableRange geo0SplittableRange = GA_FeE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClass);
 
 
-    GA_VertexGroup* vertexEdgeSeamGroup = const_cast<GA_VertexGroup*>(GA_FeE_Group::parseVertexGroupDetached(cookparms, outGeo0, vertexEdgeSeamGroupName, gop));
+    GA_VertexGroup* vertexEdgeSeamGroup = const_cast<GA_VertexGroup*>(GA_FeE_Group::findOrParseVertexGroupDetached(cookparms, outGeo0, vertexEdgeSeamGroupName, gop));
 
-    const GA_PointGroup* pointSeamGroup = GA_FeE_Group::parsePointGroupDetached(cookparms, outGeo0, pointSeamGroupName, gop);
+    const GA_PointGroup* pointSeamGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, pointSeamGroupName, gop);
     //const GA_ElementGroup* edgeSeamGroup = nullptr;
 
-    const GA_EdgeGroup* edgeSeamGroup = GA_FeE_Group::parseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
+    const GA_EdgeGroup* edgeSeamGroup = GA_FeE_Group::findOrParseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
     //GA_FeE_Group::combineGroup<GA_VertexGroup, GA_EdgeGroup>(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
     //GA_FeE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
     if(vertexEdgeSeamGroup)

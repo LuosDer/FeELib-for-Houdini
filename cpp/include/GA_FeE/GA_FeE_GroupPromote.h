@@ -406,6 +406,7 @@ namespace GA_FeE_GroupPromote {
 
 
 
+    //const UT_UniquePtr<const GA_PrimitiveGroup> geo0GroupUptr(geo0VtxGroup);
     SYS_FORCE_INLINE
         static GA_PrimitiveGroup*
         groupPromotePrimitiveDetached(
@@ -416,6 +417,7 @@ namespace GA_FeE_GroupPromote {
         return static_cast<GA_PrimitiveGroup*>(groupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE));
     }
 
+    //const UT_UniquePtr<const GA_PointGroup> geo0GroupUptr(geo0VtxGroup);
     SYS_FORCE_INLINE
         static GA_PointGroup*
         groupPromotePointDetached(
@@ -426,6 +428,7 @@ namespace GA_FeE_GroupPromote {
         return static_cast<GA_PointGroup*>(groupPromoteDetached(geo, group, GA_GROUP_POINT));
     }
 
+    //const UT_UniquePtr<const GA_VertexGroup> geo0GroupUptr(geo0VtxGroup);
     SYS_FORCE_INLINE
         static GA_VertexGroup*
         groupPromoteVertexDetached(
@@ -436,6 +439,7 @@ namespace GA_FeE_GroupPromote {
         return static_cast<GA_VertexGroup*>(groupPromoteDetached(geo, group, GA_GROUP_VERTEX));
     }
 
+    //const UT_UniquePtr<const GA_EdgeGroup> geo0GroupUptr(geo0VtxGroup);
     SYS_FORCE_INLINE
         static GA_EdgeGroup*
         groupPromoteEdgeDetached(
@@ -449,6 +453,7 @@ namespace GA_FeE_GroupPromote {
 
 
 
+    //const UT_UniquePtr<const GA_PrimitiveGroup> geo0GroupUptr(geo0PrimGroup);
     SYS_FORCE_INLINE
         static const GA_PrimitiveGroup*
         groupFindPromotePrimitiveDetached(
@@ -459,6 +464,7 @@ namespace GA_FeE_GroupPromote {
         return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE));
     }
 
+    //const UT_UniquePtr<const GA_PointGroup> geo0GroupUptr(geo0PointGroup);
     SYS_FORCE_INLINE
         static const GA_PointGroup*
         groupFindPromotePointDetached(
@@ -469,6 +475,7 @@ namespace GA_FeE_GroupPromote {
         return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_POINT));
     }
 
+    //const UT_UniquePtr<const GA_VertexGroup> geo0GroupUptr(geo0VtxGroup);
     SYS_FORCE_INLINE
         static const GA_VertexGroup*
         groupFindPromoteVertexDetached(
@@ -479,6 +486,7 @@ namespace GA_FeE_GroupPromote {
         return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_VERTEX));
     }
 
+    //const UT_UniquePtr<const GA_EdgeGroup> geo0GroupUptr(geo0EdgeGroup);
     SYS_FORCE_INLINE
         static const GA_EdgeGroup*
         groupFindPromoteEdgeDetached(
