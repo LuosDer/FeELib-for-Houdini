@@ -16,7 +16,11 @@ public:
     static PRM_Template *buildTemplates();
     static OP_Node *myConstructor(OP_Network *net, const char *name, OP_Operator *op)
     {
-        return new SOP_FeE_DelVertex_1_0(net, name, op);
+        OP_Node* newOp = new SOP_FeE_DelVertex_1_0(net, name, op);
+        //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
+        newOp->setNodeShape("tilted");
+        //newOp->setUserData("nodeshape", "tilted", false);
+        return newOp;
     }
 
     static const UT_StringHolder theSOPTypeName;
@@ -40,12 +44,22 @@ protected:
     {
         return cookMyselfAsVerb(context);
     }
+
     const char* inputLabel(unsigned idx) const override
     {
         switch (idx)
         {
         case 0:     return "Geo";
         default:    return "Invalid Source";
+        }
+    }
+
+    const char* outputLabel(unsigned idx) const override
+    {
+        switch (idx)
+        {
+        case 0:     return "Geo";
+        default:    return "Invalid Output";
         }
     }
 

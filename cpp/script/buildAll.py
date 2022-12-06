@@ -6,7 +6,8 @@ import os
 
 bypassNodeName = (
 'SOP_FeE_AttribSetToDefault_1_0',
-'SOP_FeE_UVScaletoWorldSize_3_0',
+'SOP_WindingNumber',
+'SOP_Star',
 )
 
 doCreate = True

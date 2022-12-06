@@ -19,6 +19,7 @@
 #include "GEO_FeE/GEO_FeE_Group.h"
 #include "GA_FeE/GA_FeE_GroupPromote.h"
 
+#include "GA_FeE/GA_FeE_DelVertex.h"
 
 
 using namespace SOP_FeE_DelVertex_1_0_Namespace;
@@ -34,21 +35,30 @@ using namespace SOP_FeE_DelVertex_1_0_Namespace;
 /// It isn't allowed to be the same as any other SOP's type name.
 const UT_StringHolder SOP_FeE_DelVertex_1_0::theSOPTypeName("FeE::delVertex::1.0"_sh);
 
+
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case, we add ourselves
 /// to the specified operator table.
 void
 newSopOperator(OP_OperatorTable *table)
 {
-    table->addOperator(new OP_Operator(
+    OP_Operator* newOp = new OP_Operator(
         SOP_FeE_DelVertex_1_0::theSOPTypeName,   // Internal name
-        "FeE Delete Vertex",     // UI name
+        "FeE Delete Vertex",                     // UI name
         SOP_FeE_DelVertex_1_0::myConstructor,    // How to build the SOP
         SOP_FeE_DelVertex_1_0::buildTemplates(), // My parameters
-        1,                         // Min # of sources
-        1,                         // Max # of sources
-        nullptr,                   // Custom local variables (none)
-        OP_FLAG_GENERATOR));       // Flag it as generator
+        1,                                       // Min # of sources
+        1,                                       // Max # of sources
+        nullptr,                                 // Custom local variables (none)
+        OP_FLAG_GENERATOR,                       // Flag it as generator
+        nullptr,
+        1,
+        "Five elements Elf/Topo/Blast");
+
+    newOp->setIconName("SOP_blast");
+    newOp->getDefaultColor();
+    table->addOperator(newOp);
+
 }
 
 /// This is a multi-line raw string specifying the parameter interface
@@ -82,49 +92,6 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
-    parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "attribFromPrim"
-        cppname "AttribFromPrim"
-        label   "Attrib from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromPrim"
-        cppname "GroupFromPrim"
-        label   "Group from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromEdge"
-        cppname "GroupFromEdge"
-        label   "Group from Edge"
-        type    string
-        default { "" }
-    }
-
-    parm {
-        name    "promoteEdgeGroupToPrim"
-        cppname "PromoteEdgeGroupToPrim"
-        label   "Promote Edge Group to Prim"
-        type    string
-        default { "" }
-    }
 
 
     parm {
@@ -253,21 +220,19 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     GOP_Manager gop;
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    //const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    //const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
 
-    //if (geo0Group)
-    //{
-    //    GA_GroupType type = geo0Group->classType();
-    //    int a = 1;
-    //}
     //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
+
+    const bool delDegeneratePrims = sopparms.getDelDegeneratePrims();
+    const bool delUnusedPoints = sopparms.getDelUnusedPoints();
 
 
     UT_AutoInterrupt boss("Processing");
@@ -278,31 +243,11 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     //const GA_VertexGroup* geo0VtxGroup = GA_FeE_GroupPromote::groupFindPromoteVertexDetached(outGeo0, geo0Group);
 
-    const GA_VertexGroup* geo0VtxGroup = GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group);
+    //const GA_VertexGroup* geo0VtxGroup = GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group);
 
-    const bool delDegeneratePrims = sopparms.getDelDegeneratePrims();
-    const bool delUnusedPoints = sopparms.getDelUnusedPoints();
+    GA_FeE_DelVertex::delVertex(outGeo0, geo0Group, delDegeneratePrims, delUnusedPoints);
 
     //outGeo0->destroyVertexOffsets(outGeo0->getVertexRange(geo0VtxGroup));
-
-    GA_Topology& topo = outGeo0->getTopology();
-    const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
-
-    GA_Offset start, end;
-    for (GA_Iterator it(outGeo0->getVertexRange(geo0VtxGroup)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
-        {
-            GEO_Primitive* prim = outGeo0->getGEOPrimitive(vtxPrimRef->getLink(vtxoff));
-            prim->releaseVertex(vtxoff);
-            topo.delVertex(vtxoff);
-            //outGeo0->destroyVertexOffset(vtxoff);
-        }
-    }
-    if (delDegeneratePrims)
-        outGeo0->destroyDegeneratePrimitives();
-    if (delUnusedPoints)
-        outGeo0->destroyUnusedPoints();
 
 
     //if (geo0VtxGroup->isDetached())
@@ -310,8 +255,9 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     //outGeo0->bumpAllDataIds();
-    if (delDegeneratePrims)
     outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    //outGeo0->bumpDataIdsForAddOrRemove(delUnusedPoints, delDegeneratePrims, 1);
+    //if (delDegeneratePrims)
     //outGeo0->bumpDataIdsForRewire();
 
 
