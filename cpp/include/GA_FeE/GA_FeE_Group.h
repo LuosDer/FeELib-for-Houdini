@@ -10,17 +10,97 @@
 #include "GEO/GEO_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
+#include "GA_FeE/GA_FeE_Detail.h"
 #include "GA_FeE/GA_FeE_Type.h"
 
 namespace GA_FeE_Group {
 
-    
+
+SYS_FORCE_INLINE
+    static void
+    edgeGroupToggle(
+        const GA_Detail* const geo,
+        GA_EdgeGroup* const group
+    )
+{
+    UT_ASSERT_P(group);
+    group->toggle();
+    GA_Offset start, end;
+    for (GA_Iterator it(geo->getPointRange()); it.fullBlockAdvance(start, end); )
+    {
+        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        {
+            group->remove(GA_Edge(elemoff, elemoff));
+        }
+    }
+    //group->makeAllEdgesValid();
+}
+
+SYS_FORCE_INLINE
+    static void
+    groupToggle(
+        const GA_Detail* const geo,
+        GA_ElementGroup* const group
+    )
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(group);
+    UT_ASSERT_P(group->isElementGroup());
+    GA_Size numelems = GA_FeE_Detail::numelems(geo, group->classType());
+    group->makeUnordered();
+    group->toggleAll(numelems);
+}
+
+SYS_FORCE_INLINE
+    static void
+    elementGroupToggle(
+        const GA_Detail* const geo,
+        GA_ElementGroup* const group
+    )
+{
+    return groupToggle(geo, UTverify_cast<GA_ElementGroup*>(group));
+}
+
+SYS_FORCE_INLINE
+static void
+elementGroupToggle(
+    const GA_Detail* const geo,
+    GA_Group* const group
+)
+{
+    return elementGroupToggle(geo, UTverify_cast<GA_ElementGroup*>(group));
+}
+
+SYS_FORCE_INLINE
+    static void
+    groupToggle(
+        const GA_Detail* const geo,
+        GA_Group* const group
+    )
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(group);
+    if (group->isElementGroup())
+    {
+        return elementGroupToggle(geo, group);
+    }
+    else
+    {
+        return edgeGroupToggle(geo, UTverify_cast<GA_EdgeGroup*>(group));
+    }
+}
+
+
+
+
+
+
 
 SYS_FORCE_INLINE
     static GA_Group*
     newGroup(
-        GA_Detail* geo,
-        const GA_Group* group,
+        GA_Detail* const geo,
+        const GA_Group* const group,
         const UT_StringHolder& groupName
     )
 {
@@ -33,8 +113,8 @@ SYS_FORCE_INLINE
 SYS_FORCE_INLINE
     static GA_Group*
     newDetachedGroup(
-        const GA_Detail* geo,
-        const GA_Group* group
+        const GA_Detail* const geo,
+        const GA_Group* const group
     )
 {
     UT_ASSERT_P(geo);
@@ -44,10 +124,10 @@ SYS_FORCE_INLINE
 
 
 
-
+SYS_FORCE_INLINE
 static GA_Group*
 findGroup(
-    const GA_Detail* geo,
+    const GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName
 )
@@ -59,9 +139,10 @@ findGroup(
     return groupTable->find(groupName);
 }
 
+
 static GA_Group*
 findOrCreateGroup(
-    GA_Detail* geo,
+    GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName
 )
@@ -82,7 +163,7 @@ findOrCreateGroup(
 SYS_FORCE_INLINE
 static GA_ElementGroup*
 findElementGroup(
-    GA_Detail* geo,
+    GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName
 )
@@ -95,7 +176,7 @@ findElementGroup(
 SYS_FORCE_INLINE
 static const GA_ElementGroup*
 findElementGroup(
-    const GA_Detail* geo,
+    const GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName
 )
@@ -108,7 +189,7 @@ findElementGroup(
 SYS_FORCE_INLINE
 static bool
 groupIsEmpty(
-    const GA_Group* group
+    const GA_Group* const group
 )
 {
     UT_ASSERT_P(group);
@@ -126,8 +207,8 @@ groupIsEmpty(
 SYS_FORCE_INLINE
 static bool
 groupRename(
-    GA_Detail* geo,
-    const GA_Group* group,
+    GA_Detail* const geo,
+    const GA_Group* const group,
     const UT_StringHolder& newName
 )
 {
@@ -153,7 +234,7 @@ groupRename(
 SYS_FORCE_INLINE
 static void
 groupBumpDataId(
-    GA_Group* group
+    GA_Group* const group
 )
 {
     UT_ASSERT_P(group);
@@ -173,7 +254,7 @@ groupBumpDataId(
 static const GA_Group*
 findOrParseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
@@ -217,7 +298,7 @@ SYS_FORCE_INLINE
 static const GA_PrimitiveGroup*
 findOrParsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -241,7 +322,7 @@ SYS_FORCE_INLINE
 static const GA_VertexGroup*
 findOrParseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -253,7 +334,7 @@ SYS_FORCE_INLINE
 static const GA_EdgeGroup*
 findOrParseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -270,7 +351,7 @@ findOrParseEdgeGroupDetached(
 static const GA_Group*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
@@ -307,7 +388,7 @@ SYS_FORCE_INLINE
 static const GA_PrimitiveGroup*
 parsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -320,7 +401,7 @@ SYS_FORCE_INLINE
 static const GA_PointGroup*
 parsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -332,7 +413,7 @@ SYS_FORCE_INLINE
 static const GA_VertexGroup*
 parseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -344,7 +425,7 @@ SYS_FORCE_INLINE
 static const GA_EdgeGroup*
 parseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -369,8 +450,8 @@ parseEdgeGroupDetached(
 SYS_FORCE_INLINE
 static GA_Range
 getRangeByAnyGroup(
-    const GA_Detail* geo,
-    const GA_ElementGroup* group
+    const GA_Detail* const geo,
+    const GA_ElementGroup* const group
 )
 {
     UT_ASSERT_P(geo);
@@ -384,8 +465,8 @@ getRangeByAnyGroup(
 SYS_FORCE_INLINE
 static GA_Range
 getRangeByAnyGroup(
-    const GA_Detail* geo,
-    const GA_Group* group
+    const GA_Detail* const geo,
+    const GA_Group* const group
 )
 {
     return getRangeByAnyGroup(geo, static_cast<const GA_ElementGroup*>(group));
@@ -394,8 +475,8 @@ getRangeByAnyGroup(
 SYS_FORCE_INLINE
 static GA_SplittableRange
 getSplittableRangeByAnyGroup(
-    const GA_Detail* geo,
-    const GA_ElementGroup* group
+    const GA_Detail* const geo,
+    const GA_ElementGroup* const group
 )
 {
     return GA_SplittableRange(getRangeByAnyGroup(geo, group));
@@ -404,8 +485,8 @@ getSplittableRangeByAnyGroup(
 SYS_FORCE_INLINE
 static GA_SplittableRange
 getSplittableRangeByAnyGroup(
-    const GA_Detail* geo,
-    const GA_Group* group
+    const GA_Detail* const geo,
+    const GA_Group* const group
 )
 {
     return getSplittableRangeByAnyGroup(geo, static_cast<const GA_ElementGroup*>(group));
