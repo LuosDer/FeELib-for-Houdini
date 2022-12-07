@@ -2,10 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_JoinCurve_2_0.h"
 
-
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_JoinCurve_2_0Parms, an easy way to access parameter values from
-// SOP_FeE_JoinCurve_2_0Verb::cook with the correct type.
 #include "SOP_FeE_JoinCurve_2_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
@@ -23,36 +19,6 @@
 
 using namespace SOP_FeE_JoinCurve_2_0_Namespace;
 
-//
-// Help is stored in a "wiki" style text file.  This text file should be copied
-// to $HOUDINI_PATH/help/nodes/sop/FeE.txt
-//
-// See the sample_install.sh file for an example.
-//
-
-/// This is the internal name of the SOP type.
-/// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_JoinCurve_2_0::theSOPTypeName("FeE::joinCurve::2.0"_sh);
-
-/// newSopOperator is the hook that Houdini grabs from this dll
-/// and invokes to register the SOP.  In this case, we add ourselves
-/// to the specified operator table.
-void
-newSopOperator(OP_OperatorTable *table)
-{
-    table->addOperator(new OP_Operator(
-        SOP_FeE_JoinCurve_2_0::theSOPTypeName,   // Internal name
-        "FeE Join Curve",     // UI name
-        SOP_FeE_JoinCurve_2_0::myConstructor,    // How to build the SOP
-        SOP_FeE_JoinCurve_2_0::buildTemplates(), // My parameters
-        1,                         // Min # of sources
-        1,                         // Max # of sources
-        nullptr,                   // Custom local variables (none)
-        OP_FLAG_GENERATOR));       // Flag it as generator
-}
-
-/// This is a multi-line raw string specifying the parameter interface
-/// for this SOP.
 static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
@@ -295,6 +261,35 @@ SOP_FeE_JoinCurve_2_0::buildTemplates()
     return templ.templates();
 }
 
+
+
+
+
+const UT_StringHolder SOP_FeE_JoinCurve_2_0::theSOPTypeName("FeE::joinCurve::2.0"_sh);
+
+void
+newSopOperator(OP_OperatorTable* table)
+{
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_JoinCurve_2_0::theSOPTypeName,
+        "FeE Join Curve",
+        SOP_FeE_JoinCurve_2_0::myConstructor,
+        SOP_FeE_JoinCurve_2_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        OP_FLAG_GENERATOR,
+        nullptr,
+        1,
+        "Five elements Elf/Topo/Optimize");
+
+    newOp->setIconName("SOP_polypath");
+    table->addOperator(newOp);
+}
+
+
+
+
 class SOP_FeE_JoinCurve_2_0Verb : public SOP_NodeVerb
 {
 public:
@@ -308,13 +303,9 @@ public:
 
     virtual void cook(const CookParms &cookparms) const;
     
-    /// This static data member automatically registers
-    /// this verb class at library load time.
     static const SOP_NodeVerb::Register<SOP_FeE_JoinCurve_2_0Verb> theVerb;
 };
 
-// The static member variable definition has to be outside the class definition.
-// The declaration is inside the class.
 const SOP_NodeVerb::Register<SOP_FeE_JoinCurve_2_0Verb> SOP_FeE_JoinCurve_2_0Verb::theVerb;
 
 const SOP_NodeVerb *

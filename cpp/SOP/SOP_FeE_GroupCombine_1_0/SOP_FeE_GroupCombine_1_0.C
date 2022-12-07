@@ -3,9 +3,6 @@
 #include "SOP_FeE_GroupCombine_1_0.h"
 
 
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_GroupCombine_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_GroupCombine_1_0Verb::cook with the correct type.
 #include "SOP_FeE_GroupCombine_1_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
@@ -20,36 +17,8 @@
 
 using namespace SOP_FeE_GroupCombine_1_0_Namespace;
 
-//
-// Help is stored in a "wiki" style text file.  This text file should be copied
-// to $HOUDINI_PATH/help/nodes/sop/FeE.txt
-//
-// See the sample_install.sh file for an example.
-//
 
-/// This is the internal name of the SOP type.
-/// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_GroupCombine_1_0::theSOPTypeName("FeE::groupCombine::1.0"_sh);
 
-/// newSopOperator is the hook that Houdini grabs from this dll
-/// and invokes to register the SOP.  In this case, we add ourselves
-/// to the specified operator table.
-void
-newSopOperator(OP_OperatorTable *table)
-{
-    table->addOperator(new OP_Operator(
-        SOP_FeE_GroupCombine_1_0::theSOPTypeName,   // Internal name
-        "FeE Group Combine",                        // UI name
-        SOP_FeE_GroupCombine_1_0::myConstructor,    // How to build the SOP
-        SOP_FeE_GroupCombine_1_0::buildTemplates(), // My parameters
-        1,                         // Min # of sources
-        1,                         // Max # of sources
-        nullptr,                   // Custom local variables (none)
-        OP_FLAG_GENERATOR));       // Flag it as generator
-}
-
-/// This is a multi-line raw string specifying the parameter interface
-/// for this SOP.
 static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
@@ -59,9 +28,6 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        menutoggle {
-            [ "" ]
-        }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -127,14 +93,35 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
-
-
-
 PRM_Template*
 SOP_FeE_GroupCombine_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_GroupCombine_1_0.C"_sh, theDsFile);
     return templ.templates();
+}
+
+
+const UT_StringHolder SOP_FeE_GroupCombine_1_0::theSOPTypeName("FeE::groupCombine::1.0"_sh);
+
+void
+newSopOperator(OP_OperatorTable* table)
+{
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_GroupCombine_1_0::theSOPTypeName,
+        "FeE Group Combine",
+        SOP_FeE_GroupCombine_1_0::myConstructor,
+        SOP_FeE_GroupCombine_1_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        OP_FLAG_GENERATOR,
+        nullptr,
+        1,
+        "Five elements Elf/Group");
+
+    newOp->setIconName("SOP_groupcombine");
+    table->addOperator(newOp);
+
 }
 
 
@@ -283,7 +270,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //const GA_Group* geo0EdgeGroup = gop.parseEdgeDetached(sopparms.getGroup(), outGeo0, true, success);
 
     //const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
-    GEO_FeE_Group::groupCombine(outGeo0, combineGroup, geo0Group);
+    GA_FeE_GroupUnion::groupUnion(outGeo0, combineGroup, geo0Group);
 
     //for (auto it = static_cast<const GA_EdgeGroup*>(geo0EdgeGroup)->begin(); !it.atEnd(); it.advance())
     //{

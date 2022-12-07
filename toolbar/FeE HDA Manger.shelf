@@ -18,6 +18,7 @@
     <memberTool name="Set os HFSS Env"/>
     <memberTool name="expandToTemp"/>
     <memberTool name="nodeParmsAsCode"/>
+    <memberTool name="printNodeShape"/>
   </toolshelf>
 
   <tool name="convertHDA_to_Subnet_publish" label="convertHDA to Subnet" icon="hicon:/SVGIcons.index?VOP_structunpack.svg">
@@ -397,6 +398,17 @@ for selectedNode in selectedNodes:
     os.system(command)
     break
     
+    ]]></script>
+  </tool>
+
+  <tool name="printNodeShape" label="Print Node Shape" icon="PLASMA_App">
+    <script scriptType="python"><![CDATA[
+import hou
+import os
+
+selectedNodes = hou.selectedNodes()
+for selectedNode in selectedNodes:
+    print(selectedNode.userDataDict()['nodeshape'])
     ]]></script>
   </tool>
 </shelfDocument>

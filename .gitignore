@@ -2,7 +2,12 @@
 **/backup
 *.pyc
 *.ini
-__pycache__
+
+*.exp
+*.lib
+*.pdb
+
+**/__pycache__
 
 **/build
 **/.vs

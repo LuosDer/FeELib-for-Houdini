@@ -21,36 +21,6 @@
 using namespace SOP_FeE_AttribSetToDefault_1_0_Namespace;
 
 
-//
-// Help is stored in a "wiki" style text file.  This text file should be copied
-// to $HOUDINI_PATH/help/nodes/sop/FeE.txt
-//
-// See the sample_install.sh file for an example.
-//
-
-/// This is the internal name of the SOP type.
-/// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_AttribSetToDefault_1_0::theSOPTypeName("FeE::attribSetToDefault::1.0"_sh);
-
-/// newSopOperator is the hook that Houdini grabs from this dll
-/// and invokes to register the SOP.  In this case, we add ourselves
-/// to the specified operator table.
-void
-newSopOperator(OP_OperatorTable *table)
-{
-    table->addOperator(new OP_Operator(
-        SOP_FeE_AttribSetToDefault_1_0::theSOPTypeName,   // Internal name
-        "FeE Attribute Set to Default",                     // UI name
-        SOP_FeE_AttribSetToDefault_1_0::myConstructor,    // How to build the SOP
-        SOP_FeE_AttribSetToDefault_1_0::buildTemplates(), // My parameters
-        1,                         // Min # of sources
-        1,                         // Max # of sources
-        nullptr,                   // Custom local variables (none)
-        OP_FLAG_GENERATOR));       // Flag it as generator
-}
-
-/// This is a multi-line raw string specifying the parameter interface
-/// for this SOP.
 static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
@@ -126,11 +96,6 @@ static const char *theDsFile = R"THEDSFILE(
 }
 )THEDSFILE";
 
-
-
-
-
-
 PRM_Template*
 SOP_FeE_AttribSetToDefault_1_0::buildTemplates()
 {
@@ -138,6 +103,28 @@ SOP_FeE_AttribSetToDefault_1_0::buildTemplates()
     return templ.templates();
 }
 
+
+const UT_StringHolder SOP_FeE_AttribSetToDefault_1_0::theSOPTypeName("FeE::attribSetToDefault::1.0"_sh);
+
+void
+newSopOperator(OP_OperatorTable* table)
+{
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_AttribSetToDefault_1_0::theSOPTypeName,
+        "FeE Attribute Set to Default",
+        SOP_FeE_AttribSetToDefault_1_0::myConstructor,
+        SOP_FeE_AttribSetToDefault_1_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        OP_FLAG_GENERATOR,
+        nullptr,
+        1,
+        "Five elements Elf/Attribute");
+
+    newOp->setIconName("SOP_attribcreate-2.0");
+    table->addOperator(newOp);
+}
 
 //class SOP_FeE_AttribSetToDefault_1_0Cache : public SOP_NodeCache
 //{

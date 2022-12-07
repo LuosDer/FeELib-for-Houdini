@@ -3,9 +3,7 @@
 #include "SOP_FeE_Connectivity_1_0.h"
 
 
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_Connectivity_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_Connectivity_1_0Verb::cook with the correct type.
+
 #include "SOP_FeE_Connectivity_1_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
@@ -25,36 +23,8 @@
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
 
-//
-// Help is stored in a "wiki" style text file.  This text file should be copied
-// to $HOUDINI_PATH/help/nodes/sop/FeE.txt
-//
-// See the sample_install.sh file for an example.
-//
 
-/// This is the internal name of the SOP type.
-/// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_Connectivity_1_0::theSOPTypeName("FeE::connectivity::1.0"_sh);
 
-/// newSopOperator is the hook that Houdini grabs from this dll
-/// and invokes to register the SOP.  In this case, we add ourselves
-/// to the specified operator table.
-void
-newSopOperator(OP_OperatorTable *table)
-{
-    table->addOperator(new OP_Operator(
-        SOP_FeE_Connectivity_1_0::theSOPTypeName,   // Internal name
-        "FeE Connectivity",                     // UI name
-        SOP_FeE_Connectivity_1_0::myConstructor,    // How to build the SOP
-        SOP_FeE_Connectivity_1_0::buildTemplates(), // My parameters
-        1,                         // Min # of sources
-        1,                         // Max # of sources
-        nullptr,                   // Custom local variables (none)
-        OP_FLAG_GENERATOR));       // Flag it as generator
-}
-
-/// This is a multi-line raw string specifying the parameter interface
-/// for this SOP.
 static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
@@ -83,6 +53,31 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+
+    parm {
+        name    "findInputPieceAttrib"
+        cppname "FindInputPieceAttrib"
+        label   "Find Input Piece Attribute"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "promoteFromOtherClass"
+        cppname "PromoteFromOtherClass"
+        label   "Promote from Other Class"
+        type    toggle
+        default { "0" }
+        disablewhen "{ findInputPieceAttrib == 0 }"
+    }
+    parm {
+        name    "forceCheckAttribType"
+        cppname "ForceCheckAttribType"
+        label   "Force Check Attrib Type"
+        type    toggle
+        default { "0" }
+        disablewhen "{ findInputPieceAttrib == 0 }"
+    }
+
 
 
     parm {
@@ -114,6 +109,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "class" }
     }
+
     parm {
         name    "connectivityAttribType"
         cppname "ConnectivityAttribType"
@@ -126,6 +122,23 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+    parm {
+        name    "stringPrefix"
+        cppname "StringPrefix"
+        label   "String Prefix"
+        type    string
+        default { "piece" }
+        disablewhen "{ connectivityAttribType != string }"
+    }
+
+    parm {
+        name    "stringSufix"
+        cppname "StringSufix"
+        label   "String Sufix"
+        type    string
+        default { "" }
+        disablewhen "{ connectivityAttribType != string }"
+    }
 
     parm {
         name    "seamGroup"
@@ -186,17 +199,42 @@ static const char *theDsFile = R"THEDSFILE(
 }
 )THEDSFILE";
 
-
-
-
-
-
 PRM_Template*
 SOP_FeE_Connectivity_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_Connectivity_1_0.C"_sh, theDsFile);
     return templ.templates();
 }
+
+
+
+
+const UT_StringHolder SOP_FeE_Connectivity_1_0::theSOPTypeName("FeE::connectivity::1.0"_sh);
+
+void
+newSopOperator(OP_OperatorTable* table)
+{
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_Connectivity_1_0::theSOPTypeName,
+        "FeE Connectivity",
+        SOP_FeE_Connectivity_1_0::myConstructor,
+        SOP_FeE_Connectivity_1_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        OP_FLAG_GENERATOR,
+        nullptr,
+        1,
+        "Five elements Elf/Data/Topology");
+
+    newOp->setIconName("SOP_connectivity");
+    table->addOperator(newOp);
+
+}
+
+
+
+
 
 
 //class SOP_FeE_Connectivity_1_0Cache : public SOP_NodeCache
@@ -338,6 +376,35 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
 
 
+    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
+
+    //const bool promoteFromOtherClass = sopparms.getPromoteFromOtherClass();
+
+    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
+
+    name    "findInputPieceAttrib"
+        cppname "FindInputPieceAttrib"
+        label   "Find Input Piece Attribute"
+        type    toggle
+        default { "0" }
+}
+parm{
+    name    "promoteFromOtherClass"
+    cppname "PromoteFromOtherClass"
+    label   "Promote from Other Class"
+    type    toggle
+    default { "0" }
+    disablewhen "{ findInputPieceAttrib == 0 }"
+}
+parm{
+    name    "forceCheckAttribType"
+    cppname "ForceCheckAttribType"
+    label   "Force Check Attrib Type"
+    type    toggle
+    default { "0" }
+    disablewhen "{ findInputPieceAttrib == 0 }"
+    }
+
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
@@ -371,7 +438,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferedPrecision);
 
 
-    const GA_Group* geo0GroupPromoted = GEO_FeE_Group::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
+    const GA_Group* geo0GroupPromoted = GA_FeE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
     UT_UniquePtr<const GA_Group> geo0GroupUPtr(geo0GroupPromoted);
 
     const GA_Group* geo0SeamGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);

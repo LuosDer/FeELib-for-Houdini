@@ -3,9 +3,6 @@
 #include "SOP_FeE_DelVertex_1_0.h"
 
 
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_DelVertex_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_DelVertex_1_0Verb::cook with the correct type.
 #include "SOP_FeE_DelVertex_1_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
@@ -24,46 +21,9 @@
 
 using namespace SOP_FeE_DelVertex_1_0_Namespace;
 
-//
-// Help is stored in a "wiki" style text file.  This text file should be copied
-// to $HOUDINI_PATH/help/nodes/sop/FeE.txt
-//
-// See the sample_install.sh file for an example.
-//
-
-/// This is the internal name of the SOP type.
-/// It isn't allowed to be the same as any other SOP's type name.
-const UT_StringHolder SOP_FeE_DelVertex_1_0::theSOPTypeName("FeE::delVertex::1.0"_sh);
 
 
-/// newSopOperator is the hook that Houdini grabs from this dll
-/// and invokes to register the SOP.  In this case, we add ourselves
-/// to the specified operator table.
-void
-newSopOperator(OP_OperatorTable *table)
-{
-    OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_DelVertex_1_0::theSOPTypeName,   // Internal name
-        "FeE Delete Vertex",                     // UI name
-        SOP_FeE_DelVertex_1_0::myConstructor,    // How to build the SOP
-        SOP_FeE_DelVertex_1_0::buildTemplates(), // My parameters
-        1,                                       // Min # of sources
-        1,                                       // Max # of sources
-        nullptr,                                 // Custom local variables (none)
-        OP_FLAG_GENERATOR,                       // Flag it as generator
-        nullptr,
-        1,
-        "Five elements Elf/Topo/Blast");
-
-    newOp->setIconName("SOP_blast");
-    newOp->getDefaultColor();
-    table->addOperator(newOp);
-
-}
-
-/// This is a multi-line raw string specifying the parameter interface
-/// for this SOP.
-static const char *theDsFile = R"THEDSFILE(
+static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
@@ -147,6 +107,30 @@ SOP_FeE_DelVertex_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_DelVertex_1_0.C"_sh, theDsFile);
     return templ.templates();
+}
+
+
+const UT_StringHolder SOP_FeE_DelVertex_1_0::theSOPTypeName("FeE::delVertex::1.0"_sh);
+
+
+void
+newSopOperator(OP_OperatorTable *table)
+{
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_DelVertex_1_0::theSOPTypeName,
+        "FeE Delete Vertex",
+        SOP_FeE_DelVertex_1_0::myConstructor,
+        SOP_FeE_DelVertex_1_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        OP_FLAG_GENERATOR,
+        nullptr,
+        1,
+        "Five elements Elf/Topo/Blast");
+
+    newOp->setIconName("SOP_blast");
+    table->addOperator(newOp);
 }
 
 class SOP_FeE_DelVertex_1_0Verb : public SOP_NodeVerb
@@ -254,11 +238,8 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //    outGeo0->destroyGroup(const_cast<GA_VertexGroup*>(geo0VtxGroup));
 
 
-    //outGeo0->bumpAllDataIds();
     outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
     //outGeo0->bumpDataIdsForAddOrRemove(delUnusedPoints, delDegeneratePrims, 1);
-    //if (delDegeneratePrims)
-    //outGeo0->bumpDataIdsForRewire();
 
 
 }
