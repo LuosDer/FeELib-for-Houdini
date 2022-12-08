@@ -28,10 +28,10 @@ namespace GA_FeE_Connectivity
 
 static void
 connectivityPoint(
-    const GA_Detail* geo,
+    const GA_Detail* const geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PointGroup* geoGroup = nullptr
+    const GA_PointGroup* const geoGroup = nullptr
 )
 {
     //double timeTotal = 0;
@@ -133,10 +133,10 @@ connectivityPoint(
 
 static void
 connectivityPrim(
-    const GA_Detail* geo,
+    const GA_Detail* const geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PrimitiveGroup* geoGroup = nullptr
+    const GA_PrimitiveGroup* const geoGroup = nullptr
 )
 {
     //double timeTotal = 0;
@@ -227,13 +227,13 @@ connectivityPrim(
 
 static GA_Attribute*
 addAttribConnectivityPoint(
-    GEO_Detail* geo,
-    const UT_StringHolder& name = "__topo_connectivity",
-    const GA_PointGroup* geoGroup = nullptr,
-    const GA_PointGroup* geoSeamGroup = nullptr,
+    GEO_Detail* const geo,
+    const GA_PointGroup* const geoGroup = nullptr,
+    const GA_PointGroup* const geoSeamGroup = nullptr,
     const GA_Storage storage = GA_STORE_INT32,
-    const UT_Options* creation_args = nullptr,
-    const GA_AttributeOptions* attribute_options = nullptr,
+    const UT_StringHolder& name = "__topo_connectivity",
+    const UT_Options* const creation_args = nullptr,
+    const GA_AttributeOptions* const attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
@@ -251,25 +251,6 @@ addAttribConnectivityPoint(
     return attribPtr;
 }
 
-//return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
-
-static GA_Attribute*
-addAttribConnectivityPoint(
-    GEO_Detail* geo,
-    const UT_StringHolder& name = "__topo_connectivity",
-    const GA_PointGroup* geoGroup = nullptr,
-    const GA_PointGroup* geoSeamGroup = nullptr,
-    const GA_Storage storage = GA_STORE_INT32,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 64
-)
-{
-    return addAttribConnectivityPoint(geo, name, geoGroup, geoSeamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-}
-
-
-
-
 
 
 
@@ -283,12 +264,12 @@ addAttribConnectivityPoint(
 static GA_Attribute*
 addAttribConnectivityPrim(
     GEO_Detail* geo,
-    const UT_StringHolder& name = "__topo_connectivity",
     const GA_PrimitiveGroup* geoGroup = nullptr,
     const GA_VertexGroup* geoSeamGroup = nullptr,
     const GA_Storage storage = GA_STORE_INT32,
-    const UT_Options* creation_args = nullptr,
-    const GA_AttributeOptions* attribute_options = nullptr,
+    const UT_StringHolder& name = "__topo_connectivity",
+    const UT_Options* const creation_args = nullptr,
+    const GA_AttributeOptions* const attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
     const exint subscribeRatio = 32,
     const exint minGrainSize = 1024
@@ -306,32 +287,17 @@ addAttribConnectivityPrim(
     return attribPtr;
 }
 
-//return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, subscribeRatio, minGrainSize);
-
-static GA_Attribute*
-addAttribConnectivityPrim(
-    GEO_Detail* geo,
-    const UT_StringHolder& name = "__topo_connectivity",
-    const GA_PrimitiveGroup* geoGroup = nullptr,
-    const GA_VertexGroup* geoSeamGroup = nullptr,
-    const GA_Storage storage = GA_STORE_INT32,
-    const exint subscribeRatio = 32,
-    const exint minGrainSize = 1024
-)
-{
-    return addAttribConnectivityPrim(geo, name, geoGroup, geoSeamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-}
 
 
 static GA_Attribute*
 addAttribConnectivity(
     GU_Detail* geo,
-    const UT_StringHolder& name = "__topo_connectivity",
     const GA_Group* geoGroup = nullptr,
     const GA_Group* geoSeamGroup = nullptr,
     const bool connectivityConstraint = false,
     const GA_AttributeOwner attribOwner = GA_ATTRIB_PRIMITIVE,
     const GA_Storage storage = GA_STORE_INT32,
+    const UT_StringHolder& name = "__topo_connectivity",
     const exint subscribeRatio = 32,
     const exint minGrainSize = 1024
 )
@@ -339,24 +305,28 @@ addAttribConnectivity(
     GA_Attribute* attribPtr = nullptr;
     if (connectivityConstraint)
     {
-        attribPtr = GA_FeE_Connectivity::addAttribConnectivityPrim(geo, name,
+        attribPtr = GA_FeE_Connectivity::addAttribConnectivityPrim(geo,
             UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
             UTverify_cast<const GA_VertexGroup*>(geoSeamGroup),
-            storage, subscribeRatio, minGrainSize);
+            storage, name,
+            nullptr, nullptr, GA_ReuseStrategy(),
+            subscribeRatio, minGrainSize);
         if (attribOwner != GA_ATTRIB_PRIMITIVE)
         {
-            GU_Promote::promote(*geo, attribPtr, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+            attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
         }
     }
     else
     {
-        attribPtr = GA_FeE_Connectivity::addAttribConnectivityPoint(geo, name,
+        attribPtr = GA_FeE_Connectivity::addAttribConnectivityPoint(geo,
             UTverify_cast<const GA_PointGroup*>(geoGroup),
             UTverify_cast<const GA_PointGroup*>(geoSeamGroup),
-            storage, subscribeRatio, minGrainSize);
+            storage, name,
+            nullptr, nullptr, GA_ReuseStrategy(),
+            subscribeRatio, minGrainSize);
         if (attribOwner != GA_ATTRIB_POINT)
         {
-            GU_Promote::promote(*geo, attribPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_FIRST);
+            attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
         }
     }
     return attribPtr;

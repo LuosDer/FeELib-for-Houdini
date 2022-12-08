@@ -33,7 +33,7 @@ for folderName in os.listdir(fileRootPath):
         slnAbsFilePath = os.path.realpath(slnAbsFilePath)
         break
 
-    cmdFileCommand = r'start "" "' + slnAbsFilePath.replace("/","\\") + r'"'
+    cmdFileCommand = r'start "" "' + os.path.relpath(slnAbsFilePath, "..\SOP").replace("/","\\") + r'"'
 
     cmdFile = open(cmdRealPath, 'w')
     cmdFile.write(cmdFileCommand)

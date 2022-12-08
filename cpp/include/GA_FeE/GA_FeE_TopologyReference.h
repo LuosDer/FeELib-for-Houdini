@@ -23,7 +23,7 @@ namespace GA_FeE_TopologyReference {
     SYS_FORCE_INLINE
     static void
     outTopoAttrib(
-        GA_Detail* geo,
+        GA_Detail* const geo,
         const bool outTopo
     )
     {
@@ -60,7 +60,7 @@ namespace GA_FeE_TopologyReference {
     //Get Vertex Prim Index
     static GA_Size
         vertexPrimIndex(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -69,7 +69,7 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Size
         vertexPrimIndex(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset primoff,
             const GA_Offset vtxoff
         )
@@ -84,7 +84,7 @@ namespace GA_FeE_TopologyReference {
     //This is Faster than use linear vertex offset
     static GA_Offset
         vertexVertexDst(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset primoff,
             const GA_Size vtxpnum
         )
@@ -110,7 +110,7 @@ namespace GA_FeE_TopologyReference {
     //Get Vertex Destination Point
     static GA_Offset
         vertexVertexDst(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -125,7 +125,7 @@ namespace GA_FeE_TopologyReference {
     //This is Faster than use linear vertex offset
     static GA_Offset
         vertexPointDst(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset primoff,
             const GA_Size vtxpnum
         )
@@ -149,7 +149,7 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Offset
     vertexPointDst(
-        const GA_Detail* geo,
+        const GA_Detail* const geo,
         const GA_Offset vtxoff
     )
     {
@@ -159,7 +159,7 @@ namespace GA_FeE_TopologyReference {
 #else
     static GA_Offset
         vertexPointDst(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -175,7 +175,7 @@ namespace GA_FeE_TopologyReference {
     }
     static GA_Offset
         vertexPointDst(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset primoff,
             const GA_Size vtxpnum
         )
@@ -208,10 +208,10 @@ namespace GA_FeE_TopologyReference {
     //Get Vertex neb Vertex in same Prim
     static void
         vertexVertexPrim(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle_prev,
             const GA_RWHandleT<GA_Offset>& attribHandle_next,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
         )
@@ -302,9 +302,9 @@ namespace GA_FeE_TopologyReference {
     //Get Vertex Destination Vertex
     static void
         vertexVertexPrimNext(
-        const GA_Detail* geo,
+        const GA_Detail* const geo,
         const GA_RWHandleT<GA_Offset>& attribHandle_next,
-        const GA_VertexGroup* geoGroup = nullptr,
+        const GA_VertexGroup* const geoGroup = nullptr,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 256
     )
@@ -394,10 +394,10 @@ namespace GA_FeE_TopologyReference {
     //Get Vertex Destination Point
     static void
         vertexVertexPrim1(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Size>& attribHandle_prev,
             const GA_RWHandleT<GA_Size>& attribHandle_next,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
         )
@@ -430,9 +430,9 @@ namespace GA_FeE_TopologyReference {
     //template<typename T>
     static void
         vertexPrimIndex(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Size>& attribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 16
         )
@@ -493,10 +493,10 @@ namespace GA_FeE_TopologyReference {
     //template<typename T>
     static void
         vertexPointDstByVtxpnum(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
             const GA_ROHandleT<GA_Size>& vtxpnumAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -524,10 +524,10 @@ namespace GA_FeE_TopologyReference {
     //template<typename T>
     static void
         vertexPointDst(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             GA_Attribute* attrib_next,
             const GA_Attribute* vtxPrimNextAttrib,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -570,9 +570,9 @@ namespace GA_FeE_TopologyReference {
     //template<typename T>
     static void
         vertexPointDst(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle_next,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -676,13 +676,13 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Attribute*
         addAttribVertexPrimIndex(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_vtxpnum",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 64,
             const exint minGrainSize = 16
@@ -711,16 +711,16 @@ namespace GA_FeE_TopologyReference {
 
     static bool
         addAttribVertexVertexPrim(
-            GEO_Detail* geo,
+            GEO_Detail* const geo,
             GA_Attribute*& attribPtr_prev,
             GA_Attribute*& attribPtr_next,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& namePrev = "__topo_vtxPrimPrev",
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 64,
             const exint minGrainSize = 128
@@ -748,13 +748,13 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Attribute*
         addAttribVertexVertexPrimNext(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
@@ -779,13 +779,13 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Attribute*
         addAttribVertexPointDst(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_dstpt",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -827,7 +827,7 @@ namespace GA_FeE_TopologyReference {
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             GA_PointGroup* const outGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
@@ -873,9 +873,9 @@ namespace GA_FeE_TopologyReference {
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* geo,
-            GA_PointGroup* outGroup,
-            const GA_PrimitiveGroup* geoGroup,
+            GA_Detail* const geo,
+            GA_PointGroup* const outGroup,
+            const GA_PrimitiveGroup* const geoGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
@@ -920,9 +920,9 @@ namespace GA_FeE_TopologyReference {
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* geo,
-            GA_PointGroup* outGroup,
-            const GA_PointGroup* geoGroup,
+            GA_Detail* const geo,
+            GA_PointGroup* const outGroup,
+            const GA_PointGroup* const geoGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
@@ -977,9 +977,9 @@ namespace GA_FeE_TopologyReference {
 
     static void
         groupOneNeb(
-            GA_Detail* geo,
-            GA_PointGroup* outGroup,
-            const GA_VertexGroup* geoGroup,
+            GA_Detail* const geo,
+            GA_PointGroup* const outGroup,
+            const GA_VertexGroup* const geoGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
@@ -1033,9 +1033,9 @@ namespace GA_FeE_TopologyReference {
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* geo,
-            GA_PointGroup* outGroup,
-            const GA_Group* geoGroup,
+            GA_Detail* const geo,
+            GA_PointGroup* const outGroup,
+            const GA_Group* const geoGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
@@ -1075,8 +1075,8 @@ namespace GA_FeE_TopologyReference {
 
     static GA_PointGroup*
         addGroupOneNeb(
-            GA_Detail* geo,
-            const GA_Group* geoGroup = nullptr,
+            GA_Detail* const geo,
+            const GA_Group* const geoGroup = nullptr,
             const UT_StringHolder& name = "__topo_oneNeb",
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256

@@ -24,11 +24,11 @@ static const char *theDsFile = R"THEDSFILE(
     name        parameters
     
     parm {
-       name    "delByGroup"
-       cppname "DelByGroup"
-       label   "Delete By Group"
-       type    toggle
-       default { 1 }
+        name    "delByGroup"
+        cppname "DelByGroup"
+        label   "Delete By Group"
+        type    toggle
+        default { 1 }
     }
     parm {
         name    "group"
@@ -55,9 +55,53 @@ static const char *theDsFile = R"THEDSFILE(
             "vertex"    "Vertex"
             "edge"      "Edge"
         }
-
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { 0 }
+        disablewhen "{ delByGroup == 0 }"
+    }
+    parm {
+        name    "delGroup"
+        cppname "DelGroup"
+        label   "Delete Group"
+        type    toggle
+        default { 1 }
+        disablewhen "{ delByGroup == 0 }"
     }
     
+    parm {
+        name    "delWithPoint"
+        cppname "DelWithPoint"
+        label   "Delete With Point"
+        type    toggle
+        default { 1 }
+        disablewhen "{ delByGroup == 0 }"
+    }
+    parm {
+        name    "delPointMode"
+        cppname "DelPointMode"
+        label   "Delete Point Mode"
+        type    ordinal
+        default { "delDegenerateIncompatible" }
+        disablewhen "{ delByGroup == 0 }"
+        menu {
+            "leavePrimitive"             "Leave Primitive"
+            "delDegenerate"              "Delete Degenerate"
+            "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
+        }
+    }
+    parm {
+        name    "guaranteeNoVertexReference"
+        cppname "GuaranteeNoVertexReference"
+        label   "Guarantee No Vertex Reference"
+        type    toggle
+        default { 0 }
+        disablewhen "{ delByGroup == 0 }"
+    }
 
     parm {
         name    "subscribeRatio"
@@ -177,6 +221,19 @@ sopGroupType(SOP_FeE_DelByGroup_1_0Parms::GroupType parmgrouptype)
     return GA_GROUP_INVALID;
 }
 
+static GA_Detail::GA_DestroyPointMode
+sopDelPointMode(SOP_FeE_DelByGroup_1_0Parms::DelPointMode delPointMode)
+{
+    using namespace SOP_FeE_DelByGroup_1_0Enums;
+    switch (delPointMode)
+    {
+    case DelPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
+    case DelPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
+    case DelPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
+    return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
+}
 
 
 void
@@ -188,35 +245,44 @@ SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-
-    if (!sopparms.getDelByGroup())
-        return;
-
+    const bool reverseGroup = sopparms.getReverseGroup();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, sopparms.getGroup());
-    if (!geo0Group)
-        return;
-
+    const UT_StringHolder& groupName = sopparms.getGroup();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
+    
+    //GA_Group* geo0Group = nullptr;
+    //if (reverseGroup)
+    //{
+    //    geo0Group = GA_FeE_Group::findGroup(inGeo0, groupType, groupName);
+    //    if (!geo0Group || geo0Group->isEmpty())
+    //    {
+    //        const GA_AttributeFilter filter = GA_AttributeFilter::selectNot(GA_AttributeFilter::selectTopology());
+    //        outGeo0->replaceWith(*inGeo0, &filter);
+    //        return;
+    //    }
+    //}
 
-    GA_FeE_Group::delByGroup();
 
+    outGeo0->replaceWith(*inGeo0);
+
+    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
+
+    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
+    GA_FeE_Detail::delByGroup(outGeo0, geo0Group, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
     //const exint minGrainSize = pow(2, 8);
     //const exint minGrainSize = pow(2, 4);
 
 
-    //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
     //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
-    
+    outGeo0->bumpDataIdsForAddOrRemove(1,1,1);
 }
 
 

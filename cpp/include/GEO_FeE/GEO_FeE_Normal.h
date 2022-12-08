@@ -26,15 +26,15 @@ namespace GEO_FeE_Normal {
 SYS_FORCE_INLINE
 static GA_Attribute*
 addAttribNormal3D(
-    GEO_Detail* geo,
-    const GA_Group* geoGroup = nullptr,
+    GEO_Detail* const geo,
+    const GA_Group* const geoGroup = nullptr,
     const GA_AttributeOwner attribClass = GA_ATTRIB_VERTEX,
     const GA_Storage storage = GA_STORE_REAL32,
     const UT_StringHolder& N3DAttribName = "N",
     const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
     const bool copy_orig_if_zero = false,
-    const GA_Attribute* posAttrib = nullptr
+    const GA_Attribute* const posAttrib = nullptr
 )
 {
     if(!posAttrib)
@@ -53,11 +53,11 @@ addAttribNormal3D(
 
 static void
 computeNormal2D(
-    GEO_Detail* geo,
-    const GA_PointGroup* geoPointGroup,
-    GA_Attribute* N2DAttrib,
-    const GA_Attribute* posAttrib = nullptr,
-    const GA_Attribute* N3DAttrib = nullptr,
+    GEO_Detail* const geo,
+    const GA_PointGroup* const geoPointGroup,
+    GA_Attribute* const N2DAttrib,
+    const GA_Attribute* const posAttrib = nullptr,
+    const GA_Attribute* const N3DAttrib = nullptr,
     UT_Vector3T<fpreal64> defaultN3D = { 0,1,0 },
     const bool scaleByTurns = true,
     const bool normalize = true,
@@ -179,10 +179,10 @@ computeNormal2D(
 template<typename T>
 static T
 computeNormal2D(
-    const GEO_Detail* geo,
+    const GEO_Detail* const geo,
     const GA_ROHandleT<UT_Vector3T<T>>& posH,
     const GA_RWHandleT<UT_Vector3T<T>>& N2DH,
-    const GA_Group* geoGroup = nullptr,
+    const GA_Group* const geoGroup = nullptr,
     const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
     const bool copy_orig_if_zero = false

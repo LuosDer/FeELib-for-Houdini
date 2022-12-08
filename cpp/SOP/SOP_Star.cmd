@@ -1,1 +1,0 @@
-start "" "D:\Houdini\FeELib-for-Houdini\cpp\SOP\SOP_Star\build\HDK_Project.sln"

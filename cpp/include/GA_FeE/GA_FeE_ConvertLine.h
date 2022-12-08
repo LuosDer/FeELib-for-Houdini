@@ -17,10 +17,10 @@ namespace GA_FeE_ConvertLine
 
 static void
 convertLine(
-    const GA_Detail* geo,
+    const GA_Detail* const geo,
     const GA_RWHandleT<GA_Size>& attribHandle,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
-    const GA_PointGroup* geoGroup = nullptr
+    const GA_PointGroup* const geoGroup = nullptr
 )
 {
 }

@@ -36,9 +36,9 @@ namespace GA_FeE_GroupBoolean {
     SYS_FORCE_INLINE
         static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_EdgeGroup* group,
-            const GA_PrimitiveGroup* groupRef
+            const GA_Detail* const geo,
+            GA_EdgeGroup* const group,
+            const GA_PrimitiveGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -85,9 +85,9 @@ namespace GA_FeE_GroupBoolean {
     SYS_FORCE_INLINE
         static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_EdgeGroup* group,
-            const GA_PointGroup* groupRef
+            const GA_Detail* const geo,
+            GA_EdgeGroup* const group,
+            const GA_PointGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -159,9 +159,9 @@ namespace GA_FeE_GroupBoolean {
     SYS_FORCE_INLINE
         static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_EdgeGroup* group,
-            const GA_VertexGroup* groupRef
+            const GA_Detail* const geo,
+            GA_EdgeGroup* const group,
+            const GA_VertexGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -193,9 +193,9 @@ namespace GA_FeE_GroupBoolean {
     SYS_FORCE_INLINE
         static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_EdgeGroup* group,
-            const GA_EdgeGroup* groupRef
+            const GA_Detail* const geo,
+            GA_EdgeGroup* const group,
+            const GA_EdgeGroup* const groupRef
         )
     {
         group->operator&=(*groupRef);
@@ -211,9 +211,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_EdgeGroup* group,
-            const GA_Group* groupRef
+            const GA_Detail* const geo,
+            GA_EdgeGroup* const group,
+            const GA_Group* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -347,9 +347,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PointGroup* group,
-            const GA_PointGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_PointGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -372,9 +372,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PrimitiveGroup* group,
-            const GA_PrimitiveGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PrimitiveGroup* const group,
+            const GA_PrimitiveGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -398,9 +398,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PointGroup* group,
-            const GA_PrimitiveGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_PrimitiveGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -411,9 +411,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PointGroup* group,
-            const GA_VertexGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_VertexGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -424,9 +424,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PointGroup* group,
-            const GA_EdgeGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_EdgeGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -439,9 +439,9 @@ namespace GA_FeE_GroupBoolean {
 
     static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PrimitiveGroup* group,
-            const GA_PointGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PrimitiveGroup* const group,
+            const GA_PointGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -453,9 +453,9 @@ namespace GA_FeE_GroupBoolean {
     SYS_FORCE_INLINE
         static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_PrimitiveGroup* group,
-            const GA_VertexGroup* groupRef
+            const GA_Detail* const geo,
+            GA_PrimitiveGroup* const group,
+            const GA_VertexGroup* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -474,9 +474,9 @@ namespace GA_FeE_GroupBoolean {
     SYS_FORCE_INLINE
         static void
         groupIntersect(
-            const GA_Detail* geo,
-            GA_Group* group,
-            const GA_Group* groupRef
+            const GA_Detail* const geo,
+            GA_Group* const group,
+            const GA_Group* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -515,9 +515,9 @@ namespace GA_FeE_GroupBoolean {
 
     //static void
     //    groupIntersect(
-    //        const GA_Detail* geo,
-    //        GA_Group* group,
-    //        const GA_Group* groupRef
+    //        const GA_Detail* const geo,
+    //        GA_Group* const group,
+    //        const GA_Group* const groupRef
     //    )
     //{
     //    UT_ASSERT_P(geo);
@@ -537,9 +537,9 @@ namespace GA_FeE_GroupBoolean {
     //
     //static void
     //    pointGroupBoolean(
-    //        const GA_Detail* geo,
-    //        GA_Group* group,
-    //        const GA_PointGroup* groupRef,
+    //        const GA_Detail* const geo,
+    //        GA_Group* const group,
+    //        const GA_PointGroup* const groupRef,
     //        const GA_GroupBooleanOp groupBooleanOp
     //    )
     //{
@@ -581,9 +581,9 @@ namespace GA_FeE_GroupBoolean {
 
     //static void
     //    groupBoolean(
-    //        const GA_Detail* geo,
-    //        GA_Group* group,
-    //        const GA_Group* groupRef,
+    //        const GA_Detail* const geo,
+    //        GA_Group* const group,
+    //        const GA_Group* const groupRef,
     //        const GA_GroupBooleanOp groupBooleanOp
     //    )
     //{
@@ -622,9 +622,9 @@ namespace GA_FeE_GroupBoolean {
 
 static void
 unorderedGroupBoolean(
-    const GA_Detail* geo,
-    GA_Group* group,
-    const GA_Group* groupRef,
+    const GA_Detail* const geo,
+    GA_Group* const group,
+    const GA_Group* const groupRef,
     const GU_GroupBoolOp groupBooleanOp
 )
 {
@@ -661,9 +661,9 @@ unorderedGroupBoolean(
 
     //static void
     //    unorderedGroupBoolean(
-    //        const GA_Detail* geo,
-    //        GA_Group* group,
-    //        const GA_Group* groupRef,
+    //        const GA_Detail* const geo,
+    //        GA_Group* const group,
+    //        const GA_Group* const groupRef,
     //        const GU_GroupBoolOp groupBooleanOp
     //    )
     //{

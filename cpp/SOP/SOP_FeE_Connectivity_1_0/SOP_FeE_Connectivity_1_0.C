@@ -14,10 +14,11 @@
 
 #include "GU/GU_Promote.h"
 
+#include "GA_FeE/GA_FeE_Attribute.h"
 #include "GEO_FeE/GEO_FeE_Group.h"
-#include "GEO_FeE/GEO_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Adjacency.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
+#include "GA_FeE/GA_FeE_AttributeCast.h"
 
 
 
@@ -62,6 +63,22 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
+        name    "findPieceAttribClass"
+        cppname "FindPieceAttribClass"
+        label   "Find Piece Attribute Class"
+        type    ordinal
+        default { "primpoint" }
+        menu {
+            "prim"              "Primitive"
+            "point"             "Point"
+            "vertex"            "Vertex"
+            "primpoint"         "Prim Point"
+            "pointprim"         "Point Prim"
+            "primpointvertex"   "Prim Point Vertex"
+        }
+        disablewhen "{ findInputPieceAttrib == 0 }"
+    }
+    parm {
         name    "promoteFromOtherClass"
         cppname "PromoteFromOtherClass"
         label   "Promote from Other Class"
@@ -70,9 +87,17 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ findInputPieceAttrib == 0 }"
     }
     parm {
-        name    "forceCheckAttribType"
-        cppname "ForceCheckAttribType"
-        label   "Force Check Attrib Type"
+        name    "delOriginalAttrib"
+        cppname "DelOriginalAttrib"
+        label   "Delete Original Attrib"
+        type    toggle
+        default { "0" }
+        disablewhen "{ findInputPieceAttrib == 0 } { promoteFromOtherClass == 0 }"
+    }
+    parm {
+        name    "forceCastAttribType"
+        cppname "ForceCastAttribType"
+        label   "Force Cast Attrib Type"
         type    toggle
         default { "0" }
         disablewhen "{ findInputPieceAttrib == 0 }"
@@ -100,6 +125,7 @@ static const char *theDsFile = R"THEDSFILE(
         menu {
             "prim"      "Primitive"
             "point"     "Point"
+            "vertex"    "Vertex"
         }
     }
     parm {
@@ -282,7 +308,6 @@ SOP_FeE_Connectivity_1_0::cookVerb() const
 
 
 
-
 static bool
 sopConnectivityConstraint(SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint parmConnectivityConstraint)
 {
@@ -309,6 +334,8 @@ sopAttribType(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
     UT_ASSERT_MSG(0, "Unhandled Geo0 Attrib Type!");
     return false;
 }
+
+
 
 
 static GA_AttributeOwner
@@ -369,41 +396,67 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (!geo0AttribNames.isstring())
         return;
 
-    const bool useUVConnectivity = sopparms.getUseUVConnectivity();
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
+    const bool connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
+    //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
 
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
-    if (useUVConnectivity && !uvAttribName.isstring())
-        return;
+    const GA_Precision preferedPrecision = outGeo0->getPreferredPrecision();
 
-
-    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
-
-    //const bool promoteFromOtherClass = sopparms.getPromoteFromOtherClass();
+    const UT_StringHolder& stringPrefix = sopparms.getStringPrefix();
+    const UT_StringHolder& stringSufix = sopparms.getStringSufix();
 
     const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
+    if (findInputPieceAttrib)
+    {
+        GA_Attribute* attribPtr = nullptr;
 
-    name    "findInputPieceAttrib"
-        cppname "FindInputPieceAttrib"
-        label   "Find Input Piece Attribute"
-        type    toggle
-        default { "0" }
-}
-parm{
-    name    "promoteFromOtherClass"
-    cppname "PromoteFromOtherClass"
-    label   "Promote from Other Class"
-    type    toggle
-    default { "0" }
-    disablewhen "{ findInputPieceAttrib == 0 }"
-}
-parm{
-    name    "forceCheckAttribType"
-    cppname "ForceCheckAttribType"
-    label   "Force Check Attrib Type"
-    type    toggle
-    default { "0" }
-    disablewhen "{ findInputPieceAttrib == 0 }"
+        using namespace SOP_FeE_Connectivity_1_0Enums;
+        switch (sopparms.getFindPieceAttribClass())
+        {
+        case FindPieceAttribClass::PRIM:         attribPtr = outGeo0->findAttribute(GA_ATTRIB_PRIMITIVE, geo0AttribNames);  break;
+        case FindPieceAttribClass::POINT:        attribPtr = outGeo0->findAttribute(GA_ATTRIB_POINT, geo0AttribNames);      break;
+        case FindPieceAttribClass::VERTEX:       attribPtr = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);     break;
+        case FindPieceAttribClass::PRIMPOINT:
+        {
+            GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE , GA_ATTRIB_POINT };
+            attribPtr = outGeo0->findAttribute(geo0AttribNames, searchOrder, 2);
+            break;
+        }
+        case FindPieceAttribClass::POINTPRIM:
+        {
+            GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT , GA_ATTRIB_PRIMITIVE };
+                attribPtr = outGeo0->findAttribute(geo0AttribNames, searchOrder, 2);
+            break;
+        }
+        case FindPieceAttribClass::PRIMPOINTVERTEX:
+        {
+            GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE , GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
+                attribPtr = outGeo0->findAttribute(geo0AttribNames, searchOrder, 3);
+            break;
+        }
+        default: UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");     break;
+        }
+
+        if (attribPtr)
+        {
+            const bool promoteFromOtherClass = sopparms.getPromoteFromOtherClass();
+            if (promoteFromOtherClass)
+            {
+                if (geo0AttribClass != attribPtr->getOwner())
+                {
+                    attribPtr = GU_Promote::promote(*outGeo0, attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
+                }
+            }
+
+            const bool forceCastAttribType = sopparms.getForceCastAttribType();
+            if (forceCastAttribType)
+            {
+                GA_FeE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityAttribType ? GA_STORECLASS_STRING : GA_STORECLASS_INT, "", preferedPrecision);
+            }
+            return;
+        }
     }
+
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
@@ -411,6 +464,14 @@ parm{
     const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
+
+
+    const bool useUVConnectivity = sopparms.getUseUVConnectivity();
+
+    const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
+    if (useUVConnectivity && !uvAttribName.isstring())
+        return;
+
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -422,9 +483,6 @@ parm{
     const bool useSeamGroup = seamGroupName.isstring();
 
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
-    const bool connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
-    //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
     const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
@@ -433,8 +491,6 @@ parm{
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage inStorageI = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Precision preferedPrecision = outGeo0->getPreferredPrecision();
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferedPrecision);
 
 
@@ -447,16 +503,21 @@ parm{
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
+    GA_Attribute* attribPtr = outGeo0->findAttribute(geo0AttribClass, geo0AttribNames);
+    if (attribPtr)
+    {
+        GA_FeE_Attribute::attribDelete(attribPtr);
+    }
 
 
-    GA_Attribute* attribPtr = GA_FeE_Connectivity::addAttribConnectivity(outGeo0, geo0AttribNames,
+    attribPtr = GA_FeE_Connectivity::addAttribConnectivity(outGeo0,
         geo0GroupPromoted, geo0SeamGroup,
         connectivityConstraint, geo0AttribClass,
-        inStorageI, subscribeRatio, minGrainSize);
+        inStorageI, geo0AttribNames, subscribeRatio, minGrainSize);
 
     if (connectivityAttribType) // string type
     {
-        GEO_FeE_Attribute::attribCast(outGeo0, attribPtr, GA_STORECLASS_STRING, "", preferedPrecision);
+        GA_FeE_AttributeCast::attribCast(outGeo0, attribPtr, GA_STORECLASS_STRING, "", preferedPrecision);
     }
 
 

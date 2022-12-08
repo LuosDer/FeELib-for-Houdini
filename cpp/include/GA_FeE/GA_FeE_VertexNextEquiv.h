@@ -17,7 +17,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get Vertex Next Equiv Vertex
     static GA_Offset
         vertexNextEquivNoLoop(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset dstpt
         )
@@ -57,7 +57,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquivNoLoop(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset primoff,
             const GA_Size vtxpnum
@@ -68,7 +68,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquivNoLoop(
-            GA_Detail * geo,
+            GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -84,7 +84,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get Vertex Next Equiv Vertex
     static GA_Offset
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset dstpt
         )
@@ -123,7 +123,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset primoff,
             const GA_Size vtxpnum
@@ -134,7 +134,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -161,9 +161,9 @@ namespace GA_FeE_VertexNextEquiv {
     //template<typename T>
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -189,9 +189,9 @@ namespace GA_FeE_VertexNextEquiv {
     //template<typename T>
     static void
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -219,11 +219,11 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
             GA_VertexGroup* validGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -294,10 +294,10 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             GA_VertexGroup* validGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -363,10 +363,10 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -438,11 +438,11 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
             GA_VertexGroup* unsharedGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -507,10 +507,10 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribHandle,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -576,10 +576,10 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquiv(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             GA_VertexGroup* unsharedGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -650,15 +650,15 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Attribute*
         addAttribVertexNextEquivNoLoop(
-            GEO_Detail* geo,
+            GEO_Detail* const geo,
             GA_VertexGroup*& validGroup,
             const UT_StringHolder& name = "__topo_nextEquivNoLoop",
             const UT_StringHolder& groupName = "__topo_nextEquivValid",
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Defaults& defaults = GA_Defaults(-1),
             const GA_Storage storage = GA_STORE_INT32,
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
@@ -685,8 +685,8 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_VertexGroup*
         addGroupVertexNextEquivNoLoop(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nextEquivValid",
             const exint subscribeRatio = 32,
@@ -712,13 +712,13 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Attribute*
         addAttribVertexNextEquivNoLoop(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nextEquivNoLoop",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
@@ -748,15 +748,15 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Attribute*
         addAttribVertexNextEquiv(
-            GEO_Detail* geo,
+            GEO_Detail* const geo,
             GA_VertexGroup*& groupPtr,
-            const GA_VertexGroup* geoGroup = nullptr,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nextEquiv",
             const UT_StringHolder& groupName = "__topo_unshared",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
@@ -780,13 +780,13 @@ namespace GA_FeE_VertexNextEquiv {
     
     static GA_Attribute*
         addAttribVertexNextEquiv(
-            GEO_Detail* geo,
-            const GA_VertexGroup* geoGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nextEquiv",
             const GA_Defaults& defaults = GA_Defaults(-1),
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 32,
             const exint minGrainSize = 1024
@@ -807,8 +807,8 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_VertexGroup*
     addGroupVertexNextEquiv(
-        GEO_Detail* geo,
-        const GA_VertexGroup* geoGroup = nullptr,
+        GEO_Detail* const geo,
+        const GA_VertexGroup* const geoGroup = nullptr,
         const GA_Storage storage = GA_STORE_INT32,
         const UT_StringHolder& name = "__topo_unshared",
         const exint subscribeRatio = 32,

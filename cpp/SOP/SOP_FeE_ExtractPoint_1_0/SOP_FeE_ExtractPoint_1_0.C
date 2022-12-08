@@ -56,7 +56,37 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { 0 }
+    }
     
+
+    parm {
+        name    "delPointMode"
+        cppname "DelPointMode"
+        label   "Delete Point Mode"
+        type    ordinal
+        default { "delDegenerateIncompatible" }
+        disablewhen "{ delByGroup == 0 }"
+        menu {
+            "leavePrimitive"             "Leave Primitive"
+            "delDegenerate"              "Delete Degenerate"
+            "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
+        }
+    }
+    parm {
+        name    "guaranteeNoVertexReference"
+        cppname "GuaranteeNoVertexReference"
+        label   "Guarantee No Vertex Reference"
+        type    toggle
+        default { 0 }
+        disablewhen "{ delByGroup == 0 }"
+    }
+
 
     parm {
         name    "subscribeRatio"
@@ -111,6 +141,20 @@ newSopOperator(OP_OperatorTable* table)
     newOp->setIconName("SOP_add");
     table->addOperator(newOp);
 
+}
+
+static GA_Detail::GA_DestroyPointMode
+sopDelPointMode(SOP_FeE_DelByGroup_1_0Parms::DelPointMode delPointMode)
+{
+    using namespace SOP_FeE_DelByGroup_1_0Enums;
+    switch (delPointMode)
+    {
+    case DelPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
+    case DelPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
+    case DelPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
+    return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
 }
 
 
@@ -194,6 +238,7 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
         return;
     }
 
+    const GA_AttributeFilter attribFilter = GA_AttributeFilter::selectByName();
     outGeo0->replaceWithPoints(*inGeo0);
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -201,11 +246,16 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     if (!geo0Group)
         return;
 
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
+    const bool reverseGroup = sopparms.getReverseGroup();
+
+    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
+    outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), delPointMode, sopparms.getGuaranteeNoVertexReference());
+
+    outGeo0->bumpDataIdsForAddOrRemove(1,0,0);
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();

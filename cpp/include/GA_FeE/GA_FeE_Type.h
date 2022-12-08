@@ -153,7 +153,7 @@ getPreferredStorageI(
 SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorageI(
-    const GA_Detail* geo
+    const GA_Detail* const geo
 )
 {
     return getPreferredStorageI(geo->getPreferredPrecision());
@@ -180,7 +180,7 @@ getPreferredStorageF(
 SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorageF(
-    const GA_Detail* geo
+    const GA_Detail* const geo
 )
 {
     return getPreferredStorageF(geo->getPreferredPrecision());

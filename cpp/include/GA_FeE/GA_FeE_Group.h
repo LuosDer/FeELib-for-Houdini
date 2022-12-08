@@ -16,6 +16,69 @@
 namespace GA_FeE_Group {
 
 
+
+
+SYS_FORCE_INLINE
+    static GA_Group*
+    groupDuplicate(
+        GA_Detail* const geo,
+        const GA_Group* const group,
+        const UT_StringHolder& groupName
+    )
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(group);
+    GA_Group* newGroup = nullptr;
+    if (group->isElementGroup())
+    {
+        newGroup = geo->getGroupTable(group->classType())->newGroup(groupName);
+        UTverify_cast<GA_ElementGroup*>(newGroup)->combine(group);
+    }
+    else
+    {
+        newGroup = geo->getGroupTable(group->classType())->newGroup(groupName);
+        UTverify_cast<GA_EdgeGroup*>(newGroup)->combine(group);
+    }
+    return newGroup;
+}
+
+SYS_FORCE_INLINE
+static GA_Group*
+groupDuplicate(
+    const GA_Detail* const geo,
+    const GA_Group* const group
+)
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(group);
+    GA_Group* newGroup = nullptr;
+    if (group->isElementGroup())
+    {
+        newGroup = geo->getGroupTable(group->classType())->newDetachedGroup();
+        UTverify_cast<GA_ElementGroup*>(newGroup)->combine(group);
+    }
+    else
+    {
+        newGroup = geo->getGroupTable(group->classType())->newDetachedGroup();
+        UTverify_cast<GA_EdgeGroup*>(newGroup)->combine(group);
+    }
+    return newGroup;
+}
+
+
+
+SYS_FORCE_INLINE
+    static GA_Group*
+    groupDuplicateDetached(
+        const GA_Detail* const geo,
+        const GA_Group* const group
+    )
+{
+    return groupDuplicate(geo, group);
+}
+
+
+
 SYS_FORCE_INLINE
     static void
     edgeGroupToggle(
@@ -220,7 +283,7 @@ groupRename(
 //SYS_FORCE_INLINE
 //static void
 //groupDestroy(
-//    GA_Detail* geo,
+//    GA_Detail* const geo,
 //    GA_Group* group
 //)
 //{
@@ -228,6 +291,7 @@ groupRename(
 //    if (!group)
 //        return;
 //    geo->destroyGroup(group);
+//    group = nullptr;
 //    //geo->getGroupTable(group->classType())->destroy(group);
 //}
 

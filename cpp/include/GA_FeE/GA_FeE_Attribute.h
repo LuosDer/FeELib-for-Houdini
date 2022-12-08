@@ -19,6 +19,40 @@ namespace GA_FeE_Attribute {
 
 
 
+
+SYS_FORCE_INLINE
+    static bool
+    deleteAttribute(
+        GA_Attribute* attrib
+    )
+{
+    UT_ASSERT_P(attrib);
+    return attrib->getDetail().getAttributes().destroyAttribute(attrib);
+}
+
+
+
+SYS_FORCE_INLINE
+static bool
+attributeDelete(
+    GA_Attribute* attrib
+)
+{
+    UT_ASSERT_P(attrib);
+    return attrib->getDetail().getAttributes().destroyAttribute(attrib);
+}
+
+SYS_FORCE_INLINE
+static bool
+attribDelete(
+    GA_Attribute* attrib
+)
+{
+    UT_ASSERT_P(attrib);
+    return attrib->getDetail().getAttributes().destroyAttribute(attrib);
+}
+
+
 SYS_FORCE_INLINE
 static bool
     destroyAttribute(

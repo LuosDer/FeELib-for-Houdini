@@ -22,7 +22,7 @@ namespace GA_FeE_Adjacency {
     //Get Vertex Destination Point
     static void
         pointPointEdge(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_Offset ptoff,
             UT_ValArray<GA_Offset>& ptoffArray
         )
@@ -77,11 +77,11 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
         pointPointEdge(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
             const GA_ROHandleT<GA_Size>& vtxpnumAttribHandle,
-            const GA_PointGroup* geoGroup = nullptr,
-            const GA_PointGroup* seamGroup = nullptr,
+            const GA_PointGroup* const geoGroup = nullptr,
+            const GA_PointGroup* const seamGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -146,10 +146,10 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
     pointPointEdge(
-        const GA_Detail* geo,
+        const GA_Detail* const geo,
         const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-        const GA_PointGroup* geoGroup = nullptr,
-        const GA_PointGroup* seamGroup = nullptr,
+        const GA_PointGroup* const geoGroup = nullptr,
+        const GA_PointGroup* const seamGroup = nullptr,
         const exint subscribeRatio = 128,
         const exint minGrainSize = 64
     )
@@ -175,12 +175,12 @@ namespace GA_FeE_Adjacency {
     //Get Vertex Destination Point
     static void
     pointPointEdge(
-        GA_Detail* geo,
+        GA_Detail* const geo,
         const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
         const GA_ROHandleT<GA_Offset>& vtxPrevH,
         const GA_ROHandleT<GA_Offset>& vtxNextH,
-        const GA_PointGroup* geoGroup = nullptr,
-        const GA_PointGroup* seamGroup = nullptr,
+        const GA_PointGroup* const geoGroup = nullptr,
+        const GA_PointGroup* const seamGroup = nullptr,
         const exint subscribeRatio = 128,
         const exint minGrainSize = 64
     )
@@ -240,11 +240,11 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
         primPrimEdge(
-            GA_Detail* geo,
+            GA_Detail* const geo,
             const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
             const GA_ROHandleT<GA_Offset>& nextEquivAttribHandle,
-            const GA_PrimitiveGroup* geoGroup = nullptr,
-            const GA_VertexGroup* seamGroup = nullptr,
+            const GA_PrimitiveGroup* const geoGroup = nullptr,
+            const GA_VertexGroup* const seamGroup = nullptr,
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
         )
@@ -323,11 +323,11 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
         primPrimEdge1(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_PrimitiveGroup* geoGroup = nullptr,
-            const GA_VertexGroup* seamGroup = nullptr,
+            const GA_PrimitiveGroup* const geoGroup = nullptr,
+            const GA_VertexGroup*    const seamGroup = nullptr,
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
         )
@@ -423,11 +423,11 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
         primPrimEdge2(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_PrimitiveGroup* geoGroup = nullptr,
-            const GA_VertexGroup* seamGroup = nullptr,
+            const GA_PrimitiveGroup* const geoGroup = nullptr,
+            const GA_VertexGroup*    const seamGroup = nullptr,
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
         )
@@ -525,11 +525,11 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
         primPrimEdge3(
-            const GA_Detail* geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
             const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
-            const GA_PrimitiveGroup* geoGroup = nullptr,
-            const GA_VertexGroup* seamGroup = nullptr,
+            const GA_PrimitiveGroup* const geoGroup = nullptr,
+            const GA_VertexGroup*    const seamGroup = nullptr,
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
         )
@@ -626,10 +626,10 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
     primPrimEdge4(
-        const GEO_Detail* geo,
+        const GEO_Detail* const geo,
         const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-        const GA_PrimitiveGroup* geoGroup = nullptr,
-        const GA_VertexGroup* seamGroup = nullptr,
+        const GA_PrimitiveGroup* const geoGroup = nullptr,
+        const GA_VertexGroup*    const seamGroup = nullptr,
         const exint subscribeRatio = 128,
         const exint minGrainSize = 64
     )
@@ -679,10 +679,10 @@ namespace GA_FeE_Adjacency {
     //Get all prims neighbours prims with adjacent by edge
     static void
     primPrimPoint(
-        GA_Detail* geo,
+        GA_Detail* const geo,
         const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-        const GA_PrimitiveGroup* geoGroup = nullptr,
-        const GA_PointGroup* seamGroup = nullptr,
+        const GA_PrimitiveGroup* const geoGroup = nullptr,
+        const GA_PointGroup*     const seamGroup = nullptr,
         const exint subscribeRatio = 128,
         const exint minGrainSize = 64
     )
@@ -777,13 +777,13 @@ namespace GA_FeE_Adjacency {
     //GA_FeE_Adjacency::addAttribPointPointEdge(geo, name, geoGroup, seamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
     static GA_Attribute*
         addAttribPointPointEdge(
-            GEO_Detail* geo,
-            const GA_PointGroup* geoGroup = nullptr,
-            const GA_PointGroup* seamGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_PointGroup* const geoGroup = nullptr,
+            const GA_PointGroup* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nebs",
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
@@ -816,13 +816,13 @@ namespace GA_FeE_Adjacency {
     
     static GA_Attribute*
         addAttribPrimPrimEdge(
-            GEO_Detail* geo,
-            const GA_PrimitiveGroup* geoGroup = nullptr,
-            const GA_VertexGroup* seamGroup = nullptr,
+            GEO_Detail* const geo,
+            const GA_PrimitiveGroup* const geoGroup = nullptr,
+            const GA_VertexGroup* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nebs",
             const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
@@ -851,15 +851,15 @@ namespace GA_FeE_Adjacency {
 
     static GA_Attribute*
         addAttribAdjacency(
-            GEO_Detail* geo,
+            GEO_Detail* const geo,
             const GA_GroupType groupType,
             const GA_GroupType connectivityGroupType,
-            const GA_Group* geoGroup = nullptr,
-            const GA_Group* seamGroup = nullptr,
+            const GA_Group* const geoGroup = nullptr,
+            const GA_Group* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_nebs",
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* attribute_options = nullptr,
+            const UT_Options* const creation_args = nullptr,
+            const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
             const exint subscribeRatio = 128,
             const exint minGrainSize = 64
