@@ -36,10 +36,10 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        disablewhen "{ extractPoint == 0 }"
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        disablewhen "{ extractPoint == 0 }"
     }
     parm {
         name    "groupType"
@@ -47,7 +47,6 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group Type"
         type    ordinal
         default { "guess" }
-        disablewhen "{ extractPoint == 0 }"
         menu {
             "guess"     "Guess from Group"
             "prim"      "Primitive"
@@ -55,6 +54,7 @@ static const char *theDsFile = R"THEDSFILE(
             "vertex"    "Vertex"
             "edge"      "Edge"
         }
+        disablewhen "{ extractPoint == 0 }"
     }
     parm {
         name    "reverseGroup"
@@ -62,8 +62,19 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Reverse Group"
         type    toggle
         default { 0 }
+        disablewhen "{ extractPoint == 0 }"
     }
     
+
+
+    parm {
+        name    "delInputGroup"
+        cppname "DelInputGroup"
+        label   "Delete Input Group"
+        type    toggle
+        default { 1 }
+        disablewhen "{ extractPoint == 0 }"
+    }
 
     parm {
         name    "delPointMode"
@@ -71,12 +82,12 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Delete Point Mode"
         type    ordinal
         default { "delDegenerateIncompatible" }
-        disablewhen "{ delByGroup == 0 }"
         menu {
             "leavePrimitive"             "Leave Primitive"
             "delDegenerate"              "Delete Degenerate"
             "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
         }
+        disablewhen "{ extractPoint == 0 }"
     }
     parm {
         name    "guaranteeNoVertexReference"
@@ -84,10 +95,8 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Guarantee No Vertex Reference"
         type    toggle
         default { 0 }
-        disablewhen "{ delByGroup == 0 }"
+        disablewhen "{ extractPoint == 0 }"
     }
-
-
     parm {
         name    "subscribeRatio"
         cppname "SubscribeRatio"
@@ -144,9 +153,9 @@ newSopOperator(OP_OperatorTable* table)
 }
 
 static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_DelByGroup_1_0Parms::DelPointMode delPointMode)
+sopDelPointMode(SOP_FeE_ExtractPoint_1_0Parms::DelPointMode delPointMode)
 {
-    using namespace SOP_FeE_DelByGroup_1_0Enums;
+    using namespace SOP_FeE_ExtractPoint_1_0Enums;
     switch (delPointMode)
     {
     case DelPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
@@ -226,7 +235,7 @@ void
 SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_ExtractPoint_1_0Parms>();
-    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ExtractPoint_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -237,24 +246,42 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
         outGeo0->replaceWith(*inGeo0);
         return;
     }
-
+    GA_AttributeFilter::selectGroup()
     const GA_AttributeFilter attribFilter = GA_AttributeFilter::selectByName();
     outGeo0->replaceWithPoints(*inGeo0);
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, sopparms.getGroup());
-    if (!geo0Group)
+    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
+    const bool reverseGroup = sopparms.getReverseGroup();
+
+    const UT_StringHolder& groupName = sopparms.getGroup();
+
+    GOP_Manager gop;
+    //onst GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_PointGroup* geo0Group = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, groupName, gop);
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+    if (geo0Group && !reverseGroup && geo0Group->isEmpty())
         return;
+
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const bool reverseGroup = sopparms.getReverseGroup();
+    
+    //const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
+    //outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), delPointMode, sopparms.getGuaranteeNoVertexReference());
+    outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
 
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-    outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), delPointMode, sopparms.getGuaranteeNoVertexReference());
-
+    const bool delInputGroup = sopparms.getDelInputGroup();
+    if (delInputGroup)
+    {
+        GA_PointGroup* geo0PointGroup = outGeo0->findPointGroup(groupName);
+        if (geo0PointGroup)
+        {
+            outGeo0->destroyGroup(geo0PointGroup);
+        }
+    }
     outGeo0->bumpDataIdsForAddOrRemove(1,0,0);
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
