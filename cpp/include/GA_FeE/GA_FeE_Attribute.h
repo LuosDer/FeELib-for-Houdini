@@ -18,6 +18,41 @@ namespace GA_FeE_Attribute {
 
 
 
+static void
+keepAttribute(
+    GA_AttributeSet& attribSet,
+    const GA_AttributeOwner attribClass,
+    const GA_AttributeFilter& attribFilter
+)
+{
+    for (GA_AttributeDict::iterator it = attribSet.begin(attribClass); !it.atEnd(); ++it)
+    {
+        GA_Attribute* attribPtr = it.attrib();
+        UT_StringHolder name = attribPtr->getName();
+        if (attribPtr->isDetached())
+            continue;
+        if (attribFilter.match(attribPtr))
+            continue;
+        attribPtr->bumpDataId();
+        attribSet.destroyAttribute(attribPtr);
+    }
+}
+
+
+SYS_FORCE_INLINE
+static void
+keepStdAttribute(
+    GA_AttributeSet& attribSet,
+    const GA_AttributeOwner attribClass,
+    const GA_AttributeFilter& attribFilter
+)
+{
+    GA_AttributeFilter attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilter, GA_AttributeFilter::selectPublic());
+    attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectStandard());
+    attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectFactory());
+    GA_FeE_Attribute::deleteAttribute(attribSet, attribClass, attribFilterPublic);
+}
+
 
 
 SYS_FORCE_INLINE

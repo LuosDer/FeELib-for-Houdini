@@ -116,13 +116,13 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-       name    "outSrcPrims"
-       cppname "OutSrcPrims"
-       label   "Source Prims"
-       type    toggle
-       default { 0 }
-       nolabel
-       joinnext
+        name    "outSrcPrims"
+        cppname "OutSrcPrims"
+        label   "Source Prims"
+        type    toggle
+        default { 0 }
+        nolabel
+        joinnext
     }
     parm {
         name    "srcPrimsAttribName"
@@ -150,20 +150,20 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-       name    "subscribeRatio"
-       cppname "SubscribeRatio"
-       label   "Subscribe Ratio"
-       type    integer
-       default { 64 }
-       range   { 0! 256 }
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
     }
     parm {
-       name    "minGrainSize"
-       cppname "MinGrainSize"
-       label   "Min Grain Size"
-       type    intlog
-       default { 64 }
-       range   { 0! 2048 }
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 64 }
+        range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -439,41 +439,6 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         return;
 
 
-
-    //
-    //#if 1
-    //    const GA_VertexGroupUPtr creatingGroupUPtr = tmpGeo0->createDetachedVertexGroup();
-    //    GA_VertexGroup* creatingGroup = creatingGroupUPtr.get();
-    //#else
-    //    GA_VertexGroup* creatingGroup = outGeo0->newVertexGroup("creatingGroup");
-    //#endif
-    //
-    //
-    //
-    //#if 1
-    //    const GA_ATINumericUPtr vtxpnumAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-    //    GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
-    //
-    //    const GA_ATINumericUPtr dstptAttribUPtr = tmpGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(0));
-    //    GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-    //#else
-    //    GA_Attribute* vtxpnumATI = outGeo0->createTupleAttribute(GA_ATTRIB_VERTEX, "vtxpnum", inStorageI, 1, GA_Defaults(0));
-    //#endif
-    //
-    //    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
-    //    GA_RWHandleT<GA_Size> dstptAttribHandle;
-    //    vtxpnumAttribHandle.bind(vtxpnumATI);
-    //    dstptAttribHandle.bind(dstptATI);
-    //
-    //    GA_FeE_TopologyReference::vertexPrimIndex(tmpGeo0, vtxpnumAttribHandle, geo0VtxGroup);
-    //
-    //    GA_FeE_TopologyReference::vertexPointDst(tmpGeo0, dstptAttribHandle, vtxpnumAttribHandle, geo0VtxGroup);
-    //
-    //    //GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, vtxpnumAttribHandle, creatingGroup, dstptAttribHandle, geo0VtxGroup);
-    //    ///////////// after this, vtxpnumAttribHandle is not vtxpnum anymore
-    //
-    //
-    //    GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(tmpGeo0, creatingGroup, dstptAttribHandle, geo0VtxGroup);
 
     //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
     const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
