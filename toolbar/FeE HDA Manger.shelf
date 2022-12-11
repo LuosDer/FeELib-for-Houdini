@@ -391,9 +391,12 @@ for selectedNode in selectedNodes:
     outValue = parmTemplateGroup.asCode()
     outValue = parmTemplateGroup.asDialogScript(False, True)
     
+
+    #targetPath += nodeTypeName + ".txt"
+    #file = open(targetPath,'w')
     file = open(targetPath + nodeTypeName + ".txt",'w')
     file.write(outValue)
-
+    
     command = r'start "" "' + targetPath.replace("/","\\") + r'"'
     os.system(command)
     break

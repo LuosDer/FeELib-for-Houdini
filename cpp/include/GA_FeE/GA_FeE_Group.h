@@ -16,6 +16,106 @@
 namespace GA_FeE_Group {
 
 
+static void
+delStdGroup(
+    GA_GroupTable* const groupTable,
+    const UT_StringHolder& delGroupPattern
+)
+{
+    if (delGroupPattern == "")
+        return;
+    for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group* group = it.group();
+        if (group->isDetached())
+            continue;
+        if (!group->getName().match(delGroupPattern))
+            continue;
+        groupTable->destroy(group);
+    }
+}
+
+SYS_FORCE_INLINE
+static void
+delStdGroup(
+    GA_Detail* const geo,
+    const GA_GroupType groupTable,
+    const UT_StringHolder& delGroupPattern
+)
+{
+    return delStdGroup(geo->getGroupTable(groupTable), delGroupPattern);
+}
+
+
+static void
+delStdGroup(
+    GA_Detail* const geo,
+    const UT_StringHolder& primGroupPattern,
+    const UT_StringHolder& pointGroupPattern,
+    const UT_StringHolder& vertexGroupPattern,
+    const UT_StringHolder& edgeGroupPattern
+)
+{
+    delStdGroup(geo, GA_GROUP_PRIMITIVE, primGroupPattern);
+    delStdGroup(geo, GA_GROUP_POINT,     pointGroupPattern);
+    delStdGroup(geo, GA_GROUP_VERTEX,    vertexGroupPattern);
+    delStdGroup(geo, GA_GROUP_EDGE,      edgeGroupPattern);
+}
+
+
+
+
+
+static void
+keepStdGroup(
+    GA_GroupTable* const groupTable,
+    const UT_StringHolder& keepGroupPattern
+)
+{
+    if (keepGroupPattern == "*")
+        return;
+    for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group* group = it.group();
+        if (group->isDetached())
+            continue;
+        if (group->getName().match(keepGroupPattern))
+            continue;
+        groupTable->destroy(group);
+    }
+}
+
+
+
+SYS_FORCE_INLINE
+static void
+keepStdGroup(
+    GA_Detail* const geo,
+    const GA_GroupType groupTable,
+    const UT_StringHolder& keepGroupPattern
+)
+{
+    return keepStdGroup(geo->getGroupTable(groupTable), keepGroupPattern);
+}
+
+
+static void
+keepStdGroup(
+    GA_Detail* const geo,
+    const UT_StringHolder& primGroupPattern,
+    const UT_StringHolder& pointGroupPattern,
+    const UT_StringHolder& vertexGroupPattern,
+    const UT_StringHolder& edgeGroupPattern
+)
+{
+    keepStdGroup(geo, GA_GROUP_PRIMITIVE, primGroupPattern);
+    keepStdGroup(geo, GA_GROUP_POINT,     pointGroupPattern);
+    keepStdGroup(geo, GA_GROUP_VERTEX,    vertexGroupPattern);
+    keepStdGroup(geo, GA_GROUP_EDGE,      edgeGroupPattern);
+}
+
+
+
 
 
 SYS_FORCE_INLINE

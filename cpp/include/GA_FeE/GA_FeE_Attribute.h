@@ -8,13 +8,116 @@
 
 #include "GA/GA_Detail.h"
 
+
+#include "GA/GA_AttributeFilter.h"
 #include "GA/GA_PageHandle.h"
 #include "GA/GA_PageIterator.h"
+
+
 
 #include "GA_FeE/GA_FeE_Type.h"
 
 
 namespace GA_FeE_Attribute {
+
+    
+
+
+
+static void
+delStdAttribute(
+    GA_AttributeSet& attribSet,
+    const UT_StringHolder& primAttribPattern,
+    const UT_StringHolder& pointAttribPattern,
+    const UT_StringHolder& vertexAttribPattern,
+    const UT_StringHolder& detailAttribPattern
+)
+{
+    GA_AttributeFilter attribFilter;
+    const GA_AttributeFilter attribFilterPublic = GA_AttributeFilter::selectPublic();
+    const GA_AttributeFilter attribFilterStd = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectStandard());
+
+    attribFilter = GA_AttributeFilter::selectByPattern(primAttribPattern);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, attribFilter);
+
+    attribFilter = GA_AttributeFilter::selectByPattern(pointAttribPattern);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_POINT, attribFilter);
+
+    attribFilter = GA_AttributeFilter::selectByPattern(vertexAttribPattern);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_VERTEX, attribFilter);
+
+    attribFilter = GA_AttributeFilter::selectByPattern(detailAttribPattern);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_DETAIL, attribFilter);
+}
+
+
+SYS_FORCE_INLINE
+    static void
+    delStdAttribute(
+        GA_Detail* const geo,
+        const UT_StringHolder& primAttribPattern,
+        const UT_StringHolder& pointAttribPattern,
+        const UT_StringHolder& vertexAttribPattern,
+        const UT_StringHolder& detailAttribPattern
+    )
+{
+    return delStdAttribute(geo->getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern);
+}
+
+
+
+
+static void
+keepStdAttribute(
+    GA_AttributeSet& attribSet,
+    const UT_StringHolder& primAttribPattern,
+    const UT_StringHolder& pointAttribPattern,
+    const UT_StringHolder& vertexAttribPattern,
+    const UT_StringHolder& detailAttribPattern
+)
+{
+    GA_AttributeFilter attribFilter;
+    const GA_AttributeFilter attribFilterPublic = GA_AttributeFilter::selectPublic();
+    const GA_AttributeFilter attribFilterStd = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectStandard());
+
+    attribFilter = GA_AttributeFilter::selectByPattern(primAttribPattern);
+    attribFilter = GA_AttributeFilter::selectNot(attribFilter);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, attribFilter);
+
+    attribFilter = GA_AttributeFilter::selectByPattern(pointAttribPattern);
+    attribFilter = GA_AttributeFilter::selectNot(attribFilter);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_POINT, attribFilter);
+
+    attribFilter = GA_AttributeFilter::selectByPattern(vertexAttribPattern);
+    attribFilter = GA_AttributeFilter::selectNot(attribFilter);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_VERTEX, attribFilter);
+
+    attribFilter = GA_AttributeFilter::selectByPattern(detailAttribPattern);
+    attribFilter = GA_AttributeFilter::selectNot(attribFilter);
+    attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
+    attribSet.destroyAttributes(GA_ATTRIB_DETAIL, attribFilter);
+}
+
+
+SYS_FORCE_INLINE
+static void
+keepStdAttribute(
+    GA_Detail* const geo,
+    const UT_StringHolder& primAttribPattern,
+    const UT_StringHolder& pointAttribPattern,
+    const UT_StringHolder& vertexAttribPattern,
+    const UT_StringHolder& detailAttribPattern
+)
+{
+    return keepStdAttribute(geo->getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern);
+}
 
 
 
@@ -29,11 +132,11 @@ keepAttribute(
     {
         GA_Attribute* attribPtr = it.attrib();
         UT_StringHolder name = attribPtr->getName();
-        if (attribPtr->isDetached())
-            continue;
+        //if (attribPtr->isDetached())
+        //    continue;
         if (attribFilter.match(attribPtr))
             continue;
-        attribPtr->bumpDataId();
+        //attribPtr->bumpDataId();
         attribSet.destroyAttribute(attribPtr);
     }
 }
@@ -48,9 +151,9 @@ keepStdAttribute(
 )
 {
     GA_AttributeFilter attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilter, GA_AttributeFilter::selectPublic());
-    attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectStandard());
-    attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectFactory());
-    GA_FeE_Attribute::deleteAttribute(attribSet, attribClass, attribFilterPublic);
+    attribFilterPublic = GA_AttributeFilter::selectOr(attribFilterPublic, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectStandard()));
+    //attribFilterPublic = GA_AttributeFilter::selectOr(attribFilterPublic, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectFactory()));
+    GA_FeE_Attribute::keepAttribute(attribSet, attribClass, attribFilterPublic);
 }
 
 

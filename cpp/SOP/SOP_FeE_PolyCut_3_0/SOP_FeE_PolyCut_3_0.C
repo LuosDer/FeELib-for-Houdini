@@ -30,7 +30,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Cut Point Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points, )\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
@@ -101,21 +101,10 @@ static const char *theDsFile = R"THEDSFILE(
         type    separator
         default { "" }
     }
+
     parm {
         name    "keepPrimAttribName"
         label   "Keep Primitive Attribute Name"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "keepPrimGroupName"
-        label   "Keep Primitive Group Name"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "keepEdgeGroupName"
-        label   "Keep Edge Group Name"
         type    string
         default { "" }
     }
@@ -125,12 +114,26 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "*" }
     }
+
+    parm {
+        name    "keepPrimGroupName"
+        label   "Keep Primitive Group Name"
+        type    string
+        default { "" }
+    }
     parm {
         name    "keepPointGroupName"
         label   "Keep Point Group Name"
         type    string
         default { "*" }
     }
+    parm {
+        name    "keepEdgeGroupName"
+        label   "Keep Edge Group Name"
+        type    string
+        default { "" }
+    }
+
     parm {
         name    "delInputGroup"
         label   "Delete Input Group"
@@ -173,6 +176,10 @@ PRM_Template*
 SOP_FeE_PolyCut_3_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_PolyCut_3_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("cutPointGroup"_sh, &SOP_Node::pointGroupMenu);
+    }
     return templ.templates();
 }
 

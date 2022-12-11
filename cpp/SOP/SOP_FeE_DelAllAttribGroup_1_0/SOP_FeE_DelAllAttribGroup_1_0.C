@@ -222,6 +222,18 @@ PRM_Template*
 SOP_FeE_DelAllAttribGroup_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_DelAllAttribGroup_1_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("keepPrimAttribName"_sh,    &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("keepPointAttribName"_sh,   &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("keepVertexAttribName"_sh,  &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("keepDetailAttribName"_sh,  &SOP_Node::detailAttribMenu);
+
+        templ.setChoiceListPtr("keepPrimGroupName"_sh,     &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("keepPointGroupName"_sh,    &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("keepVertexGroupName"_sh,   &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroupName"_sh,     &SOP_Node::edgeGroupMenu);
+    }
     return templ.templates();
 }
 
@@ -295,53 +307,13 @@ void
 SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_DelAllAttribGroup_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelAllAttribGroup_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     GA_AttributeSet& attribSet = outGeo0->getAttributes();
-
-
-
-
-
-    //GA_AttributeFilter   primGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPrimGroupName());
-    //GA_AttributeFilter  pointGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPointGroupName());
-    //GA_AttributeFilter vertexGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepVertexGroupName());
-    //GA_AttributeFilter   edgeGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepEdgeGroupName());
-
-    //GA_AttributeFilter groupFilter;
-    //groupFilter = GA_AttributeFilter::selectOr(groupFilter,   primGroupFilter);
-    //groupFilter = GA_AttributeFilter::selectOr(groupFilter,  pointGroupFilter);
-    //groupFilter = GA_AttributeFilter::selectOr(groupFilter, vertexGroupFilter);
-    //groupFilter = GA_AttributeFilter::selectOr(groupFilter,   edgeGroupFilter);
-
-
-    //GA_AttributeFilter   primAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPrimAttribName());
-    //GA_AttributeFilter  pointAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPointAttribName());
-    //GA_AttributeFilter vertexAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepVertexAttribName());
-    //GA_AttributeFilter detailAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepDetailAttribName());
-
-    //GA_AttributeFilter attribFilter;
-    //attribFilter = GA_AttributeFilter::selectOr(attribFilter,   primAttribFilter);
-    //attribFilter = GA_AttributeFilter::selectOr(attribFilter,  pointAttribFilter);
-    //attribFilter = GA_AttributeFilter::selectOr(attribFilter, vertexAttribFilter);
-    //attribFilter = GA_AttributeFilter::selectOr(attribFilter, detailAttribFilter);
-
-
-
-
-
-    //groupBaseFilter = GA_AttributeFilter::selectNot(groupBaseFilter);
-    //attribFilter = GA_AttributeFilter::selectAnd(attribFilter, groupBaseFilter);
-
-    //GA_AttributeFilter finalFilter = GA_AttributeFilter::selectOr(attribFilter, groupFilter);
-    //outGeo0->replaceWith(*inGeo0, &finalFilter);
-
-    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
@@ -350,109 +322,18 @@ SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     if (boss.wasInterrupted())
         return;
 
-#if 1
-    if (sopparms.getDoKeepPrimAttrib())
-    {
-        GA_AttributeFilter attribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPrimAttribName());
-        GA_FeE_Attribute::keepStdAttribute(attribSet, GA_ATTRIB_PRIMITIVE, attribFilter);
-    }
-    if (sopparms.getDoKeepPointAttrib())
-    {
-        GA_AttributeFilter attribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPointAttribName());
-        GA_FeE_Attribute::keepStdAttribute(attribSet, GA_ATTRIB_POINT, attribFilter);
-    }
-    if (sopparms.getDoKeepVertexAttrib())
-    {
-        GA_AttributeFilter attribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepVertexAttribName());
-        GA_FeE_Attribute::keepStdAttribute(attribSet, GA_ATTRIB_VERTEX, attribFilter);
-    }
-    if (sopparms.getDoKeepDetailAttrib())
-    {
-        GA_AttributeFilter attribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepDetailAttribName());
-        GA_FeE_Attribute::keepStdAttribute(attribSet, GA_ATTRIB_DETAIL, attribFilter);
-    }
-#else
-    if (sopparms.getDoKeepPrimAttrib())
-    {
-        GA_AttributeFilter   primAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPrimAttribName());
-        primAttribFilter = GA_AttributeFilter::selectNot(primAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, primAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
-    }
-    if (sopparms.getDoKeepPointAttrib())
-    {
-        GA_AttributeFilter   pointAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPointAttribName());
-        pointAttribFilter = GA_AttributeFilter::selectNot(pointAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_POINT, pointAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_POINT);
-    }
-    if (sopparms.getDoKeepVertexAttrib())
-    {
-        GA_AttributeFilter   vertexAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepVertexAttribName());
-        vertexAttribFilter = GA_AttributeFilter::selectNot(vertexAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_VERTEX, vertexAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_VERTEX);
-    }
-    if (sopparms.getDoKeepDetailAttrib())
-    {
-        GA_AttributeFilter   detailAttribFilter = GA_AttributeFilter::selectByName(sopparms.getKeepDetailAttribName());
-        detailAttribFilter = GA_AttributeFilter::selectNot(detailAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_DETAIL, detailAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_DETAIL);
-    }
-#endif
+    const UT_StringHolder& allPattern = "*";
+    const UT_StringHolder& keepPrimAttribName   = sopparms.getDoKeepPrimAttrib()   ? sopparms.getKeepPrimAttribName()   : allPattern;
+    const UT_StringHolder& keepPointAttribName  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttribName()  : allPattern;
+    const UT_StringHolder& keepVertexAttribName = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttribName() : allPattern;
+    const UT_StringHolder& keepDetailAttribName = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttribName() : allPattern;
+    GA_FeE_Attribute::keepStdAttribute(attribSet, keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
 
-
-
-    /*
-    GA_AttributeFilter groupBaseFilter = GA_AttributeFilter::selectGroup();
-
-    if (sopparms.getDoKeepPrimGroup())
-    {
-        GA_AttributeFilter   primGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPrimGroupName());
-        primAttribFilter = GA_AttributeFilter::selectNot(primAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, primAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_PRIMITIVE);
-    }
-    if (sopparms.getDoKeepPointGroup())
-    {
-        GA_AttributeFilter   pointGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepPointGroupName());
-        pointAttribFilter = GA_AttributeFilter::selectNot(pointAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_POINT, pointAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_POINT);
-    }
-    if (sopparms.getDoKeepVertexGroup())
-    {
-        GA_AttributeFilter   vertexGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepVertexGroupName());
-        vertexAttribFilter = GA_AttributeFilter::selectNot(vertexAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_VERTEX, vertexAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_VERTEX);
-    }
-    if (sopparms.getDoKeepEdgeGroup())
-    {
-        GA_AttributeFilter   edgeGroupFilter = GA_AttributeFilter::selectByName(sopparms.getKeepEdgeGroupName());
-        detailAttribFilter = GA_AttributeFilter::selectNot(detailAttribFilter);
-        attribSet.destroyAttributes(GA_ATTRIB_DETAIL, detailAttribFilter);
-        attribSet.bumpAllDataIds(GA_ATTRIB_DETAIL);
-    }
-    */
-    /*
-    for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
-    {
-        GA_GroupTable* groupTable = outGeo0->getGroupTable(groupType);
-        //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
-        for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
-        {
-            GA_Group* group = it.group();
-            if (group->isDetached())
-                continue;
-            if (!group->getName().startsWith("__topo_"))
-                continue;
-            groupTable->destroy(group);
-        }
-    }
-    */
-
+    const UT_StringHolder& keepPrimGroupName   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroupName()   : allPattern;
+    const UT_StringHolder& keepPointGroupName  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroupName()  : allPattern;
+    const UT_StringHolder& keepVertexGroupName = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroupName() : allPattern;
+    const UT_StringHolder& keepEdgeGroupName   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroupName()   : allPattern;
+    GA_FeE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
 }
 
 

@@ -200,6 +200,11 @@ PRM_Template*
 SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_UVScaletoWorldSize_3_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("uvAttribNames"_sh, &SOP_Node::allAttribReplaceMenu);
+    }
     return templ.templates();
 }
 

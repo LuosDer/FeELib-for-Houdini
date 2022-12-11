@@ -116,6 +116,10 @@ PRM_Template*
 SOP_FeE_AttribScale_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_AttribScale_1_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+    }
     return templ.templates();
 }
 

@@ -29,7 +29,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "" }
         range   { 0 1 }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
@@ -258,6 +258,10 @@ PRM_Template*
 SOP_FeE_JoinCurve_2_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_JoinCurve_2_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("stopPointGroup"_sh, &SOP_Node::pointGroupMenu);
+    }
     return templ.templates();
 }
 

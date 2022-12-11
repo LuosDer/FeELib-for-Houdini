@@ -30,77 +30,76 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { 1 }
     }
-    parm {
-        name    "group"
-        cppname "Group"
-        label   "Group"
-        type    string
-        default { "" }
-        disablewhen "{ delByGroup == 0 }"
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-    }
-    parm {
-        name    "groupType"
-        cppname "GroupType"
-        label   "Group Type"
-        type    ordinal
-        default { "guess" }
-        disablewhen "{ delByGroup == 0 }"
-        menu {
-            "guess"     "Guess from Group"
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
+    groupsimple {
+        name    "delByGroup_folder"
+        label   "Delete By Group"
+        disablewhentab "{ delByGroup == 0 }"
+
+        parm {
+            name    "group"
+            cppname "Group"
+            label   "Group"
+            type    string
+            default { "" }
+            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+            parmtag { "script_action_help" "Select geometry from an available viewport." }
+            parmtag { "script_action_icon" "BUTTONS_reselect" }
         }
-    }
-    parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
-        type    toggle
-        default { 0 }
-        disablewhen "{ delByGroup == 0 }"
-    }
-    parm {
-        name    "delGroup"
-        cppname "DelGroup"
-        label   "Delete Group"
-        type    toggle
-        default { 1 }
-        disablewhen "{ delByGroup == 0 }"
-    }
+        parm {
+            name    "groupType"
+            cppname "GroupType"
+            label   "Group Type"
+            type    ordinal
+            default { "guess" }
+            menu {
+                "guess"     "Guess from Group"
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+                "edge"      "Edge"
+            }
+        }
+        parm {
+            name    "reverseGroup"
+            cppname "ReverseGroup"
+            label   "Reverse Group"
+            type    toggle
+            default { 0 }
+        }
+        parm {
+            name    "delGroup"
+            cppname "DelGroup"
+            label   "Delete Group"
+            type    toggle
+            default { 1 }
+        }
     
-    parm {
-        name    "delWithPoint"
-        cppname "DelWithPoint"
-        label   "Delete With Point"
-        type    toggle
-        default { 1 }
-        disablewhen "{ delByGroup == 0 }"
-    }
-    parm {
-        name    "delPointMode"
-        cppname "DelPointMode"
-        label   "Delete Point Mode"
-        type    ordinal
-        default { "delDegenerateIncompatible" }
-        disablewhen "{ delByGroup == 0 }"
-        menu {
-            "leavePrimitive"             "Leave Primitive"
-            "delDegenerate"              "Delete Degenerate"
-            "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
+        parm {
+            name    "delWithPoint"
+            cppname "DelWithPoint"
+            label   "Delete With Point"
+            type    toggle
+            default { 1 }
         }
-    }
-    parm {
-        name    "guaranteeNoVertexReference"
-        cppname "GuaranteeNoVertexReference"
-        label   "Guarantee No Vertex Reference"
-        type    toggle
-        default { 0 }
-        disablewhen "{ delByGroup == 0 }"
+        parm {
+            name    "delPointMode"
+            cppname "DelPointMode"
+            label   "Delete Point Mode"
+            type    ordinal
+            default { "delDegenerateIncompatible" }
+            menu {
+                "leavePrimitive"             "Leave Primitive"
+                "delDegenerate"              "Delete Degenerate"
+                "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
+            }
+        }
+        parm {
+            name    "guaranteeNoVertexReference"
+            cppname "GuaranteeNoVertexReference"
+            label   "Guarantee No Vertex Reference"
+            type    toggle
+            default { 0 }
+        }
     }
 
     parm {
@@ -110,7 +109,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    integer
         default { 16 }
         range   { 0! 256 }
-        disablewhen "{ delByGroup == 0 }"
+        invisible
     }
     parm {
         name    "minGrainSize"
@@ -119,9 +118,8 @@ static const char *theDsFile = R"THEDSFILE(
         type    intlog
         default { 1024 }
         range   { 0! 2048 }
-        disablewhen "{ delByGroup == 0 }"
+        invisible
     }
-
 }
 )THEDSFILE";
 
@@ -131,6 +129,10 @@ PRM_Template*
 SOP_FeE_DelByGroup_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_DelByGroup_1_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+    }
     return templ.templates();
 }
 

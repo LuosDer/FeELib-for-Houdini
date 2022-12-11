@@ -28,7 +28,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
@@ -54,6 +54,9 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Combine Group Name"
         type    string
         default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('combineGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
         name    "combineGroupType"
@@ -97,6 +100,11 @@ PRM_Template*
 SOP_FeE_GroupCombine_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_GroupCombine_1_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("combineGroupName"_sh, &SOP_Node::allGroupMenu);
+    }
     return templ.templates();
 }
 

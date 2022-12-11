@@ -70,13 +70,6 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
         name    "attribFromPrim"
         cppname "AttribFromPrim"
         label   "Attrib from Prim"
@@ -84,16 +77,24 @@ static const char *theDsFile = R"THEDSFILE(
         default { "" }
     }
     parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
+        name    "attribFromVertex"
+        cppname "AttribFromVertex"
+        label   "Attrib from Vertex"
         type    string
         default { "" }
     }
+
     parm {
         name    "groupFromPrim"
         cppname "GroupFromPrim"
         label   "Group from Prim"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "groupFromVertex"
+        cppname "GroupFromVertex"
+        label   "Group from Vertex"
         type    string
         default { "" }
     }
@@ -172,6 +173,21 @@ PRM_Template*
 SOP_FeE_ConvertLine_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_ConvertLine_1_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("vertexGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("edgeGroup"_sh, &SOP_Node::edgeGroupMenu);
+
+        templ.setChoiceListPtr("attribFromPrim"_sh, &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("attribFromVertex"_sh, &SOP_Node::vertexAttribMenu);
+
+        templ.setChoiceListPtr("groupFromPrim"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("groupFromVertex"_sh, &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("groupFromEdge"_sh, &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("promoteEdgeGroupToPrim"_sh, &SOP_Node::edgeGroupMenu);
+    }
     return templ.templates();
 }
 

@@ -36,7 +36,7 @@ static const char *theDsFile = R"THEDSFILE(
         menutoggle {
             [ "" ]
         }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
@@ -64,14 +64,6 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Pos Attrib Name"
         type    string
         default { "P" }
-        menureplace {
-            [ "" ]
-            [ "import fee_buildMenu" ]
-            [ "" ]
-            [ "node = kwargs['node']" ]
-            [ "return fee_buildMenu.buildAttribsMenu(node, 0, 'point vertex', 'all')" ]
-            language python
-        }
     }
 
     parm {
@@ -112,15 +104,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "N" }
         hidewhen "{ inputNormal3D == 0 } { inputNormal3D == 1 useConstantNormal3D == 1 }"
-        menureplace {
-            [ "" ]
-            [ "import fee_buildMenu" ]
-            [ "" ]
-            [ "node = kwargs['node']" ]
-            [ "classType = node.parm('normal3DAttribClass').evalAsString()" ]
-            [ "return fee_buildMenu.buildAttribsMenu(node, 0, classType, 'all')" ]
-            language python
-        }
     }
     parm {
         name    "defaultNormal3D"
@@ -223,6 +206,12 @@ PRM_Template*
 SOP_FeE_Normal2D_1_0::buildTemplates()
 {
     static PRM_TemplateBuilder templ("SOP_FeE_Normal2D_1_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("normal3DAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
+    }
     return templ.templates();
 }
 
