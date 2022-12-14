@@ -283,7 +283,7 @@ SOP_FeE_Normal2D_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
+sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
 {
     using namespace SOP_FeE_Normal2D_1_0Enums;
     switch (attribClass)
@@ -298,6 +298,26 @@ sopAttribOwner(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
 }
+
+
+static int
+sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass, GA_AttributeOwner* searchOrder)
+{
+    int size = 0;
+    using namespace SOP_FeE_Normal2D_1_0Enums;
+    switch (attribClass)
+    {
+    case Normal3DAttribClass::PRIM:          searchOrder = { GA_ATTRIB_PRIMITIVE }; size = 1; break;
+    case Normal3DAttribClass::POINT:         return GA_ATTRIB_POINT;      break;
+    case Normal3DAttribClass::VERTEX:        return GA_ATTRIB_VERTEX;     break;
+    case Normal3DAttribClass::DETAIL:        return GA_ATTRIB_DETAIL;     break;
+    case Normal3DAttribClass::POINTVERTEX:   return GA_ATTRIB_INVALID;    break;
+    case Normal3DAttribClass::ALL:           return GA_ATTRIB_OWNER_N;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
 
 
 static GA_GroupType
@@ -404,6 +424,8 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
+
+    GA_Attribute* normal3DAttrib = normal3DAttrib;
 
 
     GA_Attribute* normal3DAttrib = nullptr;
