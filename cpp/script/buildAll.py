@@ -6,6 +6,7 @@ import os
 
 bypassNodeName = (
 'SOP_FeE_AttribSetToDefault_1_0',#unfinished
+'SOP_FeE_AttribCopyFast_1_0',#unfinished
 
 'SOP_FeE_UVScaletoWorldSize_0_5',#deprecated
 

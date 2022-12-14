@@ -13,6 +13,7 @@
 
 
 #include "GA_FeE/GA_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_GroupPromote.h"
 #include "GEO_FeE/GEO_FeE_Attribute.h"
 #include "GEO_FeE/GEO_FeE_Group.h"
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
@@ -293,8 +294,15 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
     GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
-    GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GA_FeE_GroupPromote::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true));
-    
+    GA_Group* unshared_promoGroup = GA_FeE_GroupPromote::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true);
+
+    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+
+    if (geo0Group)
+    {
+        cookparms.getNode()->setHighlight(true);
+        cookparms.select(*unshared_promoGroup);
+    }
     
     //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
@@ -366,8 +374,6 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     //outGeo0->bumpAllDataIds();
     //GA_FeE_Group::groupBumpDataId(unsharedGroup);
     //GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
-
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 

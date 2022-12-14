@@ -6,7 +6,7 @@
 
 //#include "GA_FeE/GA_FeE_Adjacency.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
 
@@ -777,7 +777,7 @@ namespace GA_FeE_Adjacency {
     //GA_FeE_Adjacency::addAttribPointPointEdge(geo, name, geoGroup, seamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
     static GA_Attribute*
         addAttribPointPointEdge(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             const GA_PointGroup* const geoGroup = nullptr,
             const GA_PointGroup* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
@@ -796,8 +796,9 @@ namespace GA_FeE_Adjacency {
         GA_Attribute* vtxNextAttrib = nullptr;
         GA_FeE_TopologyReference::addAttribVertexVertexPrim(geo, vtxPrevAttrib, vtxNextAttrib, nullptr, storage);
 
+        attribPtr = geo->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, storage, 1, creation_args, attribute_options, "arraydata", reuse);
         //attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, name, 1, defaults, creation_args, attribute_options, storage, reuse);
-        attribPtr = geo->addIntArray(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, 1, creation_args, attribute_options, storage, reuse);
+        //attribPtr = geo->addIntArray(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, 1, creation_args, attribute_options, storage, reuse);
 
         pointPointEdge(geo, attribPtr, vtxPrevAttrib, vtxNextAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         //UT_ASSERT_P(vtxPrevAttrib);
@@ -816,7 +817,7 @@ namespace GA_FeE_Adjacency {
     
     static GA_Attribute*
         addAttribPrimPrimEdge(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const GA_VertexGroup* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
@@ -838,7 +839,8 @@ namespace GA_FeE_Adjacency {
 
         GA_Attribute* vtxNextEquivAttrib = GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, nullptr, storage);
 
-        attribPtr = geo->addIntArray(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, 1, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, storage, 1, creation_args, attribute_options, "arraydata", reuse);
+        //attribPtr = geo->addIntArray(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, 1, creation_args, attribute_options, storage, reuse);
         //GA_ROHandleT<UT_ValArray<GA_Offset>> attribHandle(attribPtr);
         primPrimEdge(geo, attribPtr, vtxNextEquivAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         return attribPtr;
@@ -851,7 +853,7 @@ namespace GA_FeE_Adjacency {
 
     static GA_Attribute*
         addAttribAdjacency(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             const GA_GroupType groupType,
             const GA_GroupType connectivityGroupType,
             const GA_Group* const geoGroup = nullptr,

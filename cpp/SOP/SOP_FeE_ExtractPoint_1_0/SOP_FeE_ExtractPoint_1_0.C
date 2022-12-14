@@ -11,6 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
+#include "GA_FeE/GA_FeE_Detail.h"
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
@@ -65,7 +66,7 @@ static const char *theDsFile = R"THEDSFILE(
             cppname "ReverseGroup"
             label   "Reverse Group"
             type    toggle
-            default { 1 }
+            default { 0 }
         }
     
 
@@ -158,6 +159,14 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+    parm {
+        name    "kernel"
+        cppname "Kernel"
+        label   "Kernel"
+        type    integer
+        default { 1 }
+        range   { 0! 2! }
+    }
     parm {
         name    "subscribeRatio"
         cppname "SubscribeRatio"
@@ -309,7 +318,7 @@ void
 SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ExtractPoint_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ExtractPoint_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -375,14 +384,18 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             }
             else
             {
-                outGeo0->destroyPointOffset();
+                outGeo0->clear();
+                outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
+                return;
             }
         }
-        else if (geo0Group->getGroupEntries() == outGeo0->getNumPoints())
+        else if (geo0Group->entries() == outGeo0->getNumPoints())
         {
             if (reverseGroup)
             {
-                outGeo0->destroyPointOffset();
+                outGeo0->clear();
+                outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
+                return;
             }
             else
             {
@@ -398,8 +411,9 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         }
         else
         {
-            outGeo0->getTopology();
-            outGeo0->destroyPointOffsets();
+            outGeo0->clear();
+            outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
+            return;
         }
     }
 
@@ -410,11 +424,58 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     //const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
     //outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), delPointMode, sopparms.getGuaranteeNoVertexReference());
-    if()
-    outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
+
+    
+    switch (sopparms.getKernel())
+    {
+    case 0:
+    {
+        if (reverseGroup)
+        {
+            if (geo0Group->entries() <= 4096)
+            {
+                outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
+            }
+            else
+            {
+            }
+        }
+        else
+        {
+            if (geo0Group->entries() >= outGeo0->getNumPoints() - 4096)
+            {
+                outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
+            }
+            else
+            {
+                //outGeo0->clear();
+                //outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
+                //GA_Offset ptoff_start = outGeo0->appendPointBlock(geo0Group->entries());
+                //GA_Attribute* attrib
+                //    outGeo0->copyPoint(0, );
+            }
+        }
+    }
+        break;
+    case 1:
+    {
+        GA_OffsetList offList = GA_FeE_Detail::getOffsetList(outGeo0, geo0Group, !reverseGroup);
+        GA_IndexMap& ptmap = outGeo0->getIndexMap(GA_ATTRIB_POINT);
+
+        for (GA_Size arrayi = 0; arrayi < offList.size(); ++arrayi)
+        {
+            ptmap.destroyOffset(offList[arrayi]);
+        }
+    }
+        break;
+    case 2:
+        outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
+        break;
+    default:
+        break;
+    }
     //outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
     //outGeo0->destroyUnusedPoints(geo0Group);
-    outGeo0->copyPoint();
     const bool delInputGroup = sopparms.getDelInputGroup();
     if (delInputGroup)
     {
@@ -428,12 +489,8 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
 
 
-    //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    //const GA_Storage inStorgeF = GA_STORE_REAL32;
     //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 }
 

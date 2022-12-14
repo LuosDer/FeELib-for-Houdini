@@ -11,9 +11,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GEO_FeE/GEO_FeE_GroupExpand.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
 #include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupExpand.h"
 #include "GA_FeE/GA_FeE_Measure.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
 #include "GA_FeE/GA_FeE_TopologyReference.h"
@@ -360,12 +359,13 @@ void
 SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupExpand_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupExpand_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
+
     // outGeo0->clearAndDestroy();
 
     //outGeo0 = sopNodeProcess(*inGeo0);
@@ -420,9 +420,8 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     GA_Group* borderGroup     = GA_FeE_Group::newGroup(outGeo0, geo0Group, borderGroupName);
     GA_Group* pervBorderGroup = GA_FeE_Group::newGroup(outGeo0, geo0Group, prevBorderGroupName);
 
-    GEO_FeE_GroupExpand::groupExpand(outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
+    GA_FeE_GroupExpand::groupExpand(outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
 
 
 
@@ -442,6 +441,11 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
+    
+    //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
+    //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
+    cookparms.getNode()->setHighlight(true);
+    cookparms.select(*expandGroup);
 
 
 }

@@ -6,9 +6,10 @@
 
 //#include "GA_FeE/GA_FeE_GroupExpand.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 
-#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupUnion.h"
 #include "GA_FeE/GA_FeE_Adjacency.h"
 
 
@@ -19,7 +20,7 @@ namespace GA_FeE_GroupExpand {
 
     static void
         edgeGroupExpandEdge(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             GA_EdgeGroup* const expandGroup,
             const GA_EdgeGroup* const baseGroup,
             const exint subscribeRatio = 64,
@@ -52,7 +53,7 @@ namespace GA_FeE_GroupExpand {
 
     static void
         groupExpand(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             GA_Group* const expandGroup,
             const GA_Group* const baseGroup,
             const GA_GroupType connectivityGroupType,
@@ -130,7 +131,7 @@ namespace GA_FeE_GroupExpand {
 
     static void
         edgeGroupExpandEdge(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             GA_EdgeGroup* const expandGroup,
             GA_EdgeGroup* const borderGroup,
             GA_EdgeGroup* const prevBorderGroup,
@@ -169,7 +170,7 @@ namespace GA_FeE_GroupExpand {
 
     static void
     groupExpand(
-        GEO_Detail* const geo,
+        GA_Detail* const geo,
         GA_Group* const expandGroup,
         GA_Group* const borderGroup,
         GA_Group* const prevBorderGroup,
@@ -270,7 +271,7 @@ namespace GA_FeE_GroupExpand {
 
     //static void
     //    pointGroupExpandEdge(
-    //        GEO_Detail* const geo,
+    //        GA_Detail* const geo,
     //        GA_PointGroup* const group,
     //        const exint numiter,
     //        const exint subscribeRatio = 64,
@@ -307,7 +308,7 @@ namespace GA_FeE_GroupExpand {
 
     //static void
     //groupExpand1(
-    //    GEO_Detail* const geo,
+    //    GA_Detail* const geo,
     //    GA_Group* const group,
     //    const GA_GroupType connectivityGroupType,
     //    const exint numiter,

@@ -20,9 +20,9 @@ namespace GA_FeE_GroupUnion {
 
     static void
         edgeGroupUnion(
-            const GA_Detail* geo,
-            GA_EdgeGroup* group,
-            const GA_Group* groupRef
+            const GA_Detail* const geo,
+            GA_EdgeGroup* const group,
+            const GA_Group* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -142,9 +142,9 @@ namespace GA_FeE_GroupUnion {
     //SYS_FORCE_INLINE
     //    static void
     //    edgeGroupUnionParallel(
-    //        const GA_Detail* geo,
-    //        GA_Group* group,
-    //        const GA_Group* groupRef,
+    //        const GA_Detail* const geo,
+    //        GA_Group* const group,
+    //        const GA_Group* const groupRef,
     //        const exint subscribeRatio = 64,
     //        const exint minGrainSize = 128
     //    )
@@ -155,9 +155,9 @@ namespace GA_FeE_GroupUnion {
     SYS_FORCE_INLINE
         static void
         edgeGroupUnion(
-            const GA_Detail* geo,
-            GA_Group* group,
-            const GA_Group* groupRef
+            const GA_Detail* const geo,
+            GA_Group* const group,
+            const GA_Group* const groupRef
         )
     {
         edgeGroupUnion(geo, UTverify_cast<GA_EdgeGroup*>(group), groupRef);
@@ -166,9 +166,9 @@ namespace GA_FeE_GroupUnion {
     SYS_FORCE_INLINE
         static void
         groupUnion(
-            const GA_Detail* geo,
-            GA_Group* group,
-            const GA_Group* groupRef
+            const GA_Detail* const geo,
+            GA_Group* const group,
+            const GA_Group* const groupRef
         )
     {
         UT_ASSERT_P(geo);
@@ -192,9 +192,9 @@ namespace GA_FeE_GroupUnion {
 
     //static void
     //    edgeGroupUnionParallel(
-    //        GA_Detail* geo,
-    //        GA_EdgeGroup* group,
-    //        const GA_Group* groupRef,
+    //        GA_Detail* const geo,
+    //        GA_EdgeGroup* const group,
+    //        const GA_Group* const groupRef,
     //        const exint subscribeRatio = 64,
     //        const exint minGrainSize = 128
     //    )

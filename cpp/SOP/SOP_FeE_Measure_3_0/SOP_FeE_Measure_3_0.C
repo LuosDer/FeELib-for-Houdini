@@ -72,18 +72,6 @@ static const char *theDsFile = R"THEDSFILE(
         default { "P" }
     }
     parm {
-        name    "posAttribClass"
-        cppname "PAttribClass"
-        label   "Position Attribute Class"
-        type    ordinal
-        default { "auto" }
-        menu {
-            "auto"      "Auto"
-            "point"     "Point"
-            "vertex"    "Vertex"
-        }
-    }
-    parm {
         name    "uniScale"
         cppname "UniScale"
         label   "Uniform Scale"
@@ -189,19 +177,6 @@ SOP_FeE_Measure_3_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Measure_3_0Parms::PAttribClass attribClass)
-{
-    using namespace SOP_FeE_Measure_3_0Enums;
-    switch (attribClass)
-    {
-    case PAttribClass::AUTO:      return GA_ATTRIB_DETAIL;     break;//not detail but means Auto
-    case PAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case PAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
 
 static GA_GroupType
 sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmgrouptype)
@@ -230,14 +205,14 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Measure_3_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-    const UT_StringHolder& geo0AttribName = sopparms.getPAttribName();
-    if (!geo0AttribName.isstring())
+    const UT_StringHolder& geo0PosAttribName = sopparms.getPAttribName();
+    if (!geo0PosAttribName.isstring())
         return;
 
     const UT_StringHolder& measureAttribName = sopparms.getMeasureAttribName();
@@ -261,10 +236,8 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const SOP_FeE_Measure_3_0Parms::MeasureType measureType = sopparms.getMeasureType();
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getPAttribClass());
-    const fpreal uniScale = sopparms.getUniScale();
+    //const fpreal uniScale = sopparms.getUniScale();
 
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
@@ -277,15 +250,16 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);
     //GA_RWHandleT<attribPrecisonF> measureAttribHandle(measureAttribPtr);
 
-    switch (measureType)
+    //const SOP_FeE_Measure_3_0Parms::MeasureType measureType = sopparms.getMeasureType();
+    switch (sopparms.getMeasureType())
     {
     case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-        GA_FeE_Measure::addAttribPrimArea(     outGeo0, geo0AttribClass, geo0AttribName,
+        GA_FeE_Measure::addAttribPrimArea(     outGeo0, geo0PosAttribName,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
             GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
         break;
     case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-        GA_FeE_Measure::addAttribPrimPerimeter(outGeo0, geo0AttribClass, geo0AttribName,
+        GA_FeE_Measure::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
             GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
         break;

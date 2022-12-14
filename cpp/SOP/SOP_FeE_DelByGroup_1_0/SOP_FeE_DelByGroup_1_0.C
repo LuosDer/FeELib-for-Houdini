@@ -32,6 +32,7 @@ static const char *theDsFile = R"THEDSFILE(
     }
     groupsimple {
         name    "delByGroup_folder"
+        cppname "DelByGroup_folder"
         label   "Delete By Group"
         disablewhentab "{ delByGroup == 0 }"
 
@@ -41,7 +42,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Group"
             type    string
             default { "" }
-            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
             parmtag { "script_action_help" "Select geometry from an available viewport." }
             parmtag { "script_action_icon" "BUTTONS_reselect" }
         }
@@ -242,10 +243,12 @@ void
 SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_DelByGroup_1_0Parms>();
-    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelByGroup_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    outGeo0->replaceWith(*inGeo0);
+
 
     const bool reverseGroup = sopparms.getReverseGroup();
 
@@ -269,10 +272,19 @@ SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //    }
     //}
 
-
-    outGeo0->replaceWith(*inGeo0);
-
     GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
+
+
+    const bool delByGroup = sopparms.getDelByGroup();
+    if (!delByGroup)
+    {
+        if (geo0Group)
+        {
+            cookparms.getNode()->setHighlight(true);
+            cookparms.select(*geo0Group);
+        }
+        return;
+    }
 
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
     GA_FeE_Detail::delByGroup(outGeo0, geo0Group, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());

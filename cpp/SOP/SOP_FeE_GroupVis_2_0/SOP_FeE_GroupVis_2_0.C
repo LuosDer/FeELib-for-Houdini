@@ -1,9 +1,9 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_GroupReverse_1_0.h"
+#include "SOP_FeE_GroupVis_2_0.h"
 
 
-#include "SOP_FeE_GroupReverse_1_0.proto.h"
+#include "SOP_FeE_GroupVis_2_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -15,7 +15,7 @@
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
 #include "GA_FeE/GA_FeE_Detail.h"
 
-using namespace SOP_FeE_GroupReverse_1_0_Namespace;
+using namespace SOP_FeE_GroupVis_2_0_Namespace;
 
 
 
@@ -24,16 +24,17 @@ static const char *theDsFile = R"THEDSFILE(
     name        parameters
     
     parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
+        name    "visGroup"
+        cppname "VisGroup"
+        label   "Visualize Group"
         type    toggle
         default { 1 }
     }
     groupsimple {
-        name    "reverseGroup_folder"
-        label   "Reverse Group"
-        disablewhentab "{ reverseGroup == 0 }"
+        name    "visGroup_folder"
+        cppname "VisGroup_folder"
+        label   "Visualize Group"
+        disablewhentab "{ visGroup == 0 }"
 
         parm {
             name    "group"
@@ -66,9 +67,9 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 PRM_Template*
-SOP_FeE_GroupReverse_1_0::buildTemplates()
+SOP_FeE_GroupVis_2_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_GroupReverse_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_GroupVis_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
@@ -77,16 +78,16 @@ SOP_FeE_GroupReverse_1_0::buildTemplates()
 }
 
 
-const UT_StringHolder SOP_FeE_GroupReverse_1_0::theSOPTypeName("FeE::groupReverse::1.0"_sh);
+const UT_StringHolder SOP_FeE_GroupVis_2_0::theSOPTypeName("FeE::groupVis::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_GroupReverse_1_0::theSOPTypeName,
-        "FeE Group Reverse",
-        SOP_FeE_GroupReverse_1_0::myConstructor,
-        SOP_FeE_GroupReverse_1_0::buildTemplates(),
+        SOP_FeE_GroupVis_2_0::theSOPTypeName,
+        "FeE Group Visualize",
+        SOP_FeE_GroupVis_2_0::myConstructor,
+        SOP_FeE_GroupVis_2_0::buildTemplates(),
         1,
         1,
         nullptr,
@@ -95,33 +96,33 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/Group");
 
-    newOp->setIconName("SOP_groupcombine");
+    newOp->setIconName("SOP_groupcreate");
     table->addOperator(newOp);
 
 }
 
 
-//class SOP_FeE_GroupReverse_1_0Cache : public SOP_NodeCache
+//class SOP_FeE_GroupVis_2_0Cache : public SOP_NodeCache
 //{
 //public:
-//    SOP_FeE_GroupReverse_1_0Cache() : SOP_NodeCache(),
+//    SOP_FeE_GroupVis_2_0Cache() : SOP_NodeCache(),
 //        myPrevOutputDetailID(-1)
 //    {}
-//    ~SOP_FeE_GroupReverse_1_0Cache() override {}
+//    ~SOP_FeE_GroupVis_2_0Cache() override {}
 //
 //    int64 myPrevOutputDetailID;
 //};
 
 
-class SOP_FeE_GroupReverse_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_GroupVis_2_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_GroupReverse_1_0Verb() {}
-    virtual ~SOP_FeE_GroupReverse_1_0Verb() {}
+    SOP_FeE_GroupVis_2_0Verb() {}
+    virtual ~SOP_FeE_GroupVis_2_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupReverse_1_0Parms(); }
-    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupReverse_1_0Cache(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_GroupReverse_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupVis_2_0Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupVis_2_0Cache(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_GroupVis_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -129,17 +130,17 @@ public:
 
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
-    static const SOP_NodeVerb::Register<SOP_FeE_GroupReverse_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_GroupVis_2_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_GroupReverse_1_0Verb> SOP_FeE_GroupReverse_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_GroupVis_2_0Verb> SOP_FeE_GroupVis_2_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_GroupReverse_1_0::cookVerb() const 
+SOP_FeE_GroupVis_2_0::cookVerb() const 
 { 
-    return SOP_FeE_GroupReverse_1_0Verb::theVerb.get();
+    return SOP_FeE_GroupVis_2_0Verb::theVerb.get();
 }
 
 
@@ -148,9 +149,9 @@ SOP_FeE_GroupReverse_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupReverse_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupVis_2_0Parms::GroupType parmgrouptype)
 {
-    using namespace SOP_FeE_GroupReverse_1_0Enums;
+    using namespace SOP_FeE_GroupVis_2_0Enums;
     switch (parmgrouptype)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
@@ -164,49 +165,37 @@ sopGroupType(SOP_FeE_GroupReverse_1_0Parms::GroupType parmgrouptype)
 }
 
 
-
 void
-SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_GroupReverse_1_0Parms>();
-    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_GroupReverse_1_0Cache*)cookparms.cache();
+    auto &&sopparms = cookparms.parms<SOP_FeE_GroupVis_2_0Parms>();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    //auto sopcache = (SOP_FeE_GroupVis_2_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-
     outGeo0->replaceWith(*inGeo0);
-    
-    if (!sopparms.getReverseGroup())
-        return;
+
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, sopparms.getGroup());
-    if (!geo0Group)
-        return;
-
+    const UT_StringHolder& groupName = sopparms.getGroup();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
+    const GA_Group* const geo0Group = GA_FeE_Group::findGroupMultiClass(outGeo0, groupType, groupName);
 
-    //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
-    
-    GA_FeE_Group::groupToggle(outGeo0, geo0Group);
-    GA_FeE_Group::groupBumpDataId(geo0Group);
+    if (!geo0Group)
+        return;
 
-    if (geo0Group)
-    {
-        cookparms.getNode()->setHighlight(true);
-        cookparms.select(*geo0Group);
-    }
+    cookparms.getNode()->setHighlight(true);
+    cookparms.select(*geo0Group);
+
 }
 
 
 
-namespace SOP_FeE_GroupReverse_1_0_Namespace {
+namespace SOP_FeE_GroupVis_2_0_Namespace {
 
-} // End SOP_FeE_GroupReverse_1_0_Namespace namespace
+} // End SOP_FeE_GroupVis_2_0_Namespace namespace

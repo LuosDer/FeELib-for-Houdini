@@ -109,9 +109,84 @@ delByGroup(
     }
 }
 
+//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo->getPrimitiveMap(), group);
+static GA_OffsetList
+getOffsetList(
+    const GA_IndexMap& indexMap,
+    const GA_ElementGroup* const group = nullptr,
+    const bool reverse = false
+)
+{
+    GA_OffsetList offs;
+    if (!group && indexMap.isTrivialMap())
+    {
+        if (!reverse)
+        {
+            offs.setTrivial(GA_Offset(0), indexMap.indexSize());
+        }
+    }
+    else
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(GA_Range(indexMap, group, reverse)); it.fullBlockAdvance(start, end); )
+        {
+            offs.setTrivialRange(offs.size(), start, end - start);
+        }
+    }
+    return offs;
+}
 
 
-    
+//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo, group);
+SYS_FORCE_INLINE
+static GA_OffsetList
+getOffsetList(
+    const GA_Detail* const geo,
+    const GA_AttributeOwner owner,
+    const GA_ElementGroup* const group = nullptr,
+    const bool reverse = false
+)
+{
+    return getOffsetList(geo->getIndexMap(owner), group, reverse);
+}
+
+//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo, group);
+SYS_FORCE_INLINE
+static GA_OffsetList
+getOffsetList(
+    const GA_Detail* const geo,
+    const GA_PrimitiveGroup* const group,
+    const bool reverse = false
+)
+{
+    return getOffsetList(geo->getPrimitiveMap(), group, reverse);
+}
+
+//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo, group);
+SYS_FORCE_INLINE
+static GA_OffsetList
+getOffsetList(
+    const GA_Detail* const geo,
+    const GA_PointGroup* const group,
+    const bool reverse = false
+)
+{
+    return getOffsetList(geo->getPointMap(), group, reverse);
+}
+
+//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo, group);
+SYS_FORCE_INLINE
+static GA_OffsetList
+getOffsetList(
+    const GA_Detail* const geo,
+    const GA_VertexGroup* const group,
+    const bool reverse = false
+)
+{
+    return getOffsetList(geo->getVertexMap(), group, reverse);
+}
+
+
 
 
 } // End of namespace GA_FeE_Detail

@@ -20,7 +20,165 @@
 
 namespace GA_FeE_Attribute {
 
-    
+
+/*
+static void
+    copyAttribute(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const GA_AttributeOwner owner,
+        const UT_StringHolder& attribPattern
+    )
+{
+    if (attribPattern == "")
+        return;
+    for (GA_AttributeDict::iterator it = geo->getAttributes().begin(owner); !it.atEnd(); ++it)
+    {
+        GA_Attribute* attrib = it.attrib();
+        if (attrib->isDetached())
+            continue;
+        if (attrib->isDetached())
+            continue;
+        if (!attrib->getName().match(attribPattern))
+            continue;
+
+        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
+        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_next, &vtxPointRef](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+                    const GA_Size numvtx = vertices.size();
+                    if (geo->getPrimitiveClosedFlag(elemoff))
+                    {
+                        //attribHandle_prev.set(vertices[0], vtxPointRef->getLink(vertices[numvtx - 1]));
+                        attribHandle_next.set(vertices[numvtx - 1], vtxPointRef->getLink(vertices[0]));
+                    }
+                    else
+                    {
+                        //attribHandle_prev.set(vertices[0], -1);
+                        attribHandle_next.set(vertices[numvtx - 1], -1);
+                    }
+                    GA_Offset vtxoff_prev = vertices[0];
+                    GA_Offset vtxoff_next;
+                    for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                    {
+                        vtxoff_next = vertices[vtxpnum];
+                        attribHandle_next.set(vtxoff_prev, vtxPointRef->getLink(vtxoff_next));
+                        //attribHandle_prev.set(vtxoff_next, vtxPointRef->getLink(vtxoff_prev));
+                        vtxoff_prev = vtxoff_next;
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+}
+*/
+
+static void
+    copyAttribute(
+        GA_Attribute* const attrib,
+        const GA_Attribute* const attribRef
+    )
+{
+    UT_ASSERT(attrib);
+    UT_ASSERT(attribRef);
+    return;
+}
+
+
+static void
+copyAttribute(
+    GA_AttributeSet& attribSet,
+    const GA_AttributeSet& attribSetRef,
+    const GA_AttributeOwner owner,
+    const UT_StringHolder& attribPattern
+)
+{
+    if (attribPattern == "")
+        return;
+    for (GA_AttributeDict::iterator it = attribSet.begin(owner); !it.atEnd(); ++it)
+    {
+        GA_Attribute* attrib = it.attrib();
+        if (attrib->isDetached())
+            continue;
+        if (!attrib->getName().match(attribPattern))
+            continue;
+        
+        copyAttribute(attrib, attribSetRef.findAttribute(owner, attrib->getName()));
+    }
+}
+
+
+
+
+SYS_FORCE_INLINE
+static void
+copyAttribute(
+    GA_AttributeSet& attribSet,
+    const GA_AttributeSet& attribSetRef,
+    const GA_AttributeOwner owner,
+    const GA_AttributeScope scope,
+    const UT_StringHolder& attribName
+)
+{
+    return copyAttribute(attribSet.findAttribute(owner, scope, attribName), attribSetRef.findAttribute(owner, scope, attribName));
+}
+
+SYS_FORCE_INLINE
+static void
+copyAttribute(
+    GA_Detail* const geo,
+    const GA_Detail* const geoRef,
+    const GA_AttributeOwner owner,
+    const GA_AttributeScope scope,
+    const UT_StringHolder& attribName
+)
+{
+    return copyAttribute(geo->getAttributes(), geoRef->getAttributes(), owner, scope, attribName);
+}
+
+
+
+
+SYS_FORCE_INLINE
+static void
+copyAttribute(
+    GA_AttributeSet& attribSet,
+    const GA_AttributeSet& attribSetRef,
+    const UT_StringHolder& primAttribPattern,
+    const UT_StringHolder& pointAttribPattern,
+    const UT_StringHolder& vertexAttribPattern,
+    const UT_StringHolder& detailAttribPattern
+)
+{
+    copyAttribute(attribSet, attribSetRef, GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primAttribPattern);
+    copyAttribute(attribSet, attribSetRef, GA_ATTRIB_POINT,     GA_SCOPE_PUBLIC, pointAttribPattern);
+    copyAttribute(attribSet, attribSetRef, GA_ATTRIB_VERTEX,    GA_SCOPE_PUBLIC, vertexAttribPattern);
+    copyAttribute(attribSet, attribSetRef, GA_ATTRIB_GLOBAL,    GA_SCOPE_PUBLIC, detailAttribPattern);
+}
+
+SYS_FORCE_INLINE
+static void
+copyAttribute(
+    GA_Detail* const geo,
+    const GA_Detail* const geoRef,
+    const UT_StringHolder& primAttribPattern,
+    const UT_StringHolder& pointAttribPattern,
+    const UT_StringHolder& vertexAttribPattern,
+    const UT_StringHolder& detailAttribPattern
+)
+{
+    UT_ASSERT(geo);
+    UT_ASSERT(geoRef);
+    copyAttribute(geo->getAttributes(), geoRef->getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern);
+}
+
+
+
 
 
 

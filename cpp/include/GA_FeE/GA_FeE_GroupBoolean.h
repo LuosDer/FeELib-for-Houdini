@@ -43,6 +43,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         GA_GroupType groupTypeRef = groupRef->classType();
 
         GA_EdgeGroupUPtr restGroupUptr = geo->createDetachedEdgeGroup();
@@ -92,6 +94,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         GA_GroupType groupTypeRef = groupRef->classType();
 
         GA_EdgeGroupUPtr restGroupUptr = geo->createDetachedEdgeGroup();
@@ -166,6 +170,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         GA_GroupType groupTypeRef = groupRef->classType();
 
         GA_EdgeGroupUPtr restGroupUptr = geo->createDetachedEdgeGroup();
@@ -198,6 +204,8 @@ namespace GA_FeE_GroupBoolean {
             const GA_EdgeGroup* const groupRef
         )
     {
+        if (!groupRef)
+            return;
         group->operator&=(*groupRef);
         //for (GA_EdgeGroup::iterator it = group->begin(); !it.atEnd(); it.advance())
         //{
@@ -218,6 +226,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         GA_GroupType groupTypeRef = groupRef->classType();
         if (groupTypeRef == GA_GROUP_EDGE)
         {
@@ -354,8 +364,10 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
-        const GA_PointGroupUPtr restGroupUPtr = geo->createDetachedPointGroup();
-        const GA_SplittableRange geoSplittableRange(geo->getPointRange(restGroupUPtr.get()));
+        if (!groupRef)
+            return;
+        *group &= *groupRef;
+        const GA_SplittableRange geoSplittableRange(geo->getPointRange(group));
         UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
@@ -379,8 +391,9 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
-        const GA_PrimitiveGroupUPtr restGroupUPtr = geo->createDetachedPrimitiveGroup();
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(restGroupUPtr.get()));
+        if (!groupRef)
+            return;
+        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(group));
         UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
@@ -395,7 +408,7 @@ namespace GA_FeE_GroupBoolean {
         });
     }
 
-
+    /*
     static void
         groupIntersect(
             const GA_Detail* const geo,
@@ -405,6 +418,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
     }
@@ -418,6 +433,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
     }
@@ -431,6 +448,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
     }
@@ -446,6 +465,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
     }
@@ -460,10 +481,12 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
     }
-
+    */
 
 
 
@@ -481,6 +504,8 @@ namespace GA_FeE_GroupBoolean {
     {
         UT_ASSERT_P(geo);
         UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
         switch (group->classType())
         {
         case GA_GROUP_PRIMITIVE:
@@ -546,6 +571,8 @@ namespace GA_FeE_GroupBoolean {
 
     //    UT_ASSERT_P(geo);
     //    UT_ASSERT_P(group);
+    //    if (!groupRef)
+    //        return;
     //    if (group->classType() == GA_GROUP_EDGE)
     //    {
     //        GA_FeE_GroupUnion::edgeGroupUnion(geo, group, groupRef);
@@ -589,6 +616,8 @@ namespace GA_FeE_GroupBoolean {
     //{
     //    UT_ASSERT_P(geo);
     //    UT_ASSERT_P(group);
+    //    if (!groupRef)
+    //        return;
     //    if (group->classType() == GA_GROUP_EDGE)
     //    {
     //        GA_FeE_GroupUnion::edgeGroupUnion(geo, group, groupRef);
@@ -632,6 +661,8 @@ unorderedGroupBoolean(
     UT_ASSERT_P(group);
     UT_ASSERT_P(!group->isOrdered());
     UT_ASSERT_P(!groupRef->isOrdered());
+    if (!groupRef)
+        return;
     if (group->classType() == GA_GROUP_EDGE)
     {
         GA_FeE_GroupUnion::edgeGroupUnion(geo, group, groupRef);
@@ -671,6 +702,8 @@ unorderedGroupBoolean(
     //    UT_ASSERT_P(group);
     //    UT_ASSERT_P(!group->isOrdered());
     //    UT_ASSERT_P(!groupRef->isOrdered());
+        //if (!groupRef)
+        //    return;
     //    if (group->classType() == GA_GROUP_EDGE)
     //    {
     //        GA_FeE_GroupUnion::edgeGroupUnion(geo, group, groupRef);

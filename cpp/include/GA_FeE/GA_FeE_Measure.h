@@ -404,7 +404,7 @@ primArea(
 //        SYS_FORCE_INLINE                                                                                                                                                                                          \
 //        static GA_Attribute*                                                                                                                                                                                      \
 //        DEF_FUNC_Parm_FuncName(                                                                                                                                                                                   \
-//            GEO_Detail* const geo,                                                                                                                                                                                      \
+//            GA_Detail* const geo,                                                                                                                                                                                      \
 //            DEF_FUNC_Parm_ParmPack                                                                                                                                                                                \
 //            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
 //            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,                                                                                                                                                      \
@@ -420,7 +420,7 @@ primArea(
 //        SYS_FORCE_INLINE                                                                                                                                                                                          \
 //        static GA_Attribute*                                                                                                                                                                                      \
 //        DEF_FUNC_Parm_FuncName(                                                                                                                                                                                   \
-//            GEO_Detail* const geo,                                                                                                                                                                                      \
+//            GA_Detail* const geo,                                                                                                                                                                                      \
 //            DEF_FUNC_Parm_ParmPack                                                                                                                                                                                \
 //            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
 //            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,                                                                                                                                                      \
@@ -454,7 +454,7 @@ primArea(
 
 static GA_Attribute*
 addAttribPrimArea(
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
     const GA_Storage storage = GA_STORE_REAL32,
     const UT_StringHolder& name = "area",
@@ -467,7 +467,8 @@ addAttribPrimArea(
 )
 {
     const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
+    GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
+    //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primArea(geo, attribHandle, geoPrimGroup, subscribeRatio, minGrainSize);
     return attribPtr;
@@ -488,7 +489,7 @@ addAttribPrimArea(
 
 static GA_Attribute*
 addAttribPrimArea(
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
     const GA_Storage storage = GA_STORE_REAL32,
@@ -502,7 +503,8 @@ addAttribPrimArea(
 )
 {
     const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
-    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
+    GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
+    //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primArea(geo, attribHandle, posAttribHandle, geoPrimGroup, subscribeRatio, minGrainSize);
     return attribPtr;
@@ -533,8 +535,8 @@ addAttribPrimArea(
 
 static GA_Attribute*
 addAttribPrimArea(
-    GEO_Detail* const geo,
-    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    GA_Detail* const geo,
+    //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
     const GA_Storage storage = GA_STORE_REAL32,
@@ -553,12 +555,13 @@ addAttribPrimArea(
     }
     else
     {
-        GA_AttributeOwner geo0AttribClassFinal;
-        const GA_Attribute* attribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(geo, posAttribOwner, posAttribName, geo0AttribClassFinal);
+        const GA_AttributeOwner search_order[] = { GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
+        const GA_Attribute* attribPtr = geo->findAttribute(posAttribName, search_order, 2);
+        //GA_AttributeOwner geo0AttribClassFinal;
+        //const GA_Attribute* attribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(geo, posAttribOwner, posAttribName, geo0AttribClassFinal);
         if (!attribPtr)
             return nullptr;
-        GA_ROHandleT<TAttribTypeV> posAttribHandle(attribPtr);
-        return addAttribPrimArea(geo, posAttribHandle, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
+        return addAttribPrimArea(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
     }
 }
 
@@ -732,7 +735,7 @@ primPerimeter(
 
 static GA_Attribute*
 addAttribPrimPerimeter(
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
     const GA_Storage storage = GA_STORE_REAL32,
     const UT_StringHolder& name = "perimeter",
@@ -745,7 +748,8 @@ addAttribPrimPerimeter(
 )
 {
     const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
+    GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
+    //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primPerimeter(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
     return attribPtr;
@@ -770,7 +774,7 @@ addAttribPrimPerimeter(
 
 static GA_Attribute*
 addAttribPrimPerimeter(
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
     const GA_Storage storage = GA_STORE_REAL32,
@@ -784,7 +788,8 @@ addAttribPrimPerimeter(
 )
 {
     const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
-    GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
+    GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
+    //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
     primPerimeter(geo, attribPtr, posAttribHandle, geoPrimGroup, subscribeRatio, minGrainSize);
     return attribPtr;
@@ -799,8 +804,8 @@ addAttribPrimPerimeter(
 
 static GA_Attribute*
 addAttribPrimPerimeter(
-    GEO_Detail* const geo,
-    const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
+    GA_Detail* const geo,
+    //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
     const GA_Storage storage = GA_STORE_REAL32,
@@ -819,12 +824,13 @@ addAttribPrimPerimeter(
     }
     else
     {
-        GA_AttributeOwner geo0AttribClassFinal;
-        const GA_Attribute* attribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(geo, posAttribOwner, posAttribName, geo0AttribClassFinal);
+        const GA_AttributeOwner search_order[] = { GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
+        const GA_Attribute* attribPtr = geo->findAttribute(posAttribName, search_order, 2);
+        //GA_AttributeOwner geo0AttribClassFinal;
+        //const GA_Attribute* attribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(geo, posAttribOwner, posAttribName, geo0AttribClassFinal);
         if (!attribPtr)
             return nullptr;
-        GA_ROHandleT<TAttribTypeV> posAttribHandle(attribPtr);
-        return addAttribPrimPerimeter(geo, posAttribHandle, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
+        return addAttribPrimPerimeter(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
     }
 }
 

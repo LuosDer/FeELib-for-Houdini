@@ -20,39 +20,39 @@ namespace GA_FeE_TopologyReference {
 
     
 
-    SYS_FORCE_INLINE
-    static void
-    outTopoAttrib(
-        GA_Detail* const geo,
-        const bool outTopo
-    )
-    {
-        if (outTopo)
-            return;
-        GA_AttributeSet& AttribSet = geo->getAttributes();
-        GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern("__topo_*");
-        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectPublic());
-        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectGroup()));
-        AttribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
+SYS_FORCE_INLINE
+static void
+outTopoAttrib(
+    GA_Detail* const geo,
+    const bool outTopo
+)
+{
+    if (outTopo)
+        return;
+    GA_AttributeSet& AttribSet = geo->getAttributes();
+    GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern("__topo_*");
+    filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectPublic());
+    filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectGroup()));
+    AttribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
+    AttribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
+    AttribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
+    AttribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
         
-        for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
+    for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
+    {
+        GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+        //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
+        for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
         {
-            GA_GroupTable* groupTable = geo->getGroupTable(groupType);
-            //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
-            for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
-            {
-                GA_Group* group = it.group();
-                if (group->isDetached())
-                    continue;
-                if (!group->getName().startsWith("__topo_"))
-                    continue;
-                groupTable->destroy(group);
-            }
+            GA_Group* group = it.group();
+            if (group->isDetached())
+                continue;
+            if (!group->getName().startsWith("__topo_"))
+                continue;
+            groupTable->destroy(group);
         }
     }
+}
 
 
 
@@ -676,7 +676,7 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Attribute*
         addAttribVertexPrimIndex(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_vtxpnum",
@@ -691,7 +691,8 @@ namespace GA_FeE_TopologyReference {
         GA_Attribute* attribPtr = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, storage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexPrimIndex(geo, attribPtr, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -711,7 +712,7 @@ namespace GA_FeE_TopologyReference {
 
     static bool
         addAttribVertexVertexPrim(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             GA_Attribute*& attribPtr_prev,
             GA_Attribute*& attribPtr_next,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -730,8 +731,10 @@ namespace GA_FeE_TopologyReference {
         attribPtr_next = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, nameNext);
         if (attribPtr_prev && attribPtr_next)
             return false;
-        attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, 1, defaults, creation_args, attribute_options, storage, reuse);
-        attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr_prev = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, storage, 1, defaults, creation_args, attribute_options, reuse);
+        attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, storage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, 1, defaults, creation_args, attribute_options, storage, reuse);
+        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexVertexPrim(geo, attribPtr_prev, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
         return true;
     }
@@ -748,7 +751,7 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Attribute*
         addAttribVertexVertexPrimNext(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
@@ -763,7 +766,8 @@ namespace GA_FeE_TopologyReference {
         GA_Attribute* attribPtr_next = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, nameNext);
         if (attribPtr_next)
             return attribPtr_next;
-        attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, storage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
         vertexVertexPrimNext(geo, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr_next;
     }
@@ -779,7 +783,7 @@ namespace GA_FeE_TopologyReference {
 
     static GA_Attribute*
         addAttribVertexPointDst(
-            GEO_Detail* const geo,
+            GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
             const GA_Storage storage = GA_STORE_INT32,
             const UT_StringHolder& name = "__topo_dstpt",
@@ -794,7 +798,9 @@ namespace GA_FeE_TopologyReference {
         GA_Attribute* attribPtr = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+
+        attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, storage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
 
         GA_Attribute* refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxPrimNext");
         if (refAttrib)

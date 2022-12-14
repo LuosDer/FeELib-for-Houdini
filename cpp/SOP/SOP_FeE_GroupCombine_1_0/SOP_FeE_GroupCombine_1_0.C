@@ -221,7 +221,7 @@ void
 SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupCombine_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupCombine_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -239,7 +239,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
     GOP_Manager gop;
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (!geo0Group)
         return;
     
@@ -249,7 +249,7 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
 
     const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
-    GA_Group* combineGroup = GA_FeE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
+    GA_Group* const combineGroup = GA_FeE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
     if (!combineGroup)
         return;
 
@@ -293,6 +293,11 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //combineGroup->bumpDataId();
     GA_FeE_Group::groupBumpDataId(combineGroup);
 
+    if (geo0Group)
+    {
+        cookparms.getNode()->setHighlight(true);
+        cookparms.select(*combineGroup);
+    }
     //GA_EdgeGroup* combineEdgeGroup = static_cast<GA_EdgeGroup*>(combineGroup);
     // 
     //static_cast<GA_EdgeGroup*>(combineGroup)->makeAllEdgesValid();

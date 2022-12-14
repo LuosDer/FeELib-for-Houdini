@@ -8,6 +8,7 @@
 
 #include "GA/GA_Detail.h"
 
+#include "GA_FeE/GA_FeE_Range.h"
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Group.h"
 #include "GEO_FeE/GEO_FeE_Group.h"

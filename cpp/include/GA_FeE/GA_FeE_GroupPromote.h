@@ -44,6 +44,30 @@ namespace GA_FeE_GroupPromote {
         return newGroup;
     }
 
+    static GA_Group*
+        groupPromote(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const GA_GroupType newType
+        )
+    {
+        UT_ASSERT_P(geo);
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == newType)
+            return group;
+
+        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        if (!groupTable)
+            return nullptr;
+
+        GA_Group* newGroup = groupTable->newGroup(group->getName());
+        GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
+
+        return newGroup;
+    }
+
     static const GA_Group*
         groupPromote(
             GA_Detail* const geo,
@@ -71,6 +95,37 @@ namespace GA_FeE_GroupPromote {
 
         return newGroup;
     }
+
+    static GA_Group*
+        groupPromote(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const GA_GroupType newType,
+            const UT_StringHolder& newName
+        )
+    {
+        UT_ASSERT_P(geo);
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == newType)
+        {
+            GA_FeE_Group::groupRename(geo, group, newName);
+            return group;
+        }
+
+        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        if (!groupTable)
+            return nullptr;
+
+        GA_Group* newGroup = groupTable->newGroup(newName);
+        GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
+
+        return newGroup;
+    }
+
+
+
 
     static GA_Group*
         groupPromoteDetached(
@@ -134,6 +189,18 @@ namespace GA_FeE_GroupPromote {
     }
 
     SYS_FORCE_INLINE
+        static GA_Group*
+        groupPromote(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const GA_AttributeOwner newType,
+            const UT_StringHolder& newName
+        )
+    {
+        return groupPromote(geo, group, GA_FeE_Type::attributeOwner_groupType(newType), newName);
+    }
+
+    SYS_FORCE_INLINE
         static const GA_Group*
         groupPromoteDetached(
             const GA_Detail* const geo,
@@ -159,16 +226,89 @@ namespace GA_FeE_GroupPromote {
 
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+    static GA_Group*
+    groupPromote(
+        GA_Detail* const geo,
+        GA_Group*& group,
+        const GA_GroupType newType,
+        const UT_StringHolder& newName,
+        const bool delOriginal
+    )
+    {
+        GA_Group* newGroup = groupPromote(geo, group, newType, newName);
+        if (delOriginal && group != newGroup)
+        {
+            geo->destroyGroup(group);
+            group = nullptr;
+        }
+        return newGroup;
+    }
+
+    SYS_FORCE_INLINE
+        static GA_Group*
         groupPromote(
             GA_Detail* const geo,
-            GA_Group*& group,
+            GA_PrimitiveGroup*& group,
             const GA_GroupType newType,
             const UT_StringHolder& newName,
             const bool delOriginal
         )
     {
-        const GA_Group* newGroup = groupPromote(geo, static_cast<const GA_Group*>(group), newType, newName);
+        GA_Group* newGroup = groupPromote(geo, group, newType, newName);
+        if (delOriginal && group != newGroup)
+        {
+            geo->destroyGroup(group);
+            group = nullptr;
+        }
+        return newGroup;
+    }
+    SYS_FORCE_INLINE
+        static GA_Group*
+        groupPromote(
+            GA_Detail* const geo,
+            GA_PointGroup*& group,
+            const GA_GroupType newType,
+            const UT_StringHolder& newName,
+            const bool delOriginal
+        )
+    {
+        GA_Group* newGroup = groupPromote(geo, group, newType, newName);
+        if (delOriginal && group != newGroup)
+        {
+            geo->destroyGroup(group);
+            group = nullptr;
+        }
+        return newGroup;
+    }
+    SYS_FORCE_INLINE
+        static GA_Group*
+        groupPromote(
+            GA_Detail* const geo,
+            GA_VertexGroup*& group,
+            const GA_GroupType newType,
+            const UT_StringHolder& newName,
+            const bool delOriginal
+        )
+    {
+        GA_Group* newGroup = groupPromote(geo, group, newType, newName);
+        if (delOriginal && group != newGroup)
+        {
+            geo->destroyGroup(group);
+            group = nullptr;
+        }
+        return newGroup;
+    }
+    SYS_FORCE_INLINE
+        static GA_Group*
+        groupPromote(
+            GA_Detail* const geo,
+            GA_EdgeGroup*& group,
+            const GA_GroupType newType,
+            const UT_StringHolder& newName,
+            const bool delOriginal
+        )
+    {
+        GA_Group* newGroup = groupPromote(geo, group, newType, newName);
         if (delOriginal && group != newGroup)
         {
             geo->destroyGroup(group);
@@ -266,6 +406,53 @@ namespace GA_FeE_GroupPromote {
 
 
 
+    SYS_FORCE_INLINE
+        static GA_PrimitiveGroup*
+        groupPromotePrimitive(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const UT_StringHolder& newName
+        )
+    {
+        return static_cast<GA_PrimitiveGroup*>(groupPromote(geo, group, GA_GROUP_PRIMITIVE, newName));
+    }
+
+    SYS_FORCE_INLINE
+        static GA_PointGroup*
+        groupPromotePoint(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const UT_StringHolder& newName
+        )
+    {
+        return static_cast<GA_PointGroup*>(groupPromote(geo, group, GA_GROUP_POINT, newName));
+    }
+
+    SYS_FORCE_INLINE
+        static GA_VertexGroup*
+        groupPromoteVertex(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const UT_StringHolder& newName
+        )
+    {
+        return static_cast<GA_VertexGroup*>(groupPromote(geo, group, GA_GROUP_VERTEX, newName));
+    }
+
+    SYS_FORCE_INLINE
+        static GA_EdgeGroup*
+        groupPromoteEdge(
+            GA_Detail* const geo,
+            GA_Group* const group,
+            const UT_StringHolder& newName
+        )
+    {
+        return static_cast<GA_EdgeGroup*>(groupPromote(geo, group, GA_GROUP_EDGE, newName));
+    }
+
+
+
+
 
 
 
@@ -312,6 +499,46 @@ namespace GA_FeE_GroupPromote {
 
 
 
+
+    SYS_FORCE_INLINE
+        static GA_PrimitiveGroup*
+        groupPromotePrimitive(
+            GA_Detail* const geo,
+            GA_Group* const group
+        )
+    {
+        return static_cast<GA_PrimitiveGroup*>(groupPromote(geo, group, GA_GROUP_PRIMITIVE));
+    }
+
+    SYS_FORCE_INLINE
+        static GA_PointGroup*
+        groupPromotePoint(
+            GA_Detail* const geo,
+            GA_Group* const group
+        )
+    {
+        return static_cast<GA_PointGroup*>(groupPromote(geo, group, GA_GROUP_POINT));
+    }
+
+    SYS_FORCE_INLINE
+        static GA_VertexGroup*
+        groupPromoteVertex(
+            GA_Detail* const geo,
+            GA_Group* const group
+        )
+    {
+        return static_cast<GA_VertexGroup*>(groupPromote(geo, group, GA_GROUP_VERTEX));
+    }
+
+    SYS_FORCE_INLINE
+        static GA_EdgeGroup*
+        groupPromoteEdge(
+            GA_Detail* const geo,
+            GA_Group* const group
+        )
+    {
+        return static_cast<GA_EdgeGroup*>(groupPromote(geo, group, GA_GROUP_EDGE));
+    }
 
 
 

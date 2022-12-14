@@ -287,7 +287,8 @@ SYS_FORCE_INLINE
 
 
 
-SYS_FORCE_INLINE
+
+
 static GA_Group*
 findGroup(
     const GA_Detail* const geo,
@@ -296,10 +297,32 @@ findGroup(
 )
 {
     UT_ASSERT_P(geo);
-    const GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+    const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (!groupTable)
         return nullptr;
     return groupTable->find(groupName);
+}
+
+
+static GA_Group*
+findGroupMultiClass(
+    const GA_Detail* const geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    UT_ASSERT_P(geo);
+    GA_Group* outGroup = findGroup(geo, GA_GROUP_PRIMITIVE, groupName);
+    if (outGroup)
+        return outGroup;
+    outGroup = findGroup(geo, GA_GROUP_POINT, groupName);
+    if (outGroup)
+        return outGroup;
+    outGroup = findGroup(geo, GA_GROUP_VERTEX, groupName);
+    if (outGroup)
+        return outGroup;
+    outGroup = findGroup(geo, GA_GROUP_EDGE, groupName);
+    return outGroup;
 }
 
 

@@ -16,9 +16,9 @@
 #include "GA_FeE/GA_FeE_Measure.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
 #include "GA_FeE/GA_FeE_TopologyReference.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GEO_FeE/GEO_FeE_GroupExpand.h"
-#include "GEO_FeE/GEO_FeE_Normal.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupExpand.h"
+#include "GA_FeE/GA_FeE_Normal.h"
 
 using namespace SOP_FeE_Normal2D_1_0_Namespace;
 
@@ -322,10 +322,10 @@ void
 SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Normal2D_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Normal2D_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
@@ -366,9 +366,10 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
-    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(PreferredPrecision);
+    //const GA_Precision preferredPrecision = outGeo0->getPreferredPrecision();
+    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferredPrecision);
+    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(preferredPrecision);
+    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -394,13 +395,8 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_PointGroup* geo0PointGroup = const_cast<GA_PointGroup*>(GA_FeE_GroupPromote::groupPromotePointDetached(outGeo0, geo0Group));
     UT_UniquePtr<GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
 
-    GA_VertexGroup* geo0VtxGroup = const_cast<GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
+    //GA_VertexGroup* geo0VtxGroup = const_cast<GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
 
-    //GA_PointGroup* expandGroup = GA_FeE_Group::newDetachedGroup(outGeo0, geo0Group);
-    GA_PointGroup* expandGroup = outGeo0->newDetachedPointGroup();
-    UT_UniquePtr<GA_Group> expandGroupUPtr(expandGroup);
-
-    GEO_FeE_GroupExpand::groupExpand(outGeo0, expandGroup, geo0PointGroup, GA_GROUP_EDGE);
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
     //const GA_GroupType geo0FinalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
@@ -475,7 +471,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         if (geo0N3DAttribClass == GA_ATTRIB_OWNER_N || geo0N3DAttribClass == GA_ATTRIB_INVALID)
             geo0N3DAttribClass = GA_ATTRIB_PRIMITIVE;
 
-        normal3DAttrib = GEO_FeE_Normal::addAttribNormal3D(outGeo0, nullptr, geo0N3DAttribClass, inStorageF, N3DAttribName,
+        normal3DAttrib = GA_FeE_Normal::addAttribNormal3D(outGeo0, nullptr, geo0N3DAttribClass, inStorageF, N3DAttribName,
             GEO_DEFAULT_ADJUSTED_CUSP_ANGLE, GEO_NormalMethod::ANGLE_WEIGHTED, false, posAttrib);
     }
     const GA_AttributeOwner N3DFinalAttribClass = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
@@ -487,19 +483,16 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     }
     //outGeo0->setPrimitiveClosedFlag(elemoff);
 
-
-    //GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(geo0AttribClass, N2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
-    //GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, N2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
-    GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, N2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
-    //GA_RWHandleT<UT_Vector3T<fpreal64>> N2DAttribH(N2DAttrib);
-
-
-    //geo0PointGroup->setOrdered(false);
-    //geo0PointGroup->makeUnordered();
-    GEO_FeE_Normal::computeNormal2D(outGeo0, geo0PointGroup,
-        N2DAttrib, posAttrib, normal3DAttrib, defaultNormal3D,
+    GA_Attribute* N2DAttrib = GA_FeE_Normal::addAttribNormal2D(outGeo0, geo0PointGroup,
+        N2DAttribName, posAttrib, normal3DAttrib, defaultNormal3D,
         scaleByTurns, normalize, uniScale,
-        subscribeRatio, minGrainSize);
+        inStorageF, subscribeRatio, minGrainSize);
+
+    //GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, N2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
+    //GA_FeE_Normal::computeNormal2D(outGeo0, geo0PointGroup,
+    //    N2DAttrib, posAttrib, normal3DAttrib, defaultNormal3D,
+    //    scaleByTurns, normalize, uniScale,
+    //    subscribeRatio, minGrainSize);
 
 
     GA_FeE_Attribute::forceRenameAttribute(outGeo0, N2DAttrib, geo0AttribNames);
