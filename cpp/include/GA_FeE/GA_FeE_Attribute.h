@@ -21,26 +21,38 @@
 namespace GA_FeE_Attribute {
 
 
-/*
+
 static void
     copyAttribute(
         GA_Detail* const geo,
         const GA_Detail* const geoRef,
         const GA_AttributeOwner owner,
+        const GA_AttributeOwner ownerRef,
         const UT_StringHolder& attribPattern
     )
 {
-    if (attribPattern == "")
+    if (attribPattern.length()==0)
         return;
-    for (GA_AttributeDict::iterator it = geo->getAttributes().begin(owner); !it.atEnd(); ++it)
+    for (GA_AttributeDict::iterator it = geoRef->getAttributes().begin(ownerRef); !it.atEnd(); ++it)
     {
-        GA_Attribute* attrib = it.attrib();
-        if (attrib->isDetached())
+        GA_Attribute* attribRef = it.attrib();
+        if (attribRef->isDetached())
             continue;
-        if (attrib->isDetached())
+        if (attribRef->getScope() != GA_SCOPE_PUBLIC)
             continue;
-        if (!attrib->getName().match(attribPattern))
+        const UT_StringHolder& attribName = attribRef->getName();
+        const UT_StringHolder& attribNameNew = attribName;
+        
+        if (!attribName.match(attribPattern))
             continue;
+
+        GA_Attribute* attrib = geo->findAttribute(owner, attribNameNew);
+        if (!attrib)
+        {
+            attrib = geo->createAttribute(attribRef);
+            attrib = geo->getAttributes().createAttribute(attribRef);
+
+        }
 
         const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
         UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle_next, &vtxPointRef](const GA_SplittableRange& r)
@@ -76,7 +88,7 @@ static void
         }, subscribeRatio, minGrainSize);
     }
 }
-*/
+
 
 static void
     copyAttribute(
