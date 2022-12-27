@@ -137,7 +137,7 @@ getOffsetList(
 }
 
 
-//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo, group);
+//GA_OffsetList offList = GA_FeE_Detail::getOffsetList(geo, owner, group);
 SYS_FORCE_INLINE
 static GA_OffsetList
 getOffsetList(

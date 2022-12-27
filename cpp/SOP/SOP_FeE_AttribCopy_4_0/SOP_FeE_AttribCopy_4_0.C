@@ -327,6 +327,19 @@ sopAttribOwner(SOP_FeE_AttribCopy_4_0Parms::SourceClass attribClass)
     return GA_ATTRIB_INVALID;
 }
 
+static bool
+sopIDAttribInput(SOP_FeE_AttribCopy_4_0Parms::IDAttribInput iDAttribInput)
+{
+    using namespace SOP_FeE_AttribCopy_4_0Enums;
+    switch (iDAttribInput)
+    {
+    case IDAttribInput::SOURCE:          return false;     break;
+    case IDAttribInput::DESTINATION:     return true;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Class type!");
+    return false;
+}
+
 
 
 
@@ -347,7 +360,6 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const UT_StringHolder& copyAttribName = sopparms.getCopyAttribName();
     const UT_StringHolder& newCopyAttribName = sopparms.getNewCopyAttribName();
-    const SOP_FeE_AttribCopy_4_0Parms::AttribMergeType attribMergeType = sopparms.getAttribMergeType();
     const bool useNewCopyAttribName = sopparms.getUseNewCopyAttribName();
     const GA_AttributeOwner sourceClass = sopAttribOwner(sopparms.getSourceClass());
     const GA_AttributeOwner destinationClass = sopAttribOwner(sopparms.getDestinationClass());
@@ -367,8 +379,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
-    GA_AttributeSet& attribSet = outGeo0->getAttributes();
-
+    //GA_AttributeSet& attribSet = outGeo0->getAttributes();
 
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
@@ -379,8 +390,71 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
 
+    const bool useIDAttrib = sopparms.getUseIDAttrib();
 
-    //GA_FeE_Attribute::copyAttribute(outGeo0, inGeo1, GA_ATTRIB_PRIMITIVE, copyPrimAttribName);
+    const SOP_FeE_AttribCopy_4_0Parms::AttribMergeType attribMergeType = sopparms.getAttribMergeType();
+    using namespace SOP_FeE_AttribCopy_4_0Enums;
+    if (useIDAttrib)
+    {
+        const UT_StringHolder& iDAttribName = sopparms.getIDAttribName();
+        const bool iDAttribInput = sopIDAttribInput(sopparms.getIDAttribInput());
+
+        switch (attribMergeType)
+        {
+        case AttribMergeType::SET:
+            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
+            break;
+        case AttribMergeType::ADD:
+            break;
+        case AttribMergeType::SUB:
+            break;
+        case AttribMergeType::MULT:
+            break;
+        case AttribMergeType::MIN:
+            break;
+        case AttribMergeType::MAX:
+            break;
+        case AttribMergeType::XOR:
+            break;
+        case AttribMergeType::TOGGLE:
+            break;
+        case AttribMergeType::APPEND:
+            break;
+        case AttribMergeType::INTERSECT:
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (attribMergeType)
+        {
+        case AttribMergeType::SET:
+            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+            break;
+        case AttribMergeType::ADD:
+            break;
+        case AttribMergeType::SUB:
+            break;
+        case AttribMergeType::MULT:
+            break;
+        case AttribMergeType::MIN:
+            break;
+        case AttribMergeType::MAX:
+            break;
+        case AttribMergeType::XOR:
+            break;
+        case AttribMergeType::TOGGLE:
+            break;
+        case AttribMergeType::APPEND:
+            break;
+        case AttribMergeType::INTERSECT:
+            break;
+        default:
+            break;
+        }
+    }
     //GA_FeE_Attribute::copyAttribute(attribSet, copyAttribName, copyPointAttribName, copyVertexAttribName, copyDetailAttribName);
 
     //GA_FeE_Group::copyGroup(outGeo0, copyPrimGroupName, copyPointGroupName, copyVertexGroupName, copyEdgeGroupName);
