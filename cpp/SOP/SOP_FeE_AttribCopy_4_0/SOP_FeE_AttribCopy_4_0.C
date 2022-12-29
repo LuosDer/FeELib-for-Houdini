@@ -25,30 +25,6 @@ static const char *theDsFile = R"THEDSFILE(
     name        parameters
 
     parm {
-        name    "group"
-        cppname "Group"
-        label   "Group"
-        type    string
-        default { "" }
-        range   { 0 1 }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('destinationClass')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-    }
-    parm {
-        name    "destinationClass"
-        cppname "DestinationClass"
-        label   "Destination Class"
-        type    ordinal
-        default { "point" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "detail"    "Detail"
-        }
-    }
-    parm {
         name    "srcGroup"
         cppname "SrcGroup"
         label   "Source Group"
@@ -63,6 +39,31 @@ static const char *theDsFile = R"THEDSFILE(
         name    "sourceClass"
         cppname "SourceClass"
         label   "Source Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
+    }
+
+    parm {
+        name    "group"
+        cppname "Group"
+        label   "Group"
+        type    string
+        default { "" }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('destinationClass')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "destinationClass"
+        cppname "DestinationClass"
+        label   "Destination Class"
         type    ordinal
         default { "point" }
         menu {
@@ -402,7 +403,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (attribMergeType)
         {
         case AttribMergeType::SET:
-            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
+            GA_FeE_Attribute::copyAttribute2(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
             break;
         case AttribMergeType::ADD:
             break;
@@ -431,7 +432,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (attribMergeType)
         {
         case AttribMergeType::SET:
-            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+            GA_FeE_Attribute::copyAttribute2(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
             break;
         case AttribMergeType::ADD:
             break;

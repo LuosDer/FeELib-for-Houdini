@@ -21,6 +21,7 @@
 namespace GA_FeE_Attribute {
 
 
+/*
 template<typename T>
 static void
     copyAttributeNumeric(
@@ -110,7 +111,6 @@ copyAttributeAnyType(
     }
 }
 
-
 static void
     copyAttribute(
         GA_Detail* const geo,
@@ -129,8 +129,8 @@ static void
     GA_Attribute* attribNew = nullptr;
     GA_Attribute* attribRef = nullptr;
 
-    GA_Range rangeSrc(attribNew->getIndexMap());
-    GA_Range rangeDst(attribRef->getIndexMap());
+    GA_Range rangeSrc(geo->getIndexMap(owner));
+    GA_Range rangeDst(geoRef->getIndexMap(ownerRef));
 
     for (GA_AttributeDict::iterator it = geoRef->getAttributes().begin(ownerRef); !it.atEnd(); ++it)
     {
@@ -164,6 +164,140 @@ static void
         //copyAttributeAnyType(attribNew, attribRef, subscribeRatio, minGrainSize);
     }
 }
+*/
+
+
+template<typename T>
+static void
+copyAttributeRef(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_Attribute* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const int subscribeRatio = 8,
+    const int minGrainSize = 1024
+)
+{
+    const GA_RWHandleT<T> attribNew_h(attribNew);
+    const GA_ROHandleT<T> attribRef_h(attribRef);
+    if (attribID)
+    {
+        const GA_ROHandleT<exint> attribID_h(attribID);
+        UTparallelFor(geoSplittableRange, [&attribNew_h, &attribRef_h, &attribID_h](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    exint id = attribID_h.get(elemoff);
+                    T value = attribRef_h.get(elemoff);
+                    attribNew_h.set(id, value);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    else
+    {
+        UTparallelFor(geoSplittableRange, [&attribNew_h, &attribRef_h](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    T value = attribRef_h.get(elemoff);
+                    attribNew_h.set(elemoff, value);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+}
+
+
+static void
+copyAttributeDst2(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_Attribute* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const int subscribeRatio = 8,
+    const int minGrainSize = 1024
+)
+{
+    if (attribID)
+    {
+        const GA_ROHandleT<exint> attribID_h(attribID);
+        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &attribID_h](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    exint id = attribID_h.get(elemoff);
+                    attribNew->copy(elemoff, *attribRef, id);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    else
+    {
+        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    attribNew->copy(elemoff, *attribRef, elemoff);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+}
+
+static void
+copyAttributeRef2(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_Attribute* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const int subscribeRatio = 8,
+    const int minGrainSize = 1024
+)
+{
+    if (attribID)
+    {
+        const GA_ROHandleT<exint> attribID_h(attribID);
+        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &attribID_h](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    exint id = attribID_h.get(elemoff);
+                    attribNew->copy(id, *attribRef, elemoff);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    else
+    {
+        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    attribNew->copy(elemoff, *attribRef, elemoff);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+}
 
 
 static void
@@ -173,7 +307,7 @@ copyAttribute(
     const GA_Detail* const geoRef,
     const GA_AttributeOwner ownerRef,
     const UT_StringHolder& attribPattern,
-    const UT_StringHolder& iDAttribName,
+    const UT_StringHolder& iDAttribName = "",
     const bool iDAttribInput = false,
     const int subscribeRatio = 8,
     const int minGrainSize = 1024
@@ -184,7 +318,7 @@ copyAttribute(
 
     GA_AttributeSet& attribsDst = geo->getAttributes();
     GA_Attribute* attribNew = nullptr;
-    GA_Attribute* attribRef = nullptr;
+    const GA_Attribute* attribRef = nullptr;
 
     //GA_OffsetList offs;
     //if (!group && indexMap.isTrivialMap())
@@ -218,36 +352,21 @@ copyAttribute(
     //    rangeDst = GA_Range(attribRef->getIndexMap(), offs);
     //}
 
+    const GA_Attribute* iDAttrib = nullptr;
     GA_Range range;
     if (iDAttribInput)//DESTINATION
     {
-        const GA_Attribute* iDAttrib = attribsDst.findAttribute(owner, iDAttribName);
-
-        const GA_ROHandleT<exint> attribID_h(iDAttrib);
-        range = GA_Range(attribRef->getIndexMap());
-        const GA_SplittableRange geoSplittableRange(range);
+        if (iDAttribName.length() > 0)
+            iDAttrib = attribsDst.findAttribute(owner, iDAttribName);
+        range = GA_Range(geo->getIndexMap(owner));
     }
     else//Src
     {
-        const GA_Attribute* iDAttrib = geoRef->getAttributes().findAttribute(ownerRef, iDAttribName);
-
-        const GA_ROHandleT<exint> attribID_h(iDAttrib);
-        range = GA_Range(attribNew->getIndexMap());
-        const GA_SplittableRange geoSplittableRange(range);
-        
-        UTparallelFor(geoSplittableRange, [&attribID_h](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    float value = attribRef_h.get(elemoff);
-                    attribNew_h.set(attribID_h.get(elemoff), value);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
+        if (iDAttribName.length() > 0)
+            iDAttrib = geoRef->getAttributes().findAttribute(ownerRef, iDAttribName);
+        range = GA_Range(geoRef->getIndexMap(ownerRef));
     }
+    const GA_SplittableRange geoSplittableRange(range);
 
 
 
@@ -259,17 +378,13 @@ copyAttribute(
         if (attribRef->getScope() != GA_SCOPE_PUBLIC)
             continue;
         const UT_StringHolder& attribName = attribRef->getName();
-        const UT_StringHolder& attribNameNew = attribName;
 
-        if (!attribName.match(attribPattern))
+        if (!attribName.multiMatch(attribPattern, true, " "))
             continue;
 
+        const UT_StringHolder& attribNameNew = attribName;
+
         attribNew = attribsDst.findAttribute(owner, attribNameNew);
-        //if (attribNew)
-        //{
-        //    attribsDst.destroyAttribute(attribNew);
-        //    attribNew = nullptr;
-        //}
         if (attribNew)
         {
             attribNew->bumpDataId();
@@ -279,8 +394,118 @@ copyAttribute(
             //attrib = attribsDst.createAttribute(owner, attribRef, nullptr, nullptr, attribRef->getType(), GA_ReuseStrategy());
             attribNew = attribsDst.cloneAttribute(owner, attribNameNew, *attribRef, true);
         }
-        attribNew->copy(rangeDst, *attribRef, rangeSrc);
-        //copyAttributeAnyType(attribNew, attribRef, subscribeRatio, minGrainSize);
+
+        if (iDAttribInput)//DESTINATION
+        {
+        }
+        else//Src
+        {
+            switch (attribNew->getType().getTypeId())
+            {
+            case 0:
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            default:
+                break;
+            }
+            switch (attribNew->getStorageClass())
+            {
+            case GA_STORECLASS_INT:
+                break;
+            case GA_STORECLASS_REAL:
+                copyAttributeRef<float>(geoSplittableRange, attribNew, attribRef, iDAttrib, subscribeRatio, minGrainSize);
+                break;
+            case GA_STORECLASS_STRING:
+                break;
+            case GA_STORECLASS_DICT:
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+
+
+static void
+copyAttribute2(
+    GA_Detail* const geo,
+    const GA_AttributeOwner owner,
+    const GA_Detail* const geoRef,
+    const GA_AttributeOwner ownerRef,
+    const UT_StringHolder& attribPattern,
+    const UT_StringHolder& iDAttribName = "",
+    const bool iDAttribInput = false,
+    const int subscribeRatio = 8,
+    const int minGrainSize = 1024
+)
+{
+    if (attribPattern.length() == 0)
+        return;
+
+    GA_AttributeSet& attribsDst = geo->getAttributes();
+    GA_Attribute* attribNew = nullptr;
+    const GA_Attribute* attribRef = nullptr;
+
+
+    const GA_Attribute* iDAttrib = nullptr;
+    
+    GA_Range range;
+    if (iDAttribInput)//DESTINATION
+    {
+        if(iDAttribName.length() > 0)
+            iDAttrib = attribsDst.findAttribute(owner, iDAttribName);
+        range = GA_Range(geo->getIndexMap(owner));
+    }
+    else//Src
+    {
+        if (iDAttribName.length() > 0)
+            iDAttrib = geoRef->getAttributes().findAttribute(ownerRef, iDAttribName);
+        range = GA_Range(geoRef->getIndexMap(ownerRef));
+    }
+    const GA_SplittableRange geoSplittableRange(range);
+
+
+
+    for (GA_AttributeDict::iterator it = geoRef->getAttributes().begin(ownerRef); !it.atEnd(); ++it)
+    {
+        attribRef = it.attrib();
+        if (attribRef->isDetached())
+            continue;
+        if (attribRef->getScope() != GA_SCOPE_PUBLIC)
+            continue;
+        const UT_StringHolder& attribName = attribRef->getName();
+
+        if (!attribName.multiMatch(attribPattern, true, " "))
+            continue;
+
+        const UT_StringHolder& attribNameNew = attribName;
+
+        attribNew = attribsDst.findAttribute(owner, attribNameNew);
+        if (attribNew)
+        {
+            attribNew->bumpDataId();
+        }
+        else
+        {
+            //attrib = attribsDst.createAttribute(owner, attribRef, nullptr, nullptr, attribRef->getType(), GA_ReuseStrategy());
+            attribNew = attribsDst.cloneAttribute(owner, attribNameNew, *attribRef, true);
+        }
+
+        if (iDAttribInput)//DESTINATION
+        {
+            copyAttributeDst2(geoSplittableRange, attribNew, attribRef, iDAttrib, subscribeRatio, minGrainSize);
+        }
+        else//Src
+        {
+            copyAttributeRef2(geoSplittableRange, attribNew, attribRef, iDAttrib, subscribeRatio, minGrainSize);
+        }
     }
 }
 

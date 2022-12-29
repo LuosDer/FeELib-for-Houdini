@@ -25,6 +25,16 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
+        name    "primGroup"
+        cppname "PrimGroup"
+        label   "Prim Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives, )\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
         name    "cutPointGroup"
         cppname "CutPointGroup"
         label   "Cut Point Group"
@@ -86,6 +96,7 @@ static const char *theDsFile = R"THEDSFILE(
         nolabel
         joinnext
         default { "off" }
+        disablewhen "{ cutPoint == 0 }"
     }
     parm {
         name    "origPointAttribName"
@@ -93,7 +104,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Origin Point Attribute Name"
         type    string
         default { "origPoint" }
-        disablewhen "{ createOrigPointAttrib == 0 }"
+        disablewhen "{ createOrigPointAttrib == 0 } { cutPoint == 0 }"
     }
     parm {
         name    "sepparm"
@@ -104,70 +115,79 @@ static const char *theDsFile = R"THEDSFILE(
 
     parm {
         name    "keepPrimAttribName"
+        cppname "KeepPrimAttribName"
         label   "Keep Primitive Attribute Name"
         type    string
         default { "" }
     }
     parm {
         name    "keepPointAttribName"
+        cppname "KeepPointAttribName"
         label   "Keep Point Attribute Name"
         type    string
         default { "*" }
+        disablewhen "{ cutPoint == 0 }"
     }
 
     parm {
         name    "keepPrimGroupName"
+        cppname "KeepPrimGroupName"
         label   "Keep Primitive Group Name"
         type    string
         default { "" }
     }
     parm {
         name    "keepPointGroupName"
+        cppname "KeepPointGroupName"
         label   "Keep Point Group Name"
         type    string
         default { "*" }
+        disablewhen "{ cutPoint == 0 }"
     }
     parm {
         name    "keepEdgeGroupName"
+        cppname "KeepEdgeGroupName"
         label   "Keep Edge Group Name"
         type    string
         default { "" }
+        disablewhen "{ cutPoint == 0 }"
     }
 
     parm {
-        name    "delInputGroup"
-        label   "Delete Input Group"
+        name    "delInputPointGroup"
+        cppname "DelInputPointGroup"
+        label   "Delete Input Point Group"
         type    toggle
         default { "0" }
     }
 
 
     parm {
-       name    "kernel"
-       cppname "Kernel"
-       label   "Kernel"
-       type    integer
-       default { 0 }
-       range   { 0! 1! }
+        name    "kernel"
+        cppname "Kernel"
+        label   "Kernel"
+        type    integer
+        default { 0 }
+        range   { 0! 1! }
     }
 
 
 
     parm {
-       name    "subscribeRatio"
-       cppname "SubscribeRatio"
-       label   "Subscribe Ratio"
-       type    integer
-       default { 64 }
-       range   { 0! 256 }
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
     }
     parm {
-       name    "minGrainSize"
-       cppname "MinGrainSize"
-       label   "Min Grain Size"
-       type    intlog
-       default { 64 }
-       range   { 0! 2048 }
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 64 }
+        range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -179,6 +199,13 @@ SOP_FeE_PolyCut_3_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("cutPointGroup"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+
+        templ.setChoiceListPtr("keepPrimAttribName"_sh, &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("keepPointAttribName"_sh, &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("keepPrimGroupName"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("keepPointGroupName"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroupName"_sh, &SOP_Node::edgeGroupMenu);
     }
     return templ.templates();
 }
@@ -262,15 +289,24 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    //outGeo0->replaceWithPoints(*inGeo0);
-    outGeo0->replaceWith(*inGeo0);
+    GU_DetailHandle tmpGeoH0;
+    GU_Detail* tmpGeo0 = new GU_Detail();
+    tmpGeoH0.allocateAndSet(tmpGeo0);
+    tmpGeo0->replaceWith(*inGeo0);
+
+    outGeo0->replaceWithPoints(*inGeo0);
+    //outGeo0->replaceWith(*inGeo0);
 
     //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
-
+    
     GOP_Manager gop;
     const GA_PointGroup* cutPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getCutPointGroup(), gop);
-    if (cutPointGroup && cutPointGroup->isEmpty())
+    //if (cutPointGroup && cutPointGroup->isEmpty())
+    //    return;
+
+    const GA_PrimitiveGroup* primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, tmpGeo0, sopparms.getPrimGroup(), gop);
+    if (primGroup && primGroup->isEmpty())
         return;
 
     const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();
@@ -282,8 +318,8 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const exint kernel = sopparms.getKernel();
 
 
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
 
 
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
@@ -291,40 +327,63 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+    
 
-
-
+    const UT_StringHolder& keepPrimAttribName  = sopparms.getKeepPrimAttribName();
+    const UT_StringHolder& keepPointAttribName = sopparms.getKeepPointAttribName();
+    const UT_StringHolder& keepPrimGroupName   = sopparms.getKeepPrimGroupName();
+    const UT_StringHolder& keepPointGroupName  = sopparms.getKeepPointGroupName();
+    const UT_StringHolder& keepEdgeGroupName   = sopparms.getKeepEdgeGroupName();
 
 
 
     GA_Attribute* srcPrimsAttrib = nullptr;
     GA_Attribute* srcPointsAttrib = nullptr;
 
-
     const bool createOrigPrimAttrib = sopparms.getCreateOrigPrimAttrib();
+    //if (createOrigPrimAttrib || keepPrimAttribName.length() > 0 || keepPrimGroupName.length() > 0)
     if (createOrigPrimAttrib)
     {
         const UT_StringHolder& origPrimAttribName = sopparms.getOrigPrimAttribName();
-        srcPrimsAttrib = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, origPrimAttribName, 1, nullptr, nullptr, inStorageI);
+        srcPrimsAttrib = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, origPrimAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
     }
-
-    if (cutPoint)
+    const bool createOrigPointAttrib = sopparms.getCreateOrigPointAttrib();
+    //if (cutPoint)
+    //{
+    //    if (createOrigPointAttrib || keepPointAttribName.length() > 0 || keepPointGroupName.length() > 0)
+    //    {
+    //        const UT_StringHolder& origPointAttribName = sopparms.getOrigPointAttribName();
+    //        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, origPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
+    //    }
+    //}
+    if (cutPoint && createOrigPointAttrib)
     {
-        const bool createOrigPointAttrib = sopparms.getCreateOrigPointAttrib();
-        if (createOrigPointAttrib)
-        {
-            const UT_StringHolder& origPointAttribName = sopparms.getOrigPointAttribName();
-            srcPointsAttrib = outGeo0->addIntArray(GA_ATTRIB_POINT, origPointAttribName, 1, nullptr, nullptr, inStorageI);
-        }
-        GA_FeE_PolyCut::polyCutPoint(outGeo0, cutPointGroup, mergePrimEndsIfClosed, srcPrimsAttrib, srcPointsAttrib);
+        const UT_StringHolder& origPointAttribName = sopparms.getOrigPointAttribName();
+        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, origPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
     }
-    else
-        GA_FeE_PolyCut::polyCutPrim(outGeo0, cutPointGroup, mergePrimEndsIfClosed, srcPrimsAttrib);
 
+    GA_FeE_PolyCut::polyCut(outGeo0, tmpGeo0, cutPointGroup, cutPoint, primGroup, mergePrimEndsIfClosed, primType);
+
+    //if (!createOrigPointAttrib && srcPointsAttrib)
+    //{
+    //    outGeo0->getAttributes().destroyAttribute(srcPointsAttrib);
+    //}
+
+    //if (!createOrigPrimAttrib && srcPrimsAttrib)
+    //{
+    //    outGeo0->getAttributes().destroyAttribute(srcPrimsAttrib);
+    //}
+
+    const bool delInputPointGroup = sopparms.getDelInputPointGroup();
+    if (delInputPointGroup && !cutPointGroup->isDetached())
+    {
+        outGeo0->destroyGroup(const_cast<GA_PointGroup*>(cutPointGroup));
+    }
 
 
     outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    
+    tmpGeoH0.deleteGdp();
+
 }
 
 
