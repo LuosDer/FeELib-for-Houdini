@@ -3,6 +3,12 @@ import os
 # import subprocess
 
 #cmake -G "Visual Studio 16 2019" .. -DCMAKE_PREFIX_PATH="C:\Program Files\Side Effects Software\Houdini 19.0.498\toolkit\cmake"
+#cmake -G "Visual Studio 16 2019" ..
+#cmake -G "Visual Studio 16 2019" ../CMakeLists18.5
+#cmake -G "Visual Studio 16 2019" ../CMakeLists19.0
+#cmake -G "Visual Studio 16 2019" ../CMakeLists19.5
+#cmake -G "Visual Studio 16 2019" ../CMakeLists20.0
+#cmake -G "Visual Studio 16 2019" ../CMakeLists20.5
 
 doCreate = True
 

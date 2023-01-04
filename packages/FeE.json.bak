@@ -1,11 +1,15 @@
 {
+    "load_package_once": true,
     "env": [
         {
             "LibPath": "E:/3D/Software/Houdini/libs",
         },
     ],
-    "package_path" : [
-        "$LibPath/packages",
-        "$LibPath/FeELib-for-Houdini/packages",
-    ],
+    "package_path" : {
+        "method": "append",
+        "value": [
+            "$LibPath/packages",
+            "$LibPath/FeELib-for-Houdini/packages",
+        ]
+    }
 }

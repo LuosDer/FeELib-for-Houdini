@@ -7,7 +7,7 @@ inputVSVersion = input('WARNING! this is very Danger Operation Are you sure you 
 inputVSVersion = input('WARNING! this is very Danger Operation Are you sure you want to do this? 2 check')
 
 
-for fileRootPath in ("./../SOP/", "./../DM/"):
+for fileRootPath in ("./../src/SOP/", "./../src/DM/"):
     fileRootPath = os.path.realpath(fileRootPath) + '/'
 
     for folderName in os.listdir(fileRootPath):

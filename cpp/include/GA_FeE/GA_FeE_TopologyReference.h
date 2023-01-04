@@ -42,7 +42,7 @@ outTopoAttrib(
     {
         GA_GroupTable* groupTable = geo->getGroupTable(groupType);
         //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
-        for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); ++it)
+        for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
         {
             GA_Group* group = it.group();
             if (group->isDetached())

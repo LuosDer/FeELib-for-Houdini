@@ -40,7 +40,7 @@ publishMode = "Release"
 
 if doCreate:
 
-    for fileRootPath in ("./../SOP/", "./../DM/"):
+    for fileRootPath in ("./../src/SOP/", "./../src/DM/"):
         fileRootPath = os.path.realpath(fileRootPath) + '/'
 
         for folderName in os.listdir(fileRootPath):

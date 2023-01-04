@@ -1,0 +1,18 @@
+
+import os
+from shutil import copyfile
+
+for houdini_vertion in ("18.5", "19.0", "19.5"):
+    target_path = "../CMakeLists" + houdini_vertion + "/CMakeLists.txt"
+    copyfile("../CMakeLists.txt", target_path)
+
+    file_data = ""
+    with open(target_path, "r") as f:
+        for line in f:
+            line = line.replace(r"""list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS}/toolkit/cmake" )""", r"""list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS""" + houdini_vertion + r"""}/toolkit/cmake" )""")
+            line = line.replace(r'''"./include"''', r'''"../include"''')
+            line = line.replace(r'''./src/''', r'''../src/''')
+            
+            file_data += line
+    with open(target_path, "w") as f:
+        f.write(file_data)

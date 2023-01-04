@@ -1,1 +1,0 @@
-start "" "SOP_FeE_UVScaletoWorldSize_3_0\build\HDK_SOP_FeE_UVScaletoWorldSize_3_0_Project.sln"

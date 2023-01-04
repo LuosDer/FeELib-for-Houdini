@@ -12,7 +12,8 @@
 
 #include "GA_FeE/GA_FeE_TopologyReference.h"
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupBoolean.h"
 
 
 namespace GA_FeE_Normal {
@@ -44,7 +45,14 @@ addAttribNormal3D(
     UT_ASSERT_P(attribClass != GA_ATTRIB_OWNER_N && attribClass != GA_ATTRIB_INVALID);
 
     GA_Attribute* normal3DAttrib = geo->addFloatTuple(attribClass, N3DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, storage);
-    GEOcomputeNormals(*geo, posAttrib, normal3DAttrib, geoGroup, cuspangledegrees, method, copy_orig_if_zero);
+    if (storage == GA_STORE_REAL64)
+    {
+        GEOcomputeNormals(*geo, GA_ROHandleV3D(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, method, copy_orig_if_zero);
+    }
+    else
+    {
+        GEOcomputeNormals(*geo, GA_ROHandleV3(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, method, copy_orig_if_zero);
+    }
     return normal3DAttrib;
 }
 
