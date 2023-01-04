@@ -301,11 +301,11 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     
     GOP_Manager gop;
-    const GA_PointGroup* cutPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getCutPointGroup(), gop);
-    //if (cutPointGroup && cutPointGroup->isEmpty())
-    //    return;
+    const GA_PointGroup* const cutPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getCutPointGroup(), gop);
+    if (cutPointGroup && cutPointGroup->isEmpty())
+        return;
 
-    const GA_PrimitiveGroup* primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, tmpGeo0, sopparms.getPrimGroup(), gop);
+    const GA_PrimitiveGroup* const primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, tmpGeo0, sopparms.getPrimGroup(), gop);
     if (primGroup && primGroup->isEmpty())
         return;
 
@@ -375,7 +375,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //}
 
     const bool delInputPointGroup = sopparms.getDelInputPointGroup();
-    if (delInputPointGroup && !cutPointGroup->isDetached())
+    if (delInputPointGroup && cutPointGroup && !cutPointGroup->isDetached())
     {
         outGeo0->destroyGroup(const_cast<GA_PointGroup*>(cutPointGroup));
     }

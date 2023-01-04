@@ -51,45 +51,45 @@ if doCreate and not os.path.exists(parm_DCMAKE_PREFIX_PATH):
 
 if doCreate:
 
-    fileRootPath = "./../SOP/"
-    fileRootPath = os.path.realpath(fileRootPath) + '/'
+    for fileRootPath in ("./../SOP/", "./../DM/"):
+        fileRootPath = os.path.realpath(fileRootPath) + '/'
 
-    for folderName in os.listdir(fileRootPath):
-        relFilePath = fileRootPath + folderName
-        absFilePath = os.path.realpath(relFilePath)
-        if os.path.isfile(absFilePath):
-            continue
-        
-        absBuildPath = "{0}/build".format(absFilePath).replace('\\', '/')
-
-        if os.path.exists(absBuildPath):
-            # print(os.listdir(absBuildPath))
-            if os.listdir(absBuildPath):
+        for folderName in os.listdir(fileRootPath):
+            relFilePath = fileRootPath + folderName
+            absFilePath = os.path.realpath(relFilePath)
+            if os.path.isfile(absFilePath):
                 continue
-        else:
-            os.mkdir(absBuildPath)
+            
+            absBuildPath = "{0}/build".format(absFilePath).replace('\\', '/')
 
-        # print(absBuildPath)
-        os.chdir(absBuildPath)
-        os.system("cmake -G \"{0}\" .. -DCMAKE_PREFIX_PATH=\"{1}\"".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH))
-        # os.system("pause")
+            if os.path.exists(absBuildPath):
+                # print(os.listdir(absBuildPath))
+                if os.listdir(absBuildPath):
+                    continue
+            else:
+                os.mkdir(absBuildPath)
 
-
-    # command = ''
-    # for folderName in os.listdir(fileRootPath):
-    #     absFilePath = fileRootPath + folderName
-    #     if os.path.isfile(absFilePath):
-    #         continue
-
-    #     # print(absFilePath)
-    #     command += "\n"
-    #     command += "cd \".\\SOP\\{0}\\build\"".format(folderName)
-    #     command += "\n"
-    #     command += "cmake -G {0} .. -DCMAKE_PREFIX_PATH={1}".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH)
+            # print(absBuildPath)
+            os.chdir(absBuildPath)
+            os.system("cmake -G \"{0}\" .. -DCMAKE_PREFIX_PATH=\"{1}\"".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH))
+            # os.system("pause")
 
 
-    # command += '\npause'
+        # command = ''
+        # for folderName in os.listdir(fileRootPath):
+        #     absFilePath = fileRootPath + folderName
+        #     if os.path.isfile(absFilePath):
+        #         continue
 
-    # print(command)
-    # p = subprocess.Popen("cmd.exe /c" + "d:/start.bat", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # os.system(command)
+        #     # print(absFilePath)
+        #     command += "\n"
+        #     command += "cd \".\\SOP\\{0}\\build\"".format(folderName)
+        #     command += "\n"
+        #     command += "cmake -G {0} .. -DCMAKE_PREFIX_PATH={1}".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH)
+
+
+        # command += '\npause'
+
+        # print(command)
+        # p = subprocess.Popen("cmd.exe /c" + "d:/start.bat", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # os.system(command)

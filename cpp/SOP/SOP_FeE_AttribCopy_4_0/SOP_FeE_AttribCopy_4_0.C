@@ -352,7 +352,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //auto sopcache = (SOP_FeE_AttribCopy_4_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
+    const GEO_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0->replaceWith(*inGeo0);
 
@@ -360,22 +360,30 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         
 
     const UT_StringHolder& copyAttribName = sopparms.getCopyAttribName();
-    const UT_StringHolder& newCopyAttribName = sopparms.getNewCopyAttribName();
-    const bool useNewCopyAttribName = sopparms.getUseNewCopyAttribName();
+    //const bool useNewCopyAttribName = sopparms.getUseNewCopyAttribName();
+    const UT_StringHolder& emptyString = "";
+    const UT_StringHolder& newCopyAttribName = sopparms.getUseNewCopyAttribName() ? sopparms.getNewCopyAttribName() : emptyString;
     const GA_AttributeOwner sourceClass = sopAttribOwner(sopparms.getSourceClass());
     const GA_AttributeOwner destinationClass = sopAttribOwner(sopparms.getDestinationClass());
+
+
+
+
 
     const GA_GroupType sourceGroupType = GA_FeE_Type::attributeOwner_groupType(sourceClass);
     const GA_GroupType destinationGroupType = GA_FeE_Type::attributeOwner_groupType(destinationClass);
 
-
-    const UT_StringHolder& srcGroupName = sopparms.getSrcGroup();
-    const UT_StringHolder& groupName = sopparms.getGroup();
+    const UT_StringHolder& copyGroupName = sopparms.getCopyGroupName();
+    const UT_StringHolder& newCopyGroupName = sopparms.getUseNewCopyGroupName() ? sopparms.getNewCopyGroupName() : emptyString;
 
 
     GOP_Manager gop;
     const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, destinationGroupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
+        return;
+
+    const GA_Group* geo1Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, inGeo1, destinationGroupType, sopparms.getSrcGroup(), gop);
+    if (geo1Group && geo1Group->isEmpty())
         return;
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
@@ -403,7 +411,8 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (attribMergeType)
         {
         case AttribMergeType::SET:
-            GA_FeE_Attribute::copyAttribute2(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
+            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
+            GA_FeE_Attribute::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName, iDAttribName, iDAttribInput);
             break;
         case AttribMergeType::ADD:
             break;
@@ -432,7 +441,8 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (attribMergeType)
         {
         case AttribMergeType::SET:
-            GA_FeE_Attribute::copyAttribute2(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+            GA_FeE_Attribute::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
             break;
         case AttribMergeType::ADD:
             break;
