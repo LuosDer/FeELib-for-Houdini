@@ -3,7 +3,7 @@ import os
 # import subprocess
 
 #cmake -G "Visual Studio 16 2019" .. -DCMAKE_PREFIX_PATH="C:\Program Files\Side Effects Software\Houdini 19.0.498\toolkit\cmake"
-
+#cmake -G "Visual Studio 17 2022" .. -DCMAKE_PREFIX_PATH="C:\Program Files\Side Effects Software\Houdini 19.0.498\toolkit\cmake"
 doCreate = True
 
 inputVSVersion = input('plz input your Visual Studio Version like 19 or 22 (default is 19)')
@@ -25,33 +25,17 @@ except:
     parm_VSVersion = "Visual Studio 16 2019"
 
 
+for houdini_vertion in ("18.5", "19.0", "19.5"):
+    if doCreate:
+        HFS_envKey = "HFS"
+        parm_DCMAKE_PREFIX_PATH = os.environ[HFS_envKey]
+
+        if not os.path.exists(parm_DCMAKE_PREFIX_PATH):
+            continue
 
 
 
-
-HFS_envKey = "HFS"
-
-if HFS_envKey in os.environ:
-    parm_DCMAKE_PREFIX_PATH = os.environ[HFS_envKey] + "\\toolkit\\cmake"
-    parm_DCMAKE_PREFIX_PATH = os.path.realpath(parm_DCMAKE_PREFIX_PATH)
-else:
-    HFS_envKey = "HFSS"
-    if HFS_envKey in os.environ:
-        parm_DCMAKE_PREFIX_PATH = os.environ[HFS_envKey] + "\\toolkit\\cmake"
-        parm_DCMAKE_PREFIX_PATH = os.path.realpath(parm_DCMAKE_PREFIX_PATH)
-    else:
-        doCreate = False
-
-
-
-# print(parm_DCMAKE_PREFIX_PATH)
-if doCreate and not os.path.exists(parm_DCMAKE_PREFIX_PATH):
-    doCreate = False
-
-
-if doCreate:
-
-    for fileRootPath in ("./../src/SOP/", "./../src/DM/"):
+        fileRootPath = "./../SOP/"
         fileRootPath = os.path.realpath(fileRootPath) + '/'
 
         for folderName in os.listdir(fileRootPath):
@@ -64,14 +48,14 @@ if doCreate:
 
             if os.path.exists(absBuildPath):
                 # print(os.listdir(absBuildPath))
-                if os.listdir(absBuildPath):    
+                if os.listdir(absBuildPath):
                     continue
             else:
                 os.mkdir(absBuildPath)
 
             # print(absBuildPath)
             os.chdir(absBuildPath)
-            os.system("cmake -G \"{0}\" .. -DCMAKE_PREFIX_PATH=\"{1}\"".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH))
+            os.system("cmake -G \"{0}\" ..\"{1}\"".format(parm_VSVersion, parm_DCMAKE_PREFIX_PATH))
             # os.system("pause")
 
 
