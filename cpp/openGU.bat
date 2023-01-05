@@ -1,4 +1,4 @@
 
 @echo off
 
-start "" "%HFSS%\toolkit\include\GU"
+start "" "%HFSLatest%\toolkit\include\GU"

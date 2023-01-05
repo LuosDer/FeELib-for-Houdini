@@ -1,4 +1,4 @@
 
 @echo off
 
-start "" "%HFSS%\toolkit\cmake\"
+start "" "%HFSLatest%\toolkit\cmake\"
