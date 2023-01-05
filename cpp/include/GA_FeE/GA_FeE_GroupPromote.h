@@ -34,11 +34,11 @@ namespace GA_FeE_GroupPromote {
         if (group->classType() == newType)
             return group;
 
-        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = groupTable->newGroup(group->getName());
+        GA_Group* const newGroup = groupTable->newGroup(group->getName());
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
         return newGroup;
@@ -58,11 +58,11 @@ namespace GA_FeE_GroupPromote {
         if (group->classType() == newType)
             return group;
 
-        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = groupTable->newGroup(group->getName());
+        GA_Group* const newGroup = groupTable->newGroup(group->getName());
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
         return newGroup;
@@ -86,11 +86,11 @@ namespace GA_FeE_GroupPromote {
             return group;
         }
 
-        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = groupTable->newGroup(newName);
+        GA_Group* const newGroup = groupTable->newGroup(newName);
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
         return newGroup;
@@ -114,11 +114,11 @@ namespace GA_FeE_GroupPromote {
             return group;
         }
 
-        GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = groupTable->newGroup(newName);
+        GA_Group* const newGroup = groupTable->newGroup(newName);
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
         return newGroup;
@@ -138,11 +138,11 @@ namespace GA_FeE_GroupPromote {
         if (!group)
             return nullptr;
 
-        const GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = groupTable->newDetachedGroup();
+        GA_Group* const newGroup = groupTable->newDetachedGroup();
 
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
@@ -163,11 +163,11 @@ namespace GA_FeE_GroupPromote {
         if (group->classType() == newType)
             return group;
 
-        const GA_GroupTable* groupTable = geo->getGroupTable(newType);
+        const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
-        GA_Group* newGroup = groupTable->newDetachedGroup();
+        GA_Group* const newGroup = groupTable->newDetachedGroup();
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
         return newGroup;

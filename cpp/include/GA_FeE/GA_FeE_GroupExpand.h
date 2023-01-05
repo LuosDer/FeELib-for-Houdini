@@ -62,7 +62,10 @@ namespace GA_FeE_GroupExpand {
         )
     {
         if (!baseGroup || baseGroup->isEmpty())
+        {
+            expandGroup->addAll();
             return;
+        }
 
         const GA_GroupType groupType = baseGroup->classType();
 
@@ -91,15 +94,15 @@ namespace GA_FeE_GroupExpand {
         }
         else
         {
-            GA_ElementGroup* expandElemGroup = UTverify_cast<GA_ElementGroup*>(expandGroup);
+            GA_ElementGroup* const expandElemGroup = UTverify_cast<GA_ElementGroup*>(expandGroup);
 
-            GA_Attribute* nebsAttrib = GA_FeE_Adjacency::addAttribAdjacency(geo, groupType, connectivityGroupType);
+            const GA_Attribute* const nebsAttrib = GA_FeE_Adjacency::addAttribAdjacency(geo, groupType, connectivityGroupType);
             if (!nebsAttrib)
                 return;
-            GA_RWHandleT<UT_ValArray<GA_Offset>> nebsAttribH(nebsAttrib);
+            GA_ROHandleT<UT_ValArray<GA_Offset>> nebsAttribH(nebsAttrib);
 
             GA_SplittableRange geoSplittableRange(GA_FeE_Group::getRangeByAnyGroup(geo, baseGroup));
-            UTparallelFor(geoSplittableRange, [&geo, &expandElemGroup, &nebsAttribH](const GA_SplittableRange& r)
+            UTparallelFor(geoSplittableRange, [expandElemGroup, nebsAttribH](const GA_SplittableRange& r)
             {
                 UT_ValArray<GA_Offset> adjElems(32);
                 GA_Offset start, end;

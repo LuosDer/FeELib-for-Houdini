@@ -206,7 +206,7 @@ namespace GA_FeE_GroupBoolean {
     {
         if (!groupRef)
             return;
-        group->operator&=(*groupRef);
+        *group &= *groupRef;
         //for (GA_EdgeGroup::iterator it = group->begin(); !it.atEnd(); it.advance())
         //{
         //    if (groupRef->contains(it.getEdge()))
@@ -358,6 +358,33 @@ namespace GA_FeE_GroupBoolean {
     static void
         groupIntersect(
             const GA_Detail* const geo,
+            GA_PrimitiveGroup* const group,
+            const GA_PrimitiveGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        *group &= *groupRef;
+        //const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(group));
+        //UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
+        //{
+        //    GA_Offset start, end;
+        //    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        //    {
+        //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        //        {
+        //            if (!groupRef->contains(elemoff))
+        //                group->setElement(elemoff, false);
+        //        }
+        //    }
+        //});
+    }
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
             GA_PointGroup* const group,
             const GA_PointGroup* const groupRef
         )
@@ -367,67 +394,25 @@ namespace GA_FeE_GroupBoolean {
         if (!groupRef)
             return;
         *group &= *groupRef;
-        const GA_SplittableRange geoSplittableRange(geo->getPointRange(group));
-        UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    if (!groupRef->contains(elemoff))
-                        group->setElement(elemoff, false);
-                }
-            }
-        });
+        //const GA_SplittableRange geoSplittableRange(geo->getPointRange(group));
+        //UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
+        //{
+        //    GA_Offset start, end;
+        //    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        //    {
+        //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        //        {
+        //            if (!groupRef->contains(elemoff))
+        //                group->setElement(elemoff, false);
+        //        }
+        //    }
+        //});
     }
 
     static void
         groupIntersect(
             const GA_Detail* const geo,
-            GA_PrimitiveGroup* const group,
-            const GA_PrimitiveGroup* const groupRef
-        )
-    {
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
-        if (!groupRef)
-            return;
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(group));
-        UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    if (!groupRef->contains(elemoff))
-                        group->setElement(elemoff, false);
-                }
-            }
-        });
-    }
-
-    /*
-    static void
-        groupIntersect(
-            const GA_Detail* const geo,
-            GA_PointGroup* const group,
-            const GA_PrimitiveGroup* const groupRef
-        )
-    {
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
-        if (!groupRef)
-            return;
-        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-    }
-
-    static void
-        groupIntersect(
-            const GA_Detail* const geo,
-            GA_PointGroup* const group,
+            GA_VertexGroup* const group,
             const GA_VertexGroup* const groupRef
         )
     {
@@ -435,24 +420,12 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
+        *group &= *groupRef;
     }
 
-    static void
-        groupIntersect(
-            const GA_Detail* const geo,
-            GA_PointGroup* const group,
-            const GA_EdgeGroup* const groupRef
-        )
-    {
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(group);
-        if (!groupRef)
-            return;
-        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-    }
+
+
+
 
 
 
@@ -469,6 +442,7 @@ namespace GA_FeE_GroupBoolean {
             return;
         const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
     }
 
     SYS_FORCE_INLINE
@@ -485,8 +459,248 @@ namespace GA_FeE_GroupBoolean {
             return;
         const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
         groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
     }
-    */
+
+    SYS_FORCE_INLINE
+        static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_PrimitiveGroup* const group,
+            const GA_EdgeGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_PrimitiveGroup* const group,
+            const GA_Group* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        switch (groupRef->classType())
+        {
+        case GA_GROUP_PRIMITIVE:
+        {
+            groupIntersect(geo, group, static_cast<const GA_PrimitiveGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_POINT:
+        {
+            groupIntersect(geo, group, static_cast<const GA_PointGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_VERTEX:
+        {
+            groupIntersect(geo, group, static_cast<const GA_VertexGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_EDGE:
+        {
+            groupIntersect(geo, group, static_cast<const GA_EdgeGroup*>(groupRef));
+        }
+        break;
+        default:
+            break;
+        }
+    }
+
+
+
+
+    
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_PrimitiveGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_VertexGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_EdgeGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_PointGroup* const group,
+            const GA_Group* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        switch (groupRef->classType())
+        {
+        case GA_GROUP_PRIMITIVE:
+        {
+            groupIntersect(geo, group, static_cast<const GA_PrimitiveGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_POINT:
+        {
+            groupIntersect(geo, group, static_cast<const GA_PointGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_VERTEX:
+        {
+            groupIntersect(geo, group, static_cast<const GA_VertexGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_EDGE:
+        {
+            groupIntersect(geo, group, static_cast<const GA_EdgeGroup*>(groupRef));
+        }
+        break;
+        default:
+            break;
+        }
+    }
+
+
+
+
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_VertexGroup* const group,
+            const GA_PrimitiveGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_VertexGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_VertexGroup* const group,
+            const GA_PointGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_VertexGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_VertexGroup* const group,
+            const GA_EdgeGroup* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        const GA_VertexGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef);
+        delete promoGroupRef;
+    }
+
+
+    static void
+        groupIntersect(
+            const GA_Detail* const geo,
+            GA_VertexGroup* const group,
+            const GA_Group* const groupRef
+        )
+    {
+        UT_ASSERT_P(geo);
+        UT_ASSERT_P(group);
+        if (!groupRef)
+            return;
+        switch (groupRef->classType())
+        {
+        case GA_GROUP_PRIMITIVE:
+        {
+            groupIntersect(geo, group, static_cast<const GA_PrimitiveGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_POINT:
+        {
+            groupIntersect(geo, group, static_cast<const GA_PointGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_VERTEX:
+        {
+            groupIntersect(geo, group, static_cast<const GA_VertexGroup*>(groupRef));
+        }
+        break;
+        case GA_GROUP_EDGE:
+        {
+            groupIntersect(geo, group, static_cast<const GA_EdgeGroup*>(groupRef));
+        }
+        break;
+        default:
+            break;
+        }
+    }
+
+
 
 
 
@@ -532,6 +746,7 @@ namespace GA_FeE_GroupBoolean {
             break;
         }
     }
+    
 
 
 

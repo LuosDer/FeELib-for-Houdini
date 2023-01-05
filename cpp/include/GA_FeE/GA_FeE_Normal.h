@@ -42,10 +42,12 @@ addAttribNormal3D(
         posAttrib = geo->findPointAttribute("P");
 
     UT_ASSERT_P(posAttrib);
+    UT_ASSERT_P(posAttrib->getAIFTuple());
     UT_ASSERT_P(attribClass != GA_ATTRIB_OWNER_N && attribClass != GA_ATTRIB_INVALID);
-
+    
     GA_Attribute* normal3DAttrib = geo->addFloatTuple(attribClass, N3DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, storage);
-    if (storage == GA_STORE_REAL64)
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+    if (storage == GA_STORE_REAL64 && posAttrib->getAIFTuple()->getStorage(posAttrib) == GA_STORE_REAL64)
     {
         GEOcomputeNormals(*geo, GA_ROHandleV3D(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, method, copy_orig_if_zero);
     }
@@ -53,6 +55,9 @@ addAttribNormal3D(
     {
         GEOcomputeNormals(*geo, GA_ROHandleV3(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, method, copy_orig_if_zero);
     }
+#else
+    GEOcomputeNormals(*geo, posAttrib, normal3DAttrib, geoGroup, cuspangledegrees, method, copy_orig_if_zero);
+#endif
     return normal3DAttrib;
 }
 
@@ -87,16 +92,19 @@ computeNormal2D(
 #else
     GA_PointGroup* const unsharedPointGroup = const_cast<GA_PointGroup*>(GA_FeE_GroupPromote::groupPromotePoint(geo, unsharedVertexGroup));
 #endif
-    GA_PointGroup* const expandGroup = geo->newDetachedPointGroup();
-    UT_UniquePtr<GA_PointGroup> expandGroupUPtr(expandGroup);
+    if (geoPointGroup)
+    {
+        GA_PointGroup* const expandGroup = geo->newDetachedPointGroup();
+        UT_UniquePtr<GA_PointGroup> expandGroupUPtr(expandGroup);
 
-    GA_FeE_GroupExpand::groupExpand(geo, expandGroup, geoPointGroup, GA_GROUP_EDGE);
+        GA_FeE_GroupExpand::groupExpand(geo, expandGroup, geoPointGroup, GA_GROUP_EDGE);
 
-    //*unsharedPointGroup &= *expandGroup;
-    GA_FeE_GroupBoolean::groupIntersect(geo, unsharedPointGroup, expandGroup);
-    GA_FeE_GroupBoolean::groupIntersect(geo, unsharedVertexGroup, expandGroup);
+        *unsharedPointGroup &= *expandGroup;
+        //GA_FeE_GroupBoolean::groupIntersect(geo, unsharedPointGroup, expandGroup);
+        GA_FeE_GroupBoolean::groupIntersect(geo, unsharedVertexGroup, expandGroup);
 
-    //GA_PointGroup* expandGroup = GA_FeE_Group::newDetachedGroup(outGeo0, geo0Group);
+        //GA_PointGroup* expandGroup = GA_FeE_Group::newDetachedGroup(outGeo0, geo0Group);
+    }
 
 
     //unsharedPointGroup->operator&=(*geoPointGroup);
@@ -109,8 +117,8 @@ computeNormal2D(
     //GA_FeE_Group::groupBumpDataId(unsharedPointGroup);
 
 
-    //const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, unsharedVertexGroup);
-    const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, nullptr);
+    //const GA_Attribute* const dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, unsharedVertexGroup);
+    const GA_Attribute* const dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, nullptr);
     const GA_ROHandleT<GA_Offset> dstptAttribH(dstptAttrib);
 
     const GA_ROHandleT<UT_Vector3T<fpreal64>> posH(posAttrib);
@@ -122,15 +130,15 @@ computeNormal2D(
 
     GA_Topology& topo = geo->getTopology();
     topo.makePrimitiveRef();
-    const GA_ATITopology* vtxPointRef = topo.getPointRef();
+    const GA_ATITopology* const vtxPointRef = topo.getPointRef();
     //const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-    const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
+    const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
 
 
     const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
-    UTparallelFor(geoVertexSplittableRange, [&geo, &posH, &dstptAttribH, &N2DH, &N3DH,
-        &vtxPointRef, &vtxPrimRef,
-        &attribCalssN3D, &defaultN3D](const GA_SplittableRange& r)
+    UTparallelFor(geoVertexSplittableRange, [posH, dstptAttribH, N2DH, N3DH,
+        vtxPointRef, vtxPrimRef,
+        attribCalssN3D, defaultN3D](const GA_SplittableRange& r)
     {
         UT_Vector3T<fpreal64> dir;
         GA_Offset start, end;
@@ -166,7 +174,7 @@ computeNormal2D(
 
 
     const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
-    UTparallelFor(geoPointSplittableRange, [&geo, &N2DAttrib, &uniScale, &defaultN3D, &scaleByTurns, &normalize](const GA_SplittableRange& r)
+    UTparallelFor(geoPointSplittableRange, [N2DAttrib, uniScale, defaultN3D, scaleByTurns, normalize](const GA_SplittableRange& r)
     {
         GA_PageHandleV<UT_Vector3T<fpreal64>>::RWType N2D_PH(N2DAttrib);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)

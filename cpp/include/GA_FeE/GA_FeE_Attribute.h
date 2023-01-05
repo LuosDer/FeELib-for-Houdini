@@ -810,7 +810,7 @@ keepStdAttribute(
 SYS_FORCE_INLINE
     static bool
     deleteAttribute(
-        GA_Attribute* attrib
+        GA_Attribute* const attrib
     )
 {
     UT_ASSERT_P(attrib);
@@ -822,7 +822,7 @@ SYS_FORCE_INLINE
 SYS_FORCE_INLINE
 static bool
 attributeDelete(
-    GA_Attribute* attrib
+    GA_Attribute* const attrib
 )
 {
     UT_ASSERT_P(attrib);
@@ -832,7 +832,7 @@ attributeDelete(
 SYS_FORCE_INLINE
 static bool
 attribDelete(
-    GA_Attribute* attrib
+    GA_Attribute* const attrib
 )
 {
     UT_ASSERT_P(attrib);
@@ -843,7 +843,7 @@ attribDelete(
 SYS_FORCE_INLINE
 static bool
     destroyAttribute(
-        GA_Attribute* attrib
+        GA_Attribute* const attrib
     )
 {
     UT_ASSERT_P(attrib);
@@ -856,8 +856,8 @@ static bool
 SYS_FORCE_INLINE
 static bool
 renameAttribute(
-    GA_Detail* geo,
-    const GA_Attribute* attrib,
+    GA_Detail* const geo,
+    const GA_Attribute* const attrib,
     const UT_StringHolder& newName
 )
 {
@@ -871,7 +871,7 @@ renameAttribute(
 SYS_FORCE_INLINE
 static bool
 renameAttribute(
-    GA_Attribute* attrib,
+    GA_Attribute* const attrib,
     const UT_StringHolder& newName
 )
 {
@@ -886,26 +886,27 @@ renameAttribute(
 static bool
 forceRenameAttribute(
     GA_Detail* geo,
-    GA_Attribute* attrib,
+    GA_Attribute* const attrib,
     const UT_StringHolder& newName
 )
 {
-    GA_Attribute* existAttribute = geo->findAttribute(attrib->getOwner(), newName);
+    GA_Attribute* const existAttribute = geo->findAttribute(attrib->getOwner(), newName);
     if (existAttribute)
         geo->getAttributes().destroyAttribute(existAttribute);
-    return geo->renameAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, attrib->getName(), newName);
+    return geo->renameAttribute(attrib->getOwner(), GA_SCOPE_PUBLIC, attrib->getName(), newName);
 }
 
 
 SYS_FORCE_INLINE
 static bool
 forceRenameAttribute(
-    GA_Attribute* attrib,
+    GA_Attribute* const attrib,
     const UT_StringHolder& newName
 )
 {
-    GA_Detail& geo = attrib->getDetail();
-    return forceRenameAttribute(&geo, attrib, newName);
+    return forceRenameAttribute(&(attrib->getDetail()), attrib, newName);
+    //GA_Detail& geo = attrib->getDetail();
+    //return forceRenameAttribute(&geo, attrib, newName);
 }
 
 

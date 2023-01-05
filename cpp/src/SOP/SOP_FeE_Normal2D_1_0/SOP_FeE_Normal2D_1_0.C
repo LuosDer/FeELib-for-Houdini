@@ -98,7 +98,7 @@ static const char *theDsFile = R"THEDSFILE(
         hidewhen "{ inputNormal3D == 1 }"
     }
     parm {
-        name    "normal3DAttribName"
+        name    "inputNormal3DAttribName"
         cppname "Normal3DAttribName"
         label   "Normal3D Attrib Name"
         type    string
@@ -210,13 +210,13 @@ SOP_FeE_Normal2D_1_0::buildTemplates()
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
-        templ.setChoiceListPtr("normal3DAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("inputNormal3DAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
 
 
-const UT_StringHolder SOP_FeE_Normal2D_1_0::theSOPTypeName("FeE::normal2D::1.0"_sh);
+const UT_StringHolder SOP_FeE_Normal2D_1_0::theSOPTypeName("FeE::normal2d::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
@@ -353,11 +353,11 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //outGeo0 = sopNodeProcess(*inGeo0);
 
 #if 1
-    const UT_StringHolder& N2DAttribName = "__N2D_SOP_FeE_Normal2D_1_0";
-    const UT_StringHolder& N3DAttribName = "__N2D_SOP_FeE_Normal2D_1_0";
+    const UT_StringHolder& tmp_Normal2DAttribName = "__N2D_SOP_FeE_Normal2D_1_0";
+    const UT_StringHolder& tmp_Normal3DAttribName = "__N3D_SOP_FeE_Normal2D_1_0";
 #else
-    #define N2DAttribName "__N2D_SOP_FeE_Normal2D_1_0"
-    #define N3DAttribName "__N3D_SOP_FeE_Normal2D_1_0"
+    #define tmp_Normal2DAttribName "__N2D_SOP_FeE_Normal2D_1_0"
+    #define tmp_Normal3DAttribName "__N3D_SOP_FeE_Normal2D_1_0"
 #endif
 
     const UT_StringHolder& geo0AttribNames = sopparms.getNormal2DAttribName();
@@ -406,14 +406,14 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GOP_Manager gop;
     const UT_StringHolder& groupName0 = sopparms.getGroup();
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
-    const bool hasGroup = !!geo0Group;
+    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
+    //const bool hasGroup = !!geo0Group;
 
-    if (hasGroup && geo0Group->isEmpty())
+    if (geo0Group && geo0Group->isEmpty())
         return;
 
-    GA_PointGroup* geo0PointGroup = const_cast<GA_PointGroup*>(GA_FeE_GroupPromote::groupPromotePointDetached(outGeo0, geo0Group));
-    UT_UniquePtr<GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
+    const GA_PointGroup* const geo0PointGroup = GA_FeE_GroupPromote::groupPromotePointDetached(outGeo0, geo0Group);
+    UT_UniquePtr<const GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
 
     //GA_VertexGroup* geo0VtxGroup = const_cast<GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
 
@@ -431,40 +431,40 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Attribute* normal3DAttrib = nullptr;
     if (inputNormal3D)
     {
-        const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
+        const UT_StringHolder& inputNormal3DAttribName = sopparms.getNormal3DAttribName();
         switch (geo0N3DAttribClass)
         {
         case GA_ATTRIB_PRIMITIVE:
-            normal3DAttrib = outGeo0->findPrimitiveAttribute(normal3DAttribName);
+            normal3DAttrib = outGeo0->findPrimitiveAttribute(inputNormal3DAttribName);
             if (!normal3DAttrib)
                 return;
             break;
         case GA_ATTRIB_POINT:
-            normal3DAttrib = outGeo0->findPointAttribute(normal3DAttribName);
+            normal3DAttrib = outGeo0->findPointAttribute(inputNormal3DAttribName);
             if (!normal3DAttrib)
                 return;
             break;
         case GA_ATTRIB_VERTEX:
-            normal3DAttrib = outGeo0->findVertexAttribute(normal3DAttribName);
+            normal3DAttrib = outGeo0->findVertexAttribute(inputNormal3DAttribName);
             if (!normal3DAttrib)
                 return;
             break;
         case GA_ATTRIB_DETAIL:
-            normal3DAttrib = outGeo0->findGlobalAttribute(normal3DAttribName);
+            normal3DAttrib = outGeo0->findGlobalAttribute(inputNormal3DAttribName);
             if (!normal3DAttrib)
                 return;
             break;
         case GA_ATTRIB_OWNER_N:
-            normal3DAttrib = outGeo0->findPrimitiveAttribute(normal3DAttribName);
+            normal3DAttrib = outGeo0->findPrimitiveAttribute(inputNormal3DAttribName);
             if (!normal3DAttrib)
             {
-                normal3DAttrib = outGeo0->findPointAttribute(normal3DAttribName);
+                normal3DAttrib = outGeo0->findPointAttribute(inputNormal3DAttribName);
                 if (!normal3DAttrib)
                 {
-                    normal3DAttrib = outGeo0->findVertexAttribute(normal3DAttribName);
+                    normal3DAttrib = outGeo0->findVertexAttribute(inputNormal3DAttribName);
                     if (!normal3DAttrib)
                     {
-                        normal3DAttrib = outGeo0->findGlobalAttribute(normal3DAttribName);
+                        normal3DAttrib = outGeo0->findGlobalAttribute(inputNormal3DAttribName);
                         if (!normal3DAttrib)
                             return;
                     }
@@ -473,10 +473,10 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
             
             break;
         case GA_ATTRIB_INVALID:
-            normal3DAttrib = outGeo0->findPointAttribute(normal3DAttribName);
+            normal3DAttrib = outGeo0->findPointAttribute(inputNormal3DAttribName);
             if (!normal3DAttrib)
             {
-                normal3DAttrib = outGeo0->findVertexAttribute(normal3DAttribName);
+                normal3DAttrib = outGeo0->findVertexAttribute(inputNormal3DAttribName);
                 if (!normal3DAttrib)
                 {
                     return;
@@ -493,7 +493,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         if (geo0N3DAttribClass == GA_ATTRIB_OWNER_N || geo0N3DAttribClass == GA_ATTRIB_INVALID)
             geo0N3DAttribClass = GA_ATTRIB_PRIMITIVE;
 
-        normal3DAttrib = GA_FeE_Normal::addAttribNormal3D(outGeo0, nullptr, geo0N3DAttribClass, inStorageF, N3DAttribName,
+        normal3DAttrib = GA_FeE_Normal::addAttribNormal3D(outGeo0, nullptr, geo0N3DAttribClass, inStorageF, tmp_Normal3DAttribName,
             GEO_DEFAULT_ADJUSTED_CUSP_ANGLE, GEO_NormalMethod::ANGLE_WEIGHTED, false, posAttrib);
     }
     const GA_AttributeOwner N3DFinalAttribClass = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
@@ -506,11 +506,11 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //outGeo0->setPrimitiveClosedFlag(elemoff);
 
     GA_Attribute* N2DAttrib = GA_FeE_Normal::addAttribNormal2D(outGeo0, geo0PointGroup,
-        N2DAttribName, posAttrib, normal3DAttrib, defaultNormal3D,
+        tmp_Normal2DAttribName, posAttrib, normal3DAttrib, defaultNormal3D,
         scaleByTurns, normalize, uniScale,
         inStorageF, subscribeRatio, minGrainSize);
 
-    //GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, N2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
+    //GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, tmp_Normal2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
     //GA_FeE_Normal::computeNormal2D(outGeo0, geo0PointGroup,
     //    N2DAttrib, posAttrib, normal3DAttrib, defaultNormal3D,
     //    scaleByTurns, normalize, uniScale,
@@ -522,7 +522,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //GA_Attribute* existAttribute = outGeo0->findAttribute(GA_ATTRIB_POINT, geo0AttribNames);
     //if(existAttribute)
     //    outGeo0->getAttributes().destroyAttribute(existAttribute);
-    //outGeo0->renameAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, N2DAttribName, geo0AttribNames);
+    //outGeo0->renameAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, tmp_Normal2DAttribName, geo0AttribNames);
 
     if(!inputNormal3D && !useConstantNormal3D && normal3DAttrib)
         GA_FeE_Attribute::destroyAttribute(normal3DAttrib);
@@ -532,7 +532,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     N2DAttrib->bumpDataId();
     //N2DAttrib->bumpDataId();
-    outGeo0->bumpAllDataIds();
+    //outGeo0->bumpAllDataIds();
 
 
 }
