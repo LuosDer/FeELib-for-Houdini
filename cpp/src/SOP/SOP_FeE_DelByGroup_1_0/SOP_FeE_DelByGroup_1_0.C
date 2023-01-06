@@ -12,7 +12,6 @@
 
 
 #include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
 #include "GA_FeE/GA_FeE_Detail.h"
 
 using namespace SOP_FeE_DelByGroup_1_0_Namespace;
@@ -154,9 +153,9 @@ newSopOperator(OP_OperatorTable* table)
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/Group");
+        "Five elements Elf/Operation/Delete");
 
-    newOp->setIconName("SOP_blast");
+    newOp->setIconName("SOP_delete");
     table->addOperator(newOp);
 
 }
@@ -271,31 +270,9 @@ SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //        return;
     //    }
     //}
-
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
-
-
-    const bool delByGroup = sopparms.getDelByGroup();
-    if (!delByGroup)
-    {
-        if (geo0Group)
-        {
-            cookparms.getNode()->setHighlight(true);
-            cookparms.select(*geo0Group);
-        }
-        return;
-    }
-
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-    GA_FeE_Detail::delByGroup(outGeo0, geo0Group, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
+    GA_FeE_Detail::delElement(sopparms.getDelByGroup(), cookparms, outGeo0, groupType, groupName, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());
 
-
-    //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
     outGeo0->bumpDataIdsForAddOrRemove(1,1,1);
 }
 

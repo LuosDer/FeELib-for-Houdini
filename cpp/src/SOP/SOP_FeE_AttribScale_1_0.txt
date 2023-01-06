@@ -1,7 +1,7 @@
 #type: node
 #context: sop
 #internal: FeE
-#largeicon: /nodes/sop/SOP_FeE_ConvertLine_1_0.png
+#largeicon: /nodes/sop/SOP_FeE_AttribScale_1_0.png
 
 #tags: shape
 

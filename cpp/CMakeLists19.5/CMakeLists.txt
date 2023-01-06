@@ -92,6 +92,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_ConvertLine_1_0
     SOP_FeE_DelAllAttribGroup_1_0
     SOP_FeE_DelByGroup_1_0
+    SOP_FeE_DelElement_1_0
     SOP_FeE_DelVertex_1_0
     SOP_FeE_ExtractPoint_1_0
     SOP_FeE_GroupCombine_1_0
@@ -100,9 +101,15 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
     SOP_FeE_JoinCurve_2_0
+    SOP_FeE_LeaveElement_1_0
     SOP_FeE_Measure_3_0
     SOP_FeE_Normal2D_1_0
     SOP_FeE_PolyCut_3_0
+    SOP_FeE_PolyReduce2D_4_0
+    SOP_FeE_PrimInlinePoint_Fast_2_0
+    SOP_FeE_Skin_3_0
+    SOP_FeE_SkinIntersectCurve_2_0
+    SOP_FeE_UVRectify_2_0
     SOP_FeE_UVScaletoWorldSize_0_5
     SOP_FeE_UVScaletoWorldSize_3_0
 )

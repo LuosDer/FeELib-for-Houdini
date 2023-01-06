@@ -18,7 +18,7 @@ namespace GA_FeE_Group {
 
 static void
 delStdGroup(
-    GA_GroupTable* const groupTable,
+    GA_GroupTable* const const groupTable,
     const UT_StringHolder& delGroupPattern
 )
 {
@@ -68,7 +68,7 @@ delStdGroup(
 
 static void
 keepStdGroup(
-    GA_GroupTable* const groupTable,
+    GA_GroupTable* const const groupTable,
     const UT_StringHolder& keepGroupPattern
 )
 {
@@ -297,7 +297,7 @@ findGroup(
 )
 {
     UT_ASSERT_P(geo);
-    const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
+    const GA_GroupTable* const const groupTable = geo->getGroupTable(groupType);
     if (!groupTable)
         return nullptr;
     return groupTable->find(groupName);
@@ -334,7 +334,7 @@ findOrCreateGroup(
 )
 {
     UT_ASSERT_P(geo);
-    GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+    GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (!groupTable)
         return nullptr;
     GA_Group* group = groupTable->find(groupName);
@@ -438,6 +438,49 @@ groupBumpDataId(
 
 
 
+static GA_Group*
+findOrParseGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GEO_Detail* const geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    UT_ASSERT_P(geo);
+    if (!groupName.length())
+        return nullptr;
+
+    if (!groupName.isstring())
+    {
+        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+        return nullptr;
+    }
+
+    GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
+    if (groupTable)
+    {
+        GA_Group* anyGroup = groupTable->find(groupName);
+        if (anyGroup)
+            return anyGroup;
+    }
+
+    bool success = true;
+    GA_Group* anyGroup = const_cast<GA_Group*>(gop.parseGroupDetached(groupName, groupType, geo, true, false, success));
+
+    //if (!success || (anyGroup && !anyGroup->isElementGroup()))
+    if (!success)
+    {
+        cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
+        return nullptr;
+    }
+    if (anyGroup)
+    {
+        return anyGroup;
+    }
+    return nullptr;
+}
+
 static const GA_Group*
 findOrParseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
@@ -456,8 +499,8 @@ findOrParseGroupDetached(
         cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
         return nullptr;
     }
-    
-    const GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+
+    const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (groupTable)
     {
         const GA_Group* anyGroup = groupTable->find(groupName);
@@ -480,6 +523,9 @@ findOrParseGroupDetached(
     }
     return nullptr;
 }
+
+
+
 
 SYS_FORCE_INLINE
 static const GA_PrimitiveGroup*
@@ -900,7 +946,7 @@ copyGroup(
     if (attribPattern.length() == 0)
         return;
 
-    GA_GroupTable* attribsDst = geo->getGroupTable(owner);
+    GA_GroupTable* const attribsDst = geo->getGroupTable(owner);
     GA_Group* attribNew = nullptr;
     const GA_Group* attribRef = nullptr;
 
