@@ -18,7 +18,7 @@ namespace GA_FeE_Group {
 
 static void
 delStdGroup(
-    GA_GroupTable* const const groupTable,
+    GA_GroupTable* const groupTable,
     const UT_StringHolder& delGroupPattern
 )
 {
@@ -29,7 +29,7 @@ delStdGroup(
         GA_Group* group = it.group();
         if (group->isDetached())
             continue;
-        if (!group->getName().match(delGroupPattern))
+        if (!group->getName().multiMatch(delGroupPattern))
             continue;
         groupTable->destroy(group);
     }
@@ -43,6 +43,8 @@ delStdGroup(
     const UT_StringHolder& delGroupPattern
 )
 {
+    if (delGroupPattern == "")
+        return;
     return delStdGroup(geo->getGroupTable(groupTable), delGroupPattern);
 }
 
@@ -68,7 +70,7 @@ delStdGroup(
 
 static void
 keepStdGroup(
-    GA_GroupTable* const const groupTable,
+    GA_GroupTable* const groupTable,
     const UT_StringHolder& keepGroupPattern
 )
 {
@@ -297,7 +299,7 @@ findGroup(
 )
 {
     UT_ASSERT_P(geo);
-    const GA_GroupTable* const const groupTable = geo->getGroupTable(groupType);
+    const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (!groupTable)
         return nullptr;
     return groupTable->find(groupName);
@@ -467,6 +469,7 @@ findOrParseGroupDetached(
 
     bool success = true;
     GA_Group* anyGroup = const_cast<GA_Group*>(gop.parseGroupDetached(groupName, groupType, geo, true, false, success));
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, geo, group);
 
     //if (!success || (anyGroup && !anyGroup->isElementGroup()))
     if (!success)
@@ -573,6 +576,59 @@ findOrParseEdgeGroupDetached(
 )
 {
     return static_cast<const GA_EdgeGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_EDGE, groupName, gop));
+}
+
+
+
+
+
+
+SYS_FORCE_INLINE
+static GA_PrimitiveGroup*
+findOrParsePrimitiveGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GEO_Detail* const geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<GA_PrimitiveGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_PRIMITIVE, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static GA_PointGroup*
+findOrParsePointGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GEO_Detail* geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<GA_PointGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_POINT, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static GA_VertexGroup*
+findOrParseVertexGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GEO_Detail* const geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<GA_VertexGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_VERTEX, groupName, gop));
+}
+
+SYS_FORCE_INLINE
+static GA_EdgeGroup*
+findOrParseEdgeGroupDetached(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GEO_Detail* const geo,
+    const UT_StringHolder& groupName,
+    GOP_Manager& gop
+)
+{
+    return static_cast<GA_EdgeGroup*>(findOrParseGroupDetached(cookparms, geo, GA_GROUP_EDGE, groupName, gop));
 }
 
 

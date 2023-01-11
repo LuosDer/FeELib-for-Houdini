@@ -10,8 +10,7 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GA_FeE/GA_FeE_Detail.h"
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GEO_FeE/GEO_FeE_Detail.h"
 
 
 
@@ -174,38 +173,20 @@ SOP_FeE_LeaveElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-    if (!sopparms.getLeaveElement())
-    {
-        return;
-    }
-
-    const bool reverseGroup = sopparms.getLeaveElementReverseGroup();
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getLeaveElementGroupType());
-    const UT_StringHolder& groupName = sopparms.getLeaveElementGroup();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
+    const bool reverseGroup = sopparms.getLeaveElementReverseGroup();
+
+    const GA_GroupType groupType = sopGroupType(sopparms.getLeaveElementGroupType());
+    const UT_StringHolder& groupName = sopparms.getLeaveElementGroup();
 
 
-    if (!sopparms.getLeaveElement())
-    {
-        if (geo0Group)
-        {
-            cookparms.getNode()->setHighlight(true);
-            cookparms.select(*geo0Group);
-        }
-        return;
-    }
-
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-    GA_FeE_Detail::leaveElement(sopparms.getLeaveElement(), cookparms, outGeo0, geo0Group, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());
-
+    GEO_FeE_Detail::leaveElement(sopparms.getLeaveElement(), cookparms, outGeo0, inGeo0, groupType, groupName,
+        reverseGroup, sopparms.getDelElementInputGroup());
 
     outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
 }

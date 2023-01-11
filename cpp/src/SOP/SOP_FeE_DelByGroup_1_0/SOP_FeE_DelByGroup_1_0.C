@@ -11,8 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_Detail.h"
+#include "GEO_FeE/GEO_FeE_Detail.h"
 
 using namespace SOP_FeE_DelByGroup_1_0_Namespace;
 
@@ -242,36 +241,27 @@ void
 SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_DelByGroup_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelByGroup_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
     outGeo0->replaceWith(*inGeo0);
 
 
-    const bool reverseGroup = sopparms.getReverseGroup();
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    
-    //GA_Group* geo0Group = nullptr;
-    //if (reverseGroup)
-    //{
-    //    geo0Group = GA_FeE_Group::findGroup(inGeo0, groupType, groupName);
-    //    if (!geo0Group || geo0Group->isEmpty())
-    //    {
-    //        const GA_AttributeFilter filter = GA_AttributeFilter::selectNot(GA_AttributeFilter::selectTopology());
-    //        outGeo0->replaceWith(*inGeo0, &filter);
-    //        return;
-    //    }
-    //}
+
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const UT_StringHolder& groupName = sopparms.getGroup();
+
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-    GA_FeE_Detail::delElement(sopparms.getDelByGroup(), cookparms, outGeo0, groupType, groupName, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());
+    GEO_FeE_Detail::delElement(sopparms.getDelByGroup(), cookparms, outGeo0, groupType, groupName,
+        sopparms.getReverseGroup(), sopparms.getDelGroup(), sopparms.getDelWithPoint(),
+        delPointMode, sopparms.getGuaranteeNoVertexReference()
+    );
 
     outGeo0->bumpDataIdsForAddOrRemove(1,1,1);
 }

@@ -10,11 +10,8 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GU/GU_IntersectionAnalysis.h"
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GEO_FeE/GEO_FeE_Detail.h"
 
 
 
@@ -25,32 +22,32 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "delElements"
-        cppname "DelElements"
-        label   "Delete Elements"
+        name    "delElement"
+        cppname "DelElement"
+        label   "Delete Element"
         type    toggle
         default { "on" }
     }
     groupsimple {
-        name    "delElements_folder"
-        label   "Delete Elements"
-        disablewhen "{ delElements == 0 }"
+        name    "delElement_folder"
+        label   "Delete Element"
+        disablewhen "{ delElement == 0 }"
         grouptag { "group_type" "simple" }
 
         parm {
-            name    "delElementsGroup"
-            cppname "DelElementsGroup"
+            name    "delElementGroup"
+            cppname "DelElementGroup"
             label   "Group Name"
             type    string
             default { "" }
-            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('delElementsGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('delElementGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
             parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
             parmtag { "script_action_icon" "BUTTONS_reselect" }
             parmtag { "sop_input" "0" }
         }
         parm {
-            name    "delElementsGroupType"
-            cppname "DelElementsGroupType"
+            name    "delElementGroupType"
+            cppname "DelElementGroupType"
             label   "Group Type"
             type    ordinal
             default { "guess" }
@@ -58,21 +55,50 @@ static const char *theDsFile = R"THEDSFILE(
                 "guess"     "Guess from Group"
                 "prim"      "Primitive"
                 "point"     "Point"
+                "vertex"    "Vertex"
+                "edge"      "Edge"
             }
         }
         parm {
-            name    "delElementsReverseGroup"
-            cppname "DelElementsReverseGroup"
+            name    "delElementReverseGroup"
+            cppname "DelElementReverseGroup"
             label   "Delete Non Selected"
             type    toggle
             default { "off" }
         }
         parm {
-            name    "delElementsInputGroup"
-            cppname "DelElementsInputGroup"
-            label   "Delete Elements Input Group"
+            name    "delElementInputGroup"
+            cppname "DelElementInputGroup"
+            label   "Delete Element Input Group"
             type    toggle
             default { "on" }
+        }
+
+        parm {
+            name    "delElementWithPoint"
+            cppname "DelElementWithPoint"
+            label   "Delete With Point"
+            type    toggle
+            default { 1 }
+        }
+        parm {
+            name    "delElementPointMode"
+            cppname "DelElementPointMode"
+            label   "Delete Point Mode"
+            type    ordinal
+            default { "delDegenerateIncompatible" }
+            menu {
+                "leavePrimitive"             "Leave Primitive"
+                "delDegenerate"              "Delete Degenerate"
+                "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
+            }
+        }
+        parm {
+            name    "delElementGuaranteeNoVertexReference"
+            cppname "DelElementGuaranteeNoVertexReference"
+            label   "Guarantee No Vertex Reference"
+            type    toggle
+            default { 0 }
         }
     }
 }
@@ -84,7 +110,7 @@ SOP_FeE_DelElement_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_DelElement_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("delElementsGroup"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("delElementGroup"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -109,7 +135,7 @@ newSopOperator(OP_OperatorTable* table)
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/Operation/Delete");
+        "Five element Elf/Operation/Delete");
 
     newOp->setIconName("SOP_delete");
     table->addOperator(newOp);
@@ -143,6 +169,43 @@ SOP_FeE_DelElement_1_0::cookVerb() const
 }
 
 
+
+
+
+
+
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmgrouptype)
+{
+    using namespace SOP_FeE_DelElement_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case DelElementGroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case DelElementGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case DelElementGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case DelElementGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case DelElementGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+static GA_Detail::GA_DestroyPointMode
+sopDelPointMode(SOP_FeE_DelElement_1_0Parms::DelElementPointMode delPointMode)
+{
+    using namespace SOP_FeE_DelElement_1_0Enums;
+    switch (delPointMode)
+    {
+    case DelElementPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
+    case DelElementPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
+    case DelElementPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
+    return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
+}
+
 void
 SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -154,53 +217,24 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     outGeo0->replaceWith(*inGeo0);
 
 
-    const bool reverseGroup = sopparms.getReverseGroup();
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    
-    //GA_Group* geo0Group = nullptr;
-    //if (reverseGroup)
-    //{
-    //    geo0Group = GA_FeE_Group::findGroup(inGeo0, groupType, groupName);
-    //    if (!geo0Group || geo0Group->isEmpty())
-    //    {
-    //        const GA_AttributeFilter filter = GA_AttributeFilter::selectNot(GA_AttributeFilter::selectTopology());
-    //        outGeo0->replaceWith(*inGeo0, &filter);
-    //        return;
-    //    }
-    //}
-
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
 
 
-    const bool delByGroup = sopparms.getDelByGroup();
-    if (!delByGroup)
-    {
-        if (geo0Group)
-        {
-            cookparms.getNode()->setHighlight(true);
-            cookparms.select(*geo0Group);
-        }
-        return;
-    }
 
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-    GA_FeE_Detail::delByGroup(outGeo0, geo0Group, reverseGroup, sopparms.getDelGroup(), sopparms.getDelWithPoint(), delPointMode, sopparms.getGuaranteeNoVertexReference());
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
+    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
+    const UT_StringHolder& groupName = sopparms.getDelElementGroup();
 
+    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
+    GEO_FeE_Detail::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
+        sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
+        delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
+    );
 
-    //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
-    outGeo0->bumpDataIdsForAddOrRemove(1,1,1);
+    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
 
 }
 

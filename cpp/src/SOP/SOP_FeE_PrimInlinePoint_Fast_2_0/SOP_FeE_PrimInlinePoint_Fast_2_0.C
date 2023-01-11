@@ -10,11 +10,9 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GU/GU_IntersectionAnalysis.h"
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+
+#include "GA_FeE/GA_FeE_GeoProperty.h"
 
 
 
@@ -66,33 +64,6 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
 
-    parm {
-        name    "kernel"
-        cppname "Kernel"
-        label   "Kernel"
-        type    integer
-        default { 0 }
-        range   { 0! 1! }
-    }
-
-
-
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
 }
 )THEDSFILE";
 
@@ -161,6 +132,34 @@ SOP_FeE_PrimInlinePoint_Fast_2_0::cookVerb() const
 }
 
 
+
+
+
+
+
+
+
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_PrimInlinePoint_Fast_2_0Parms::GroupType parmgrouptype)
+{
+    using namespace SOP_FeE_PrimInlinePoint_Fast_2_0Enums;
+    switch (parmgrouptype)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
+
 void
 SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -171,30 +170,22 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
 
-
-    GU_DetailHandle tmpGeoH0;
-    GU_Detail* tmpGeo0 = new GU_Detail();
-    tmpGeoH0.allocateAndSet(tmpGeo0);
-    tmpGeo0->replaceWith(*inGeo0);
-
-
     outGeo0->replaceWithPoints(*inGeo0);
-    //outGeo0->replaceWith(*inGeo0);
 
-    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-
-    
-    GOP_Manager gop;
-    const GA_PrimitiveGroup* const primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
-    if (primGroup && primGroup->isEmpty())
-        return;
+    const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
+    const bool reverseGroup = sopparms.getReverseGroup();
+    //const fpreal threshold_inlineDot = radians(threshold_inlineAngle);
 
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
+    GA_FeE_GeoProperty::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), threshold_inlineAngle, reverseGroup);
+
+    //const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -202,12 +193,7 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
     
 
 
-    fpreal64 threshold = sopparms.getThreshold();
-
-
-
     outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    tmpGeoH0.deleteGdp();
 
 }
 

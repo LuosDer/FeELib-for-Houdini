@@ -11,11 +11,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Detail.h"
+#include "GEO_FeE/GEO_FeE_Detail.h"
 #include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_Detail.h"
 
 using namespace SOP_FeE_ExtractPoint_1_0_Namespace;
 
@@ -318,10 +315,10 @@ void
 SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ExtractPoint_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ExtractPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     if (!sopparms.getExtractPoint())
     {
@@ -329,10 +326,8 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
     }
 
-    outGeo0->replaceWithPoints(*inGeo0);
 
     const UT_StringHolder& groupName = sopparms.getGroup();
-    const bool reverseGroup = sopparms.getReverseGroup();
 
     const UT_StringHolder& delPrimAttrib = sopparms.getDelPrimAttrib();
     const UT_StringHolder& delPointAttrib = sopparms.getDelPointAttrib();
@@ -345,147 +340,23 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const UT_StringHolder& delEdgeGroup = sopparms.getDelEdgeGroup();
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    GA_FeE_Attribute::delStdAttribute(outGeo0, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
-
-    const GA_PointGroup* geo0Group = outGeo0->findPointGroup(groupName);
-    if (geo0Group)
-    {
-        GA_FeE_Group::delStdGroup(outGeo0, delPrimGroup, "", delVertexGroup, delEdgeGroup);
-        GA_GroupTable* groupTable = outGeo0->getGroupTable(GA_GROUP_POINT);
-        for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
-        {
-            GA_Group* const group = it.group();
-            if (group->isDetached())
-                continue;
-            if (group->getName() == groupName)
-                continue;
-            if (group->getName().match(delPointGroup))
-                continue;
-            groupTable->destroy(group);
-        }
-    }
-    else
-    {
-        GA_FeE_Group::delStdGroup(outGeo0, delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
-    }
-
-    GOP_Manager gop;
-    //onst GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    //geo0Group = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, groupName, gop);
-    geo0Group = GA_FeE_Group::parsePointGroupDetached(cookparms, outGeo0, groupName, gop);
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-    if (geo0Group)
-    {
-        if (geo0Group->isEmpty())
-        {
-            if (reverseGroup)
-            {
-                return;
-            }
-            else
-            {
-                outGeo0->clear();
-                outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
-                return;
-            }
-        }
-        else if (geo0Group->entries() == outGeo0->getNumPoints())
-        {
-            if (reverseGroup)
-            {
-                outGeo0->clear();
-                outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
-                return;
-            }
-            else
-            {
-                return;
-            }
-        }
-    }
-    else
-    {
-        if (reverseGroup)
-        {
-            return;
-        }
-        else
-        {
-            outGeo0->clear();
-            outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
-            return;
-        }
-    }
-
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    //const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-    //outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, reverseGroup), delPointMode, sopparms.getGuaranteeNoVertexReference());
+#if 1
+    GEO_FeE_Detail::extractPoint(cookparms, outGeo0, inGeo0, groupName,
+        delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
+        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
+        sopparms.getReverseGroup(), sopparms.getDelInputGroup());
+#else
+    GA_FeE_Attribute::delStdAttribute(outGeo0, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+    GEO_FeE_Detail::extractPoint(cookparms, outGeo0, groupName,
+        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
+        sopparms.getReverseGroup(), sopparms.getDelInputGroup());
+#endif
 
-    
-    switch (sopparms.getKernel())
-    {
-    case 0:
-    {
-        if (reverseGroup)
-        {
-            if (geo0Group->entries() <= 4096)
-            {
-                outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
-            }
-            else
-            {
-            }
-        }
-        else
-        {
-            if (geo0Group->entries() >= outGeo0->getNumPoints() - 4096)
-            {
-                outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
-            }
-            else
-            {
-                //outGeo0->clear();
-                //outGeo0->cloneCopyGroupsAndAttributes(*inGeo0);
-                //GA_Offset ptoff_start = outGeo0->appendPointBlock(geo0Group->entries());
-                //GA_Attribute* attrib
-                //    outGeo0->copyPoint(0, );
-            }
-        }
-    }
-        break;
-    case 1:
-    {
-        GA_OffsetList offList = GA_FeE_Detail::getOffsetList(outGeo0, geo0Group, !reverseGroup);
-        GA_IndexMap& ptmap = outGeo0->getIndexMap(GA_ATTRIB_POINT);
-
-        for (GA_Size arrayi = 0; arrayi < offList.size(); ++arrayi)
-        {
-            ptmap.destroyOffset(offList[arrayi]);
-        }
-    }
-        break;
-    case 2:
-        outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
-        break;
-    default:
-        break;
-    }
-    //outGeo0->destroyPointOffsets(GA_Range(outGeo0->getPointMap(), geo0Group), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
-    //outGeo0->destroyUnusedPoints(geo0Group);
-    const bool delInputGroup = sopparms.getDelInputGroup();
-    if (delInputGroup)
-    {
-        GA_PointGroup* geo0PointGroup = outGeo0->findPointGroup(groupName);
-        if (geo0PointGroup)
-        {
-            outGeo0->destroyGroup(geo0PointGroup);
-        }
-    }
-    outGeo0->bumpDataIdsForAddOrRemove(true, false, false);
+    outGeo0->bumpDataIdsForAddOrRemove(1, 0, 0);
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();

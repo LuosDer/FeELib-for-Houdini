@@ -10,6 +10,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
+#include "GU/GU_Flatten2.h"
+#include "GU/GU_UVPack.h"
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Range.h"
 
@@ -27,7 +29,7 @@ static const char* theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nkwargs['ordered'] = pwd.parm('ordered').eval()\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nkwargs['ordered'] = pwd.parm('ordered').eval()\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
@@ -59,31 +61,44 @@ static const char* theDsFile = R"THEDSFILE(
             "abf"   "Angle-Based (ABF)"
         }
     }
+
+
+
+
+
     parm {
-        name    "manualLayout"
-        cppname "ManualLayout"
-        label   "Manual Layout"
+        name    "straightenArcs"
+        cppname "StraightenArcs"
+        label   "Straighten Arcs"
         type    toggle
         default { "on" }
+        disablewhen "{ flattenMethod != abf }"
+    }
+    parm {
+        name    "straightenGrids"
+        cppname "StraightenGrids"
+        label   "Straighten Grids"
+        type    toggle
+        default { "on" }
+        disablewhen "{ flattenMethod != abf }"
+    }
+    parm {
+        name    "rectifyPatches"
+        cppname "RectifyPatches"
+        label   "Rectify Patches"
+        type    toggle
+        default { "on" }
+        disablewhen "{ flattenMethod != abf }"
     }
 
 
 
     parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
+        name    "layout"
+        cppname "Layout"
+        label   "Layout"
+        type    toggle
+        default { "on" }
     }
 }
 )THEDSFILE";
@@ -100,7 +115,7 @@ SOP_FeE_UVRectify_2_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_UVRectify_2_0::theSOPTypeName("FeE::uvRectify::2.0"_sh);
+const UT_StringHolder SOP_FeE_UVRectify_2_0::theSOPTypeName("FeE::uvRectify::0.5"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
@@ -149,38 +164,18 @@ SOP_FeE_UVRectify_2_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_UVRectify_2_0Parms::AttribClass attribClass)
+static bool
+sopFlattenMethod(SOP_FeE_UVRectify_2_0Parms::FlattenMethod flattenMethod)
 {
     using namespace SOP_FeE_UVRectify_2_0Enums;
-    switch (attribClass)
+    switch (flattenMethod)
     {
-    case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case AttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case AttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    case FlattenMethod::SCP:      return false;  break;
+    case FlattenMethod::ABF:      return true;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
+    return false;
 }
-
-
-static GA_GroupType
-sopGroupType(SOP_FeE_UVRectify_2_0Parms::GroupType parmgrouptype)
-{
-    using namespace SOP_FeE_UVRectify_2_0Enums;
-    switch (parmgrouptype)
-    {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
 
 
 
@@ -195,89 +190,199 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0->replaceWith(*inGeo0);
 
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
+
+    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttrib();
     if (!geo0AttribNames.isstring() || geo0AttribNames.length()==0)
         return;
 
+    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
 
-    const fpreal uniScale = sopparms.getUniScale();
-    const bool doNormalize = sopparms.getNormalize();
+    GA_Attribute* geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
+    if (!geo0Attrib)
+        geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
+    if (!geo0Attrib)
+        geo0Attrib = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, geo0AttribNames, inStorageF, 3, GA_Defaults(0));
 
-    if (!doNormalize && uniScale==1)
-        return;
+    //const fpreal uniScale = sopparms.getUniScale();
+    //const bool doNormalize = sopparms.getNormalize();
 
 
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
-
-
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-
-    const exint kernel = sopparms.getKernel();
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 13);
-
-
-    const GA_SplittableRange geo0SplittableRange = GA_FeE_Range::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
-
-
-
-    const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
-
-    GA_Attribute* attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub, 2, 4);
-    if (!attribPtr)
-        return;
-
-    switch (kernel)
+    GA_VertexGroupUPtr allVtxGroupUPtr;
+    GA_VertexGroup* allVtxGroup;
+    if (geo0Group)
     {
-    case 0:
-    {
-        GA_FeE_Attribute::normalizeAttribElement(geo0SplittableRange, attribPtr,
-            doNormalize, uniScale,
-            subscribeRatio, minGrainSize);
+        allVtxGroupUPtr = outGeo0->createDetachedVertexGroup();
+        allVtxGroup = allVtxGroupUPtr.get();
+        allVtxGroup->combine(geo0Group);
     }
-    break;
-    case 1:
+    else
     {
-        GA_RWHandleT<UT_Vector3F> attribH(attribPtr);
-        GA_FeE_Attribute::normalizeAttribElement(geo0SplittableRange, attribH,
-            doNormalize, uniScale,
-            subscribeRatio, minGrainSize);
+        allVtxGroup = nullptr;
     }
-    break;
-    case 2:
-    {
-        //const GA_RWAttributeRef attrib_rwRef(attribPtr);
 
-        //GAparallelForEachPage(geo0Range, true, [&attrib_rwRef, &doNormalize, &uniScale](GA_PageIterator pit)
-        //{
-        //    GA_RWPageHandleV3 attrib_ph(attrib_rwRef.getAttribute());
 
-        //    GAforEachPageBlock(pit, [&](GA_Offset start, GA_Offset end)
-        //    {
-        //        attrib_ph.setPage(start);
-        //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-        //        {
-        //            //UT_Vector3F attribValue = attribHandle.get(elemoff);
-        //            if (doNormalize)
-        //                attrib_ph.value(elemoff).normalize();
-        //            //UT_Vector3 N = v_ph.get(i);
-        //            //N.normalize();
-        //            //v_ph.set(i, N);
-        //        }
-        //    }
-        //});
+
+
+    const GA_EdgeGroup* const seamGroup = GA_FeE_Group::findOrParseEdgeGroupDetached(cookparms, outGeo0, sopparms.getSeamGroup(), gop);
+    
+
+
+    const GA_AttributeOwner geo0AttribClass = geo0Attrib->getOwner();
+    const bool layoutit = sopparms.getLayout();
+    const bool flattenMethod = sopFlattenMethod(sopparms.getFlattenMethod());
+    //const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = sopparms.getMinGrainSize();
+
+    GA_RWHandleT<UT_Vector3R> uv_h(geo0Attrib);
+
+    const bool straightenArcs = sopparms.getStraightenArcs();
+    const bool straightenGrids = sopparms.getStraightenGrids();
+    const bool rectifyPatches = sopparms.getRectifyPatches();
+
+#if 1
+    GU_Flatten2::IslandBundle islandBundle(outGeo0, nullptr, seamGroup, nullptr);
+    islandBundle.forEachIsland([uv_h, outGeo0, layoutit, flattenMethod, straightenArcs, straightenGrids, rectifyPatches](GU_Flatten2::Island& island) {
+
+        GU_Flatten2::ConstraintSet constraints;
+        //island.triangualte(seamGroup);
+
+        GU_Flatten2::generateQuadLayoutConstraints(island, straightenArcs, straightenGrids, rectifyPatches, constraints);
+
+
+#if 0
+        GU_Flatten2::ConstraintSet::AlignedGroupSet& alignGroups = constraints.alignedSets();
+        GU_Flatten2::ConstraintSet::StraightGroupSet& straightGroups = constraints.straightSets();
+#endif
+
+
+
+#if 0
+        GU_Flatten2::balanceIsland(island, uv_h);
+
+        GU_Flatten2::AngleConstraintArray angle_constraints;
+        GU_Flatten2::generateStraighLoopConstraints(island, constraints, angle_constraints);
+#endif
+
+#if 0
+        GA_Attribute* geo0AttribNew = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, "newUV", inStorageF, 3, GA_Defaults(0));
+        GA_RWHandleT<UT_Vector3R> uvNew_h(geo0AttribNew);
+
+        const bool use_custom_pins = true;
+        GU_Flatten2::repositionIsland(island, constraints, uv_h, uvNew_h, use_custom_pins);
+#endif
+
+
+#if 1
+        if (flattenMethod)
+        {
+            //GU_Flatten2::Status status = GU_Flatten2::flattenAngleBased(island, constraints, uv_h);
+            GU_Flatten2::flattenAngleBased(island, constraints, uv_h);
+        }
+        else
+        {
+#if 0
+            UT_Fpreal64Array opposite_angle_cotan;
+            UT_Fpreal64Array tri_area;
+            GU_Flatten2::calcAnglesAndAreas(island, opposite_angle_cotan, tri_area);
+            GU_Flatten2::flattenSpectral(island, constraints, opposite_angle_cotan, tri_area, uv_h);
+#else
+            GU_Flatten2::flattenIsland(GU_Flatten2::Method::SCP, island, constraints, uv_h);
+            //GU_Flatten2::flattenSpectral(island, constraints, uv_h);
+#endif
+        }
+#endif
+
+    }, true);
+#else
+
+    GU_Flatten2::Island island(outGeo0);
+    GU_Flatten2::ConstraintSet constraints;
+
+    GA_Offset start, end;
+    for (GA_Iterator it(outGeo0->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    {
+        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        {
+            island.appendPoly(elemoff);
+        }
     }
-    break;
+    island.triangualte(seamGroup);
+
+    const bool straighten_arcs = true;
+    const bool straighten_grids = true;
+    const bool rectify_patches = true;
+    GU_Flatten2::generateQuadLayoutConstraints(island, straighten_arcs, straighten_grids, rectify_patches, constraints);
+
+
+#if 0
+    GU_Flatten2::ConstraintSet::AlignedGroupSet& alignGroups = constraints.alignedSets();
+    GU_Flatten2::ConstraintSet::StraightGroupSet& straightGroups = constraints.straightSets();
+#endif
+
+    
+
+#if 0
+    GU_Flatten2::balanceIsland(island, uv_h);
+
+    GU_Flatten2::AngleConstraintArray angle_constraints;
+    GU_Flatten2::generateStraighLoopConstraints(island, constraints, angle_constraints);
+#endif
+
+#if 0
+    GA_Attribute* geo0AttribNew = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, "newUV", inStorageF, 3, GA_Defaults(0));
+    GA_RWHandleT<UT_Vector3R> uvNew_h(geo0AttribNew);
+
+    const bool use_custom_pins = true;
+    GU_Flatten2::repositionIsland(island, constraints, uv_h, uvNew_h, use_custom_pins);
+#endif
+
+
+#if 1
+    if (flattenMethod)
+    {
+        //GU_Flatten2::Status status = GU_Flatten2::flattenAngleBased(island, constraints, uv_h);
+        GU_Flatten2::flattenAngleBased(island, constraints, uv_h);
     }
-    attribPtr->bumpDataId();
+    else
+    {
+#if 0
+        UT_Fpreal64Array opposite_angle_cotan;
+        UT_Fpreal64Array tri_area;
+        GU_Flatten2::calcAnglesAndAreas(island, opposite_angle_cotan, tri_area);
+        GU_Flatten2::flattenSpectral(island, constraints, opposite_angle_cotan, tri_area, uv_h);
+#else
+        GU_Flatten2::flattenIsland(GU_Flatten2::Method::SCP, island, constraints, uv_h);
+        //GU_Flatten2::flattenSpectral(island, constraints, uv_h);
+#endif
+    }
+#endif
+
+#endif
+
+
+    if (layoutit)
+    {
+        const GA_PrimitiveGroup* islandGroup = nullptr;
+        int resolution = 1024;
+        int padding = 0;
+        bool pad_boundary = false;
+        bool correct_area_proprtions = false;
+        bool axis_align_islands = true;
+        bool repack_wasted = true;
+
+        GU_UVPack uvPack(outGeo0, islandGroup,
+            resolution, padding,
+            correct_area_proprtions, axis_align_islands, repack_wasted);
+
+        uvPack.tilePack();
+    }
+
+    geo0Attrib->bumpDataId();
 
 
 
