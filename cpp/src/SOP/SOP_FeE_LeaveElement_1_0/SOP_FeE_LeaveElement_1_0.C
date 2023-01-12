@@ -188,7 +188,10 @@ SOP_FeE_LeaveElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GEO_FeE_Detail::leaveElement(sopparms.getLeaveElement(), cookparms, outGeo0, inGeo0, groupType, groupName,
         reverseGroup, sopparms.getDelElementInputGroup());
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    if (sopparms.getLeaveElement())
+    {
+        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    }
 }
 
 

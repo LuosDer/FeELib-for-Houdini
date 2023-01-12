@@ -55,6 +55,17 @@ static const char *theDsFile = R"THEDSFILE(
         default { "1e-05" }
         range   { 0! 180! }
     }
+
+    parm {
+        name    "primInlinePoint_groupName"
+        cppname "PrimInlinePoint_groupName"
+        label   "Prim Inline Point Group Name"
+        type    string
+        default { "primInlinePoint_fast" }
+        disablewhen " { delInlinePoint == 1 }"
+    }
+
+
     parm {
         name    "reverseGroup"
         cppname "ReverseGroup"
@@ -62,8 +73,30 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { "0" }
     }
+    parm {
+        name    "delInlinePoint"
+        cppname "DelInlinePoint"
+        label   "Delete Inline Point"
+        type    toggle
+        default { "0" }
+    }
 
-
+    parm {
+       name    "subscribeRatio"
+       cppname "SubscribeRatio"
+       label   "Subscribe Ratio"
+       type    integer
+       default { 16 }
+       range   { 0! 256 }
+    }
+    parm {
+       name    "minGrainSize"
+       cppname "MinGrainSize"
+       label   "Min Grain Size"
+       type    intlog
+       default { 1024 }
+       range   { 0! 2048 }
+    }
 }
 )THEDSFILE";
 
@@ -73,7 +106,7 @@ SOP_FeE_PrimInlinePoint_Fast_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_PrimInlinePoint_Fast_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -164,36 +197,52 @@ void
 SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_PrimInlinePoint_Fast_2_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PrimInlinePoint_Fast_2_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
+    outGeo0->replaceWith(*inGeo0);
 
-    outGeo0->replaceWithPoints(*inGeo0);
 
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
+    const fpreal threshold_inlineAngleRadians = GA_FeE_Type::radians(threshold_inlineAngle);
     const bool reverseGroup = sopparms.getReverseGroup();
-    //const fpreal threshold_inlineDot = radians(threshold_inlineAngle);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    GA_FeE_GeoProperty::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), threshold_inlineAngle, reverseGroup);
-
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
 
     //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
 
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+
+    if (sopparms.getDelInlinePoint())
+    {
+        GA_FeE_GeoProperty::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(),
+            threshold_inlineAngleRadians, reverseGroup,
+            subscribeRatio, minGrainSize);
+        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    }
+    else
+    {
+        GA_PointGroup* const inlinePtGroup = GA_FeE_GeoProperty::groupPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), sopparms.getPrimInlinePoint_groupName(),
+            threshold_inlineAngleRadians, reverseGroup,
+            subscribeRatio, minGrainSize);
+
+        cookparms.getNode()->setHighlight(true);
+        cookparms.select(*inlinePtGroup);
+
+        inlinePtGroup->bumpDataId();
+    }
+
+
 
 }
 

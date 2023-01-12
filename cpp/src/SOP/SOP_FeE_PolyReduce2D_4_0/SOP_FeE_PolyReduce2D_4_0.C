@@ -10,11 +10,10 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GU/GU_IntersectionAnalysis.h"
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+
+#include "GA_FeE/GA_FeE_Detail.h"
+#include "GA_FeE/GA_FeE_GeoProperty.h"
 
 
 
@@ -36,19 +35,19 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "delInLinePoints"
-        cppname "DelInLinePoints"
-        label   "Delete In-Line Points"
+        name    "delInLinePoint"
+        cppname "DelInLinePoint"
+        label   "Delete In-Line Point"
         type    toggle
         default { "1" }
     }
     parm {
-        name    "threshold_delInLinePoints"
-        cppname "Threshold_delInLinePoints"
-        label   "Threshold Delete In-Line Points"
+        name    "threshold_inlineAngle"
+        cppname "Threshold_inlineAngle"
+        label   "Threshold In-Line Angle"
         type    angle
         default { "1e-05" }
-        disablewhen "{ delInLinePoints == 0 }"
+        disablewhen "{ delInLinePoint == 0 }"
         range   { 0! 180! }
     }
     parm {
@@ -90,21 +89,21 @@ static const char *theDsFile = R"THEDSFILE(
         range   { 0.001 10 }
     }
     parm {
-        name    "limitMinPoints"
-        cppname "LimitMinPoints"
-        label   "Minimum Points"
+        name    "limitMinPoint"
+        cppname "LimitMinPoint"
+        label   "Minimum Point"
         type    toggle
         nolabel
         joinnext
         default { "off" }
     }
     parm {
-        name    "minPoints"
-        cppname "MinPoints"
-        label   "Min Points"
+        name    "minPoint"
+        cppname "MinPoint"
+        label   "Min Point"
         type    integer
         default { "10" }
-        disablewhen "{ limitMinPoints == 0 }"
+        disablewhen "{ limitMinPoint == 0 }"
         range   { 1! 50 }
     }
     parm {
@@ -115,93 +114,36 @@ static const char *theDsFile = R"THEDSFILE(
         default { "off" }
     }
     parm {
-        name    "polyReduce2D_GroupName"
+        name    "polyReduce2D_groupName"
         cppname "PolyReduce2D_GroupName"
         label   "Group Name"
         type    string
         default { "polyReduce2D" }
-        disablewhen "{ delPoints == 1 }"
-        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Primitives kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
+        disablewhen "{ delPoint == 1 }"
+        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Points kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
+
     parm {
-        name    "sepparm"
-        label   "Separator"
-        type    separator
-        default { "" }
-    }
-    parm {
-        name    "delPoints"
-        cppname "DeletePoints"
-        label   "Delete Points"
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
         type    toggle
-        default { "on" }
+        default { "0" }
     }
+
     parm {
-        name    "delNonSelectedPoints"
-        cppname "DelNonSelectedPoints"
-        label   "Delete Non Selected"
+        name    "delPoint"
+        cppname "DeletePoint"
+        label   "Delete Point"
         type    toggle
-        default { "off" }
-        disablewhen "{ delPoints == 0 }"
+        default { "1" }
     }
-    parm {
-        name    "tmpAttrib_ndot"
-        label   "Temp Attrib "
-        type    string
-        invisible
-        default { [ "'__ndot_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpAttrib_ndir"
-        label   "Temp Attrib "
-        type    string
-        invisible
-        default { [ "'__ndir_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpAttrib_lastid"
-        label   "Temp Attrib lastid"
-        type    string
-        invisible
-        default { [ "'__lastid_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpAttrib_nextid"
-        label   "Temp Attrib nextid"
-        type    string
-        invisible
-        default { [ "'__nextid_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpAttrib_lastdist"
-        label   "Temp Attrib "
-        type    string
-        invisible
-        default { [ "'__lastdist_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpAttrib_nextdist"
-        label   "Temp Attrib "
-        type    string
-        invisible
-        default { [ "'__nextdist_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpGroup_reversedPrim"
-        label   "Temp Group reversedPrim"
-        type    string
-        invisible
-        default { [ "'__reversedPrim_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-    parm {
-        name    "tmpGroup_polyReduce2D"
-        label   "Temp Group polyReduce2D"
-        type    string
-        invisible
-        default { [ "'__outgrp_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
+
+
+
+
 
 
     parm {
@@ -240,7 +182,7 @@ SOP_FeE_PolyReduce2D_4_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_PolyReduce2D_4_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
@@ -259,8 +201,8 @@ newSopOperator(OP_OperatorTable* table)
         "FeE Poly Reduce 2D",
         SOP_FeE_PolyReduce2D_4_0::myConstructor,
         SOP_FeE_PolyReduce2D_4_0::buildTemplates(),
-        2,
-        2,
+        1,
+        1,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -299,6 +241,33 @@ SOP_FeE_PolyReduce2D_4_0::cookVerb() const
 }
 
 
+
+
+
+
+
+
+
+
+
+static int
+sopGeoPropertyType(SOP_FeE_PolyReduce2D_4_0Parms::GeoPropertyType parmgrouptype)
+{
+    using namespace SOP_FeE_PolyReduce2D_4_0Enums;
+    switch (parmgrouptype)
+    {
+    case GeoPropertyType::ANGLE:     return 0;    break;
+    case GeoPropertyType::DIST:      return 1;    break;
+    case GeoPropertyType::ROC:       return 2;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo Property Type!");
+    return 0;
+}
+
+
+
+
+
 void
 SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -307,28 +276,26 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //auto sopcache = (SOP_FeE_PolyReduce2D_4_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GEO_Detail* const inGeo1 = cookparms.inputGeo(1);
+
+    outGeo0->replaceWith(*inGeo0);
 
 
+    //GU_DetailHandle tmpGeoH0;
+    //GU_Detail* tmpGeo0 = new GU_Detail();
+    //tmpGeoH0.allocateAndSet(tmpGeo0);
+    //tmpGeo0->replaceWith(*inGeo0);
 
-    GU_DetailHandle tmpGeoH0;
-    GU_Detail* tmpGeo0 = new GU_Detail();
-    tmpGeoH0.allocateAndSet(tmpGeo0);
-    tmpGeo0->replaceWith(*inGeo0);
 
-
-    outGeo0->replaceWithPoints(*inGeo0);
     //outGeo0->replaceWith(*inGeo0);
 
     //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-
     
+
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
-    if (primGroup && primGroup->isEmpty())
+    const GA_PrimitiveGroup* const geo0PrimGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
+    if (geo0PrimGroup && geo0PrimGroup->isEmpty())
         return;
-
-
+    
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
@@ -341,12 +308,33 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     
 
 
-    fpreal64 threshold = sopparms.getThreshold();
+    const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
+    const fpreal threshold_inlineAngleRadians = GA_FeE_Type::radians(threshold_inlineAngle);
+    
+    const bool reverseGroup = sopparms.getReverseGroup();
+    const bool limitByGeoProperty = sopparms.getLimitByGeoProperty();
+    const bool limitMinPoint = sopparms.getLimitMinPoint();
+
+    const bool coverSourcePoly = sopparms.getCoverSourcePoly();
+
+
+    const fpreal minPoint = sopparms.getMinPoint();
+    const exint maxDist = sopparms.getMaxDist();
+    const exint maxAngle = sopparms.getMaxAngle();
+    const int geoPropertyType = sopGeoPropertyType(sopparms.getGeoPropertyType());
 
 
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    tmpGeoH0.deleteGdp();
+
+    GA_FeE_GeoProperty::polyReduce2D(cookparms, outGeo0, geo0PrimGroup,
+        sopparms.getPolyReduce2D_GroupName(),
+        sopparms.getDelInLinePoint(), threshold_inlineAngleRadians,
+        reverseGroup, sopparms.getDeletePoint(),
+        subscribeRatio, minGrainSize);
+
+
+
+    //tmpGeoH0.deleteGdp();
 
 }
 

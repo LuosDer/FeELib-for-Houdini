@@ -234,8 +234,10 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
     );
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-
+    if (sopparms.getDelElement())
+    {
+        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    }
 }
 
 

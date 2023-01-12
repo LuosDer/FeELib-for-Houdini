@@ -23,6 +23,41 @@ namespace GA_FeE_Detail {
 
 
 SYS_FORCE_INLINE
+    static GA_Offset
+    getPrimitivePointOffset(
+        const GA_Detail* const geo,
+        const GA_Size primoff,
+        const GA_Size vtxpnum
+    )
+{
+    return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum));
+}
+
+SYS_FORCE_INLINE
+static UT_Vector3
+getPrimitivePointPos3(
+    const GA_Detail* const geo,
+    const GA_Size primoff,
+    const GA_Size vtxpnum
+)
+{
+    return geo->getPos3(getPrimitivePointOffset(geo, primoff, vtxpnum));
+}
+
+SYS_FORCE_INLINE
+static UT_Vector3D
+getPrimitivePointPos3D(
+    const GA_Detail* const geo,
+    const GA_Size primoff,
+    const GA_Size vtxpnum
+)
+{
+    return geo->getPos3D(getPrimitivePointOffset(geo, primoff, vtxpnum));
+}
+
+
+
+SYS_FORCE_INLINE
 static GA_Size
     numelems(
         const GA_Detail* const geo,
@@ -504,7 +539,6 @@ extractPoint(
             geo->destroyGroup(inputGroup);
     }
 }
-
 
 
 

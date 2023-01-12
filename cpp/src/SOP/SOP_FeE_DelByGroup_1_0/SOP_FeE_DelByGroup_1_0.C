@@ -263,7 +263,10 @@ SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         delPointMode, sopparms.getGuaranteeNoVertexReference()
     );
 
-    outGeo0->bumpDataIdsForAddOrRemove(1,1,1);
+    if (sopparms.getDelByGroup())
+    {
+        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    }
 }
 
 
