@@ -678,7 +678,7 @@ outTopoAttrib(
         addAttribVertexPrimIndex(
             GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& name = "__topo_vtxpnum",
             const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* const creation_args = nullptr,
@@ -691,8 +691,9 @@ outTopoAttrib(
         GA_Attribute* attribPtr = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, name);
         if (attribPtr)
             return attribPtr;
-        attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, storage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+        attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, fianlStorage, reuse);
         vertexPrimIndex(geo, attribPtr, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -716,7 +717,7 @@ outTopoAttrib(
             GA_Attribute*& attribPtr_prev,
             GA_Attribute*& attribPtr_next,
             const GA_VertexGroup* const geoGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& namePrev = "__topo_vtxPrimPrev",
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_Defaults& defaults = GA_Defaults(-1),
@@ -731,10 +732,13 @@ outTopoAttrib(
         attribPtr_next = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, nameNext);
         if (attribPtr_prev && attribPtr_next)
             return false;
-        attribPtr_prev = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, storage, 1, defaults, creation_args, attribute_options, reuse);
-        attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, storage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, 1, defaults, creation_args, attribute_options, storage, reuse);
-        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+
+        const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+
+        attribPtr_prev = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, fianlStorage, 1, defaults, creation_args, attribute_options, reuse);
+        attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, fianlStorage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, 1, defaults, creation_args, attribute_options, fianlStorage, reuse);
+        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, fianlStorage, reuse);
         vertexVertexPrim(geo, attribPtr_prev, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
         return true;
     }
@@ -753,7 +757,7 @@ outTopoAttrib(
         addAttribVertexVertexPrimNext(
             GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& nameNext = "__topo_vtxPrimNext",
             const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* const creation_args = nullptr,
@@ -766,8 +770,9 @@ outTopoAttrib(
         GA_Attribute* attribPtr_next = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, nameNext);
         if (attribPtr_next)
             return attribPtr_next;
-        attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, storage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, storage, reuse);
+        const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+        attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, fianlStorage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, fianlStorage, reuse);
         vertexVertexPrimNext(geo, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr_next;
     }
@@ -785,7 +790,7 @@ outTopoAttrib(
         addAttribVertexPointDst(
             GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INT32,
+            const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& name = "__topo_dstpt",
             const GA_Defaults& defaults = GA_Defaults(-1),
             const UT_Options* const creation_args = nullptr,
@@ -798,14 +803,15 @@ outTopoAttrib(
         GA_Attribute* attribPtr = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, name);
         if (attribPtr)
             return attribPtr;
+        const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
 
-        attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, storage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, storage, reuse);
+        attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, defaults, creation_args, attribute_options, reuse);
+        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, fianlStorage, reuse);
 
         GA_Attribute* refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxPrimNext");
         if (refAttrib)
         {
-            //GA_Attribute* vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), storage, nullptr);
+            //GA_Attribute* vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), fianlStorage, nullptr);
             vertexPointDst(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
             return attribPtr;
         }
@@ -813,7 +819,7 @@ outTopoAttrib(
         refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxpnum");
         if (refAttrib)
         {
-            //GA_Attribute* vtxPrimNextAttrib = addAttribVertexPrimIndex(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), storage, nullptr);
+            //GA_Attribute* vtxPrimNextAttrib = addAttribVertexPrimIndex(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), fianlStorage, nullptr);
             vertexPointDstByVtxpnum(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
             return attribPtr;
         }

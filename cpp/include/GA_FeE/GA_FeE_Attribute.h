@@ -919,24 +919,23 @@ forceRenameAttribute(
 
 static const GA_Attribute*
 findFloatTuplePointVertex(
-    const GEO_Detail* geo,
+    const GA_Detail* const geo,
     const GA_AttributeOwner attribOwner,
     const GA_AttributeScope scope,
     const UT_StringRef& attribName,
-    GA_AttributeOwner& attribOwnerFinal,
-    const int min_size = 1,
-    const int max_size = -1
+    GA_AttributeOwner& attribOwnerFinal
 )
 {
     const GA_Attribute* attribPtr = nullptr;
+    const GA_AttributeSet& geoAttribs = geo->getAttributes();
     if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
     {
-        attribPtr = geo->findFloatTuple(GA_ATTRIB_VERTEX, scope, attribName, min_size, max_size);
+        attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (attribPtr)
             attribOwnerFinal = GA_ATTRIB_VERTEX;
         else
         {
-            attribPtr = geo->findFloatTuple(GA_ATTRIB_POINT, scope, attribName, min_size, max_size);
+            attribPtr = geoAttribs.findAttribute(GA_ATTRIB_POINT, scope, attribName);
             if (!attribPtr)
             {
                 attribOwnerFinal = GA_ATTRIB_INVALID;
@@ -947,7 +946,7 @@ findFloatTuplePointVertex(
     }
     else
     {
-        attribPtr = geo->findFloatTuple(attribOwner, scope, attribName, min_size, max_size);
+        attribPtr = geoAttribs.findAttribute(attribOwner, scope, attribName);
         if (!attribPtr)
         {
             attribOwnerFinal = GA_ATTRIB_INVALID;
@@ -961,24 +960,23 @@ findFloatTuplePointVertex(
 
 static GA_Attribute*
 findFloatTuplePointVertex(
-    GEO_Detail* geo,
+    GA_Detail* const geo,
     const GA_AttributeOwner attribOwner,
     const GA_AttributeScope scope,
     const UT_StringRef& attribName,
-    GA_AttributeOwner& attribOwnerFinal,
-    const int min_size = 1,
-    const int max_size = -1
+    GA_AttributeOwner& attribOwnerFinal
 )
 {
     GA_Attribute* attribPtr = nullptr;
+    GA_AttributeSet& geoAttribs = geo->getAttributes();
     if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
     {
-        attribPtr = geo->findFloatTuple(GA_ATTRIB_VERTEX, scope, attribName, min_size, max_size);
+        attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (attribPtr)
             attribOwnerFinal = GA_ATTRIB_VERTEX;
         else
         {
-            attribPtr = geo->findFloatTuple(GA_ATTRIB_POINT, scope, attribName, min_size, max_size);
+            attribPtr = geoAttribs.findAttribute(GA_ATTRIB_POINT, scope, attribName);
             if (!attribPtr)
             {
                 attribOwnerFinal = GA_ATTRIB_INVALID;
@@ -989,7 +987,7 @@ findFloatTuplePointVertex(
     }
     else
     {
-        attribPtr = geo->findFloatTuple(attribOwner, scope, attribName, min_size, max_size);
+        attribPtr = geoAttribs.findAttribute(attribOwner, scope, attribName);
         if (!attribPtr)
         {
             attribOwnerFinal = GA_ATTRIB_INVALID;
@@ -1011,30 +1009,26 @@ findFloatTuplePointVertex(
 SYS_FORCE_INLINE
 static const GA_Attribute*
 findFloatTuplePointVertex(
-    const GEO_Detail* geo,
+    const GA_Detail* const geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
-    GA_AttributeOwner& attribOwnerFianl,
-    const int min_size = 1,
-    const int max_size = -1
+    GA_AttributeOwner& attribOwnerFianl
 )
 {
-    return findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl, min_size, max_size);
+    return findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
 }
 
 
 SYS_FORCE_INLINE
 static GA_Attribute*
 findFloatTuplePointVertex(
-    GEO_Detail* geo,
+    GA_Detail* const geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
-    GA_AttributeOwner& attribOwnerFianl,
-    const int min_size = 1,
-    const int max_size = -1
+    GA_AttributeOwner& attribOwnerFianl
 )
 {
-    return findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl, min_size, max_size);
+    return findFloatTuplePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
 }
 
 
@@ -1049,14 +1043,14 @@ findFloatTuplePointVertex(
 static void
 normalizeAttribElement(
     const GA_SplittableRange& geoSplittableRange,
-    GA_Attribute* attribPtr,
+    GA_Attribute* const attribPtr,
     const bool doNormalize = 1,
     const fpreal64 uniScale = 1,
     const int subscribeRatio = 64,
     const int minGrainSize = 64
 )
 {
-    UTparallelFor(geoSplittableRange, [&attribPtr, &doNormalize, &uniScale](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange, [attribPtr, doNormalize, uniScale](const GA_SplittableRange& r)
     {
         GA_PageHandleV<UT_Vector3F>::RWType attrib_ph(attribPtr);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)

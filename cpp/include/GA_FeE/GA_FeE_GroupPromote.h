@@ -141,9 +141,11 @@ namespace GA_FeE_GroupPromote {
         const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
         if (!groupTable)
             return nullptr;
-
+        
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-
+        //GA_GroupUPtr newGroupUPtr = UTmakeUnique<GA_Group>(*geo);
+        //GA_Group* const newGroup = newGroupUPtr.get();
+        
         GA_FeE_GroupUnion::groupUnion(geo, newGroup, group);
 
         return newGroup;
@@ -201,7 +203,7 @@ namespace GA_FeE_GroupPromote {
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static GA_Group*
         groupPromoteDetached(
             const GA_Detail* const geo,
             const GA_Group* const group,
@@ -318,7 +320,7 @@ namespace GA_FeE_GroupPromote {
     }
 
     SYS_FORCE_INLINE
-        static const GA_Group*
+        static GA_Group*
         groupPromoteDetached(
             GA_Detail* const geo,
             GA_Group*& group,
@@ -326,7 +328,7 @@ namespace GA_FeE_GroupPromote {
             const bool delOriginal
         )
     {
-        const GA_Group* newGroup = groupPromoteDetached(geo, group, newType);
+        GA_Group* newGroup = groupPromoteDetached(geo, group, newType);
         if (delOriginal && group != newGroup)
         {
             geo->destroyGroup(group);

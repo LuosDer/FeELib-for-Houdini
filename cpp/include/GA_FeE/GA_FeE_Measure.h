@@ -436,13 +436,13 @@ primArea(
 //
 //
 //
-//DEF_FUNC_AddAttrib(addAttribPrimArea,          , area, -1.0, GA_STORE_REAL32, 16, 1024)
+//DEF_FUNC_AddAttrib(addAttribPrimArea,          , area, -1.0, GA_STORE_INVALID, 16, 1024)
 
 
 //using parmPack1 = const GA_ROHandleT<TAttribTypeV>& posAttribHandle;
-//DEF_FUNC_AddAttrib(addAttribPrimArea, parmPack1, area, -1.0, GA_STORE_REAL32, 16, 1024)
+//DEF_FUNC_AddAttrib(addAttribPrimArea, parmPack1, area, -1.0, GA_STORE_INVALID, 16, 1024)
 
-//DEF_FUNC_AddAttrib(addAttribPrimPerimeter, , perimeter, -1.0, GA_STORE_REAL32, 16, 1024)
+//DEF_FUNC_AddAttrib(addAttribPrimPerimeter, , perimeter, -1.0, GA_STORE_INVALID, 16, 1024)
 
 //GA_FeE_Measure::addAttribPrimArea(geo, name, geoPrimGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
 
@@ -456,7 +456,7 @@ static GA_Attribute*
 addAttribPrimArea(
     GA_Detail* const geo,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-    const GA_Storage storage = GA_STORE_REAL32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "area",
     const GA_Defaults& defaults = GA_Defaults(-1.0),
     const UT_Options* const creation_args = nullptr,
@@ -466,7 +466,7 @@ addAttribPrimArea(
     const exint minGrainSize = 1024
 )
 {
-    const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
     GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
     //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
@@ -492,7 +492,7 @@ addAttribPrimArea(
     GA_Detail* const geo,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-    const GA_Storage storage = GA_STORE_REAL32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "area",
     const GA_Defaults& defaults = GA_Defaults(-1.0),
     const UT_Options* const creation_args = nullptr,
@@ -502,7 +502,7 @@ addAttribPrimArea(
     const exint minGrainSize = 1024
 )
 {
-    const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
     GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
     //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
@@ -539,7 +539,7 @@ addAttribPrimArea(
     //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-    const GA_Storage storage = GA_STORE_REAL32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "area",
     const GA_Defaults& defaults = GA_Defaults(-1.0),
     const UT_Options* const creation_args = nullptr,
@@ -737,7 +737,7 @@ static GA_Attribute*
 addAttribPrimPerimeter(
     GA_Detail* const geo,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-    const GA_Storage storage = GA_STORE_REAL32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "perimeter",
     const GA_Defaults& defaults = GA_Defaults(-1.0),
     const UT_Options* const creation_args = nullptr,
@@ -747,7 +747,7 @@ addAttribPrimPerimeter(
     const exint minGrainSize = 1024
 )
 {
-    const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
     GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
     //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
@@ -777,7 +777,7 @@ addAttribPrimPerimeter(
     GA_Detail* const geo,
     const GA_ROHandleT<TAttribTypeV>& posAttribHandle,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-    const GA_Storage storage = GA_STORE_REAL32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "perimeter",
     const GA_Defaults& defaults = GA_Defaults(-1.0),
     const UT_Options* const creation_args = nullptr,
@@ -787,7 +787,7 @@ addAttribPrimPerimeter(
     const exint minGrainSize = 1024
 )
 {
-    const GA_Storage finalStorage = storage == GA_STORE_REAL32 ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttribHandle->getAIFTuple()->getStorage(posAttribHandle.getAttribute()) : storage;
     GA_Attribute* attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
     //GA_Attribute* attribPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
     GA_RWHandleT<attribPrecisonF> attribHandle(attribPtr);
@@ -808,7 +808,7 @@ addAttribPrimPerimeter(
     //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
     const UT_StringHolder& posAttribName = "P",
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-    const GA_Storage storage = GA_STORE_REAL32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "perimeter",
     const GA_Defaults& defaults = GA_Defaults(-1.0),
     const UT_Options* const creation_args = nullptr,

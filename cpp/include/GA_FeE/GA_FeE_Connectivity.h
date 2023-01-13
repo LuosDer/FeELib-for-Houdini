@@ -8,8 +8,9 @@
 
 #include "GU/GU_Detail.h"
 
-#include "GU/GU_Promote.h"
+//#include "GU/GU_Promote.h"
 #include "GA_FeE/GA_FeE_Adjacency.h"
+#include "GA_FeE/GA_FeE_AttribPromote.h"
 
 //#include "chrono"
 
@@ -227,10 +228,10 @@ connectivityPrim(
 
 static GA_Attribute*
 addAttribConnectivityPoint(
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const GA_PointGroup* const geoGroup = nullptr,
     const GA_PointGroup* const geoSeamGroup = nullptr,
-    const GA_Storage storage = GA_STORE_INT32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "__topo_connectivity",
     const UT_Options* const creation_args = nullptr,
     const GA_AttributeOptions* const attribute_options = nullptr,
@@ -243,10 +244,14 @@ addAttribConnectivityPoint(
     if (attribPtr)
         return attribPtr;
 
-    attribPtr = geo->addIntTuple(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
+    const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+
+    attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
+
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = 
         GA_FeE_Adjacency::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup,
-            storage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+            fianlStorage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+
     connectivityPoint(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
 }
@@ -263,10 +268,10 @@ addAttribConnectivityPoint(
 
 static GA_Attribute*
 addAttribConnectivityPrim(
-    GEO_Detail* geo,
+    GA_Detail* const geo,
     const GA_PrimitiveGroup* geoGroup = nullptr,
     const GA_VertexGroup* geoSeamGroup = nullptr,
-    const GA_Storage storage = GA_STORE_INT32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "__topo_connectivity",
     const UT_Options* const creation_args = nullptr,
     const GA_AttributeOptions* const attribute_options = nullptr,
@@ -278,11 +283,14 @@ addAttribConnectivityPrim(
     GA_Attribute* attribPtr = geo->findPrimitiveAttribute(name);
     if (attribPtr)
         return attribPtr;
+    const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle =
         GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup,
-            storage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    
-    attribPtr = geo->addIntTuple(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, 1, GA_Defaults(-1), creation_args, attribute_options, storage, reuse);
+            fianlStorage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+
+    attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
+
     connectivityPrim(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
 }
@@ -291,12 +299,12 @@ addAttribConnectivityPrim(
 
 static GA_Attribute*
 addAttribConnectivity(
-    GU_Detail* geo,
+    GU_Detail* const geo,
     const GA_Group* geoGroup = nullptr,
     const GA_Group* geoSeamGroup = nullptr,
     const bool connectivityConstraint = false,
     const GA_AttributeOwner attribOwner = GA_ATTRIB_PRIMITIVE,
-    const GA_Storage storage = GA_STORE_INT32,
+    const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& name = "__topo_connectivity",
     const exint subscribeRatio = 32,
     const exint minGrainSize = 1024
@@ -313,6 +321,7 @@ addAttribConnectivity(
             subscribeRatio, minGrainSize);
         if (attribOwner != GA_ATTRIB_PRIMITIVE)
         {
+
             attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
         }
     }
