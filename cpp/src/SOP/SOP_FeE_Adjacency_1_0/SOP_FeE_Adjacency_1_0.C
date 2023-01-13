@@ -404,7 +404,7 @@ void
 SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Adjacency_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Adjacency_1_0Cache*)cookparms.cache();
 
     const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -508,10 +508,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //const bool& outAsOffset = sopparms.getOutAsOffset();
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
 
-    //const GA_Storage inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
@@ -568,6 +565,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
         //GA_FeE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, static_cast<const GA_VertexGroup*>(geo0Group), subscribeRatio, minGrainSize);
+        vtxpnumAttribHandle.bumpDataId();
     }
 
 
@@ -602,6 +600,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         default:
             break;
         }
+        dstptAttribHandle.bumpDataId();
     }
 
 
@@ -638,6 +637,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         default:
             break;
         }
+        vtxPrevAttribHandle.bumpDataId();
+        vtxNextAttribHandle.bumpDataId();
     }
 
 
@@ -659,6 +660,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         GA_FeE_VertexNextEquiv::vertexNextEquiv(outGeo0, vtxNextEquivAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
+        vtxNextEquivAttribHandle.bumpDataId();
     }
 
 
@@ -669,11 +671,12 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calVertexNextEquivNoLoop)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
         intAttribHandle.bind(attribPtr);
         GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
+        attribPtr->bumpDataId();
     }
 
     if (calPointPointEdge)
@@ -701,6 +704,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         default:
             break;
         }
+        attribPtr->bumpDataId();
     }
 
     if (calPointPointPrim)
@@ -711,6 +715,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         //GA_FeE_Adjacency::pointPointPrim(outGeo0, attribHandle,
         //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
         //    subscribeRatio, minGrainSize);
+        attribPtr->bumpDataId();
     }
 
     if (calPrimPrimEdge)
@@ -758,6 +763,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
             default:
                 break;
             }
+            attribPtr->bumpDataId();
         }
     }
 
@@ -769,6 +775,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         GA_FeE_Adjacency::primPrimPoint(outGeo0, attribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), pointSeamGroup,
             subscribeRatio, minGrainSize);
+        attribPtr->bumpDataId();
     }
 
 

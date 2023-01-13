@@ -12,7 +12,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_GeoProperty.h"
+#include "GA_FeE/GA_FeE_PrimInlinePoint.h"
 
 
 
@@ -225,14 +225,14 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
     if (sopparms.getDelInlinePoint())
     {
-        GA_FeE_GeoProperty::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(),
+        GA_FeE_PrimInlinePoint::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(),
             threshold_inlineAngleRadians, reverseGroup,
             subscribeRatio, minGrainSize);
         outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
     }
     else
     {
-        GA_PointGroup* const inlinePtGroup = GA_FeE_GeoProperty::groupPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), sopparms.getPrimInlinePoint_groupName(),
+        GA_PointGroup* const inlinePtGroup = GA_FeE_PrimInlinePoint::groupPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), sopparms.getPrimInlinePoint_groupName(),
             threshold_inlineAngleRadians, reverseGroup,
             subscribeRatio, minGrainSize);
 

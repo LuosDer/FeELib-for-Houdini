@@ -12,8 +12,8 @@
 
 
 
-#include "GA_FeE/GA_FeE_Detail.h"
-#include "GA_FeE/GA_FeE_GeoProperty.h"
+//#include "GA_FeE/GA_FeE_Detail.h"
+#include "GA_FeE/GA_FeE_PolyReduce2D.h"
 
 
 
@@ -326,7 +326,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
 
-    GA_FeE_GeoProperty::polyReduce2D(cookparms, outGeo0, geo0PrimGroup,
+    GA_FeE_PolyReduce2D::polyReduce2D(cookparms, outGeo0, geo0PrimGroup,
         sopparms.getPolyReduce2D_GroupName(),
         sopparms.getDelInLinePoint(), threshold_inlineAngleRadians,
         reverseGroup, sopparms.getDeletePoint(),

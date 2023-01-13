@@ -135,7 +135,7 @@ newSopOperator(OP_OperatorTable* table)
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five element Elf/Operation/Delete");
+        "Five elements Elf/Operation/Delete");
 
     newOp->setIconName("SOP_delete");
     table->addOperator(newOp);
