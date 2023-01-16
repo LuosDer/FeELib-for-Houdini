@@ -22,6 +22,12 @@
 namespace GA_FeE_Detail {
 
 
+
+
+
+
+
+
 SYS_FORCE_INLINE
     static GA_Offset
     getPrimitivePointOffset(

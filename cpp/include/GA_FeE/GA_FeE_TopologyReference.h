@@ -18,6 +18,77 @@
 namespace GA_FeE_TopologyReference {
 
 
+SYS_FORCE_INLINE
+    static GA_Offset
+    offsetPromote(
+        const GA_Detail* const geo,
+        const GA_AttributeOwner origClass,
+        const GA_AttributeOwner newClass,
+        const GA_Offset elemoff
+    )
+{
+    //const GA_Topology& topo = geo->getTopology();
+    switch (origClass)
+    {
+    case GA_ATTRIB_PRIMITIVE:
+        switch (newClass)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            return elemoff;
+            break;
+        case GA_ATTRIB_POINT:
+            return geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, 0));
+            break;
+        case GA_ATTRIB_VERTEX:
+            return geo->getPrimitiveVertexOffset(elemoff, 0);
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled newClass!");
+            break;
+        }
+        break;
+    case GA_ATTRIB_POINT:
+        switch (newClass)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            return geo->vertexPrimitive(geo->pointVertex(elemoff));
+            break;
+        case GA_ATTRIB_POINT:
+            return elemoff;
+            break;
+        case GA_ATTRIB_VERTEX:
+            return geo->pointVertex(elemoff);
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled newClass!");
+            break;
+        }
+        break;
+    case GA_ATTRIB_VERTEX:
+        switch (newClass)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            return geo->vertexPrimitive(elemoff);
+            break;
+        case GA_ATTRIB_POINT:
+            return geo->vertexPoint(elemoff);
+            break;
+        case GA_ATTRIB_VERTEX:
+            return elemoff;
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled newClass!");
+            break;
+        }
+        break;
+    default:
+        UT_ASSERT_MSG(0, "Unhandled origClass!");
+        break;
+    }
+}
+
+
+
     
 
 SYS_FORCE_INLINE

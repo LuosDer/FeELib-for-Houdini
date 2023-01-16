@@ -6,7 +6,7 @@
 
 //#include "GU_FeE/GA_FeE_Connectivity.h"
 
-#include "GU/GU_Detail.h"
+#include "GA/GA_Detail.h"
 
 //#include "GU/GU_Promote.h"
 #include "GA_FeE/GA_FeE_Adjacency.h"
@@ -299,7 +299,7 @@ addAttribConnectivityPrim(
 
 static GA_Attribute*
 addAttribConnectivity(
-    GU_Detail* const geo,
+    GA_Detail* const geo,
     const GA_Group* geoGroup = nullptr,
     const GA_Group* geoSeamGroup = nullptr,
     const bool connectivityConstraint = false,
@@ -321,8 +321,10 @@ addAttribConnectivity(
             subscribeRatio, minGrainSize);
         if (attribOwner != GA_ATTRIB_PRIMITIVE)
         {
-
-            attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
+            //attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
+            GA_Attribute* const origAttribPtr = attribPtr;
+            attribPtr = GA_FeE_AttribPromote::attribPromote(geo, attribPtr, attribOwner);
+            geo->getAttributes().destroyAttribute(origAttribPtr);
         }
     }
     else
@@ -335,7 +337,10 @@ addAttribConnectivity(
             subscribeRatio, minGrainSize);
         if (attribOwner != GA_ATTRIB_POINT)
         {
-            attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
+            //attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
+            GA_Attribute* const origAttribPtr = attribPtr;
+            attribPtr = GA_FeE_AttribPromote::attribPromote(geo, attribPtr, attribOwner);
+            geo->getAttributes().destroyAttribute(origAttribPtr);
         }
     }
     return attribPtr;

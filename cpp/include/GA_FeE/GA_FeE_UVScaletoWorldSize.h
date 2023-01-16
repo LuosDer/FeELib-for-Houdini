@@ -13,6 +13,7 @@
 
 
 #include "GA_FeE/GA_FeE_Type.h"
+#include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Measure.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
@@ -21,143 +22,257 @@
 namespace GA_FeE_UVScaletoWorldSize {
 
 
+
+
+
+template<typename T>
 static void
 uvScaletoWorldSize(
     GA_Detail* const geo,
-    const GA_PrimitiveGroup* const geoGroup,
-    const GA_AttributeOwner uvAttribClass,
-    const UT_StringHolder& uvAttribName,
+    const GA_RWHandleT<UT_Vector3T<T>>& uvAttribPtr_h,
+    const GA_PrimitiveGroup* const geoGroup = nullptr,
     const bool computeUVAreaInPiece = true,
-    const GA_Precision preferredPrecision = GA_PRECISION_INVALID,
+    const UT_Vector3R uvScale = UT_Vector3R(1.0),
+    const bool doUVScalex = true,
+    const bool doUVScaley = true,
+    const bool doUVScalez = true,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
 )
 {
-    GA_AttributeOwner uvAttribClassFinal;
-    GA_Attribute* const uvAttribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(geo, uvAttribClass, uvAttribName, uvAttribClassFinal);
-    if (!uvAttribPtr)
+    if (geoGroup && geoGroup->isEmpty())
         return;
 
-    GA_RWHandleT<TAttribTypeV> uvAttribPtr_h(uvAttribPtr);
+    const GA_Storage inStorage = uvAttribPtr_h.getAttribute()->getStorage();
 
-    const GA_Precision finalPreferredPrecision = preferredPrecision == GA_PRECISION_INVALID ? geo->getPreferredPrecision() : preferredPrecision;
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(finalPreferredPrecision);
-    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(finalPreferredPrecision);
+    const GA_ATINumericUPtr areaUPtr   = GA_FeE_Measure::addDetachedAttribPrimArea(geo,                                                    geoGroup, inStorage);
+    const GA_ATINumericUPtr areaUVUPtr = GA_FeE_Measure::addDetachedAttribPrimArea(geo, static_cast<const GA_ROHandleT<T>>(uvAttribPtr_h), geoGroup, inStorage);
+    GA_ATINumeric* const areaATIPtr   = areaUPtr.get();
+    GA_ATINumeric* const areaUVATIPtr = areaUVUPtr.get();
 
 
-#if UVScaletoWorldSize_UseDetachedAttrib
-#if 1
-    const GA_ATINumericUPtr areaATI_deleter    = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 1);
-    const GA_ATINumericUPtr areaUVATI_deleter  = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 1);
-    const GA_ATINumericUPtr uvScaleATI_deleter = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 3);
-    GA_ATINumeric* const areaATIPtr    = areaATI_deleter.get();
-    GA_ATINumeric* const areaUVATIPtr  = areaUVATI_deleter.get();
+    const GA_ATINumericUPtr uvScaleATI_deleter = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorage, 3);
     GA_ATINumeric* const uvScaleATIPtr = uvScaleATI_deleter.get();
-#else
-
-    GA_Attribute* const areaATIPtr   = GA_FeE_Measure::addAttribPrimArea(geo,              geoGroup, inStorageF, "__area_SOP_FeE_UVScaletoWorldSize_3_0");
-    GA_Attribute* const areaUVATIPtr = GA_FeE_Measure::addAttribPrimArea(geo, uvAttribPtr, geoGroup, inStorageF, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0");
-
-    if (!areaUVATIPtr)
-        return;
-    GA_ATINumericUPtr uvScaleATI_UPtr = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 3);
-    GA_ATINumeric* uvScaleATIPtr = uvScaleATI_UPtr.get();
-#endif
-#else
-    GA_Attribute* areaATIPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__area_SOP_FeE_UVScaletoWorldSize_3_0", 1, GA_Defaults(0.0), 0, 0, inStorageF);
-    GA_Attribute* areaUVATIPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0", 1, GA_Defaults(0.0), 0, 0, inStorageF);
-    GA_Attribute* uvScaleATIPtr = geo->addFloatTuple(GA_ATTRIB_PRIMITIVE, "__uvScale_SOP_FeE_UVScaletoWorldSize_3_0", 3, GA_Defaults(1.0), 0, 0, inStorageF);
-#endif
-
-    GA_RWHandleT<attribPrecisonF> areaAttribHandle(areaATIPtr);
-    GA_RWHandleT<attribPrecisonF> areaUVAttribHandle(areaUVATIPtr);
-    GA_RWHandleT<TAttribTypeV> uvScaleAttribHandle(uvScaleATIPtr);
-
+    
+    GA_RWHandleT<T> areaAttrib_h(areaATIPtr);
+    GA_RWHandleT<T> areaUVAttrib_h(areaUVATIPtr);
+    GA_RWHandleT<UT_Vector3T<T>> uvScaleAttrib_h(uvScaleATIPtr);
+    //GA_ROHandleT<exint> connectivityAttrib_h;
+    
     if (computeUVAreaInPiece)
     {
-#if UVScaletoWorldSize_UseDetachedAttrib
-        GA_ATINumericUPtr connectivityATIUPtr = geo->createDetachedTupleAttribute(GA_ATTRIB_POINT, inStorageI, 1, GA_Defaults(-1));
-        GA_Attribute* connectivityATIPtr = connectivityATIUPtr.get();
-#else
-        GA_Attribute* connectivityATIPtr = geo->addIntTuple(GA_ATTRIB_POINT, "__connectivity_SOP_FeE_UVScaletoWorldSize_3_0", 1, GA_Defaults(-1), 0, 0, inStorageI);
-#endif
+        const GA_Attribute* const connectivityATIPtr = GA_FeE_Connectivity::addAttribConnectivity(geo);
 
-
-#if UVScaletoWorldSize_UseDetachedAttrib
-        GA_AttributeUPtr connectivityAPtr_deleter = GU_Promote::create(GA_ATTRIB_PRIMITIVE, *connectivityATIPtr, GU_Promote::GU_PROMOTE_FIRST);
-        connectivityATIPtr = connectivityAPtr_deleter.get();
-#else
-        connectivityATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), connectivityATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_FIRST, NULL);
-#endif
-        connectivityAttribHandle = connectivityATIPtr;
-
-
-        GA_Attribute* const connectivityATIPtr = GA_FeE_Connectivity::addAttribConnectivityPoint(geo);
-        GA_AttributeUPtr connectivityATIUPtr =
-
-
-#if UVScaletoWorldSize_UseDetachedAttrib
-        areaAttribHandle   = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr,   GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-        areaUVAttribHandle = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-#else
-        areaAttribHandle = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-        areaUVAttribHandle = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-#endif
-
+        areaAttrib_h = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
+        areaUVAttrib_h = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, false, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
     }
 
-    const int& attribSize = uvAttribPtr->getTupleSize();
-    //template <typename T>
-    switch (attribSize)
     {
-    case 3:
-        break;
-    default:
-        UT_ASSERT_MSG(0, "Unhandled geo Attrib Size");
-    }
-
-
-
-    {
-        const GA_SplittableRange geo0SplittableRange(geo->getPrimitiveRange());
-        UTparallelFor(geo0SplittableRange, [&geo, &uvScaleAttribHandle, &areaUVAttribHandle, &areaAttribHandle, uvScale, doUVScalex, doUVScaley, doUVScalez](const GA_SplittableRange& r)
+        const GA_SplittableRange geo0SplittableRange(geo->getPrimitiveRange(geoGroup));
+        UTparallelFor(geo0SplittableRange, [geo, uvScaleAttrib_h, areaUVAttrib_h, areaAttrib_h, uvScale, doUVScalex, doUVScaley, doUVScalez](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const fpreal areaUV = areaUVAttribHandle.get(elemoff);
-                    const fpreal area = areaAttribHandle.get(elemoff);
-                    TAttribTypeV uvS = uvScale * sqrt(area / areaUV);
+                    const T areaUV = areaUVAttrib_h.get(elemoff);
+                    const T area = areaAttrib_h.get(elemoff);
+                    UT_Vector3T<T> uvS(uvScale * sqrt(area / areaUV));
                     uvS[0] = doUVScalex ? uvS[0] : 1;
                     uvS[1] = doUVScaley ? uvS[1] : 1;
                     uvS[2] = doUVScalez ? uvS[2] : 1;
-                    uvScaleAttribHandle.set(elemoff, uvS);
+                    uvScaleAttrib_h.set(elemoff, uvS);
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
 
     {
+        const GA_AttributeOwner uvAttribClassFinal = uvAttribPtr_h.getAttribute()->getOwner();
+        const GA_AttributeOwner uvAttribClassFinal_bool = uvAttribClassFinal == GA_ATTRIB_POINT;
         const GA_SplittableRange geo0SplittableRange = GA_FeE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, uvAttribClassFinal);
-        UTparallelFor(geo0SplittableRange, [&geo, &uvAttribPtr_h, &uvScaleAttribHandle, &uvAttribClassFinal](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange, [geo, uvAttribPtr_h, uvScaleAttrib_h, uvAttribClassFinal_bool](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const GA_Offset& primoff = uvAttribClassFinal == GA_ATTRIB_POINT ? geo->vertexPrimitive(geo->pointVertex(elemoff)) : geo->vertexPrimitive(elemoff);
-                    TAttribTypeV uv = uvAttribPtr_h.get(elemoff) * uvScaleAttribHandle.get(primoff);
+                    const GA_Offset primoff = uvAttribClassFinal_bool ? geo->vertexPrimitive(geo->pointVertex(elemoff)) : geo->vertexPrimitive(elemoff);
+                    UT_Vector3T<T> uv = uvAttribPtr_h.get(elemoff) * uvScaleAttrib_h.get(primoff);
                     uvAttribPtr_h.set(elemoff, uv);
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
 
+#if !UVScaletoWorldSize_UseDetachedAttrib
+    outGeo0->destroyAttribute(GA_ATTRIB_PRIMITIVE, "__area_SOP_FeE_UVScaletoWorldSize_3_0");
+    outGeo0->destroyAttribute(GA_ATTRIB_PRIMITIVE, "__areaUV_SOP_FeE_UVScaletoWorldSize_3_0");
+    outGeo0->destroyAttribute(GA_ATTRIB_POINT, "__adjElems_SOP_FeE_UVScaletoWorldSize_3_0");
+#endif
 }
 
+
+
+SYS_FORCE_INLINE
+static void
+uvScaletoWorldSize(
+    GA_Detail* const geo,
+    GA_Attribute* const uvAttribPtr,
+    const GA_PrimitiveGroup* const geoGroup = nullptr,
+    const bool computeUVAreaInPiece = true,
+    const UT_Vector3R uvScale = UT_Vector3R(1.0),
+    const bool doUVScalex = true,
+    const bool doUVScaley = true,
+    const bool doUVScalez = true,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+
+    //static_cast<GA_ATINumeric*>(uvAttribPtr)->getStorage();
+    switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+    {
+    case GA_STORE_BOOL:
+        uvScaletoWorldSize<bool>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT8:
+        uvScaletoWorldSize<int8>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT16:
+        uvScaletoWorldSize<int16>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT32:
+        uvScaletoWorldSize<int>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT64:
+        uvScaletoWorldSize<int64>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL16:
+        uvScaletoWorldSize<fpreal16>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL32:
+        uvScaletoWorldSize<fpreal32>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL64:
+        uvScaletoWorldSize<fpreal64>(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez, subscribeRatio, minGrainSize);
+        break;
+    default:
+        break;
+    }
+}
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+uvScaletoWorldSize(
+    GA_Detail* const geo,
+    const GA_AttributeOwner uvAttribClass,
+    const UT_StringHolder& uvAttribName,
+    const GA_PrimitiveGroup* const geoGroup = nullptr,
+    const bool computeUVAreaInPiece = true,
+    const UT_Vector3R uvScale = UT_Vector3R(1.0),
+    const bool doUVScalex = true,
+    const bool doUVScaley = true,
+    const bool doUVScalez = true,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    GA_Attribute* const uvAttribPtr = GA_FeE_Attribute::findAttributePointVertex(geo, uvAttribClass, uvAttribName);
+    if (!uvAttribPtr)
+        return nullptr;
+
+    uvScaletoWorldSize(geo, uvAttribPtr, geoGroup, computeUVAreaInPiece,
+        uvScale, doUVScalex, doUVScaley, doUVScalez,
+        subscribeRatio, minGrainSize);
+
+    return uvAttribPtr;
+}
+
+
+SYS_FORCE_INLINE
+static GA_Attribute*
+uvScaletoWorldSize(
+    GA_Detail* const geo,
+    const GA_AttributeOwner uvAttribClass,
+    const UT_StringHolder& uvAttribName,
+    const GA_Group* const geoGroup = nullptr,
+    const bool computeUVAreaInPiece = true,
+    const UT_Vector3R uvScale = UT_Vector3R(1.0),
+    const bool doUVScalex = true,
+    const bool doUVScaley = true,
+    const bool doUVScalez = true,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    switch (geoGroup->classType())
+    {
+    case GA_GROUP_PRIMITIVE:
+        return uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, static_cast<const GA_PrimitiveGroup*>(geoGroup), computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez,
+            subscribeRatio, minGrainSize);
+        break;
+    case GA_GROUP_POINT:
+    {
+        const GA_PrimitiveGroup* const geoPrimGroup = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, geoGroup);
+        return uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, geoPrimGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez,
+            subscribeRatio, minGrainSize);
+    }
+        break;
+    case GA_GROUP_VERTEX:
+    {
+        const GA_PrimitiveGroup* const geoPrimGroup = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, geoGroup);
+        return uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, geoPrimGroup, computeUVAreaInPiece,
+            uvScale, doUVScalex, doUVScaley, doUVScalez,
+            subscribeRatio, minGrainSize);
+    }
+        break;
+    default:
+        UT_ASSERT_MSG(0, "unhandled group type");
+        break;
+    }
+    return nullptr;
+}
+
+
+
+static GA_Attribute*
+uvScaletoWorldSize(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GEO_Detail* const geo,
+    const GA_AttributeOwner uvAttribClass,
+    const UT_StringHolder& uvAttribName,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName,
+    const bool computeUVAreaInPiece = true,
+    const UT_Vector3R uvScale = UT_Vector3R(1.0),
+    const bool doUVScalex = true,
+    const bool doUVScaley = true,
+    const bool doUVScalez = true,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    GOP_Manager gop;
+    const GA_Group* const geoGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+
+    return uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, geoGroup,
+        computeUVAreaInPiece,
+        uvScale, doUVScalex, doUVScaley, doUVScalez,
+        subscribeRatio, minGrainSize);
+}
 
 
 } // End of namespace GA_FeE_UVScaletoWorldSize
