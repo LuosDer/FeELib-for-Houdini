@@ -74,7 +74,7 @@ namespace GA_FeE_DelVertex {
 			}
 
 			GA_Topology& topo = geo->getTopology();
-			const GA_ATITopology* vtxPointRef = topo.getPointRef();
+			const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
 			GA_Offset start, end;
 			for (GA_Iterator it(geo->getPrimitiveRange(group)); it.blockAdvance(start, end); )
@@ -124,9 +124,9 @@ namespace GA_FeE_DelVertex {
 			}
 
 			GA_Topology& topo = geo->getTopology();
-			const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-			const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
-			const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+			const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+			const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+			const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
 			GA_Offset start, end;
 			for (GA_Iterator it(geo->getPointRange(group)); it.blockAdvance(start, end); )
@@ -167,8 +167,8 @@ namespace GA_FeE_DelVertex {
 			return delAllVertex(geo, delDegeneratePrims, delUnusedPoints);
 
 		GA_Topology& topo = geo->getTopology();
-		const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
-		const GA_ATITopology* vtxPointRef = topo.getPointRef();
+		const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+		const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
 
 		GA_PrimitiveGroupUPtr primGroupUPtr;
@@ -205,7 +205,7 @@ namespace GA_FeE_DelVertex {
 		}
 #else
 		const GA_SplittableRange geoSplittableRange(geo->getVertexRange(group));
-		UTparallelFor(geoSplittableRange, [&geo, &topo, &vtxPrimRef, &vtxPointRef, &primGroup, &pointGroup, delDegeneratePrims, delUnusedPoints](const GA_SplittableRange& r)
+		UTparallelFor(geoSplittableRange, [geo, &topo, vtxPrimRef, vtxPointRef, primGroup, pointGroup, delDegeneratePrims, delUnusedPoints](const GA_SplittableRange& r)
 		{
 			GA_Offset start, end;
 			for (GA_Iterator it(r); it.blockAdvance(start, end); )

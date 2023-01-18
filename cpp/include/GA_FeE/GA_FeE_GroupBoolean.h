@@ -368,7 +368,7 @@ namespace GA_FeE_GroupBoolean {
             return;
         *group &= *groupRef;
         //const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(group));
-        //UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
+        //UTparallelFor(geoSplittableRange, [geo, group, groupRef](const GA_SplittableRange& r)
         //{
         //    GA_Offset start, end;
         //    for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -395,7 +395,7 @@ namespace GA_FeE_GroupBoolean {
             return;
         *group &= *groupRef;
         //const GA_SplittableRange geoSplittableRange(geo->getPointRange(group));
-        //UTparallelFor(geoSplittableRange, [&geo, &group, &groupRef](const GA_SplittableRange& r)
+        //UTparallelFor(geoSplittableRange, [geo, group, groupRef](const GA_SplittableRange& r)
         //{
         //    GA_Offset start, end;
         //    for (GA_Iterator it(r); it.blockAdvance(start, end); )

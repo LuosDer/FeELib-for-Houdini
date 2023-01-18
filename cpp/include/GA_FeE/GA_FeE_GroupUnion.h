@@ -34,7 +34,7 @@ namespace GA_FeE_GroupUnion {
         case GA_GROUP_PRIMITIVE:
         {
             const GA_Topology& topo = geo->getTopology();
-            const GA_ATITopology* vtxPointRef = topo.getPointRef();
+            const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
             const GA_Range range = geo->getPrimitiveRange(static_cast<const GA_PrimitiveGroup*>(groupRef));
             GA_Offset start, end;
@@ -205,10 +205,10 @@ namespace GA_FeE_GroupUnion {
     //    case GA_GROUP_PRIMITIVE:
     //    {
     //        const GA_Topology& topo = geo->getTopology();
-    //        const GA_ATITopology* vtxPointRef = topo.getPointRef();
+    //        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
     //        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(static_cast<const GA_PrimitiveGroup*>(groupRef)));
-    //        UTparallelFor(geoSplittableRange, [&geo, &group, &vtxPointRef](const GA_SplittableRange& r)
+    //        UTparallelFor(geoSplittableRange, [geo, group, vtxPointRef](const GA_SplittableRange& r)
     //            {
     //                GA_Offset start, end;
     //                for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -239,7 +239,7 @@ namespace GA_FeE_GroupUnion {
     //    case GA_GROUP_POINT:
     //    {
     //        const GA_SplittableRange geoSplittableRange(geo->getPointRange(static_cast<const GA_PointGroup*>(groupRef)));
-    //        UTparallelFor(geoSplittableRange, [&geo, &group](const GA_SplittableRange& r)
+    //        UTparallelFor(geoSplittableRange, [geo, group](const GA_SplittableRange& r)
     //            {
     //                GA_Offset start, end;
     //                for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -289,7 +289,7 @@ namespace GA_FeE_GroupUnion {
     //    case GA_GROUP_VERTEX:
     //    {
     //        const GA_SplittableRange geoSplittableRange(geo->getVertexRange(static_cast<const GA_VertexGroup*>(groupRef)));
-    //        UTparallelFor(geoSplittableRange, [&geo, &group](const GA_SplittableRange& r)
+    //        UTparallelFor(geoSplittableRange, [geo, group](const GA_SplittableRange& r)
     //            {
     //                GA_Offset start, end;
     //                for (GA_Iterator it(r); it.blockAdvance(start, end); )

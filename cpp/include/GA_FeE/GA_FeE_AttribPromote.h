@@ -32,6 +32,7 @@ static void
     UT_ASSERT_P(geo);
     UT_ASSERT_P(dstAttribPtr);
     UT_ASSERT_P(srcAttribPtr);
+    UT_ASSERT_P(dstAttribPtr != srcAttribPtr);
 
     const GA_AttributeOwner dstClass = dstAttribPtr->getOwner();
     const GA_AttributeOwner srcClass = srcAttribPtr->getOwner();
@@ -46,7 +47,8 @@ static void
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                dstAttribPtr->copy(elemoff, *srcAttribPtr, GA_FeE_TopologyReference::offsetPromote(geo, srcClass, dstClass, elemoff));
+                //dstAttribPtr->copy(elemoff, *srcAttribPtr, GA_FeE_TopologyReference::offsetPromote(geo, srcClass, dstClass, elemoff));
+                dstAttribPtr->copy(elemoff, *srcAttribPtr, GA_FeE_TopologyReference::offsetPromote(geo, dstClass, srcClass, elemoff));
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -55,26 +57,8 @@ static void
 
 
 
-//static GA_Attribute*
-//    attribPromoteDetached(
-//        const GA_Detail* const geo,
-//        const GA_Attribute* const attribPtr,
-//        const GA_AttributeOwner newClass,
-//        const exint subscribeRatio = 16,
-//        const exint minGrainSize = 1024
-//    )
-//{
-//    UT_ASSERT_P(geo);
-//    if (!attribPtr)
-//        return nullptr;
-//
-//    if (attribPtr->getOwner() == newClass)
-//        return nullptr;
-//    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneTempAttribute(newClass, *attribPtr, true);
-//    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
-//
-//    return newAttribPtr;
-//}
+
+
 
 static GA_AttributeUPtr
 attribPromoteDetached(
@@ -87,9 +71,6 @@ attribPromoteDetached(
 {
     UT_ASSERT_P(geo);
     if (!attribPtr)
-        return nullptr;
-
-    if (attribPtr->getOwner() == newClass)
         return nullptr;
 
     GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
@@ -111,8 +92,97 @@ static GA_Attribute*
     if (!attribPtr)
         return nullptr;
 
-    if (attribPtr->getOwner() == newClass)
+    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
+    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+
+    return newAttribPtr;
+}
+
+
+
+
+static GA_ConstAttributeUPtr
+attribFindPromoteDetached(
+    const GA_Detail* const geo,
+    const GA_Attribute* const attribPtr,
+    const GA_AttributeOwner newClass,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
+)
+{
+    UT_ASSERT_P(geo);
+    if (!attribPtr)
         return nullptr;
+
+    if (attribPtr->getOwner() == newClass)
+        return UT_UniquePtr<const GA_Attribute>(attribPtr);
+
+    GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
+    attribPromote(geo, newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+
+    return newAttribUPtr;
+}
+
+static const GA_Attribute*
+attribFindPromote(
+    GA_Detail* const geo,
+    const GA_Attribute* const attribPtr,
+    const GA_AttributeOwner newClass,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
+)
+{
+    UT_ASSERT_P(geo);
+    if (!attribPtr)
+        return nullptr;
+
+    if (attribPtr->getOwner() == newClass)
+        return attribPtr;
+
+    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
+    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+
+    return newAttribPtr;
+}
+
+
+static GA_AttributeUPtr
+attribFindPromoteDetached(
+    const GA_Detail* const geo,
+    GA_Attribute* const attribPtr,
+    const GA_AttributeOwner newClass,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
+)
+{
+    UT_ASSERT_P(geo);
+    if (!attribPtr)
+        return nullptr;
+
+    if (attribPtr->getOwner() == newClass)
+        return UT_UniquePtr<GA_Attribute>(attribPtr);
+
+    GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
+    attribPromote(geo, newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+
+    return newAttribUPtr;
+}
+
+static GA_Attribute*
+attribFindPromote(
+    GA_Detail* const geo,
+    GA_Attribute* const attribPtr,
+    const GA_AttributeOwner newClass,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
+)
+{
+    UT_ASSERT_P(geo);
+    if (!attribPtr)
+        return nullptr;
+
+    if (attribPtr->getOwner() == newClass)
+        return attribPtr;
 
     GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
     attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
@@ -122,27 +192,10 @@ static GA_Attribute*
 
 
 
-//static GA_Attribute*
-//    attribFindPromote(
-//        GA_Detail* const geo,
-//        const GA_Attribute* const attribPtr,
-//        const GA_AttributeOwner newClass,
-//        const exint subscribeRatio = 16,
-//        const exint minGrainSize = 1024
-//    )
-//{
-//    UT_ASSERT_P(geo);
-//    if (!attribPtr)
-//        return nullptr;
-//
-//    if (attribPtr->getOwner() == newClass)
-//        return nullptr;
-//
-//    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
-//    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
-//
-//    return newAttribPtr;
-//}
+
+
+
+
 
 
 

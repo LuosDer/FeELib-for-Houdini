@@ -176,6 +176,14 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
+        name    "outTopoAttrib"
+        cppname "OutTopoAttrib"
+        label   "Output Topo Attribute"
+        type    toggle
+        default { "0" }
+    }
+
+    parm {
         name    "subscribeRatio"
         cppname "SubscribeRatio"
         label   "Subscribe Ratio"
@@ -313,7 +321,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVScaletoWorldSize_3_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
@@ -321,9 +329,9 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     //outGeo0 = sopNodeProcess(*inGeo0);
 
 
-    const bool& doUVScalex = sopparms.getDoUVScalex();
-    const bool& doUVScaley = sopparms.getDoUVScaley();
-    const bool& doUVScalez = sopparms.getDoUVScalez();
+    const bool doUVScalex = sopparms.getDoUVScalex();
+    const bool doUVScaley = sopparms.getDoUVScaley();
+    const bool doUVScalez = sopparms.getDoUVScalez();
     if (!doUVScalex && !doUVScaley && !doUVScalez)
         return;
 
@@ -380,6 +388,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     uvAttribPtr->bumpDataId();
+
+    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 }

@@ -23,15 +23,15 @@ namespace GA_FeE_AttributeCast {
             const exint minGrainSize = 128
         )
     {
-        const GA_RWHandleT<T> attribH(attrib);
-        UTparallelFor(geoSplittableRange, [&geo, &attribH](const GA_SplittableRange& r)
+        const GA_RWHandleT<T> attrib_h(attrib);
+        UTparallelFor(geoSplittableRange, [geo, &attrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    attribH.set(elemoff, T(1));
+                    attrib_h.set(elemoff, T(1));
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -46,15 +46,15 @@ namespace GA_FeE_AttributeCast {
             const exint minGrainSize = 128
         )
     {
-        const GA_RWHandleS attribH(attrib);
-        UTparallelFor(geoSplittableRange, [&geo, &attribH](const GA_SplittableRange& r)
+        const GA_RWHandleS attrib_h(attrib);
+        UTparallelFor(geoSplittableRange, [geo, &attrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    attribH.set(elemoff, "1");
+                    attrib_h.set(elemoff, "1");
                 }
             }
         }, subscribeRatio, minGrainSize);

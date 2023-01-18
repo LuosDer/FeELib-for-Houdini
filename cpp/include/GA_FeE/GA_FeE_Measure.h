@@ -450,7 +450,7 @@ primArea(
 {
     //GU_Measure::computeArea(*geo, areaAttrib_h, geoPrimGroup);
     const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-    UTparallelFor(geoSplittableRange0, [geo, areaAttrib_h, posAttrib_h](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange0, [geo, &areaAttrib_h, &posAttrib_h](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -478,7 +478,7 @@ primArea(
 {
     //GU_Measure::computeArea(*geo, areaAttrib_h, geoPrimGroup);poly
     const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-    UTparallelFor(geoSplittableRange0, [geo, areaAttrib_h](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange0, [geo, &areaAttrib_h](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -613,7 +613,7 @@ addAttribPrimArea(
 }
 
 
-static GA_ATINumericUPtr
+static GA_AttributeUPtr
 addDetachedAttribPrimArea(
     const GA_Detail* const geo,
     const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
@@ -625,7 +625,7 @@ addDetachedAttribPrimArea(
 )
 {
     const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-    GA_ATINumericUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, defaults, attribute_options);
+    GA_AttributeUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, defaults, attribute_options);
     GA_Attribute* const attribPtr = attribUPtr.get();
     switch (finalStorage)
     {
@@ -684,7 +684,7 @@ addAttribPrimArea(
 
 
 template<typename T>
-static GA_ATINumericUPtr
+static GA_AttributeUPtr
 addDetachedAttribPrimArea(
     const GA_Detail* const geo,
     const GA_ROHandleT<UT_Vector3T<T>>& posAttrib_h,
@@ -697,7 +697,7 @@ addDetachedAttribPrimArea(
 )
 {
     const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib_h->getAIFTuple()->getStorage(posAttrib_h.getAttribute()) : storage;
-    GA_ATINumericUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, defaults, attribute_options);
+    GA_AttributeUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, defaults, attribute_options);
     GA_Attribute* const attribPtr = attribUPtr.get();
     primArea<T>(geo, attribPtr, posAttrib_h, geoPrimGroup, subscribeRatio, minGrainSize);
     return attribUPtr;
@@ -742,7 +742,7 @@ addAttribPrimArea(
 }
 
 
-static GA_ATINumericUPtr
+static GA_AttributeUPtr
 addDetachedAttribPrimArea(
     const GA_Detail* const geo,
     const GA_Attribute* const posAttrib,
@@ -770,7 +770,7 @@ addDetachedAttribPrimArea(
         UT_ASSERT_MSG(0, "unhandled storage type");
         break;
     }
-    return GA_ATINumericUPtr();
+    return GA_AttributeUPtr();
 }
 
 
@@ -1041,7 +1041,7 @@ primPerimeter(
 {
     //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
     const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-    UTparallelFor(geoSplittableRange0, [geo, p_h](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange0, [geo, &p_h](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -1097,7 +1097,7 @@ primPerimeter(
 {
     //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
     const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-    UTparallelFor(geoSplittableRange0, [geo, p_h, posAttrib_h](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange0, [geo, &p_h, &posAttrib_h](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )

@@ -250,18 +250,18 @@ SOP_FeE_PolyReduce2D_4_0::cookVerb() const
 
 
 
-static int
+static GA_FeE_PolyReduce2D::PolyReduce2D_GeoPropertyType
 sopGeoPropertyType(SOP_FeE_PolyReduce2D_4_0Parms::GeoPropertyType parmgrouptype)
 {
     using namespace SOP_FeE_PolyReduce2D_4_0Enums;
     switch (parmgrouptype)
     {
-    case GeoPropertyType::ANGLE:     return 0;    break;
-    case GeoPropertyType::DIST:      return 1;    break;
-    case GeoPropertyType::ROC:       return 2;    break;
+    case GeoPropertyType::ANGLE:     return GA_FeE_PolyReduce2D::PolyReduce2D_ANGLE;    break;
+    case GeoPropertyType::DIST:      return GA_FeE_PolyReduce2D::PolyReduce2D_DIST;     break;
+    case GeoPropertyType::ROC:       return GA_FeE_PolyReduce2D::PolyReduce2D_ROC;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo Property Type!");
-    return 0;
+    return GA_FeE_PolyReduce2D::PolyReduce2D_ANGLE;
 }
 
 
@@ -272,10 +272,10 @@ void
 SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_PolyReduce2D_4_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PolyReduce2D_4_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
 
@@ -291,10 +291,6 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
     
 
-    GOP_Manager gop;
-    const GA_PrimitiveGroup* const geo0PrimGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
-    if (geo0PrimGroup && geo0PrimGroup->isEmpty())
-        return;
     
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -308,9 +304,17 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     
 
 
+    const fpreal minPoint = sopparms.getMinPoint();
+
+    const fpreal threshold_maxDist = sopparms.getMaxDist();
+
+    const fpreal threshold_maxAngle = sopparms.getMaxAngle();
+    const fpreal threshold_maxAngleRadians = GA_FeE_Type::radians(threshold_maxAngle);
+
+
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
     const fpreal threshold_inlineAngleRadians = GA_FeE_Type::radians(threshold_inlineAngle);
-    
+
     const bool reverseGroup = sopparms.getReverseGroup();
     const bool limitByGeoProperty = sopparms.getLimitByGeoProperty();
     const bool limitMinPoint = sopparms.getLimitMinPoint();
@@ -318,22 +322,34 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const bool coverSourcePoly = sopparms.getCoverSourcePoly();
 
 
-    const fpreal minPoint = sopparms.getMinPoint();
-    const exint maxDist = sopparms.getMaxDist();
-    const exint maxAngle = sopparms.getMaxAngle();
-    const int geoPropertyType = sopGeoPropertyType(sopparms.getGeoPropertyType());
+    const GA_FeE_PolyReduce2D::PolyReduce2D_GeoPropertyType geoPropertyType = sopGeoPropertyType(sopparms.getGeoPropertyType());
+
+    const bool delPoint = sopparms.getDeletePoint();
 
 
-
-
-    GA_FeE_PolyReduce2D::polyReduce2D(cookparms, outGeo0, geo0PrimGroup,
-        sopparms.getPolyReduce2D_GroupName(),
+    GA_PointGroup* const polyReduce2DPtGroup = GA_FeE_PolyReduce2D::polyReduce2D(cookparms, outGeo0,
+        sopparms.getGroup(), sopparms.getPolyReduce2D_GroupName(),
         sopparms.getDelInLinePoint(), threshold_inlineAngleRadians,
-        reverseGroup, sopparms.getDeletePoint(),
+        limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
+        limitMinPoint, minPoint,
+        coverSourcePoly, reverseGroup, delPoint,
         subscribeRatio, minGrainSize);
 
 
+    if (delPoint || sopparms.getDelInLinePoint())
+    {
+        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    }
 
+    if (!delPoint)
+    {
+        cookparms.getNode()->setHighlight(true);
+        if (polyReduce2DPtGroup)
+        {
+            cookparms.select(*polyReduce2DPtGroup);
+            polyReduce2DPtGroup->bumpDataId();
+        }
+    }
     //tmpGeoH0.deleteGdp();
 
 }

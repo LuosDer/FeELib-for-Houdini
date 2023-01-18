@@ -364,7 +364,7 @@ copyAttributeDst(
     if (attribID)
     {
         const GA_ROHandleT<exint> attribID_h(attribID);
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &attribID_h](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef, &attribID_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -379,7 +379,7 @@ copyAttributeDst(
     }
     else
     {
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -406,7 +406,7 @@ copyAttributeRef(
     if (attribID)
     {
         const GA_ROHandleT<exint> attribID_h(attribID);
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &attribID_h](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef, &attribID_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -421,7 +421,7 @@ copyAttributeRef(
     }
     else
     {
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -1170,25 +1170,25 @@ normalizeAttribElement(
 static void
 normalizeAttribElement(
     const GA_SplittableRange& geoSplittableRange,
-    const GA_RWHandleT<UT_Vector3F>& attribHandle,
+    const GA_RWHandleT<UT_Vector3F>& attrib_h,
     const bool doNormalize = 1,
     const fpreal64 uniScale = 1,
     const int subscribeRatio = 64,
     const int minGrainSize = 64
 )
 {
-    UTparallelFor(geoSplittableRange, [&attribHandle, &doNormalize, &uniScale](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange, [&attrib_h, doNormalize, uniScale](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                UT_Vector3F attribValue = attribHandle.get(elemoff);
+                UT_Vector3F attribValue = attrib_h.get(elemoff);
                 if (doNormalize)
                     attribValue.normalize();
                 attribValue *= uniScale;
-                attribHandle.set(elemoff, attribValue);
+                attrib_h.set(elemoff, attribValue);
             }
         }
     }, subscribeRatio, minGrainSize);

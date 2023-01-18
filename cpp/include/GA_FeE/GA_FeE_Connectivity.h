@@ -30,7 +30,7 @@ namespace GA_FeE_Connectivity
 static void
 connectivityPoint(
     const GA_Detail* const geo,
-    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_RWHandleT<GA_Size>& attrib_h,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
     const GA_PointGroup* const geoGroup = nullptr
 )
@@ -66,7 +66,7 @@ connectivityPoint(
     }
     else
     {
-        UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+        UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
             for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
             {
                 rawData[elemoff] = geo->pointIndex(rawData[elemoff]);
@@ -107,17 +107,17 @@ connectivityPoint(
 
     const GA_SplittableRange geoSplittableRange0(geo->getPointRange());
     //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
-    UTparallelFor(geoSplittableRange0, [&geo, &attribHandle, &classnumArray](const GA_SplittableRange& r) {
+    UTparallelFor(geoSplittableRange0, [geo, &attrib_h, &classnumArray](const GA_SplittableRange& r) {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                attribHandle.set(elemoff, classnumArray[geo->pointIndex(elemoff)]);
+                attrib_h.set(elemoff, classnumArray[geo->pointIndex(elemoff)]);
             }
         }
     }, 16, 1024);
-    //geo->setAttributeFromArray(attribHandle.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
+    //geo->setAttributeFromArray(attrib_h.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
 
 
 
@@ -135,7 +135,7 @@ connectivityPoint(
 static void
 connectivityPrim(
     const GA_Detail* const geo,
-    const GA_RWHandleT<GA_Size>& attribHandle,
+    const GA_RWHandleT<GA_Size>& attrib_h,
     const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttribHandle,
     const GA_PrimitiveGroup* const geoGroup = nullptr
 )
@@ -172,7 +172,7 @@ connectivityPrim(
     }
     else
     {
-        UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [&geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+        UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
             for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
             {
                 rawData[elemoff] = geo->primitiveIndex(rawData[elemoff]);
@@ -207,17 +207,17 @@ connectivityPrim(
 
     const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
     //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
-    UTparallelFor(geoSplittableRange0, [&geo, &attribHandle, &classnumArray](const GA_SplittableRange& r) {
+    UTparallelFor(geoSplittableRange0, [geo, &attrib_h, &classnumArray](const GA_SplittableRange& r) {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                attribHandle.set(elemoff, classnumArray[geo->primitiveIndex(elemoff)]);
+                attrib_h.set(elemoff, classnumArray[geo->primitiveIndex(elemoff)]);
             }
         }
     }, 16, 1024);
-    //geo->setAttributeFromArray(attribHandle.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
+    //geo->setAttributeFromArray(attrib_h.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
 }
 
 
@@ -280,7 +280,7 @@ addAttribConnectivityPrim(
     const exint minGrainSize = 1024
 )
 {
-    GA_Attribute* attribPtr = geo->findPrimitiveAttribute(name);
+    GA_Attribute* attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name);
     if (attribPtr)
         return attribPtr;
     const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
@@ -313,6 +313,12 @@ addAttribConnectivity(
     GA_Attribute* attribPtr = nullptr;
     if (connectivityConstraint)
     {
+        if (attribOwner != GA_ATTRIB_PRIMITIVE)
+        {
+            attribPtr = geo->getAttributes().findAttribute(attribOwner, GA_FEE_TOPO_SCOPE, name);
+            if (attribPtr)
+                return attribPtr;
+        }
         attribPtr = GA_FeE_Connectivity::addAttribConnectivityPrim(geo,
             UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
             UTverify_cast<const GA_VertexGroup*>(geoSeamGroup),
@@ -329,6 +335,12 @@ addAttribConnectivity(
     }
     else
     {
+        if (attribOwner != GA_ATTRIB_POINT)
+        {
+            attribPtr = geo->getAttributes().findAttribute(attribOwner, GA_FEE_TOPO_SCOPE, name);
+            if (attribPtr)
+                return attribPtr;
+        }
         attribPtr = GA_FeE_Connectivity::addAttribConnectivityPoint(geo,
             UTverify_cast<const GA_PointGroup*>(geoGroup),
             UTverify_cast<const GA_PointGroup*>(geoSeamGroup),

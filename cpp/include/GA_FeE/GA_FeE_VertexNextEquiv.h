@@ -22,10 +22,10 @@ namespace GA_FeE_VertexNextEquiv {
             const GA_Offset dstpt
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_Topology& topo = geo->getTopology();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         GA_Offset vtxoff_next, ptnum;
         if (dstpt < 0)
@@ -89,10 +89,10 @@ namespace GA_FeE_VertexNextEquiv {
             const GA_Offset dstpt
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_Topology& topo = geo->getTopology();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         GA_Offset vtxoff_next, ptnum;
         if (dstpt < 0)
@@ -162,21 +162,21 @@ namespace GA_FeE_VertexNextEquiv {
     static void
         vertexNextEquivNoLoop(
             GA_Detail* const geo,
-            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_RWHandleT<GA_Offset>& attrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    attribHandle.set(elemoff, vertexNextEquivNoLoop(geo, elemoff));
+                    attrib_h.set(elemoff, vertexNextEquivNoLoop(geo, elemoff));
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -190,21 +190,21 @@ namespace GA_FeE_VertexNextEquiv {
     static void
         vertexNextEquiv(
             GA_Detail* const geo,
-            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_RWHandleT<GA_Offset>& attrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    attribHandle.set(elemoff, vertexNextEquiv(geo, elemoff));
+                    attrib_h.set(elemoff, vertexNextEquiv(geo, elemoff));
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -220,9 +220,9 @@ namespace GA_FeE_VertexNextEquiv {
     static void
         vertexNextEquivNoLoop(
             GA_Detail* const geo,
-            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_RWHandleT<GA_Offset>& attrib_h,
             GA_VertexGroup* validGroup,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -230,14 +230,14 @@ namespace GA_FeE_VertexNextEquiv {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0, 
-            [&geo, &attribHandle, &dstptAttribHandle, &validGroup,
-            &vtxPointRef, &pointVtxRef, &vtxNextRef]
+            [geo, validGroup, &attrib_h, &dstptAttrib_h,
+            vtxPointRef, pointVtxRef, vtxNextRef]
             (const GA_SplittableRange& r)
             {
                 GA_Offset vtxoff_next, dstpt, ptnum;
@@ -246,20 +246,20 @@ namespace GA_FeE_VertexNextEquiv {
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        dstpt = dstptAttribHandle.get(elemoff);
+                        dstpt = dstptAttrib_h.get(elemoff);
                         if (dstpt < 0)
                         {
-                            attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                            attrib_h.set(elemoff, GA_INVALID_OFFSET);
                             //validGroup->setElement(elemoff, true);
                             continue;
                         }
 
                         for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                         {
-                            if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                            if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                 continue;
                             dstpt = GA_INVALID_OFFSET;
-                            attribHandle.set(elemoff, vtxoff_next);
+                            attrib_h.set(elemoff, vtxoff_next);
                             break;
                         }
 
@@ -269,18 +269,18 @@ namespace GA_FeE_VertexNextEquiv {
                         ptnum = vtxPointRef->getLink(elemoff);
                         for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                         {
-                            if (dstptAttribHandle.get(vtxoff_next) != ptnum)
+                            if (dstptAttrib_h.get(vtxoff_next) != ptnum)
                                 continue;
                             if (dstpt > ptnum)
                             {
                                 dstpt = GA_INVALID_OFFSET;
-                                attribHandle.set(elemoff, vtxoff_next);
+                                attrib_h.set(elemoff, vtxoff_next);
                             }
                             break;
                         }
                         if (dstpt >= 0)
                         {
-                            attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                            attrib_h.set(elemoff, GA_INVALID_OFFSET);
                             validGroup->setElement(elemoff, true);
                         }
                     }
@@ -296,7 +296,7 @@ namespace GA_FeE_VertexNextEquiv {
         vertexNextEquivNoLoop(
             GA_Detail* const geo,
             GA_VertexGroup* validGroup,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -304,14 +304,14 @@ namespace GA_FeE_VertexNextEquiv {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0,
-            [&geo, &dstptAttribHandle, &validGroup,
-            &vtxPointRef, &pointVtxRef, &vtxNextRef]
+            [geo, validGroup, &dstptAttrib_h,
+            vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
             GA_Offset vtxoff_next, dstpt, ptnum;
@@ -320,7 +320,7 @@ namespace GA_FeE_VertexNextEquiv {
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    dstpt = dstptAttribHandle.get(elemoff);
+                    dstpt = dstptAttrib_h.get(elemoff);
                     if (dstpt < 0)
                     {
                         //validGroup->setElement(elemoff, true);
@@ -329,7 +329,7 @@ namespace GA_FeE_VertexNextEquiv {
 
                     for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                        if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
                         break;
@@ -341,7 +341,7 @@ namespace GA_FeE_VertexNextEquiv {
                     ptnum = vtxPointRef->getLink(elemoff);
                     for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != ptnum)
+                        if (dstptAttrib_h.get(vtxoff_next) != ptnum)
                             continue;
                         if (dstpt > ptnum)
                         {
@@ -364,8 +364,8 @@ namespace GA_FeE_VertexNextEquiv {
     static void
         vertexNextEquivNoLoop(
             GA_Detail* const geo,
-            const GA_RWHandleT<GA_Offset>& attribHandle,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_RWHandleT<GA_Offset>& attrib_h,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -373,14 +373,14 @@ namespace GA_FeE_VertexNextEquiv {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0,
-            [&geo, &attribHandle, &dstptAttribHandle,
-            &vtxPointRef, &pointVtxRef, &vtxNextRef]
+            [geo, &attrib_h, &dstptAttrib_h,
+            vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
             GA_Offset vtxoff_next, dstpt, ptnum;
@@ -389,19 +389,19 @@ namespace GA_FeE_VertexNextEquiv {
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    dstpt = dstptAttribHandle.get(elemoff);
+                    dstpt = dstptAttrib_h.get(elemoff);
                     if (dstpt < 0)
                     {
-                        attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                        attrib_h.set(elemoff, GA_INVALID_OFFSET);
                         continue;
                     }
 
                     for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                        if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
-                        attribHandle.set(elemoff, vtxoff_next);
+                        attrib_h.set(elemoff, vtxoff_next);
                         break;
                     }
 
@@ -411,18 +411,18 @@ namespace GA_FeE_VertexNextEquiv {
                     ptnum = vtxPointRef->getLink(elemoff);
                     for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != ptnum)
+                        if (dstptAttrib_h.get(vtxoff_next) != ptnum)
                             continue;
                         if (dstpt > ptnum)
                         {
                             dstpt = GA_INVALID_OFFSET;
-                            attribHandle.set(elemoff, vtxoff_next);
+                            attrib_h.set(elemoff, vtxoff_next);
                         }
                         break;
                     }
                     if (dstpt >= 0)
                     {
-                        attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                        attrib_h.set(elemoff, GA_INVALID_OFFSET);
                     }
                 }
             }
@@ -439,9 +439,9 @@ namespace GA_FeE_VertexNextEquiv {
     static void
         vertexNextEquiv(
             GA_Detail* const geo,
-            const GA_RWHandleT<GA_Offset>& attribHandle,
+            const GA_RWHandleT<GA_Offset>& attrib_h,
             GA_VertexGroup* unsharedGroup,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -449,14 +449,14 @@ namespace GA_FeE_VertexNextEquiv {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0,
-            [&geo, &attribHandle, &unsharedGroup, &dstptAttribHandle,
-            &vtxPointRef, &pointVtxRef, &vtxNextRef]
+            [geo, unsharedGroup, &attrib_h, &dstptAttrib_h,
+            vtxPointRef, pointVtxRef, vtxNextRef]
             (const GA_SplittableRange& r)
         {
             GA_Offset vtxoff_next, dstpt, ptnum;
@@ -465,19 +465,19 @@ namespace GA_FeE_VertexNextEquiv {
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    dstpt = dstptAttribHandle.get(elemoff);
+                    dstpt = dstptAttrib_h.get(elemoff);
                     if (dstpt < 0)
                     {
-                        attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                        attrib_h.set(elemoff, GA_INVALID_OFFSET);
                         continue;
                     }
 
                     for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                        if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
-                        attribHandle.set(elemoff, vtxoff_next);
+                        attrib_h.set(elemoff, vtxoff_next);
                         break;
                     }
 
@@ -487,15 +487,15 @@ namespace GA_FeE_VertexNextEquiv {
                     ptnum = vtxPointRef->getLink(elemoff);
                     for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != ptnum)
+                        if (dstptAttrib_h.get(vtxoff_next) != ptnum)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
-                        attribHandle.set(elemoff, vtxoff_next);
+                        attrib_h.set(elemoff, vtxoff_next);
                         break;
                     }
                     if (dstpt >= 0)
                     {
-                        attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                        attrib_h.set(elemoff, GA_INVALID_OFFSET);
                         unsharedGroup->setElement(elemoff, true);
                     }
                 }
@@ -508,8 +508,8 @@ namespace GA_FeE_VertexNextEquiv {
     static void
         vertexNextEquiv(
             GA_Detail* const geo,
-            const GA_RWHandleT<GA_Offset>& attribHandle,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_RWHandleT<GA_Offset>& attrib_h,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -517,14 +517,14 @@ namespace GA_FeE_VertexNextEquiv {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0,
-            [&geo, &attribHandle, &dstptAttribHandle,
-            &vtxPointRef, &pointVtxRef, &vtxNextRef]
+            [geo, &attrib_h, &dstptAttrib_h,
+            vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
             GA_Offset vtxoff_next, dstpt, ptnum;
@@ -533,19 +533,19 @@ namespace GA_FeE_VertexNextEquiv {
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    dstpt = dstptAttribHandle.get(elemoff);
+                    dstpt = dstptAttrib_h.get(elemoff);
                     if (dstpt < 0)
                     {
-                        attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                        attrib_h.set(elemoff, GA_INVALID_OFFSET);
                         continue;
                     }
 
                     for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                        if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
-                        attribHandle.set(elemoff, vtxoff_next);
+                        attrib_h.set(elemoff, vtxoff_next);
                         break;
                     }
 
@@ -555,15 +555,15 @@ namespace GA_FeE_VertexNextEquiv {
                     ptnum = vtxPointRef->getLink(elemoff);
                     for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != ptnum)
+                        if (dstptAttrib_h.get(vtxoff_next) != ptnum)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
-                        attribHandle.set(elemoff, vtxoff_next);
+                        attrib_h.set(elemoff, vtxoff_next);
                         break;
                     }
                     if (dstpt >= 0)
                     {
-                        attribHandle.set(elemoff, GA_INVALID_OFFSET);
+                        attrib_h.set(elemoff, GA_INVALID_OFFSET);
                     }
                 }
             }
@@ -578,7 +578,7 @@ namespace GA_FeE_VertexNextEquiv {
         vertexNextEquiv(
             GA_Detail* const geo,
             GA_VertexGroup* unsharedGroup,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -586,14 +586,14 @@ namespace GA_FeE_VertexNextEquiv {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0,
-            [&geo, &unsharedGroup, &dstptAttribHandle,
-            &vtxPointRef, &pointVtxRef, &vtxNextRef]
+            [geo, unsharedGroup, &dstptAttrib_h,
+            vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
             GA_Offset vtxoff_next, dstpt, ptnum;
@@ -602,7 +602,7 @@ namespace GA_FeE_VertexNextEquiv {
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    dstpt = dstptAttribHandle.get(elemoff);
+                    dstpt = dstptAttrib_h.get(elemoff);
                     if (dstpt < 0)
                     {
                         continue;
@@ -610,7 +610,7 @@ namespace GA_FeE_VertexNextEquiv {
 
                     for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                        if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
                         break;
@@ -622,7 +622,7 @@ namespace GA_FeE_VertexNextEquiv {
                     ptnum = vtxPointRef->getLink(elemoff);
                     for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        if (dstptAttribHandle.get(vtxoff_next) != ptnum)
+                        if (dstptAttrib_h.get(vtxoff_next) != ptnum)
                             continue;
                         dstpt = GA_INVALID_OFFSET;
                         break;

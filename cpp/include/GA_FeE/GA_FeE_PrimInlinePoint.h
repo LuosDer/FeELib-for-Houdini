@@ -6,8 +6,7 @@
 
 //#include "GA_FeE/GA_FeE_PrimInlinePoint.h"
 
-//#include "GA/GA_Detail.h"
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
 
@@ -181,7 +180,7 @@ SYS_FORCE_INLINE
 static void
     groupPrimInlinePoint_fast(
         const SOP_NodeVerb::CookParms& cookparms,
-        const GEO_Detail* const geo,
+        const GA_Detail* const geo,
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
         GA_PointGroup* const inlinePtGroup,
@@ -204,7 +203,7 @@ SYS_FORCE_INLINE
 static GA_PointGroup*
     groupPrimInlinePoint_fast(
         const SOP_NodeVerb::CookParms& cookparms,
-        GEO_Detail* const geo,
+        GA_Detail* const geo,
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
         const UT_StringHolder& outGroupName,
@@ -257,7 +256,7 @@ SYS_FORCE_INLINE
 static GA_PointGroupUPtr
     groupDetachedPrimInlinePoint_fast(
         const SOP_NodeVerb::CookParms& cookparms,
-        const GEO_Detail* const geo,
+        const GA_Detail* const geo,
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
         const fpreal threshold_radians,
@@ -301,7 +300,7 @@ SYS_FORCE_INLINE
 static void
     delPrimInlinePoint_fast(
         const SOP_NodeVerb::CookParms& cookparms,
-        GEO_Detail* const geo,
+        GA_Detail* const geo,
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
         const fpreal threshold_radians,

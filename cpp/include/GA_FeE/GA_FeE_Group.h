@@ -6,8 +6,7 @@
 
 //#include "GA_FeE/GA_FeE_Group.h"
 
-//#include "GA/GA_Detail.h"
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
 #include "GA_FeE/GA_FeE_Detail.h"
@@ -26,7 +25,7 @@ delStdGroup(
         return;
     for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
     {
-        GA_Group* group = it.group();
+        GA_Group* const group = it.group();
         if (group->isDetached())
             continue;
         if (!group->getName().multiMatch(delGroupPattern))
@@ -78,7 +77,7 @@ keepStdGroup(
         return;
     for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
     {
-        GA_Group* group = it.group();
+        GA_Group* const group = it.group();
         if (group->isDetached())
             continue;
         if (group->getName().match(keepGroupPattern))
@@ -339,7 +338,7 @@ findOrCreateGroup(
     GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (!groupTable)
         return nullptr;
-    GA_Group* group = groupTable->find(groupName);
+    GA_Group* const group = groupTable->find(groupName);
     if (!group)
         return groupTable->newGroup(groupName);
     return nullptr;
@@ -409,7 +408,7 @@ groupRename(
 //static void
 //groupDestroy(
 //    GA_Detail* const geo,
-//    GA_Group* group
+//    GA_Group* const group
 //)
 //{
 //    UT_ASSERT_P(geo);
@@ -443,7 +442,7 @@ groupBumpDataId(
 static GA_Group*
 findOrParseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
@@ -462,13 +461,13 @@ findOrParseGroupDetached(
     GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (groupTable)
     {
-        GA_Group* anyGroup = groupTable->find(groupName);
+        GA_Group* const anyGroup = groupTable->find(groupName);
         if (anyGroup)
             return anyGroup;
     }
 
     bool success = true;
-    GA_Group* anyGroup = const_cast<GA_Group*>(gop.parseGroupDetached(groupName, groupType, geo, true, false, success));
+    GA_Group* const anyGroup = const_cast<GA_Group*>(gop.parseGroupDetached(groupName, groupType, static_cast<GEO_Detail*>(geo), true, false, success));
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, geo, group);
 
     //if (!success || (anyGroup && !anyGroup->isElementGroup()))
@@ -487,7 +486,7 @@ findOrParseGroupDetached(
 static const GA_Group*
 findOrParseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
@@ -506,13 +505,13 @@ findOrParseGroupDetached(
     const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (groupTable)
     {
-        const GA_Group* anyGroup = groupTable->find(groupName);
+        const GA_Group* const anyGroup = groupTable->find(groupName);
         if (anyGroup)
             return anyGroup;
     }
 
     bool success = true;
-    const GA_Group* anyGroup = gop.parseGroupDetached(groupName, groupType, geo, true, false, success);
+    const GA_Group* const anyGroup = gop.parseGroupDetached(groupName, groupType, static_cast<const GEO_Detail*>(geo), true, false, success);
 
     //if (!success || (anyGroup && !anyGroup->isElementGroup()))
     if (!success)
@@ -534,7 +533,7 @@ SYS_FORCE_INLINE
 static const GA_PrimitiveGroup*
 findOrParsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -546,7 +545,7 @@ SYS_FORCE_INLINE
 static const GA_PointGroup*
 findOrParsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* geo,
+    const GA_Detail* geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -558,7 +557,7 @@ SYS_FORCE_INLINE
 static const GA_VertexGroup*
 findOrParseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -570,7 +569,7 @@ SYS_FORCE_INLINE
 static const GA_EdgeGroup*
 findOrParseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -587,7 +586,7 @@ SYS_FORCE_INLINE
 static GA_PrimitiveGroup*
 findOrParsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -599,7 +598,7 @@ SYS_FORCE_INLINE
 static GA_PointGroup*
 findOrParsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* geo,
+    GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -611,7 +610,7 @@ SYS_FORCE_INLINE
 static GA_VertexGroup*
 findOrParseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -623,7 +622,7 @@ SYS_FORCE_INLINE
 static GA_EdgeGroup*
 findOrParseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -640,7 +639,7 @@ findOrParseEdgeGroupDetached(
 static const GA_Group*
 parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
@@ -657,7 +656,7 @@ parseGroupDetached(
     }
 
     bool success = true;
-    const GA_Group* anyGroup = gop.parseGroupDetached(groupName, groupType, geo, true, false, success);
+    const GA_Group* const anyGroup = gop.parseGroupDetached(groupName, groupType, static_cast<const GEO_Detail*>(geo), true, false, success);
 
     //if (!success || (anyGroup && !anyGroup->isElementGroup()))
     if (!success)
@@ -677,7 +676,7 @@ SYS_FORCE_INLINE
 static const GA_PrimitiveGroup*
 parsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -690,7 +689,7 @@ SYS_FORCE_INLINE
 static const GA_PointGroup*
 parsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -702,7 +701,7 @@ SYS_FORCE_INLINE
 static const GA_VertexGroup*
 parseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -714,7 +713,7 @@ SYS_FORCE_INLINE
 static const GA_EdgeGroup*
 parseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
-    const GEO_Detail* const geo,
+    const GA_Detail* const geo,
     const UT_StringHolder& groupName,
     GOP_Manager& gop
 )
@@ -838,7 +837,7 @@ copyGroupDst(
     if (attribID)
     {
         const GA_ROHandleT<exint> attribID_h(attribID);
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &attribID_h](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef, &attribID_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -853,7 +852,7 @@ copyGroupDst(
     }
     else
     {
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -913,7 +912,7 @@ copyGroupRef(
     if (attribID)
     {
         const GA_ROHandleT<exint> attribID_h(attribID);
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &attribID_h](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef, &attribID_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -928,7 +927,7 @@ copyGroupRef(
     }
     else
     {
-        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribNew, attribRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )

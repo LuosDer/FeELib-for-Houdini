@@ -119,14 +119,14 @@ computeNormal2D(
 
     //const GA_Attribute* const dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, unsharedVertexGroup);
     const GA_Attribute* const dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, nullptr);
-    const GA_ROHandleT<GA_Offset> dstptAttribH(dstptAttrib);
+    const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
 
-    const GA_ROHandleT<UT_Vector3T<fpreal64>> posH(posAttrib);
-    const GA_ROHandleT<UT_Vector3T<fpreal64>> N3DH(N3DAttrib);
-    const GA_RWHandleT<UT_Vector3T<fpreal64>> N2DH(N2DAttrib);
+    const GA_ROHandleT<UT_Vector3T<fpreal64>> pos_h(posAttrib);
+    const GA_ROHandleT<UT_Vector3T<fpreal64>> N3D_h(N3DAttrib);
+    const GA_RWHandleT<UT_Vector3T<fpreal64>> N2D_h(N2DAttrib);
 
     if (attribCalssN3D == GA_ATTRIB_GLOBAL)
-        defaultN3D = N3DH.get(0);
+        defaultN3D = N3D_h.get(0);
 
     GA_Topology& topo = geo->getTopology();
     topo.makePrimitiveRef();
@@ -136,9 +136,9 @@ computeNormal2D(
 
 
     const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
-    UTparallelFor(geoVertexSplittableRange, [posH, dstptAttribH, N2DH, N3DH,
+    UTparallelFor(geoVertexSplittableRange, [&pos_h, &dstptAttrib_h, &N2D_h, &N3D_h,
         vtxPointRef, vtxPrimRef,
-        attribCalssN3D, defaultN3D](const GA_SplittableRange& r)
+        attribCalssN3D, &defaultN3D](const GA_SplittableRange& r)
     {
         UT_Vector3T<fpreal64> dir;
         GA_Offset start, end;
@@ -147,34 +147,34 @@ computeNormal2D(
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 GA_Offset ptoff = vtxPointRef->getLink(elemoff);
-                GA_Offset dstpt = dstptAttribH.get(elemoff);
+                GA_Offset dstpt = dstptAttrib_h.get(elemoff);
 
-                dir = posH.get(ptoff) - posH.get(dstpt);
+                dir = pos_h.get(ptoff) - pos_h.get(dstpt);
                 switch (attribCalssN3D)
                 {
                 case GA_ATTRIB_PRIMITIVE:
-                    dir.cross(N3DH.get(vtxPrimRef->getLink(elemoff)));
+                    dir.cross(N3D_h.get(vtxPrimRef->getLink(elemoff)));
                     break;
                 case GA_ATTRIB_POINT:
-                    dir.cross(N3DH.get(ptoff));
+                    dir.cross(N3D_h.get(ptoff));
                     break;
                 case GA_ATTRIB_VERTEX:
-                    dir.cross(N3DH.get(elemoff));
+                    dir.cross(N3D_h.get(elemoff));
                     break;
                 default:
                     dir.cross(defaultN3D);
                     break;
                 }
                 dir.normalize();
-                N2DH.add(ptoff, dir);
-                N2DH.add(dstpt, dir);
+                N2D_h.add(ptoff, dir);
+                N2D_h.add(dstpt, dir);
             }
         }
     }, subscribeRatio, minGrainSize);
 
 
     const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
-    UTparallelFor(geoPointSplittableRange, [N2DAttrib, uniScale, defaultN3D, scaleByTurns, normalize](const GA_SplittableRange& r)
+    UTparallelFor(geoPointSplittableRange, [N2DAttrib, uniScale, scaleByTurns, normalize](const GA_SplittableRange& r)
     {
         GA_PageHandleV<UT_Vector3T<fpreal64>>::RWType N2D_PH(N2DAttrib);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
@@ -233,15 +233,15 @@ template<typename T>
 static T
 computeNormal2D(
     const GA_Detail* const geo,
-    const GA_ROHandleT<UT_Vector3T<T>>& posH,
-    const GA_RWHandleT<UT_Vector3T<T>>& N2DH,
+    const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
+    const GA_RWHandleT<UT_Vector3T<T>>& N2D_h,
     const GA_Group* const geoGroup = nullptr,
     const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
     const bool copy_orig_if_zero = false
 )
 {
-    posH.getAttribute()->getOwner();
+    pos_h.getAttribute()->getOwner();
     GEO_Normal::compute
 }
 //using triangleArea = heronsFormula;

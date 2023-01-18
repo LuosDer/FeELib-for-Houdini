@@ -78,8 +78,8 @@ namespace GA_FeE_Adjacency {
     static void
         pointPointEdge(
             const GA_Detail* const geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-            const GA_ROHandleT<GA_Size>& vtxpnumAttribHandle,
+            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
+            const GA_ROHandleT<GA_Size>& vtxpnumAttrib_h,
             const GA_PointGroup* const geoGroup = nullptr,
             const GA_PointGroup* const seamGroup = nullptr,
             const exint subscribeRatio = 64,
@@ -87,7 +87,7 @@ namespace GA_FeE_Adjacency {
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getPointRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &vtxpnumAttribHandle, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, &vtxpnumAttrib_h, seamGroup](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> ptoffArray;
             GA_Offset start, end;
@@ -102,7 +102,7 @@ namespace GA_FeE_Adjacency {
                     {
                         const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
                         const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-                        const GA_Size vtxpnum = vtxpnumAttribHandle.get(vtxoff_next);
+                        const GA_Size vtxpnum = vtxpnumAttrib_h.get(vtxoff_next);
 
                         if (vtxpnum == 0)
                         {
@@ -136,7 +136,7 @@ namespace GA_FeE_Adjacency {
                                 ptoffArray.emplace_back(pt_next);
                         }
                     }
-                    attribHandle.set(elemoff, ptoffArray);
+                    attrib_h.set(elemoff, ptoffArray);
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -147,7 +147,7 @@ namespace GA_FeE_Adjacency {
     static void
     pointPointEdge(
         const GA_Detail* const geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
+        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
         const GA_PointGroup* const geoGroup = nullptr,
         const GA_PointGroup* const seamGroup = nullptr,
         const exint subscribeRatio = 128,
@@ -155,7 +155,7 @@ namespace GA_FeE_Adjacency {
     )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getPointRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, seamGroup](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> adjElems;
             GA_Offset start, end;
@@ -164,7 +164,7 @@ namespace GA_FeE_Adjacency {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     pointPointEdge(geo, elemoff, adjElems);
-                    attribHandle.set(elemoff, adjElems);
+                    attrib_h.set(elemoff, adjElems);
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -176,9 +176,9 @@ namespace GA_FeE_Adjacency {
     static void
     pointPointEdge(
         GA_Detail* const geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-        const GA_ROHandleT<GA_Offset>& vtxPrevH,
-        const GA_ROHandleT<GA_Offset>& vtxNextH,
+        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
+        const GA_ROHandleT<GA_Offset>& vtxPrev_h,
+        const GA_ROHandleT<GA_Offset>& vtxNext_h,
         const GA_PointGroup* const geoGroup = nullptr,
         const GA_PointGroup* const seamGroup = nullptr,
         const exint subscribeRatio = 128,
@@ -188,13 +188,13 @@ namespace GA_FeE_Adjacency {
         GA_Topology& topo = geo->getTopology();
         topo.makeFull();
         //topo.makeVertexRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        //const GA_ATITopology* vtxPrevRef = topo.getVertexPrevRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        //const GA_ATITopology* const vtxPrevRef = topo.getVertexPrevRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
         const GA_SplittableRange geo0SplittableRange0(geo->getPointRange(geoGroup));
 
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &vtxPrevH, &vtxNextH, &pointVtxRef, &vtxNextRef, &vtxPointRef, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, &vtxPrev_h, &vtxNext_h, pointVtxRef, vtxNextRef, vtxPointRef, seamGroup](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> ptoffArray(32);
             GA_Offset start, end;
@@ -205,7 +205,7 @@ namespace GA_FeE_Adjacency {
                     ptoffArray.clear();
                     for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        const GA_Offset vtxPrev = vtxPrevH.get(vtxoff_next);
+                        const GA_Offset vtxPrev = vtxPrev_h.get(vtxoff_next);
                         if (vtxPrev != GA_INVALID_OFFSET)
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxPrev);
@@ -216,7 +216,7 @@ namespace GA_FeE_Adjacency {
                                 ptoffArray.sort();
                             }
                         }
-                        const GA_Offset vtxNext = vtxNextH.get(vtxoff_next);
+                        const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
                         if (vtxNext != GA_INVALID_OFFSET)
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxNext);
@@ -228,7 +228,7 @@ namespace GA_FeE_Adjacency {
                             }
                         }
                     }
-                    attribHandle.set(elemoff, ptoffArray);
+                    attrib_h.set(elemoff, ptoffArray);
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -241,8 +241,8 @@ namespace GA_FeE_Adjacency {
     static void
         primPrimEdge(
             GA_Detail* const geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-            const GA_ROHandleT<GA_Offset>& nextEquivAttribHandle,
+            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
+            const GA_ROHandleT<GA_Offset>& nextEquivAttrib_h,
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const GA_VertexGroup* const seamGroup = nullptr,
             const exint subscribeRatio = 128,
@@ -251,10 +251,10 @@ namespace GA_FeE_Adjacency {
     {
         GA_Topology& topo = geo->getTopology();
         topo.makePrimitiveRef();
-        const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
+        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
 
         const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &nextEquivAttribHandle, &seamGroup, &vtxPrimRef](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, &nextEquivAttrib_h, seamGroup, vtxPrimRef](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> adjElems;
             GA_Offset vtxoff_next;
@@ -274,17 +274,17 @@ namespace GA_FeE_Adjacency {
                             const GA_Offset vtxoff_start = vertices[i];
                             if (!seamGroup->contains(vtxoff_start))
                                 continue;
-                            GA_Offset vtxoff_next = nextEquivAttribHandle.get(vtxoff_start);
+                            GA_Offset vtxoff_next = nextEquivAttrib_h.get(vtxoff_start);
                             if (vtxoff_next < 0)
                                 continue;
-                            for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttribHandle.get(vtxoff_next))
+                            for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttrib_h.get(vtxoff_next))
                             {
                                 if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
                                     continue;
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -301,17 +301,17 @@ namespace GA_FeE_Adjacency {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset vtxoff_start = vertices[i];
-                            GA_Offset vtxoff_next = nextEquivAttribHandle.get(vtxoff_start);
+                            GA_Offset vtxoff_next = nextEquivAttrib_h.get(vtxoff_start);
                             if (vtxoff_next < 0)
                                 continue;
-                            for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttribHandle.get(vtxoff_next))
+                            for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttrib_h.get(vtxoff_next))
                             {
                                 if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
                                     continue;
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -324,8 +324,8 @@ namespace GA_FeE_Adjacency {
     static void
         primPrimEdge1(
             const GA_Detail* const geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const GA_VertexGroup*    const seamGroup = nullptr,
             const exint subscribeRatio = 128,
@@ -333,7 +333,7 @@ namespace GA_FeE_Adjacency {
         )
     {
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geoSplittableRange, [&geo, &attribHandle, &dstptAttribHandle, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [geo, &attrib_h, &dstptAttrib_h, seamGroup](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> adjElems(32);
             GA_Offset vtxoff_next;
@@ -349,7 +349,7 @@ namespace GA_FeE_Adjacency {
                         const GA_Size numvtx = vertices.size();
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
-                            const GA_Offset dstpt = dstptAttribHandle.get(vertices[i]);
+                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
                             if (dstpt < 0)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
@@ -357,7 +357,7 @@ namespace GA_FeE_Adjacency {
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
                                     continue;
@@ -366,14 +366,14 @@ namespace GA_FeE_Adjacency {
 
                             for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (dstptAttribHandle.get(vtxoff_next) != ptoff)
+                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -388,7 +388,7 @@ namespace GA_FeE_Adjacency {
                         const GA_Size numvtx = vertices.size();
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
-                            const GA_Offset dstpt = dstptAttribHandle.get(vertices[i]);
+                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
                             if (dstpt < 0)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
@@ -396,7 +396,7 @@ namespace GA_FeE_Adjacency {
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
                                     continue;
@@ -405,14 +405,14 @@ namespace GA_FeE_Adjacency {
 
                             for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (dstptAttribHandle.get(vtxoff_next) != ptoff)
+                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -424,8 +424,8 @@ namespace GA_FeE_Adjacency {
     static void
         primPrimEdge2(
             const GA_Detail* const geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const GA_VertexGroup*    const seamGroup = nullptr,
             const exint subscribeRatio = 128,
@@ -433,7 +433,7 @@ namespace GA_FeE_Adjacency {
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, &dstptAttrib_h, seamGroup](const GA_SplittableRange& r)
         {
             //UT_SmallArray<GA_Offset> adjElems;
             //UT_ValArray<GA_Offset> adjElems;
@@ -450,7 +450,7 @@ namespace GA_FeE_Adjacency {
                         const GA_Size numvtx = vertices.size();
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
-                            const GA_Offset dstpt = dstptAttribHandle.get(vertices[i]);
+                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
                             if (dstpt < 0)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
@@ -458,7 +458,7 @@ namespace GA_FeE_Adjacency {
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
                                     continue;
@@ -467,14 +467,14 @@ namespace GA_FeE_Adjacency {
 
                             for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (dstptAttribHandle.get(vtxoff_next) != ptoff)
+                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -489,7 +489,7 @@ namespace GA_FeE_Adjacency {
                         const GA_Size numvtx = vertices.size();
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
-                            const GA_Offset dstpt = dstptAttribHandle.get(vertices[i]);
+                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
                             if (dstpt < 0)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
@@ -497,7 +497,7 @@ namespace GA_FeE_Adjacency {
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
                                     continue;
@@ -506,14 +506,14 @@ namespace GA_FeE_Adjacency {
 
                             for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (dstptAttribHandle.get(vtxoff_next) != ptoff)
+                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -526,8 +526,8 @@ namespace GA_FeE_Adjacency {
     static void
         primPrimEdge3(
             const GA_Detail* const geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
-            const GA_ROHandleT<GA_Offset>& dstptAttribHandle,
+            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
+            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const GA_VertexGroup*    const seamGroup = nullptr,
             const exint subscribeRatio = 128,
@@ -535,7 +535,7 @@ namespace GA_FeE_Adjacency {
         )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &dstptAttribHandle, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, &dstptAttrib_h, seamGroup](const GA_SplittableRange& r)
         {
             //UT_SmallArray<GA_Offset> adjElems;
             //UT_ValArray<GA_Offset> adjElems;
@@ -552,7 +552,7 @@ namespace GA_FeE_Adjacency {
                         const GA_Size numvtx = vertices.size();
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
-                            const GA_Offset dstpt = dstptAttribHandle.get(vertices[i]);
+                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
                             if (dstpt < 0)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
@@ -560,7 +560,7 @@ namespace GA_FeE_Adjacency {
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
                                     continue;
@@ -569,14 +569,14 @@ namespace GA_FeE_Adjacency {
 
                             for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (dstptAttribHandle.get(vtxoff_next) != ptoff)
+                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -591,7 +591,7 @@ namespace GA_FeE_Adjacency {
                         const GA_Size numvtx = vertices.size();
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
-                            const GA_Offset dstpt = dstptAttribHandle.get(vertices[i]);
+                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
                             if (dstpt < 0)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
@@ -599,7 +599,7 @@ namespace GA_FeE_Adjacency {
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (dstptAttribHandle.get(vtxoff_next) != dstpt)
+                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
                                     continue;
@@ -608,14 +608,14 @@ namespace GA_FeE_Adjacency {
 
                             for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (dstptAttribHandle.get(vtxoff_next) != ptoff)
+                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
                                 if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -627,7 +627,7 @@ namespace GA_FeE_Adjacency {
     static void
     primPrimEdge4(
         const GEO_Detail* const geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
+        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
         const GA_PrimitiveGroup* const geoGroup = nullptr,
         const GA_VertexGroup*    const seamGroup = nullptr,
         const exint subscribeRatio = 128,
@@ -635,7 +635,7 @@ namespace GA_FeE_Adjacency {
     )
     {
         const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, seamGroup](const GA_SplittableRange& r)
         {
             GEO_Detail::GEO_EdgeAdjArray adjElemStruct;
             UT_ValArray<GA_Offset> adjElems;
@@ -652,7 +652,7 @@ namespace GA_FeE_Adjacency {
                         {
                             adjElems[i] = adjElemStruct[i].myAdjacentPolygon;
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
                 else
@@ -665,7 +665,7 @@ namespace GA_FeE_Adjacency {
                         {
                             adjElems[i] = adjElemStruct[i].myAdjacentPolygon;
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -680,7 +680,7 @@ namespace GA_FeE_Adjacency {
     static void
     primPrimPoint(
         GA_Detail* const geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attribHandle,
+        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
         const GA_PrimitiveGroup* const geoGroup = nullptr,
         const GA_PointGroup*     const seamGroup = nullptr,
         const exint subscribeRatio = 128,
@@ -691,14 +691,14 @@ namespace GA_FeE_Adjacency {
         //topo.makeFull();
         //topo.makePrimitiveRef();
         //topo.makeVertexRef();
-        const GA_ATITopology* vtxPrimRef = topo.getPrimitiveRef();
-        const GA_ATITopology* vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
 
         const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attribHandle, &seamGroup, &vtxNextRef, &vtxPointRef, &pointVtxRef, &vtxPrimRef](const GA_SplittableRange& r)
+        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, seamGroup, vtxNextRef, vtxPointRef, pointVtxRef, vtxPrimRef](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> adjElems(64);
             GA_Offset vtxoff_next;
@@ -726,7 +726,7 @@ namespace GA_FeE_Adjacency {
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -751,7 +751,7 @@ namespace GA_FeE_Adjacency {
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
                         }
-                        attribHandle.set(elemoff, adjElems);
+                        attrib_h.set(elemoff, adjElems);
                     }
                 }
             }
@@ -806,9 +806,9 @@ namespace GA_FeE_Adjacency {
         pointPointEdge(geo, attribPtr, vtxPrevAttrib, vtxNextAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         //UT_ASSERT_P(vtxPrevAttrib);
         //UT_ASSERT_P(vtxNextAttrib);
-        //GA_ROHandleT<GA_Offset> vtxPrevH(vtxPrevAttrib);
-        //GA_ROHandleT<GA_Offset> vtxNextH(vtxNextAttrib);
-        //pointPointEdge(geo, attribPtr, vtxPrevH, vtxNextH, geoGroup, seamGroup, subscribeRatio, minGrainSize);
+        //GA_ROHandleT<GA_Offset> vtxPrev_h(vtxPrevAttrib);
+        //GA_ROHandleT<GA_Offset> vtxNext_h(vtxNextAttrib);
+        //pointPointEdge(geo, attribPtr, vtxPrev_h, vtxNext_h, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
 
@@ -838,14 +838,14 @@ namespace GA_FeE_Adjacency {
 
         const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
         //GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, "dstpt", nullptr, GA_Defaults(-1), fianlStorage, subscribeRatio, minGrainSize);
-        //GA_RWHandleT<GA_Offset> dstptAttribHandle(dstptAttrib);
+        //GA_RWHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
         //GA_Attribute* vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "vtxPrimNext", nullptr, GA_Defaults(-1), fianlStorage, subscribeRatio, minGrainSize);
 
         GA_Attribute* vtxNextEquivAttrib = GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, nullptr, fianlStorage);
 
         attribPtr = geo->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, creation_args, attribute_options, "arraydata", reuse);
         //attribPtr = geo->addIntArray(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, 1, creation_args, attribute_options, fianlStorage, reuse);
-        //GA_ROHandleT<UT_ValArray<GA_Offset>> attribHandle(attribPtr);
+        //GA_ROHandleT<UT_ValArray<GA_Offset>> attrib_h(attribPtr);
         primPrimEdge(geo, attribPtr, vtxNextEquivAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
