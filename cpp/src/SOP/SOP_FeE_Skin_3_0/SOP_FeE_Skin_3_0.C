@@ -550,7 +550,7 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Skin_3_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWithPoints(*inGeo0);
 

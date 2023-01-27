@@ -342,7 +342,7 @@ void
 SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Normal2D_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Normal2D_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -412,8 +412,8 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_PointGroup* const geo0PointGroup = GA_FeE_GroupPromote::groupPromotePointDetached(outGeo0, geo0Group);
-    UT_UniquePtr<const GA_PointGroup> geo0PointGroupUPtr(geo0PointGroup);
+    const GA_PointGroupUPtr geo0PointGroupUPtr = GA_FeE_GroupPromote::groupPromotePointDetached(outGeo0, geo0Group);
+    const GA_PointGroup* geo0PointGroup = geo0PointGroupUPtr.get();
 
     //GA_VertexGroup* geo0VtxGroup = const_cast<GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
 

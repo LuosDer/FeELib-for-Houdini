@@ -340,7 +340,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     {
         outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
     }
-
+    
     if (!delPoint)
     {
         cookparms.getNode()->setHighlight(true);
@@ -350,6 +350,9 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             polyReduce2DPtGroup->bumpDataId();
         }
     }
+
+    //GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+
     //tmpGeoH0.deleteGdp();
 
 }

@@ -498,10 +498,10 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferedPrecision);
 
 
-    const GA_Group* geo0GroupPromoted = GA_FeE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
-    UT_UniquePtr<const GA_Group> geo0GroupUPtr(geo0GroupPromoted);
+    const GA_GroupUPtr geo0GroupUPtr = GA_FeE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
+    const GA_Group* const geo0GroupPromoted = geo0GroupUPtr.get();
 
-    const GA_Group* geo0SeamGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
+    const GA_Group* const geo0SeamGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
 
 
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);

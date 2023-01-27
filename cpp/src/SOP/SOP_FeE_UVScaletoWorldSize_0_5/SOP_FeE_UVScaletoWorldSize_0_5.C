@@ -334,7 +334,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     const bool& computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
     const GEO_Detail* const inGeo1 = cookparms.inputGeo(computeUVAreaInPiece ? 2 : 1);
 
     if (!inGeo1)
@@ -356,9 +356,9 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     //outGeo0 = sopNodeProcess(*inGeo0);
 
     
-    const bool& doUVScalex = sopparms.getDoUVScalex();
-    const bool& doUVScaley = sopparms.getDoUVScaley();
-    const bool& doUVScalez = sopparms.getDoUVScalez();
+    const bool doUVScalex = sopparms.getDoUVScalex();
+    const bool doUVScaley = sopparms.getDoUVScaley();
+    const bool doUVScalez = sopparms.getDoUVScalez();
     if (!doUVScalex && !doUVScaley && !doUVScalez)
         return;
 
@@ -381,14 +381,14 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
 
-    const GA_GroupType& groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
     const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_GroupType& geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
+    const GA_GroupType geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
 
 
     UT_AutoInterrupt boss("Processing");
@@ -398,27 +398,23 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
 
-    const attribPrecisonF& uniScale = sopparms.getUVScale();
-    const attribPrecisonF& uvScalex = sopparms.getUVScalex();
-    const attribPrecisonF& uvScaley = sopparms.getUVScaley();
-    const attribPrecisonF& uvScalez = sopparms.getUVScalez();
+    const attribPrecisonF uniScale = sopparms.getUVScale();
+    const attribPrecisonF uvScalex = sopparms.getUVScalex();
+    const attribPrecisonF uvScaley = sopparms.getUVScaley();
+    const attribPrecisonF uvScalez = sopparms.getUVScalez();
 
     TAttribTypeV uvScale(doUVScalex, doUVScaley, doUVScalez);
     //TAttribTypeV uvScale(uvScalex, uvScaley, uvScalez);
     uvScale *= TAttribTypeV(uvScalex, uvScaley, uvScalez) * uniScale;
 
 
-    const GA_AttributeOwner& geo0AttribClass = sopAttribOwner(sopparms.getUVAttribClass());
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getUVAttribClass());
     //fpreal uvSplitDistThreshold = sopparms.getUVSplitDistThreshold();
 
-    const exint& subscribeRatio = sopparms.getSubscribeRatio();
-    const exint& minGrainSize = sopparms.getMinGrainSize();
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
 
-    //const exint& minGrainSize = pow(2, 8);
-    //const exint& minGrainSize = pow(2, 4);
-
-    //const GA_Storage& inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage& inStorageF = GA_STORE_REAL32;
+    const GA_Storage inStorageF = GA_STORE_REAL32;
 
 
     const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
@@ -427,11 +423,11 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
 
-    const GA_Attribute* areaAttribPtr = inGeo1->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, geo1AreaAttribNameSub);
+    const GA_Attribute* const areaAttribPtr = inGeo1->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, geo1AreaAttribNameSub);
     if (!areaAttribPtr)
         return;
 
-    const GA_Attribute* areaUVAttribPtr = inGeo1->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, geo1AreaUVAttribNameSub);
+    const GA_Attribute* const areaUVAttribPtr = inGeo1->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, geo1AreaUVAttribNameSub);
     if (!areaUVAttribPtr)
         return;
 
@@ -440,13 +436,13 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
     GA_ATINumericUPtr uvScaleATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 3);
-    GA_ATINumeric* uvScaleATIPtr = uvScaleATI_deleter.get();
+    GA_ATINumeric* const uvScaleATIPtr = uvScaleATI_deleter.get();
     GA_RWHandleT<TAttribTypeV> uvScaleAttribHandle(uvScaleATIPtr);
 
 
 
     GA_AttributeOwner geo0AttribClassFinal;
-    GA_Attribute* attribPtr = GA_FeE_Attribute::findFloatTuplePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal);
+    GA_Attribute* const attribPtr = GA_FeE_Attribute::findAttributePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal);
     if (!attribPtr)
         return;
 

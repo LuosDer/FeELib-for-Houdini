@@ -14,9 +14,10 @@
 
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_GroupPromote.h"
-#include "GEO_FeE/GEO_FeE_Attribute.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
+#include "GA_FeE/GA_FeE_GroupPromote.h"
 
 
 using namespace SOP_FeE_GroupUnshared_1_0_Namespace;
@@ -249,10 +250,10 @@ void
 SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupUnshared_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupUnshared_1_0Cache*)cookparms.cache();
-
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
@@ -267,13 +268,13 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_VertexGroup* geo0VtxGroup = static_cast<const GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
+    const GA_VertexGroupUPtr geo0VtxGroupUPtr = GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group);
     //GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
-
+    const GA_VertexGroup* const geo0VtxGroup = geo0VtxGroupUPtr.get();
 
 
     UT_AutoInterrupt boss("Processing");
@@ -287,14 +288,12 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    //const GA_Storage inStorgeF = GA_STORE_REAL32;
     const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
 
-    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
+    //GA_VertexGroup* const unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
     GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
-    GA_Group* unshared_promoGroup = GA_FeE_GroupPromote::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true);
+    GA_Group* const unshared_promoGroup = GA_FeE_GroupPromote::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true);
 
     GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
