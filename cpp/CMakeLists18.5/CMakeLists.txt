@@ -95,6 +95,8 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_DelElement_1_0
     SOP_FeE_DelVertex_1_0
     SOP_FeE_ExtractPoint_1_0
+    SOP_FeE_GroupByMeshWinding_1_0
+    SOP_FeE_GroupByPolyWinding_1_0
     SOP_FeE_GroupCombine_1_0
     SOP_FeE_GroupExpand_1_0
     SOP_FeE_GroupReverse_1_0
