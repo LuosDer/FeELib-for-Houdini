@@ -342,7 +342,7 @@ void
 SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Normal2D_1_0Parms>();
-    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Normal2D_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);

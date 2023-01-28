@@ -96,7 +96,24 @@ numelems(
     GA_GroupType groupType
 )
 {
-    return numelems(geo, GA_FeE_Type::attributeOwner_groupType(groupType));
+    //return numelems(geo, GA_FeE_Type::attributeOwner_groupType(groupType));
+    UT_ASSERT_P(geo);
+    switch (groupType)
+    {
+    case GA_GROUP_PRIMITIVE:
+        return geo->getNumPrimitives();
+        break;
+    case GA_GROUP_POINT:
+        return geo->getNumPoints();
+        break;
+    case GA_GROUP_VERTEX:
+        return geo->getNumVertices();
+        break;
+    default:
+        return -1;
+        break;
+    }
+    return -1;
 }
 
 
@@ -125,8 +142,8 @@ clearElement(
 
 static void
 leaveElement(
-    GEO_Detail* const geo,
-    const GEO_Detail* const srcGeo,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
     GA_Group*& group,
     const bool reverse = false,
     const bool delGroup = true
@@ -149,11 +166,11 @@ leaveElement(
     {
     case GA_GROUP_PRIMITIVE:
     {
-        geo->merge(*srcGeo, static_cast<const GA_PrimitiveGroup*>(group));
+        static_cast<GEO_Detail*>(geo)->merge(*static_cast<const GEO_Detail*>(srcGeo), static_cast<const GA_PrimitiveGroup*>(group));
     }
     break;
     case GA_GROUP_POINT:
-        geo->mergePoints(*srcGeo, static_cast<const GA_PointGroup*>(group));
+        static_cast<GEO_Detail*>(geo)->mergePoints(*static_cast<const GEO_Detail*>(srcGeo), static_cast<const GA_PointGroup*>(group));
         break;
     case GA_GROUP_VERTEX:
         UT_ASSERT_MSG(0, "not possible");
@@ -433,8 +450,8 @@ extractPoint(
 //extractPoint(geo, groupName, reverseGroup, delGroup);
 static void
 extractPoint(
-    GEO_Detail* const geo,
-    const GEO_Detail* const srcGeo,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
     const GA_PointGroup* const group,
     const bool reverseGroup = false,
     const bool delInputGroup = true
@@ -496,7 +513,7 @@ extractPoint(
             else
             {
                 clearElement(geo);
-                geo->mergePoints(*srcGeo, group, false, false);
+                static_cast<GEO_Detail*>(geo)->mergePoints(*static_cast<const GEO_Detail*>(srcGeo), group, false, false);
             }
         }
         else
@@ -508,7 +525,7 @@ extractPoint(
             else
             {
                 clearElement(geo);
-                geo->mergePoints(*srcGeo, group, false, false);
+                static_cast<GEO_Detail*>(geo)->mergePoints(*static_cast<const GEO_Detail*>(srcGeo), group, false, false);
             }
         }
     }
@@ -531,7 +548,7 @@ extractPoint(
         //clearElement(geo);
         geo->clear();
         //geo->mergePoints(*srcGeo, group, false, false);
-        geo->mergePoints(*srcGeo, GA_Range(srcGeo->getPointMap(), group, reverseGroup));
+        static_cast<GEO_Detail*>(geo)->mergePoints(*static_cast<const GEO_Detail*>(srcGeo), GA_Range(srcGeo->getPointMap(), group, reverseGroup));
         break;
     default:
         break;

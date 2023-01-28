@@ -22,10 +22,10 @@ namespace GU_FeE_Attribute {
 #if 1
 #define DEFFUNCsetToDefaultF(T)                                                        \
 static void setToDefault(                                                              \
-    const GA_RWHandleT<T>& attrib_h                                                \
+    const GA_RWHandleT<T>& attrib_h                                                    \
 )                                                                                      \
 {                                                                                      \
-    const GA_ATINumeric* attrib = attrib_h.getAttribute();                         \
+    const GA_ATINumeric* attrib = attrib_h.getAttribute();                             \
     const GA_AttributeOwner attribOwner = attrib->getOwner();                          \
                                                                                        \
     if (attribOwner == GA_ATTRIB_INVALID)                                              \
@@ -34,7 +34,7 @@ static void setToDefault(                                                       
     const GA_Defaults defaults = attrib->getDefaults();                                \
     T defaultValue;                                                                    \
     defaults.get(0, defaultValue);                                                     \
-    attrib_h.makeConstant(defaultValue);                                           \
+    attrib_h.makeConstant(defaultValue);                                               \
 }                                                                                      \
 
 
@@ -109,10 +109,10 @@ static void setToDefault(
 
 #define DEFFUNCsetToDefaultV3(T)                                                       \
 static void setToDefault(                                                              \
-    const GA_RWHandleT<UT_Vector3T<T>>& attrib_h                                   \
+    const GA_RWHandleT<UT_Vector3T<T>>& attrib_h                                       \
 )                                                                                      \
 {                                                                                      \
-    const GA_ATINumeric* attrib = attrib_h.getAttribute();                         \
+    const GA_ATINumeric* attrib = attrib_h.getAttribute();                             \
     const GA_AttributeOwner attribOwner = attrib->getOwner();                          \
                                                                                        \
     if (attribOwner == GA_ATTRIB_INVALID)                                              \
@@ -124,7 +124,7 @@ static void setToDefault(                                                       
     defaults.get(0, defaultValue[0]);                                                  \
     defaults.get(1, defaultValue[1]);                                                  \
     defaults.get(2, defaultValue[2]);                                                  \
-    attrib_h.makeConstantV(defaultValue, 3);                                       \
+    attrib_h.makeConstantV(defaultValue, 3);                                           \
 }                                                                                      
 
 //DEFFUNCsetToDefaultV3(fpreal16)
@@ -141,7 +141,7 @@ DEFFUNCsetToDefaultV3(int64)
 template<typename T>
 static void
 setToDefault(
-    const GU_Detail* const geo,
+    const GA_Detail* const geo,
     const GA_RWHandleT<T>& attrib_h,
     const GA_ElementGroup* const geoGroup = nullptr,
     const int subscribeRatio = 16,
@@ -219,7 +219,7 @@ setToDefault(
 #define DEFFUNCsetToDefaultVD(T)                                                                \
 template<>                                                                                      \
 static void setToDefault<T>(                                                                    \
-    const GU_Detail* const geo,                                                                 \
+    const GA_Detail* const geo,                                                                 \
     const GA_RWHandleT<T>& attrib_h,                                                            \
     const GA_ElementGroup* const geoGroup,                                                      \
     const int subscribeRatio,                                                                   \
@@ -243,7 +243,7 @@ DEFFUNCsetToDefaultVD(fpreal64)
 
 template<>
 static void setToDefault<int32>(
-    const GU_Detail* const geo,
+    const GA_Detail* const geo,
     const GA_RWHandleT<int32>& attrib_h,
     const GA_ElementGroup* const geoGroup,
     const int subscribeRatio,
@@ -279,7 +279,7 @@ setToDefault(
         setToDefault(attrib_h);
         return;
     }
-    const GU_Detail* const const geo = attrib_h.getAttribute()->getDetail();
+    const GA_Detail* const geo = attrib_h.getAttribute()->getDetail();
     setToDefault(geo, attrib_h, geoGroup, subscribeRatio, minGrainSize);
 }
 
@@ -290,7 +290,7 @@ setToDefault(
 
 static void
 setToDefault(
-    const GU_Detail* const geo,
+    const GA_Detail* const geo,
     GA_Attribute* const attrib,
     const GA_ElementGroup* const geoGroup = nullptr,
     const int subscribeRatio = 16,

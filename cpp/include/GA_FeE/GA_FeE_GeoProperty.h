@@ -6,8 +6,7 @@
 
 //#include "GA_FeE/GA_FeE_GeoProperty.h"
 
-//#include "GA/GA_Detail.h"
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
 

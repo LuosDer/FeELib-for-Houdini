@@ -29,7 +29,7 @@ namespace GEO_FeE_Detail {
 static void
     delElement(
         const SOP_NodeVerb::CookParms& cookparms,
-        GEO_Detail* const geo,
+        GA_Detail* const geo,
         const GA_GroupType groupType,
         const UT_StringHolder& groupName,
         const bool reverse = false,
@@ -49,7 +49,7 @@ static void
     delElement(
         const bool doDelElement,
         const SOP_NodeVerb::CookParms& cookparms,
-        GEO_Detail* const geo,
+        GA_Detail* const geo,
         const GA_GroupType groupType,
         const UT_StringHolder& groupName,
         const bool reverse = false,
@@ -89,8 +89,8 @@ static void
 static void
 leaveElement(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
-    const GEO_Detail* const srcGeo,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     const bool reverse = false,
@@ -110,8 +110,8 @@ static void
 leaveElement(
     const bool doLeaveElement,
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
-    const GEO_Detail* const srcGeo,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
     const GA_GroupType groupType,
     const UT_StringHolder& groupName,
     const bool reverse = false,
@@ -186,7 +186,7 @@ extractPoint(
 static void
 extractPoint(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
+    GA_Detail* const geo,
     const UT_StringHolder& groupName,
     const UT_StringHolder& delPrimGroup,
     const UT_StringHolder& delPointGroup,
@@ -212,8 +212,8 @@ extractPoint(
 SYS_FORCE_INLINE
 static void
 extractPoint(
-    GEO_Detail* const geo,
-    const GEO_Detail* const srcGeo,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
     const GA_PointGroup* const group,
     const UT_StringHolder& delPrimAttrib,
     const UT_StringHolder& delPointAttrib,
@@ -248,8 +248,8 @@ SYS_FORCE_INLINE
 static void
 extractPoint(
     const SOP_NodeVerb::CookParms& cookparms,
-    GEO_Detail* const geo,
-    const GEO_Detail* const srcGeo,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
     const UT_StringHolder& groupName,
     const UT_StringHolder& delPrimAttrib,
     const UT_StringHolder& delPointAttrib,

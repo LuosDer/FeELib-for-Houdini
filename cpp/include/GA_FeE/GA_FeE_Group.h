@@ -9,7 +9,6 @@
 #include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
-#include "GA_FeE/GA_FeE_Detail.h"
 #include "GA_FeE/GA_FeE_Type.h"
 
 namespace GA_FeE_Group {
@@ -210,9 +209,22 @@ SYS_FORCE_INLINE
     UT_ASSERT_P(geo);
     UT_ASSERT_P(group);
     UT_ASSERT_P(group->isElementGroup());
-    GA_Size numelems = GA_FeE_Detail::numelems(geo, group->classType());
+
     group->makeUnordered();
-    group->toggleAll(numelems);
+    switch (group->classType())
+    {
+    case GA_GROUP_PRIMITIVE:
+        group->toggleAll(geo->getNumPrimitives());
+        break;
+    case GA_GROUP_POINT:
+        group->toggleAll(geo->getNumPoints());
+        break;
+    case GA_GROUP_VERTEX:
+        group->toggleAll(geo->getNumVertices());
+        break;
+    default:
+        break;
+    }
 }
 
 SYS_FORCE_INLINE

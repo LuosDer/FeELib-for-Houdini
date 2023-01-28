@@ -244,13 +244,13 @@ addAttribConnectivityPoint(
     if (attribPtr)
         return attribPtr;
 
-    const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
 
-    attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
+    attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
 
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle = 
         GA_FeE_Adjacency::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup,
-            fianlStorage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+            finalStorage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 
     connectivityPoint(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
@@ -283,13 +283,13 @@ addAttribConnectivityPrim(
     GA_Attribute* attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name);
     if (attribPtr)
         return attribPtr;
-    const GA_Storage fianlStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
 
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttribHandle =
         GA_FeE_Adjacency::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup,
-            fianlStorage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+            finalStorage, "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 
-    attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, fianlStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
+    attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
 
     connectivityPrim(geo, attribPtr, adjElemsAttribHandle, geoGroup);
     return attribPtr;
