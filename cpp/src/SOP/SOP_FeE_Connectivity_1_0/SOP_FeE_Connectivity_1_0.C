@@ -6,7 +6,7 @@
 
 #include "SOP_FeE_Connectivity_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
@@ -15,8 +15,8 @@
 #include "GU/GU_Promote.h"
 
 #include "GA_FeE/GA_FeE_Attribute.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_Adjacency.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupPromote.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
 #include "GA_FeE/GA_FeE_AttributeCast.h"
 
@@ -386,10 +386,10 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //std::chrono::duration<double> diff;
 
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Connectivity_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
@@ -448,7 +448,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             {
                 if (geo0AttribClass != attribPtr->getOwner())
                 {
-                    attribPtr = GU_Promote::promote(*outGeo0, attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
+                    attribPtr = GU_Promote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
                 }
             }
 
@@ -490,8 +490,6 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
@@ -509,9 +507,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     GA_Attribute* attribPtr = outGeo0->findAttribute(geo0AttribClass, geo0AttribNames);
     if (attribPtr)
-    {
-        GA_FeE_Attribute::attribDelete(attribPtr);
-    }
+        outGeo0->getAttributes().destroyAttribute(attribPtr);
 
 
     attribPtr = GA_FeE_Connectivity::addAttribConnectivity(outGeo0,

@@ -5,15 +5,13 @@
 
 #include "SOP_FeE_GroupReverse_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_Detail.h"
+#include "GA_FeE/GA_FeE_Group.h"
 
 using namespace SOP_FeE_GroupReverse_1_0_Namespace;
 
@@ -169,7 +167,7 @@ void
 SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupReverse_1_0Parms>();
-    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupReverse_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -178,12 +176,6 @@ SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     
     if (!sopparms.getReverseGroup())
         return;
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GA_Group* geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, sopparms.getGroup());
-    if (!geo0Group)
-        return;
-
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -194,15 +186,9 @@ SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //const exint minGrainSize = sopparms.getMinGrainSize();
 
     //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
-    
-    GA_FeE_Group::groupToggle(outGeo0, geo0Group);
-    GA_FeE_Group::groupBumpDataId(geo0Group);
 
-    if (geo0Group)
-    {
-        cookparms.getNode()->setHighlight(true);
-        cookparms.select(*geo0Group);
-    }
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    GA_FeE_Group::groupToggle(cookparms, outGeo0, groupType, sopparms.getGroup());
 }
 
 

@@ -5,15 +5,13 @@
 
 #include "SOP_FeE_Skin_3_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
+#include "GA_FeE/GA_FeE_Skin.h"
 
 
 using namespace SOP_FeE_Skin_3_0_Namespace;
@@ -256,7 +254,7 @@ static const char *theDsFile = R"THEDSFILE(
     groupsimple {
         name    "uv_folder"
         label   "UV"
-        disablewhen "{ adduv == 0 }"
+        disablewhen "{ addUV == 0 }"
 
         parm {
             name    "uvAttribName"
@@ -547,7 +545,7 @@ void
 SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Skin_3_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Skin_3_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -555,10 +553,10 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0->replaceWithPoints(*inGeo0);
 
 
-    GU_DetailHandle tmpGeoH0;
-    GU_Detail* tmpGeo0 = new GU_Detail();
-    tmpGeoH0.allocateAndSet(tmpGeo0);
-    tmpGeo0->replaceWith(*inGeo0);
+    GU_DetailHandle geoTmp_h;
+    GU_Detail* geoTmp = new GU_Detail();
+    geoTmp_h.allocateAndSet(geoTmp);
+    geoTmp->replaceWith(*inGeo0);
 
 
     //outGeo0 = sopNodeProcess(*inGeo0);
@@ -574,7 +572,7 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_VertexGroupUPtr geo0vtxGroupUPtr;
     if (hasInputGroup)
     {
-        geo0vtxGroupUPtr = tmpGeo0->createDetachedVertexGroup();
+        geo0vtxGroupUPtr = geoTmp->createDetachedVertexGroup();
         geo0VtxGroup = geo0vtxGroupUPtr.get();
         if (primGroupName.isstring())
         {
@@ -612,10 +610,10 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
-    const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
+    //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
+    const GA_VertexGroup* const creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
     //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstptAttribH = tmpGeo0->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
+    const GA_RWHandleT<GA_Offset> dstptAttribH = geoTmp->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
 
     UT_ASSERT_P(dstptAttribH.getAttribute());
 
@@ -628,15 +626,15 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     GA_Topology& topo = outGeo0->getTopology();
 
-    GA_Topology& topo_tmpGeo0 = tmpGeo0->getTopology();
-    const GA_ATITopology* vtxPointRef_tmpGeo0 = topo_tmpGeo0.getPointRef();
+    GA_Topology& topo_geoTmp = geoTmp->getTopology();
+    const GA_ATITopology* vtxPointRef_geoTmp = topo_geoTmp.getPointRef();
 
     GA_Offset start, end;
-    for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
+    for (GA_Iterator it(geoTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
     {
         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
         {
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef_tmpGeo0->getLink(vtxoff));
+            topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
             ++vtxoff_first;
             topo.wireVertexPoint(vtxoff_first, dstptAttribH.get(vtxoff));
             ++vtxoff_first;
@@ -645,7 +643,7 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
-    tmpGeoH0.deleteGdp();
+    geoTmp_h.deleteGdp();
 
 
 

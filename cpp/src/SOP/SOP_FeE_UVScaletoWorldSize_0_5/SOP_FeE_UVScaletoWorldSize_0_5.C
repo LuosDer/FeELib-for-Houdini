@@ -5,7 +5,7 @@
 
 #include "SOP_FeE_UVScaletoWorldSize_0_5.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
@@ -13,8 +13,6 @@
 
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Range.h"
-#include "GA_FeE/GA_FeE_Measure.h"
-#include "GA_FeE/GA_FeE_Connectivity.h"
 
 
 using namespace SOP_FeE_UVScaletoWorldSize_0_5_Namespace;
@@ -267,7 +265,7 @@ public:
         }
         auto&& sopparms = parms.parms<SOP_FeE_UVScaletoWorldSize_0_5Parms>();
         const bool& computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
-        const exint& refInputnum = computeUVAreaInPiece ? 2 : 1;
+        const exint refInputnum = computeUVAreaInPiece ? 2 : 1;
         if (parms.inputs().hasInput(refInputnum))
         {
             if (!parms.inputs().cookInput(refInputnum))
@@ -329,24 +327,30 @@ void
 SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_UVScaletoWorldSize_0_5Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVScaletoWorldSize_0_5Cache*)cookparms.cache();
 
-    const bool& computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
-
+    const bool computeUVAreaInPiece = sopparms.getComputeUVAreaInPiece();
+    
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GEO_Detail* const inGeo1 = cookparms.inputGeo(computeUVAreaInPiece ? 2 : 1);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(computeUVAreaInPiece ? 2 : 1);
 
     if (!inGeo1)
     {
         cookparms.sopAddError(SOP_MESSAGE, "no ref input");
-        outGeo0->clearAndDestroy();
+        //outGeo0->clearAndDestroy();
+        outGeo0->clearCaches();
+        outGeo0->incrementMetaCacheCount();
+        outGeo0->clear();
         return;
     }
     if (inGeo0->getNumPrimitives() != inGeo1->getNumPrimitives())
     {
         cookparms.sopAddError(SOP_MESSAGE, "NON MATCH Prim Count");
-        outGeo0->clearAndDestroy();
+        //outGeo0->clearAndDestroy();
+        outGeo0->clearCaches();
+        outGeo0->incrementMetaCacheCount();
+        outGeo0->clear();
         return;
     }
 
@@ -384,7 +388,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -398,10 +402,10 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
 
-    const attribPrecisonF uniScale = sopparms.getUVScale();
-    const attribPrecisonF uvScalex = sopparms.getUVScalex();
-    const attribPrecisonF uvScaley = sopparms.getUVScaley();
-    const attribPrecisonF uvScalez = sopparms.getUVScalez();
+    const fpreal uniScale = sopparms.getUVScale();
+    const fpreal64 uvScalex = sopparms.getUVScalex();
+    const fpreal64 uvScaley = sopparms.getUVScaley();
+    const fpreal64 uvScalez = sopparms.getUVScalez();
 
     TAttribTypeV uvScale(doUVScalex, doUVScaley, doUVScalez);
     //TAttribTypeV uvScale(uvScalex, uvScaley, uvScalez);
@@ -417,17 +421,17 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const GA_Storage inStorageF = GA_STORE_REAL32;
 
 
-    const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
-    const UT_StringHolder& geo1AreaAttribNameSub = geo1AreaAttribNames;
+    const UT_StringHolder& geo0AttribNameSub       = geo0AttribNames;
+    const UT_StringHolder& geo1AreaAttribNameSub   = geo1AreaAttribNames;
     const UT_StringHolder& geo1AreaUVAttribNameSub = geo1AreaUVAttribNames;
 
 
 
-    const GA_Attribute* const areaAttribPtr = inGeo1->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, geo1AreaAttribNameSub);
+    const GA_Attribute* const areaAttribPtr = inGeo1->getAttributes().findAttribute(GA_ATTRIB_PRIMITIVE, geo1AreaAttribNameSub);
     if (!areaAttribPtr)
         return;
 
-    const GA_Attribute* const areaUVAttribPtr = inGeo1->findFloatTuple(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, geo1AreaUVAttribNameSub);
+    const GA_Attribute* const areaUVAttribPtr = inGeo1->getAttributes().findAttribute(GA_ATTRIB_PRIMITIVE, geo1AreaUVAttribNameSub);
     if (!areaUVAttribPtr)
         return;
 
@@ -451,7 +455,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
 
-    const int& attribSize = attribPtr->getTupleSize();
+    const int attribSize = attribPtr->getTupleSize();
     switch (attribSize)
     {
     case 3:
@@ -471,8 +475,8 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const attribPrecisonF& areaUV = areaUVAttribHandle.get(elemoff);
-                    const attribPrecisonF& area = areaAttribHandle.get(elemoff);
+                    const attribPrecisonF areaUV = areaUVAttribHandle.get(elemoff);
+                    const attribPrecisonF area = areaAttribHandle.get(elemoff);
                     TAttribTypeV uvS = uvScale * sqrt(area / areaUV);
                     uvS[0] = doUVScalex ? uvS[0] : 1;
                     uvS[1] = doUVScaley ? uvS[1] : 1;

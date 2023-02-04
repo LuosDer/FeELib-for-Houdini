@@ -5,7 +5,7 @@
 
 #include "SOP_FeE_PolyCut_3_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
@@ -13,7 +13,7 @@
 
 #include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Group.h"
 
 #include "GA_FeE/GA_FeE_PolyCut.h"
 
@@ -59,8 +59,8 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "primType"
-        cppname "PrimType"
+        name    "polyType"
+        cppname "PolyType"
         label   "Prim Type"
         type    ordinal
         default { "auto" }
@@ -72,26 +72,26 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "createOrigPrimAttrib"
-        cppname "CreateOrigPrimAttrib"
-        label   "Create Origin Primitive Attribute"
+        name    "createSrcPrimAttrib"
+        cppname "CreateSrcPrimAttrib"
+        label   "Create Srcin Primitive Attribute"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "origPrimAttribName"
-        cppname "OrigPrimAttribName"
-        label   "Origin Primitive Attribute Name"
+        name    "srcPrimAttribName"
+        cppname "SrcPrimAttribName"
+        label   "Srcin Primitive Attribute Name"
         type    string
-        default { "origPrim" }
-        disablewhen "{ createOrigPrimAttrib == 0 }"
+        default { "srcPrim" }
+        disablewhen "{ createSrcPrimAttrib == 0 }"
     }
     parm {
-        name    "createOrigPointAttrib"
-        cppname "CreateOrigPointAttrib"
-        label   "Create Origin Point Attribute"
+        name    "createSrcPointAttrib"
+        cppname "CreateSrcPointAttrib"
+        label   "Create Srcin Point Attribute"
         type    toggle
         nolabel
         joinnext
@@ -99,12 +99,12 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ cutPoint == 0 }"
     }
     parm {
-        name    "origPointAttribName"
-        cppname "OrigPointAttribName"
-        label   "Origin Point Attribute Name"
+        name    "srcPointAttribName"
+        cppname "SrcPointAttribName"
+        label   "Srcin Point Attribute Name"
         type    string
-        default { "origPoint" }
-        disablewhen "{ createOrigPointAttrib == 0 } { cutPoint == 0 }"
+        default { "srcPoint" }
+        disablewhen "{ createSrcPointAttrib == 0 } { cutPoint == 0 }"
     }
     parm {
         name    "sepparm"
@@ -162,33 +162,33 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
 
-    parm {
-        name    "kernel"
-        cppname "Kernel"
-        label   "Kernel"
-        type    integer
-        default { 0 }
-        range   { 0! 1! }
-    }
+    //parm {
+    //    name    "kernel"
+    //    cppname "Kernel"
+    //    label   "Kernel"
+    //    type    integer
+    //    default { 0 }
+    //    range   { 0! 1! }
+    //}
 
 
 
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
+    //parm {
+    //    name    "subscribeRatio"
+    //    cppname "SubscribeRatio"
+    //    label   "Subscribe Ratio"
+    //    type    integer
+    //    default { 64 }
+    //    range   { 0! 256 }
+    //}
+    //parm {
+    //    name    "minGrainSize"
+    //    cppname "MinGrainSize"
+    //    label   "Min Grain Size"
+    //    type    intlog
+    //    default { 64 }
+    //    range   { 0! 2048 }
+    //}
 }
 )THEDSFILE";
 
@@ -265,61 +265,49 @@ SOP_FeE_PolyCut_3_0::cookVerb() const
 
 
 
-static int
-sopPrimType(SOP_FeE_PolyCut_3_0Parms::PrimType parmgrouptype)
+
+
+
+
+
+static GA_FeE_PolyCutType
+sopPolyType(SOP_FeE_PolyCut_3_0Parms::PolyType parmgrouptype)
 {
     using namespace SOP_FeE_PolyCut_3_0Enums;
     switch (parmgrouptype)
     {
-    case PrimType::AUTO:       return 0;    break;
-    case PrimType::POLYLINE:   return 1;    break;
-    case PrimType::POLY:       return 2;    break;
+    case PolyType::AUTO:       return GA_FeE_PolyCutType_AUTO;    break;
+    case PolyType::POLYLINE:   return GA_FeE_PolyCutType_OPEN;    break;
+    case PolyType::POLY:       return GA_FeE_PolyCutType_CLOSE;    break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Prim type!");
-    return -1;
+    UT_ASSERT_MSG(0, "Unhandled Poly type!");
+    return GA_FeE_PolyCutType_AUTO;
 }
+
 
 
 void
 SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_PolyCut_3_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PolyCut_3_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    GU_DetailHandle tmpGeoH0;
-    GU_Detail* tmpGeo0 = new GU_Detail();
-    tmpGeoH0.allocateAndSet(tmpGeo0);
-    tmpGeo0->replaceWith(*inGeo0);
+    //GU_DetailHandle tmpGeoH0;
+    //GU_Detail* tmpGeo0 = new GU_Detail();
+    //tmpGeoH0.allocateAndSet(tmpGeo0);
+    //tmpGeo0->replaceWith(*inGeo0);
 
-    outGeo0->replaceWithPoints(*inGeo0);
-    //outGeo0->replaceWith(*inGeo0);
+
 
     //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
-    
-    GOP_Manager gop;
-    const GA_PointGroup* const cutPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getCutPointGroup(), gop);
-    if (cutPointGroup && cutPointGroup->isEmpty())
-        return;
-
-    const GA_PrimitiveGroup* const primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, tmpGeo0, sopparms.getPrimGroup(), gop);
-    if (primGroup && primGroup->isEmpty())
-        return;
 
     const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();
-
     const bool cutPoint = sopparms.getCutPoint();
-
-    const int primType = sopPrimType(sopparms.getPrimType());
-
-    const exint kernel = sopparms.getKernel();
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
+    const GA_FeE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
 
 
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
@@ -335,54 +323,35 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& keepPointGroupName  = sopparms.getKeepPointGroupName();
     const UT_StringHolder& keepEdgeGroupName   = sopparms.getKeepEdgeGroupName();
 
+    const bool delInputPointGroup = sopparms.getDelInputPointGroup();
 
 
-    GA_Attribute* srcPrimsAttrib = nullptr;
-    GA_Attribute* srcPointsAttrib = nullptr;
+    const UT_StringHolder& emptyStr = "";
 
-    const bool createOrigPrimAttrib = sopparms.getCreateOrigPrimAttrib();
-    //if (createOrigPrimAttrib || keepPrimAttribName.length() > 0 || keepPrimGroupName.length() > 0)
-    if (createOrigPrimAttrib)
-    {
-        const UT_StringHolder& origPrimAttribName = sopparms.getOrigPrimAttribName();
-        srcPrimsAttrib = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, origPrimAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
-    }
-    const bool createOrigPointAttrib = sopparms.getCreateOrigPointAttrib();
+    const bool createSrcPrimAttrib = sopparms.getCreateSrcPrimAttrib();
+    const UT_StringHolder& srcPrimAttribName = createSrcPrimAttrib ? sopparms.getSrcPrimAttribName() : emptyStr;
+
+    const bool createSrcPointAttrib = sopparms.getCreateSrcPointAttrib();
+    const UT_StringHolder& srcPointAttribName = createSrcPointAttrib ? sopparms.getSrcPointAttribName() : emptyStr;
+
+    
     //if (cutPoint)
     //{
-    //    if (createOrigPointAttrib || keepPointAttribName.length() > 0 || keepPointGroupName.length() > 0)
+    //    if (createSrcPointAttrib || keepPointAttribName.length() > 0 || keepPointGroupName.length() > 0)
     //    {
-    //        const UT_StringHolder& origPointAttribName = sopparms.getOrigPointAttribName();
-    //        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, origPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
+    //        const UT_StringHolder& srcPointAttribName = sopparms.getSrcPointAttribName();
+    //        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, srcPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
     //    }
     //}
-    if (cutPoint && createOrigPointAttrib)
-    {
-        const UT_StringHolder& origPointAttribName = sopparms.getOrigPointAttribName();
-        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, origPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
-    }
 
-    GA_FeE_PolyCut::polyCut(outGeo0, tmpGeo0, cutPointGroup, cutPoint, primGroup, mergePrimEndsIfClosed, primType);
 
-    //if (!createOrigPointAttrib && srcPointsAttrib)
-    //{
-    //    outGeo0->getAttributes().destroyAttribute(srcPointsAttrib);
-    //}
-
-    //if (!createOrigPrimAttrib && srcPrimsAttrib)
-    //{
-    //    outGeo0->getAttributes().destroyAttribute(srcPrimsAttrib);
-    //}
-
-    const bool delInputPointGroup = sopparms.getDelInputPointGroup();
-    if (delInputPointGroup && cutPointGroup && !cutPointGroup->isDetached())
-    {
-        outGeo0->destroyGroup(const_cast<GA_PointGroup*>(cutPointGroup));
-    }
+    GA_FeE_PolyCut::polyCut(cookparms, outGeo0, inGeo0,
+        sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
+        cutPoint, mergePrimEndsIfClosed, polyType,
+        inStorageI, srcPrimAttribName, srcPointAttribName);
 
 
     outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    tmpGeoH0.deleteGdp();
 
 }
 

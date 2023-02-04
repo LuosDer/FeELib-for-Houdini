@@ -12,13 +12,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Measure.h"
-#include "GA_FeE/GA_FeE_Connectivity.h"
-#include "GA_FeE/GA_FeE_TopologyReference.h"
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_GroupExpand.h"
 #include "GA_FeE/GA_FeE_Normal.h"
+
+
+
 
 using namespace SOP_FeE_Normal2D_1_0_Namespace;
 
@@ -33,9 +30,6 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        menutoggle {
-            [ "" ]
-        }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -66,55 +60,6 @@ static const char *theDsFile = R"THEDSFILE(
         default { "P" }
     }
 
-    parm {
-        name    "inputNormal3D"
-        cppname "InputNormal3D"
-        label   "Input Normal 3D"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "normal3DAttribClass"
-        cppname "Normal3DAttribClass"
-        label   "Normal 3D Attrib Class"
-        type    ordinal
-        default { "point" }
-        disablewhen " { inputNormal3D == 1 useConstantNormal3D == 1 }"
-        menu {
-            "prim"          "Prim"
-            "point"         "Point"
-            "vertex"        "Vertex"
-            "detail"        "Detail"
-            "pointvertex"   "PointVertex"
-            "all"           "ALL"
-        }
-    }
-    parm {
-        name    "useConstantNormal3D"
-        cppname "UseConstantNormal3D"
-        label   "Use Constant Normal 3D"
-        type    toggle
-        default { "0" }
-        hidewhen "{ inputNormal3D == 1 }"
-    }
-    parm {
-        name    "inputNormal3DAttribName"
-        cppname "Normal3DAttribName"
-        label   "Normal3D Attrib Name"
-        type    string
-        default { "N" }
-        hidewhen "{ inputNormal3D == 0 } { inputNormal3D == 1 useConstantNormal3D == 1 }"
-    }
-    parm {
-        name    "defaultNormal3D"
-        cppname "DefaultNormal3D"
-        label   "Default Normal 3D"
-        type    vector
-        size    3
-        default { "0" "1" "0" }
-        disablewhen "{ useConstantNormal3D == 0 }"
-        range   { -1 1 }
-    }
 
 
     parm {
@@ -171,6 +116,71 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
+
+
+
+    parm {
+        name    "useConstantNormal3D"
+        cppname "UseConstantNormal3D"
+        label   "Use Constant Normal 3D"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "findNormal3D"
+        cppname "FindNormal3D"
+        label   "Find Normal 3D"
+        type    toggle
+        default { "0" }
+        disablewhen "{ useConstantNormal3D == 1 }"
+    }
+    parm {
+        name    "addNormal3DIfNoFind"
+        cppname "AddNormal3DIfNoFind"
+        label   "Add Normal 3D If No Find"
+        type    toggle
+        default { "1" }
+        disablewhen "{ useConstantNormal3D == 1 } { findNormal3D == 0 }"
+    }
+
+    parm {
+        name    "normal3DAttribClass"
+        cppname "Normal3DAttribClass"
+        label   "Normal 3D Attrib Class"
+        type    ordinal
+        default { "point" }
+        disablewhen "{ useConstantNormal3D == 1 }"
+        menu {
+            "prim"          "Prim"
+            "point"         "Point"
+            "vertex"        "Vertex"
+            "detail"        "Detail"
+            "pointvertex"   "PointVertex"
+            "all"           "ALL"
+        }
+    }
+    parm {
+        name    "normal3DAttribName"
+        cppname "Normal3DAttribName"
+        label   "Normal3D Attrib Name"
+        type    string
+        default { "N" }
+        disablewhen "{ useConstantNormal3D == 1 } { findNormal3D == 0 }"
+    }
+    parm {
+        name    "defaultNormal3D"
+        cppname "DefaultNormal3D"
+        label   "Default Normal 3D"
+        type    vector
+        size    3
+        default { "0" "1" "0" }
+        disablewhen "{ useConstantNormal3D == 0 addNormal3DIfNoFind == 1 } { useConstantNormal3D == 0 findNormal3D == 0 }"
+        range   { -1 1 }
+    }
+
+
+
+
     parm {
         name    "outTopoAttrib"
         cppname "OutTopoAttrib"
@@ -210,7 +220,7 @@ SOP_FeE_Normal2D_1_0::buildTemplates()
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
-        templ.setChoiceListPtr("inputNormal3DAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("normal3DAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -280,23 +290,21 @@ SOP_FeE_Normal2D_1_0::cookVerb() const
 
 
 
-
-
-static GA_AttributeOwner
+static GA_FeE_Normal::GA_FeE_Normal_SearchOrder
 sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
 {
     using namespace SOP_FeE_Normal2D_1_0Enums;
     switch (attribClass)
     {
-    case Normal3DAttribClass::PRIM:          return GA_ATTRIB_PRIMITIVE;  break;
-    case Normal3DAttribClass::POINT:         return GA_ATTRIB_POINT;      break;
-    case Normal3DAttribClass::VERTEX:        return GA_ATTRIB_VERTEX;     break;
-    case Normal3DAttribClass::DETAIL:        return GA_ATTRIB_DETAIL;     break;
-    case Normal3DAttribClass::POINTVERTEX:   return GA_ATTRIB_INVALID;    break;
-    case Normal3DAttribClass::ALL:           return GA_ATTRIB_OWNER_N;    break;
+    case Normal3DAttribClass::PRIM:          return GA_FeE_Normal::GA_FeE_Normal_PRIMITIVE;   break;
+    case Normal3DAttribClass::POINT:         return GA_FeE_Normal::GA_FeE_Normal_POINT;       break;
+    case Normal3DAttribClass::VERTEX:        return GA_FeE_Normal::GA_FeE_Normal_VERTEX;      break;
+    case Normal3DAttribClass::DETAIL:        return GA_FeE_Normal::GA_FeE_Normal_DETAIL;      break;
+    case Normal3DAttribClass::POINTVERTEX:   return GA_FeE_Normal::GA_FeE_Normal_POINTVERTEX; break;
+    case Normal3DAttribClass::ALL:           return GA_FeE_Normal::GA_FeE_Normal_N;           break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled GA_FeE_Normal_SearchOrder!");
+    return GA_FeE_Normal::GA_FeE_Normal_INVALID;
 }
 
 
@@ -348,22 +356,13 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
-#if 1
-    const UT_StringHolder& tmp_Normal2DAttribName = "__N2D_SOP_FeE_Normal2D_1_0";
-    const UT_StringHolder& tmp_Normal3DAttribName = "__N3D_SOP_FeE_Normal2D_1_0";
-#else
-    #define tmp_Normal2DAttribName "__N2D_SOP_FeE_Normal2D_1_0"
-    #define tmp_Normal3DAttribName "__N3D_SOP_FeE_Normal2D_1_0"
-#endif
 
     const UT_StringHolder& geo0AttribNames = sopparms.getNormal2DAttribName();
     if (!geo0AttribNames.isstring())
         return;
-    GA_AttributeOwner geo0N3DAttribClass = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
+
+
+    GA_FeE_Normal::GA_FeE_Normal_SearchOrder geo0Normal3DSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
 
 
 
@@ -372,9 +371,11 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool scaleByTurns = sopparms.getScaleByTurns();
     const bool normalize = sopparms.getNormalize();
     const bool extrapolateEnds = sopparms.getExtrapolateEnds();
-    const bool inputNormal3D = sopparms.getInputNormal3D();
-    const bool useConstantNormal3D = sopparms.getUseConstantNormal3D();
 
+    const bool useConstantNormal3D = sopparms.getUseConstantNormal3D();
+    const bool findNormal3D = sopparms.getFindNormal3D();
+    const bool addNormal3DIfNoFind = sopparms.getAddNormal3DIfNoFind();
+    
     UT_Vector3T<fpreal64> defaultNormal3D = sopparms.getDefaultNormal3D();
     const fpreal64 uniScale = sopparms.getUniScale();
     const fpreal64 blend = sopparms.getBlend();
@@ -395,146 +396,37 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-
-    const GA_Attribute* posAttrib = outGeo0->findPointAttribute(sopparms.getPosAttribName());
-    if (!posAttrib)
-        return;
-    //const GA_ROHandleT<UT_Vector3T<fpreal64>> posH(posAttrib);
-
-
-
-    GOP_Manager gop;
     const UT_StringHolder& groupName0 = sopparms.getGroup();
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
-    //const bool hasGroup = !!geo0Group;
-
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    const GA_PointGroupUPtr geo0PointGroupUPtr = GA_FeE_GroupPromote::groupPromotePointDetached(outGeo0, geo0Group);
-    const GA_PointGroup* geo0PointGroup = geo0PointGroupUPtr.get();
-
-    //GA_VertexGroup* geo0VtxGroup = const_cast<GA_VertexGroup*>(GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group));
-
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-    //const GA_GroupType geo0FinalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
-
-
-
-
-
-    //GA_Attribute* normal3DAttrib = normal3DAttrib;
-
-
-    GA_Attribute* normal3DAttrib = nullptr;
-    if (inputNormal3D)
-    {
-        const UT_StringHolder& inputNormal3DAttribName = sopparms.getNormal3DAttribName();
-        switch (geo0N3DAttribClass)
-        {
-        case GA_ATTRIB_PRIMITIVE:
-            normal3DAttrib = outGeo0->findPrimitiveAttribute(inputNormal3DAttribName);
-            if (!normal3DAttrib)
-                return;
-            break;
-        case GA_ATTRIB_POINT:
-            normal3DAttrib = outGeo0->findPointAttribute(inputNormal3DAttribName);
-            if (!normal3DAttrib)
-                return;
-            break;
-        case GA_ATTRIB_VERTEX:
-            normal3DAttrib = outGeo0->findVertexAttribute(inputNormal3DAttribName);
-            if (!normal3DAttrib)
-                return;
-            break;
-        case GA_ATTRIB_DETAIL:
-            normal3DAttrib = outGeo0->findGlobalAttribute(inputNormal3DAttribName);
-            if (!normal3DAttrib)
-                return;
-            break;
-        case GA_ATTRIB_OWNER_N:
-            normal3DAttrib = outGeo0->findPrimitiveAttribute(inputNormal3DAttribName);
-            if (!normal3DAttrib)
-            {
-                normal3DAttrib = outGeo0->findPointAttribute(inputNormal3DAttribName);
-                if (!normal3DAttrib)
-                {
-                    normal3DAttrib = outGeo0->findVertexAttribute(inputNormal3DAttribName);
-                    if (!normal3DAttrib)
-                    {
-                        normal3DAttrib = outGeo0->findGlobalAttribute(inputNormal3DAttribName);
-                        if (!normal3DAttrib)
-                            return;
-                    }
-                }
-            }
-            
-            break;
-        case GA_ATTRIB_INVALID:
-            normal3DAttrib = outGeo0->findPointAttribute(inputNormal3DAttribName);
-            if (!normal3DAttrib)
-            {
-                normal3DAttrib = outGeo0->findVertexAttribute(inputNormal3DAttribName);
-                if (!normal3DAttrib)
-                {
-                    return;
-                }
-            }
-            break;
-        default:
-            return;
-            break;
-        }
-    }
-    else if (!useConstantNormal3D)
-    {
-        if (geo0N3DAttribClass == GA_ATTRIB_OWNER_N || geo0N3DAttribClass == GA_ATTRIB_INVALID)
-            geo0N3DAttribClass = GA_ATTRIB_PRIMITIVE;
-
-        normal3DAttrib = GA_FeE_Normal::addAttribNormal3D(outGeo0, nullptr, geo0N3DAttribClass, inStorageF, tmp_Normal3DAttribName,
-            GEO_DEFAULT_ADJUSTED_CUSP_ANGLE, GEO_NormalMethod::ANGLE_WEIGHTED, false, posAttrib);
-    }
-    const GA_AttributeOwner N3DFinalAttribClass = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
-    const GA_ROHandleT<UT_Vector3T<fpreal64>> N3DH(normal3DAttrib);
-
-    if (!useConstantNormal3D && N3DFinalAttribClass == GA_ATTRIB_DETAIL)
-    {
-        defaultNormal3D = N3DH.get(0);
-    }
-    //outGeo0->setPrimitiveClosedFlag(elemoff);
-
-    GA_Attribute* N2DAttrib = GA_FeE_Normal::addAttribNormal2D(outGeo0, geo0PointGroup,
-        tmp_Normal2DAttribName, posAttrib, normal3DAttrib, defaultNormal3D,
-        scaleByTurns, normalize, uniScale,
-        inStorageF, subscribeRatio, minGrainSize);
-
-    //GA_Attribute* N2DAttrib = outGeo0->addFloatTuple(GA_ATTRIB_POINT, tmp_Normal2DAttribName, 3, GA_Defaults(0.0), nullptr, nullptr, inStorageF);
-    //GA_FeE_Normal::computeNormal2D(outGeo0, geo0PointGroup,
-    //    N2DAttrib, posAttrib, normal3DAttrib, defaultNormal3D,
-    //    scaleByTurns, normalize, uniScale,
-    //    subscribeRatio, minGrainSize);
-
-
-    GA_FeE_Attribute::forceRenameAttribute(outGeo0, N2DAttrib, geo0AttribNames);
-    //GA_AttributeOwner search_order[] = { GA_ATTRIB_POINT };
-    //GA_Attribute* existAttribute = outGeo0->findAttribute(GA_ATTRIB_POINT, geo0AttribNames);
-    //if(existAttribute)
-    //    outGeo0->getAttributes().destroyAttribute(existAttribute);
-    //outGeo0->renameAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, tmp_Normal2DAttribName, geo0AttribNames);
-
-    if(!inputNormal3D && !useConstantNormal3D && normal3DAttrib)
-        GA_FeE_Attribute::destroyAttribute(normal3DAttrib);
     
+    const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
     
+    const GA_Attribute* const posAttrib = outGeo0->findPointAttribute(sopparms.getPosAttribName());
+
+
+
+
+
+    const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
+
+    const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+    const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
+    const bool copy_orig_if_zero = false;
+
+
+    GA_Attribute* const normal2DAttrib = GA_FeE_Normal::addAttribNormal2D(cookparms, outGeo0, posAttribName,
+        groupType, groupName0, inStorageF, geo0AttribNames,
+        defaultNormal3D, scaleByTurns, normalize, uniScale,
+
+        useConstantNormal3D, normal3DAttribName,
+        findNormal3D, addNormal3DIfNoFind, geo0Normal3DSearchOrder,
+        cuspangledegrees, method, copy_orig_if_zero,
+        subscribeRatio, minGrainSize);
+
+
     GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
-    N2DAttrib->bumpDataId();
-    //N2DAttrib->bumpDataId();
-    //outGeo0->bumpAllDataIds();
-
-
+    normal2DAttrib->bumpDataId();
 }
 
 

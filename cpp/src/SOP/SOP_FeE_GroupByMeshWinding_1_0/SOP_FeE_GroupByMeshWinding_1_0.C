@@ -5,14 +5,14 @@
 
 #include "SOP_FeE_GroupByMeshWinding_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Detail.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
+
+#include "GA_FeE/GA_FeE_GroupByMeshWinding.h"
 
 using namespace SOP_FeE_GroupByMeshWinding_1_0_Namespace;
 
@@ -23,165 +23,113 @@ static const char *theDsFile = R"THEDSFILE(
     name        parameters
     
     parm {
-       name    "extractPoint"
-       cppname "ExtractPoint"
-       label   "Extract Point"
-       type    toggle
-       default { 1 }
-    }
-    groupsimple {
-        name    "extractPoint_folder"
-        label   "Extract Point"
-        disablewhentab "{ extractPoint == 0 }"
-
-        parm {
-            name    "group"
-            cppname "Group"
-            label   "Group"
-            type    string
-            default { "" }
-            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-            parmtag { "script_action_help" "Select geometry from an available viewport." }
-            parmtag { "script_action_icon" "BUTTONS_reselect" }
-        }
-        parm {
-            name    "groupType"
-            cppname "GroupType"
-            label   "Group Type"
-            type    ordinal
-            default { "point" }
-            menu {
-                "guess"     "Guess from Group"
-                "prim"      "Primitive"
-                "point"     "Point"
-                "vertex"    "Vertex"
-                "edge"      "Edge"
-            }
-        }
-        parm {
-            name    "reverseGroup"
-            cppname "ReverseGroup"
-            label   "Reverse Group"
-            type    toggle
-            default { 0 }
-        }
-    
-
-
-        parm {
-            name    "delInputGroup"
-            cppname "DelInputGroup"
-            label   "Delete Input Group"
-            type    toggle
-            default { 1 }
-        }
-
-        parm {
-            name    "delPrimAttrib"
-            cppname "DelPrimAttrib"
-            label   "Delete Prim Attributes"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delPointAttrib"
-            cppname "DelPointAttrib"
-            label   "Delete Point Attributes"
-            type    string
-            default { "" }
-        }
-        parm {
-            name    "delVertexAttrib"
-            cppname "DelVertexAttrib"
-            label   "Delete Vertex Attributes"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delDetailAttrib"
-            cppname "DelDetailAttrib"
-            label   "Delete Detail Attributes"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delPrimGroup"
-            cppname "DelPrimGroup"
-            label   "Delete Prim Group"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delPointGroup"
-            cppname "DelPointGroup"
-            label   "Delete Point Group"
-            type    string
-            default { "" }
-        }
-        parm {
-            name    "delVertexGroup"
-            cppname "DelVertexGroup"
-            label   "Delete Vertex Group"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delEdgeGroup"
-            cppname "DelEdgeGroup"
-            label   "Delete Edge Group"
-            type    string
-            default { "*" }
-        }
-
-        parm {
-            name    "delPointMode"
-            cppname "DelPointMode"
-            label   "Delete Point Mode"
-            type    ordinal
-            default { "delDegenerateIncompatible" }
-            menu {
-                "leavePrimitive"             "Leave Primitive"
-                "delDegenerate"              "Delete Degenerate"
-                "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
-            }
-            invisible
-        }
-        parm {
-            name    "guaranteeNoVertexReference"
-            cppname "GuaranteeNoVertexReference"
-            label   "Guarantee No Vertex Reference"
-            type    toggle
-            default { 0 }
-            invisible
-        }
-    }
-
-    parm {
-        name    "kernel"
-        cppname "Kernel"
-        label   "Kernel"
-        type    integer
-        default { 1 }
-        range   { 0! 2! }
+        name    "primGroup"
+        cppname "PrimGroup"
+        label   "Prim Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
     }
     parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 16 }
-        range   { 0! 256 }
-        invisible
+        name    "runOverPieces"
+        cppname "RunOverPieces"
+        label   "Run Over Pieces"
+        type    toggle
+        default { "0" }
     }
     parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 1024 }
-        range   { 0! 2048 }
-        invisible
+        name    "findInputPieceAttrib"
+        cppname "FindInputPieceAttrib"
+        label   "Find Input Piece Attribute"
+        type    toggle
+        default { "0" }
+        disablewhen "{ runOverPieces == 0 }"
     }
+    parm {
+        name    "pieceAttribName"
+        cppname "PieceAttribName"
+        label   "Piece Attribute Name"
+        type    string
+        default { "class" }
+        disablewhen "{ runOverPieces == 0 }"
+    }
+    parm {
+        name    "polyCap"
+        cppname "PolyCap"
+        label   "Poly Cap"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "outReversedGroup"
+        cppname "OutReversedGroup"
+        label   "Output Reversed Group"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "reversedGroupName"
+        cppname "ReversedGroupName"
+        label   "Reversed Group Name"
+        type    string
+        default { "reversed" }
+        disablewhen "{ outReversedGroup == 0 }"
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "reversePrim"
+        cppname "ReversePrim"
+        label   "Reverse Prim"
+        type    toggle
+        default { "1" }
+    }
+    //parm {
+    //     name    "deleteGroup"
+    //     cppname "DeleteGroup"
+    //     label   "Delete Group"
+    //     type    toggle
+    //     default { "0" }
+    // }
+
+
+    parm {
+        name    "groupByMeshWindingMethod"
+        cppname "GroupByMeshWindingMethod"
+        label   "Method"
+        type    ordinal
+        default { "volume" }
+        menu {
+            "volume"  "Volume"
+            "wn"      "Winding Number"
+        }
+    }
+    //parm {
+    //    name    "subscribeRatio"
+    //    cppname "SubscribeRatio"
+    //    label   "Subscribe Ratio"
+    //    type    integer
+    //    default { 16 }
+    //    range   { 0! 256 }
+    //    invisible
+    //}
+    //parm {
+    //    name    "minGrainSize"
+    //    cppname "MinGrainSize"
+    //    label   "Min Grain Size"
+    //    type    intlog
+    //    default { 1024 }
+    //    range   { 0! 2048 }
+    //    invisible
+    //}
 }
 )THEDSFILE";
 
@@ -193,7 +141,7 @@ SOP_FeE_GroupByMeshWinding_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_GroupByMeshWinding_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
@@ -222,19 +170,6 @@ newSopOperator(OP_OperatorTable* table)
 
 }
 
-static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_GroupByMeshWinding_1_0Parms::DelPointMode delPointMode)
-{
-    using namespace SOP_FeE_GroupByMeshWinding_1_0Enums;
-    switch (delPointMode)
-    {
-    case DelPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
-    case DelPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
-    case DelPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
-    return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
-}
 
 
 //class SOP_FeE_GroupByMeshWinding_1_0Cache : public SOP_NodeCache
@@ -283,20 +218,17 @@ SOP_FeE_GroupByMeshWinding_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopGroupType(SOP_FeE_GroupByMeshWinding_1_0Parms::GroupType parmgrouptype)
+static GA_FeE_GroupByMeshWinding_Method
+sopMethod(SOP_FeE_GroupByMeshWinding_1_0Parms::GroupByMeshWindingMethod parmgrouptype)
 {
     using namespace SOP_FeE_GroupByMeshWinding_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case GroupByMeshWindingMethod::VOLUME:     return GA_FeE_GroupByMeshWinding_VOLUME;         break;
+    case GroupByMeshWindingMethod::WN:         return GA_FeE_GroupByMeshWinding_WINDINGNUMBER;  break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled GA_FeE_GroupByMeshWinding METHOD!");
+    return GA_FeE_GroupByMeshWinding_VOLUME;
 }
 
 
@@ -305,48 +237,37 @@ void
 SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_GroupByMeshWinding_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupByMeshWinding_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
-
-    if (!sopparms.getExtractPoint())
-    {
-        outGeo0->replaceWith(*inGeo0);
-        return;
-    }
-
-
-    const UT_StringHolder& groupName = sopparms.getGroup();
-
-    const UT_StringHolder& delPrimAttrib = sopparms.getDelPrimAttrib();
-    const UT_StringHolder& delPointAttrib = sopparms.getDelPointAttrib();
-    const UT_StringHolder& delVertexAttrib = sopparms.getDelVertexAttrib();
-    const UT_StringHolder& delDetailAttrib = sopparms.getDelDetailAttrib();
-
-    const UT_StringHolder& delPrimGroup = sopparms.getDelPrimGroup();
-    const UT_StringHolder& delPointGroup = sopparms.getDelPointGroup();
-    const UT_StringHolder& delVertexGroup = sopparms.getDelVertexGroup();
-    const UT_StringHolder& delEdgeGroup = sopparms.getDelEdgeGroup();
-    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    
+    outGeo0->replaceWith(*inGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-#if 1
-    GEO_FeE_Detail::extractPoint(cookparms, outGeo0, inGeo0, groupName,
-        delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
-        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
-        sopparms.getReverseGroup(), sopparms.getDelInputGroup());
-#else
-    GA_FeE_Attribute::delStdAttribute(outGeo0, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
-    GEO_FeE_Detail::extractPoint(cookparms, outGeo0, groupName,
-        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
-        sopparms.getReverseGroup(), sopparms.getDelInputGroup());
-#endif
+    const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
+    const GA_FeE_GroupByMeshWinding_Method method = sopMethod(sopparms.getGroupByMeshWindingMethod());
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 0, 0);
+    
+    const bool runOverPieces = sopparms.getRunOverPieces();
+    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
+    const UT_StringHolder& pieceAttribName = sopparms.getPieceAttribName();
+
+
+    const bool outReversedGroup = sopparms.getOutReversedGroup();
+    const UT_StringHolder& reversedGroupName = sopparms.getReversedGroupName();
+
+    const bool reverseGroup = sopparms.getReverseGroup();
+    const bool reversePrim = sopparms.getReversePrim();
+    const bool polyCap = sopparms.getPolyCap();
+    //const bool delAttrib = sopparms.getDelAttrib();
+    
+    GA_FeE_GroupByMeshWinding::groupByMeshWinding(cookparms, outGeo0, primGroupName, method,
+        runOverPieces, findInputPieceAttrib, pieceAttribName,
+        outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap);
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();

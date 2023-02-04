@@ -17,11 +17,19 @@
 #include "GEO/GEO_PrimPoly.h"
 
 
+enum GA_FeE_PolyCutType
+{
+    GA_FeE_PolyCutType_AUTO,
+    GA_FeE_PolyCutType_OPEN,
+    GA_FeE_PolyCutType_CLOSE,
+};
 
 namespace GA_FeE_PolyCut {
 
 
 
+
+#define TMP_CutPointGroup_GA_FeE_PolyCut "__tmp_cutPointGroup_GA_FeE_PolyCut"
 
 
 SYS_FORCE_INLINE
@@ -78,20 +86,18 @@ appendPrimitive_polyCut(
 // can not use in parallel unless for each GA_Detail
 static void
 polyCut(
-    GA_Detail* const geoPoint,
-    const GA_Detail* const geo,
-    const GA_PointGroup* const cutPointGroup,
-    const bool cutPoint = false,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
+    GA_PointGroup* const cutPointGroup,
     const GA_PrimitiveGroup* const primGroup = nullptr,
+    const bool cutPoint = false,
     const bool mergePrimEndsIfClosed = true,
-    const int primType = 0
-    //GA_Attribute* const srcPrimsAttrib = nullptr,
-    //GA_Attribute* const srcPointsAttrib = nullptr
+    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO
 )
 {
-    UT_ASSERT_P(geoPoint);
     UT_ASSERT_P(geo);
-    UT_ASSERT_P(geoPoint->getNumPoints() == geo->getNumPoints());
+    UT_ASSERT_P(srcGeo);
+    UT_ASSERT_P(geo->getNumPoints() == srcGeo->getNumPoints());
 
     //GA_RWHandleT<GA_Offset> srcPrimsAttrib_h;
     //if (srcPrimsAttrib)
@@ -104,12 +110,12 @@ polyCut(
     //    srcPointsAttrib_h = srcPointsAttrib;
     //}
 
-    //const GA_PointGroupUPtr tmp_cutPointGroupUPtr = geoPoint->createDetachedPointGroup();
+    //const GA_PointGroupUPtr tmp_cutPointGroupUPtr = geo->createDetachedPointGroup();
     //GA_PointGroup* const tmp_cutPointGroup = tmp_cutPointGroupUPtr.get();
     GA_PointGroup* tmp_cutPointGroup = nullptr;
     if (cutPoint)
     {
-        tmp_cutPointGroup = static_cast<GA_PointGroup*>(geoPoint->pointGroups().newGroup("__tmp_cutPointGroup_GA_FeE_PolyCut"));
+        tmp_cutPointGroup = static_cast<GA_PointGroup*>(geo->pointGroups().newGroup(TMP_CutPointGroup_GA_FeE_PolyCut));
         if (cutPointGroup)
         {
             //tmp_cutPointGroup->combine(cutPointGroup);
@@ -118,23 +124,23 @@ polyCut(
         }
         else
         {
-            tmp_cutPointGroup->setElement(geoPoint->getPointRange(), true);
+            tmp_cutPointGroup->setElement(geo->getPointRange(), true);
         }
     }
 
-    GA_Topology& topo = geoPoint->getTopology();
-    const GA_Topology& topoRef = geo->getTopology();
+    GA_Topology& topo = geo->getTopology();
+    const GA_Topology& topoRef = srcGeo->getTopology();
     const GA_ATITopology* const vtxPointRef = topoRef.getPointRef();
 
     bool closeFlag;
-    switch (primType)
+    switch (polyType)
     {
-    case 0:
+    case GA_FeE_PolyCutType_AUTO:
         break;
-    case 1:
+    case GA_FeE_PolyCutType_OPEN:
         closeFlag = false;
         break;
-    case 2:
+    case GA_FeE_PolyCutType_CLOSE:
         closeFlag = true;
         break;
     default:
@@ -143,25 +149,25 @@ polyCut(
     }
     GEO_PrimPoly* newPrim = nullptr;
     GA_Offset start, end;
-    for (GA_Iterator it(geo->getPrimitiveRange(primGroup)); it.fullBlockAdvance(start, end); )
+    for (GA_Iterator it(srcGeo->getPrimitiveRange(primGroup)); it.fullBlockAdvance(start, end); )
     {
         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
         {
-            if (primType == 0)
+            if (polyType == GA_FeE_PolyCutType_AUTO)
             {
-                closeFlag = geo->getPrimitiveClosedFlag(elemoff);
+                closeFlag = srcGeo->getPrimitiveClosedFlag(elemoff);
             }
-            GA_OffsetListRef vertices = geo->getPrimitiveVertexList(elemoff);
-            //const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff) - 1;
+            GA_OffsetListRef vertices = srcGeo->getPrimitiveVertexList(elemoff);
+            //const GA_Size numvtx = srcGeo->getPrimitiveVertexCount(elemoff) - 1;
             const GA_Size numvtx = vertices.size() - 1;
             if (numvtx == -1) continue;
 
-            //const GEO_Primitive* const srcPrim = static_cast<const GEO_Primitive*>(geo->getPrimitive(elemoff));
+            //const GEO_Primitive* const srcPrim = static_cast<const GEO_Primitive*>(srcGeo->getPrimitive(elemoff));
 
             GA_Offset primpoint = vtxPointRef->getLink(vertices[0]);
 
 
-            if (mergePrimEndsIfClosed && (cutPointGroup && !cutPointGroup->contains(primpoint)) && (geo->getPrimitiveClosedFlag(elemoff) || primpoint == vtxPointRef->getLink(vertices[numvtx])))
+            if (mergePrimEndsIfClosed && (cutPointGroup && !cutPointGroup->contains(primpoint)) && (srcGeo->getPrimitiveClosedFlag(elemoff) || primpoint == vtxPointRef->getLink(vertices[numvtx])))
             {
                 GA_Size firstPrimIndex = 0;
                 for (GA_Size vtxpnum = 1; vtxpnum <= numvtx; ++vtxpnum) {
@@ -177,12 +183,12 @@ polyCut(
 
                 if (cutPoint)
                 {
-                    appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                    appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                 }
                 firstPrimIndex;
                 primpoint;
 
-                newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
 
                 if (cutPoint)
                 {
@@ -190,10 +196,10 @@ polyCut(
                         primpoint = vtxPointRef->getLink(vertices[vtxpnum]);
                         if (!cutPointGroup || cutPointGroup->contains(primpoint))
                         {
-                            appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                            appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                             newPrim->appendVertex(primpoint);
-                            appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
-                            newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                            appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
+                            newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
                         }
                         else
                         {
@@ -208,11 +214,11 @@ polyCut(
                         newPrim->appendVertex(primpoint);
                         if (cutPointGroup && !cutPointGroup->contains(primpoint)) continue;
 
-                        newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                        newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
                     }
                 }
 
-                for (GA_Size vtxpnum = !geo->getPrimitiveClosedFlag(elemoff); vtxpnum <= firstPrimIndex; ++vtxpnum) {
+                for (GA_Size vtxpnum = !srcGeo->getPrimitiveClosedFlag(elemoff); vtxpnum <= firstPrimIndex; ++vtxpnum) {
                     primpoint = vtxPointRef->getLink(vertices[vtxpnum]);
                     newPrim->appendVertex(primpoint);
                 }
@@ -220,7 +226,7 @@ polyCut(
                 if (cutPoint)
                 {
                     primpoint = vtxPointRef->getLink(vertices[firstPrimIndex]);
-                    appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                    appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                     newPrim->appendVertex(primpoint);
                 }
             }
@@ -228,20 +234,20 @@ polyCut(
             {
                 if (cutPoint)
                 {
-                    newPrim = static_cast<GEO_PrimPoly*>(geoPoint->appendPrimitive(GA_PrimitiveTypeId(1)));
-                    geoPoint->copyAttributes(GA_ATTRIB_PRIMITIVE, newPrim->getMapOffset(), *geo, elemoff);
-                    geoPoint->setPrimitiveClosedFlag(newPrim->getMapOffset(), closeFlag);
+                    newPrim = static_cast<GEO_PrimPoly*>(geo->appendPrimitive(GA_PrimitiveTypeId(1)));
+                    geo->copyAttributes(GA_ATTRIB_PRIMITIVE, newPrim->getMapOffset(), *srcGeo, elemoff);
+                    geo->setPrimitiveClosedFlag(newPrim->getMapOffset(), closeFlag);
                 }
                 else
                 {
-                    newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                    newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
                 }
 
                 if (cutPoint)
                 {
                     if (!cutPointGroup || cutPointGroup->contains(primpoint))
                     {
-                        appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                        appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                     }
                     newPrim->appendVertex(primpoint);
                     for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum) {
@@ -249,10 +255,10 @@ polyCut(
 
                         if (!cutPointGroup || cutPointGroup->contains(primpoint))
                         {
-                            appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                            appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                             newPrim->appendVertex(primpoint);
-                            appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
-                            newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                            appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
+                            newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
                         }
                         else
                         {
@@ -268,7 +274,7 @@ polyCut(
 
                         if (cutPointGroup && !cutPointGroup->contains(primpoint)) continue;
 
-                        newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                        newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
                     }
                 }
 
@@ -276,23 +282,23 @@ polyCut(
                 primpoint = vtxPointRef->getLink(vertices[numvtx]);
                 if (cutPoint && (!cutPointGroup || cutPointGroup->contains(primpoint)))
                 {
-                    appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                    appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                 }
                 newPrim->appendVertex(primpoint);
 
-                if (geo->getPrimitiveClosedFlag(elemoff) && primType == 1) {
+                if (srcGeo->getPrimitiveClosedFlag(elemoff) && polyType == 1) {
 
                     if (cutPoint)
                     {
-                        appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                        appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                     }
 
-                    newPrim = appendPrimitive_polyCut(geoPoint, geo, closeFlag, primpoint, elemoff);
+                    newPrim = appendPrimitive_polyCut(geo, srcGeo, closeFlag, primpoint, elemoff);
                     primpoint = vtxPointRef->getLink(vertices[0]);
 
                     if (cutPoint)
                     {
-                        appendPoint_polyCut(geoPoint, primpoint, tmp_cutPointGroup);
+                        appendPoint_polyCut(geo, primpoint, tmp_cutPointGroup);
                     }
 
                     newPrim->appendVertex(primpoint);
@@ -302,13 +308,127 @@ polyCut(
     }
     if (cutPoint)
     {
-        //geoPoint->destroyUnusedPoints(geoPoint->getPointRange(tmp_cutPointGroup));
-        geoPoint->destroyPointOffsets(geoPoint->getPointRange(tmp_cutPointGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
-        geoPoint->destroyGroup(tmp_cutPointGroup);
+        //geo->destroyUnusedPoints(geo->getPointRange(tmp_cutPointGroup));
+        geo->destroyPointOffsets(geo->getPointRange(tmp_cutPointGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
+        geo->destroyGroup(tmp_cutPointGroup);
 
-        //geoPoint->edgeGroups()
+        //geo->edgeGroups()
     }
 }
+
+//
+//static void
+//polyCut(
+//    GA_Detail* const geo,
+//    const GA_Detail* const srcGeo,
+//    GA_PointGroup* const cutPointGroup,
+//    const GA_PrimitiveGroup* const primGroup = nullptr,
+//    const bool cutPoint = false,
+//    const bool mergePrimEndsIfClosed = true,
+//    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO,
+//    const bool delInputPointGroup = false
+//)
+//{
+//    polyCut(geo, srcGeo, cutPointGroup, primGroup, cutPoint, mergePrimEndsIfClosed, polyType);
+//
+//    if (delInputPointGroup && cutPointGroup && !cutPointGroup->isDetached())
+//    {
+//        geo->destroyGroup(cutPointGroup);
+//    }
+//}
+
+
+// can not use in parallel unless for each GA_Detail
+static void
+polyCut(
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
+    const GA_PointGroup* const cutPointGroup,
+    const GA_PrimitiveGroup* const primGroup = nullptr,
+    const bool cutPoint = false,
+    const bool mergePrimEndsIfClosed = true,
+    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO,
+
+    const GA_Storage storage = GA_STORE_INVALID,
+    //const bool createSrcPrimAttrib = false,
+    const UT_StringHolder& srcPrimAttribName = "",
+    //const bool createSrcPointAttrib = false,
+    const UT_StringHolder& srcPointAttribName = ""
+
+)
+{
+    //GU_DetailHandle geoTmp0_h;
+    //GU_Detail* geoTmp0 = new GU_Detail();
+    //geoTmp0_h.allocateAndSet(geoTmp0);
+    //geoTmp0->replaceWith(*srcGeo);
+
+    const GA_Storage finalStorageI = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+    if (srcPrimAttribName.length() != 0 && srcPrimAttribName.isstring())
+    {
+        geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorageI, 1, GA_Defaults(-1));
+    }
+
+    if (srcPointAttribName.length() != 0 && srcPointAttribName.isstring())
+    {
+        geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, srcPointAttribName, finalStorageI, 1, GA_Defaults(-1));
+    }
+
+    polyCut(geo, srcGeo, cutPointGroup, primGroup,
+        cutPoint, mergePrimEndsIfClosed, polyType);
+}
+
+
+
+// can not use in parallel unless for each GA_Detail
+static void
+polyCut(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GA_Detail* const geo,
+    const GA_Detail* const srcGeo,
+    const UT_StringHolder& cutPointGroupName = "",
+    const UT_StringHolder& primGroupName = "",
+    const bool cutPoint = false,
+    const bool mergePrimEndsIfClosed = true,
+    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO,
+
+    const GA_Storage storage = GA_STORE_INVALID,
+    //const bool createSrcPrimAttrib = false,
+    const UT_StringHolder& srcPrimAttribName = "",
+    //const bool createSrcPointAttrib = false,
+    const UT_StringHolder& srcPointAttribName = "",
+    const bool delInputPointGroup = false
+)
+{
+    GOP_Manager gop;
+    GA_PointGroup* const cutPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, geo, cutPointGroupName, gop);
+    if (cutPointGroup && cutPointGroup->isEmpty())
+    {
+        geo->replaceWith(*srcGeo);
+        return;
+    }
+
+    const GA_PrimitiveGroup* const primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, srcGeo, primGroupName, gop);
+    if (primGroup && primGroup->isEmpty())
+    {
+        geo->replaceWith(*srcGeo);
+        return;
+    }
+
+    geo->replaceWithPoints(*srcGeo);
+
+    polyCut(geo, srcGeo, cutPointGroup, primGroup,
+        cutPoint, mergePrimEndsIfClosed, polyType,
+        storage, srcPrimAttribName, srcPointAttribName);
+
+    if (delInputPointGroup && cutPointGroup && !cutPointGroup->isDetached())
+    {
+        geo->destroyGroup(cutPointGroup);
+    }
+}
+
+
+
+
 
 
 } // End of namespace GA_FeE_PolyCut

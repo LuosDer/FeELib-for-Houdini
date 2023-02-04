@@ -5,15 +5,13 @@
 
 #include "SOP_FeE_GroupVis_2_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_Detail.h"
+#include "GA_FeE/GA_FeE_Group.h"
 
 using namespace SOP_FeE_GroupVis_2_0_Namespace;
 
@@ -183,8 +181,7 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-
-    const GA_Group* const geo0Group = GA_FeE_Group::findGroupMultiClass(outGeo0, groupType, groupName);
+    const GA_Group* const geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
 
     if (!geo0Group)
         return;

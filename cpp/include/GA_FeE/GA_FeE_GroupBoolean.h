@@ -440,9 +440,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_PrimitiveGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
     SYS_FORCE_INLINE
@@ -457,9 +456,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_PrimitiveGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
     SYS_FORCE_INLINE
@@ -474,9 +472,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PrimitiveGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_PrimitiveGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromotePrimitiveDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
 
@@ -533,9 +530,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_PointGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
     static void
@@ -549,9 +545,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_PointGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
     static void
@@ -565,9 +560,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_PointGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_PointGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromotePointDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
 
@@ -624,9 +618,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_VertexGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_VertexGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
     static void
@@ -640,9 +633,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_VertexGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_VertexGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
     static void
@@ -656,9 +648,8 @@ namespace GA_FeE_GroupBoolean {
         UT_ASSERT_P(group);
         if (!groupRef)
             return;
-        const GA_VertexGroup* promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
-        groupIntersect(geo, group, promoGroupRef);
-        delete promoGroupRef;
+        const GA_VertexGroupUPtr promoGroupRef = GA_FeE_GroupPromote::groupPromoteVertexDetached(geo, groupRef);
+        groupIntersect(geo, group, promoGroupRef.get());
     }
 
 

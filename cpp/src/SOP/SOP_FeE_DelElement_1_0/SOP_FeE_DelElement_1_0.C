@@ -5,13 +5,13 @@
 
 #include "SOP_FeE_DelElement_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GEO_FeE/GEO_FeE_Detail.h"
+#include "GA_FeE/GA_FeE_DelElement.h"
 
 
 
@@ -210,7 +210,7 @@ void
 SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_DelElement_1_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelElement_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -229,7 +229,7 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& groupName = sopparms.getDelElementGroup();
 
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
-    GEO_FeE_Detail::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
+    GA_FeE_DelElement::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
         sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
         delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
     );

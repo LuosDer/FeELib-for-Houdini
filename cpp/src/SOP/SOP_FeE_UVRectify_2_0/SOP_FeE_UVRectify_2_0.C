@@ -4,7 +4,7 @@
 #include "SOP_FeE_UVRectify_2_0.proto.h"
 
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
@@ -12,8 +12,9 @@
 
 #include "GU/GU_Flatten2.h"
 #include "GU/GU_UVPack.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Range.h"
+
+
+#include "GA_FeE/GA_FeE_Group.h"
 
 
 using namespace SOP_FeE_UVRectify_2_0_Namespace;

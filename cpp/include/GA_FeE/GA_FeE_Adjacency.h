@@ -154,6 +154,7 @@ namespace GA_FeE_Adjacency {
         const exint minGrainSize = 64
     )
     {
+
         const GA_SplittableRange geo0SplittableRange0(geo->getPointRange(geoGroup));
         UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, seamGroup](const GA_SplittableRange& r)
         {

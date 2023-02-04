@@ -27,8 +27,8 @@ static void
     copyAttributeNumeric(
         GA_Attribute* const attribNew,
         const GA_Attribute* const attribRef,
-        const int subscribeRatio,
-        const int minGrainSize
+        const exint subscribeRatio,
+        const exint minGrainSize
     )
 {
     UT_ASSERT_P(attribNew);
@@ -56,8 +56,8 @@ static void
 copyAttributeString(
     GA_Attribute* const attribNew,
     const GA_Attribute* const attribRef,
-    const int subscribeRatio,
-    const int minGrainSize
+    const exint subscribeRatio,
+    const exint minGrainSize
 )
 {
     UT_ASSERT_P(attribNew);
@@ -85,8 +85,8 @@ static void
 copyAttributeAnyType(
     GA_Attribute* const attribNew,
     const GA_Attribute* const attribRef,
-    const int subscribeRatio,
-    const int minGrainSize
+    const exint subscribeRatio,
+    const exint minGrainSize
 )
 {
     UT_ASSERT_P(attribNew);
@@ -118,8 +118,8 @@ static void
         const GA_Detail* const geoRef,
         const GA_AttributeOwner ownerRef,
         const UT_StringHolder& attribPattern,
-        const int subscribeRatio = 8,
-        const int minGrainSize = 1024
+        const exint subscribeRatio = 8,
+        const exint minGrainSize = 1024
     )
 {
     if (attribPattern.length()==0)
@@ -174,8 +174,8 @@ copyAttributeRef(
     GA_Attribute* const attribNew,
     const GA_Attribute* const attribRef,
     const GA_Attribute* const attribID = nullptr,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
 )
 {
     const GA_RWHandleT<T> attribNew_h(attribNew);
@@ -224,8 +224,8 @@ copyAttribute2(
     const UT_StringHolder& attribPattern,
     const UT_StringHolder& iDAttribName = "",
     const bool iDAttribInput = false,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
 )
 {
     if (attribPattern.length() == 0)
@@ -357,8 +357,8 @@ copyAttributeDst(
     GA_Attribute* const attribNew,
     const GA_Attribute* const attribRef,
     const GA_Attribute* const attribID = nullptr,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
 )
 {
     if (attribID)
@@ -399,8 +399,8 @@ copyAttributeRef(
     GA_Attribute* const attribNew,
     const GA_Attribute* const attribRef,
     const GA_Attribute* const attribID = nullptr,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
 )
 {
     if (attribID)
@@ -445,8 +445,8 @@ copyAttribute(
     const UT_StringHolder& attribPattern,
     const UT_StringHolder& iDAttribName = "",
     const bool iDAttribInput = false,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
 )
 {
     if (attribPattern.length() == 0)
@@ -1128,27 +1128,52 @@ findAttributePointVertex(
 
 
 
+//
+//template<typename T>
+//static void
+//normalizeAttribElement(
+//    const GA_RWHandleT<UT_Vector3T<T>>& attrib_h,
+//    const GA_SplittableRange& geoSplittableRange,
+//    const bool doNormalize = 1,
+//    const T uniScale = 1,
+//    const exint subscribeRatio = 64,
+//    const exint minGrainSize = 64
+//)
+//{
+//    UTparallelFor(geoSplittableRange, [&attrib_h, doNormalize, uniScale](const GA_SplittableRange& r)
+//    {
+//        UT_Vector3T<T> attribValue;
+//        GA_Offset start, end;
+//        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+//        {
+//            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+//            {
+//                attribValue = attrib_h.get(elemoff);
+//                if (doNormalize)
+//                    attribValue.normalize();
+//                attribValue *= uniScale;
+//                attrib_h.set(elemoff, attribValue);
+//            }
+//        }
+//    }, subscribeRatio, minGrainSize);
+//}
 
 
-
-//GA_FeE_Attribute::normalizeElementAttrib(geo0SplittableRange, attribPtr,
-//    doNormalize, uniScale,
-//    subscribeRatio, minGrainSize);
-
-
+template<typename T>
 static void
-normalizeAttribElement(
-    const GA_SplittableRange& geoSplittableRange,
+normalizeAttribElement2T(
     GA_Attribute* const attribPtr,
+    const GA_SplittableRange& geoSplittableRange,
     const bool doNormalize = 1,
-    const fpreal64 uniScale = 1,
-    const int subscribeRatio = 64,
-    const int minGrainSize = 64
+    const T uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
 )
 {
     UTparallelFor(geoSplittableRange, [attribPtr, doNormalize, uniScale](const GA_SplittableRange& r)
     {
-        GA_PageHandleV<UT_Vector3F>::RWType attrib_ph(attribPtr);
+        UT_Vector2T<T> attribValue;
+        GA_PageHandleT<UT_Vector2T<T>, typename UT_Vector2T<T>::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
             GA_Offset start, end;
@@ -1167,33 +1192,229 @@ normalizeAttribElement(
 }
 
 
+
+
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+template<typename T>
 static void
-normalizeAttribElement(
-    const GA_SplittableRange& geoSplittableRange,
-    const GA_RWHandleT<UT_Vector3F>& attrib_h,
+normalizeAttribElement3T(
+    GA_Attribute* const attribPtr,
+    const GA_Range& geoRange,
     const bool doNormalize = 1,
-    const fpreal64 uniScale = 1,
-    const int subscribeRatio = 64,
-    const int minGrainSize = 64
+    const T uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
 )
 {
-    UTparallelFor(geoSplittableRange, [&attrib_h, doNormalize, uniScale](const GA_SplittableRange& r)
+    GAparallelForEachPage(geoRange, true, [attribPtr, doNormalize, uniScale](GA_PageIterator pit)
     {
-        GA_Offset start, end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        GA_PageHandleT<UT_Vector3T<T>, typename UT_Vector3T<T>::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+        GAforEachPageBlock(pit, [&attrib_ph, doNormalize, uniScale](GA_Offset start, GA_Offset end)
         {
+            attrib_ph.setPage(start);
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                UT_Vector3F attribValue = attrib_h.get(elemoff);
                 if (doNormalize)
-                    attribValue.normalize();
-                attribValue *= uniScale;
-                attrib_h.set(elemoff, attribValue);
+                    attrib_ph.value(elemoff).normalize();
+                attrib_ph.value(elemoff) *= uniScale;
+            }
+        });
+    });
+}
+#endif
+
+
+template<typename T>
+static void
+normalizeAttribElement3T(
+    GA_Attribute* const attribPtr,
+    const GA_SplittableRange& geoSplittableRange,
+    const bool doNormalize = 1,
+    const T uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    UTparallelFor(geoSplittableRange, [attribPtr, doNormalize, uniScale](const GA_SplittableRange& r)
+    {
+        UT_Vector3T<T> attribValue;
+        GA_PageHandleT<UT_Vector3T<T>, typename UT_Vector3T<T>::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                attrib_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    if (doNormalize)
+                        attrib_ph.value(elemoff).normalize();
+                    attrib_ph.value(elemoff) *= uniScale;
+                }
             }
         }
     }, subscribeRatio, minGrainSize);
 }
 
+template<typename T>
+static void
+normalizeAttribElement4T(
+    GA_Attribute* const attribPtr,
+    const GA_SplittableRange& geoSplittableRange,
+    const bool doNormalize = 1,
+    const T uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    UTparallelFor(geoSplittableRange, [attribPtr, doNormalize, uniScale](const GA_SplittableRange& r)
+    {
+        UT_Vector4T<T> attribValue;
+        GA_PageHandleT<UT_Vector4T<T>, typename UT_Vector4T<T>::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                attrib_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    if (doNormalize)
+                        attrib_ph.value(elemoff).normalize();
+                    attrib_ph.value(elemoff) *= uniScale;
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+
+//GA_FeE_Attribute::normalizeAttribElement(attribPtr, geo0SplittableRange,
+//    doNormalize, uniScale,
+//    subscribeRatio, minGrainSize);
+
+static void
+normalizeAttribElement(
+    GA_Attribute* const attribPtr,
+    const GA_SplittableRange& geoSplittableRange,
+    const bool doNormalize = 1,
+    const fpreal64 uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    UT_ASSERT_P(attribPtr);
+    const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
+    switch (attribPtr->getAIFTuple()->getTupleSize(attribPtr))
+    {
+    case 2:
+        switch (storage)
+        {
+        case GA_STORE_REAL16:
+            normalizeAttribElement2T<fpreal16>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        case GA_STORE_REAL32:
+            normalizeAttribElement2T<fpreal32>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        case GA_STORE_REAL64:
+            normalizeAttribElement2T<fpreal64>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        default:
+            break;
+        }
+        break;
+    case 3:
+        switch (storage)
+        {
+        case GA_STORE_REAL16:
+            normalizeAttribElement3T<fpreal16>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        case GA_STORE_REAL32:
+            normalizeAttribElement3T<fpreal32>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        case GA_STORE_REAL64:
+            normalizeAttribElement3T<fpreal64>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        default:
+            break;
+        }
+        break;
+    case 4:
+        switch (storage)
+        {
+        case GA_STORE_REAL16:
+            normalizeAttribElement4T<fpreal16>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        case GA_STORE_REAL32:
+            normalizeAttribElement4T<fpreal32>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        case GA_STORE_REAL64:
+            normalizeAttribElement4T<fpreal64>(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+//GA_FeE_Attribute::normalizeAttribElement(attribPtr,
+//    doNormalize, uniScale,
+//    subscribeRatio, minGrainSize);
+
+SYS_FORCE_INLINE
+static void
+normalizeAttribElement(
+    GA_Attribute* const attribPtr,
+    const bool doNormalize = 1,
+    const fpreal64 uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    normalizeAttribElement(attribPtr, GA_SplittableRange(GA_Range(attribPtr->getIndexMap())), doNormalize, uniScale, subscribeRatio, minGrainSize);
+}
+
+
+
+
+
+//GA_FeE_Attribute::normalizeAttribElement(geo, attribClass, attribPattern,
+//    doNormalize, uniScale,
+//    subscribeRatio, minGrainSize);
+
+static void
+normalizeAttribElement(
+    const GA_Detail* const geo,
+    const GA_ElementGroup* const geoGroup,
+    const GA_AttributeOwner attribClass,
+    const UT_StringHolder& attribPattern,
+    const bool doNormalize = 1,
+    const fpreal64 uniScale = 1,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    if (!attribPattern.isstring() || attribPattern.length() == 0)
+        return;
+
+    const GA_SplittableRange& geoSplittableRange(GA_Range(geo->getIndexMap(attribClass), geoGroup));
+    //const GA_SplittableRange geo0SplittableRange = GA_FeE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribClass);
+
+    GA_Attribute* attribPtr = nullptr;
+    for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
+    {
+        attribPtr = it.attrib();
+        if (attribPtr->isDetached())
+            continue;
+        if (!attribPtr->getName().multiMatch(attribPattern))
+            continue;
+        normalizeAttribElement(attribPtr, geoSplittableRange, doNormalize, uniScale, subscribeRatio, minGrainSize);
+        attribPtr->bumpDataId();
+    }
+}
 
 
 

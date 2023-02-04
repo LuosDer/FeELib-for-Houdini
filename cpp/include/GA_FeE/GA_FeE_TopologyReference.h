@@ -109,19 +109,21 @@ outTopoAttrib(
     AttribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
     AttribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
     AttribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
-        
+
+    GA_GroupTable* groupTable = nullptr;
+    GA_Group* groupPtr = nullptr;
     for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
     {
-        GA_GroupTable* groupTable = geo->getGroupTable(groupType);
+        groupTable = geo->getGroupTable(groupType);
         //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
         for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
         {
-            GA_Group* group = it.group();
-            if (group->isDetached())
+            groupPtr = it.group();
+            //if (groupPtr->isDetached())
+            //    continue;
+            if (!groupPtr->getName().startsWith("__topo_"))
                 continue;
-            if (!group->getName().startsWith("__topo_"))
-                continue;
-            groupTable->destroy(group);
+            groupTable->destroy(groupPtr);
         }
     }
 }
@@ -610,24 +612,24 @@ outTopoAttrib(
         const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
         UTparallelFor(geo0SplittableRange0, [geo, attrib_next, vtxPrimNextAttrib, vtxPointRef](const GA_SplittableRange& r)
         {
-            GA_PageHandleScalar<GA_Offset>::RWType dstpt_aph(attrib_next);
-            GA_PageHandleScalar<GA_Offset>::ROType vtxPrimNext_aph(vtxPrimNextAttrib);
+            GA_PageHandleScalar<GA_Offset>::RWType dstpt_ph(attrib_next);
+            GA_PageHandleScalar<GA_Offset>::ROType vtxPrimNext_ph(vtxPrimNextAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    dstpt_aph.setPage(start);
-                    vtxPrimNext_aph.setPage(start);
+                    dstpt_ph.setPage(start);
+                    vtxPrimNext_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        if (vtxPrimNext_aph.value(elemoff) < 0)
+                        if (vtxPrimNext_ph.value(elemoff) < 0)
                         {
-                            dstpt_aph.value(elemoff) = GA_INVALID_OFFSET;
+                            dstpt_ph.value(elemoff) = GA_INVALID_OFFSET;
                         }
                         else
                         {
-                            dstpt_aph.value(elemoff) = vtxPointRef->getLink(vtxPrimNext_aph.value(elemoff));
+                            dstpt_ph.value(elemoff) = vtxPointRef->getLink(vtxPrimNext_ph.value(elemoff));
                         }
                     }
                 }
@@ -872,6 +874,7 @@ outTopoAttrib(
             const exint minGrainSize = 64
         )
     {
+        UT_ASSERT_P(geo);
         GA_Attribute* attribPtr = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, name);
         if (attribPtr)
             return attribPtr;
@@ -934,7 +937,7 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                        ptoff = vtxPointRef->getLink(vtxoff);
+                        ptoff  = vtxPointRef->getLink(vtxoff);
                         vtxoff = pointVtxRef->getLink(ptoff);
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff))
@@ -942,7 +945,7 @@ outTopoAttrib(
                             outGroup->setElement(ptoff, true);
 
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-                        ptoff = vtxPointRef->getLink(vtxoff);
+                        ptoff  = vtxPointRef->getLink(vtxoff);
                         vtxoff = pointVtxRef->getLink(ptoff);
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff))

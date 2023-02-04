@@ -5,15 +5,13 @@
 
 #include "SOP_FeE_ConvertLine_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
+#include "GA_FeE/GA_FeE_ConvertLine.h"
 
 
 using namespace SOP_FeE_ConvertLine_1_0_Namespace;
@@ -391,55 +389,20 @@ void
 SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ConvertLine_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ConvertLine_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWithPoints(*inGeo0);
+    //outGeo0->replaceWithPoints(*inGeo0);
 
-
-    GU_DetailHandle tmpGeoH0;
-    GU_Detail* tmpGeo0 = new GU_Detail();
-    tmpGeoH0.allocateAndSet(tmpGeo0);
-    tmpGeo0->replaceWith(*inGeo0);
-
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
+    
     const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
     const UT_StringHolder& pointGroupName = sopparms.getPointGroup();
     const UT_StringHolder& vertexGroupName = sopparms.getVertexGroup();
     const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
 
 
-    const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
-    GA_VertexGroup* geo0VtxGroup = nullptr;
-    GA_VertexGroupUPtr geo0vtxGroupUPtr;
-    if (hasInputGroup)
-    {
-        geo0vtxGroupUPtr = tmpGeo0->createDetachedVertexGroup();
-        geo0VtxGroup = geo0vtxGroupUPtr.get();
-        if (primGroupName.isstring())
-        {
-
-        }
-
-        if (pointGroupName.isstring())
-        {
-
-        }
-
-        if (vertexGroupName.isstring())
-        {
-
-        }
-
-        if (edgeGroupName.isstring())
-        {
-
-        }
-    }
 
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
 
@@ -447,7 +410,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -456,40 +419,9 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
-    const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(tmpGeo0, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
-    //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstptAttribH = tmpGeo0->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
-
-    UT_ASSERT_P(dstptAttribH.getAttribute());
-
-
-    GA_Size entries = creatingGroup->getGroupEntries();
-
-    GA_Offset vtxoff_first;
-    GA_Offset primoff_first = outGeo0->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-
-
-    GA_Topology& topo = outGeo0->getTopology();
-
-    GA_Topology& topo_tmpGeo0 = tmpGeo0->getTopology();
-    const GA_ATITopology* vtxPointRef_tmpGeo0 = topo_tmpGeo0.getPointRef();
-
-    GA_Offset start, end;
-    for (GA_Iterator it(tmpGeo0->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
-        {
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef_tmpGeo0->getLink(vtxoff));
-            ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, dstptAttribH.get(vtxoff));
-            ++vtxoff_first;
-        }
-    }
-
+    GA_FeE_ConvertLine::convertLine(outGeo0, inGeo0, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID, isClosed);
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
-    tmpGeoH0.deleteGdp();
 
 
 

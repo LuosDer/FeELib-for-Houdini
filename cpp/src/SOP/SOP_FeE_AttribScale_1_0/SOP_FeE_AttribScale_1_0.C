@@ -4,14 +4,14 @@
 #include "SOP_FeE_AttribScale_1_0.proto.h"
 
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
 #include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Range.h"
+#include "GA_FeE/GA_FeE_Group.h"
 
 
 using namespace SOP_FeE_AttribScale_1_0_Namespace;
@@ -211,97 +211,40 @@ void
 SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_AttribScale_1_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
 
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
-    if (!geo0AttribNames.isstring() || geo0AttribNames.length()==0)
-        return;
-
-
-    const fpreal uniScale = sopparms.getUniScale();
+    const fpreal64 uniScale = sopparms.getUniScale();
     const bool doNormalize = sopparms.getNormalize();
 
     if (!doNormalize && uniScale==1)
         return;
 
 
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-
-    const exint kernel = sopparms.getKernel();
+    //const exint kernel = sopparms.getKernel();
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 13);
 
 
-    const GA_SplittableRange geo0SplittableRange = GA_FeE_Range::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClass);
-
-
-
-    const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
-
-    GA_Attribute* attribPtr = outGeo0->findFloatTuple(geo0AttribClass, GA_SCOPE_PUBLIC, geo0AttribNameSub, 2, 4);
-    if (!attribPtr)
-        return;
-
-    switch (kernel)
-    {
-    case 0:
-    {
-        GA_FeE_Attribute::normalizeAttribElement(geo0SplittableRange, attribPtr,
-            doNormalize, uniScale,
-            subscribeRatio, minGrainSize);
-    }
-    break;
-    case 1:
-    {
-        GA_RWHandleT<UT_Vector3F> attribH(attribPtr);
-        GA_FeE_Attribute::normalizeAttribElement(geo0SplittableRange, attribH,
-            doNormalize, uniScale,
-            subscribeRatio, minGrainSize);
-    }
-    break;
-    case 2:
-    {
-        //const GA_RWAttributeRef attrib_rwRef(attribPtr);
-
-        //GAparallelForEachPage(geo0Range, true, [&attrib_rwRef, &doNormalize, &uniScale](GA_PageIterator pit)
-        //{
-        //    GA_RWPageHandleV3 attrib_ph(attrib_rwRef.getAttribute());
-
-        //    GAforEachPageBlock(pit, [&](GA_Offset start, GA_Offset end)
-        //    {
-        //        attrib_ph.setPage(start);
-        //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-        //        {
-        //            //UT_Vector3F attribValue = attribHandle.get(elemoff);
-        //            if (doNormalize)
-        //                attrib_ph.value(elemoff).normalize();
-        //            //UT_Vector3 N = v_ph.get(i);
-        //            //N.normalize();
-        //            //v_ph.set(i, N);
-        //        }
-        //    }
-        //});
-    }
-    break;
-    }
-    attribPtr->bumpDataId();
-
+    GA_FeE_Attribute::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribNames,
+        doNormalize, uniScale,
+        subscribeRatio, minGrainSize);
 
 
 

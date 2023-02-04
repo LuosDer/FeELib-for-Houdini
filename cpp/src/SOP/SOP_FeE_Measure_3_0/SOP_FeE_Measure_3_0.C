@@ -4,13 +4,12 @@
 
 #include "SOP_FeE_Measure_3_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 #include "GA_FeE/GA_FeE_Type.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_Measure.h"
 
@@ -53,8 +52,12 @@ static const char *theDsFile = R"THEDSFILE(
         type    ordinal
         default { "area" }
         menu {
-            "area"       "Area"
-            "perimeter"  "Perimeter"
+            "area"          "Area"
+            "perimeter"     "Perimeter"
+            "volume"        "Volume"
+            "meshArea"      "Mesh Area"
+            "meshPerimeter" "Mesh Perimeter"
+            "meshVolume"    "Mesh Volume "
         }
     }
     parm {
@@ -202,7 +205,7 @@ void
 SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Measure_3_0Parms>();
-    GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Measure_3_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -260,6 +263,11 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         break;
     case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
         GA_FeE_Measure::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
+            static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
+            GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+        break;
+    case SOP_FeE_Measure_3_0Enums::MeasureType::MESHVOLUME:
+        GA_FeE_Measure::addAttribMeshVolume(outGeo0, geo0PosAttribName,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
             GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
         break;

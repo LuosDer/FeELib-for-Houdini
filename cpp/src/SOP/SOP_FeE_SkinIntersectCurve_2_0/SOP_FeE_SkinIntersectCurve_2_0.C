@@ -5,17 +5,18 @@
 
 #include "SOP_FeE_SkinIntersectCurve_2_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 #include "GU/GU_IntersectionAnalysis.h"
-#include <GU/GU_PrimMesh.h>
+#include "GU/GU_PrimMesh.h"
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+
+
+
+#include "GA_FeE/GA_FeE_Group.h"
 
 
 
@@ -205,11 +206,11 @@ void
 SOP_FeE_SkinIntersectCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_SkinIntersectCurve_2_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_SkinIntersectCurve_2_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GEO_Detail* const inGeo1 = cookparms.inputGeo(1);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
 
 
@@ -253,8 +254,8 @@ SOP_FeE_SkinIntersectCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     UT_Array<UT_Fpreal32Array> prim_uvw_arr;
     UT_Array<UT_Int64Array>*    pt_num_arr    = nullptr;
     UT_Vector3DArray intersectionPoses = GU_IntersectionAnalysis::findIntersectionPoints(
-        inGeo0, NULL,
-        inGeo1, NULL,
+        static_cast<const GEO_Detail*>(inGeo0), NULL,
+        static_cast<const GEO_Detail*>(inGeo1), NULL,
         threshold,
         //input_num_arr,
         //prim_num_arr,

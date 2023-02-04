@@ -420,7 +420,26 @@ static void
     geo->destroyPrimitives(geo->getPrimitiveRange(delPrimitiveGroup));
 }
 
-
+static void
+joinCurve(
+    GA_Detail* const geo,
+    const GA_PointGroup* const stopPointGroup,
+    const bool keepOrder = false,
+    const bool keepLoop = true,
+    const bool closeLoop = false,
+    const bool outSrcPrims = false,
+    const UT_StringHolder& srcPrimsAttribName = "",
+    const GA_Storage storage = GA_STORE_INVALID
+)
+{
+    GA_Attribute* srcPrimsAttrib = nullptr;
+    if (outSrcPrims && srcPrimsAttribName.isstring() && srcPrimsAttribName.length() != 0)
+    {
+        const GA_Storage finalStorageI = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+        srcPrimsAttrib = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, finalStorageI, 1, GA_Defaults(-1));
+    }
+    joinCurve(geo, stopPointGroup, keepOrder, keepLoop, closeLoop, srcPrimsAttrib);
+}
 
     
 

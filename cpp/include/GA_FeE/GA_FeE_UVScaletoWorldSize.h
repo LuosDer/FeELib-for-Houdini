@@ -14,11 +14,14 @@
 #define GA_FeE_UVScaletoWorldSize_AreaUVAttribName "__areaUV_GA_FeE_UVScaletoWorldSize"
 
 
-#include "GA_FeE/GA_FeE_Type.h"
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GU/GU_Promote.h"
+
 #include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Measure.h"
 #include "GA_FeE/GA_FeE_Connectivity.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupPromote.h"
+#include "GA_FeE/GA_FeE_Measure.h"
+#include "GA_FeE/GA_FeE_Range.h"
 
 
 namespace GA_FeE_UVScaletoWorldSize {

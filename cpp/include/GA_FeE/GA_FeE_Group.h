@@ -14,6 +14,21 @@
 namespace GA_FeE_Group {
 
 
+
+SYS_FORCE_INLINE
+    static void
+    groupBumpDataId(
+        GA_Group* const group
+    )
+{
+    UT_ASSERT_P(group);
+    if (group->classType() == GA_GROUP_EDGE)
+        static_cast<GA_EdgeGroup*>(group)->bumpDataId();
+    else
+        static_cast<GA_ElementGroup*>(group)->bumpDataId();
+}
+
+
 static void
 delStdGroup(
     GA_GroupTable* const groupTable,
@@ -25,8 +40,8 @@ delStdGroup(
     for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
     {
         GA_Group* const group = it.group();
-        if (group->isDetached())
-            continue;
+        //if (group->isDetached())
+        //    continue;
         if (!group->getName().multiMatch(delGroupPattern))
             continue;
         groupTable->destroy(group);
@@ -77,8 +92,8 @@ keepStdGroup(
     for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
     {
         GA_Group* const group = it.group();
-        if (group->isDetached())
-            continue;
+        //if (group->isDetached())
+        //    continue;
         if (group->getName().match(keepGroupPattern))
             continue;
         groupTable->destroy(group);
@@ -151,15 +166,13 @@ groupDuplicate(
 {
     UT_ASSERT_P(geo);
     UT_ASSERT_P(group);
-    GA_Group* newGroup = nullptr;
+    GA_Group* newGroup = geo->getGroupTable(group->classType())->newDetachedGroup();
     if (group->isElementGroup())
     {
-        newGroup = geo->getGroupTable(group->classType())->newDetachedGroup();
         UTverify_cast<GA_ElementGroup*>(newGroup)->combine(group);
     }
     else
     {
-        newGroup = geo->getGroupTable(group->classType())->newDetachedGroup();
         UTverify_cast<GA_EdgeGroup*>(newGroup)->combine(group);
     }
     return newGroup;
@@ -176,6 +189,7 @@ SYS_FORCE_INLINE
 {
     return groupDuplicate(geo, group);
 }
+
 
 
 
@@ -200,51 +214,81 @@ SYS_FORCE_INLINE
 }
 
 SYS_FORCE_INLINE
+static void
+edgeGroupToggle(
+    GA_EdgeGroup* const group
+)
+{
+    UT_ASSERT_P(&group->getDetail());
+    edgeGroupToggle(&group->getDetail(), group);
+}
+
+SYS_FORCE_INLINE
+static void
+groupToggle(
+    const GA_Detail* const geo,
+    GA_EdgeGroup* const group
+)
+{
+    UT_ASSERT_P(&group->getDetail());
+    edgeGroupToggle(geo, group);
+}
+
+SYS_FORCE_INLINE
+static void
+groupToggle(
+    GA_EdgeGroup* const group
+)
+{
+    UT_ASSERT_P(&group->getDetail());
+    edgeGroupToggle(&group->getDetail(), group);
+}
+
+SYS_FORCE_INLINE
     static void
     groupToggle(
-        const GA_Detail* const geo,
         GA_ElementGroup* const group
     )
 {
-    UT_ASSERT_P(geo);
     UT_ASSERT_P(group);
     UT_ASSERT_P(group->isElementGroup());
-
-    group->makeUnordered();
-    switch (group->classType())
-    {
-    case GA_GROUP_PRIMITIVE:
-        group->toggleAll(geo->getNumPrimitives());
-        break;
-    case GA_GROUP_POINT:
-        group->toggleAll(geo->getNumPoints());
-        break;
-    case GA_GROUP_VERTEX:
-        group->toggleAll(geo->getNumVertices());
-        break;
-    default:
-        break;
-    }
+    //group->makeUnordered();
+    group->toggleAll(group->getIndexMap().indexSize());
 }
 
 SYS_FORCE_INLINE
     static void
     elementGroupToggle(
-        const GA_Detail* const geo,
         GA_ElementGroup* const group
     )
 {
-    return groupToggle(geo, UTverify_cast<GA_ElementGroup*>(group));
+    return groupToggle(group);
 }
 
 SYS_FORCE_INLINE
 static void
 elementGroupToggle(
-    const GA_Detail* const geo,
     GA_Group* const group
 )
 {
-    return elementGroupToggle(geo, UTverify_cast<GA_ElementGroup*>(group));
+    return elementGroupToggle(UTverify_cast<GA_ElementGroup*>(group));
+}
+
+SYS_FORCE_INLINE
+static void
+groupToggle(
+    GA_Group* const group
+)
+{
+    UT_ASSERT_P(group);
+    if (group->isElementGroup())
+    {
+        return elementGroupToggle(group);
+    }
+    else
+    {
+        return edgeGroupToggle(UTverify_cast<GA_EdgeGroup*>(group));
+    }
 }
 
 SYS_FORCE_INLINE
@@ -258,13 +302,73 @@ SYS_FORCE_INLINE
     UT_ASSERT_P(group);
     if (group->isElementGroup())
     {
-        return elementGroupToggle(geo, group);
+        return elementGroupToggle(group);
     }
     else
     {
         return edgeGroupToggle(geo, UTverify_cast<GA_EdgeGroup*>(group));
     }
 }
+
+
+static void
+groupToggle(
+    const GA_Detail* const geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    UT_ASSERT_P(geo);
+    GA_Group* groupPtr = nullptr;
+    for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupType)->beginTraverse(); !it.atEnd(); ++it)
+    {
+        groupPtr = it.group();
+        //if (groupPtr->isDetached())
+        //    continue;
+        if (!groupPtr->getName().multiMatch(groupName))
+            continue;
+        groupToggle(geo, groupPtr);
+        groupBumpDataId(groupPtr);
+    }
+}
+
+static void
+groupToggle(
+    const SOP_NodeVerb::CookParms& cookparms,
+    const GA_Detail* const geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    UT_ASSERT_P(geo);
+    bool doHighlight = true;
+    GA_Group* groupPtr = nullptr;
+    for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupType)->beginTraverse(); !it.atEnd(); ++it)
+    {
+        groupPtr = it.group();
+        //if (groupPtr->isDetached())
+        //    continue;
+        if (!groupPtr->getName().multiMatch(groupName))
+            continue;
+        groupToggle(geo, groupPtr);
+        groupBumpDataId(groupPtr);
+
+        if (doHighlight)
+        {
+            cookparms.getNode()->setHighlight(true);
+            cookparms.select(*groupPtr);
+            doHighlight = false;
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -303,6 +407,39 @@ SYS_FORCE_INLINE
 
 
 static GA_Group*
+findGroupBase(
+    const GA_Detail* const geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
+    if (!groupTable)
+        return nullptr;
+    return groupTable->find(groupName);
+}
+
+static GA_Group*
+findGroupN(
+    const GA_Detail* const geo,
+    const UT_StringHolder& groupName
+)
+{
+    UT_ASSERT_P(geo);
+    GA_Group* outGroup = findGroupBase(geo, GA_GROUP_PRIMITIVE, groupName);
+    if (outGroup)
+        return outGroup;
+    outGroup = findGroupBase(geo, GA_GROUP_POINT, groupName);
+    if (outGroup)
+        return outGroup;
+    outGroup = findGroupBase(geo, GA_GROUP_VERTEX, groupName);
+    if (outGroup)
+        return outGroup;
+    outGroup = findGroupBase(geo, GA_GROUP_EDGE, groupName);
+    return outGroup;
+}
+
+static GA_Group*
 findGroup(
     const GA_Detail* const geo,
     const GA_GroupType groupType,
@@ -310,33 +447,17 @@ findGroup(
 )
 {
     UT_ASSERT_P(geo);
-    const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
-    if (!groupTable)
-        return nullptr;
-    return groupTable->find(groupName);
+    if (groupType == GA_GROUP_N)
+    {
+        return findGroupN(geo, groupName);
+    }
+    else
+    {
+        findGroupBase(geo, groupType, groupName);
+    }
 }
 
 
-static GA_Group*
-findGroupMultiClass(
-    const GA_Detail* const geo,
-    const GA_GroupType groupType,
-    const UT_StringHolder& groupName
-)
-{
-    UT_ASSERT_P(geo);
-    GA_Group* outGroup = findGroup(geo, GA_GROUP_PRIMITIVE, groupName);
-    if (outGroup)
-        return outGroup;
-    outGroup = findGroup(geo, GA_GROUP_POINT, groupName);
-    if (outGroup)
-        return outGroup;
-    outGroup = findGroup(geo, GA_GROUP_VERTEX, groupName);
-    if (outGroup)
-        return outGroup;
-    outGroup = findGroup(geo, GA_GROUP_EDGE, groupName);
-    return outGroup;
-}
 
 
 static GA_Group*
@@ -430,19 +551,6 @@ groupRename(
 //    group = nullptr;
 //    //geo->getGroupTable(group->classType())->destroy(group);
 //}
-
-SYS_FORCE_INLINE
-static void
-groupBumpDataId(
-    GA_Group* const group
-)
-{
-    UT_ASSERT_P(group);
-    if (group->classType() == GA_GROUP_EDGE)
-        static_cast<GA_EdgeGroup*>(group)->bumpDataId();
-    else
-        static_cast<GA_ElementGroup*>(group)->bumpDataId();
-}
 
 
 
@@ -1039,8 +1147,8 @@ copyGroup(
     for (GA_GroupTable::iterator<GA_Group> it = geoRef->getGroupTable(ownerRef)->beginTraverse(); !it.atEnd(); ++it)
     {
         attribRef = it.group();
-        if (attribRef->isDetached())
-            continue;
+        //if (attribRef->isDetached())
+        //    continue;
         const UT_StringHolder& attribName = attribRef->getName();
 
         if (!attribName.multiMatch(attribPattern, true, " "))

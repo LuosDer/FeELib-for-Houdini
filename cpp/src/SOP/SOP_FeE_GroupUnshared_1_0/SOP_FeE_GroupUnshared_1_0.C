@@ -5,16 +5,13 @@
 
 #include "SOP_FeE_GroupUnshared_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_GroupPromote.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
 #include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_VertexNextEquiv.h"
 #include "GA_FeE/GA_FeE_GroupPromote.h"
@@ -250,7 +247,7 @@ void
 SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupUnshared_1_0Parms>();
-    GA_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupUnshared_1_0Cache*)cookparms.cache();
     
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);

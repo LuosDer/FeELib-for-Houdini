@@ -4,16 +4,13 @@
 
 #include "SOP_FeE_JoinCurve_2_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
-
+#include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_JoinCurve.h"
 
 
@@ -339,7 +336,7 @@ void
 SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_JoinCurve_2_0Parms>();
-    GEO_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_JoinCurve_2_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
@@ -361,7 +358,7 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     GOP_Manager gop;
-    const GA_PointGroup* stopPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getStopPointGroup(), gop);
+    const GA_PointGroup* const stopPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getStopPointGroup(), gop);
 
     
     const bool keepOrder = sopparms.getKeepOrder();
@@ -427,12 +424,6 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
-    GA_Attribute* srcPrimsAttrib = nullptr;
-    if (outSrcPrims)
-    {
-        srcPrimsAttrib = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, 1, nullptr, nullptr, inStorageI);
-    }
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
@@ -442,7 +433,7 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     switch (kernel)
     {
     case 0:
-        GA_FeE_JoinCurve::joinCurve(outGeo0, stopPointGroup, keepOrder, keepLoop, closeLoop, srcPrimsAttrib);
+        GA_FeE_JoinCurve::joinCurve(outGeo0, stopPointGroup, keepOrder, keepLoop, closeLoop, outSrcPrims, srcPrimsAttribName, inStorageI);
         break;
     case 1:
 //        for (GA_Iterator it(outGeo0->getPointRange(groupOneNeb)); it.fullBlockAdvance(start, end); )

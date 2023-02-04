@@ -8,7 +8,7 @@
 // SOP_FeE_Adjacency_1_0Verb::cook with the correct type.
 #include "SOP_FeE_Adjacency_1_0.proto.h"
 
-#include "GEO/GEO_Detail.h"
+#include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
@@ -16,7 +16,8 @@
 
 #include "GA_FeE/GA_FeE_TopologyReference.h"
 #include "GA_FeE/GA_FeE_Adjacency.h"
-#include "GEO_FeE/GEO_FeE_Group.h"
+#include "GA_FeE/GA_FeE_Group.h"
+#include "GA_FeE/GA_FeE_GroupUnion.h"
 
 
 
@@ -404,10 +405,10 @@ void
 SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Adjacency_1_0Parms>();
-    GEO_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Adjacency_1_0Cache*)cookparms.cache();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
@@ -550,7 +551,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
     if (calVertexPrimIndex)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexPrimIndexAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPrimIndexAttribName, inStorageI, 1, GA_Defaults(-1));
         vtxpnumAttribHandle.bind(attribPtr);
     }
     else if (calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
@@ -574,7 +575,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_RWHandleT<GA_Offset> dstptAttribHandle;
     if (calVertexPointDst)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexPointDstAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPointDstAttribName, inStorageI, 1, GA_Defaults(-1));
         dstptAttribHandle.bind(attribPtr);
     }
     else if (calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge)
@@ -609,8 +610,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_RWHandleT<GA_Offset> vtxPrevAttribHandle, vtxNextAttribHandle;
     if (calVertexVertexPrim)
     {
-        vtxPrevAttribHandle = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-        vtxNextAttribHandle = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        vtxPrevAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, inStorageI, 1, GA_Defaults(-1));
+        vtxNextAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, inStorageI, 1, GA_Defaults(-1));
     }
     else if (calPointPointEdge)
     {
@@ -648,7 +649,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_RWHandleT<GA_Offset> vtxNextEquivAttribHandle;
     if (calVertexNextEquiv)
     {
-        vtxNextEquivAttribHandle = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        vtxNextEquivAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, inStorageI, 1, GA_Defaults(-1));
     }
     else if (calPrimPrimEdge)
     {
@@ -671,7 +672,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calVertexNextEquivNoLoop)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, inStorageI, 1, GA_Defaults(-1));
         intAttribHandle.bind(attribPtr);
         GA_FeE_VertexNextEquiv::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
@@ -681,8 +682,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calPointPointEdge)
     {
-        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
-        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, 0, 0, inStorageI);
+        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(-1));
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointEdgeAttribName, inStorageI, 1);
         attribHandle.bind(attribPtr);
         switch (kernel)
         {
@@ -709,8 +710,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calPointPointPrim)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, 0, 0, inStorageI);
-        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointPrimAttribName, inStorageI, 1);
+        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(-1));
         attribHandle.bind(attribPtr);
         //GA_FeE_Adjacency::pointPointPrim(outGeo0, attribHandle,
         //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
@@ -730,8 +731,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         }
         else
         {
-            GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, 0, 0, inStorageI);
-            //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+            GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimEdgeAttribName, inStorageI, 1);
+            //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1));
             attribHandle.bind(attribPtr);
             switch (kernel)
             {
@@ -769,8 +770,8 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (calPrimPrimPoint)
     {
-        GA_Attribute* attribPtr = outGeo0->addIntArray(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, 0, 0, inStorageI);
-        //GA_Attribute* attribPtr = outGeo0->addIntTuple(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(-1), 0, 0, inStorageI);
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimPointAttribName, inStorageI, 1);
+        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(-1));
         attribHandle.bind(attribPtr);
         GA_FeE_Adjacency::primPrimPoint(outGeo0, attribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), pointSeamGroup,

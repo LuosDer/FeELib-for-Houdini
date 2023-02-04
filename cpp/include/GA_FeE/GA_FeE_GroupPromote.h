@@ -640,7 +640,7 @@ namespace GA_FeE_GroupPromote {
         if (!group)
             return GA_PrimitiveGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_POINT);
+        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_PRIMITIVE);
         if (!groupTable)
             return GA_PrimitiveGroupUPtr();
 
@@ -661,7 +661,7 @@ namespace GA_FeE_GroupPromote {
         if (!group)
             return GA_PointGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_PRIMITIVE);
+        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_POINT);
         if (!groupTable)
             return GA_PointGroupUPtr();
 
