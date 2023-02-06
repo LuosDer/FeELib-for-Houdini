@@ -17,7 +17,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get Vertex Next Equiv Vertex
     static GA_Offset
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset dstpt
         )
@@ -57,7 +57,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset primoff,
             const GA_Size vtxpnum
@@ -68,7 +68,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -84,7 +84,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get Vertex Next Equiv Vertex
     static GA_Offset
         vertexNextEquiv(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset dstpt
         )
@@ -123,7 +123,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquiv(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff,
             const GA_Offset primoff,
             const GA_Size vtxpnum
@@ -134,7 +134,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     static GA_Offset
         vertexNextEquiv(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_Offset vtxoff
         )
     {
@@ -161,15 +161,15 @@ namespace GA_FeE_VertexNextEquiv {
     //template<typename T>
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -189,15 +189,15 @@ namespace GA_FeE_VertexNextEquiv {
     //template<typename T>
     static void
         vertexNextEquiv(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -219,7 +219,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attrib_h,
             GA_VertexGroup* const validGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
@@ -228,15 +228,15 @@ namespace GA_FeE_VertexNextEquiv {
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, 
-            [geo, validGroup, &attrib_h, &dstptAttrib_h,
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, 
+            [validGroup, &attrib_h, &dstptAttrib_h,
             vtxPointRef, pointVtxRef, vtxNextRef]
             (const GA_SplittableRange& r)
             {
@@ -294,7 +294,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_VertexGroup* const validGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -302,15 +302,15 @@ namespace GA_FeE_VertexNextEquiv {
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0,
-            [geo, validGroup, &dstptAttrib_h,
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0,
+            [validGroup, &dstptAttrib_h,
             vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
@@ -363,7 +363,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquivNoLoop(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attrib_h,
             const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -371,15 +371,15 @@ namespace GA_FeE_VertexNextEquiv {
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0,
-            [geo, &attrib_h, &dstptAttrib_h,
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0,
+            [&attrib_h, &dstptAttrib_h,
             vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
@@ -438,7 +438,7 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquiv(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attrib_h,
             GA_VertexGroup* unsharedGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
@@ -447,15 +447,15 @@ namespace GA_FeE_VertexNextEquiv {
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0,
-            [geo, unsharedGroup, &attrib_h, &dstptAttrib_h,
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0,
+            [unsharedGroup, &attrib_h, &dstptAttrib_h,
             vtxPointRef, pointVtxRef, vtxNextRef]
             (const GA_SplittableRange& r)
         {
@@ -515,15 +515,15 @@ namespace GA_FeE_VertexNextEquiv {
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0,
-            [geo, &attrib_h, &dstptAttrib_h,
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0,
+            [&attrib_h, &dstptAttrib_h,
             vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
@@ -576,23 +576,23 @@ namespace GA_FeE_VertexNextEquiv {
     //Get all vertices NextEquiv Vertex
     static void
         vertexNextEquiv(
-            GA_Detail* const geo,
-            GA_VertexGroup* unsharedGroup,
+            const GA_Detail* const geo,
+            GA_VertexGroup* const unsharedGroup,
             const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0,
-            [geo, unsharedGroup, &dstptAttrib_h,
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0,
+            [unsharedGroup, &dstptAttrib_h,
             vtxPointRef, pointVtxRef, vtxNextRef]
         (const GA_SplittableRange& r)
         {
@@ -830,7 +830,7 @@ namespace GA_FeE_VertexNextEquiv {
             return groupPtr;
         const GA_Attribute* const refAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
         groupPtr = geo->newVertexGroup(name);
-        vertexNextEquiv(geo, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
+        vertexNextEquiv(static_cast<const GA_Detail*>(geo), groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
     }
 

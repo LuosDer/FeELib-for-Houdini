@@ -22,24 +22,27 @@ namespace GA_FeE_AttribPromote {
 
 static void
     attribPromote(
-        const GA_Detail* const geo,
+        //const GA_Detail* const geo,
         GA_Attribute* const dstAttribPtr,
         const GA_Attribute* const srcAttribPtr,
         const exint subscribeRatio = 16,
         const exint minGrainSize = 1024
     )
 {
-    UT_ASSERT_P(geo);
     UT_ASSERT_P(dstAttribPtr);
     UT_ASSERT_P(srcAttribPtr);
     UT_ASSERT_P(dstAttribPtr != srcAttribPtr);
+
+    const GA_Detail* const geo = &srcAttribPtr->getDetail();
+
+    UT_ASSERT_P(geo == &srcAttribPtr->getDetail());
 
     const GA_AttributeOwner dstClass = dstAttribPtr->getOwner();
     const GA_AttributeOwner srcClass = srcAttribPtr->getOwner();
 
     //GA_RWHandleT<> newAttrib_h(newAttribPtr);
     //GA_ROHandleT<> attrib_h(attribPtr);
-    const GA_SplittableRange geoSplittableRange(GA_Range(geo->getIndexMap(dstClass)));
+    const GA_SplittableRange geoSplittableRange(GA_Range(dstAttribPtr->getIndexMap()));
     UTparallelFor(geoSplittableRange, [geo, dstAttribPtr, srcAttribPtr, srcClass, dstClass](const GA_SplittableRange& r)
     {
         GA_Offset start, end;

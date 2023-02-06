@@ -37,7 +37,8 @@ skin(
     const GA_Storage storage = GA_STORE_INVALID,
     const exint subscribeRatio = 32,
     const exint minGrainSize = 1024
-) {
+)
+{
     const GA_Attribute* const connectivityPointAttrib = GA_FeE_Connectivity::addAttribConnectivityPoint(geo, nullptr, nullptr, GA_STORE_INT64);
     const GA_Attribute* const connectivityPrimAttrib = GA_FeE_AttribPromote::attribPromote(geo, connectivityPointAttrib, GA_ATTRIB_PRIMITIVE);
 
@@ -50,15 +51,15 @@ skin(
     const GA_Offset primoff_first = GA_FeE_ConvertLine::convertLine(geo, true, true, false, "", true, "", "", "", "", storage);
     //GA_FeE_ConvertLine::convertLine(geo, inGeo0, true);
 
-
     const GA_ROHandleT<GA_Offset> connectivityPrim_h(connectivityPrimAttrib);
-    GA_Offset val0 = connectivityPrim_h.get(0);
-    GA_Offset val1 = connectivityPrim_h.get(1);
-    GA_Offset val2 = connectivityPrim_h.get(2);
-    GA_Offset val3 = connectivityPrim_h.get(3);
-    GA_Offset val4 = connectivityPrim_h.get(4);
-    GA_Offset val5 = connectivityPrim_h.get(5);
-    GA_Offset val6 = connectivityPrim_h.get(6);
+    GA_Offset val0 = connectivityPrim_h.get(geo->primitiveOffset(0));
+    GA_Offset val1 = connectivityPrim_h.get(geo->primitiveOffset(1));
+    GA_Offset val2 = connectivityPrim_h.get(geo->primitiveOffset(2));
+    GA_Offset val3 = connectivityPrim_h.get(geo->primitiveOffset(3));
+    GA_Offset val4 = connectivityPrim_h.get(geo->primitiveOffset(4));
+    GA_Offset val5 = connectivityPrim_h.get(geo->primitiveOffset(5));
+    GA_Offset val6 = connectivityPrim_h.get(geo->primitiveOffset(6));
+    return;
 
 
     GA_Offset start, end;

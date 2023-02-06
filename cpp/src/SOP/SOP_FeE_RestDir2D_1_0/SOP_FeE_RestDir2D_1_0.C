@@ -273,7 +273,8 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    GA_Attribute* const restDir2DAttrib = GA_FeE_RestDir2D::addAttribRestDir2D(cookparms, outGeo0, groupType, groupName,
+    GA_Attribute* const restDir2DAttrib = GA_FeE_RestDir2D::addAttribRestDir2D(
+        cookparms, outGeo0, groupType, groupName,
         method, inStorgeF, restDir2DAttribName,
         nullptr, nullptr, GA_ReuseStrategy(),
         subscribeRatio, minGrainSize);
