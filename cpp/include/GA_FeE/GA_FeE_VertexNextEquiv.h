@@ -783,7 +783,8 @@ namespace GA_FeE_VertexNextEquiv {
 
 
     //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, defaults, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    
+
+    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
     static GA_Attribute*
         addAttribVertexNextEquiv(
             GA_Detail* const geo,
@@ -813,6 +814,7 @@ namespace GA_FeE_VertexNextEquiv {
 
     //GA_FeE_VertexNextEquiv::addAttribVertexNextEquiv(geo, name, geoGroup, subscribeRatio, minGrainSize);
 
+    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
     static GA_VertexGroup*
     addGroupVertexNextEquiv(
         GA_Detail* const geo,

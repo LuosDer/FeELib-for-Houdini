@@ -11,7 +11,11 @@
 #include "UT/UT_DSOVersion.h"
 
 
+
+
 #include "GA_FeE/GA_FeE_Skin.h"
+
+
 
 
 using namespace SOP_FeE_Skin_3_0_Namespace;
@@ -65,44 +69,6 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "sop_input" "0" }
     }
 
-
-
-    parm {
-        name    "attribFromPrim"
-        cppname "AttribFromPrim"
-        label   "Attrib from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-
-    parm {
-        name    "groupFromPrim"
-        cppname "GroupFromPrim"
-        label   "Group from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromEdge"
-        cppname "GroupFromEdge"
-        label   "Group from Edge"
-        type    string
-        default { "" }
-    }
 
     parm {
         name    "promoteEdgeGroupToPrim"
@@ -176,15 +142,11 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ useEndGroup == 0 }"
     }
 
+)THEDSFILE"
+// ==== This is necessary because MSVC++ has a limit of 16380 character per
+// ==== string literal
+R"THEDSFILE(
 
-    parm {
-        name    "mergeInput"
-        cppname "MergeInput"
-        label   "Merge Input"
-        type    toggle
-        default { "0" }
-        disablewhen "{ close == 1 }"
-    }
     parm {
         name    "attribFromVertex"
         cppname "AttribFromVertex"
@@ -221,6 +183,14 @@ static const char *theDsFile = R"THEDSFILE(
         default { "" }
     }
 
+    parm {
+        name    "mergeInput"
+        cppname "MergeInput"
+        label   "Merge Input"
+        type    toggle
+        default { "0" }
+        disablewhen "{ close == 1 }"
+    }
 
 
     parm {
@@ -238,12 +208,13 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "polyCap"
-        cppname "PolyCap"
-        label   "Poly Cap"
+        name    "meshCap"
+        cppname "MeshCap"
+        label   "Mesh Cap"
         type    toggle
         default { "0" }
     }
+
     parm {
         name    "addUV"
         cppname "AddUV"
@@ -273,9 +244,9 @@ static const char *theDsFile = R"THEDSFILE(
 
         }
         parm {
-            name    "uvType"
-            cppname "UVType"
-            label   "UV Type"
+            name    "uvMethod"
+            cppname "UVMethod"
+            label   "UV Method"
             type    ordinal
             default { "uniform" }
             menu {
@@ -289,7 +260,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Seam Group"
             type    string
             default { "seams" }
-            disablewhen "{ coreuv != seams }"
+            disablewhen "{ uvMethod != uniform }"
         }
         parm {
             name    "uvLayout"
@@ -300,6 +271,15 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+
+
+    parm {
+        name    "outTopoAttrib"
+        cppname "OutTopoAttrib"
+        label   "Output Topo Attribute"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -326,20 +306,21 @@ SOP_FeE_Skin_3_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_Skin_3_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("vertexGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("edgeGroup"_sh, &SOP_Node::edgeGroupMenu);
+        //templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        //templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::pointGroupMenu);
+        //templ.setChoiceListPtr("vertexGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
+        //templ.setChoiceListPtr("edgeGroup"_sh, &SOP_Node::edgeGroupMenu);
 
-        templ.setChoiceListPtr("attribFromPrim"_sh, &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("attribFromVertex"_sh, &SOP_Node::vertexAttribMenu);
+        //templ.setChoiceListPtr("attribFromPrim"_sh, &SOP_Node::primAttribMenu);
+        //templ.setChoiceListPtr("attribFromVertex"_sh, &SOP_Node::vertexAttribMenu);
 
-        templ.setChoiceListPtr("groupFromPrim"_sh, &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("groupFromVertex"_sh, &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("groupFromEdge"_sh, &SOP_Node::edgeGroupMenu);
-        templ.setChoiceListPtr("promoteEdgeGroupToPrim"_sh, &SOP_Node::edgeGroupMenu);
-
-        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::pointAttribMenu);
+        //templ.setChoiceListPtr("groupFromPrim"_sh, &SOP_Node::primGroupMenu);
+        //templ.setChoiceListPtr("groupFromVertex"_sh, &SOP_Node::vertexNamedGroupMenu);
+        //templ.setChoiceListPtr("groupFromEdge"_sh, &SOP_Node::edgeGroupMenu);
+        //templ.setChoiceListPtr("promoteEdgeGroupToPrim"_sh, &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("seamGroup"_sh, &SOP_Node::edgeGroupMenu);
+        
+        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::allTextureCoordMenu);
         
     }
     return templ.templates();
@@ -550,7 +531,7 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWithPoints(*inGeo0);
+    outGeo0->replaceWith(*inGeo0);
 
 
     GU_DetailHandle geoTmp_h;
@@ -595,57 +576,25 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         }
     }
 
-    const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
+    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
+    const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
 
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
-
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-
-
-    //const GA_VertexGroup* creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, "__topo_nextEquivValid", geo0VtxGroup, subscribeRatio, minGrainSize);
-    const GA_VertexGroup* const creatingGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, geo0VtxGroup, inStorageI, "__topo_nextEquivValid", subscribeRatio, minGrainSize);
-    //const GA_Attribute* dstptAttrib = outGeo0->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstptAttribH = geoTmp->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_dstpt");
-
-    UT_ASSERT_P(dstptAttribH.getAttribute());
-
-
-    GA_Size entries = creatingGroup->getGroupEntries();
-
-    GA_Offset vtxoff_first;
-    GA_Offset primoff_first = outGeo0->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-
-
-    GA_Topology& topo = outGeo0->getTopology();
-
-    GA_Topology& topo_geoTmp = geoTmp->getTopology();
-    const GA_ATITopology* vtxPointRef_geoTmp = topo_geoTmp.getPointRef();
-
-    GA_Offset start, end;
-    for (GA_Iterator it(geoTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
-        {
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
-            ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, dstptAttribH.get(vtxoff));
-            ++vtxoff_first;
-        }
-    }
+    GA_FeE_Skin::skin(outGeo0, true);
 
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
-    geoTmp_h.deleteGdp();
 
-
+    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 }
 

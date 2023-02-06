@@ -1,12 +1,12 @@
 
 #pragma once
 
-#ifndef __GA_FeE_PolyCap_h__
-#define __GA_FeE_PolyCap_h__
+#ifndef __GA_FeE_MeshCap_h__
+#define __GA_FeE_MeshCap_h__
 
 
 
-//#include "GA_FeE/GA_FeE_PolyCap.h"
+//#include "GA_FeE/GA_FeE_MeshCap.h"
 
 #include "GA/GA_Detail.h"
 
@@ -15,7 +15,7 @@
 
 
 
-namespace GA_FeE_PolyCap {
+namespace GA_FeE_MeshCap {
 
 
 
@@ -25,7 +25,7 @@ namespace GA_FeE_PolyCap {
 
 
 static void
-polyCapSingle(
+meshCapSingle(
     GA_Detail* const geo
 )
 {
@@ -42,6 +42,6 @@ polyCapSingle(
 
 
 
-} // End of namespace GA_FeE_PolyCap
+} // End of namespace GA_FeE_MeshCap
 
 #endif

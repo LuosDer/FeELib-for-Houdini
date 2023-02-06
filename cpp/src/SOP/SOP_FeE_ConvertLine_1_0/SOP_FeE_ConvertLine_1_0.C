@@ -115,24 +115,30 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-        name    "outSrcPrims"
-        cppname "OutSrcPrims"
-        label   "Source Prims"
+        name    "outSrcPrim"
+        cppname "OutSrcPrim"
+        label   "Out Source Prim"
         type    toggle
         default { 0 }
         nolabel
         joinnext
     }
     parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
+        name    "srcPrimAttribName"
+        cppname "SrcPrimAttribName"
+        label   "Source Prim Attrib Name"
         type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
+        default { "srcPrim" }
+        disablewhen "{ outSrcPrim == 0 }"
     }
 
-
+    parm {
+        name    "copyPrimAttrib"
+        cppname "CopyPrimAttrib"
+        label   "Copy Prim Attrib"
+        type    toggle
+        default { 0 }
+    }
 
     parm {
         name    "primType"
@@ -145,6 +151,14 @@ static const char *theDsFile = R"THEDSFILE(
             "poly"      "Poly"
         }
     }
+    parm {
+        name    "keepSourcePrim"
+        cppname "KeepSourcePrim"
+        label   "Keep Source Prim"
+        type    toggle
+        default { "0" }
+    }
+
 
 
 
@@ -405,6 +419,9 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
+    const bool keepSourcePrim = sopparms.getKeepSourcePrim();
+
+
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -417,9 +434,25 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (boss.wasInterrupted())
         return;
 
+    const bool outSrcPrim = sopparms.getOutSrcPrim();
+    const UT_StringHolder& srcPrimAttribName = sopparms.getSrcPrimAttribName();
 
 
-    GA_FeE_ConvertLine::convertLine(outGeo0, inGeo0, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID, isClosed);
+    const bool copyPrimAttrib = sopparms.getCopyPrimAttrib();
+    
+        
+
+    outGeo0->replaceWith(*inGeo0);
+    GA_FeE_ConvertLine::convertLine(outGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+    
+    
+    
+    //GA_FeE_ConvertLine::convertLine(outGeo0, inGeo0, isClosed, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+
+
+
+
+
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
 
