@@ -16,6 +16,7 @@
 
 #include "GA_FeE/GA_FeE_Type.h"
 #include "GA_FeE/GA_FeE_TopologyReference.h"
+#include "GA_FeE/GA_FeE_Group.h"
 
 #include "GEO/GEO_PrimPoly.h"
 
@@ -28,21 +29,21 @@ namespace GA_FeE_JoinCurve {
 static void
     joinCurve(
         GA_Detail* const geo,
-        const GA_PointGroup* const stopPointGroup,
         const bool keepOrder = false,
         const bool keepLoop = true,
         const bool closeLoop = false,
+        const GA_PointGroup* const stopPointGroup = nullptr,
         GA_Attribute* const srcPrimsAttrib = nullptr
     )
 {
     UT_ASSERT_P(geo);
 
     UT_ValArray<GA_Offset> srcPrims;
-    GA_RWHandleT<UT_ValArray<GA_Offset>> srcPrimsAttribH;
+    GA_RWHandleT<UT_ValArray<GA_Offset>> srcPrims_h;
     if (srcPrimsAttrib)
     {
         srcPrims.setCapacity(1024);
-        srcPrimsAttribH = srcPrimsAttrib;
+        srcPrims_h = srcPrimsAttrib;
     }
 
     //GA_Offset vtxoff_new = geo->appendVertex();
@@ -255,7 +256,7 @@ static void
 
             if (srcPrimsAttrib)
             {
-                srcPrimsAttribH.set(primoff, srcPrims);
+                srcPrims_h.set(primoff, srcPrims);
                 srcPrims.clear();
             }
         }
@@ -410,7 +411,7 @@ static void
 
                 if (srcPrimsAttrib)
                 {
-                    srcPrimsAttribH.set(primoff, srcPrims);
+                    srcPrims_h.set(primoff, srcPrims);
                     srcPrims.clear();
                 }
             }
@@ -420,26 +421,48 @@ static void
     geo->destroyPrimitives(geo->getPrimitiveRange(delPrimitiveGroup));
 }
 
+SYS_FORCE_INLINE
 static void
 joinCurve(
     GA_Detail* const geo,
-    const GA_PointGroup* const stopPointGroup,
+    const bool outSrcPrims,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const UT_StringHolder& srcPrimsAttribName = "",
     const bool keepOrder = false,
     const bool keepLoop = true,
     const bool closeLoop = false,
-    const bool outSrcPrims = false,
-    const UT_StringHolder& srcPrimsAttribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
+    const GA_PointGroup* const stopPointGroup = nullptr
 )
-{
+{   
     GA_Attribute* srcPrimsAttrib = nullptr;
     if (outSrcPrims && srcPrimsAttribName.isstring() && srcPrimsAttribName.length() != 0)
     {
         const GA_Storage finalStorageI = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
         srcPrimsAttrib = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, finalStorageI, 1, GA_Defaults(-1));
     }
-    joinCurve(geo, stopPointGroup, keepOrder, keepLoop, closeLoop, srcPrimsAttrib);
+    joinCurve(geo, keepOrder, keepLoop, closeLoop, stopPointGroup, srcPrimsAttrib);
 }
+
+
+static void
+joinCurve(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GA_Detail* const geo,
+    const UT_StringHolder& stopPointGroupName,
+    const bool keepOrder = false,
+    const bool keepLoop = true,
+    const bool closeLoop = false,
+    const bool outSrcPrims = false,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const UT_StringHolder& srcPrimsAttribName = ""
+)
+{
+    GOP_Manager gop;
+    const GA_PointGroup* const stopPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, geo, stopPointGroupName, gop);
+
+    joinCurve(geo, outSrcPrims, storage, srcPrimsAttribName, keepOrder, keepLoop, closeLoop, stopPointGroup);
+}
+
 
     
 

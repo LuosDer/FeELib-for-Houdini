@@ -357,30 +357,11 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
 
 
-    GOP_Manager gop;
-    const GA_PointGroup* const stopPointGroup = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, outGeo0, sopparms.getStopPointGroup(), gop);
-
     
     const bool keepOrder = sopparms.getKeepOrder();
     const bool keepLoop = sopparms.getKeepLoop();
     const bool closeLoop = sopparms.getCloseLoop();
     
-
-
-    //const GA_PointGroupUPtr passedPointGroupUPtr = outGeo0->createDetachedPointGroup();
-    //GA_PointGroup* passedPointGroup = passedPointGroupUPtr.get();
-
-
-    //GA_PrimitiveGroupUPtr passedPrimitiveGroupUPtr;
-    //GA_PrimitiveGroup* passedPrimitiveGroup = nullptr;
-
-    //if (keepLoop)
-    //{
-    //    passedPrimitiveGroupUPtr = outGeo0->createDetachedPrimitiveGroup();
-    //    passedPrimitiveGroup = passedPrimitiveGroupUPtr.get();
-    //}
-    
-
 
 
     const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
@@ -411,11 +392,10 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         }
     }
 
-    //const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
     const UT_StringHolder& srcPrimsAttribName = sopparms.getSrcPrimsAttribName();
-    const bool outSrcPrims = sopparms.getOutSrcPrims() && srcPrimsAttribName.isstring();
+    const bool outSrcPrims = sopparms.getOutSrcPrims();
 
-    const exint kernel = sopparms.getKernel();
+    //const exint kernel = sopparms.getKernel();
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
@@ -428,67 +408,12 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-
-
-    switch (kernel)
-    {
-    case 0:
-        GA_FeE_JoinCurve::joinCurve(outGeo0, stopPointGroup, keepOrder, keepLoop, closeLoop, outSrcPrims, srcPrimsAttribName, inStorageI);
-        break;
-    case 1:
-//        for (GA_Iterator it(outGeo0->getPointRange(groupOneNeb)); it.fullBlockAdvance(start, end); )
-//        {
-//            for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
-//            {
-//                if (KeepOrder)
-//                {
-//                }
-//                if (passedPointGroup->contains(ptoff))
-//                    continue;
-//                if (stopPointGroup && stopPointGroup->contains(ptoff))
-//                    continue;
-//                const GA_Primitive* newPrim = outGeo0->appendPrimitive(GA_PRIMPOLY);
-//
-//                GA_Offset newPrimoff = newPrim->getMapOffset();
-//
-//
-//                GA_Offset primoff_neb = newPrim->getMapOffset();
-//#if 0
-//                while (1) {
-//#else
-//                for (int LOOPCOUNT = 0; LOOPCOUNT <= MAXLOOPCOUNT; ++LOOPCOUNT) {
-//                    if (LOOPCOUNT == MAXLOOPCOUNT)
-//                    {
-//                        UT_ASSERT("Unsupport Input Geo so arrive death loop");
-//                    }
-//#endif
-//
-//
-//                }
-//                if (keepLoop)
-//                {
-//                    passedPrimitiveGroup->setElement(primoff, true);
-//                }
-//                passedPointGroup->setElement(ptoff, true);
-//                if (outSrcPrims)
-//                {
-//                    srcPrims.emplace_back();
-//                    srcPrimsAttribH.set(newPrimoff, srcPrims);
-//                }
-//                if (outSrcPrims)
-//                {
-//                    srcPrims.clear();
-//                }
-//            }
-//        }
-        break;
-    }
+    GA_FeE_JoinCurve::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, inStorageI, srcPrimsAttribName);
 
 
     outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
     //outGeo0->bumpDataIdsForRewire();
 
-    //tmpGeoH0.deleteGdp();
     
 }
 
