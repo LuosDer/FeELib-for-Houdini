@@ -206,22 +206,22 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
 
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 128 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
+    //parm {
+    //    name    "subscribeRatio"
+    //    cppname "SubscribeRatio"
+    //    label   "Subscribe Ratio"
+    //    type    integer
+    //    default { 128 }
+    //    range   { 0! 256 }
+    //}
+    //parm {
+    //    name    "minGrainSize"
+    //    cppname "MinGrainSize"
+    //    label   "Min Grain Size"
+    //    type    intlog
+    //    default { 64 }
+    //    range   { 0! 2048 }
+    //}
 }
 )THEDSFILE";
 
@@ -489,8 +489,8 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
+    //const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = sopparms.getMinGrainSize();
 
 
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferedPrecision);
@@ -513,7 +513,9 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     attribPtr = GA_FeE_Connectivity::addAttribConnectivity(outGeo0,
         geo0GroupPromoted, geo0SeamGroup,
         connectivityConstraint, geo0AttribClass,
-        inStorageI, geo0AttribNames, subscribeRatio, minGrainSize);
+        inStorageI, geo0AttribNames
+        //, subscribeRatio, minGrainSize
+    );
 
     if (connectivityAttribType) // string type
     {

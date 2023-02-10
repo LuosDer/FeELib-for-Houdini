@@ -11,9 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_Group.h"
+
 
 #include "GA_FeE/GA_FeE_PolyCut.h"
 

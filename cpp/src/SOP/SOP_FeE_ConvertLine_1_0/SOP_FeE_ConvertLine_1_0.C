@@ -441,13 +441,14 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const bool copyPrimAttrib = sopparms.getCopyPrimAttrib();
     
         
-
+#if 1
+    GA_FeE_ConvertLine::convertLine(outGeo0, inGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+#else
     outGeo0->replaceWith(*inGeo0);
     GA_FeE_ConvertLine::convertLine(outGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+#endif
     
     
-    
-    //GA_FeE_ConvertLine::convertLine(outGeo0, inGeo0, isClosed, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
 
 
 

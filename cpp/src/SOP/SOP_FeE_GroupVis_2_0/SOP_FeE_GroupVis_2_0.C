@@ -96,7 +96,6 @@ newSopOperator(OP_OperatorTable* table)
 
     newOp->setIconName("SOP_groupcreate");
     table->addOperator(newOp);
-
 }
 
 

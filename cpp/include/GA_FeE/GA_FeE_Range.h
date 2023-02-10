@@ -47,7 +47,7 @@ namespace GA_FeE_Range {
         if (!group->isElementGroup())
             return GA_Range();
 
-        return GA_Range(geo->getIndexMap(GA_FeE_Type::attributeOwner_groupType(groupType)), GA_FeE_GroupPromote::elementGroupPromoteDetached(geo, group, groupType));
+        return GA_Range(geo->getIndexMap(GA_FeE_Type::attributeOwner_groupType(groupType)), GA_FeE_GroupPromote::elementGroupPromoteDetached(geo, group, groupType).get());
     }
 
 

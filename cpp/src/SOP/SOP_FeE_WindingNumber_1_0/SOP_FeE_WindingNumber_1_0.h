@@ -36,7 +36,7 @@
 
 class PRM_Template;
 
-namespace SOP_FeE_WindingNumber_1_0 {
+namespace SOP_FeE_WindingNumber_1_0_Namespace {
 /// This is the SOP class definition.  It doesn't need to be in a separate
 /// file like this.  This is just an example of a header file, in case
 /// another file needs to reference something in here.
@@ -47,8 +47,14 @@ public:
     static PRM_Template *buildTemplates();
     static OP_Node *myConstructor(OP_Network *net, const char *name, OP_Operator *op)
     {
-        return new SOP_FeE_WindingNumber_1_0(net, name, op);
+        OP_Node* newOp = new SOP_FeE_WindingNumber_1_0(net, name, op);
+        //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
+        newOp->setNodeShape("squared");
+        //newOp->setUserData("nodeshape", "tilted", false);
+        return newOp;
     }
+
+    static const UT_StringHolder theSOPTypeName;
 
     const SOP_NodeVerb *cookVerb() const override;
 

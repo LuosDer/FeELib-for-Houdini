@@ -26,6 +26,14 @@
 
 
 
+enum PolyReduce2D_GeoPropertyType
+{
+    PolyReduce2D_ANGLE,
+    PolyReduce2D_DIST,
+    PolyReduce2D_ROC,
+};
+
+
 namespace GA_FeE_PolyReduce2D {
 
 
@@ -35,14 +43,6 @@ namespace GA_FeE_PolyReduce2D {
 
 #define GA_FeE_PolyReduce2D_UseDetachedAttrib_ForRelease 1
 
-
-    
-enum PolyReduce2D_GeoPropertyType
-{
-    PolyReduce2D_ANGLE,
-    PolyReduce2D_DIST,
-    PolyReduce2D_ROC,
-};
 
 
 
@@ -105,7 +105,7 @@ polyReduce2D(
     
 
     {
-        GA_PointGroupUPtr geoPointGroupUPtr = GA_FeE_GroupPromote::groupPromotePointDetached(geo, geoGroup);
+        const GA_PointGroupUPtr geoPointGroupUPtr = GA_FeE_GroupPromote::groupPromotePointDetached(geo, geoGroup);
         const GA_PointGroup* const geoPointGroup = geoPointGroupUPtr.get();
         const GA_SplittableRange geoSplittableRange0(geo->getPointRange(geoPointGroup));
         UTparallelFor(geoSplittableRange0, [geo, &pos_h, &ndir_h, &weight_h, &nebsAttrib_h,

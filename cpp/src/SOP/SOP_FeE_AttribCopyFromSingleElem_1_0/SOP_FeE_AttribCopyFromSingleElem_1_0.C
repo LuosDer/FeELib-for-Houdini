@@ -1,9 +1,9 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_Skin_3_0.h"
+#include "SOP_FeE_AttribCopyFromSingleElem_1_0.h"
 
 
-#include "SOP_FeE_Skin_3_0.proto.h"
+#include "SOP_FeE_AttribCopyFromSingleElem_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -13,12 +13,12 @@
 
 
 
-#include "GA_FeE/GA_FeE_Skin.h"
+#include "GA_FeE/GA_FeE_Attribute.h"
 
 
 
 
-using namespace SOP_FeE_Skin_3_0_Namespace;
+using namespace SOP_FeE_AttribCopyFromSingleElem_1_0_Namespace;
 
 
 static const char *theDsFile = R"THEDSFILE(
@@ -301,50 +301,35 @@ R"THEDSFILE(
 )THEDSFILE";
 
 PRM_Template*
-SOP_FeE_Skin_3_0::buildTemplates()
+SOP_FeE_AttribCopyFromSingleElem_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_Skin_3_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_AttribCopyFromSingleElem_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         //templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        //templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::pointGroupMenu);
-        //templ.setChoiceListPtr("vertexGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
-        //templ.setChoiceListPtr("edgeGroup"_sh, &SOP_Node::edgeGroupMenu);
-
-        //templ.setChoiceListPtr("attribFromPrim"_sh, &SOP_Node::primAttribMenu);
-        //templ.setChoiceListPtr("attribFromVertex"_sh, &SOP_Node::vertexAttribMenu);
-
-        //templ.setChoiceListPtr("groupFromPrim"_sh, &SOP_Node::primGroupMenu);
-        //templ.setChoiceListPtr("groupFromVertex"_sh, &SOP_Node::vertexNamedGroupMenu);
-        //templ.setChoiceListPtr("groupFromEdge"_sh, &SOP_Node::edgeGroupMenu);
-        //templ.setChoiceListPtr("promoteEdgeGroupToPrim"_sh, &SOP_Node::edgeGroupMenu);
-        templ.setChoiceListPtr("seamGroup"_sh, &SOP_Node::edgeGroupMenu);
-        
-        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::allTextureCoordMenu);
-        
     }
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_Skin_3_0::theSOPTypeName("FeE::skin::3.0"_sh);
+const UT_StringHolder SOP_FeE_AttribCopyFromSingleElem_1_0::theSOPTypeName("FeE::attribCopyFromSingleElem::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_Skin_3_0::theSOPTypeName,
-        "FeE Skin",
-        SOP_FeE_Skin_3_0::myConstructor,
-        SOP_FeE_Skin_3_0::buildTemplates(),
+        SOP_FeE_AttribCopyFromSingleElem_1_0::theSOPTypeName,
+        "FeE Attribute Copy from Single Element",
+        SOP_FeE_AttribCopyFromSingleElem_1_0::myConstructor,
+        SOP_FeE_AttribCopyFromSingleElem_1_0::buildTemplates(),
         1,
         2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/Convert");
+        "Five elements Elf/Attribute");
 
-    newOp->setIconName("SOP_skin");
+    newOp->setIconName("SOP_attribcopy");
     table->addOperator(newOp);
 
 }
@@ -353,14 +338,14 @@ newSopOperator(OP_OperatorTable* table)
 
 
 
-class SOP_FeE_Skin_3_0Verb : public SOP_NodeVerb
+class SOP_FeE_AttribCopyFromSingleElem_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_Skin_3_0Verb() {}
-    virtual ~SOP_FeE_Skin_3_0Verb() {}
+    SOP_FeE_AttribCopyFromSingleElem_1_0Verb() {}
+    virtual ~SOP_FeE_AttribCopyFromSingleElem_1_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_Skin_3_0Parms(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_Skin_3_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_AttribCopyFromSingleElem_1_0Parms(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_AttribCopyFromSingleElem_1_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -368,26 +353,26 @@ public:
     
     /// This static data member automatically registers
     /// this verb class at library load time.
-    static const SOP_NodeVerb::Register<SOP_FeE_Skin_3_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_AttribCopyFromSingleElem_1_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_Skin_3_0Verb> SOP_FeE_Skin_3_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_AttribCopyFromSingleElem_1_0Verb> SOP_FeE_AttribCopyFromSingleElem_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_Skin_3_0::cookVerb() const 
+SOP_FeE_AttribCopyFromSingleElem_1_0::cookVerb() const 
 { 
-    return SOP_FeE_Skin_3_0Verb::theVerb.get();
+    return SOP_FeE_AttribCopyFromSingleElem_1_0Verb::theVerb.get();
 }
 
 
 
 
 static bool
-sopPrimPolyIsClosed(SOP_FeE_Skin_3_0Parms::PrimType parmgrouptype)
+sopPrimPolyIsClosed(SOP_FeE_AttribCopyFromSingleElem_1_0Parms::PrimType parmgrouptype)
 {
-    using namespace SOP_FeE_Skin_3_0Enums;
+    using namespace SOP_FeE_AttribCopyFromSingleElem_1_0Enums;
     switch (parmgrouptype)
     {
     case PrimType::POLYLINE:   return 0;    break;
@@ -523,11 +508,11 @@ void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool compl
 
 
 void
-SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_AttribCopyFromSingleElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto&& sopparms = cookparms.parms<SOP_FeE_Skin_3_0Parms>();
+    auto&& sopparms = cookparms.parms<SOP_FeE_AttribCopyFromSingleElem_1_0Parms>();
     GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_Skin_3_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_AttribCopyFromSingleElem_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
@@ -589,17 +574,15 @@ SOP_FeE_Skin_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GA_FeE_Skin::skin(outGeo0, true);
+    GA_FeE_Attribute::copyAttribFromSingleElement(outGeo0, sopparms.getOutTopoAttrib());
 
-    outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
+    attribPtr->bumpDataIds();
 
-
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 }
 
 
 
-namespace SOP_FeE_Skin_3_0_Namespace {
+namespace SOP_FeE_AttribCopyFromSingleElem_1_0_Namespace {
 
-} // End SOP_FeE_Skin_3_0_Namespace namespace
+} // End SOP_FeE_AttribCopyFromSingleElem_1_0_Namespace namespace

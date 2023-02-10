@@ -17,7 +17,7 @@
 
 #include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_Measure.h"
-#include "GA_FeE/GA_FeE_PolyCap.h"
+#include "GA_FeE/GA_FeE_MeshCap.h"
 
 enum GA_FeE_GroupByMeshWinding_Method
 {
@@ -100,7 +100,7 @@ isMeshWindingCorrect(
 		geoTmp0_h.allocateAndSet(geoTmp0);
 		geoTmp0->replaceWith(*geo);
 
-		GA_FeE_PolyCap::polyCapSingle(geoTmp0);
+		GA_FeE_MeshCap::meshCapSingle(geoTmp0);
 
 		isMeshWindingCorrectb = isMeshWindingCorrect(geoTmp0, geoPrimGroup, method);
 	}

@@ -240,13 +240,13 @@ primArea##T(                                                                    
     const GA_Offset primoff                                                                                                                             \
 )                                                                                                                                                       \
 {                                                                                                                                                       \
-    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);                                                                             \
+    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);                                                                            \
                                                                                                                                                         \
-    const bool closed = vertices.getExtraFlag();                                                                                                       \
+    const bool closed = vertices.getExtraFlag();                                                                                                        \
     if (!closed)                                                                                                                                        \
     return 0.0;                                                                                                                                         \
                                                                                                                                                         \
-    const GA_Size numvtx = vertices.size();                                                                                                            \
+    const GA_Size numvtx = vertices.size();                                                                                                             \
     if (numvtx < 3)                                                                                                                                     \
         return 0.0;                                                                                                                                     \
                                                                                                                                                         \
@@ -264,11 +264,11 @@ primArea##T(                                                                    
                                                                                                                                                         \
                                                                                                                                                         \
                                                                                                                                                         \
-    UT_Vector3T<fpreal##T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));                                                                           \
-    UT_Vector3T<fpreal##T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));                                                                           \
-    const UT_Vector3T<fpreal##T> pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));                                                                     \
+    UT_Vector3T<fpreal##T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));                                                                      \
+    UT_Vector3T<fpreal##T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));                                                                      \
+    const UT_Vector3T<fpreal##T> pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));                                                                \
                                                                                                                                                         \
-    /*GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));*/                                                                   \
+    /*GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));*/                                                                 \
                                                                                                                                                         \
     switch (numvtx)                                                                                                                                     \
     {                                                                                                                                                   \
@@ -279,31 +279,31 @@ primArea##T(                                                                    
     break;                                                                                                                                              \
     case 4:                                                                                                                                             \
     {                                                                                                                                                   \
-        const UT_Vector3T<fpreal##T> pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));                                                                 \
+        const UT_Vector3T<fpreal##T> pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));                                                            \
         return bretschneidersFormula0(pos0, pos1, pos2, pos3);                                                                                          \
     }                                                                                                                                                   \
     break;                                                                                                                                              \
-    default:                                                                                                                                          \
-        UT_ASSERT_MSG(0, "unsupport numvtx");                                                                                                            \
-        break;                                                                                                                                           \
+    default:                                                                                                                                            \
+        UT_ASSERT_MSG(0, "unsupport numvtx");                                                                                                           \
+        break;                                                                                                                                          \
     }                                                                                                                                                   \
                                                                                                                                                         \
                                                                                                                                                         \
                                                                                                                                                         \
-    const UT_Vector3T<fpreal##T> dir0 = pos1 - pos0;                                                                                                     \
-    const UT_Vector3T<fpreal##T> dir1 = pos2 - pos1;                                                                                                     \
-    const UT_Vector3T<fpreal##T> crossdir0B = cross(dir0, dir1);                                                                                         \
-    fpreal##T lengthdir0B = crossdir0B.length();                                                                                                         \
+    const UT_Vector3T<fpreal##T> dir0 = pos1 - pos0;                                                                                                    \
+    const UT_Vector3T<fpreal##T> dir1 = pos2 - pos1;                                                                                                    \
+    const UT_Vector3T<fpreal##T> crossdir0B = cross(dir0, dir1);                                                                                        \
+    fpreal##T lengthdir0B = crossdir0B.length();                                                                                                        \
     lengthdir0B = 1.0 / lengthdir0B;                                                                                                                    \
-    const fpreal##T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;                       \
-    const fpreal##T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;                       \
-    const fpreal##T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;                       \
+    const fpreal##T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;                      \
+    const fpreal##T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;                      \
+    const fpreal##T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;                      \
                                                                                                                                                         \
-    fpreal##T areaSum = 0.0;                                                                                                                             \
-    pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));                                                                                        \
+    fpreal##T areaSum = 0.0;                                                                                                                            \
+    pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));                                                                                    \
     for (GA_Size i(0); i < numvtx; ++i)                                                                                                                 \
     {                                                                                                                                                   \
-        pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));                                                                                             \
+        pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));                                                                                         \
         areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])                                                                                      \
             + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])                                                                                           \
             + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);                                                                                          \
@@ -381,7 +381,7 @@ primArea(
     }
     break;
     default:
-        UT_ASSERT_MSG(0, "unsupport numvtx");
+        //UT_ASSERT_MSG(0, "unsupport numvtx");
         break;
     }
 

@@ -347,6 +347,36 @@ extractPoint(
     GA_FeE_Group::delStdGroup(geo, GA_GROUP_POINT, delPointGroup);
 }
 
+//extractPoint(geo, groupName, reverseGroup, delGroup);
+SYS_FORCE_INLINE
+static void
+extractPoint(
+    GA_Detail* const geo,
+    const GA_PointGroup* const group,
+    const UT_StringHolder& delPrimAttrib,
+    const UT_StringHolder& delPointAttrib,
+    const UT_StringHolder& delVertexAttrib,
+    const UT_StringHolder& delDetailAttrib,
+    const UT_StringHolder& delPrimGroup,
+    const UT_StringHolder& delPointGroup,
+    const UT_StringHolder& delVertexGroup,
+    const UT_StringHolder& delEdgeGroup,
+    const bool reverseGroup = false,
+    const bool delInputGroup = true
+)
+{
+    UT_VERIFY_P(geo);
+    geo->replaceWithPoints(*geo);
+
+    GA_FeE_Attribute::delStdAttribute(geo, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+    GA_FeE_Group::delStdGroup(geo, delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
+
+    extractPoint(geo, geo, group,
+        reverseGroup, delInputGroup);
+
+    GA_FeE_Group::delStdGroup(geo, GA_GROUP_POINT, delPointGroup);
+}
+
 
 //GA_FeE_Detail::extractPoint(cookparms, outGeo0, inGeo0, groupName,
 //    delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
@@ -375,6 +405,39 @@ extractPoint(
     GOP_Manager gop;
     const GA_PointGroup* const group = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, srcGeo, groupName, gop);
     extractPoint(geo, srcGeo, group,
+        delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
+        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
+        reverseGroup, delInputGroup);
+}
+
+
+//GA_FeE_ExtractPoint::extractPoint(cookparms, outGeo0, groupName,
+//    delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
+//    delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
+//    sopparms.getReverseGroup(), sopparms.getDelInputGroup());
+SYS_FORCE_INLINE
+static void
+extractPoint(
+    const SOP_NodeVerb::CookParms& cookparms,
+    GA_Detail* const geo,
+    const UT_StringHolder& groupName,
+    const UT_StringHolder& delPrimAttrib,
+    const UT_StringHolder& delPointAttrib,
+    const UT_StringHolder& delVertexAttrib,
+    const UT_StringHolder& delDetailAttrib,
+    const UT_StringHolder& delPrimGroup,
+    const UT_StringHolder& delPointGroup,
+    const UT_StringHolder& delVertexGroup,
+    const UT_StringHolder& delEdgeGroup,
+    const bool reverseGroup = false,
+    const bool delInputGroup = true
+)
+{
+    UT_VERIFY_P(geo);
+
+    GOP_Manager gop;
+    const GA_PointGroup* const group = GA_FeE_Group::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
+    extractPoint(geo, group,
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         reverseGroup, delInputGroup);

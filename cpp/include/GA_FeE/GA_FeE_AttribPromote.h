@@ -19,10 +19,9 @@
 namespace GA_FeE_AttribPromote {
 
 
-
 static void
     attribPromote(
-        //const GA_Detail* const geo,
+        const GA_Detail* const geo,
         GA_Attribute* const dstAttribPtr,
         const GA_Attribute* const srcAttribPtr,
         const exint subscribeRatio = 16,
@@ -33,8 +32,7 @@ static void
     UT_ASSERT_P(srcAttribPtr);
     UT_ASSERT_P(dstAttribPtr != srcAttribPtr);
 
-    const GA_Detail* const geo = &srcAttribPtr->getDetail();
-
+    UT_ASSERT_P(geo == &dstAttribPtr->getDetail());
     UT_ASSERT_P(geo == &srcAttribPtr->getDetail());
 
     const GA_AttributeOwner dstClass = dstAttribPtr->getOwner();
@@ -58,11 +56,26 @@ static void
 }
 
 
+SYS_FORCE_INLINE
+static void
+    attribPromote(
+        GA_Attribute* const dstAttribPtr,
+        const GA_Attribute* const srcAttribPtr,
+        const exint subscribeRatio = 16,
+        const exint minGrainSize = 1024
+    )
+{
+    UT_ASSERT_P(srcAttribPtr);
+    attribPromote(&srcAttribPtr->getDetail(), dstAttribPtr, srcAttribPtr, subscribeRatio, minGrainSize);
+}
 
 
 
 
 
+
+
+SYS_FORCE_INLINE
 static GA_AttributeUPtr
 attribPromoteDetached(
     const GA_Detail* const geo,
@@ -74,13 +87,43 @@ attribPromoteDetached(
 {
     UT_ASSERT_P(geo);
     if (!attribPtr)
-        return nullptr;
-
+        return GA_AttributeUPtr();
+#if 0
+    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneTempAttribute(newClass, *attribPtr, true);
+    GA_AttributeUPtr newAttribUPtr(newAttribPtr);
+    attribPromote(newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+#else
     GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
     attribPromote(geo, newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+#endif
 
     return newAttribUPtr;
 }
+
+SYS_FORCE_INLINE
+static GA_AttributeUPtr
+attribPromoteDetached(
+    const GA_Attribute* const attribPtr,
+    const GA_AttributeOwner newClass,
+    const exint subscribeRatio = 16,
+    const exint minGrainSize = 1024
+)
+{
+    if (!attribPtr)
+        return GA_AttributeUPtr();
+#if 0
+    GA_Attribute* const newAttribPtr = attribPtr->getDetail().getAttributes().cloneTempAttribute(newClass, *attribPtr, true);
+    GA_AttributeUPtr newAttribUPtr(newAttribPtr);
+    attribPromote(newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+#else
+    GA_AttributeUPtr newAttribUPtr = attribPtr->getDetail().getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
+    attribPromote(newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+#endif
+
+    return newAttribUPtr;
+}
+
+
 
 static GA_Attribute*
     attribPromote(

@@ -435,8 +435,7 @@ findGroupN(
     outGroup = findGroupBase(geo, GA_GROUP_VERTEX, groupName);
     if (outGroup)
         return outGroup;
-    outGroup = findGroupBase(geo, GA_GROUP_EDGE, groupName);
-    return outGroup;
+    return findGroupBase(geo, GA_GROUP_EDGE, groupName);
 }
 
 static GA_Group*
@@ -453,7 +452,7 @@ findGroup(
     }
     else
     {
-        findGroupBase(geo, groupType, groupName);
+        return findGroupBase(geo, groupType, groupName);
     }
 }
 

@@ -345,13 +345,14 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
 
 #if 1
-    GA_FeE_ExtractPoint::extractPoint(cookparms, outGeo0, inGeo0, groupName,
+    outGeo0->replaceWith(*inGeo0);
+    GA_FeE_ExtractPoint::extractPoint(cookparms, outGeo0, groupName,
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         sopparms.getReverseGroup(), sopparms.getDelInputGroup());
 #else
-    GA_FeE_Attribute::delStdAttribute(outGeo0, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
-    GA_FeE_ExtractPoint::extractPoint(cookparms, outGeo0, groupName,
+    GA_FeE_ExtractPoint::extractPoint(cookparms, outGeo0, inGeo0, groupName,
+        delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         sopparms.getReverseGroup(), sopparms.getDelInputGroup());
 #endif

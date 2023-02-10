@@ -296,8 +296,8 @@ outTopoAttrib(
             GA_PrimitiveGroup* promotedGroup = promotedGroupUPtr.get();
             promotedGroup->combine(geoGroup);
 
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(promotedGroup));
-            UTparallelFor(geo0SplittableRange0, [geo, &attribPrev_h, &attribNext_h, geoGroup](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(promotedGroup));
+            UTparallelFor(geoSplittableRange0, [geo, &attribPrev_h, &attribNext_h, geoGroup](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -305,20 +305,20 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size lastIndex = vertices.size() - 1;
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            attribPrev_h.set(vertices[0], vertices[numvtx -1]);
-                            attribNext_h.set(vertices[numvtx -1], vertices[0]);
+                            attribPrev_h.set(vertices[0], vertices[lastIndex]);
+                            attribNext_h.set(vertices[lastIndex], vertices[0]);
                         }
                         else
                         {
                             attribPrev_h.set(vertices[0], -1);
-                            attribNext_h.set(vertices[numvtx -1], -1);
+                            attribNext_h.set(vertices[lastIndex], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             if (!geoGroup->contains(vtxoff_next))
@@ -333,8 +333,8 @@ outTopoAttrib(
         }
         else
         {
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
-            UTparallelFor(geo0SplittableRange0, [geo, &attribPrev_h, &attribNext_h](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
+            UTparallelFor(geoSplittableRange0, [geo, &attribPrev_h, &attribNext_h](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -342,20 +342,20 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size lastIndex = vertices.size() - 1;
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            attribPrev_h.set(vertices[0], vertices[numvtx - 1]);
-                            attribNext_h.set(vertices[numvtx - 1], vertices[0]);
+                            attribPrev_h.set(vertices[0], vertices[lastIndex]);
+                            attribNext_h.set(vertices[lastIndex], vertices[0]);
                         }
                         else
                         {
                             attribPrev_h.set(vertices[0], -1);
-                            attribNext_h.set(vertices[numvtx - 1], -1);
+                            attribNext_h.set(vertices[lastIndex], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             attribNext_h.set(vtxoff_prev, vtxoff_next);
@@ -389,8 +389,8 @@ outTopoAttrib(
             GA_PrimitiveGroup* promotedGroup = promotedGroupUPtr.get();
             promotedGroup->combine(geoGroup);
 
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(promotedGroup));
-            UTparallelFor(geo0SplittableRange0, [geo, &attribNext_h, geoGroup](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(promotedGroup));
+            UTparallelFor(geoSplittableRange0, [geo, &attribNext_h, geoGroup](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -398,20 +398,20 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size lastIndex = vertices.size() - 1;
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribPrev_h.set(vertices[0], vertices[numvtx - 1]);
-                            attribNext_h.set(vertices[numvtx - 1], vertices[0]);
+                            //attribPrev_h.set(vertices[0], vertices[lastIndex]);
+                            attribNext_h.set(vertices[lastIndex], vertices[0]);
                         }
                         else
                         {
                             //attribPrev_h.set(vertices[0], -1);
-                            attribNext_h.set(vertices[numvtx - 1], -1);
+                            attribNext_h.set(vertices[lastIndex], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             if (!geoGroup->contains(vtxoff_next))
@@ -426,8 +426,8 @@ outTopoAttrib(
         }
         else
         {
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
-            UTparallelFor(geo0SplittableRange0, [geo, &attribNext_h](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
+            UTparallelFor(geoSplittableRange0, [geo, &attribNext_h](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -435,20 +435,20 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size lastIndex = vertices.size() - 1;
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribPrev_h.set(vertices[0], vertices[numvtx - 1]);
-                            attribNext_h.set(vertices[numvtx - 1], vertices[0]);
+                            //attribPrev_h.set(vertices[0], vertices[lastIndex]);
+                            attribNext_h.set(vertices[lastIndex], vertices[0]);
                         }
                         else
                         {
                             //attribPrev_h.set(vertices[0], -1);
-                            attribNext_h.set(vertices[numvtx - 1], -1);
+                            attribNext_h.set(vertices[lastIndex], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             attribNext_h.set(vtxoff_prev, vtxoff_next);
@@ -477,8 +477,8 @@ outTopoAttrib(
         )
     {
         const GA_Topology& topo = geo->getTopology();
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, &topo, &attribPrev_h, &attribNext_h, geoGroup](const GA_SplittableRange& r)
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, &topo, &attribPrev_h, &attribNext_h, geoGroup](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             GA_Offset vtxoff_prev, vtxoff_next;
@@ -517,8 +517,8 @@ outTopoAttrib(
             GA_PrimitiveGroup* promotedGroup = promotedGroupUPtr.get();
             promotedGroup->combine(geoGroup);
 
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(promotedGroup));
-            UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, geoGroup](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(promotedGroup));
+            UTparallelFor(geoSplittableRange0, [geo, &attrib_h, geoGroup](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -539,8 +539,8 @@ outTopoAttrib(
         }
         else
         {
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(nullptr));
-            UTparallelFor(geo0SplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(nullptr));
+            UTparallelFor(geoSplittableRange0, [geo, &attrib_h](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -567,7 +567,7 @@ outTopoAttrib(
     //template<typename T>
     static void
         vertexPointDstByVtxpnum(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attrib_h,
             const GA_ROHandleT<GA_Size>& vtxpnumAttrib_h,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -575,12 +575,12 @@ outTopoAttrib(
             const exint minGrainSize = 64
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makePrimitiveRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makePrimitiveRef();
         const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, &attrib_h, &vtxpnumAttrib_h, vtxPrimRef](const GA_SplittableRange& r)
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, &attrib_h, &vtxpnumAttrib_h, vtxPrimRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -598,7 +598,7 @@ outTopoAttrib(
     //template<typename T>
     static void
         vertexPointDst(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_Attribute* const attrib_next,
             const GA_Attribute* const vtxPrimNextAttrib,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -609,8 +609,8 @@ outTopoAttrib(
         const GA_Topology& topo = geo->getTopology();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, attrib_next, vtxPrimNextAttrib, vtxPointRef](const GA_SplittableRange& r)
+        const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, attrib_next, vtxPrimNextAttrib, vtxPointRef](const GA_SplittableRange& r)
         {
             GA_PageHandleScalar<GA_Offset>::RWType dstpt_ph(attrib_next);
             GA_PageHandleScalar<GA_Offset>::ROType vtxPrimNext_ph(vtxPrimNextAttrib);
@@ -644,7 +644,7 @@ outTopoAttrib(
     //template<typename T>
     static void
         vertexPointDst(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             const GA_RWHandleT<GA_Offset>& attribNext_h,
             const GA_VertexGroup* const geoGroup = nullptr,
             const exint subscribeRatio = 64,
@@ -659,8 +659,8 @@ outTopoAttrib(
             GA_PrimitiveGroup* promotedGroup = promotedGroupUPtr.get();
             promotedGroup->combine(geoGroup);
 
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(promotedGroup));
-            UTparallelFor(geo0SplittableRange0, [geo, &attribNext_h, geoGroup, vtxPointRef](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(promotedGroup));
+            UTparallelFor(geoSplittableRange0, [geo, &attribNext_h, geoGroup, vtxPointRef](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -668,20 +668,20 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size lastIndex = vertices.size() - 1;
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribPrev_h.set(vertices[0], vtxPointRef->getLink(vertices[numvtx - 1]));
-                            attribNext_h.set(vertices[numvtx - 1], vtxPointRef->getLink(vertices[0]));
+                            //attribPrev_h.set(vertices[0], vtxPointRef->getLink(vertices[lastIndex]));
+                            attribNext_h.set(vertices[lastIndex], vtxPointRef->getLink(vertices[0]));
                         }
                         else
                         {
                             //attribPrev_h.set(vertices[0], -1);
-                            attribNext_h.set(vertices[numvtx - 1], -1);
+                            attribNext_h.set(vertices[lastIndex], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             if (!geoGroup->contains(vtxoff_next))
@@ -696,8 +696,8 @@ outTopoAttrib(
         }
         else
         {
-            const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange());
-            UTparallelFor(geo0SplittableRange0, [geo, &attribNext_h, vtxPointRef](const GA_SplittableRange& r)
+            const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
+            UTparallelFor(geoSplittableRange0, [geo, &attribNext_h, vtxPointRef](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -705,20 +705,20 @@ outTopoAttrib(
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size lastIndex = vertices.size() - 1;
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
-                            //attribPrev_h.set(vertices[0], vtxPointRef->getLink(vertices[numvtx - 1]));
-                            attribNext_h.set(vertices[numvtx - 1], vtxPointRef->getLink(vertices[0]));
+                            //attribPrev_h.set(vertices[0], vtxPointRef->getLink(vertices[lastIndex]));
+                            attribNext_h.set(vertices[lastIndex], vtxPointRef->getLink(vertices[0]));
                         }
                         else
                         {
                             //attribPrev_h.set(vertices[0], -1);
-                            attribNext_h.set(vertices[numvtx - 1], -1);
+                            attribNext_h.set(vertices[lastIndex], -1);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                        for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
                             attribNext_h.set(vtxoff_prev, vtxPointRef->getLink(vtxoff_next));
@@ -748,7 +748,7 @@ outTopoAttrib(
 
     //GA_FeE_Adjacency::addAttribVertexPrimIndex(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
 
-    static GA_Attribute* const
+    static GA_Attribute*
         addAttribVertexPrimIndex(
             GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -770,6 +770,24 @@ outTopoAttrib(
         //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
         vertexPrimIndex(geo, attribPtr, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
+    }
+
+    static GA_AttributeUPtr
+        addDetachedAttribVertexPrimIndex(
+            const GA_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_AttributeOptions* const attribute_options = nullptr,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 16
+        )
+    {
+        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+        GA_AttributeUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
+        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
+        vertexPrimIndex(geo, attribUPtr.get(), geoGroup, subscribeRatio, minGrainSize);
+        return attribUPtr;
     }
 
 
@@ -811,9 +829,28 @@ outTopoAttrib(
 
         attribPtr_prev = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
         attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr_prev = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, namePrev, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
-        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
         vertexVertexPrim(geo, attribPtr_prev, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
+        return true;
+    }
+
+    static bool
+        addDetachedAttribVertexVertexPrim(
+            const GA_Detail* const geo,
+            GA_AttributeUPtr& attribPtr_prev,
+            GA_AttributeUPtr& attribPtr_next,
+            const GA_VertexGroup* const geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_AttributeOptions* const attribute_options = nullptr,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 128
+        )
+    {
+        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+
+        attribPtr_prev = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
+        attribPtr_next = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
+        vertexVertexPrim(geo, attribPtr_prev.get(), attribPtr_next.get(), geoGroup, subscribeRatio, minGrainSize);
         return true;
     }
 
@@ -827,7 +864,7 @@ outTopoAttrib(
 
     //GA_FeE_TopologyReference::addAttribVertexVertexPrimNext(geo, name, geoGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
 
-    static GA_Attribute* const
+    static GA_Attribute*
         addAttribVertexVertexPrimNext(
             GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -846,8 +883,24 @@ outTopoAttrib(
             return attribPtr_next;
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
         attribPtr_next = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr_next = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, nameNext, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
         vertexVertexPrimNext(geo, attribPtr_next, geoGroup, subscribeRatio, minGrainSize);
+        return attribPtr_next;
+    }
+
+    static GA_AttributeUPtr
+        addDetachedAttribVertexVertexPrimNext(
+            const GA_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_AttributeOptions* const attribute_options = nullptr,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+        GA_AttributeUPtr attribPtr_next = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
+        vertexVertexPrimNext(geo, attribPtr_next.get(), geoGroup, subscribeRatio, minGrainSize);
         return attribPtr_next;
     }
 
@@ -860,7 +913,7 @@ outTopoAttrib(
 
     //GA_FeE_TopologyReference::addAttribVertexPointDst(geo, name, geoGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 
-    static GA_Attribute* const
+    static GA_Attribute* 
         addAttribVertexPointDst(
             GA_Detail* const geo,
             const GA_VertexGroup* const geoGroup = nullptr,
@@ -881,9 +934,8 @@ outTopoAttrib(
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
 
         attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-        //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GA_FEE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
 
-        GA_Attribute* refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxPrimNext");
+        const GA_Attribute* refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxPrimNext");
         if (refAttrib)
         {
             //GA_Attribute* const vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), finalStorage, nullptr);
@@ -903,6 +955,42 @@ outTopoAttrib(
         return attribPtr;
     }
 
+    static GA_AttributeUPtr
+        addDetachedAttribVertexPointDst(
+            const GA_Detail* const geo,
+            const GA_VertexGroup* const geoGroup = nullptr,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const GA_Defaults& defaults = GA_Defaults(-1),
+            const GA_AttributeOptions* const attribute_options = nullptr,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 64
+        )
+    {
+        UT_ASSERT_P(geo);
+        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageI(geo) : storage;
+
+        GA_AttributeUPtr attribPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
+
+        const GA_Attribute* refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxPrimNext");
+        if (refAttrib)
+        {
+            //GA_Attribute* const vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), finalStorage, nullptr);
+            vertexPointDst(geo, attribPtr.get(), refAttrib, geoGroup, subscribeRatio, minGrainSize);
+            return attribPtr;
+        }
+
+        refAttrib = geo->findVertexAttribute(GA_FEE_TOPO_SCOPE, "__topo_vtxpnum");
+        if (refAttrib)
+        {
+            //GA_Attribute* const vtxPrimNextAttrib = addAttribVertexPrimIndex(geo, "__topo_vtxPrimNext", geoGroup, GA_Defaults(-1), finalStorage, nullptr);
+            vertexPointDstByVtxpnum(geo, attribPtr.get(), refAttrib, geoGroup, subscribeRatio, minGrainSize);
+            return attribPtr;
+        }
+
+        vertexPointDst(geo, attribPtr.get(), geoGroup, subscribeRatio, minGrainSize);
+        return attribPtr;
+    }
+
 
 
 
@@ -914,14 +1002,14 @@ outTopoAttrib(
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_PointGroup* const outGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
@@ -954,27 +1042,28 @@ outTopoAttrib(
                     }
                 }
             }, subscribeRatio, minGrainSize);
+        outGroup->invalidateGroupEntries();
     }
     
 
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_PointGroup* const outGroup,
             const GA_PrimitiveGroup* const geoGroup,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 256
         )
     {
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, outGroup,
+        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, outGroup,
             vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
             {
                 GA_Offset vtxoff, ptoff;
@@ -1001,13 +1090,14 @@ outTopoAttrib(
                     }
                 }
             }, subscribeRatio, minGrainSize);
+        outGroup->invalidateGroupEntries();
     }
 
 
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
     static void
         groupOneNeb(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_PointGroup* const outGroup,
             const GA_PointGroup* const geoGroup,
             const exint subscribeRatio = 64,
@@ -1019,8 +1109,8 @@ outTopoAttrib(
             groupOneNeb(geo, outGroup, subscribeRatio, minGrainSize);
             return;
         }
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
@@ -1029,8 +1119,8 @@ outTopoAttrib(
         GA_PrimitiveGroup* geoPromoGroup = geoPromoGroupUPtr.get();
         geoPromoGroup->combine(geoGroup);
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, outGroup, geoGroup,
+        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, outGroup, geoGroup,
             vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
             {
                 GA_Offset vtxoff, ptoff;
@@ -1057,6 +1147,7 @@ outTopoAttrib(
                     }
                 }
             }, subscribeRatio, minGrainSize);
+        outGroup->invalidateGroupEntries();
     }
 
 
@@ -1064,7 +1155,7 @@ outTopoAttrib(
 
     static void
         groupOneNeb(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_PointGroup* const outGroup,
             const GA_VertexGroup* const geoGroup,
             const exint subscribeRatio = 64,
@@ -1076,18 +1167,18 @@ outTopoAttrib(
             groupOneNeb(geo, outGroup, subscribeRatio, minGrainSize);
             return;
         }
-        GA_Topology& topo = geo->getTopology();
-        topo.makeVertexRef();
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
         const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
         const GA_PrimitiveGroupUPtr geoPromoGroupUPtr = geo->createDetachedPrimitiveGroup();
-        GA_PrimitiveGroup* geoPromoGroup = geoPromoGroupUPtr.get();
+        GA_PrimitiveGroup* const geoPromoGroup = geoPromoGroupUPtr.get();
         geoPromoGroup->combine(geoGroup);
 
-        const GA_SplittableRange geo0SplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
-        UTparallelFor(geo0SplittableRange0, [geo, outGroup, geoGroup,
+        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
+        UTparallelFor(geoSplittableRange0, [geo, outGroup, geoGroup,
             vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
             {
                 GA_Offset vtxoff, ptoff, vtxoff_next;
@@ -1114,13 +1205,14 @@ outTopoAttrib(
                     }
                 }
             }, subscribeRatio, minGrainSize);
+        outGroup->invalidateGroupEntries();
     }
 
-
     //GA_FeE_TopologyReference::groupOneNeb(geo, outGroup, geoGroup, name, subscribeRatio, minGrainSize);
+    SYS_FORCE_INLINE
     static void
         groupOneNeb(
-            GA_Detail* const geo,
+            const GA_Detail* const geo,
             GA_PointGroup* const outGroup,
             const GA_Group* const geoGroup,
             const exint subscribeRatio = 64,
@@ -1174,6 +1266,19 @@ outTopoAttrib(
             return outGroup;
         outGroup = geo->newPointGroup(name);
         groupOneNeb(geo, outGroup, geoGroup, subscribeRatio, minGrainSize);
+        return outGroup;
+    }
+
+    static GA_PointGroupUPtr
+        addDetachedGroupOneNeb(
+            const GA_Detail* const geo,
+            const GA_Group* const geoGroup = nullptr,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 256
+        )
+    {
+        GA_PointGroupUPtr outGroup = geo->createDetachedPointGroup();
+        groupOneNeb(geo, outGroup.get(), geoGroup, subscribeRatio, minGrainSize);
         return outGroup;
     }
 
