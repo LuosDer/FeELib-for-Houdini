@@ -92,22 +92,31 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_Carve_1_0
     SOP_FeE_Connectivity_1_0
     SOP_FeE_ConvertLine_1_0
+    SOP_FeE_CurveExpand2d_3_0
+    SOP_FeE_CurveSetExpand2d_3_0
+    SOP_FeE_CurveUV_1_0
     SOP_FeE_DelAllAttribGroup_1_0
     SOP_FeE_DelAndUnpack_1_0
     SOP_FeE_DelByGroup_1_0
     SOP_FeE_DelElement_1_0
     SOP_FeE_DelVertex_1_0
+    SOP_FeE_EdgeGroupTransfer_3_0
+    SOP_FeE_ExtendCurveStraight_1_0
+    SOP_FeE_ExtremePrim_1_0
     SOP_FeE_ExtrudeBorder2D_1_0
     SOP_FeE_ExtractPoint_1_0
     SOP_FeE_GroupByMeshWinding_1_0
     SOP_FeE_GroupByPolyWinding_1_0
     SOP_FeE_GroupCombine_1_0
+    SOP_FeE_GroupCurveEnds_2_0
     SOP_FeE_GroupExpand_1_0
     SOP_FeE_GroupNewEdge_1_0
     SOP_FeE_GroupReverse_1_0
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
+    SOP_FeE_HasEdgeGroup_2_0
     SOP_FeE_JoinCurve_2_0
+    SOP_FeE_KuhnMunkres_2_0
     SOP_FeE_LeaveElement_1_0
     SOP_FeE_MatchAxis_1_0
     SOP_FeE_MatchBBox_2_0
@@ -121,15 +130,19 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_PolyReduce2D_4_0
     SOP_FeE_PrimInlinePoint_Fast_2_0
     SOP_FeE_RestDir2D_1_0
+    SOP_FeE_RestPy_1_0
     SOP_FeE_SetVectorComponent_1_0
     SOP_FeE_Skin_1_0
     SOP_FeE_SkinIntersectCurve_2_0
+    SOP_FeE_SkinPiece_4_0
+    SOP_FeE_SplitPoint_1_0
     SOP_FeE_Triangulate2D_2_0
     SOP_FeE_UVGridify_1_0
     SOP_FeE_UVRectify_2_0
     SOP_FeE_UVScaletoWorldSize_0_5
     SOP_FeE_UVScaletoWorldSize_3_0
     SOP_FeE_WindingNumber_1_0
+    SOP_FeE_XformByAttrib_1_0
 )
 
 

@@ -10,7 +10,6 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_JoinCurve.h"
 
 
@@ -401,14 +400,14 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //const exint minGrainSize = sopparms.getMinGrainSize();
     
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_FeE_JoinCurve::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, inStorageI, srcPrimsAttribName);
+    GA_FeE_JoinCurve::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, GA_STORE_INVALID, srcPrimsAttribName);
 
 
     outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);

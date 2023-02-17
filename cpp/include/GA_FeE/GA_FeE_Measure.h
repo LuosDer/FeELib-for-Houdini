@@ -10,7 +10,6 @@
 
 #include "GEO/GEO_Hull.h"
 
-#include "GA_FeE/GA_FeE_Attribute.h"
 
 
 namespace GA_FeE_Measure {

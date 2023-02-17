@@ -162,22 +162,22 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
+    //parm {
+    //    name    "subscribeRatio"
+    //    cppname "SubscribeRatio"
+    //    label   "Subscribe Ratio"
+    //    type    integer
+    //    default { 64 }
+    //    range   { 0! 256 }
+    //}
+    //parm {
+    //    name    "minGrainSize"
+    //    cppname "MinGrainSize"
+    //    label   "Min Grain Size"
+    //    type    intlog
+    //    default { 64 }
+    //    range   { 0! 2048 }
+    //}
 }
 )THEDSFILE";
 
@@ -421,10 +421,6 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
     const bool keepSourcePrim = sopparms.getKeepSourcePrim();
 
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
 
     //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);

@@ -11,11 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_GroupPromote.h"
-
+#include "GA_FeE/GA_FeE_GroupUnshared.h"
 
 using namespace SOP_FeE_GroupUnshared_1_0_Namespace;
 
@@ -86,6 +82,13 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
 
+    parm {
+        name    "groupUnsharedAfterFuse"
+        cppname "GroupUnsharedAfterFuse"
+        label   "Group Unshared after Fuse"
+        type    toggle
+        default { "0" }
+    }
     parm {
         name    "outTopoAttrib"
         cppname "OutTopoAttrib"
@@ -263,21 +266,14 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
         return;
 
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GOP_Manager gop;
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    const GA_VertexGroupUPtr geo0VtxGroupUPtr = GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group);
-    //GA_VertexGroup* geo0VtxGroup = static_cast<GA_VertexGroup*>(geo0VtxGroupUPtr.get());
-    const GA_VertexGroup* const geo0VtxGroup = geo0VtxGroupUPtr.get();
-
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
+
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
+    const bool groupUnsharedAfterFuse = sopparms.getGroupUnsharedAfterFuse();
 
     const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
@@ -288,93 +284,12 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
 
-    //GA_VertexGroup* const unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
-    GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, geo0VtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
-    GA_Group* const unshared_promoGroup = GA_FeE_GroupPromote::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, true);
-
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
-
-    if (geo0Group)
-    {
-        cookparms.getNode()->setHighlight(true);
-        cookparms.select(*unshared_promoGroup);
-    }
-    
-    //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
-
-
-    //GEO_FeE_Attribute::attribCast(outGeo0, unshared_promoGroup, unsharedAttribStorageClass, "", PreferredPrecision);
-
-    //if (unsharedAttribClass != GA_GROUP_EDGE)
-    //{
-    //    switch (unsharedAttribType)
-    //    {
-    //    case 0://Group
-    //        break;
-    //    case 1://Integer
-    //        break;
-    //    case 2://Float
-    //        break;
-    //    default:
-    //        UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
-    //    }
-    //}
-
-    //switch (unsharedAttribType)
-    //{
-    //case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribType::GROUP:
-    //    break;
-    //case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribType::INT:
-    //    break;
-    //case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribType::FLOAT:
-    //    break;
-    //default:
-    //    UT_ASSERT_MSG(0, "Unhandled Attrib Type!");
-    //}
-
-
-
-
-//#if 1
-//    //const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
-//    switch (unsharedAttribClass)
-//    {
-//    case GA_GROUP_PRIMITIVE:
-//        break;
-//    case GA_GROUP_POINT:
-//        break;
-//    case GA_GROUP_VERTEX:
-//        break;
-//    case GA_GROUP_EDGE:
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
-//    }
-//#else
-//    const SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribClass& unsharedAttribClass = sopparms.getUnsharedAttribClass();
-//    switch (unsharedAttribClass)
-//    {
-//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::PRIM:
-//        break;
-//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::POINT:
-//        break;
-//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::VERTEX:
-//        break;
-//    case SOP_FeE_GroupUnshared_1_0Enums::UnsharedAttribClass::EDGE:
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "Unhandled Attrib Class!");
-//    }
-//#endif
-
-    //outGeo0->bumpAllDataIds();
-    //GA_FeE_Group::groupBumpDataId(unsharedGroup);
-    //GA_FeE_Group::groupBumpDataId(unshared_promoGroup);
-
-
-
-
-
+    GA_FeE_GroupUnshared::groupUnshared(cookparms, outGeo0, groupType, sopparms.getGroup(),
+        geo0AttribNames,
+        unsharedAttribStorageClass, unsharedAttribClass,
+        groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
+        subscribeRatio, minGrainSize
+        );
 }
 
 

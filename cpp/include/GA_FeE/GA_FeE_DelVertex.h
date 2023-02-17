@@ -8,10 +8,10 @@
 
 #include "GA/GA_Detail.h"
 
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
+//#include "GA/GA_PageHandle.h"
+//#include "GA/GA_PageIterator.h"
 
-#include "GA_FeE/GA_FeE_Type.h"
+#include "GA_FeE/GA_FeE_Group.h"
 
 
 namespace GA_FeE_DelVertex {
@@ -313,8 +313,34 @@ delVertex(
 			delDegeneratePrims, delUnusedPoints);
 		break;
 	}
-	UT_ASSERT("cant be possible");
+	UT_ASSERT_MSG(0, "cant be possible");
 }
+
+
+
+static void
+delVertex(
+	const SOP_NodeVerb::CookParms& cookparms,
+	GA_Detail* const geo,
+	const GA_GroupType groupType,
+	const UT_StringHolder& groupName,
+	const bool delDegeneratePrims = true,
+	const bool delUnusedPoints = true
+)
+{
+	GOP_Manager gop;
+	const GA_Group* const geoGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+	if (geoGroup && geoGroup->isEmpty())
+		return;
+
+	delVertex(geo, geoGroup,
+		delDegeneratePrims, delUnusedPoints);
+
+	geo->bumpDataIdsForAddOrRemove(1, 1, 1);
+
+}
+
+
 
 
 } // End of namespace GA_FeE_DelVertex

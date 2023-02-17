@@ -109,7 +109,21 @@ getAttribValCount(
 
 
 
-
+static void
+bumpDataId(
+    GA_Detail* const geo,
+    const GA_AttributeOwner owner,
+    const UT_StringHolder& attribPattern
+)
+{
+    GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribPattern);
+    UT_Array<GA_Attribute*> attribList;
+    geo->getAttributes().matchAttributes(filter, owner, attribList);
+    for (GA_Size i = 0; i < attribList.size(); ++i)
+    {
+        attribList[i]->bumpDataId();
+    }
+}
 
 
 
@@ -1024,7 +1038,7 @@ findAttributePointVertex(
 {
     const GA_Attribute* attribPtr = nullptr;
     const GA_AttributeSet& geoAttribs = geo->getAttributes();
-    if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
+    if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (attribPtr)
@@ -1063,7 +1077,7 @@ findAttributePointVertex(
 {
     const GA_Attribute* attribPtr = nullptr;
     const GA_AttributeSet& geoAttribs = geo->getAttributes();
-    if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
+    if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (!attribPtr)
@@ -1101,7 +1115,7 @@ findAttributePointVertex(
 {
     GA_Attribute* attribPtr = nullptr;
     GA_AttributeSet& geoAttribs = geo->getAttributes();
-    if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
+    if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (attribPtr)
@@ -1142,7 +1156,7 @@ findAttributePointVertex(
 {
     GA_Attribute* attribPtr = nullptr;
     GA_AttributeSet& geoAttribs = geo->getAttributes();
-    if (attribOwner >= GA_ATTRIB_PRIMITIVE)//means Auto
+    if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (!attribPtr)
@@ -1210,7 +1224,6 @@ findAttributePointVertex(
     return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
 }
 
-
 SYS_FORCE_INLINE
 static GA_Attribute*
 findAttributePointVertex(
@@ -1222,6 +1235,62 @@ findAttributePointVertex(
     return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName);
 }
 
+
+
+
+static GA_Attribute*
+findUVAttributePointVertex(
+    GA_Detail* const geo,
+    const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
+    const UT_StringRef& uvAttribName = "uv",
+    const GA_Storage storage = GA_STORE_INVALID
+)
+{
+    GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
+    if (uvAttribPtr)
+    {
+        int tupleSize = uvAttribPtr->getTupleSize();
+        if (tupleSize < 2 || tupleSize > 4)
+        {
+            //geo->getAttributes().destroyAttribute(uvAttribPtr);
+            uvAttribPtr = nullptr;
+        }
+    }
+    return uvAttribPtr;
+}
+
+
+
+static GA_Attribute*
+findOrCreateUVAttributePointVertex(
+    GA_Detail* const geo,
+    const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
+    const UT_StringRef& uvAttribName = "uv",
+    const GA_Storage storage = GA_STORE_INVALID
+)
+{
+    GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
+    if (uvAttribPtr)
+    {
+        int tupleSize = uvAttribPtr->getTupleSize();
+        if (tupleSize < 2 || tupleSize > 4)
+        {
+            geo->getAttributes().destroyAttribute(uvAttribPtr);
+            uvAttribPtr = nullptr;
+        }
+    }
+    if (!uvAttribPtr)
+    {
+        const GA_Storage finalStorageF = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageF(geo) : storage;
+#if 1
+        uvAttribPtr = static_cast<GEO_Detail*>(geo)->addTextureAttribute(uvAttribClass == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorageF);
+#else
+        uvAttribPtr = geo->getAttributes().createTupleAttribute(
+            uvAttribClass == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, uvAttribName, finalStorageF, 3, GA_Defaults(0));
+#endif
+    }
+    return uvAttribPtr;
+}
 
 
 //

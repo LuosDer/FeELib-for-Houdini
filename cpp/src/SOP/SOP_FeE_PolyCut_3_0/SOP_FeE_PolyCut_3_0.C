@@ -268,18 +268,18 @@ SOP_FeE_PolyCut_3_0::cookVerb() const
 
 
 
-static GA_FeE_PolyCutType
+static GFE_PolyCutType
 sopPolyType(SOP_FeE_PolyCut_3_0Parms::PolyType parmgrouptype)
 {
     using namespace SOP_FeE_PolyCut_3_0Enums;
     switch (parmgrouptype)
     {
-    case PolyType::AUTO:       return GA_FeE_PolyCutType_AUTO;    break;
-    case PolyType::POLYLINE:   return GA_FeE_PolyCutType_OPEN;    break;
-    case PolyType::POLY:       return GA_FeE_PolyCutType_CLOSE;    break;
+    case PolyType::AUTO:       return GFE_PolyCutType_AUTO;    break;
+    case PolyType::POLYLINE:   return GFE_PolyCutType_OPEN;    break;
+    case PolyType::POLY:       return GFE_PolyCutType_CLOSE;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Poly type!");
-    return GA_FeE_PolyCutType_AUTO;
+    return GFE_PolyCutType_AUTO;
 }
 
 
@@ -305,7 +305,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();
     const bool cutPoint = sopparms.getCutPoint();
-    const GA_FeE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
+    const GFE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
 
 
     const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);

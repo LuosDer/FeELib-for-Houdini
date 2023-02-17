@@ -14,12 +14,8 @@
 
 
 #include "GA_FeE/GA_FeE_UVScaletoWorldSize.h"
-#include "GA_FeE/GA_FeE_TopologyReference.h"
 
 using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
-
-
-#define UVScaletoWorldSize_UseDetachedAttrib 1
 
 
 
@@ -374,18 +370,11 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
 
-    GA_Attribute* const uvAttribPtr = GA_FeE_UVScaletoWorldSize::uvScaletoWorldSize(cookparms, outGeo0,
+    GA_FeE_UVScaletoWorldSize::uvScaletoWorldSize(cookparms, outGeo0,
         geo0AttribClass, geo0AttribNameSub,
         groupType, sopparms.getGroup(),
-        computeUVAreaInPiece, uvScale, doUVScalex, doUVScaley, doUVScalez,
+        computeUVAreaInPiece, uvScale, doUVScalex, doUVScaley, doUVScalez, sopparms.getOutTopoAttrib(),
         subscribeRatio, minGrainSize);
-
-
-    uvAttribPtr->bumpDataId();
-
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
-
-
 }
 
 

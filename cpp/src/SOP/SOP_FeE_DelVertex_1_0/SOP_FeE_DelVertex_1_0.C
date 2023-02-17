@@ -11,11 +11,6 @@
 #include "UT/UT_DSOVersion.h"
 
 
-//#include "GA_FeE/GA_FeE_Attribute.h"
-//#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_Group.h"
-//#include "GA_FeE/GA_FeE_GroupPromote.h"
-
 #include "GA_FeE/GA_FeE_DelVertex.h"
 
 
@@ -200,23 +195,10 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    //outGeo0->replaceWithPoints(*inGeo0);
     outGeo0->replaceWith(*inGeo0);
 
 
-
-
-    GOP_Manager gop;
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    //const GA_Group* geo0Group = GA_FeE_Group::parseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
 
 
     const bool delDegeneratePrims = sopparms.getDelDegeneratePrims();
@@ -227,24 +209,7 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-
-
-    //const GA_VertexGroup* geo0VtxGroup = GA_FeE_GroupPromote::groupFindPromoteVertexDetached(outGeo0, geo0Group);
-
-    //const GA_VertexGroup* geo0VtxGroup = GA_FeE_GroupPromote::groupPromoteVertexDetached(outGeo0, geo0Group);
-
-    GA_FeE_DelVertex::delVertex(outGeo0, geo0Group, delDegeneratePrims, delUnusedPoints);
-
-    //outGeo0->destroyVertexOffsets(outGeo0->getVertexRange(geo0VtxGroup));
-
-
-    //if (geo0VtxGroup->isDetached())
-    //    outGeo0->destroyGroup(const_cast<GA_VertexGroup*>(geo0VtxGroup));
-
-
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    //outGeo0->bumpDataIdsForAddOrRemove(delUnusedPoints, delDegeneratePrims, 1);
-
+    GA_FeE_DelVertex::delVertex(cookparms, outGeo0, groupType, sopparms.getGroup(), delDegeneratePrims, delUnusedPoints);
 
 }
 

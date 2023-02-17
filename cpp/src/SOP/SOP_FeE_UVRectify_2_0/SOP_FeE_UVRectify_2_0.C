@@ -198,6 +198,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
 
+    //GA_Attribute* uvAttribPtr = GA_FeE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
     GA_Attribute* geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
     if (!geo0Attrib)
         geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);

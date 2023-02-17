@@ -30,9 +30,6 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        menutoggle {
-            [ "" ]
-        }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }

@@ -22,86 +22,24 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives, )\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-    }
-    parm {
-        name    "cutPointGroup"
-        cppname "CutPointGroup"
-        label   "Cut Point Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points, )\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-    }
-    parm {
-        name    "mergePrimEndsIfClosed"
-        cppname "MergePrimEndsIfClosed"
-        label   "Merge Prim Ends if Closed "
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "cutPoint"
-        cppname "CutPoint"
-        label   "Cut Point"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "polyType"
-        cppname "PolyType"
-        label   "Prim Type"
+        name    "carveSpace"
+        cppname "interpAttrib"
+        label   "Carve Space"
         type    ordinal
-        default { "auto" }
+        default { "world" }
         menu {
-            "auto"          "Auto Detect"
-            "polyline"      "Poly Line"
-            "poly"          "Poly"
+            "customAttrib"  "CustomAttrib"
+            "average"       "Average"
+            "arcLength"     "Arc Length"
+            "world"         "World"
         }
     }
-
     parm {
-        name    "createSrcPrimAttrib"
-        cppname "CreateSrcPrimAttrib"
-        label   "Create Srcin Primitive Attribute"
-        type    toggle
-        nolabel
-        joinnext
-        default { "0" }
-    }
-    parm {
-        name    "srcPrimAttribName"
-        cppname "SrcPrimAttribName"
-        label   "Srcin Primitive Attribute Name"
+        name    "customCarveUVAttribName"
+        label   "Custom Carve UV Attrib Name"
         type    string
-        default { "srcPrim" }
-        disablewhen "{ createSrcPrimAttrib == 0 }"
-    }
-    parm {
-        name    "createSrcPointAttrib"
-        cppname "CreateSrcPointAttrib"
-        label   "Create Srcin Point Attribute"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        disablewhen "{ cutPoint == 0 }"
-    }
-    parm {
-        name    "srcPointAttribName"
-        cppname "SrcPointAttribName"
-        label   "Srcin Point Attribute Name"
-        type    string
-        default { "srcPoint" }
-        disablewhen "{ createSrcPointAttrib == 0 } { cutPoint == 0 }"
+        default { "" }
+        disablewhen "{ carveSpace != customAttrib }"
     }
     parm {
         name    "sepparm"
@@ -109,53 +47,318 @@ static const char *theDsFile = R"THEDSFILE(
         type    separator
         default { "" }
     }
-
     parm {
-        name    "keepPrimAttribName"
-        cppname "KeepPrimAttribName"
-        label   "Keep Primitive Attribute Name"
+        name    "firstptgroup"
+        label   "First Point Group"
         type    string
         default { "" }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points, )\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "keepPointAttribName"
-        cppname "KeepPointAttribName"
-        label   "Keep Point Attribute Name"
+        name    "startCarveULocal"
+        label   "Start Carve U Local"
+        type    float
+        default { "0.25" }
+        hidewhen "{ carveSpace != uv }"
+        range   { 0! 1! }
+    }
+    parm {
+        name    "startCarveUWorld"
+        label   "Start Carve U Local World"
+        type    log
+        default { "0.25" }
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "startCarveUAttrib"
+        label   "Start CarveU Attrib"
         type    string
-        default { "*" }
-        disablewhen "{ cutPoint == 0 }"
+        default { "startCarveU" }
     }
-
     parm {
-        name    "keepPrimGroupName"
-        cppname "KeepPrimGroupName"
-        label   "Keep Primitive Group Name"
+        name    "outBreakPtsGrp_outside1"
+        label   "Output Break Points Group Outside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "breakPtsGrp_outside1"
+        label   "Break Points Group Outside1"
         type    string
-        default { "" }
+        default { "breakpt" }
+        disablewhen "{ outBreakPtsGrp_outside1 == 0 }"
     }
     parm {
-        name    "keepPointGroupName"
-        cppname "KeepPointGroupName"
-        label   "Keep Point Group Name"
+        name    "outCurveGrp_outside1"
+        label   "Output Curve Group Outside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "curveGrp_outside1"
+        label   "Curve Group Outside1"
         type    string
-        default { "*" }
-        disablewhen "{ cutPoint == 0 }"
+        default { "outside" }
+        disablewhen "{ outCurveGrp_outside1 == 0 }"
     }
     parm {
-        name    "keepEdgeGroupName"
-        cppname "KeepEdgeGroupName"
-        label   "Keep Edge Group Name"
+        name    "outSourcePt_outside1"
+        label   "Output Source Points Outside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "sourcePt_outside1"
+        label   "Source Points Outside1"
         type    string
-        default { "" }
-        disablewhen "{ cutPoint == 0 }"
+        default { "sourcept" }
+        disablewhen "{ outSourcePt_outside1 == 0 }"
     }
-
     parm {
-        name    "delInputPointGroup"
-        cppname "DelInputPointGroup"
-        label   "Delete Input Point Group"
+        name    "keepoutside1"
+        label   "Keep Outside"
         type    toggle
         default { "0" }
+    }
+    parm {
+        name    "sepparm2"
+        label   "Separator"
+        type    separator
+        default { "" }
+    }
+    parm {
+        name    "secondptgroup"
+        label   "Second Point Group"
+        type    string
+        default { "" }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "absdomainuworld2"
+        label   "Absolute Second U"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "domainu2"
+        label   "Second U"
+        type    float
+        default { "0.75" }
+        hidewhen "{ carveSpace != uv }"
+        range   { 0! 1! }
+    }
+    parm {
+        name    "domainuworld2"
+        label   "Second U World"
+        type    log
+        default { "0.75" }
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "endCarveU_attribName"
+        label   "End CarveU Attrib Name"
+        type    string
+        default { "endCarveU" }
+    }
+    parm {
+        name    "outBreakPtsGrp_outside2"
+        label   "Output Break Points Group Outside2"
+        type    toggle
+        nolabel
+        joinnext
+        default { "ch(\"outBreakPtsGrp_outside1\")" }
+    }
+    parm {
+        name    "breakPtsGrp_outside2"
+        label   "Break Points Group Outside2"
+        type    string
+        default { [ "chs(\"breakPtsGrp_outside1\")" hscript-expr ] }
+        disablewhen "{ outBreakPtsGrp_outside2 == 0 }"
+    }
+    parm {
+        name    "outCurveGrp_outside2"
+        label   "Output Curve Group Outside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { "ch(\"outCurveGrp_outside1\")" }
+    }
+    parm {
+        name    "curveGrp_outside2"
+        label   "Curve Group Outside1"
+        type    string
+        default { [ "chs(\"curveGrp_outside1\")" hscript-expr ] }
+        disablewhen "{ outCurveGrp_outside2 == 0 }"
+    }
+    parm {
+        name    "outSourcePt_outside2"
+        label   "Output Source Points Outside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { [ "ch(\"outSourcePt_outside1\")" hscript-expr ] }
+    }
+    parm {
+        name    "sourcePt_outside2"
+        label   "Source Points Outside1"
+        type    string
+        default { [ "chs(\"sourcePt_outside1\")" hscript-expr ] }
+        disablewhen "{ outSourcePt_outside2 == 0 }"
+    }
+    parm {
+        name    "reverseoutside2"
+        label   "Reverse Outside2"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "keepoutside2"
+        label   "Keep Outside"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "sepparm3"
+        label   "Separator"
+        type    separator
+        default { "" }
+    }
+    parm {
+        name    "outBreakPtsGrp_inside1"
+        label   "Output Break Points Group Inside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { "ch(\"outBreakPtsGrp_outside1\")" }
+    }
+    parm {
+        name    "breakPtsGrp_inside1"
+        label   "Break Points Group Inside1"
+        type    string
+        default { [ "chs(\"breakPtsGrp_outside1\")" hscript-expr ] }
+        disablewhen "{ outBreakPtsGrp_inside1 == 0 }"
+    }
+    parm {
+        name    "outBreakPtsGrp_inside2"
+        label   "Output Break Points Group Inside"
+        type    toggle
+        nolabel
+        joinnext
+        default { "ch(\"outBreakPtsGrp_inside1\")" }
+    }
+    parm {
+        name    "breakPtsGrp_inside2"
+        label   "Break Points Group Inside2"
+        type    string
+        default { [ "chs(\"breakPtsGrp_inside1\")" hscript-expr ] }
+        disablewhen "{ outBreakPtsGrp_inside2 == 0 }"
+    }
+    parm {
+        name    "outCurveGrp_inside"
+        label   "Output Curve Group Inside"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "curveGrp_inside"
+        label   "Curve Group Inside"
+        type    string
+        default { "inside" }
+        disablewhen "{ outCurveGrp_inside == 0 }"
+    }
+    parm {
+        name    "outSourcePt_inside1"
+        label   "Output Source Points Inside1"
+        type    toggle
+        nolabel
+        joinnext
+        default { [ "ch(\"outSourcePt_outside1\")" hscript-expr ] }
+    }
+    parm {
+        name    "sourcePt_inside1"
+        label   "Source Points Inside1"
+        type    string
+        default { [ "chs(\"sourcePt_outside1\")" hscript-expr ] }
+        disablewhen "{ outSourcePt_inside1 == 0 }"
+    }
+    parm {
+        name    "outSourcePt_inside2"
+        label   "Output Source Points Inside"
+        type    toggle
+        nolabel
+        joinnext
+        default { [ "ch(\"outSourcePt_outside1\")" hscript-expr ] }
+    }
+    parm {
+        name    "sourcePt_inside2"
+        label   "Source Points Inside"
+        type    string
+        default { [ "chs(\"sourcePt_outside1\")" hscript-expr ] }
+        disablewhen "{ outSourcePt_inside1 == 0 }"
+    }
+    parm {
+        name    "delReversedInsideCurve"
+        label   "Delete Reversed Inside Curve"
+        type    toggle
+        default { "0" }
+        disablewhen "{ keepinside == 0 }"
+    }
+    parm {
+        name    "keepinside"
+        label   "Keep Inside"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "sepparm4"
+        label   "Separator"
+        type    separator
+        default { "" }
+    }
+    parm {
+        name    "interpAttrib"
+        cppname "interpAttrib"
+        label   "Interp Attribs Name"
+        type    string
+        default { "P" }
+    }
+    parm {
+        name    "sort_ptsorder"
+        label   "Sort Points Order"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "sort_primsorder"
+        label   "Sort Primitives Order"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "del_startCarveU_attrib"
+        label   "Delete Start Carve U Attrib"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "del_endCarveU_attrib"
+        label   "Delete End CarveU Attrib"
+        type    toggle
+        default { [ "ch('del_startCarveU_attrib')" hscript-expr ] }
     }
 
 
@@ -292,14 +495,6 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    //GU_DetailHandle tmpGeoH0;
-    //GU_Detail* tmpGeo0 = new GU_Detail();
-    //tmpGeoH0.allocateAndSet(tmpGeo0);
-    //tmpGeo0->replaceWith(*inGeo0);
-
-
-
-    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
 
     const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();

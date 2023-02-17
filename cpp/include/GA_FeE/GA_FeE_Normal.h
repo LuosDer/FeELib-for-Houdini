@@ -16,26 +16,26 @@
 #include "GA_FeE/GA_FeE_GroupBoolean.h"
 #include "GA_FeE/GA_FeE_GroupExpand.h"
 
+enum GFE_NormalSearchOrder
+{
+    GFE_NormalSearchOrder_PRIMITIVE,
+    GFE_NormalSearchOrder_POINT,
+    GFE_NormalSearchOrder_VERTEX,
+    GFE_NormalSearchOrder_DETAIL,
+    GFE_NormalSearchOrder_POINTVERTEX,
+    GFE_NormalSearchOrder_N,
+    GFE_NormalSearchOrder_GLOBAL = GFE_NormalSearchOrder_DETAIL,
+    GFE_NormalSearchOrder_INVALID = -1,
+};
+
 
 namespace GA_FeE_Normal {
 
-    //#define GA_FeE_Temp_Normal3DAttribName "__Normal3D_SOP_FeE_Normal"
-    #define GA_FeE_Temp_Normal2DAttribName "__Normal2D_SOP_FeE_Normal"
+    //#define GFE_Temp_Normal3DAttribName "__Normal3D_SOP_FeE_Normal"
+    #define GFE_Temp_Normal2DAttribName "__Normal2D_SOP_FeE_Normal"
 
-    //constexpr UT_StringHolder& GA_FeE_Temp_Normal3DAttribName = "__Normal3D_SOP_FeE_Normal";
+    //constexpr UT_StringHolder& GFE_Temp_Normal3DAttribName = "__Normal3D_SOP_FeE_Normal";
 
-    enum GA_FeE_Normal_SearchOrder
-    {
-        GA_FeE_Normal_PRIMITIVE,
-        GA_FeE_Normal_POINT,
-        GA_FeE_Normal_VERTEX,
-        GA_FeE_Normal_DETAIL,
-        GA_FeE_Normal_POINTVERTEX,
-        GA_FeE_Normal_N,
-        GA_FeE_Normal_GLOBAL = GA_FeE_Normal_DETAIL,
-        GA_FeE_Normal_INVALID = -1,
-    };
-    
 
 
     static void
@@ -195,7 +195,7 @@ namespace GA_FeE_Normal {
 
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
-            const GA_FeE_Normal_SearchOrder normalSearchOrder = GA_FeE_Normal_INVALID,
+            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder_INVALID,
             const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
             const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
             const bool copy_orig_if_zero = false
@@ -206,27 +206,27 @@ namespace GA_FeE_Normal {
         {
             switch (normalSearchOrder)
             {
-            case GA_FeE_Normal_PRIMITIVE:
+            case GFE_NormalSearchOrder_PRIMITIVE:
                 normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_POINT:
+            case GFE_NormalSearchOrder_POINT:
                 normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_VERTEX:
+            case GFE_NormalSearchOrder_VERTEX:
                 normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_DETAIL:
+            case GFE_NormalSearchOrder_DETAIL:
                 normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_N:
+            case GFE_NormalSearchOrder_N:
                 normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
                 {
@@ -243,7 +243,7 @@ namespace GA_FeE_Normal {
                     }
                 }
                 break;
-            case GA_FeE_Normal_POINTVERTEX:
+            case GFE_NormalSearchOrder_POINTVERTEX:
                 normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
                 {
@@ -253,7 +253,7 @@ namespace GA_FeE_Normal {
                 }
                 break;
             default:
-                UT_ASSERT_MSG(0, "unhandled GA_FeE_Normal_SearchOrder");
+                UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder");
                 //return nullptr;
                 break;
             }
@@ -264,13 +264,13 @@ namespace GA_FeE_Normal {
             GA_AttributeOwner geoNormal3DAttribClass;
             switch (normalSearchOrder)
             {
-            case GA_FeE_Normal_PRIMITIVE:
+            case GFE_NormalSearchOrder_PRIMITIVE:
                 geoNormal3DAttribClass = GA_ATTRIB_PRIMITIVE;
                 break;
-            case GA_FeE_Normal_POINT:
+            case GFE_NormalSearchOrder_POINT:
                 geoNormal3DAttribClass = GA_ATTRIB_POINT;
                 break;
-            case GA_FeE_Normal_VERTEX:
+            case GFE_NormalSearchOrder_VERTEX:
                 geoNormal3DAttribClass = GA_ATTRIB_VERTEX;
                 break;
             default:
@@ -309,7 +309,7 @@ namespace GA_FeE_Normal {
 
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
-            const GA_FeE_Normal_SearchOrder normalSearchOrder = GA_FeE_Normal_INVALID,
+            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder_INVALID,
             const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
             const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
             const bool copy_orig_if_zero = false
@@ -320,27 +320,27 @@ namespace GA_FeE_Normal {
         {
             switch (normalSearchOrder)
             {
-            case GA_FeE_Normal_PRIMITIVE:
+            case GFE_NormalSearchOrder_PRIMITIVE:
                 normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_POINT:
+            case GFE_NormalSearchOrder_POINT:
                 normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_VERTEX:
+            case GFE_NormalSearchOrder_VERTEX:
                 normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_DETAIL:
+            case GFE_NormalSearchOrder_DETAIL:
                 normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
                 //if (!normal3DAttrib)
                 //    return nullptr;
                 break;
-            case GA_FeE_Normal_N:
+            case GFE_NormalSearchOrder_N:
                 normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
                 {
@@ -357,7 +357,7 @@ namespace GA_FeE_Normal {
                     }
                 }
                 break;
-            case GA_FeE_Normal_POINTVERTEX:
+            case GFE_NormalSearchOrder_POINTVERTEX:
                 normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
                 {
@@ -367,7 +367,7 @@ namespace GA_FeE_Normal {
                 }
                 break;
             default:
-                UT_ASSERT_MSG(0, "unhandled GA_FeE_Normal_SearchOrder");
+                UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder");
                 //return nullptr;
                 break;
             }
@@ -378,13 +378,13 @@ namespace GA_FeE_Normal {
             GA_AttributeOwner geoNormal3DAttribClass;
             switch (normalSearchOrder)
             {
-            case GA_FeE_Normal_PRIMITIVE:
+            case GFE_NormalSearchOrder_PRIMITIVE:
                 geoNormal3DAttribClass = GA_ATTRIB_PRIMITIVE;
                 break;
-            case GA_FeE_Normal_POINT:
+            case GFE_NormalSearchOrder_POINT:
                 geoNormal3DAttribClass = GA_ATTRIB_POINT;
                 break;
-            case GA_FeE_Normal_VERTEX:
+            case GFE_NormalSearchOrder_VERTEX:
                 geoNormal3DAttribClass = GA_ATTRIB_VERTEX;
                 break;
             default:
@@ -643,12 +643,12 @@ namespace GA_FeE_Normal {
             const exint minGrainSize = 1024
         )
     {
-        GA_Attribute* normal2DAttrib = geo->findPointAttribute(GA_FeE_Temp_Normal2DAttribName);
+        GA_Attribute* normal2DAttrib = geo->findPointAttribute(GFE_Temp_Normal2DAttribName);
         if (normal2DAttrib)
             geo->getAttributes().destroyAttribute(normal2DAttrib);
 
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GA_FeE_Type::getPreferredStorageF(geo) : storage;
-        normal2DAttrib = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, GA_FeE_Temp_Normal2DAttribName, finalStorage, 3, GA_Defaults(0.0));
+        normal2DAttrib = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, GFE_Temp_Normal2DAttribName, finalStorage, 3, GA_Defaults(0.0));
 
         computeNormal2D(geo, geoPointGroup,
             normal2DAttrib, posAttrib, normal3DAttrib, defaultNormal3D,
@@ -714,7 +714,7 @@ namespace GA_FeE_Normal {
             const UT_StringHolder& normal3DAttribName = "N",
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
-            const GA_FeE_Normal_SearchOrder normalSearchOrder = GA_FeE_Normal_INVALID,
+            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder_INVALID,
             const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
             const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
             const bool copy_orig_if_zero = false,
@@ -763,7 +763,7 @@ namespace GA_FeE_Normal {
             const UT_StringHolder& normal3DAttribName = "N",
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
-            const GA_FeE_Normal_SearchOrder normalSearchOrder = GA_FeE_Normal_INVALID,
+            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder_INVALID,
             const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
             const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED,
             const bool copy_orig_if_zero = false,

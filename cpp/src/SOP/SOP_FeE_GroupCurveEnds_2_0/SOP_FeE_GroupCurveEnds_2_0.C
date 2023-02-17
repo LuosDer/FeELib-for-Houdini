@@ -1,0 +1,378 @@
+
+//#define UT_ASSERT_LEVEL 3
+#include "SOP_FeE_GroupCurveEnds_2_0.h"
+
+#include "SOP_FeE_GroupCurveEnds_2_0.proto.h"
+
+
+#include "GA/GA_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
+
+
+#include "GA_FeE/GA_FeE_GroupCurveEnds.h"
+
+using namespace SOP_FeE_GroupCurveEnds_2_0_Namespace;
+
+
+static const char *theDsFile = R"THEDSFILE(
+{
+    name        parameters
+    parm {
+        name    "group"
+        cppname "Group"
+        label   "Group"
+        type    string
+        default { "" }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "outEndsGroup"
+        cppname "OutEndsGroup"
+        label   "OutEndsGroup"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "endsGroupName"
+        cppname "EndsGroupName"
+        label   "Ends Group Name"
+        type    string
+        default { "ends" }
+        disablewhen "{ outEndsGroup == 0 }"
+    }
+    parm {
+        name    "outEndsInt"
+        cppname "OutEndsInt"
+        label   "OutEndsInt"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "endsIntName"
+        cppname "EndsIntName"
+        label   "Ends Integer Name"
+        type    string
+        default { "ends" }
+        disablewhen "{ outEndsInt == 0 }"
+    }
+    parm {
+        name    "outStartGroup"
+        cppname "OutStartGroup"
+        label   "OutStartGroup"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "startGroupName"
+        cppname "StartGroupName"
+        label   "Start Group Name"
+        type    string
+        default { "start" }
+        disablewhen "{ outStartGroup == 0 }"
+    }
+    parm {
+        name    "outStartInt"
+        cppname "OutStartInt"
+        label   "OutStartInt"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "startIntName"
+        cppname "StartIntName"
+        label   "Start Integer Name"
+        type    string
+        default { "start" }
+        disablewhen "{ outStartInt == 0 }"
+    }
+    parm {
+        name    "outEndGroup"
+        cppname "OutEndGroup"
+        label   "OutEndGroup"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "endgroupname"
+        cppname "NumEnds"
+        label   "End Group Name"
+        type    string
+        default { "end" }
+        disablewhen "{ outEndGroup == 0 }"
+    }
+    parm {
+        name    "outEndInt"
+        cppname "OutEndInt"
+        label   "OutEndInt"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "endIntName"
+        cppname "EndIntName"
+        label   "End Integer Name"
+        type    string
+        default { "end" }
+        disablewhen "{ outEndInt == 0 }"
+    }
+    parm {
+        name    "includeUnused"
+        cppname "IncludeUnused"
+        label   "Include Unused"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
+        type    ordinal
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
+        }
+    }
+    parm {
+        name    "visualize"
+        cppname "Visualize"
+        label   "Visualize"
+        type    ordinal
+        default { "ends" }
+        menu {
+            "ends"  "Ends"
+            "start" "Start"
+            "end"   "End"
+        }
+    }
+    parm {
+        name    "numEnds"
+        cppname "NumEnds"
+        label   "NumEnds"
+        type    integer
+        default { "1" }
+        range   { 1! 10 }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
+
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 16 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
+    }
+
+}
+)THEDSFILE";
+
+PRM_Template*
+SOP_FeE_GroupCurveEnds_2_0::buildTemplates()
+{
+    static PRM_TemplateBuilder templ("SOP_FeE_GroupCurveEnds_2_0.C"_sh, theDsFile);
+    if (templ.justBuilt())
+    {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+    }
+    return templ.templates();
+}
+
+
+const UT_StringHolder SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName("FeE::groupExpand::1.0"_sh);
+
+void
+newSopOperator(OP_OperatorTable* table)
+{
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName,
+        "FeE Group Expand",
+        SOP_FeE_GroupCurveEnds_2_0::myConstructor,
+        SOP_FeE_GroupCurveEnds_2_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        OP_FLAG_GENERATOR,
+        nullptr,
+        1,
+        "Five elements Elf/Group");
+
+    newOp->setIconName("SOP_groupexpand");
+    table->addOperator(newOp);
+
+}
+
+//class SOP_FeE_GroupCurveEnds_2_0Cache : public SOP_NodeCache
+//{
+//public:
+//    SOP_FeE_GroupCurveEnds_2_0Cache() : SOP_NodeCache(),
+//        myPrevOutputDetailID(-1)
+//    {}
+//    ~SOP_FeE_GroupCurveEnds_2_0Cache() override {}
+//
+//    int64 myPrevOutputDetailID;
+//};
+
+
+class SOP_FeE_GroupCurveEnds_2_0Verb : public SOP_NodeVerb
+{
+public:
+    SOP_FeE_GroupCurveEnds_2_0Verb() {}
+    virtual ~SOP_FeE_GroupCurveEnds_2_0Verb() {}
+
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupCurveEnds_2_0Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupCurveEnds_2_0Cache(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName; }
+
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+
+    virtual void cook(const CookParms &cookparms) const;
+
+    /// This static data member automatically registers
+    /// this verb class at library ldir0d time.
+    static const SOP_NodeVerb::Register<SOP_FeE_GroupCurveEnds_2_0Verb> theVerb;
+};
+
+// The static member variable definition has to be outside the class definition.
+// The declaration is inside the class.
+const SOP_NodeVerb::Register<SOP_FeE_GroupCurveEnds_2_0Verb> SOP_FeE_GroupCurveEnds_2_0Verb::theVerb;
+
+const SOP_NodeVerb *
+SOP_FeE_GroupCurveEnds_2_0::cookVerb() const 
+{ 
+    return SOP_FeE_GroupCurveEnds_2_0Verb::theVerb.get();
+}
+
+
+
+
+
+
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmgrouptype)
+{
+    using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
+    switch (parmgrouptype)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
+void
+SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+{
+    auto &&sopparms = cookparms.parms<SOP_FeE_GroupCurveEnds_2_0Parms>();
+    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    //auto sopcache = (SOP_FeE_GroupCurveEnds_2_0Cache*)cookparms.cache();
+
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+
+    outGeo0->replaceWith(*inGeo0);
+
+    // outGeo0->clearAndDestroy();
+
+    //outGeo0 = sopNodeProcess(*inGeo0);
+
+    const GA_GroupType geo0finalGroupType = geo0Group->classType();
+
+
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+
+
+    //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
+    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
+    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(PreferredPrecision);
+
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
+
+
+    GA_FeE_GroupCurveEnds::groupCurveEnds(cookparms, outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+
+
+
+
+    //GA_VertexGroup* geo0VtxGroup = nullptr;
+    //GA_VertexGroup* geo0VtxSeamGroup = nullptr;
+
+    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
+    //GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
+
+    //const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+
+
+    sopparms.getVisualize();
+
+
+    //GA_FeE_Group::groupBumpDataId(geo0OutGroup);
+
+    //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
+    //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
+    // 
+    //cookparms.getNode()->setHighlight(true);
+    //cookparms.select(*expandGroup);
+
+
+}
+
+

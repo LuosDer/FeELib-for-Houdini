@@ -12,16 +12,17 @@
 //#include "GA/GA_Types.h"
 
 #include "GA_FeE/GA_FeE_Type.h"
+#include "GA_FeE/GA_FeE_Group.h"
 #include "GA_FeE/GA_FeE_TopologyReference.h"
 
 #include "GEO/GEO_PrimPoly.h"
 
 
-enum GA_FeE_PolyCutType
+enum GFE_PolyCutType
 {
-    GA_FeE_PolyCutType_AUTO,
-    GA_FeE_PolyCutType_OPEN,
-    GA_FeE_PolyCutType_CLOSE,
+    GFE_PolyCutType_AUTO,
+    GFE_PolyCutType_OPEN,
+    GFE_PolyCutType_CLOSE,
 };
 
 namespace GA_FeE_PolyCut {
@@ -93,7 +94,7 @@ polyCut(
     const GA_PrimitiveGroup* const primGroup = nullptr,
     const bool cutPoint = false,
     const bool mergePrimEndsIfClosed = true,
-    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO
+    const GFE_PolyCutType polyType = GFE_PolyCutType_AUTO
 )
 {
     UT_ASSERT_P(geoPoint);
@@ -139,12 +140,12 @@ polyCut(
     bool closeFlag;
     switch (polyType)
     {
-    case GA_FeE_PolyCutType_AUTO:
+    case GFE_PolyCutType_AUTO:
         break;
-    case GA_FeE_PolyCutType_OPEN:
+    case GFE_PolyCutType_OPEN:
         closeFlag = false;
         break;
-    case GA_FeE_PolyCutType_CLOSE:
+    case GFE_PolyCutType_CLOSE:
         closeFlag = true;
         break;
     default:
@@ -157,7 +158,7 @@ polyCut(
     {
         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
         {
-            if (polyType == GA_FeE_PolyCutType_AUTO)
+            if (polyType == GFE_PolyCutType_AUTO)
             {
                 closeFlag = geoFull->getPrimitiveClosedFlag(elemoff);
             }
@@ -329,7 +330,7 @@ polyCut(
     const GA_PrimitiveGroup* const primGroup = nullptr,
     const bool cutPoint = false,
     const bool mergePrimEndsIfClosed = true,
-    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO
+    const GFE_PolyCutType polyType = GFE_PolyCutType_AUTO
 )
 {
     GU_DetailHandle geoFull_h;
@@ -354,7 +355,7 @@ polyCut(
 //    const GA_PrimitiveGroup* const primGroup = nullptr,
 //    const bool cutPoint = false,
 //    const bool mergePrimEndsIfClosed = true,
-//    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO,
+//    const GFE_PolyCutType polyType = GFE_PolyCutType_AUTO,
 //    const bool delInputPointGroup = false
 //)
 //{
@@ -381,7 +382,7 @@ polyCut(
     const GA_PrimitiveGroup* const primGroup = nullptr,
     const bool cutPoint = false,
     const bool mergePrimEndsIfClosed = true,
-    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO
+    const GFE_PolyCutType polyType = GFE_PolyCutType_AUTO
 
 )
 {
@@ -412,7 +413,7 @@ polyCut(
     const UT_StringHolder& primGroupName = "",
     const bool cutPoint = false,
     const bool mergePrimEndsIfClosed = true,
-    const GA_FeE_PolyCutType polyType = GA_FeE_PolyCutType_AUTO,
+    const GFE_PolyCutType polyType = GFE_PolyCutType_AUTO,
 
     const GA_Storage storage = GA_STORE_INVALID,
     //const bool createSrcPrimAttrib = false,

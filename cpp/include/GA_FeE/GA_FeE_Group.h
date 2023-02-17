@@ -30,19 +30,52 @@ SYS_FORCE_INLINE
 
 
 static void
-delStdGroup(
+groupBumpDataId(
     GA_GroupTable* const groupTable,
-    const UT_StringHolder& delGroupPattern
+    const UT_StringHolder& groupPattern
 )
 {
-    if (delGroupPattern == "")
+    if (groupPattern == "")
         return;
     for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
     {
         GA_Group* const group = it.group();
         //if (group->isDetached())
         //    continue;
-        if (!group->getName().multiMatch(delGroupPattern))
+        if (!group->getName().multiMatch(groupPattern))
+            continue;
+        groupBumpDataId(group);
+    }
+}
+
+
+SYS_FORCE_INLINE
+static void
+groupBumpDataId(
+    GA_Detail* const geo,
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupPattern
+)
+{
+    return groupBumpDataId(geo->getGroupTable(groupType), groupPattern);
+}
+
+
+
+static void
+delStdGroup(
+    GA_GroupTable* const groupTable,
+    const UT_StringHolder& groupPattern
+)
+{
+    if (groupPattern == "")
+        return;
+    for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group* const group = it.group();
+        //if (group->isDetached())
+        //    continue;
+        if (!group->getName().multiMatch(groupPattern))
             continue;
         groupTable->destroy(group);
     }
@@ -52,13 +85,11 @@ SYS_FORCE_INLINE
 static void
 delStdGroup(
     GA_Detail* const geo,
-    const GA_GroupType groupTable,
-    const UT_StringHolder& delGroupPattern
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupPattern
 )
 {
-    if (delGroupPattern == "")
-        return;
-    return delStdGroup(geo->getGroupTable(groupTable), delGroupPattern);
+    return delStdGroup(geo->getGroupTable(groupType), groupPattern);
 }
 
 

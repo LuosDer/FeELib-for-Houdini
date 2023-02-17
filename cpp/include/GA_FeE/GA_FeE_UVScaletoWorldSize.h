@@ -204,7 +204,7 @@ uvScaletoWorldSize(
     const exint minGrainSize = 64
 )
 {
-    GA_Attribute* const uvAttribPtr = GA_FeE_Attribute::findAttributePointVertex(geo, uvAttribClass, uvAttribName);
+    GA_Attribute* uvAttribPtr = GA_FeE_Attribute::findUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
     if (!uvAttribPtr)
         return nullptr;
 
@@ -285,6 +285,7 @@ uvScaletoWorldSize(
     const bool doUVScalex = true,
     const bool doUVScaley = true,
     const bool doUVScalez = true,
+    const bool outTopoAttrib = false,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
 )
@@ -292,10 +293,17 @@ uvScaletoWorldSize(
     GOP_Manager gop;
     const GA_Group* const geoGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
 
-    return uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, geoGroup,
+    GA_Attribute* const uvAttribPtr = uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, geoGroup,
         computeUVAreaInPiece,
         uvScale, doUVScalex, doUVScaley, doUVScalez,
         subscribeRatio, minGrainSize);
+
+    if(uvAttribPtr)
+        uvAttribPtr->bumpDataId();
+
+    GA_FeE_TopologyReference::outTopoAttrib(geo, outTopoAttrib);
+
+    return uvAttribPtr;
 }
 
 
