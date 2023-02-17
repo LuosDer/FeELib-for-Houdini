@@ -18,9 +18,10 @@
 
 enum GFE_CurveUVMethod
 {
-    GFE_CurveUVMethod_ArcLength,
-    GFE_CurveUVMethod_Average,
-    GFE_CurveUVMethod_ChordLen,
+    GFE_CurveUVMethod_WorldArcLength,
+    GFE_CurveUVMethod_WorldAverage,
+    GFE_CurveUVMethod_LocalArcLength,
+    GFE_CurveUVMethod_LocalAverage,
 };
 
 namespace GA_FeE_CurveUV {
@@ -39,8 +40,9 @@ namespace GA_FeE_CurveUV {
     {
         if (geoPrimGroup && geoPrimGroup->isEmpty())
             return;
-
+        static_cast<GU_Detail*>(geo)->length
         const bool isPointAttrib = uv_h.getAttribute()->getOwner() == GA_ATTRIB_POINT;
+        const GA_AttributeOwner owner = uv_h.getAttribute()->getOwner();
         GA_Attribute* const pAttribPtr = GA_FeE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
         GA_ROHandleT<fpreal> p_h(pAttribPtr);
 
@@ -54,19 +56,34 @@ namespace GA_FeE_CurveUV {
                 {
                     const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
                     if (numvtx < 2) return;
-
+#if 1
+                    switch (curveUVMethod)
+                    {
+                    case GFE_CurveUVMethod_WorldArcLength:
+                        break;
+                    case GFE_CurveUVMethod_WorldAverage:
+                        break;
+                    case GFE_CurveUVMethod_LocalArcLength:
+                        break;
+                    case GFE_CurveUVMethod_LocalAverage:
+                        break;
+                    default:
+                        UT_ASSERT_MSG(0, "unhandled curveUVMethod");
+                        break;
+                    }
+#else
                     GEO_Curve* GEO_Curve0 = static_cast<GEO_Curve*>(geo->getPrimitive(primoff));
 
                     bool success = false;
                     switch (curveUVMethod)
                     {
-                    case GFE_CurveUVMethod_ArcLength:
+                    case GFE_CurveUVMethod_WorldArcLength:
                         success = GEO_Curve0->grevilleTexture(uv_h, isPointAttrib);
                         break;
-                    case GFE_CurveUVMethod_Average:
+                    case GFE_CurveUVMethod_LocalAverage:
                         success = GEO_Curve0->uniformTexture(uv_h, isPointAttrib);
                         break;
-                    case GFE_CurveUVMethod_ChordLen:
+                    case GFE_CurveUVMethod_LocalArcLength:
                         success = GEO_Curve0->chordLenTexture(uv_h, isPointAttrib);
                         break;
                     default:
@@ -74,6 +91,7 @@ namespace GA_FeE_CurveUV {
                         break;
                     }
                     UT_ASSERT_P(success);
+#endif
                 }
             }
         }, subscribeRatio, minGrainSize);

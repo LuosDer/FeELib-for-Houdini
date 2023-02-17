@@ -19,10 +19,10 @@
 #include "GA_FeE/GA_FeE_Measure.h"
 #include "GA_FeE/GA_FeE_MeshCap.h"
 
-enum GA_FeE_GroupByMeshWinding_Method
+enum GFE_GroupByMeshWindingMethod
 {
-	GA_FeE_GroupByMeshWinding_VOLUME,
-	GA_FeE_GroupByMeshWinding_WINDINGNUMBER,
+	GFE_GroupByMeshWindingMethod_VOLUME,
+	GFE_GroupByMeshWindingMethod_WINDINGNUMBER,
 };
 
 
@@ -61,15 +61,15 @@ static bool
 isMeshWindingCorrect(
     GA_Detail* const geo,
 	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GA_FeE_GroupByMeshWinding_Method method
+	const GFE_GroupByMeshWindingMethod method
 )
 {
 	switch (method)
 	{
-	case GA_FeE_GroupByMeshWinding_VOLUME:
+	case GFE_GroupByMeshWindingMethod_VOLUME:
 		return isMeshWindingCorrect_volume(geo, geoPrimGroup);
 		break;
-	case GA_FeE_GroupByMeshWinding_WINDINGNUMBER:
+	case GFE_GroupByMeshWindingMethod_WINDINGNUMBER:
 		return isMeshWindingCorrect_wn(geo, geoPrimGroup);
 		break;
 	default:
@@ -85,7 +85,7 @@ static bool
 isMeshWindingCorrect(
 	GA_Detail* const geo,
 	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GA_FeE_GroupByMeshWinding_Method method,
+	const GFE_GroupByMeshWindingMethod method,
 
 	const bool reversePrim,
 
@@ -129,7 +129,7 @@ static GA_PrimitiveGroup*
 groupByMeshWinding(
 	GA_Detail* const geo,
 	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GA_FeE_GroupByMeshWinding_Method method,
+	const GFE_GroupByMeshWindingMethod method,
 
 	const bool outReversedGroup,
 	const UT_StringHolder& reversedGroupName,
@@ -177,7 +177,7 @@ static GA_PrimitiveGroup*
 groupByMeshWinding(
 	GA_Detail* const geo,
 	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GA_FeE_GroupByMeshWinding_Method method,
+	const GFE_GroupByMeshWindingMethod method,
 
 	const bool runOverPieces,
 	const bool findInputPieceAttrib,
@@ -226,7 +226,7 @@ groupByMeshWinding(
 	const SOP_NodeVerb::CookParms& cookparms,
 	GA_Detail* const geo,
 	const UT_StringHolder& groupName,
-	const GA_FeE_GroupByMeshWinding_Method method,
+	const GFE_GroupByMeshWindingMethod method,
 
 	const bool runOverPieces,
 	const bool findInputPieceAttrib,

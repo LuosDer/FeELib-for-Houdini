@@ -16,11 +16,11 @@
 #include "GA_FeE/GA_FeE_RestDir2D.h"
 
 
-enum GA_FeE_GroupByPolyWinding_Method
+enum GFE_GroupByPolyWindingMethod
 {
-	GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal,
-	GA_FeE_GroupByPolyWinding_RestDir2D_HouOBB,
-	GA_FeE_GroupByPolyWinding_Ray,
+	GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
+	GFE_GroupByPolyWindingMethod_RestDir2D_HouOBB,
+	GFE_GroupByPolyWindingMethod_Ray,
 };
 
 
@@ -298,7 +298,7 @@ groupByPolyWinding(
 	GA_PrimitiveGroup* const reversedGroup,
 	const GA_Attribute* normalAttrib,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GA_FeE_GroupByPolyWinding_Method method = GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal,
+	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
 	const bool reverseGroup = false,
 	const exint subscribeRatio = 64,
 	const exint minGrainSize = 1024
@@ -315,7 +315,7 @@ groupByPolyWinding(
 	}
 	switch (method)
 	{
-	case GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal:
+	case GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal:
 		groupByPolyWinding_restDir2D<fpreal>(geo, reversedGroup, normalAttrib,
 			geoPrimGroup, GA_FeE_RestDir2D_AvgNormal,
 			reverseGroup,
@@ -345,7 +345,7 @@ groupByPolyWinding(
 	GA_PrimitiveGroup* const reversedGroup,
 	const GA_Attribute* const normalAttrib,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GA_FeE_GroupByPolyWinding_Method method = GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal,
+	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
 	const bool reverseGroup = false,
 	const bool reversePrim = false,
 	const exint subscribeRatio = 64,
@@ -370,7 +370,7 @@ groupByPolyWinding(
 	GA_Detail* const geo,
 	const GA_Attribute* const normalAttrib,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GA_FeE_GroupByPolyWinding_Method method = GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal,
+	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
 
 	const bool outReversedGroup = true,
 	const UT_StringHolder& reversedGroupName = "reversed",
@@ -417,7 +417,7 @@ groupByPolyWinding(
 	GA_Detail* const geo,
 	const UT_StringHolder& normalAttribName = "N",
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GA_FeE_GroupByPolyWinding_Method method = GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal,
+	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
 
 	const bool outReversedGroup = true,
 	const UT_StringHolder& reversedGroupName = "reversed",
@@ -444,7 +444,7 @@ groupByPolyWinding(
 	GA_Detail* const geo,
 	const UT_StringHolder& groupName,
 	const UT_StringHolder& normalAttribName = "N",
-	const GA_FeE_GroupByPolyWinding_Method method = GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal,
+	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
 	const bool outReversedGroup = true,
 	const UT_StringHolder& reversedGroupName = "reversed",
 	const bool reverseGroup = false,

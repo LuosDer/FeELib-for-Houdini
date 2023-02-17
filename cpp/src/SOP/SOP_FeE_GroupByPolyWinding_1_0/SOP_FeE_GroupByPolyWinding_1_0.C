@@ -246,18 +246,18 @@ sopGroupType(SOP_FeE_GroupByPolyWinding_1_0Parms::GroupType parmgrouptype)
 
 
 
-static GA_FeE_GroupByPolyWinding_Method
+static GFE_GroupByPolyWindingMethod
 sopMethod(SOP_FeE_GroupByPolyWinding_1_0Parms::GroupByPolyWindingMethod parmgrouptype)
 {
     using namespace SOP_FeE_GroupByPolyWinding_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupByPolyWindingMethod::RESTDIR2D_AVGNORMAL:  return GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal; break;
-    case GroupByPolyWindingMethod::RESTDIR2D_HOUOBB:     return GA_FeE_GroupByPolyWinding_RestDir2D_HouOBB;    break;
-    case GroupByPolyWindingMethod::RAY:                  return GA_FeE_GroupByPolyWinding_Ray;                 break;
+    case GroupByPolyWindingMethod::RESTDIR2D_AVGNORMAL:  return GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal; break;
+    case GroupByPolyWindingMethod::RESTDIR2D_HOUOBB:     return GFE_GroupByPolyWindingMethod_RestDir2D_HouOBB;    break;
+    case GroupByPolyWindingMethod::RAY:                  return GFE_GroupByPolyWindingMethod_Ray;                 break;
     }
     UT_ASSERT_MSG(0, "Unhandled GA_FeE_GroupByPolyWinding METHOD!");
-    return GA_FeE_GroupByPolyWinding_RestDir2D_AvgNormal;
+    return GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal;
 }
 
 void
@@ -295,7 +295,7 @@ SOP_FeE_GroupByPolyWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const UT_StringHolder& normalAttribName = sopparms.getNormalAttribName();
     
 
-    const GA_FeE_GroupByPolyWinding_Method method = sopMethod(sopparms.getGroupByPolyWindingMethod());
+    const GFE_GroupByPolyWindingMethod method = sopMethod(sopparms.getGroupByPolyWindingMethod());
 
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();

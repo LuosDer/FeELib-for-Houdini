@@ -218,17 +218,17 @@ SOP_FeE_GroupByMeshWinding_1_0::cookVerb() const
 
 
 
-static GA_FeE_GroupByMeshWinding_Method
+static GFE_GroupByMeshWindingMethod
 sopMethod(SOP_FeE_GroupByMeshWinding_1_0Parms::GroupByMeshWindingMethod parmgrouptype)
 {
     using namespace SOP_FeE_GroupByMeshWinding_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupByMeshWindingMethod::VOLUME:     return GA_FeE_GroupByMeshWinding_VOLUME;         break;
-    case GroupByMeshWindingMethod::WN:         return GA_FeE_GroupByMeshWinding_WINDINGNUMBER;  break;
+    case GroupByMeshWindingMethod::VOLUME:     return GFE_GroupByMeshWindingMethod_VOLUME;         break;
+    case GroupByMeshWindingMethod::WN:         return GFE_GroupByMeshWindingMethod_WINDINGNUMBER;  break;
     }
     UT_ASSERT_MSG(0, "Unhandled GA_FeE_GroupByMeshWinding METHOD!");
-    return GA_FeE_GroupByMeshWinding_VOLUME;
+    return GFE_GroupByMeshWindingMethod_VOLUME;
 }
 
 
@@ -249,7 +249,7 @@ SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         return;
 
     const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-    const GA_FeE_GroupByMeshWinding_Method method = sopMethod(sopparms.getGroupByMeshWindingMethod());
+    const GFE_GroupByMeshWindingMethod method = sopMethod(sopparms.getGroupByMeshWindingMethod());
 
     
     const bool runOverPieces = sopparms.getRunOverPieces();

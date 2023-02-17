@@ -41,10 +41,10 @@ static const char *theDsFile = R"THEDSFILE(
         type    ordinal
         default { "arcLength" }
         menu {
-            "arcLength" "Arc Length"
-            "average"   "Average"
-            "chordLen"  "ChordLen"
-
+            "worldArcLength"  "World Arc Length"
+            "worldAverage"    "World Average"
+            "localArcLength"  "Local Arc Length"
+            "localAverage"    "Local Average"
         }
     }
     parm {
@@ -101,21 +101,21 @@ SOP_FeE_CurveUV_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_CurveUV_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::allTextureCoordMenu);
+        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allTextureCoordMenu);
+        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
         
     }
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_CurveUV_1_0::theSOPTypeName("FeE::uvGridify::1.0"_sh);
+const UT_StringHolder SOP_FeE_CurveUV_1_0::theSOPTypeName("FeE::curveUV::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_CurveUV_1_0::theSOPTypeName,
-        "FeE UV Gridify",
+        "FeE Curve UV",
         SOP_FeE_CurveUV_1_0::myConstructor,
         SOP_FeE_CurveUV_1_0::buildTemplates(),
         1,
@@ -187,12 +187,13 @@ sopCurveUVMethod(SOP_FeE_CurveUV_1_0Parms::CurveUVMethod curveUVMethod)
     using namespace SOP_FeE_CurveUV_1_0Enums;
     switch (curveUVMethod)
     {
-    case CurveUVMethod::ARCLENGTH:     return GFE_CurveUVMethod_ArcLength;    break;
-    case CurveUVMethod::AVERAGE:       return GFE_CurveUVMethod_Average;      break;
-    case CurveUVMethod::CHORDLEN:      return GFE_CurveUVMethod_ChordLen;      break;
+    case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod_WorldArcLength;    break;
+    case CurveUVMethod::WORLDAVERAGE:       return GFE_CurveUVMethod_WorldAverage;      break;
+    case CurveUVMethod::LOCALARCLENGTH:     return GFE_CurveUVMethod_LocalArcLength;    break;
+    case CurveUVMethod::LOCALAVERAGE:       return GFE_CurveUVMethod_LocalAverage;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled CurveUVMethod!");
-    return GFE_CurveUVMethod_ArcLength;
+    return GFE_CurveUVMethod_WorldArcLength;
 }
 
 

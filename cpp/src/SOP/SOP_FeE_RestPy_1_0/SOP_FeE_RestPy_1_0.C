@@ -72,9 +72,16 @@ static const char *theDsFile = R"THEDSFILE(
         name    "vecComp"
         cppname "VecComp"
         label   "Vector Component"
-        type    int
+        type    integer
         default { "1" }
         range   { 0! 3! }
+    }
+    parm {
+        name    "restAttribName"
+        cppname "RestAttribName"
+        label   "Rest Attribute Name"
+        type    string
+        default { "restPy" }
     }
 
     parm {
@@ -224,8 +231,9 @@ SOP_FeE_RestPy_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_AttributeOwner vecAttribClass = sopAttribOwner(sopparms.getVecAttribClass());
     const UT_StringHolder& vecAttribName = sopparms.getVecAttrib();
-    const int vecComp = sopparms.getVecComp();
-
+    const exint vecComp = sopparms.getVecComp();
+    const UT_StringHolder& restAttribName = sopparms.getRestAttribName();
+    
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const UT_StringHolder& groupName = sopparms.getGroup();
 
@@ -240,8 +248,8 @@ SOP_FeE_RestPy_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
     
-    GA_Attribute* posAttribPtr = GA_FeE_RestPy::restPy(cookparms, outGeo0, groupType, groupName,
-        vecAttribClass, vecAttribName, vecComp,
+    GA_Attribute* posAttribPtr = GA_FeE_RestPy::restPy<fpreal>(cookparms, outGeo0, groupType, groupName,
+        vecAttribClass, vecAttribName, GA_STORE_INVALID, restAttribName, vecComp, false, 0,
         subscribeRatio, minGrainSize);
 }
 
