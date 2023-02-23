@@ -22,72 +22,220 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "group"
-        cppname "Group"
-        label   "Group"
+        name    "pointGroup"
+        cppname "PointGroup"
+        label   "Point Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "1" }
     }
     parm {
-        name    "groupType"
-        cppname "GroupType"
-        label   "Group Type"
-        type    ordinal
-        default { "guess" }
-        menu {
-            "guess"     "Guess from Group"
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
-        }
-    }
-    
-    
-    parm {
-        name    "combineGroupName"
-        cppname "CombineGroupName"
-        label   "Combine Group Name"
+        name    "collisionGroup"
+        cppname "CollisionGroup"
+        label   "Collision Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('combineGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "1" }
     }
     parm {
-        name    "combineGroupType"
-        cppname "CombineGroupType"
-        label   "Combine Group Type"
+        name    "runOverPiece"
+        cppname "RunOverPiece"
+        label   "Run Over Piece"
+        type    toggle
+        default { "off" }
+    }
+    parm {
+        name    "class"
+        cppname "Class"
+        label   "Piece Elements"
         type    ordinal
-        default { "guess" }
+        default { "primitive" }
+        disablewhen "{ runOverPiece == 0 }"
         menu {
-            "guess"     "Guess from Group"
             "prim"      "Primitive"
             "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
         }
     }
-
-
     parm {
-       name    "subscribeRatio"
-       cppname "SubscribeRatio"
-       label   "Subscribe Ratio"
-       type    integer
-       default { 16 }
-       range   { 0! 256 }
+        name    "classRef"
+        cppname "ClassRef"
+        label   "Piece Elements Ref"
+        type    ordinal
+        default { "primitive" }
+        disablewhen "{ runOverPiece == 0 }"
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+        }
     }
     parm {
-       name    "minGrainSize"
-       cppname "MinGrainSize"
-       label   "Min Grain Size"
-       type    intlog
-       default { 1024 }
-       range   { 0! 2048 }
+        name    "usePieceAttrib"
+        cppname "UsePieceAttrib"
+        label   "Piece Attribute"
+        type    toggle
+        default { "on" }
+        disablewhen "{ runOverPiece == 0 }"
+    }
+    parm {
+        name    "pieceAttrib"
+        cppname "PieceAttrib"
+        label   "Piece Attribute"
+        type    string
+        default { "name" }
+        disablewhen "{ usePieceAttrib == 0 } { runOverPiece == 0 }"
+    }
+    parm {
+        name    "pieceAttribRef"
+        cppname "PieceAttribRef"
+        label   "Piece Attribute Ref"
+        type    string
+        default { "name" }
+        disablewhen "{ usePieceAttrib == 0 } { runOverPiece == 0 }"
+    }
+    parm {
+        name    "sepparm2"
+        label   "Separator"
+        type    separator
+        default { "" }
+    }
+    parm {
+        name    "method"
+        cppname "Method"
+        label   "Method"
+        type    ordinal
+        default { "minimum" }
+        menu {
+            "minimum"   "Minimum Distance"
+            "project"   "Project Rays"
+        }
+    }
+    parm {
+        name    "dirAttrib"
+        cppname "DirAttrib"
+        label   "Direction Attrib"
+        type    string
+        default { "N" }
+        hidewhen "{ method != project }"
+    }
+    parm {
+        name    "peakDist"
+        cppname "PeakDist"
+        label   "Peak Distance"
+        type    log
+        default { "-0.01" }
+        hidewhen "{ method != project }"
+        range   { 0.0001 0.1 }
+    }
+    parm {
+        name    "checkMaxRayDist"
+        cppname "CheckMaxRayDist"
+        label   "Check Max Ray Distance"
+        type    toggle
+        nolabel
+        joinnext
+        default { "on" }
+    }
+    parm {
+        name    "maxRayDist"
+        cppname "MaxRayDist"
+        label   "Max Distance"
+        type    log
+        default { "1e-05" }
+        disablewhen "{ checkMaxRayDist == 0 }"
+        range   { 0.001 10 }
+    }
+    parm {
+        name    "rayTolerance"
+        cppname "RayTolerance"
+        label   "Ray Tolerance"
+        type    log
+        default { "0.01" }
+        range   { 0! 1! }
+    }
+    parm {
+        name    "outHitGroup"
+        cppname "OutHitGroup"
+        label   "Out Hit Group"
+        type    toggle
+        default { "on" }
+    }
+    parm {
+        name    "hitGroup"
+        cppname "HitGroup"
+        label   "Hit Group"
+        type    string
+        default { "onPoly" }
+        disablewhen "{ outHitGroup == 0 }"
+    }
+    parm {
+        name    "outHitPrimAttrib"
+        cppname "OutHitPrimAttrib"
+        label   "Out Hit Prim Attribute"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "hitPrimAttrib"
+        cppname "HitPrimAttrib"
+        label   "Hit Prim Attribute"
+        type    string
+        default { "hitPrim" }
+        disablewhen "{ outHitPrimAttrib == 0 }"
+    }
+    parm {
+        name    "outHitPrimUVAttrib"
+        cppname "OutHitPrimUVAttrib"
+        label   "Out Hit Prim UV Attribute"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "hitPrimUVAttrib"
+        cppname "HitPrimUVAttrib"
+        label   "Hit Prim UV Attribute"
+        type    string
+        default { "hitPrimUV" }
+        disablewhen "{ outPrimUVAttrib == 0 }"
+    }
+    parm {
+        name    "sepparm"
+        label   "Separator"
+        type    separator
+        default { "" }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "reverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
+
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 16 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
     }
 
 }
@@ -179,24 +327,31 @@ SOP_FeE_OnPoly_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopCombineGroupType(SOP_FeE_OnPoly_1_0Parms::CombineGroupType parmgrouptype)
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_OnPoly_1_0Parms::Class parmgrouptype)
 {
     using namespace SOP_FeE_OnPoly_1_0Enums;
     switch (parmgrouptype)
     {
-    case CombineGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case CombineGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case CombineGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case CombineGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case CombineGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case Class::POINT:     return GA_ATTRIB_POINT;      break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled geo Class type!");
+    return GA_ATTRIB_PRIMITIVE;
 }
 
-
-
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_OnPoly_1_0Parms::ClassRef parmgrouptype)
+{
+    using namespace SOP_FeE_OnPoly_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case ClassRef::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case ClassRef::POINT:     return GA_ATTRIB_POINT;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo Class Ref type!");
+    return GA_ATTRIB_PRIMITIVE;
+}
 
 static GA_GroupType
 sopGroupType(SOP_FeE_OnPoly_1_0Parms::GroupType parmgrouptype)
@@ -224,6 +379,7 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //auto sopcache = (SOP_FeE_OnPoly_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(1);
 
     outGeo0->replaceWith(*inGeo0);
     // outGeo0->clearAndDestroy();
@@ -235,22 +391,9 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (!geo0AttribNames.isstring())
         return;
 
-
-    GOP_Manager gop;
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (!geo0Group)
-        return;
-    
-    //if (!geo0Group || geo0Group->isEmpty())
-    if (!geo0Group || GA_FeE_Group::groupIsEmpty(geo0Group))
-        return;
+    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
-    const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
-    GA_Group* const combineGroup = GA_FeE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
-    if (!combineGroup)
-        return;
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -259,51 +402,19 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
 
 
-    //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
-
-
-    //const GA_AttributeOwner combineAttribType = GA_FeE_Group::attributeOwner_groupType(combineGroupType);
-    //GA_ElementGroup* combineGroup = outGeo0->findElementGroup(combineAttribType, geo0AttribNames);
-    //combineGroup->combine(geo0Group);
-
-    //bool success = true;
-    //GOP_Manager gop;
-    //const GA_Group* geo0EdgeGroup = gop.parseEdgeDetached(sopparms.getGroup(), outGeo0, true, success);
-
-    //const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
-    GA_FeE_GroupUnion::groupUnion(outGeo0, combineGroup, geo0Group);
-
-    //for (auto it = static_cast<const GA_EdgeGroup*>(geo0EdgeGroup)->begin(); !it.atEnd(); it.advance())
-    //{
-    //    const GA_Edge& edge = it.getEdge();
-    //    static_cast<GA_EdgeGroup*>(combineGroup)->add(edge.p0(), edge.p1());
-    //}
-
-
-    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_OnPoly_1_0", geo0VtxGroup);
-    //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
-
-    //combineGroup->bumpDataId();
-    GA_FeE_Group::groupBumpDataId(combineGroup);
-
-    if (geo0Group)
-    {
-        cookparms.getNode()->setHighlight(true);
-        cookparms.select(*combineGroup);
-    }
-    //GA_EdgeGroup* combineEdgeGroup = static_cast<GA_EdgeGroup*>(combineGroup);
-    // 
-    //static_cast<GA_EdgeGroup*>(combineGroup)->makeAllEdgesValid();
     
-
-
-
+    const UT_StringHolder& collisionGroupName = sopparms.getCollisionGroupName();
+    const GA_AttributeOwner attribClass = sopparms.getClass();
+    const GA_AttributeOwner attribClassRef = sopparms.getClassRef();
+    const bool runOverPiece = sopparms.getRunOverPiece();
+    const bool outHitGroup = sopparms.getOutHitGroup();
+    const bool outHitPrimAttrib = sopparms.getOutHitPrimAttrib();
+    const bool outHitPrimUVAttrib = sopparms.getOutHitPrimUVAttrib();
+    
+    GA_FeE_OnPoly::onPoly(cookparms, outGeo0, inGeo1, sopparms.getPointGroup(), );
+    
 }
 
 

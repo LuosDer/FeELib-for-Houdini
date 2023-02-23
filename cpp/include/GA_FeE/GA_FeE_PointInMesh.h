@@ -44,22 +44,25 @@ namespace GA_FeE_PointInBBox {
 
     static void
         pointInBBox(
-            const SOP_NodeVerb::CookParms& cookparms,
             GA_Detail* const geo,
-            const GA_Detail* const refGeo,
+            const GA_Detail* refGeo,
             const GA_Detail* restGeo,
             const UT_StringHolder& attribToXformPattern,
             const UT_StringHolder& restPosAttribName = "",
             const UT_StringHolder& refPosAttribName = ""
         ) {
-        if (!attribToXformPattern.isstring() || attribToXformPattern.isEmpty())
-            return;
 
         UT_ASSERT_P(geo);
         UT_ASSERT_P(refGeo);
 
-        if (!restGeo)
-            restGeo = geo;
+        if (!attribToXformPattern.isstring() || attribToXformPattern.isEmpty())
+            return;
+
+        if (!xn && !xp && !yn && !yp && !zn && !zp)
+            return;
+
+        if (!refGeo)
+            refGeo = geo;
 
         const GA_Attribute* posRestAttribPtr = restGeo->findPointAttribute(restPosAttribName);
         if(!posRestAttribPtr)
@@ -74,33 +77,37 @@ namespace GA_FeE_PointInBBox {
     }
 
     static GA_PointGroup*
-    addGroupPointInBBox
+    addGroupPointInBBox(
         const SOP_NodeVerb::CookParms& cookparms,
         GA_Detail* const geo,
-        const GA_Detail* const refGeo,
-        const GA_Detail* restGeo,
-        const UT_StringHolder& attribToXformPattern,
-        const UT_StringHolder& restPosAttribName = "",
-        const UT_StringHolder& refPosAttribName = ""
+        const GA_Detail* refGeo,
+
+        const bool xn,
+        const fpreal xnThreshold,
+        const bool xp,
+        const fpreal xpThreshold,
+        const bool yn,
+        const fpreal ynThreshold,
+        const bool yp,
+        const fpreal ypThreshold,
+        const bool zn,
+        const fpreal znThreshold,
+        const bool zp,
+        const fpreal zpThreshold,
+        const UT_StringHolder& pointInBBoxGroupName = "pointInBBox"
+
         ) {
-        if (!attribToXformPattern.isstring() || attribToXformPattern.isEmpty())
+        UT_ASSERT_P(geo);
+
+        if (!pointInBBoxGroupName.isstring() || pointInBBoxGroupName.isEmpty())
             return;
 
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(refGeo);
+        if (!xn && !xp && !yn && !yp && !zn && !zp)
+            return;
 
-        if (!restGeo)
-            restGeo = geo;
+        GA_PointGroup* groupPtr = pointInBBox(geo, refGeo, restGeo, attribToXformPattern, posRestAttribPtr, posRefAttribPtr);
 
-        const GA_Attribute* posRestAttribPtr = restGeo->findPointAttribute(restPosAttribName);
-        if (!posRestAttribPtr)
-            posRestAttribPtr = restGeo->findPointAttribute("P");
-
-        const GA_Attribute* posRefAttribPtr = refGeo->findPointAttribute(refPosAttribName);
-        if (!posRefAttribPtr)
-            posRefAttribPtr = refGeo->findPointAttribute("P");
-
-        pointInBBox<fpreal>(geo, refGeo, restGeo, attribToXformPattern, posRestAttribPtr, posRefAttribPtr);
+        groupPtr->bumpDataId();
     }
 
 

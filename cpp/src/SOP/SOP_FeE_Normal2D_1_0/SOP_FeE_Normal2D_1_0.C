@@ -190,20 +190,20 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-       name    "subscribeRatio"
-       cppname "SubscribeRatio"
-       label   "Subscribe Ratio"
-       type    integer
-       default { 16 }
-       range   { 0! 256 }
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 16 }
+        range   { 0! 256 }
     }
     parm {
-       name    "minGrainSize"
-       cppname "MinGrainSize"
-       label   "Min Grain Size"
-       type    intlog
-       default { 1024 }
-       range   { 0! 2048 }
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
     }
 
 }

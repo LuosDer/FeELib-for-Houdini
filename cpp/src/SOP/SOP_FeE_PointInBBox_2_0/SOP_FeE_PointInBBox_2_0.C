@@ -1,9 +1,9 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_PointInBBox_1_0.h"
+#include "SOP_FeE_PointInBBox_2_0.h"
 
 
-#include "SOP_FeE_PointInBBox_1_0.proto.h"
+#include "SOP_FeE_PointInBBox_2_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -25,261 +25,202 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
     parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "groupRef"
+        cppname "GroupRef"
+        label   "Group Ref"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupTypeRef')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
     parm {
-        name    "vertexGroup"
-        cppname "VertexGroup"
-        label   "Vertex Group"
+        name    "groupTypeRef"
+        cppname "GroupTypeRef"
+        label   "Group Type Ref"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "groupName"
+        cppname "GroupName"
+        label   "Group Name"
         type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
+        default { "`opname('.')`" }
     }
     parm {
-        name    "edgeGroup"
-        cppname "EdgeGroup"
-        label   "Edge Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
+        type    ordinal
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
+        }
     }
-
-
     parm {
-        name    "promoteEdgeGroupToPrim"
-        cppname "PromoteEdgeGroupToPrim"
-        label   "Promote Edge Group to Prim"
-        type    string
-        default { "" }
+        name    "intersectNum"
+        cppname "IntersectNum"
+        label   "Intersect Num"
+        type    integer
+        default { "0" }
+        range   { 0! 2! }
     }
-
-
-
     parm {
-        name    "outSrcPrims"
-        cppname "OutSrcPrims"
-        label   "Source Prims"
+        name    "xn"
+        cppname "XN"
+        label   "XN"
         type    toggle
-        default { 0 }
         nolabel
         joinnext
-    }
-    parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
-        type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
-    }
-
-
-
-    parm {
-        name    "primType"
-        cppname "PrimType"
-        label   "Prim Type"
-        type    ordinal
-        default { "polyline" }
-        menu {
-            "polyline"  "Polyline"
-            "poly"      "Poly"
-        }
-    }
-
-    parm {
-        name    "excludeSharedEdge"
-        cppname "ExcludeSharedEdge"
-        label   "Exclude Shared Edge"
-        type    toggle
         default { "0" }
     }
     parm {
-        name    "close"
-        cppname "Close"
-        label   "Close"
+        name    "xnThreshold"
+        cppname "XNThreshold"
+        label   "X Negative"
+        type    log
+        default { "0" }
+        disablewhen "{ xn == 0 }"
+        range   { 1e-06 10 }
+    }
+    parm {
+        name    "xp"
+        cppname "XP"
+        label   "XP"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
     parm {
-        name    "useEndGroup"
-        cppname "UseEndGroup"
-        label   "Use End Group"
+        name    "xpThreshold"
+        cppname "XPThreshold"
+        label   "X Positive"
+        type    log
+        default { "0" }
+        disablewhen "{ xp == 0 }"
+        range   { 1e-06 10 }
+    }
+    parm {
+        name    "yn"
+        cppname "YN"
+        label   "YN"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
     parm {
-        name    "endGroup"
-        cppname "EndGroup"
-        label   "End Group"
-        type    string
-        default { "end" }
-        disablewhen "{ useEndGroup == 0 }"
-    }
-
-)THEDSFILE"
-// ==== This is necessary because MSVC++ has a limit of 16380 character per
-// ==== string literal
-R"THEDSFILE(
-
-    parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "attribFromPrim"
-        cppname "AttribFromPrim"
-        label   "Attrib from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromPrim"
-        cppname "GroupFromPrim"
-        label   "Group from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromEdge"
-        cppname "GroupFromEdge"
-        label   "Group from Edge"
-        type    string
-        default { "" }
-    }
-
-    parm {
-        name    "mergeInput"
-        cppname "MergeInput"
-        label   "Merge Input"
-        type    toggle
+        name    "ynThreshold"
+        cppname "YNThreshold"
+        label   "Y Negative"
+        type    log
         default { "0" }
-        disablewhen "{ close == 1 }"
+        disablewhen "{ yn == 0 }"
+        range   { 1e-06 10 }
     }
-
-
     parm {
-        name    "correctGeoWinding"
-        cppname "CorrectGeoWinding"
-        label   "Correct Geo Winding"
+        name    "yp"
+        cppname "YP"
+        label   "YP"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
     parm {
-        name    "reverse"
-        cppname "Reverse"
-        label   "Reverse"
+        name    "ypThreshold"
+        cppname "YPThreshold"
+        label   "Y Positive"
+        type    log
+        default { "0" }
+        disablewhen "{ yp == 0 }"
+        range   { 1e-06 10 }
+    }
+    parm {
+        name    "zn"
+        cppname "ZN"
+        label   "ZN"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
     parm {
-        name    "meshCap"
-        cppname "MeshCap"
-        label   "Mesh Cap"
-        type    toggle
+        name    "znThreshold"
+        cppname "ZNThreshold"
+        label   "Z Negative"
+        type    log
         default { "0" }
+        disablewhen "{ zn == 0 }"
+        range   { 1e-06 10 }
     }
-
     parm {
-        name    "addUV"
-        cppname "AddUV"
-        label   "Add UV"
+        name    "zp"
+        cppname "ZP"
+        label   "ZP"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
-    groupsimple {
-        name    "uv_folder"
-        label   "UV"
-        disablewhen "{ addUV == 0 }"
-
-        parm {
-            name    "posAttribName"
-            cppname "PosAttribName"
-            label   "UV Attribute Name"
-            type    string
-            default { "uv" }
-        }
-        parm {
-            name    "uvSize"
-            cppname "UVSize"
-            label   "UV Size"
-            type    integer
-            default { "3" }
-            range   { 1! 3! }
-
-        }
-        parm {
-            name    "uvMethod"
-            cppname "UVMethod"
-            label   "UV Method"
-            type    ordinal
-            default { "uniform" }
-            menu {
-                "uniform"   "Uniform"
-                "length"    "Length"
-            }
-        }
-        parm {
-            name    "seamGroup"
-            cppname "SeamGroup"
-            label   "Seam Group"
-            type    string
-            default { "seams" }
-            disablewhen "{ uvMethod != uniform }"
-        }
-        parm {
-            name    "uvLayout"
-            cppname "UVLayout"
-            label   "UV Layout"
-            type    toggle
-            default { "0" }
-        }
-    }
-
-
-
     parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
-        type    toggle
+        name    "zpThreshold"
+        cppname "ZPThreshold"
+        label   "Z Positive"
+        type    log
         default { "0" }
+        disablewhen "{ zp == 0 }"
+        range   { 1e-06 10 }
     }
+    parm {
+        name    "numingroup_min"
+        cppname "SubscribeRatio"
+        label   "Num in Group Min"
+        type    integer
+        default { "1" }
+        disablewhen "{ onlyfull == 1 }"
+        range   { 1! 10 }
+    }
+
+
 
     parm {
         name    "subscribeRatio"
@@ -301,9 +242,9 @@ R"THEDSFILE(
 )THEDSFILE";
 
 PRM_Template*
-SOP_FeE_PointInBBox_1_0::buildTemplates()
+SOP_FeE_PointInBBox_2_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_PointInBBox_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_PointInBBox_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
@@ -313,16 +254,16 @@ SOP_FeE_PointInBBox_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_PointInBBox_1_0::theSOPTypeName("FeE::pointInBBox::1.0"_sh);
+const UT_StringHolder SOP_FeE_PointInBBox_2_0::theSOPTypeName("FeE::pointInBBox::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_PointInBBox_1_0::theSOPTypeName,
+        SOP_FeE_PointInBBox_2_0::theSOPTypeName,
         "FeE Point in Boundin Box",
-        SOP_FeE_PointInBBox_1_0::myConstructor,
-        SOP_FeE_PointInBBox_1_0::buildTemplates(),
+        SOP_FeE_PointInBBox_2_0::myConstructor,
+        SOP_FeE_PointInBBox_2_0::buildTemplates(),
         1,
         2,
         nullptr,
@@ -347,7 +288,7 @@ public:
     virtual ~SOP_FeE_PointInBBox_1_0Verb() {}
 
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_PointInBBox_1_0Parms(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_PointInBBox_1_0::theSOPTypeName; }
+    virtual UT_StringHolder name() const { return SOP_FeE_PointInBBox_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -363,7 +304,7 @@ public:
 const SOP_NodeVerb::Register<SOP_FeE_PointInBBox_1_0Verb> SOP_FeE_PointInBBox_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_PointInBBox_1_0::cookVerb() const 
+SOP_FeE_PointInBBox_2_0::cookVerb() const 
 { 
     return SOP_FeE_PointInBBox_1_0Verb::theVerb.get();
 }
@@ -506,12 +447,24 @@ SOP_FeE_PointInBBox_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     outGeo0->replaceWith(*inGeo0);
 
+    const bool xn = sopparms.getXN();
+    const bool xp = sopparms.getXP();
+    const bool yn = sopparms.getYN();
+    const bool yp = sopparms.getYP();
+    const bool zn = sopparms.getZN();
+    const bool zp = sopparms.getZP();
 
+    const fpreal xnThreshold = sopparms.getXNThreshold();
+    const fpreal xpThreshold = sopparms.getXPThreshold();
+    const fpreal ynThreshold = sopparms.getYNThreshold();
+    const fpreal ypThreshold = sopparms.getYPThreshold();
+    const fpreal znThreshold = sopparms.getZNThreshold();
+    const fpreal zpThreshold = sopparms.getZPThreshold();
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
-    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
+    const UT_StringHolder& groupName = sopparms.getSeamGroup();
     const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
 
     //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
@@ -520,7 +473,9 @@ SOP_FeE_PointInBBox_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (boss.wasInterrupted())
         return;
 
-    GA_Attribute* posAttribPtr = GA_FeE_PointInBBox::addGroupPointInBBox(cookparms, outGeo0, inGeo1, inGeo2, "P", "P", "P");
+
+
+    GA_PointGroup* groupPtr = GA_FeE_PointInBBox::addGroupPointInBBox(cookparms, outGeo0, inGeo1, xn, xp, yn, yp, zn, zp);
 }
 
 
