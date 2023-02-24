@@ -408,6 +408,8 @@ extractPoint(
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         reverseGroup, delInputGroup);
+
+    geo->bumpDataIdsForAddOrRemove(1, 0, 0);
 }
 
 
@@ -441,6 +443,8 @@ extractPoint(
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         reverseGroup, delInputGroup);
+
+    geo->bumpDataIdsForAddOrRemove(1, 0, 0);
 }
 
 

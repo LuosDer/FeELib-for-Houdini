@@ -120,6 +120,11 @@ delElement(
     }
 
     delElement(geo, geoGroup, reverse, delGroup && !geoGroup->isDetached(), delWithPoint, delPointMode, guaranteeNoVertexReference);
+
+    if (doDelElement)
+    {
+        geo->bumpDataIdsForAddOrRemove(1, 1, 1);
+    }
 }
 
 

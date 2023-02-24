@@ -25,258 +25,203 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-    parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
+        name    "wnQueryPointGroup"
+        cppname "WNQueryPointGroup"
+        label   "Query Point Group"
         type    string
         default { "" }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
     parm {
-        name    "vertexGroup"
-        cppname "VertexGroup"
-        label   "Vertex Group"
+        name    "wnMeshPrimGroup"
+        cppname "WNMeshPrimGroup"
+        label   "Mesh Primitive Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
+        parmtag { "sop_input" "1" }
     }
     parm {
-        name    "edgeGroup"
-        cppname "EdgeGroup"
-        label   "Edge Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        default { "`chs('wnQueryPointGroup')`" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
-
-
     parm {
-        name    "promoteEdgeGroupToPrim"
-        cppname "PromoteEdgeGroupToPrim"
-        label   "Promote Edge Group to Prim"
-        type    string
-        default { "" }
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
-
-
-
     parm {
-        name    "outSrcPrims"
-        cppname "OutSrcPrims"
-        label   "Source Prims"
+        name    "outWN"
+        cppname "OutWN"
+        label   "Output Winding Number"
         type    toggle
-        default { 0 }
         nolabel
         joinnext
+        default { "0" }
     }
     parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
+        name    "wnAttribName"
+        cppname "WNAttribName"
+        label   "Winding Number Attrib Name"
         type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
+        default { "windingNumber" }
+        disablewhen "{ outWN == 0 }"
     }
-
-
-
     parm {
-        name    "primType"
-        cppname "PrimType"
-        label   "Prim Type"
+        name    "outGroup"
+        cppname "OutGroup"
+        label   "Output Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "1" }
+    }
+    parm {
+        name    "groupName"
+        cppname "GroupName"
+        label   "Group Name"
+        type    string
+        default { "`opname('.')`" }
+        disablewhen "{ outGroup == 0 }"
+    }
+    parm {
+        name    "outNumericAttrib"
+        cppname "OutNumericAttrib"
+        label   "Output Integer Attrib"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "numericAttribName"
+        cppname "NumericAttribName"
+        label   "Integer Attrib Name"
+        type    string
+        default { "`opname('.')`" }
+        disablewhen "{ outNumericAttrib == 0 }"
+    }
+    parm {
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
         type    ordinal
-        default { "polyline" }
+        default { "replace" }
         menu {
-            "polyline"  "Polyline"
-            "poly"      "Poly"
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
         }
     }
-
     parm {
-        name    "excludeSharedEdge"
-        cppname "ExcludeSharedEdge"
-        label   "Exclude Shared Edge"
+        name    "inGeo"
+        cppname "InGeo"
+        label   "In Geo"
         type    toggle
-        default { "0" }
+        default { "on" }
     }
     parm {
-        name    "close"
-        cppname "Close"
-        label   "Close"
+        name    "onGeo"
+        cppname "OnGeo"
+        label   "On Geo"
         type    toggle
-        default { "0" }
+        default { "on" }
     }
     parm {
-        name    "useEndGroup"
-        cppname "UseEndGroup"
-        label   "Use End Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "endGroup"
-        cppname "EndGroup"
-        label   "End Group"
-        type    string
-        default { "end" }
-        disablewhen "{ useEndGroup == 0 }"
-    }
-
-)THEDSFILE"
-// ==== This is necessary because MSVC++ has a limit of 16380 character per
-// ==== string literal
-R"THEDSFILE(
-
-    parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "attribFromPrim"
-        cppname "AttribFromPrim"
-        label   "Attrib from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromPrim"
-        cppname "GroupFromPrim"
-        label   "Group from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromEdge"
-        cppname "GroupFromEdge"
-        label   "Group from Edge"
-        type    string
-        default { "" }
-    }
-
-    parm {
-        name    "mergeInput"
-        cppname "MergeInput"
-        label   "Merge Input"
-        type    toggle
-        default { "0" }
-        disablewhen "{ close == 1 }"
-    }
-
-
-    parm {
-        name    "correctGeoWinding"
-        cppname "CorrectGeoWinding"
-        label   "Correct Geo Winding"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "reverse"
-        cppname "Reverse"
-        label   "Reverse"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "meshCap"
-        cppname "MeshCap"
-        label   "Mesh Cap"
-        type    toggle
-        default { "0" }
-    }
-
-    parm {
-        name    "addUV"
-        cppname "AddUV"
-        label   "Add UV"
-        type    toggle
-        default { "0" }
+        name    "threshold"
+        cppname "Threshold"
+        label   "Threshold"
+        type    log
+        default { "1e-05" }
+        range   { 1e-05 1 }
     }
     groupsimple {
-        name    "uv_folder"
-        label   "UV"
-        disablewhen "{ addUV == 0 }"
+        name    "wn_folder"
+        label   "Wingding Number"
+        grouptag { "group_type" "simple" }
 
         parm {
-            name    "posAttribName"
-            cppname "PosAttribName"
-            label   "UV Attribute Name"
-            type    string
-            default { "uv" }
-        }
-        parm {
-            name    "uvSize"
-            cppname "UVSize"
-            label   "UV Size"
-            type    integer
-            default { "3" }
-            range   { 1! 3! }
-
-        }
-        parm {
-            name    "uvMethod"
-            cppname "UVMethod"
-            label   "UV Method"
+            name    "wnType"
+            cppname "WNType"
+            label   "Winding Number Type"
             type    ordinal
-            default { "uniform" }
+            default { "xyz" }
             menu {
-                "uniform"   "Uniform"
-                "length"    "Length"
+                "xyz"   "3D"
+                "xy"    "2D in XY Plane"
+                "yz"    "2D in YZ Plane"
+                "zx"    "2D in ZX Plane"
             }
         }
         parm {
-            name    "seamGroup"
-            cppname "SeamGroup"
-            label   "Seam Group"
-            type    string
-            default { "seams" }
-            disablewhen "{ uvMethod != uniform }"
+            name    "wnAsSolidAngle"
+            cppname "WNAsSolidAngle"
+            label   "Scale to Solid Angle"
+            type    toggle
+            default { "off" }
         }
         parm {
-            name    "uvLayout"
-            cppname "UVLayout"
-            label   "UV Layout"
+            name    "wnNegate"
+            cppname "WNNegate"
+            label   "Negate Value (Reverse)"
             type    toggle
-            default { "0" }
+            default { "off" }
+        }
+        parm {
+            name    "wnFullAccuracy"
+            cppname "WNFullAccuracy"
+            label   "Full Accuracy (Slow)"
+            type    toggle
+            default { "off" }
+        }
+        parm {
+            name    "wnAccuracyScale"
+            cppname "WNAccuracyScale"
+            label   "Accuracy Scale"
+            type    float
+            default { "2" }
+            disablewhen "{ wnFullAccuracy == 1 }"
+            range   { 1! 12! }
+        }
+        parm {
+            name    "wnPrecision"
+            cppname "WNPrecision"
+            label   "Precision"
+            type    ordinal
+            default { "64" }
+            menu {
+                "auto"   "Auto"
+                "_16"    "16"
+                "_32"    "32"
+                "_64"    "64"
+            }
         }
     }
 
-
-
     parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
         type    toggle
         default { "0" }
     }
@@ -306,9 +251,9 @@ SOP_FeE_PointInMesh_WN_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_PointInMesh_WN_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::allTextureCoordMenu);
-        
+        templ.setChoiceListPtr("wnQueryPointGroup"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("wnMeshPrimGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("wnAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -347,6 +292,7 @@ public:
     virtual ~SOP_FeE_PointInMesh_WN_2_0Verb() {}
 
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_PointInMesh_WN_2_0Parms(); }
+    virtual SOP_NodeCache* allocCache() const { return new GA_WindingNumber_Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_PointInMesh_WN_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
@@ -372,125 +318,51 @@ SOP_FeE_PointInMesh_WN_2_0::cookVerb() const
 
 
 
-//// Calls functor on every active offset in this index map.
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachOffset(GA_IndexMap& idxmap, FUNCTOR&& functor)
-//{
-//    if (idxmap.isTrivialMap())
-//    {
-//        const GA_Offset end = GA_Offset(GA_Size(idxmap.indexSize()));
-//        for (GA_Offset off(0); off != end; ++off)
-//        {
-//            functor(off, off);
-//        }
-//    }
-//    else
-//    {
-//        const GA_Offset veryend(idxmap.myMaxOccupiedOffset + 1);
-//        GA_Size idx(0);
-//        GA_Offset off(0);
-//        while (true)
-//        {
-//            off = idxmap.findActiveOffset(off, veryend);
-//            GA_Offset end = idxmap.findInactiveOffset(off, veryend);
-//            if (off == end)
-//                break;
-//            do
-//            {
-//                functor(off, idx);
-//                ++off;
-//                ++idx;
-//            } while (off != end);
-//        }
-//    }
-//}
 
-
-
-
-/*
-template<typename FUNCTOR>
-static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const GA_ElementGroup* group = nullptr, bool complement = false)
+static GA_Storage
+sopWNStorage(SOP_FeE_PointInMesh_WN_2_0Parms::WNPrecision wnPrecision)
 {
-    // Fall back to regular case if no group.
-    //if (!group)
-    //{
-    //    if (!complement)
-    //        index_map.forEachOffset(functor);
-    //    return;
-    //}
-
-    // Group order is only relevant if not complemented.
-    if (!complement)
+    using namespace SOP_FeE_PointInMesh_WN_2_0Enums;
+    switch (wnPrecision)
     {
-        const GA_ElementGroupOrder* order = group->getOrdered();
-        if (order)
-        {
-            GA_Size idx(0);
-            for (GA_ElementGroupOrderIndex i(0), n(order->entries()); i != n; ++i)
-            {
-                GA_Offset off = order->getElement(i);
-                functor(off, idx);
-                ++idx;
-            }
-            return;
-        }
+    case WNPrecision::AUTO:     return GA_STORE_INVALID;   break;
+    case WNPrecision::_16:      return GA_STORE_REAL16;    break;
+    case WNPrecision::_32:      return GA_STORE_REAL32;    break;
+    case WNPrecision::_64:      return GA_STORE_REAL64;    break;
     }
-
-    // We have a group, treated as unordered.
-    const GA_Offset veryend = index_map.offsetSize();
-    GA_Size idx(0);
-    GA_Offset off(0);
-    while (true)
-    {
-        bool value;
-        GA_Size span_size;
-        group->getConstantSpan(off, veryend, span_size, value);
-        if (span_size == 0)
-            break;
-        if (value == complement)
-        {
-            off += span_size;
-            continue;
-        }
-        const GA_Offset span_end = off + span_size;
-        while (true)
-        {
-            off = index_map.findActiveOffset(off, span_end);
-            GA_Offset end = index_map.findInactiveOffset(off, span_end);
-            if (off == end)
-                break;
-            do
-            {
-                functor(off, idx);
-                ++off;
-                ++idx;
-            } while (off != end);
-        }
-    }
+    UT_ASSERT_MSG(0, "Unhandled WNPrecision!");
+    return GA_STORE_INVALID;
 }
 
-template<typename FUNCTOR>
-SYS_FORCE_INLINE
-void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool complement, FUNCTOR&& functor)
+static GA_WindingNumberType
+sopWNType(SOP_FeE_PointInMesh_WN_2_0Parms::WNType wnType)
 {
-    forEachOffset(functor, geo->getPrimitiveMap(), group, complement);
+    using namespace SOP_FeE_PointInMesh_WN_2_0Enums;
+    switch (wnType)
+    {
+    case WNType::XYZ:      return GA_WNType_XYZ;   break;
+    case WNType::XY:       return GA_WNType_XY;    break;
+    case WNType::YZ:       return GA_WNType_YZ;    break;
+    case WNType::ZX:       return GA_WNType_ZX;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled WNType!");
+    return GA_WNType_XYZ;
 }
 
-*/
-
-
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachVertex(GA_Detail* geo, const GA_VertexGroup* group, bool complement, FUNCTOR&& functor)
-//{
-//    forEachOffset(functor, geo->getVertexMap(), group, complement);
-//}
-
-
-
-
+static GA_GroupMergeType
+sopGroupMergeType(SOP_FeE_PointInMesh_WN_2_0Parms::GroupMergeType groupMergeType)
+{
+    using namespace SOP_FeE_PointInMesh_WN_2_0Enums;
+    switch (groupMergeType)
+    {
+    case GroupMergeType::REPLACE:     return GA_GroupMerge_Replace;    break;
+    case GroupMergeType::UNION:       return GA_GroupMerge_Union;      break;
+    case GroupMergeType::INTERSECT:   return GA_GroupMerge_Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GA_GroupMerge_Subtract;   break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
+    return GA_GroupMerge_Replace;
+}
 
 
 void
@@ -498,11 +370,10 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_PointInMesh_WN_2_0Parms>();
     GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_PointInMesh_WN_2_0Cache*)cookparms.cache();
+    auto sopcache = (GA_WindingNumber_Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
-    const GA_Detail* const inGeo2 = cookparms.inputGeo(2);
 
     outGeo0->replaceWith(*inGeo0);
 
@@ -511,16 +382,71 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
-    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
-    const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
-
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_Attribute* posAttribPtr = GA_FeE_MatchBBox::matchBBox(cookparms, outGeo0, inGeo1, inGeo2, "P", "P", "P");
+    const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
+    
+        
+#if 1
+    GA_FeE_PointInMesh pointInMesh(outGeo0, inGeo1, &cookparms, sopcache, subscribeRatio, minGrainSize);
+    pointInMesh.setWNAttrib(
+        sopparms.getOutWN(),
+        sopparms.getWNAttribName(),
+        wnStorage,
+        sopWNType(sopparms.getWNType()),
+        sopparms.getWNFullAccuracy(),
+        sopparms.getWNAccuracyScale(),
+        sopparms.getWNAsSolidAngle(),
+        sopparms.getWNNegate()
+    );
+    pointInMesh.setGroupPointInMesh_wn(
+        sopparms.getOutGroup(),
+        sopparms.getGroupName(),
+        sopparms.getInGeo(),
+        sopparms.getOnGeo(),
+        sopparms.getThreshold(),
+        sopparms.getReverseGroup(),
+        groupMergeType
+    );
+    pointInMesh.setNumericAttribPointInMesh_wn(
+        sopparms.getOutNumericAttrib(),
+        GA_STORE_INVALID,
+        sopparms.getNumericAttribName()
+    );
+    pointInMesh.computeAll();
+    pointInMesh.bumpDataId();
+    pointInMesh.visualizeGroup();
+#else
+
+    GA_PointGroup* pointInMesh_wn_groupPtr = GA_FeE_PointInMesh::addGroupPointInMesh_wn(
+        cookparms, outGeo0, inGeo1, 
+        sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup(), sopcache,
+
+        sopparms.getOutWN(),
+        sopparms.getWNName(),
+        sopparms.getOutGroup(),
+        sopparms.getGroupName(),
+        sopparms.getOutNumericAttrib(),
+        GA_STORE_INVALID,
+        sopparms.getNumericAttribName(),
+        groupMergeType,
+        sopparms.getInGeo(),
+        sopparms.getOnGeo(),
+        sopparms.getThreshold(),
+        
+        GA_STORE_INVALID,
+        sopWNType(sopparms.getWNType()),
+        sopparms.getWNFullAccuracy(),
+        sopparms.getWNAccuracyScale(),
+        sopparms.getWNAsSolidAngle(),
+        sopparms.getWNNegate()
+    );
+#endif
+
 }
 
 

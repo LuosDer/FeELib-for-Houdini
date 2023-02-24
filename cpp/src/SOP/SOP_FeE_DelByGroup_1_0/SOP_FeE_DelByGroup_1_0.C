@@ -258,15 +258,14 @@ SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& groupName = sopparms.getGroup();
 
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
+    
+
+
     GA_FeE_DelElement::delElement(sopparms.getDelByGroup(), cookparms, outGeo0, groupType, groupName,
         sopparms.getReverseGroup(), sopparms.getDelGroup(), sopparms.getDelWithPoint(),
         delPointMode, sopparms.getGuaranteeNoVertexReference()
     );
 
-    if (sopparms.getDelByGroup())
-    {
-        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    }
 }
 
 

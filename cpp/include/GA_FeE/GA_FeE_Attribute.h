@@ -457,8 +457,132 @@ copyAttribute2(
 }
 
 
+template<typename T>
+static void
+copyAttributeDst(
+    const GA_SplittableRange& geoSplittableRange,
+    const GA_RWHandleT<T>& attribNew_h,
+    const GA_ElementGroup* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    if (attribID)
+    {
+        const GA_ROHandleT<exint> attribID_h(attribID);
+        UTparallelFor(geoSplittableRange, [&attribNew_h, attribRef, &attribID_h](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    exint id = attribID_h.get(elemoff);
+                    attribNew_h.set(elemoff, (T)attribRef->contains(id));
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    else
+    {
+        UTparallelFor(geoSplittableRange, [&attribNew_h, attribRef](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    attribNew_h.set(elemoff, (T)attribRef->contains(elemoff));
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+}
 
+static bool
+copyAttributeDst(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_ElementGroup* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    switch (attribNew->getAIFTuple()->getStorage(attribNew))
+    {
+    //case GA_STORE_BOOL:
+    //    copyAttributeDst(geoSplittableRange, GA_RWHandleT<bool>(attribNew),
+    //        UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+    //    break;
+    case GA_STORE_UINT8:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<uint8>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT8:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<int8>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT16:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<int16>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT32:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<int32>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT64:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<int64>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL16:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<fpreal16>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL32:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<fpreal32>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL64:
+        copyAttributeDst(geoSplittableRange, GA_RWHandleT<fpreal64>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    default:
+        return false;
+        break;
+    }
+    return true;
+}
 
+template<typename T>
+SYS_FORCE_INLINE
+static void
+copyAttributeDst(
+    const GA_SplittableRange& geoSplittableRange,
+    const GA_RWHandleT<T>& attribNew_h,
+    const GA_Group* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    copyAttributeDst<T>(geoSplittableRange, attribNew_h, UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+}
+
+SYS_FORCE_INLINE
+static void
+copyAttributeDst(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_Group* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    copyAttributeDst(geoSplittableRange, attribNew, UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+}
 
 
 static void
@@ -502,6 +626,140 @@ copyAttributeDst(
         }, subscribeRatio, minGrainSize);
     }
 }
+
+
+
+template<typename T>
+static void
+copyAttributeRef(
+    const GA_SplittableRange& geoSplittableRange,
+    const GA_RWHandleT<T>& attribNew_h,
+    const GA_ElementGroup* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    if (attribID)
+    {
+        const GA_ROHandleT<exint> attribID_h(attribID);
+        UTparallelFor(geoSplittableRange, [&attribNew_h, attribRef, &attribID_h](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    exint id = attribID_h.get(elemoff);
+                    attribNew_h.set(id, (T)attribRef->contains(elemoff));
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    else
+    {
+        UTparallelFor(geoSplittableRange, [&attribNew_h, attribRef](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    attribNew_h.set(elemoff, (T)attribRef->contains(elemoff));
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+}
+
+
+static bool
+copyAttributeRef(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_ElementGroup* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    switch (attribNew->getAIFTuple()->getStorage(attribNew))
+    {
+    //case GA_STORE_BOOL:
+    //    copyAttributeRef(geoSplittableRange, GA_RWHandleT<bool>(attribNew),
+    //        UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+    //    break;
+    case GA_STORE_UINT8:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<uint8>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT8:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<int8>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT16:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<int16>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT32:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<int32>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_INT64:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<int64>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL16:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<fpreal16>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL32:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<fpreal32>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    case GA_STORE_REAL64:
+        copyAttributeRef(geoSplittableRange, GA_RWHandleT<fpreal64>(attribNew),
+            UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+        break;
+    default:
+        return false;
+        break;
+    }
+    return true;
+}
+
+template<typename T>
+SYS_FORCE_INLINE
+static void
+copyAttributeRef(
+    const GA_SplittableRange& geoSplittableRange,
+    const GA_RWHandleT<T>& attribNew_h,
+    const GA_Group* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    copyAttributeRef<T>(geoSplittableRange, attribNew_h, UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+}
+
+template<typename T>
+SYS_FORCE_INLINE
+static void
+copyAttributeRef(
+    const GA_SplittableRange& geoSplittableRange,
+    GA_Attribute* const attribNew,
+    const GA_Group* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    copyAttributeRef<T>(geoSplittableRange, attribNew, UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+}
+
+
+
 
 static void
 copyAttributeRef(
@@ -625,8 +883,19 @@ copyAttribute(
 
 
 
-
-
+SYS_FORCE_INLINE
+static bool
+copyAttribute(
+    GA_Attribute* const attribNew,
+    const GA_ElementGroup* const attribRef,
+    const GA_Attribute* const attribID = nullptr,
+    const exint subscribeRatio = 8,
+    const exint minGrainSize = 1024
+)
+{
+    const GA_SplittableRange geoSplittableRange(GA_Range(attribNew->getIndexMap()));
+    return copyAttributeDst(geoSplittableRange, attribNew, UTverify_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
+}
 
 
 

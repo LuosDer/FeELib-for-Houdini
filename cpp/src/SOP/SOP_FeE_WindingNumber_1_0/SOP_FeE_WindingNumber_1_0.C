@@ -17,7 +17,7 @@ class SOP_FeE_WindingNumber_1_0Verb : public SOP_NodeVerb
 {
 public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_WindingNumber_1_0Parms(); }
-    virtual SOP_NodeCache *allocCache() const { return new GA_FeE_WindingNumber::GA_WindingNumber_Cache(); }
+    virtual SOP_NodeCache *allocCache() const { return new GA_WindingNumber_Cache(); }
     virtual UT_StringHolder name() const { return theSOPTypeName; }
 
     /// This SOP wouldn't get any benefit from the results of the previous cook,
@@ -59,9 +59,9 @@ static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "queryPoints"
-        cppname "QueryPoints"
-        label   "Query Points"
+        name    "wnQueryPointGroup"
+        cppname "WNQueryPointGroup"
+        label   "Query Point Group"
         type    string
         default { "" }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
@@ -69,9 +69,9 @@ static const char* theDsFile = R"THEDSFILE(
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "meshPrims"
-        cppname "MeshPrims"
-        label   "Mesh Primitives"
+        name    "wnMeshPrimGroup"
+        cppname "WNMeshPrimGroup"
+        label   "Mesh Primitive Group"
         type    string
         default { "" }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
@@ -100,35 +100,48 @@ static const char* theDsFile = R"THEDSFILE(
         default { "windingNumber" }
     }
     parm {
-        name    "asSolidAngle"
-        cppname "AsSolidAngle"
+        name    "wnAsSolidAngle"
+        cppname "WNAsSolidAngle"
         label   "Scale to Solid Angle"
         type    toggle
         default { "0" }
         joinnext
     }
     parm {
-        name    "negate"
-        cppname "Negate"
+        name    "wnNegate"
+        cppname "WNNegate"
         label   "Negate Value (Reverse)"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "fullAccuracy"
-        cppname "FullAccuracy"
+        name    "wnFullAccuracy"
+        cppname "WNFullAccuracy"
         label   "Full Accuracy (Slow)"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "accuracyScale"
-        cppname "AccuracyScale"
+        name    "wnAccuracyScale"
+        cppname "WNAccuracyScale"
         label   "Accuracy Scale"
         type    float
         default { "2" }
         range   { 1! 20 }
-        disablewhen "{ fullAccuracy == 1 }"
+        disablewhen "{ wnFullAccuracy == 1 }"
+    }
+    parm {
+        name    "wnPrecision"
+        cppname "WNPrecision"
+        label   "Precision"
+        type    ordinal
+        default { "64" }
+        menu {
+            "auto"   "Auto"
+            "_16"    "16"
+            "_32"    "32"
+            "_64"    "64"
+        }
     }
 }
 )THEDSFILE";
@@ -139,8 +152,9 @@ SOP_FeE_WindingNumber_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_WindingNumber_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("queryPoints"_sh, &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("meshPrims"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("wnQueryPointGroup"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("wnMeshPrimGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("wnAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -175,6 +189,22 @@ newSopOperator(OP_OperatorTable *table)
 
 
 
+
+static GA_Storage
+sopWNStorage(SOP_FeE_WindingNumber_1_0Parms::WNPrecision wnPrecision)
+{
+    using namespace SOP_FeE_WindingNumber_1_0Enums;
+    switch (wnPrecision)
+    {
+    case WNPrecision::AUTO:     return GA_STORE_INVALID;   break;
+    case WNPrecision::_16:      return GA_STORE_REAL16;    break;
+    case WNPrecision::_32:      return GA_STORE_REAL32;    break;
+    case WNPrecision::_64:      return GA_STORE_REAL64;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled WNPrecision!");
+    return GA_STORE_INVALID;
+}
+
 static GA_WindingNumberType
 sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 {
@@ -196,10 +226,13 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_WindingNumber_1_0Parms>();
+    auto sopcache = (GA_WindingNumber_Cache*)cookparms.cache();
 
     GA_Detail* const geoPoint = cookparms.gdh().gdpNC();
     const GA_Detail* const geoRefMesh = cookparms.inputGeo(1);
     
+
+    const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
 
     //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(geoPoint);
     
@@ -215,11 +248,10 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 #else
     GA_Attribute* wnAttribPtr = GA_FeE_WindingNumber::addAttribWindingNumber(
         cookparms, geoPoint, geoRefMesh,
-        sopparms.getQueryPoints(), sopparms.getMeshPrims(), nullptr,
-        GA_STORE_INVALID, sopparms.getWNAttribName(),
-        sopWNType(sopparms.getWNType()), sopparms.getFullAccuracy(), sopparms.getAccuracyScale(), sopparms.getAsSolidAngle(), sopparms.getNegate()
+        sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup(), sopcache,
+        wnStorage, sopparms.getWNAttribName(),
+        sopWNType(sopparms.getWNType()), sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(), sopparms.getWNAsSolidAngle(), sopparms.getWNNegate()
     );
 #endif
 
-    wnAttribPtr->bumpDataId();
 }

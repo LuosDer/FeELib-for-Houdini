@@ -126,7 +126,7 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/UV");
 
-    newOp->setIconName("DATATYPES_uv");
+    newOp->setIconName("SOP_texture");
     table->addOperator(newOp);
 
 }

@@ -31,9 +31,9 @@ namespace GA_FeE_CurveUV {
         static void
         curveUV(
             GA_Detail* const geo,
-            const GA_RWHandleT<UT_Vector3T<fpreal32>>& uv_h,
+            const GA_RWHandleT<UT_Vector3T<FLOAT_T>>& uv_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_ArcLength,
+            const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -47,13 +47,16 @@ namespace GA_FeE_CurveUV {
         //GA_Attribute* const pAttribPtr = GA_FeE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
         //GA_ROHandleT<fpreal> p_h(pAttribPtr);
         //GA_Attribute* const pAttribPtr = GA_FeE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
-        const GA_ROHandleT<UT_Vector3T<fpreal>> pos_h(geo->getP());
-        fpreal dist = 0;
+        GA_ROHandleT<UT_Vector3T<fpreal>> pos_h(geo->getP());
+
         const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
         UTparallelFor(geoSplittableRange0, [geo, &uv_h, &pos_h, curveUVMethod, isPointAttrib](const GA_SplittableRange& r)
         {
+            UT_Array<fpreal> uvs;
+            fpreal dist = 0;
+            UT_Vector3T<fpreal> uv(0.0);
             UT_Vector3T<fpreal> pos, pos_prev;
-            GA_Offset ptoff;
+            GA_Offset ptoff, vtxoff;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -66,39 +69,71 @@ namespace GA_FeE_CurveUV {
                     {
                     case GFE_CurveUVMethod_WorldArcLength:
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                        pos_h.get(ptoff, pos_prev);
+                        pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum));
-                            pos_h.get(ptoff, pos_prev);
-                            dist += pos.distance(pos_prev);
-                            uv_h.set(ptoff, 0, dist);
+                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            ptoff = geo->vertexPoint(vtxoff);
+                            pos = pos_h.get(ptoff);
+                            uv[0] += pos.distance(pos_prev);
+                            uv_h.set(isPointAttrib ? ptoff : vtxoff, 0, uv);
                             pos_prev = pos;
                         }
                         break;
                     case GFE_CurveUVMethod_WorldAverage:
+                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
+                        pos_prev = pos_h.get(ptoff);
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
+                        {
+                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            ptoff = geo->vertexPoint(vtxoff);
+                            pos = pos_h.get(ptoff);
+                            dist += pos.distance(pos_prev);
+                            pos_prev = pos;
+                        }
+                        dist /= (numvtx-1);
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
+                        {
+                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            uv[0] += dist;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                        }
                         break;
                     case GFE_CurveUVMethod_LocalArcLength:
+                    {
+                        uvs.setSize(numvtx);
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                        pos_h.get(ptoff, pos_prev);
+                        pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum));
-                            pos_h.get(ptoff, pos_prev);
+                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            ptoff = geo->vertexPoint(vtxoff);
+                            pos = pos_h.get(ptoff);
                             dist += pos.distance(pos_prev);
-                            uv_h.set(ptoff, 0, dist);
+                            uvs[vtxpnum] = dist;
                             pos_prev = pos;
                         }
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
+                        GA_Size lastIndex = numvtx - 1;
+                        fpreal p = uvs[lastIndex];
+                        for (GA_Size vtxpnum = 1; vtxpnum < lastIndex; vtxpnum++)
                         {
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum));
-                            pos_h.get(ptoff, pos_prev);
-                            dist += pos.distance(pos_prev);
-                            uv_h.set(ptoff, 0, dist);
-                            pos_prev = pos;
+                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            uv[0] = uvs[vtxpnum] / p;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
+                        vtxoff = geo->getPrimitiveVertexOffset(primoff, lastIndex);
+                        uv[0] = 1.0;
+                        uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                    }
                         break;
                     case GFE_CurveUVMethod_LocalAverage:
+                        dist = 1.0 / (numvtx-1);
+                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
+                        {
+                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            uv[0] += dist;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                        }
                         break;
                     default:
                         UT_ASSERT_MSG(0, "unhandled curveUVMethod");
@@ -136,7 +171,7 @@ SYS_FORCE_INLINE
         GA_Detail* const geo,
         GA_Attribute* const uvAttribPtr,
         const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-        const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_ArcLength,
+        const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 64
     )
@@ -155,9 +190,9 @@ SYS_FORCE_INLINE
             subscribeRatio, minGrainSize);
         break;
     case GA_STORE_REAL64:
-        curveUV<fpreal64>(geo, uvAttribPtr, geoPrimGroup,
-            curveUVMethod,
-            subscribeRatio, minGrainSize);
+        //curveUV<fpreal64>(geo, uvAttribPtr, geoPrimGroup,
+        //    curveUVMethod,
+        //    subscribeRatio, minGrainSize);
         break;
     default:
         break;
@@ -173,7 +208,7 @@ curveUV(
     const GA_Storage storage = GA_STORE_INVALID,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
     const UT_StringHolder& uvAttribName = "uv",
-    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_ArcLength,
+    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
 )
@@ -197,7 +232,7 @@ curveUV(
     const GA_Storage storage = GA_STORE_INVALID,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
     const UT_StringHolder& uvAttribName = "uv",
-    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_ArcLength,
+    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
 )

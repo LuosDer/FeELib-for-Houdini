@@ -10,12 +10,20 @@
 
 
 
-
+#ifndef PI
 #define PI 3.14159265358979323846
+#endif
+
+enum GA_GroupMergeType
+{
+    GA_GroupMerge_Replace,
+    GA_GroupMerge_Union,
+    GA_GroupMerge_Intersect,
+    GA_GroupMerge_Subtract,
+};
 
 
 namespace GA_FeE_Type {
-
 
 
 #ifndef GA_FEE_TOPO_SCOPE

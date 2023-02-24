@@ -357,7 +357,6 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         sopparms.getReverseGroup(), sopparms.getDelInputGroup());
 #endif
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 0, 0);
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
