@@ -387,14 +387,6 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
-    GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, groupName0, gop);
-
-    if (!geo0Group)
-        return;
-
-    const GA_GroupType geo0finalGroupType = geo0Group->classType();
-
     const exint numsteps = sopparms.getNumsteps();
 
 
@@ -413,36 +405,32 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     //GA_Group* geo0OutGroup = GEO_FeE_Group::groupDuplicate(outGeo0, geo0Group, geo0AttribNames);
 
+
+    const GA_GroupType geo0finalGroupType = geo0Group->classType();
+
     GA_Group* expandGroup     = GA_FeE_Group::newGroup(outGeo0, geo0Group, expandGroupName);
     GA_Group* borderGroup     = GA_FeE_Group::newGroup(outGeo0, geo0Group, borderGroupName);
-    GA_Group* pervBorderGroup = GA_FeE_Group::newGroup(outGeo0, geo0Group, prevBorderGroupName);
+    GA_Group* prevBorderGroup = GA_FeE_Group::newGroup(outGeo0, geo0Group, prevBorderGroupName);
 
-    GA_FeE_GroupExpand::groupExpand(outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
+    return outGeo0->getGroupTable(group->classType())->newGroup(groupName);
+
+    const bool outTopoAttrib = sopparms.getOutTopoAttrib();
+
+    GA_FeE_GroupExpand::groupExpand(cookparms, outGeo0,
+        expandGroup, borderGroup, prevBorderGroup,
+        groupType, groupName0,
+        GA_GROUP_EDGE, numsteps,
+        outTopoAttrib, subscribeRatio, minGrainSize);
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
 
-
-    //GA_VertexGroup* geo0VtxGroup = nullptr;
-    //GA_VertexGroup* geo0VtxSeamGroup = nullptr;
-
-    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
-    //GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
-
-    //const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+    const GA_GroupType geo0finalGroupType = geo0Group->classType();
 
 
 
 
     //GA_FeE_Group::groupBumpDataId(geo0OutGroup);
-
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
-
-    
-    //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
-    //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
-    cookparms.getNode()->setHighlight(true);
-    cookparms.select(*expandGroup);
 
 
 }

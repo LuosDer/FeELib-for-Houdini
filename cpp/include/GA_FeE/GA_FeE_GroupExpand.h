@@ -270,6 +270,38 @@ namespace GA_FeE_GroupExpand {
     }
 
 
+    static void
+        groupExpand(
+            const SOP_NodeVerb::CookParms& cookparms,
+            GA_Detail* const geo,
+            GA_Group* const expandGroup,
+            GA_Group* const borderGroup,
+            GA_Group* const prevBorderGroup,
+            const GA_GroupType baseGroupType,
+            const UT_StringHolder& baseGroupName,
+            const GA_GroupType connectivityGroupType,
+            const exint numiter,
+            const bool outTopoAttrib,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 1024
+        )
+    {
+        GOP_Manager gop;
+        const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, geo, baseGroupType, baseGroupName, gop);
+
+        if (!geo0Group)
+            return;
+
+        GA_FeE_TopologyReference::outTopoAttrib(geo, );
+
+
+        GA_FeE_GroupExpand::groupExpand(geo, expandGroup, borderGroup, prevBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
+        //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
+        //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
+        cookparms.getNode()->setHighlight(true);
+        cookparms.select(*expandGroup);
+    }
+
 
 
     //static void

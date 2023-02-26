@@ -32,7 +32,7 @@ public:
         const exint minGrainSize = 64
         //,const bool outWN = false,
         //const UT_StringHolder & wnName = "__topo_windingNumber",
-        //const GA_Storage wnStorage = GA_STORE_INVALID,
+        //const GA_Storage wnStorage = GA_STORE_REAL64,
         //const GA_WindingNumberType wnType = GA_WNType_XYZ,
         //const bool fullAccuracy = false,
         //const fpreal accuracyScale = 2.0,
@@ -127,7 +127,7 @@ public:
         setWNAttrib(
             const bool outWN = false,
             const UT_StringHolder& wnName = "__topo_windingNumber",
-            const GA_Storage wnStorage = GA_STORE_INVALID,
+            const GA_Storage wnStorage = GA_STORE_REAL64,
             const GA_WindingNumberType wnType = GA_WNType_XYZ,
             const bool fullAccuracy = false,
             const fpreal accuracyScale = 2.0,
