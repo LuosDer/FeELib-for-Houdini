@@ -10,8 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GFE/GFE_NormalizeAttribElement.h"
 
 
 using namespace SOP_FeE_AttribScale_1_0_Namespace;
@@ -60,9 +59,9 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribNames"
-        cppname "AttribNames"
-        label   "Attrib Names"
+        name    "attribName"
+        cppname "AttribName"
+        label   "Attrib Name"
         type    string
         default { "N" }
     }
@@ -226,14 +225,9 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-    const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
+    const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GOP_Manager gop;
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
 
@@ -241,12 +235,23 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
-
-    GA_FeE_Attribute::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribNames,
+#if 0
+    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0,
+        UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,
         doNormalize, uniScale,
         subscribeRatio, minGrainSize);
 
+#else
+    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0, &cookparms, subscribeRatio, minGrainSize);
+    
+    normalizeAttribElement.setInGroup(groupType, sopparms.getGroup());
+    normalizeAttribElement.setParm(doNormalize, uniScale);
+    normalizeAttribElement.compute();
+#endif
 
+    //GFE_NormalizeAttribElement_Namespace::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,
+    //    doNormalize, uniScale,
+    //    subscribeRatio, minGrainSize);
 
 
 

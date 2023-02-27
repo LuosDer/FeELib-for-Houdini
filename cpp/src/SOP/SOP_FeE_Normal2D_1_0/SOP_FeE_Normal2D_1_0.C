@@ -12,7 +12,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Normal.h"
+#include "GFE/GFE_Normal.h"
 
 
 
@@ -388,9 +388,9 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     //const GA_Precision preferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferredPrecision);
-    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(preferredPrecision);
-    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferredPrecision);
+    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(preferredPrecision);
+    const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -414,7 +414,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool copy_orig_if_zero = false;
 
 
-    GA_Attribute* const normal2DAttrib = GA_FeE_Normal::addAttribNormal2D(cookparms, outGeo0, posAttribName,
+    GA_Attribute* const normal2DAttrib = GFE_Normal::addAttribNormal2D(cookparms, outGeo0, posAttribName,
         groupType, groupName0, inStorageF, geo0AttribNames,
         defaultNormal3D, scaleByTurns, normalize, uniScale,
 
@@ -424,7 +424,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         subscribeRatio, minGrainSize);
 
 
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+    GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
     normal2DAttrib->bumpDataId();
 }

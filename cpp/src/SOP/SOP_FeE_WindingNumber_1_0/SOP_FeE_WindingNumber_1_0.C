@@ -8,7 +8,7 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GA_FeE/GA_FeE_WindingNumber.h"
+#include "GFE/GFE_WindingNumber.h"
 
 using namespace SOP_FeE_WindingNumber_1_0_Namespace;
 
@@ -17,7 +17,7 @@ class SOP_FeE_WindingNumber_1_0Verb : public SOP_NodeVerb
 {
 public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_WindingNumber_1_0Parms(); }
-    virtual SOP_NodeCache *allocCache() const { return new GA_WindingNumber_Cache(); }
+    virtual SOP_NodeCache *allocCache() const { return new GFE_WindingNumber_Cache(); }
     virtual UT_StringHolder name() const { return theSOPTypeName; }
 
     /// This SOP wouldn't get any benefit from the results of the previous cook,
@@ -205,19 +205,19 @@ sopWNStorage(SOP_FeE_WindingNumber_1_0Parms::WNPrecision wnPrecision)
     return GA_STORE_INVALID;
 }
 
-static GA_WindingNumberType
+static GFE_WindingNumberType
 sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (wnType)
     {
-    case WNType::XYZ:      return GA_WNType_XYZ;   break;
-    case WNType::XY:       return GA_WNType_XY;    break;
-    case WNType::YZ:       return GA_WNType_YZ;    break;
-    case WNType::ZX:       return GA_WNType_ZX;    break;
+    case WNType::XYZ:      return GFE_WNType_XYZ;   break;
+    case WNType::XY:       return GFE_WNType_XY;    break;
+    case WNType::YZ:       return GFE_WNType_YZ;    break;
+    case WNType::ZX:       return GFE_WNType_ZX;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled WNType!");
-    return GA_WNType_XYZ;
+    return GFE_WNType_XYZ;
 }
 
 
@@ -226,7 +226,7 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_WindingNumber_1_0Parms>();
-    auto sopcache = (GA_WindingNumber_Cache*)cookparms.cache();
+    auto sopcache = (GFE_WindingNumber_Cache*)cookparms.cache();
 
     GA_Detail* const geoPoint = cookparms.gdh().gdpNC();
     const GA_Detail* const geoRefMesh = cookparms.inputGeo(1);
@@ -234,19 +234,19 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
 
-    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(geoPoint);
+    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(geoPoint);
     
 #if 0
-    GA_FeE_WindingNumber::GA_WindingNumber_Cache* sopcache = (GA_FeE_WindingNumber::GA_WindingNumber_Cache*)cookparms.cache();
+    GFE_WindingNumber::GA_WindingNumber_Cache* sopcache = (GFE_WindingNumber::GA_WindingNumber_Cache*)cookparms.cache();
 
-    GA_Attribute* wnAttribPtr = GA_FeE_WindingNumber::addAttribWindingNumber(
+    GA_Attribute* wnAttribPtr = GFE_WindingNumber::addAttribWindingNumber(
         cookparms, geoPoint, geoRefMesh,
         sopparms.getQueryPoints(), sopparms.getMeshPrims(), sopcache,
         GA_STORE_INVALID, sopparms.getWNAttribName(),
         sopWNType(sopparms.getWNType()), sopparms.getFullAccuracy(), sopparms.getAccuracyScale(), sopparms.getAsSolidAngle(), sopparms.getNegate()
     );
 #else
-    GA_Attribute* wnAttribPtr = GA_FeE_WindingNumber::addAttribWindingNumber(
+    GA_Attribute* wnAttribPtr = GFE_WindingNumber::addAttribWindingNumber(
         cookparms, geoPoint, geoRefMesh,
         sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup(), sopcache,
         wnStorage, sopparms.getWNAttribName(),

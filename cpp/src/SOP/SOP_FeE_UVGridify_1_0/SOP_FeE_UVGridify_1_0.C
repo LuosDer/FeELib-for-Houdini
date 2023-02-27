@@ -138,7 +138,7 @@ SOP_FeE_UVGridify_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::allTextureCoordMenu);
+        //templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::allTextureCoordMenu);
         
     }
     return templ.templates();
