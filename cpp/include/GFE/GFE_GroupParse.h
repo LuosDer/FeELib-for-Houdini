@@ -399,6 +399,11 @@ public:
     }
 
 
+
+
+
+private:
+
     const SOP_NodeVerb::CookParms* cookparms;
     GEO_Detail* geo;
     const GEO_Detail* geoConst;
