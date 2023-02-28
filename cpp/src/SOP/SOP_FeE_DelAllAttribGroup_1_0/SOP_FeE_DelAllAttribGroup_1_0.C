@@ -11,8 +11,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GFE/GFE_Group.h"
+#include "GFE/GFE_Attribute.h"
 
 using namespace SOP_FeE_DelAllAttribGroup_1_0_Namespace;
 
@@ -325,13 +325,13 @@ SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     const UT_StringHolder& keepPointAttribName  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttribName()  : allPattern;
     const UT_StringHolder& keepVertexAttribName = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttribName() : allPattern;
     const UT_StringHolder& keepDetailAttribName = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttribName() : allPattern;
-    GA_FeE_Attribute::keepStdAttribute(attribSet, keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
+    GFE_Attribute::keepStdAttribute(attribSet, keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
 
     const UT_StringHolder& keepPrimGroupName   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroupName()   : allPattern;
     const UT_StringHolder& keepPointGroupName  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroupName()  : allPattern;
     const UT_StringHolder& keepVertexGroupName = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroupName() : allPattern;
     const UT_StringHolder& keepEdgeGroupName   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroupName()   : allPattern;
-    GA_FeE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
+    GFE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
 }
 
 

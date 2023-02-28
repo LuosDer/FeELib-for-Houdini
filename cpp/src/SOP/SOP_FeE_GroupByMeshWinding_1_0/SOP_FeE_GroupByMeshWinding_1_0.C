@@ -12,7 +12,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_GroupByMeshWinding.h"
+#include "GFE/GFE_GroupByMeshWinding.h"
 
 using namespace SOP_FeE_GroupByMeshWinding_1_0_Namespace;
 
@@ -227,7 +227,7 @@ sopMethod(SOP_FeE_GroupByMeshWinding_1_0Parms::GroupByMeshWindingMethod parmgrou
     case GroupByMeshWindingMethod::VOLUME:     return GFE_GroupByMeshWindingMethod_VOLUME;         break;
     case GroupByMeshWindingMethod::WN:         return GFE_GroupByMeshWindingMethod_WINDINGNUMBER;  break;
     }
-    UT_ASSERT_MSG(0, "Unhandled GA_FeE_GroupByMeshWinding METHOD!");
+    UT_ASSERT_MSG(0, "Unhandled GFE_GroupByMeshWinding METHOD!");
     return GFE_GroupByMeshWindingMethod_VOLUME;
 }
 
@@ -265,7 +265,7 @@ SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const bool polyCap = sopparms.getPolyCap();
     //const bool delAttrib = sopparms.getDelAttrib();
     
-    GA_FeE_GroupByMeshWinding::groupByMeshWinding(cookparms, outGeo0, primGroupName, method,
+    GFE_GroupByMeshWinding::groupByMeshWinding(cookparms, outGeo0, primGroupName, method,
         runOverPieces, findInputPieceAttrib, pieceAttribName,
         outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap);
 
@@ -273,7 +273,7 @@ SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     //const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
 }
 
 

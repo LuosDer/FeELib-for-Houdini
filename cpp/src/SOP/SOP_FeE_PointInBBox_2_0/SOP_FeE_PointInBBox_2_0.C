@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_PointInBBox.h"
+#include "GFE/GFE_PointInBBox.h"
 
 
 
@@ -361,7 +361,7 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const UT_StringHolder& groupName = sopparms.getSeamGroup();
     const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -369,7 +369,7 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    GA_PointGroup* groupPtr = GA_FeE_PointInBBox::addGroupPointInBBox(cookparms, outGeo0, inGeo1, xn, xp, yn, yp, zn, zp);
+    GA_PointGroup* groupPtr = GFE_PointInBBox::addGroupPointInBBox(cookparms, outGeo0, inGeo1, xn, xp, yn, yp, zn, zp);
 }
 
 

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_ExtremePrim.h"
+#include "GFE/GFE_ExtremePrim.h"
 
 using namespace SOP_FeE_ExtremePrim_1_0_Namespace;
 
@@ -195,7 +195,7 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (boss.wasInterrupted())
         return;
 
-    const GA_Group* const geo0Group = GA_FeE_ExtremePrim::extremePrim(outGeo0, groupType, groupName);
+    const GA_Group* const geo0Group = GFE_ExtremePrim::extremePrim(outGeo0, groupType, groupName);
 
     if (!geo0Group)
         return;

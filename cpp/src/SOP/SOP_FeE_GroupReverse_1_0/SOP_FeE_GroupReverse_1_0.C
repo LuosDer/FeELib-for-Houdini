@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GFE/GFE_Group.h"
 
 using namespace SOP_FeE_GroupReverse_1_0_Namespace;
 
@@ -185,10 +185,10 @@ SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
 
-    //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GA_FeE_Group::groupToggle(cookparms, outGeo0, groupType, sopparms.getGroup());
+    GFE_Group::groupToggle(cookparms, outGeo0, groupType, sopparms.getGroup());
 }
 
 

@@ -12,7 +12,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_ExtendCurveStraight.h"
+#include "GFE/GFE_ExtendCurveStraight.h"
 
 
 using namespace SOP_FeE_ExtendCurveStraight_1_0_Namespace;
@@ -211,7 +211,7 @@ SOP_FeE_ExtendCurveStraight_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
 
     
         
-    GA_FeE_ExtendCurveStraight::extendCurveStraight(cookparms, outGeo0,
+    GFE_ExtendCurveStraight::extendCurveStraight(cookparms, outGeo0,
         extendCurveStraightDist, sopparms.getPrimGroup(), sopparms.getPointGroup(),
         extendStartPoint, extendEndPoint, tryFindNextOverlapPoint,
         sopparms.getPosAttrib(),

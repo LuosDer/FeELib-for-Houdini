@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_DelVertex.h"
+#include "GFE/GFE_DelVertex.h"
 
 
 using namespace SOP_FeE_DelVertex_1_0_Namespace;
@@ -209,7 +209,7 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GA_FeE_DelVertex::delVertex(cookparms, outGeo0, groupType, sopparms.getGroup(), delDegeneratePrims, delUnusedPoints);
+    GFE_DelVertex::delVertex(cookparms, outGeo0, groupType, sopparms.getGroup(), delDegeneratePrims, delUnusedPoints);
 
 }
 

@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_CurveUV.h"
+#include "GFE/GFE_CurveUV.h"
 
 
 
@@ -222,16 +222,16 @@ SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    //GA_Attribute* uvAttribPtr = GA_FeE_CurveUV::curveUV(cookparms, outGeo0, primGroupName,
+    //GA_Attribute* uvAttribPtr = GFE_CurveUV::curveUV(cookparms, outGeo0, primGroupName,
     //    uvAttribClass, uvAttribName, curveUVMethod,
     //    subscribeRatio, minGrainSize);
-    GA_FeE_CurveUV::curveUV(cookparms, outGeo0, primGroupName,
+    GFE_CurveUV::curveUV(cookparms, outGeo0, primGroupName,
         GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
         subscribeRatio, minGrainSize);
 }

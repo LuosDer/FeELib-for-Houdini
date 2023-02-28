@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_DelElement.h"
+#include "GFE/GFE_DelElement.h"
 
 using namespace SOP_FeE_DelByGroup_1_0_Namespace;
 
@@ -261,7 +261,7 @@ SOP_FeE_DelByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 
 
-    GA_FeE_DelElement::delElement(sopparms.getDelByGroup(), cookparms, outGeo0, groupType, groupName,
+    GFE_DelElement::delElement(sopparms.getDelByGroup(), cookparms, outGeo0, groupType, groupName,
         sopparms.getReverseGroup(), sopparms.getDelGroup(), sopparms.getDelWithPoint(),
         delPointMode, sopparms.getGuaranteeNoVertexReference()
     );

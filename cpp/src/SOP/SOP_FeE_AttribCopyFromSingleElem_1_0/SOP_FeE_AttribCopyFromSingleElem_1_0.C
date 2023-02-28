@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GFE/GFE_Attribute.h"
 
 
 
@@ -568,13 +568,13 @@ SOP_FeE_AttribCopyFromSingleElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &co
     const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
     const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_FeE_Attribute::copyAttribFromSingleElement(outGeo0, sopparms.getOutTopoAttrib());
+    GFE_Attribute::copyAttribFromSingleElement(outGeo0, sopparms.getOutTopoAttrib());
 
     attribPtr->bumpDataIds();
 

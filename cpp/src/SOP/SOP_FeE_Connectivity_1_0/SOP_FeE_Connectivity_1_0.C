@@ -14,11 +14,11 @@
 
 #include "GU/GU_Promote.h"
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_GroupPromote.h"
-#include "GA_FeE/GA_FeE_Connectivity.h"
-#include "GA_FeE/GA_FeE_AttributeCast.h"
+#include "GFE/GFE_Attribute.h"
+#include "GFE/GFE_GroupParse.h"
+#include "GFE/GFE_GroupPromote.h"
+#include "GFE/GFE_Connectivity.h"
+#include "GFE/GFE_AttributeCast.h"
 
 
 
@@ -63,18 +63,18 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "findPieceAttribClass"
-        cppname "FindPieceAttribClass"
-        label   "Find Piece Attribute Class"
+        name    "pieceAttribSearchOrder"
+        cppname "PieceAttribSearchOrder"
+        label   "Piece Attribute Class Search Order"
         type    ordinal
         default { "primpoint" }
         menu {
-            "prim"              "Primitive"
-            "point"             "Point"
-            "vertex"            "Vertex"
-            "primpoint"         "Prim Point"
-            "pointprim"         "Point Prim"
-            "primpointvertex"   "Prim Point Vertex"
+            "prim"       "Primitive"
+            "point"      "Point"
+            "vertex"     "Vertex"
+            "primpoint"  "Prim Point"
+            "pointprim"  "Point Prim"
+            "all"        "All"
         }
         disablewhen "{ findInputPieceAttrib == 0 }"
     }
@@ -373,21 +373,30 @@ sopGroupType(SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
 
 
 
+static GFE_PieceAttribSearchOrder
+sopPieceAttribSearchOrder(SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder parmgrouptype)
+{
+    using namespace SOP_FeE_Connectivity_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case PieceAttribSearchOrder::PRIM:       return GFE_PieceAttribSearchOrder_PRIM;         break;
+    case PieceAttribSearchOrder::POINT:      return GFE_PieceAttribSearchOrder_POINT;        break;
+    case PieceAttribSearchOrder::VERTEX:     return GFE_PieceAttribSearchOrder_VERTEX;       break;
+    case PieceAttribSearchOrder::PRIMPOINT:  return GFE_PieceAttribSearchOrder_PRIMPOINT;    break;
+    case PieceAttribSearchOrder::POINTPRIM:  return GFE_PieceAttribSearchOrder_POINTPRIM;    break;
+    case PieceAttribSearchOrder::ALL:        return GFE_PieceAttribSearchOrder_ALL;          break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Piece Attrib Search Order!");
+    return GFE_PieceAttribSearchOrder_INVALID;
+}
+
 
 void
 SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
-    //double timeTotal = 0;
-    //double timeTotal1 = 0;
-    //auto timeStart = std::chrono::steady_clock::now();
-    //auto timeEnd = std::chrono::steady_clock::now();
-    //timeStart = std::chrono::steady_clock::now();
-    //timeEnd = std::chrono::steady_clock::now();
-    //std::chrono::duration<double> diff;
-
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
     GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_Connectivity_1_0Cache*)cookparms.cache();
+    //auto sopcache = (GFE_Connectivity_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
@@ -409,37 +418,10 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const UT_StringHolder& stringPrefix = sopparms.getStringPrefix();
     const UT_StringHolder& stringSufix = sopparms.getStringSufix();
 
-    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
-    if (findInputPieceAttrib)
+    if (sopparms.getFindInputPieceAttrib())
     {
-        GA_Attribute* attribPtr = nullptr;
-
-        using namespace SOP_FeE_Connectivity_1_0Enums;
-        switch (sopparms.getFindPieceAttribClass())
-        {
-        case FindPieceAttribClass::PRIM:         attribPtr = outGeo0->findAttribute(GA_ATTRIB_PRIMITIVE, geo0AttribNames);  break;
-        case FindPieceAttribClass::POINT:        attribPtr = outGeo0->findAttribute(GA_ATTRIB_POINT, geo0AttribNames);      break;
-        case FindPieceAttribClass::VERTEX:       attribPtr = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);     break;
-        case FindPieceAttribClass::PRIMPOINT:
-        {
-            GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE , GA_ATTRIB_POINT };
-            attribPtr = outGeo0->findAttribute(geo0AttribNames, searchOrder, 2);
-            break;
-        }
-        case FindPieceAttribClass::POINTPRIM:
-        {
-            GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT , GA_ATTRIB_PRIMITIVE };
-                attribPtr = outGeo0->findAttribute(geo0AttribNames, searchOrder, 2);
-            break;
-        }
-        case FindPieceAttribClass::PRIMPOINTVERTEX:
-        {
-            GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE , GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
-                attribPtr = outGeo0->findAttribute(geo0AttribNames, searchOrder, 3);
-            break;
-        }
-        default: UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");     break;
-        }
+        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = sopPieceAttribSearchOrder(sopparms.getFindPieceAttribClass());
+        GA_Attribute* attribPtr = GFE_Attribute::findPieceAttrib(outGeo0, pieceAttribSearchOrder, geo0AttribNames);
 
         if (attribPtr)
         {
@@ -455,7 +437,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             const bool forceCastAttribType = sopparms.getForceCastAttribType();
             if (forceCastAttribType)
             {
-                GA_FeE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityAttribType ? GA_STORECLASS_STRING : GA_STORECLASS_INT, "", preferedPrecision);
+                GFE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityAttribType ? GA_STORECLASS_STRING : GA_STORECLASS_INT, "", preferedPrecision);
             }
             return;
         }
@@ -465,7 +447,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -493,13 +475,13 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferedPrecision);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferedPrecision);
 
 
-    const GA_GroupUPtr geo0GroupUPtr = GA_FeE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
+    const GA_GroupUPtr geo0GroupUPtr = GFE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
     const GA_Group* const geo0GroupPromoted = geo0GroupUPtr.get();
 
-    const GA_Group* const geo0SeamGroup = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
+    const GA_Group* const geo0SeamGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
 
 
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
@@ -510,7 +492,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         outGeo0->getAttributes().destroyAttribute(attribPtr);
 
 
-    attribPtr = GA_FeE_Connectivity::addAttribConnectivity(outGeo0,
+    attribPtr = GFE_Connectivity::addAttribConnectivity(outGeo0,
         geo0GroupPromoted, geo0SeamGroup,
         connectivityConstraint, geo0AttribClass,
         inStorageI, geo0AttribNames
@@ -519,7 +501,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     if (connectivityAttribType) // string type
     {
-        GA_FeE_AttributeCast::attribCast(outGeo0, attribPtr, GA_STORECLASS_STRING, "", preferedPrecision);
+        GFE_AttributeCast::attribCast(outGeo0, attribPtr, GA_STORECLASS_STRING, "", preferedPrecision);
     }
 
 
@@ -531,7 +513,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //outGeo0->setDetailAttributeF("timeTotal1", timeTotal1 * 1000);
 
 
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+    GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 }

@@ -12,8 +12,8 @@
 
 
 
-//#include "GA_FeE/GA_FeE_Detail.h"
-#include "GA_FeE/GA_FeE_PolyReduce2D.h"
+//#include "GFE/GFE_Detail.h"
+#include "GFE/GFE_PolyReduce2D.h"
 
 
 
@@ -288,7 +288,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     //outGeo0->replaceWith(*inGeo0);
 
-    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
+    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
     
 
     
@@ -296,7 +296,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -309,11 +309,11 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const fpreal threshold_maxDist = sopparms.getMaxDist();
 
     const fpreal threshold_maxAngle = sopparms.getMaxAngle();
-    const fpreal threshold_maxAngleRadians = GA_FeE_Type::radians(threshold_maxAngle);
+    const fpreal threshold_maxAngleRadians = GFE_Type::radians(threshold_maxAngle);
 
 
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
-    const fpreal threshold_inlineAngleRadians = GA_FeE_Type::radians(threshold_inlineAngle);
+    const fpreal threshold_inlineAngleRadians = GFE_Type::radians(threshold_inlineAngle);
 
     const bool reverseGroup = sopparms.getReverseGroup();
     const bool limitByGeoProperty = sopparms.getLimitByGeoProperty();
@@ -327,7 +327,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const bool delPoint = sopparms.getDeletePoint();
 
 
-    GA_PointGroup* const polyReduce2DPtGroup = GA_FeE_PolyReduce2D::polyReduce2D(cookparms, outGeo0,
+    GA_PointGroup* const polyReduce2DPtGroup = GFE_PolyReduce2D::polyReduce2D(cookparms, outGeo0,
         sopparms.getGroup(), sopparms.getPolyReduce2D_GroupName(),
         sopparms.getDelInLinePoint(), threshold_inlineAngleRadians,
         limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
@@ -351,7 +351,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         }
     }
 
-    //GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+    //GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
     //tmpGeoH0.deleteGdp();
 

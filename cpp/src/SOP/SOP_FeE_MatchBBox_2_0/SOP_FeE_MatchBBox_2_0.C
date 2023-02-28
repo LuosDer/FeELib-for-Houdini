@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_MatchBBox.h"
+#include "GFE/GFE_MatchBBox.h"
 
 
 
@@ -514,13 +514,13 @@ SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
     const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_Attribute* posAttribPtr = GA_FeE_MatchBBox::matchBBox(cookparms, outGeo0, inGeo1, inGeo2, "P", "P", "P");
+    GA_Attribute* posAttribPtr = GFE_MatchBBox::matchBBox(cookparms, outGeo0, inGeo1, inGeo2, "P", "P", "P");
 }
 
 

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_ExtrudeBorder2D.h"
+#include "GFE/GFE_ExtrudeBorder2D.h"
 
 
 
@@ -230,7 +230,7 @@ SOP_FeE_ExtrudeBorder2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
 
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
 
-    GA_FeE_DelAndUnpack::delAndUnpack(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
+    GFE_DelAndUnpack::delAndUnpack(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
         sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
         delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
     );

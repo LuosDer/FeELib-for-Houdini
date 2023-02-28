@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_UVScaletoWorldSize.h"
+#include "GFE/GFE_UVScaletoWorldSize.h"
 
 using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
 
@@ -363,14 +363,14 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     //const GA_Precision preferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(preferredPrecision);
-    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(preferredPrecision);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferredPrecision);
+    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(preferredPrecision);
     
 
 
     const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
 
-    GA_FeE_UVScaletoWorldSize::uvScaletoWorldSize(cookparms, outGeo0,
+    GFE_UVScaletoWorldSize_Namespace::uvScaletoWorldSize(cookparms, outGeo0,
         geo0AttribClass, geo0AttribNameSub,
         groupType, sopparms.getGroup(),
         computeUVAreaInPiece, uvScale, doUVScalex, doUVScaley, doUVScalez, sopparms.getOutTopoAttrib(),

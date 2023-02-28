@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_Skin.h"
+#include "GFE/GFE_Skin.h"
 
 
 
@@ -583,18 +583,18 @@ SOP_FeE_Skin_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
     const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_FeE_Skin::skin(outGeo0, true);
+    GFE_Skin::skin(outGeo0, true);
 
     outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
 
-    GA_FeE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+    GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 }
 

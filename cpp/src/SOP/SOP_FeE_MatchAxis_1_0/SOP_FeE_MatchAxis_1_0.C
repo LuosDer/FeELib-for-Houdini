@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_MatchAxis.h"
+#include "GFE/GFE_MatchAxis.h"
 
 
 
@@ -235,15 +235,15 @@ SOP_FeE_MatchAxis_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //const UT_Vector3D upVec = sopparms.getUpVec();
     
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
     const GA_AttributeOwner owner = sopAttribOwner(sopparms.getMatchAxisAttribClass());
-    //GA_FeE_MatchAxis::matchAxis(cookparms, outGeo0, sopparms.getPointGroup(), owner, sopparms.getMatchAxisAttribName(), fromVec, toVec, upVec);
-    GA_FeE_MatchAxis::matchAxis(cookparms, outGeo0, sopparms.getPointGroup(), owner, sopparms.getMatchAxisAttribName(), fromVec, toVec);
+    //GFE_MatchAxis::matchAxis(cookparms, outGeo0, sopparms.getPointGroup(), owner, sopparms.getMatchAxisAttribName(), fromVec, toVec, upVec);
+    GFE_MatchAxis::matchAxis(cookparms, outGeo0, sopparms.getPointGroup(), owner, sopparms.getMatchAxisAttribName(), fromVec, toVec);
 
 
 }

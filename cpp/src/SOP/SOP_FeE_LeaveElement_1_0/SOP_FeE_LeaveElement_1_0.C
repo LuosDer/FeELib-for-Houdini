@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_LeaveElement.h"
+#include "GFE/GFE_LeaveElement.h"
 
 
 
@@ -186,7 +186,7 @@ SOP_FeE_LeaveElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const UT_StringHolder& groupName = sopparms.getLeaveElementGroup();
 
 
-    GA_FeE_LeaveElement::leaveElement(sopparms.getLeaveElement(), cookparms, outGeo0, inGeo0, groupType, groupName,
+    GFE_LeaveElement::leaveElement(sopparms.getLeaveElement(), cookparms, outGeo0, inGeo0, groupType, groupName,
         reverseGroup, sopparms.getDelElementInputGroup());
 
     if (sopparms.getLeaveElement())

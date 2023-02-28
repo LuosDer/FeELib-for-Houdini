@@ -246,12 +246,27 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         sopWNType(sopparms.getWNType()), sopparms.getFullAccuracy(), sopparms.getAccuracyScale(), sopparms.getAsSolidAngle(), sopparms.getNegate()
     );
 #else
-    GA_Attribute* wnAttribPtr = GFE_WindingNumber::addAttribWindingNumber(
+#if 0
+    GA_Attribute* wnAttribPtr = GFE_WindingNumber_Namespace::addAttribWindingNumber(
         cookparms, geoPoint, geoRefMesh,
         sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup(), sopcache,
         wnStorage, sopparms.getWNAttribName(),
         sopWNType(sopparms.getWNType()), sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(), sopparms.getWNAsSolidAngle(), sopparms.getWNNegate()
     );
+#else
+    GFE_WindingNumber gfeWN(cookparms, geoPoint, geoRefMesh, sopcache);
+
+    gfeWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+
+    gfeWN.setOutAttrib(false, wnStorage, sopparms.getWNAttribName(), sopWNType(sopparms.getWNType()),
+        sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
+        sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
+
+    gfeWN.compute();
+
+    gfeWN.bumpDataId();
+#endif
+
 #endif
 
 }

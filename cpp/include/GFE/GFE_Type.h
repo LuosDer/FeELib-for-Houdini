@@ -22,6 +22,17 @@ enum GFE_GroupMergeType
     GFE_GroupMerge_Subtract,
 };
 
+enum GFE_PieceAttribSearchOrder
+{
+    GFE_PieceAttribSearchOrder_PRIM,
+    GFE_PieceAttribSearchOrder_POINT,
+    GFE_PieceAttribSearchOrder_VERTEX,
+    GFE_PieceAttribSearchOrder_PRIMPOINT,
+    GFE_PieceAttribSearchOrder_POINTPRIM,
+    GFE_PieceAttribSearchOrder_ALL,
+    GFE_PieceAttribSearchOrder_INVALID = -1,
+};
+
 
 namespace GFE_Type {
 

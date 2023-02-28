@@ -12,7 +12,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_PrimInlinePoint.h"
+#include "GFE/GFE_PrimInlinePoint.h"
 
 
 
@@ -206,7 +206,7 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
 
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
-    const fpreal threshold_inlineAngleRadians = GA_FeE_Type::radians(threshold_inlineAngle);
+    const fpreal threshold_inlineAngleRadians = GFE_Type::radians(threshold_inlineAngle);
     const bool reverseGroup = sopparms.getReverseGroup();
 
 
@@ -215,7 +215,7 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -225,14 +225,14 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
     if (sopparms.getDelInlinePoint())
     {
-        GA_FeE_PrimInlinePoint::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(),
+        GFE_PrimInlinePoint::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(),
             threshold_inlineAngleRadians, reverseGroup,
             subscribeRatio, minGrainSize);
         outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
     }
     else
     {
-        GA_PointGroup* const inlinePtGroup = GA_FeE_PrimInlinePoint::groupPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), sopparms.getPrimInlinePoint_groupName(),
+        GA_PointGroup* const inlinePtGroup = GFE_PrimInlinePoint::groupPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), sopparms.getPrimInlinePoint_groupName(),
             threshold_inlineAngleRadians, reverseGroup,
             subscribeRatio, minGrainSize);
 

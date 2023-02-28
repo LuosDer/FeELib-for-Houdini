@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_RestDir2D.h"
+#include "GFE/GFE_RestDir2D.h"
 
 using namespace SOP_FeE_RestDir2D_1_0_Namespace;
 
@@ -228,17 +228,17 @@ sopGroupType(SOP_FeE_RestDir2D_1_0Parms::GroupType parmgrouptype)
 }
 
 
-static GA_FeE_RestDir2D_Method
+static GFE_RestDir2D_Method
 sopMethod(SOP_FeE_RestDir2D_1_0Parms::RestDir2DMethod parmgrouptype)
 {
     using namespace SOP_FeE_RestDir2D_1_0Enums;
     switch (parmgrouptype)
     {
-    case RestDir2DMethod::AVGNORMAL:   return GA_FeE_RestDir2D_AvgNormal;   break;
-    case RestDir2DMethod::HOUOBB:      return GA_FeE_RestDir2D_HouOBB;   break;
+    case RestDir2DMethod::AVGNORMAL:   return GFE_RestDir2D_AvgNormal;   break;
+    case RestDir2DMethod::HOUOBB:      return GFE_RestDir2D_HouOBB;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled RestDir2DMethod!");
-    return GA_FeE_RestDir2D_AvgNormal;
+    return GFE_RestDir2D_AvgNormal;
 }
 
 
@@ -266,14 +266,14 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const UT_StringHolder& restDir2DAttribName = sopparms.getRestDir2DAttribName();
     
-    const GA_FeE_RestDir2D_Method method = sopMethod(sopparms.getRestDir2DMethod());
+    const GFE_RestDir2D_Method method = sopMethod(sopparms.getRestDir2DMethod());
 
-    const GA_Storage inStorgeF = GA_FeE_Type::getPreferredStorageF(outGeo0);
+    const GA_Storage inStorgeF = GFE_Type::getPreferredStorageF(outGeo0);
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    GA_Attribute* const restDir2DAttrib = GA_FeE_RestDir2D::addAttribRestDir2D(
+    GA_Attribute* const restDir2DAttrib = GFE_RestDir2D::addAttribRestDir2D(
         cookparms, outGeo0, groupType, groupName,
         method, inStorgeF, restDir2DAttribName,
         nullptr, nullptr, GA_ReuseStrategy(),

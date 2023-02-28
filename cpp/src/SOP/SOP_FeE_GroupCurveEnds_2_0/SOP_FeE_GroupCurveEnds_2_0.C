@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_GroupCurveEnds.h"
+#include "GFE/GFE_GroupCurveEnds.h"
 
 using namespace SOP_FeE_GroupCurveEnds_2_0_Namespace;
 
@@ -338,15 +338,15 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
 
     //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
-    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(PreferredPrecision);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
+    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(PreferredPrecision);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    GA_FeE_GroupCurveEnds::groupCurveEnds(cookparms, outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
+    GFE_GroupCurveEnds::groupCurveEnds(cookparms, outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
@@ -355,16 +355,16 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     //GA_VertexGroup* geo0VtxGroup = nullptr;
     //GA_VertexGroup* geo0VtxSeamGroup = nullptr;
 
-    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
+    //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
     //GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
 
-    //const GA_Attribute* dstptAttrib = GA_FeE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
+    //const GA_Attribute* dstptAttrib = GFE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
 
 
     sopparms.getVisualize();
 
 
-    //GA_FeE_Group::groupBumpDataId(geo0OutGroup);
+    //GFE_Group::groupBumpDataId(geo0OutGroup);
 
     //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
     //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());

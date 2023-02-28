@@ -9,9 +9,9 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GA_FeE/GA_FeE_Type.h"
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_Measure.h"
+#include "GFE/GFE_Type.h"
+#include "GFE/GFE_Group.h"
+#include "GFE/GFE_Measure.h"
 
 
 using namespace SOP_FeE_Measure_3_0_Namespace;
@@ -230,7 +230,7 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -247,7 +247,7 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
+    const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(outGeo0);
     
 
     //GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);
@@ -257,17 +257,17 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     switch (sopparms.getMeasureType())
     {
     case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-        GA_FeE_Measure::addAttribPrimArea(     outGeo0, geo0PosAttribName,
+        GFE_Measure::addAttribPrimArea(     outGeo0, geo0PosAttribName,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
             GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
         break;
     case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-        GA_FeE_Measure::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
+        GFE_Measure::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
             GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
         break;
     case SOP_FeE_Measure_3_0Enums::MeasureType::MESHVOLUME:
-        GA_FeE_Measure::addAttribMeshVolume(outGeo0, geo0PosAttribName,
+        GFE_Measure::addAttribMeshVolume(outGeo0, geo0PosAttribName,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
             GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
         break;

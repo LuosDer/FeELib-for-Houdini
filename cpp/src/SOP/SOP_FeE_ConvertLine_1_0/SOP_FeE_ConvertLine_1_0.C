@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_ConvertLine.h"
+#include "GFE/GFE_ConvertLine.h"
 
 
 using namespace SOP_FeE_ConvertLine_1_0_Namespace;
@@ -423,7 +423,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
@@ -438,10 +438,10 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     
         
 #if 1
-    GA_FeE_ConvertLine::convertLine(outGeo0, inGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+    GFE_ConvertLine::convertLine(outGeo0, inGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
 #else
     outGeo0->replaceWith(*inGeo0);
-    GA_FeE_ConvertLine::convertLine(outGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+    GFE_ConvertLine::convertLine(outGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
 #endif
     
     

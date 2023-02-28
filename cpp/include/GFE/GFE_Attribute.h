@@ -40,10 +40,44 @@ bumpDataId(
 }
 
 
+static GA_Attribute*
+findPieceAttrib(
+    GA_Detail* const geo,
+    const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
+    const UT_StringHolder& pieceAttribName
+)
+{
+    GA_Attribute* attribPtr = nullptr;
 
-
-
-
+    switch (pieceAttribSearchOrder)
+    {
+    case GFE_PieceAttribSearchOrder_PRIM:       attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder_POINT:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder_VERTEX:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder_PRIMPOINT:
+    {
+        GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
+        attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
+    }
+        break;
+    case GFE_PieceAttribSearchOrder_POINTPRIM:
+    {
+        GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
+        attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
+    }
+        break;
+    case GFE_PieceAttribSearchOrder_ALL:
+    {
+        GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
+        attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 3);
+    }
+        break;
+    default:
+        UT_ASSERT_MSG(0, "Unhandled Geo Piece Attrib Search Order!");
+        break;
+    }
+    return attribPtr;
+}
 
 SYS_FORCE_INLINE
 static bool
@@ -106,7 +140,7 @@ forceRenameAttribute(
 
 
 
-//GFE_Attribute::findAttributePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal)
+//GFE_Attribute::findAttributePointVertex(geo, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal)
 //GFE_Attribute::findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
 
 static const GA_Attribute*
@@ -264,7 +298,7 @@ findAttributePointVertex(
 
 
 
-//GFE_Attribute::findAttributePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal)
+//GFE_Attribute::findAttributePointVertex(geo, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal)
 //GFE_Attribute::findAttributePointVertex(geo, attribOwner, attribName, attribOwnerFianl);
 
 

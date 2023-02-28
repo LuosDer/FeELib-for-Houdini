@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_JoinCurve.h"
+#include "GFE/GFE_JoinCurve.h"
 
 
 using namespace SOP_FeE_JoinCurve_2_0_Namespace;
@@ -345,10 +345,10 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (sopparms.getCheckInputError())
     {
-        GA_FeE_JoinCurve::joinCurveCheckInputError(cookparms, outGeo0);
+        GFE_JoinCurve::joinCurveCheckInputError(cookparms, outGeo0);
     }
 
-    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
+    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
     const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
     const UT_StringHolder& pointGroupName = sopparms.getPointGroup();
@@ -400,14 +400,14 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //const exint minGrainSize = sopparms.getMinGrainSize();
     
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_FeE_JoinCurve::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, GA_STORE_INVALID, srcPrimsAttribName);
+    GFE_JoinCurve::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, GA_STORE_INVALID, srcPrimsAttribName);
 
 
     outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);

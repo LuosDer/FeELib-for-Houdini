@@ -13,7 +13,7 @@
 
 
 
-#include "GFE/GFE_PointInMesh.h"
+#include "GFE/GFE_PointInMeshWN.h"
 
 
 
@@ -392,19 +392,17 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     
         
 #if 1
-    GFE_PointInMesh pointInMesh(outGeo0, inGeo1, &cookparms, sopcache, subscribeRatio, minGrainSize);
-    pointInMesh.setWNAttrib(
-        sopparms.getOutWN(),
-        sopparms.getWNAttribName(),
-        wnStorage,
+    GFE_PointInMeshWN pointInMeshWN(cookparms, outGeo0, inGeo1, sopcache, subscribeRatio, minGrainSize);
+
+    pointInMeshWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+
+    pointInMeshWN.getGFEWN().setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName(),
         sopWNType(sopparms.getWNType()),
-        sopparms.getWNFullAccuracy(),
-        sopparms.getWNAccuracyScale(),
-        sopparms.getWNAsSolidAngle(),
-        sopparms.getWNNegate()
-    );
-    pointInMesh.setOutGroup(
-        sopparms.getOutGroup(),
+        sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
+        sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
+
+    pointInMeshWN.setOutGroup(
+        !sopparms.getOutGroup(),
         sopparms.getGroupName(),
         sopparms.getInGeo(),
         sopparms.getOnGeo(),
@@ -412,14 +410,21 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         sopparms.getReverseGroup(),
         groupMergeType
     );
-    pointInMesh.setNumericAttrib(
-        sopparms.getOutNumericAttrib(),
+    pointInMeshWN.setNumericAttrib(
+        !sopparms.getOutNumericAttrib(),
         GA_STORE_INVALID,
         sopparms.getNumericAttribName()
     );
-    pointInMesh.compute();
-    pointInMesh.bumpDataId();
-    pointInMesh.visualizeGroup();
+    if (sopparms.getOutGroup())
+    {
+        pointInMeshWN.addOutGroup();
+    }
+    if (sopparms.getOutNumericAttrib())
+    {
+        pointInMeshWN.addNumericAttrib();
+    }
+    pointInMeshWN.bumpDataId();
+    pointInMeshWN.visualizeGroup();
 #else
 
     GA_PointGroup* pointInMesh_wn_groupPtr = GFE_PointInMesh::addGroupPointInMesh_wn(

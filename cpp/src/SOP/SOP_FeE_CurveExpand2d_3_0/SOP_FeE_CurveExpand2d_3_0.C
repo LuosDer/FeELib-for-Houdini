@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_CurveExpand2d.h"
+#include "GFE/GFE_CurveExpand2d.h"
 
 
 
@@ -237,13 +237,13 @@ SOP_FeE_CurveExpand2d_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    GA_Attribute* posAttribPtr = GA_FeE_CurveExpand2d::curveExpand2d(cookparms, outGeo0, groupType, groupName,
+    GA_Attribute* posAttribPtr = GFE_CurveExpand2d::curveExpand2d(cookparms, outGeo0, groupType, groupName,
         uvAttribClass, uvAttribName,
         rowsOrColsNumMethod, rowsOrColsNum, 
         reverseUVu, reverseUVv, uniScale,

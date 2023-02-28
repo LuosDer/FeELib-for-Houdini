@@ -11,8 +11,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_GroupNewEdge.h"
-//#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
+#include "GFE/GFE_GroupNewEdge.h"
+//#include "GFE/GFE_VertexNextEquiv.h"
 
 
 using namespace SOP_FeE_GroupNewEdge_1_0_Namespace;
@@ -239,17 +239,17 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
     GOP_Manager gop;
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (!geo0Group)
         return;
     
     //if (!geo0Group || geo0Group->isEmpty())
-    if (!geo0Group || GA_FeE_Group::groupIsEmpty(geo0Group))
+    if (!geo0Group || GFE_Group::groupIsEmpty(geo0Group))
         return;
 
 
     const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
-    GA_Group* const combineGroup = GA_FeE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
+    GA_Group* const combineGroup = GFE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
     if (!combineGroup)
         return;
 
@@ -266,10 +266,10 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
     //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
     //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
 
 
-    //const GA_AttributeOwner combineAttribType = GA_FeE_Group::attributeOwner_groupType(combineGroupType);
+    //const GA_AttributeOwner combineAttribType = GFE_Group::attributeOwner_groupType(combineGroupType);
     //GA_ElementGroup* combineGroup = outGeo0->findElementGroup(combineAttribType, geo0AttribNames);
     //combineGroup->combine(geo0Group);
 
@@ -278,7 +278,7 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //const GA_Group* geo0EdgeGroup = gop.parseEdgeDetached(sopparms.getGroup(), outGeo0, true, success);
 
     //const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
-    GA_FeE_GroupNewEdge::addGroupNewEdge(outGeo0, combineGroup, geo0Group);
+    GFE_GroupNewEdge::addGroupNewEdge(outGeo0, combineGroup, geo0Group);
 
     //for (auto it = static_cast<const GA_EdgeGroup*>(geo0EdgeGroup)->begin(); !it.atEnd(); it.advance())
     //{
@@ -287,11 +287,11 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //}
 
 
-    //GA_VertexGroup* unsharedGroup = GA_FeE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupNewEdge_1_0", geo0VtxGroup);
-    //GA_Group* unshared_promoGroup = GA_FeE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
+    //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupNewEdge_1_0", geo0VtxGroup);
+    //GA_Group* unshared_promoGroup = GFE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
 
     //combineGroup->bumpDataId();
-    GA_FeE_Group::groupBumpDataId(combineGroup);
+    GFE_Group::groupBumpDataId(combineGroup);
 
     if (geo0Group)
     {

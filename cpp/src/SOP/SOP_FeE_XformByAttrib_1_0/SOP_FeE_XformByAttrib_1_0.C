@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_XformByAttrib.h"
+#include "GFE/GFE_XformByAttrib.h"
 
 
 
@@ -258,7 +258,7 @@ SOP_FeE_XformByAttrib_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
         return;
 
 
-    GA_FeE_XformByAttrib::xformByAttrib(cookparms, outGeo0, inGeo1, groupType, sopparms.getGroup(),
+    GFE_XformByAttrib::xformByAttrib(cookparms, outGeo0, inGeo1, groupType, sopparms.getGroup(),
         xformAttribName, owner, attribToXformName,
         invertXform, preserveLength, delXformAttrib,
         subscribeRatio, minGrainSize);

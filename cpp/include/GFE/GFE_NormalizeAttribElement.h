@@ -25,38 +25,38 @@ class GFE_NormalizeAttribElement {
 
 public:
 
-GFE_NormalizeAttribElement(
-    GA_Detail* const geo,
-    const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 64
-)
-    : geo(geo)
-    , cookparms(cookparms)
-    , subscribeRatio(subscribeRatio)
-    , minGrainSize(minGrainSize)
-{
-    UT_ASSERT_MSG(geo, "do not find geo");
-}
+    GFE_NormalizeAttribElement(
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(geo)
+        , cookparms(cookparms)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_NormalizeAttribElement(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
 
 GFE_NormalizeAttribElement(
     const GA_Detail* const geo,
     const GA_ElementGroup* const geoGroup,
     const GA_AttributeOwner attribClass,
-    const UT_StringHolder& attribPattern,
     const bool doNormalize = true,
-    const fpreal64 uniScale = 1,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 64
+    const fpreal64 uniScale = 1
 )
     : geo(geo)
     , geoGroup(geoGroup)
     , attribClass(attribClass)
-    , attribPattern(attribPattern)
     , doNormalize(doNormalize)
     , uniScale(uniScale)
-    , subscribeRatio(subscribeRatio)
-    , minGrainSize(minGrainSize)
 {
 }
 
@@ -67,141 +67,29 @@ GFE_NormalizeAttribElement(
 
 
 
-template<typename VECTOR_T>
 void
-normalizeAttribElement(
-    GA_Attribute* const attribPtr
+setAttrib(
+    const GA_AttributeOwner attribClass,
+    const UT_StringHolder& attribPattern,
+    const bool doNormalize = true,
+    const fpreal64 uniScale = 1.0,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
 )
 {
-    UTparallelFor(geoSplittableRange, [attribPtr, this](const GA_SplittableRange& r)
-    {
-        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-            {
-                attrib_ph.setPage(start);
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    if (doNormalize)
-                        attrib_ph.value(elemoff).normalize();
-                    attrib_ph.value(elemoff) *= uniScale;
-                }
-            }
-        }
-    }, subscribeRatio, minGrainSize);
-}
-
-
-//#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-//template<typename VECTOR_T>
-//static void
-//normalizeAttribElement(
-//    GA_Attribute* const attribPtr,
-//    const GA_Range& geoRange,
-//    const typename VECTOR_T::value_type uniScale = 1
-//)
-//{
-//    GAparallelForEachPage(geoRange, true, [this](GA_PageIterator pit)
-//    {
-//        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-//        GAforEachPageBlock(pit, [&attrib_ph, this](GA_Offset start, GA_Offset end)
-//        {
-//            attrib_ph.setPage(start);
-//            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-//            {
-//                if (doNormalize)
-//                    attrib_ph.value(elemoff).normalize();
-//                attrib_ph.value(elemoff) *= uniScale;
-//            }
-//        });
-//    });
-//}
-//
-//#endif
-
-
-bool
-normalizeAttribElement(
-    GA_Attribute* const attribPtr
-)
-{
-    UT_ASSERT_P(attribPtr);
-    const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
-    switch (attribPtr->getAIFTuple()->getTupleSize(attribPtr))
-    {
-    case 2:
-        switch (storage)
-        {
-        case GA_STORE_REAL16:
-            normalizeAttribElement<UT_Vector2T<fpreal16>>(attribPtr);
-            break;
-        case GA_STORE_REAL32:
-            normalizeAttribElement<UT_Vector2T<fpreal32>>(attribPtr);
-            break;
-        case GA_STORE_REAL64:
-            normalizeAttribElement<UT_Vector2T<fpreal64>>(attribPtr);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    case 3:
-        switch (storage)
-        {
-        case GA_STORE_REAL16:
-            normalizeAttribElement<UT_Vector3T<fpreal16>>(attribPtr);
-            break;
-        case GA_STORE_REAL32:
-            normalizeAttribElement<UT_Vector3T<fpreal32>>(attribPtr);
-            break;
-        case GA_STORE_REAL64:
-            normalizeAttribElement<UT_Vector3T<fpreal64>>(attribPtr);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    case 4:
-        switch (storage)
-        {
-        case GA_STORE_REAL16:
-            normalizeAttribElement<UT_Vector4T<fpreal16>>(attribPtr);
-            break;
-        case GA_STORE_REAL32:
-            normalizeAttribElement<UT_Vector4T<fpreal32>>(attribPtr);
-            break;
-        case GA_STORE_REAL64:
-            normalizeAttribElement<UT_Vector4T<fpreal64>>(attribPtr);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    default:
-        return false;
-        break;
-    }
-    return true;
-}
-
-
-void
-setAttrib()
-{
-    if (initAttrib)
-        return;
-
     if (!attribPattern.isstring() || attribPattern.length() == 0)
         return;
 
-    initAttrib = true;
+    hasParm_outAttrib = true;
 
-    
+    this->attribClass = attribClass;
+    //this->attribPattern = attribPattern;
+    this->doNormalize = doNormalize;
+    this->uniScale = uniScale;
+    this->subscribeRatio = subscribeRatio;
+    this->minGrainSize = minGrainSize;
+
+
     GA_Attribute* attribPtr = nullptr;
     for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
     {
@@ -214,84 +102,53 @@ setAttrib()
 
 
 
-
-
-
-
-
-void
-setAttrib(
-    const GA_AttributeOwner const attribClass,
-    const UT_StringHolder& attribPattern
-)
-{
-    this->attribClass = attribClass;
-    this->attribPattern = attribPattern;
-}
-
-void
-setInGroup(
-    const GA_ElementGroup* const geoGroup
-)
-{
-    this->geoGroup = geoGroup;
-}
-
-void
-setInGroup()
-{
-    if (initInGroup)
-        return;
-
-    initInGroup = true;
-
-    GA_ElementGroupUPtr geoGroupUPtr;
-    const GA_ElementGroup* geoGroup = nullptr;
-    GA_GroupType groupType;
-    UT_StringHolder groupName;
-
-    const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribClass);
-    this->geoGroup = geoGroup;
-    geoGroupUPtr.reset(geoGroup);
-}
-
-void
-setInGroup()
-{
-    geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
-}
-
 void
 setRange(
     const GA_SplittableRange& geoSplittableRange
 )
 {
-    initGeoSplittableRange = true;
+    hasParm_geoSplittableRange = true;
     this->geoSplittableRange = geoSplittableRange;
 }
 
 void
 setRange()
 {
-    if (!initInGroup)
+    if (!hasParm_inGroup)
         setInGroup();
-    initGeoSplittableRange = true;
-    const GA_SplittableRange& geoSplittableRange(GA_Range(geo->getIndexMap(attribClass), geoGroup));
+    hasParm_geoSplittableRange = true;
+    //const GA_SplittableRange& geoSplittableRange(GA_Range(geo->getIndexMap(attribClass), geoGroup));
     //const GA_SplittableRange geo0SplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribClass);
     this->geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribClass);
 }
 
 
-
 void
-setParm(
-    const bool doNormalize = true,
-    const fpreal64 uniScale = 1.0
+setInGroup(
+    const GA_Group* const geoGroup = nullptr
 )
 {
-    this->doNormalize = doNormalize;
-    this->uniScale = uniScale;
+    hasParm_inGroup = true;
+    this->geoGroup = geoGroup;
 }
+
+void
+setInGroup(
+    const GA_GroupType groupType,
+    const UT_StringHolder& groupName
+)
+{
+    hasParm_inGroup = true;
+    groupParse.setParm(cookparms);
+    groupParse.setParm(geo);
+    groupParse.setParm(groupName);
+    geoGroup = groupParse.parseConst(groupType);
+    //geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+    setRange();
+}
+
+
+
 
 
 
@@ -300,12 +157,10 @@ setParm(
 void
 compute()
 {
-    if (!initInGroup)
-        setInGroup();
-    if (!initAttrib)
-        setAttrib();
-    if (!initGeoSplittableRange)
+    if (!hasParm_geoSplittableRange)
         setRange();
+    if (!hasParm_outAttrib)
+        return;
 
     if (geoGroup && geoGroup->isEmpty())
         return;
@@ -317,7 +172,7 @@ compute()
 }
 
 void
-bumpDataId()
+bumpDataId() const
 {
     for (int i = 0; i < attribArray.size(); i++)
     {
@@ -326,30 +181,158 @@ bumpDataId()
 }
 
 
+const std::vector<GA_Attribute*>&
+getAttrib() const
+{
+    return attribArray;
+}
+
+
+protected:
+
+    template<typename VECTOR_T>
+    void
+        normalizeAttribElement(
+            GA_Attribute* const attribPtr
+        ) const
+    {
+        UTparallelFor(geoSplittableRange, [attribPtr, this](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (doNormalize)
+                            attrib_ph.value(elemoff).normalize();
+                        attrib_ph.value(elemoff) *= uniScale;
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+    //#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+    //template<typename VECTOR_T>
+    //static void
+    //normalizeAttribElement(
+    //    GA_Attribute* const attribPtr,
+    //    const GA_Range& geoRange,
+    //    const typename VECTOR_T::value_type uniScale = 1
+    //)
+    //{
+    //    GAparallelForEachPage(geoRange, true, [this](GA_PageIterator pit)
+    //    {
+    //        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+    //        GAforEachPageBlock(pit, [&attrib_ph, this](GA_Offset start, GA_Offset end)
+    //        {
+    //            attrib_ph.setPage(start);
+    //            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    //            {
+    //                if (doNormalize)
+    //                    attrib_ph.value(elemoff).normalize();
+    //                attrib_ph.value(elemoff) *= uniScale;
+    //            }
+    //        });
+    //    });
+    //}
+    //
+    //#endif
+
+
+    bool
+        normalizeAttribElement(
+            GA_Attribute* const attribPtr
+        ) const
+    {
+        UT_ASSERT_P(attribPtr);
+        const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
+        switch (attribPtr->getAIFTuple()->getTupleSize(attribPtr))
+        {
+        case 2:
+            switch (storage)
+            {
+            case GA_STORE_REAL16:
+                normalizeAttribElement<UT_Vector2T<fpreal16>>(attribPtr);
+                break;
+            case GA_STORE_REAL32:
+                normalizeAttribElement<UT_Vector2T<fpreal32>>(attribPtr);
+                break;
+            case GA_STORE_REAL64:
+                normalizeAttribElement<UT_Vector2T<fpreal64>>(attribPtr);
+                break;
+            default:
+                return false;
+                break;
+            }
+            break;
+        case 3:
+            switch (storage)
+            {
+            case GA_STORE_REAL16:
+                normalizeAttribElement<UT_Vector3T<fpreal16>>(attribPtr);
+                break;
+            case GA_STORE_REAL32:
+                normalizeAttribElement<UT_Vector3T<fpreal32>>(attribPtr);
+                break;
+            case GA_STORE_REAL64:
+                normalizeAttribElement<UT_Vector3T<fpreal64>>(attribPtr);
+                break;
+            default:
+                return false;
+                break;
+            }
+            break;
+        case 4:
+            switch (storage)
+            {
+            case GA_STORE_REAL16:
+                normalizeAttribElement<UT_Vector4T<fpreal16>>(attribPtr);
+                break;
+            case GA_STORE_REAL32:
+                normalizeAttribElement<UT_Vector4T<fpreal32>>(attribPtr);
+                break;
+            case GA_STORE_REAL64:
+                normalizeAttribElement<UT_Vector4T<fpreal64>>(attribPtr);
+                break;
+            default:
+                return false;
+                break;
+            }
+            break;
+        default:
+            return false;
+            break;
+        }
+        return true;
+    }
+
+
+
 
 private:
     const SOP_NodeVerb::CookParms* cookparms;
     const GA_Detail* geo;
 
 
-    bool initInGroup = false;
-    GA_ElementGroupUPtr geoGroupUPtr;
+    bool hasParm_inGroup = false;
     const GA_Group* geoGroup = nullptr;
-    GA_GroupType groupType;
-    UT_StringHolder groupName;
+    GFE_GroupParse groupParse;
 
 
-    bool initGeoSplittableRange = false;
+    bool hasParm_geoSplittableRange = false;
     GA_SplittableRange geoSplittableRange;
 
 
-    bool initAttrib = false;
-    GOP_Manager gop;
+    bool hasParm_outAttrib = false;
     GA_AttributeOwner attribClass;
-    UT_StringHolder attribPattern;
+    //UT_StringHolder attribPattern;
     std::vector<GA_Attribute*> attribArray;
-
-
     bool doNormalize;
     fpreal64 uniScale;
 
@@ -721,6 +704,8 @@ namespace GFE_NormalizeAttribElement_Namespace {
 
 
 
+
+#endif
 
 
 #endif

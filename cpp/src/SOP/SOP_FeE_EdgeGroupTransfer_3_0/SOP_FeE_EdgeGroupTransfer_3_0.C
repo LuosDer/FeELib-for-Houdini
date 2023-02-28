@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_EdgeGroupTransfer.h"
+#include "GFE/GFE_EdgeGroupTransfer.h"
 
 
 
@@ -244,13 +244,13 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    GA_FeE_EdgeGroupTransfer::edgeGroupTransfer(cookparms,
+    GFE_EdgeGroupTransfer::edgeGroupTransfer(cookparms,
         outGeo0, inGeo0,
         groupType, groupName, edgeGroupName,
         useSnapDist, snapDist,

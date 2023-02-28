@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GFE/GFE_Group.h"
 
 using namespace SOP_FeE_GroupVis_2_0_Namespace;
 
@@ -180,7 +180,7 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    const GA_Group* const geo0Group = GA_FeE_Group::findGroup(outGeo0, groupType, groupName);
+    const GA_Group* const geo0Group = GFE_Group::findGroup(outGeo0, groupType, groupName);
 
     if (!geo0Group)
         return;

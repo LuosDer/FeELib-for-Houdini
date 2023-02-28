@@ -14,7 +14,7 @@
 #include "GU/GU_UVPack.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GFE/GFE_Group.h"
 
 
 using namespace SOP_FeE_UVRectify_2_0_Namespace;
@@ -196,9 +196,9 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (!geo0AttribNames.isstring() || geo0AttribNames.length()==0)
         return;
 
-    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
+    const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(outGeo0);
 
-    //GA_Attribute* uvAttribPtr = GA_FeE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
+    //GA_Attribute* uvAttribPtr = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
     GA_Attribute* geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
     if (!geo0Attrib)
         geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
@@ -210,7 +210,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -230,7 +230,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const GA_EdgeGroup* const seamGroup = GA_FeE_Group::findOrParseEdgeGroupDetached(cookparms, outGeo0, sopparms.getSeamGroup(), gop);
+    const GA_EdgeGroup* const seamGroup = GFE_Group::findOrParseEdgeGroupDetached(cookparms, outGeo0, sopparms.getSeamGroup(), gop);
     
 
 

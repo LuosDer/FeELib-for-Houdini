@@ -11,14 +11,12 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_Range.h"
+#include "GFE/GFE_Attribute.h"
+#include "GFE/GFE_Range.h"
+#include "GFE/GFE_GroupParse.h"
 
 
 using namespace SOP_FeE_UVScaletoWorldSize_0_5_Namespace;
-
-using attribPrecisonF = fpreal32;
-using TAttribTypeV = UT_Vector3T<attribPrecisonF>;
 
 
 static const char *theDsFile = R"THEDSFILE(
@@ -388,7 +386,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -407,9 +405,9 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const fpreal64 uvScaley = sopparms.getUVScaley();
     const fpreal64 uvScalez = sopparms.getUVScalez();
 
-    TAttribTypeV uvScale(doUVScalex, doUVScaley, doUVScalez);
+    UT_Vector3T<fpreal64> uvScale(doUVScalex, doUVScaley, doUVScalez);
     //TAttribTypeV uvScale(uvScalex, uvScaley, uvScalez);
-    uvScale *= TAttribTypeV(uvScalex, uvScaley, uvScalez) * uniScale;
+    uvScale *= UT_Vector3T<fpreal64>(uvScalex, uvScaley, uvScalez) * uniScale;
 
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getUVAttribClass());
@@ -435,22 +433,22 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     if (!areaUVAttribPtr)
         return;
 
-    GA_ROHandleT<attribPrecisonF> areaAttribHandle(areaAttribPtr);
-    GA_ROHandleT<attribPrecisonF> areaUVAttribHandle(areaUVAttribPtr);
+    GA_ROHandleT<fpreal> areaAttribHandle(areaAttribPtr);
+    GA_ROHandleT<fpreal> areaUVAttribHandle(areaUVAttribPtr);
 
 
     GA_ATINumericUPtr uvScaleATI_deleter = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorageF, 3);
     GA_ATINumeric* const uvScaleATIPtr = uvScaleATI_deleter.get();
-    GA_RWHandleT<TAttribTypeV> uvScaleAttribHandle(uvScaleATIPtr);
+    GA_RWHandleT<UT_Vector3T<fpreal64>> uvScaleAttribHandle(uvScaleATIPtr);
 
 
 
     GA_AttributeOwner geo0AttribClassFinal;
-    GA_Attribute* const attribPtr = GA_FeE_Attribute::findAttributePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal);
+    GA_Attribute* const attribPtr = GFE_Attribute::findAttributePointVertex(outGeo0, geo0AttribClass, geo0AttribNameSub, geo0AttribClassFinal);
     if (!attribPtr)
         return;
 
-    GA_RWHandleT<TAttribTypeV> attribHandle(attribPtr);
+    GA_RWHandleT<UT_Vector3T<fpreal64>> attribHandle(attribPtr);
 
 
 
@@ -475,9 +473,9 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const attribPrecisonF areaUV = areaUVAttribHandle.get(elemoff);
-                    const attribPrecisonF area = areaAttribHandle.get(elemoff);
-                    TAttribTypeV uvS = uvScale * sqrt(area / areaUV);
+                    const fpreal64 areaUV = areaUVAttribHandle.get(elemoff);
+                    const fpreal64 area = areaAttribHandle.get(elemoff);
+                    UT_Vector3T<fpreal64> uvS = uvScale * sqrt(area / areaUV);
                     uvS[0] = doUVScalex ? uvS[0] : 1;
                     uvS[1] = doUVScaley ? uvS[1] : 1;
                     uvS[2] = doUVScalez ? uvS[2] : 1;
@@ -488,8 +486,8 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     }
 
     {
-        //const GA_Range geo0Range = GA_FeE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
-        const GA_SplittableRange geo0SplittableRange = GA_FeE_Range::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
+        //const GA_Range geo0Range = GFE_Group::getRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
+        const GA_SplittableRange geo0SplittableRange = GFE_Range::getSplittableRangeByAnyGroup(outGeo0, geo0Group, geo0AttribClassFinal);
         UTparallelFor(geo0SplittableRange, [&outGeo0, &attribHandle, &uvScaleAttribHandle, &geo0AttribClassFinal](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
@@ -498,7 +496,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     const GA_Offset& primoff = geo0AttribClassFinal == GA_ATTRIB_POINT ? outGeo0->vertexPrimitive(outGeo0->pointVertex(elemoff)) : outGeo0->vertexPrimitive(elemoff);
-                    TAttribTypeV uv = attribHandle.get(elemoff) * uvScaleAttribHandle.get(primoff);
+                    UT_Vector3T<fpreal64> uv = attribHandle.get(elemoff) * uvScaleAttribHandle.get(primoff);
                     attribHandle.set(elemoff, uv);
                 }
             }

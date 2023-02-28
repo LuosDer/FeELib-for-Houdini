@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_PolyCut.h"
+#include "GFE/GFE_PolyCut.h"
 
 
 using namespace SOP_FeE_PolyCut_3_0_Namespace;
@@ -300,7 +300,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
-    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
+    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
 
     const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();
@@ -308,7 +308,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GFE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
 
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -343,7 +343,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //}
 
 
-    GA_FeE_PolyCut::polyCut(cookparms, outGeo0, inGeo0,
+    GFE_PolyCut::polyCut(cookparms, outGeo0, inGeo0,
         sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
         cutPoint, mergePrimEndsIfClosed, polyType,
         inStorageI, srcPrimAttribName, srcPointAttribName);

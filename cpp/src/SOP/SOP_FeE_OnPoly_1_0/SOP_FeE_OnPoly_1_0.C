@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_OnPoly.h"
+#include "GFE/GFE_OnPoly.h"
 
 
 using namespace SOP_FeE_OnPoly_1_0_Namespace;
@@ -413,7 +413,7 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool outHitPrimAttrib = sopparms.getOutHitPrimAttrib();
     const bool outHitPrimUVAttrib = sopparms.getOutHitPrimUVAttrib();
     
-    GA_FeE_OnPoly::onPoly(cookparms, outGeo0, inGeo1, sopparms.getPointGroup(), );
+    GFE_OnPoly::onPoly(cookparms, outGeo0, inGeo1, sopparms.getPointGroup(), );
     
 }
 

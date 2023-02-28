@@ -242,10 +242,10 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         subscribeRatio, minGrainSize);
 
 #else
-    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0, &cookparms, subscribeRatio, minGrainSize);
+    GFE_NormalizeAttribElement normalizeAttribElement(cookparms, outGeo0);
     
     normalizeAttribElement.setInGroup(groupType, sopparms.getGroup());
-    normalizeAttribElement.setParm(doNormalize, uniScale);
+    normalizeAttribElement.setAttrib(geo0AttribClass, geo0AttribName, doNormalize, uniScale, subscribeRatio, minGrainSize);
     normalizeAttribElement.compute();
 #endif
 

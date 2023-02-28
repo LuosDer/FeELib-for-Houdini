@@ -11,10 +11,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
-#include "GA_FeE/GA_FeE_VertexNextEquiv.h"
-#include "GA_FeE/GA_FeE_Detail.h"
+#include "GFE/GFE_Group.h"
+#include "GFE/GFE_Attribute.h"
+#include "GFE/GFE_VertexNextEquiv.h"
+#include "GFE/GFE_Detail.h"
 
 using namespace SOP_FeE_AttribCopy_4_0_Namespace;
 
@@ -370,19 +370,19 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const GA_GroupType sourceGroupType = GA_FeE_Type::attributeOwner_groupType(sourceClass);
-    const GA_GroupType destinationGroupType = GA_FeE_Type::attributeOwner_groupType(destinationClass);
+    const GA_GroupType sourceGroupType = GFE_Type::attributeOwner_groupType(sourceClass);
+    const GA_GroupType destinationGroupType = GFE_Type::attributeOwner_groupType(destinationClass);
 
     const UT_StringHolder& copyGroupName = sopparms.getCopyGroupName();
     const UT_StringHolder& newCopyGroupName = sopparms.getUseNewCopyGroupName() ? sopparms.getNewCopyGroupName() : emptyString;
 
 
     GOP_Manager gop;
-    const GA_Group* geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, destinationGroupType, sopparms.getGroup(), gop);
+    const GA_Group* geo0Group = GFE_Group::findOrParseGroupDetached(cookparms, outGeo0, destinationGroupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
-    const GA_Group* geo1Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, inGeo1, destinationGroupType, sopparms.getSrcGroup(), gop);
+    const GA_Group* geo1Group = GFE_Group::findOrParseGroupDetached(cookparms, inGeo1, destinationGroupType, sopparms.getSrcGroup(), gop);
     if (geo1Group && geo1Group->isEmpty())
         return;
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
@@ -411,8 +411,8 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (attribMergeType)
         {
         case AttribMergeType::SET:
-            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
-            GA_FeE_Group::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName, iDAttribName, iDAttribInput);
+            GFE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
+            GFE_Group::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName, iDAttribName, iDAttribInput);
             break;
         case AttribMergeType::ADD:
             break;
@@ -441,8 +441,8 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         switch (attribMergeType)
         {
         case AttribMergeType::SET:
-            GA_FeE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
-            GA_FeE_Group::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
+            GFE_Attribute::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+            GFE_Group::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
             break;
         case AttribMergeType::ADD:
             break;
@@ -466,9 +466,9 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
             break;
         }
     }
-    //GA_FeE_Attribute::copyAttribute(attribSet, copyAttribName, copyPointAttribName, copyVertexAttribName, copyDetailAttribName);
+    //GFE_Attribute::copyAttribute(attribSet, copyAttribName, copyPointAttribName, copyVertexAttribName, copyDetailAttribName);
 
-    //GA_FeE_Group::copyGroup(outGeo0, copyPrimGroupName, copyPointGroupName, copyVertexGroupName, copyEdgeGroupName);
+    //GFE_Group::copyGroup(outGeo0, copyPrimGroupName, copyPointGroupName, copyVertexGroupName, copyEdgeGroupName);
 }
 
 

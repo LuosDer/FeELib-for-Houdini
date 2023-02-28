@@ -18,22 +18,71 @@
 #include "GFE/GFE_Type.h"
 
 
-namespace GFE_SetVectorComponent {
+class GFE_SetVectorComponent {
+
+
+
+public:
+
+    GFE_SetVectorComponent(
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(geo)
+        , cookparms(cookparms)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_SetVectorComponent(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_SetVectorComponent(
+        const GA_Detail* const geo,
+        const GA_ElementGroup* const geoGroup,
+        const GA_AttributeOwner attribClass,
+        const bool doNormalize = true,
+        const fpreal64 uniScale = 1
+    )
+        : geo(geo)
+        , geoGroup(geoGroup)
+        , attribClass(attribClass)
+        , doNormalize(doNormalize)
+        , uniScale(uniScale)
+    {
+    }
+
+
+    ~GFE_SetVectorComponent()
+    {
+    }
+
+
+
+};
+
+namespace GFE_SetVectorComponent_Namespace {
 
 template<typename T>
 static GA_Size
 setVectorComponent(
     const GA_Attribute* const attribPtr,
     const int comp,
-    const T attribVal,
+    const T& attribVal,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 1024
 )
 {
     UT_ASSERT_P(attribPtr);
-    attribPtr
     const GA_SplittableRange geoSplittableRange(GA_Range(attribPtr->getIndexMap()));
-    UTparallelFor(geoSplittableRange, [attribPtr, attribVal](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange, [attribPtr, &attribVal](const GA_SplittableRange& r)
     {
         GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
@@ -57,7 +106,7 @@ setVectorComponent(
     const GA_Attribute* const attribPtr,
     const GA_Attribute* const attribRefPtr,
     const int comp,
-    const T attribVal,
+    const T& attribVal,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 1024
     )

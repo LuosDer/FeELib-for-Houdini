@@ -18,7 +18,7 @@
 
 #include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_GroupPromote.h"
 #include "GFE/GFE_Measure.h"
 #include "GFE/GFE_Range.h"
@@ -30,10 +30,53 @@ class GFE_UVScaletoWorldSize {
 
 
 public:
+
     GFE_UVScaletoWorldSize(
-
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
+        : geo(geo)
+        , cookparms(cookparms)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
 
+    GFE_UVScaletoWorldSize(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+
+    ~GFE_UVScaletoWorldSize()
+    {
+    }
+
+    void
+        setAttrib(
+
+        )
+    {
+        std::vector<GA_Attribute*> uvAttribPtrs;
+    }
+
+    void
+        compute(
+
+        )
+    {
+        std::vector<GA_Attribute*> uvAttribPtrs;
+    }
+
+
+
+
+
+protected:
 
     template<typename T>
     static void
@@ -42,7 +85,7 @@ public:
             const GA_RWHandleT<UT_Vector3T<T>>& uv_h,
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const bool computeUVAreaInPiece = true,
-            const UT_Vector3D& uvScale = UT_Vector3D(1.0),
+            const UT_Vector3T<T>& uvScale = UT_Vector3T<T>(1.0),
             const bool doUVScalex = true,
             const bool doUVScaley = true,
             const bool doUVScalez = true,
@@ -92,46 +135,42 @@ public:
         GA_ROHandleT<T> areaUVAttrib_h(areaUVATIPtr);
         GA_RWHandleT<UT_Vector3T<T>> uvScaleAttrib_h(uvScaleATIPtr);
 
+        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoGroup));
+        UTparallelFor(geoSplittableRange, [geo, &uvScaleAttrib_h, &areaUVAttrib_h, &areaAttrib_h, uvScale, doUVScalex, doUVScaley, doUVScalez](const GA_SplittableRange& r)
         {
-            const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoGroup));
-            UTparallelFor(geoSplittableRange, [geo, &uvScaleAttrib_h, &areaUVAttrib_h, &areaAttrib_h, uvScale, doUVScalex, doUVScaley, doUVScalez](const GA_SplittableRange& r)
+            GA_Offset start, end;
+            UT_Vector3T<T> uvS;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                UT_Vector3T<T> uvS;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        const T area = areaAttrib_h.get(elemoff);
-                        const T areaUV = areaUVAttrib_h.get(elemoff);
-                        uvS = uvScale * sqrt(area / areaUV);
-                        uvS[0] = doUVScalex ? uvS[0] : T(1);
-                        uvS[1] = doUVScaley ? uvS[1] : T(1);
-                        uvS[2] = doUVScalez ? uvS[2] : T(1);
-                        uvScaleAttrib_h.set(elemoff, uvS);
-                    }
+                    const T area = areaAttrib_h.get(elemoff);
+                    const T areaUV = areaUVAttrib_h.get(elemoff);
+                    uvS = uvScale * sqrt(area / areaUV);
+                    uvS[0] = doUVScalex ? uvS[0] : T(1);
+                    uvS[1] = doUVScaley ? uvS[1] : T(1);
+                    uvS[2] = doUVScalez ? uvS[2] : T(1);
+                    uvScaleAttrib_h.set(elemoff, uvS);
                 }
-            }, subscribeRatio, minGrainSize);
-        }
+            }
+        }, subscribeRatio, minGrainSize);
 
+        const GA_AttributeOwner uvAttribClassFinal = uv_h.getAttribute()->getOwner();
+        const bool uvAttribClassFinal_bool = uvAttribClassFinal == GA_ATTRIB_POINT;
+        const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, uvAttribClassFinal);
+        UTparallelFor(geoSplittableRange, [geo, &uv_h, &uvScaleAttrib_h, uvAttribClassFinal_bool](const GA_SplittableRange& r)
         {
-            const GA_AttributeOwner uvAttribClassFinal = uv_h.getAttribute()->getOwner();
-            const bool uvAttribClassFinal_bool = uvAttribClassFinal == GA_ATTRIB_POINT;
-            const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, uvAttribClassFinal);
-            UTparallelFor(geoSplittableRange, [geo, &uv_h, &uvScaleAttrib_h, uvAttribClassFinal_bool](const GA_SplittableRange& r)
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        const GA_Offset primoff = uvAttribClassFinal_bool ? geo->vertexPrimitive(geo->pointVertex(elemoff)) : geo->vertexPrimitive(elemoff);
-                        UT_Vector3T<T> uv = uv_h.get(elemoff) * uvScaleAttrib_h.get(primoff);
-                        uv_h.set(elemoff, uv);
-                    }
+                    const GA_Offset primoff = uvAttribClassFinal_bool ? geo->vertexPrimitive(geo->pointVertex(elemoff)) : geo->vertexPrimitive(elemoff);
+                    UT_Vector3T<T> uv = uv_h.get(elemoff) * uvScaleAttrib_h.get(primoff);
+                    uv_h.set(elemoff, uv);
                 }
-            }, subscribeRatio, minGrainSize);
-        }
+            }
+        }, subscribeRatio, minGrainSize);
 
 #if !GFE_UVScaletoWorldSize_UseDetachedAttrib
         geo->getAttributes().destroyAttribute(areaATIPtr);
@@ -222,8 +261,8 @@ public:
 
 
 private:
+    const SOP_NodeVerb::CookParms* cookparms;
     GA_Detail* const geo;
-    //GA_RWHandleT<UT_Vector3T<T>>* uvAttribPtr;
     std::vector<GA_Attribute*> uvAttribPtrs;
     const GA_PrimitiveGroup* const geoGroup = nullptr;
     const bool computeUVAreaInPiece = true;
@@ -232,20 +271,56 @@ private:
     const bool doUVScaley = true;
     const bool doUVScalez = true;
     const bool outTopoAttrib = false;
-    const exint subscribeRatio = 64;
-    const exint minGrainSize = 64;
 
-    const SOP_NodeVerb::CookParms* cookparms;
     GA_AttributeOwner uvAttribClass;
     const UT_StringHolder* uvAttribName;
     GA_GroupType groupType;
     const UT_StringHolder* groupName;
+
+    exint subscribeRatio;
+    exint minGrainSize;
 };
 
 
 
 
-namespace GFE_UVScaletoWorldSize {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+namespace GFE_UVScaletoWorldSize_Namespace {
 
 
 
@@ -512,7 +587,7 @@ uvScaletoWorldSize(
 )
 {
     GOP_Manager gop;
-    const GA_Group* const geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+    const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
 
     GA_Attribute* const uvAttribPtr = uvScaletoWorldSize(geo, uvAttribClass, uvAttribName, geoGroup,
         computeUVAreaInPiece,

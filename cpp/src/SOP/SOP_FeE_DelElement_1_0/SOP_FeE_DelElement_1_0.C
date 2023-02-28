@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_DelElement.h"
+#include "GFE/GFE_DelElement.h"
 
 
 
@@ -229,7 +229,7 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& groupName = sopparms.getDelElementGroup();
 
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
-    GA_FeE_DelElement::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
+    GFE_DelElement::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
         sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
         delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
     );

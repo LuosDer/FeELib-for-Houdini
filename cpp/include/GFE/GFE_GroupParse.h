@@ -34,13 +34,11 @@ public:
     GFE_GroupParse(
         const GA_Detail* const geo,
         const UT_StringHolder& groupName,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-        bool findGroup = true
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geoConst(static_cast<const GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geoConst, "do not find geo");
     }
@@ -48,13 +46,11 @@ public:
     GFE_GroupParse(
         const GEO_Detail* const geo,
         const UT_StringHolder& groupName,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-        bool findGroup = true
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geoConst(geo)
         , groupName(groupName)
         , cookparms(cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geoConst, "do not find geo");
     }
@@ -62,13 +58,11 @@ public:
     GFE_GroupParse(
         const GU_Detail* const geo,
         const UT_StringHolder& groupName,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-        bool findGroup = true
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geoConst(static_cast<const GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geoConst, "do not find geo");
     }
@@ -76,13 +70,11 @@ public:
     GFE_GroupParse(
         const SOP_NodeVerb::CookParms& cookparms,
         const GA_Detail* const geo,
-        const UT_StringHolder& groupName,
-        bool findGroup = true
+        const UT_StringHolder& groupName
     )
         : geoConst(static_cast<const GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(&cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geoConst, "do not find geo");
     }
@@ -90,13 +82,11 @@ public:
     GFE_GroupParse(
         const SOP_NodeVerb::CookParms& cookparms,
         const GEO_Detail* const geo,
-        const UT_StringHolder& groupName,
-        bool findGroup = true
+        const UT_StringHolder& groupName
     )
         : geoConst(geo)
         , groupName(groupName)
         , cookparms(&cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geoConst, "do not find geo");
     }
@@ -104,13 +94,11 @@ public:
     GFE_GroupParse(
         const SOP_NodeVerb::CookParms& cookparms,
         const GU_Detail* const geo,
-        const UT_StringHolder& groupName,
-        bool findGroup = true
+        const UT_StringHolder& groupName
         )
         : geoConst(static_cast<const GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(&cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geoConst, "do not find geo");
     }
@@ -125,13 +113,11 @@ public:
     GFE_GroupParse(
         GA_Detail* const geo,
         const UT_StringHolder& groupName,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-        bool findGroup = true
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geo(static_cast<GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -139,13 +125,11 @@ public:
     GFE_GroupParse(
         GEO_Detail* const geo,
         const UT_StringHolder& groupName,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-        bool findGroup = true
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geo(geo)
         , groupName(groupName)
         , cookparms(cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -159,7 +143,6 @@ public:
         : geo(static_cast<GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -167,13 +150,11 @@ public:
     GFE_GroupParse(
         const SOP_NodeVerb::CookParms& cookparms,
         GA_Detail* const geo,
-        const UT_StringHolder& groupName,
-        bool findGroup = true
+        const UT_StringHolder& groupName
     )
         : geo(static_cast<GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(&cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -181,13 +162,11 @@ public:
     GFE_GroupParse(
         const SOP_NodeVerb::CookParms& cookparms,
         GEO_Detail* const geo,
-        const UT_StringHolder& groupName,
-        bool findGroup = true
+        const UT_StringHolder& groupName
     )
         : geo(geo)
         , groupName(groupName)
         , cookparms(&cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -195,13 +174,11 @@ public:
     GFE_GroupParse(
         const SOP_NodeVerb::CookParms& cookparms,
         GU_Detail* const geo,
-        const UT_StringHolder& groupName,
-        bool findGroup = true
+        const UT_StringHolder& groupName
     )
         : geo(static_cast<GEO_Detail*>(geo))
         , groupName(groupName)
         , cookparms(&cookparms)
-        , findGroup(findGroup)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -209,11 +186,7 @@ public:
 
 
 
-
-
-
-
-
+    
 
 
     GA_Group*
@@ -310,6 +283,36 @@ public:
 
 
     SYS_FORCE_INLINE
+        const GA_PrimitiveGroup*
+        parsePrimitiveConst()
+    {
+        return static_cast<const GA_PrimitiveGroup*>(parseConst(GA_GROUP_PRIMITIVE));
+    }
+
+    SYS_FORCE_INLINE
+        const GA_PointGroup*
+        parsePointConst()
+    {
+        return static_cast<const GA_PointGroup*>(parseConst(GA_GROUP_POINT));
+    }
+
+    SYS_FORCE_INLINE
+        const GA_VertexGroup*
+        parseVertexConst()
+    {
+        return static_cast<const GA_VertexGroup*>(parseConst(GA_GROUP_VERTEX));
+    }
+
+    SYS_FORCE_INLINE
+        const GA_EdgeGroup*
+        parseEdgeConst()
+    {
+        return static_cast<const GA_EdgeGroup*>(parseConst(GA_GROUP_EDGE));
+    }
+
+
+
+    SYS_FORCE_INLINE
         GA_PrimitiveGroup*
         parsePrimitive()
     {
@@ -341,6 +344,17 @@ public:
 
 
 
+
+
+
+    SYS_FORCE_INLINE
+    void
+        setFindGroup(
+            const bool findGroup
+        )
+    {
+        this->findGroup = findGroup;
+    }
 
     SYS_FORCE_INLINE
         void
@@ -408,7 +422,7 @@ private:
     GEO_Detail* geo;
     const GEO_Detail* geoConst;
 
-    bool findGroup;
+    bool findGroup = true;
     GOP_Manager gop;
     UT_StringHolder groupName;
 };
@@ -440,6 +454,7 @@ private:
 
 
 namespace GFE_GroupParse_Namespace {
+//namespace GFE_GroupParse {
 
 
 

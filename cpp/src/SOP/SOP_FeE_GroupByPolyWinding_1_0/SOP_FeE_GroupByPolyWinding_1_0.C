@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_GroupByPolyWinding.h"
+#include "GFE/GFE_GroupByPolyWinding.h"
 
 using namespace SOP_FeE_GroupByPolyWinding_1_0_Namespace;
 
@@ -256,7 +256,7 @@ sopMethod(SOP_FeE_GroupByPolyWinding_1_0Parms::GroupByPolyWindingMethod parmgrou
     case GroupByPolyWindingMethod::RESTDIR2D_HOUOBB:     return GFE_GroupByPolyWindingMethod_RestDir2D_HouOBB;    break;
     case GroupByPolyWindingMethod::RAY:                  return GFE_GroupByPolyWindingMethod_Ray;                 break;
     }
-    UT_ASSERT_MSG(0, "Unhandled GA_FeE_GroupByPolyWinding METHOD!");
+    UT_ASSERT_MSG(0, "Unhandled GFE_GroupByPolyWinding METHOD!");
     return GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal;
 }
 
@@ -300,9 +300,9 @@ SOP_FeE_GroupByPolyWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
-    //const GA_Storage inStorgeI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
 
-    GA_PrimitiveGroup* const reversedGroup = GA_FeE_GroupByPolyWinding::groupByPolyWinding(cookparms, outGeo0, groupName,
+    GA_PrimitiveGroup* const reversedGroup = GFE_GroupByPolyWinding::groupByPolyWinding(cookparms, outGeo0, groupName,
         //runOverPieces, findInputPieceAttrib, pieceAttribName,
         normalAttribName, method, outReversedGroup, reversedGroupName, reverseGroup, reversePrim,
         subscribeRatio, minGrainSize);

@@ -11,11 +11,11 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_GroupExpand.h"
-#include "GA_FeE/GA_FeE_Measure.h"
-#include "GA_FeE/GA_FeE_Connectivity.h"
-#include "GA_FeE/GA_FeE_TopologyReference.h"
+#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupExpand.h"
+#include "GFE/GFE_Measure.h"
+#include "GFE/GFE_Connectivity.h"
+#include "GFE/GFE_TopologyReference.h"
 
 
 using namespace SOP_FeE_GroupExpand_1_0_Namespace;
@@ -395,8 +395,8 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
-    //const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(PreferredPrecision);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
+    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(PreferredPrecision);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -408,15 +408,15 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     const GA_GroupType geo0finalGroupType = geo0Group->classType();
 
-    GA_Group* expandGroup     = GA_FeE_Group::newGroup(outGeo0, geo0Group, expandGroupName);
-    GA_Group* borderGroup     = GA_FeE_Group::newGroup(outGeo0, geo0Group, borderGroupName);
-    GA_Group* prevBorderGroup = GA_FeE_Group::newGroup(outGeo0, geo0Group, prevBorderGroupName);
+    GA_Group* expandGroup     = GFE_Group::newGroup(outGeo0, geo0Group, expandGroupName);
+    GA_Group* borderGroup     = GFE_Group::newGroup(outGeo0, geo0Group, borderGroupName);
+    GA_Group* prevBorderGroup = GFE_Group::newGroup(outGeo0, geo0Group, prevBorderGroupName);
 
     return outGeo0->getGroupTable(group->classType())->newGroup(groupName);
 
     const bool outTopoAttrib = sopparms.getOutTopoAttrib();
 
-    GA_FeE_GroupExpand::groupExpand(cookparms, outGeo0,
+    GFE_GroupExpand::groupExpand(cookparms, outGeo0,
         expandGroup, borderGroup, prevBorderGroup,
         groupType, groupName0,
         GA_GROUP_EDGE, numsteps,
@@ -430,7 +430,7 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    //GA_FeE_Group::groupBumpDataId(geo0OutGroup);
+    //GFE_Group::groupBumpDataId(geo0OutGroup);
 
 
 }

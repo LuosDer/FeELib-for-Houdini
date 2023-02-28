@@ -16,7 +16,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_Group.h"
+#include "GFE/GFE_Group.h"
 
 
 
@@ -223,11 +223,11 @@ SOP_FeE_SkinIntersectCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     outGeo0->replaceWithPoints(*inGeo0);
     //outGeo0->replaceWith(*inGeo0);
 
-    //GA_PointGroup* groupOneNeb = GA_FeE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
+    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
 
     
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const primGroup = GA_FeE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
+    const GA_PrimitiveGroup* const primGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
     if (primGroup && primGroup->isEmpty())
         return;
 
@@ -236,7 +236,7 @@ SOP_FeE_SkinIntersectCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(outGeo0);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_GroupUnshared.h"
+#include "GFE/GFE_GroupUnshared.h"
 
 using namespace SOP_FeE_GroupUnshared_1_0_Namespace;
 
@@ -282,9 +282,9 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
 
     const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    const GA_Storage inStorageI = GA_FeE_Type::getPreferredStorageI(PreferredPrecision);
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
 
-    GA_FeE_GroupUnshared::groupUnshared(cookparms, outGeo0, groupType, sopparms.getGroup(),
+    GFE_GroupUnshared::groupUnshared(cookparms, outGeo0, groupType, sopparms.getGroup(),
         geo0AttribNames,
         unsharedAttribStorageClass, unsharedAttribClass,
         groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_KuhnMunkres.h"
+#include "GFE/GFE_KuhnMunkres.h"
 
 using namespace SOP_FeE_KuhnMunkres_2_0_Namespace;
 
@@ -212,7 +212,7 @@ SOP_FeE_KuhnMunkres_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     const UT_StringHolder& kmMatchedPointName = sopparms.getKMMatchedPointAttribName();
 
-    GA_FeE_KuhnMunkres::kuhnMunkres(cookparms, outGeo0, inGeo1, kmMatchedPointName, sopparms.getPosAttrib(), sopparms.getPosRefAttrib());
+    GFE_KuhnMunkres::kuhnMunkres(cookparms, outGeo0, inGeo1, kmMatchedPointName, sopparms.getPosAttrib(), sopparms.getPosRefAttrib());
 
     
 

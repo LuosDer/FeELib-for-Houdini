@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_SetVectorComponent.h"
+#include "GFE/GFE_SetVectorComponent.h"
 
 
 using namespace SOP_FeE_SetVectorComponent_1_0_Namespace;
@@ -59,18 +59,35 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribNames"
-        cppname "AttribNames"
-        label   "Attrib Names"
+        name    "attribName"
+        cppname "AttribName"
+        label   "Attrib Name"
         type    string
         default { "N" }
     }
     parm {
-        name    "normalize"
-        cppname "Normalize"
-        label   "Normalize"
-        type    toggle
-        default { "1" }
+        name    "comp"
+        cppname "Comp"
+        label   "Component"
+        type    integer
+        default { 1 }
+        range   { 0! 4! }
+    }
+    parm {
+        name    "constValueI"
+        cppname "ConstValueI"
+        label   "Constant Value I"
+        type    integer
+        default { 0 }
+        range   { -10 10 }
+    }
+    parm {
+        name    "constValueF"
+        cppname "ConstValueF"
+        label   "Constant Value F"
+        type    float
+        default { 0 }
+        range   { -1 1 }
     }
     parm {
         name    "uniScale"
@@ -79,16 +96,6 @@ static const char* theDsFile = R"THEDSFILE(
         type    float
         default { 1 }
         range   { -100 100 }
-    }
-
-
-    parm {
-        name    "kernel"
-        cppname "Kernel"
-        label   "Kernel"
-        type    integer
-        default { 0 }
-        range   { 0! 2 }
     }
 
 
@@ -118,6 +125,7 @@ SOP_FeE_SetVectorComponent_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("attribName"_sh, &SOP_Node::allAttribMenu);
     }
     return templ.templates();
 }
@@ -218,32 +226,31 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
 
     const fpreal64 uniScale = sopparms.getUniScale();
-    const bool doNormalize = sopparms.getNormalize();
-
-    if (!doNormalize && uniScale==1)
-        return;
+    const int comp = sopparms.getComp();
 
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GOP_Manager gop;
-    const GA_Group* const geo0Group = GA_FeE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    
+
+    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+        
+
     if (geo0Group && geo0Group->isEmpty())
         return;
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-
 
     //const exint kernel = sopparms.getKernel();
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    GA_FeE_Attribute::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribNames,
-        doNormalize, uniScale,
-        subscribeRatio, minGrainSize);
+    GFE_SetVectorComponent setVectorComponent(cookparms, outGeo0);
+
+    setVectorComponent.setInGroup(groupType, sopparms.getGroup());
+    setVectorComponent.setAttrib(geo0AttribClass, geo0AttribName, comp, uniScale, subscribeRatio, minGrainSize);
+    setVectorComponent.compute();
 
 
 
