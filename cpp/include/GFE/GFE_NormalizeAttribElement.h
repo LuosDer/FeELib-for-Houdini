@@ -66,29 +66,46 @@ GFE_NormalizeAttribElement(
 }
 
 
+void
+setOutAttrib(
+    const GA_Attribute* attribPtr
+)
+{
+    if (!attribPtr)
+        return;
+
+    attribClass = attribPtr->getOwner();
+    attribArray.clear();
+    attribArray.emplace_back(attribPtr);
+}
 
 void
-setAttrib(
+addOutAttrib(
+    const GA_Attribute* attribPtr
+)
+{
+    if (!attribPtr)
+        return;
+
+    if (attribArray.size() == 0)
+        return setOutAttrib(attribPtr);
+
+    attribArray.emplace_back(attribPtr);
+}
+
+void
+setOutAttrib(
     const GA_AttributeOwner attribClass,
-    const UT_StringHolder& attribPattern,
-    const bool doNormalize = true,
-    const fpreal64 uniScale = 1.0,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 64
+    const UT_StringHolder& attribPattern
 )
 {
     if (!attribPattern.isstring() || attribPattern.length() == 0)
         return;
 
-    hasParm_outAttrib = true;
-
     this->attribClass = attribClass;
     //this->attribPattern = attribPattern;
-    this->doNormalize = doNormalize;
-    this->uniScale = uniScale;
-    this->subscribeRatio = subscribeRatio;
-    this->minGrainSize = minGrainSize;
 
+    attribArray.clear();
 
     GA_Attribute* attribPtr = nullptr;
     for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
@@ -98,6 +115,21 @@ setAttrib(
             continue;
         attribArray.emplace_back(attribPtr);
     }
+}
+
+void
+setComputeParm(
+    const bool doNormalize = true,
+    const fpreal64 uniScale = 1.0,
+    const exint subscribeRatio = 64,
+    const exint minGrainSize = 64
+)
+{
+    hasParm_computeParm = true;
+    this->doNormalize = doNormalize;
+    this->uniScale = uniScale;
+    this->subscribeRatio = subscribeRatio;
+    this->minGrainSize = minGrainSize;
 }
 
 
@@ -157,10 +189,11 @@ setInGroup(
 void
 compute()
 {
+    if (attribArray.size()==0)
+        return;
+
     if (!hasParm_geoSplittableRange)
         setRange();
-    if (!hasParm_outAttrib)
-        return;
 
     if (geoGroup && geoGroup->isEmpty())
         return;
@@ -321,24 +354,23 @@ private:
 
 
     bool hasParm_inGroup = false;
-    const GA_Group* geoGroup = nullptr;
     GFE_GroupParse groupParse;
+    const GA_Group* geoGroup = nullptr;
 
 
     bool hasParm_geoSplittableRange = false;
     GA_SplittableRange geoSplittableRange;
 
 
-    bool hasParm_outAttrib = false;
     GA_AttributeOwner attribClass;
     //UT_StringHolder attribPattern;
     std::vector<GA_Attribute*> attribArray;
+
+    bool hasParm_computeParm = false;
     bool doNormalize;
     fpreal64 uniScale;
-
     exint subscribeRatio;
     exint minGrainSize;
-
 };
 
 

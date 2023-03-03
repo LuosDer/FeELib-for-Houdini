@@ -16,7 +16,7 @@
 
 #include "GFE/GFE_Type.h"
 #include "GFE/GFE_TopologyReference.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
 #include "GEO/GEO_PrimPoly.h"
 
@@ -458,7 +458,7 @@ joinCurve(
 )
 {
     GOP_Manager gop;
-    const GA_PointGroup* const stopPointGroup = GFE_Group::findOrParsePointGroupDetached(cookparms, geo, stopPointGroupName, gop);
+    const GA_PointGroup* const stopPointGroup = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geo, stopPointGroupName, gop);
 
     joinCurve(geo, outSrcPrims, storage, srcPrimsAttribName, keepOrder, keepLoop, closeLoop, stopPointGroup);
 }

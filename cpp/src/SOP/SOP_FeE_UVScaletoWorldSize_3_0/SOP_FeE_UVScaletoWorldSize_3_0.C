@@ -15,6 +15,11 @@
 
 #include "GFE/GFE_UVScaletoWorldSize.h"
 
+
+
+
+
+
 using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
 
 
@@ -367,14 +372,25 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(preferredPrecision);
     
 
+#if 1
+    GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(cookparms, outGeo0);
 
-    const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
-
+    gfeUVScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
+    gfeUVScaletoWorldSize.setOutAttrib(geo0AttribClass, geo0AttribNames);
+    gfeUVScaletoWorldSize.setComputeParm(computeUVAreaInPiece, uvScale,
+        doUVScalex, doUVScaley, doUVScalez,
+        sopparms.getOutTopoAttrib(),
+        subscribeRatio, minGrainSize);
+    gfeUVScaletoWorldSize.compute();
+    gfeUVScaletoWorldSize.bumpDataId();
+#else
     GFE_UVScaletoWorldSize_Namespace::uvScaletoWorldSize(cookparms, outGeo0,
-        geo0AttribClass, geo0AttribNameSub,
+        geo0AttribClass, geo0AttribNames,
         groupType, sopparms.getGroup(),
         computeUVAreaInPiece, uvScale, doUVScalex, doUVScaley, doUVScalez, sopparms.getOutTopoAttrib(),
         subscribeRatio, minGrainSize);
+#endif
+
 }
 
 

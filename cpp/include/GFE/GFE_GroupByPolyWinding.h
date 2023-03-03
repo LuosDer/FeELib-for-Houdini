@@ -12,7 +12,7 @@
 
 #include "GU/GU_RayIntersect.h"
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_RestDir2D.h"
 
 
@@ -457,7 +457,7 @@ groupByPolyWinding(
 		return nullptr;
 
 	GOP_Manager gop;
-	const GA_PrimitiveGroup* const geoPrimGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, geo, groupName, gop);
+	const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, groupName, gop);
 
 	GA_PrimitiveGroup* const reversedGroup = groupByPolyWinding(geo, normalAttribName, geoPrimGroup,
 		//runOverPieces, findInputPieceAttrib, pieceAttribName,

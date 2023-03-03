@@ -13,6 +13,8 @@
 #include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_TopologyReference.h"
 #include "GFE/GFE_VertexNextEquiv.h"
+
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_GroupBoolean.h"
 #include "GFE/GFE_GroupExpand.h"
 
@@ -774,7 +776,7 @@ namespace GFE_Normal {
         )
     {
         GOP_Manager gop;
-        const GA_Group* const geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+        const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
         //const bool hasGroup = !!geoGroup;
 
         if (geoGroup && geoGroup->isEmpty())

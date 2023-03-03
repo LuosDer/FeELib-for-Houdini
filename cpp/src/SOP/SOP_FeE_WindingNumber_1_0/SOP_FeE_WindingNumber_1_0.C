@@ -254,11 +254,13 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         sopWNType(sopparms.getWNType()), sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(), sopparms.getWNAsSolidAngle(), sopparms.getWNNegate()
     );
 #else
-    GFE_WindingNumber gfeWN(cookparms, geoPoint, geoRefMesh, sopcache);
+    GFE_WindingNumber gfeWN(geoPoint, geoRefMesh, sopcache, &cookparms);
 
-    gfeWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    gfeWN.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    gfeWN.setOutAttrib(false, wnStorage, sopparms.getWNAttribName(), sopWNType(sopparms.getWNType()),
+    gfeWN.findOrCreateOutAttrib(wnStorage, false, sopparms.getWNAttribName());
+
+    gfeWN.setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 

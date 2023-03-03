@@ -12,7 +12,7 @@
 //#include "GA/GA_Types.h"
 
 #include "GFE/GFE_Type.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_TopologyReference.h"
 
 #include "GEO/GEO_PrimPoly.h"
@@ -424,14 +424,14 @@ polyCut(
 )
 {
     GOP_Manager gop;
-    GA_PointGroup* const cutPointGroup = GFE_Group::findOrParsePointGroupDetached(cookparms, geoPoint, cutPointGroupName, gop);
+    GA_PointGroup* const cutPointGroup = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geoPoint, cutPointGroupName, gop);
     if (cutPointGroup && cutPointGroup->isEmpty())
     {
         geoPoint->replaceWith(*geoFull);
         return;
     }
 
-    const GA_PrimitiveGroup* const primGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, geoFull, primGroupName, gop);
+    const GA_PrimitiveGroup* const primGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geoFull, primGroupName, gop);
     if (primGroup && primGroup->isEmpty())
     {
         geoPoint->replaceWith(*geoFull);

@@ -11,6 +11,7 @@
 
 
 #include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_GroupPromote.h"
 #include "GFE/GFE_Type.h"
 
@@ -157,7 +158,7 @@ edgeGroupTransfer(
         return;
 
     GOP_Manager gop;
-    const GA_Group* const geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+    const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
     if (geoGroup && geoGroup->isEmpty())
         return;
 

@@ -245,8 +245,10 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     GFE_NormalizeAttribElement normalizeAttribElement(cookparms, outGeo0);
     
     normalizeAttribElement.setInGroup(groupType, sopparms.getGroup());
-    normalizeAttribElement.setAttrib(geo0AttribClass, geo0AttribName, doNormalize, uniScale, subscribeRatio, minGrainSize);
+    normalizeAttribElement.setOutAttrib(geo0AttribClass, geo0AttribName);
+    normalizeAttribElement.setComputeParm(doNormalize, uniScale, subscribeRatio, minGrainSize);
     normalizeAttribElement.compute();
+    normalizeAttribElement.bumpDataId();
 #endif
 
     //GFE_NormalizeAttribElement_Namespace::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,

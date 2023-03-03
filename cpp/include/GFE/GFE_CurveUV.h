@@ -13,7 +13,7 @@
 
 #include "GFE/GFE_Type.h"
 #include "GFE/GFE_Attribute.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_Measure.h"
 
 enum GFE_CurveUVMethod
@@ -238,7 +238,7 @@ curveUV(
 )
 {
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const geoPrimGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, geo, primGroupName, gop);
+    const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, primGroupName, gop);
 
     return curveUV(geo, geoPrimGroup,
         storage, uvAttribClass, uvAttribName, curveUVMethod,

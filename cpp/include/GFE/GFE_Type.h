@@ -34,6 +34,10 @@ enum GFE_PieceAttribSearchOrder
 };
 
 
+
+
+
+
 namespace GFE_Type {
 
 
@@ -211,27 +215,68 @@ getPreferredStorageF(
 }
 
 
-
-template<typename T>
 SYS_FORCE_INLINE
-static T
-radians(
-    const T degrees
+static GA_Storage
+getPreferredStorage(
+    const GA_Precision precision,
+    const GA_StorageClass storageClass
 )
 {
-    return degrees * PI / 180;
+    switch (storageClass)
+    {
+    case GA_STORECLASS_REAL:
+        return getPreferredStorageF(precision);
+        break;
+    case GA_STORECLASS_INT:
+        return getPreferredStorageI(precision);
+        break;
+    default:
+        return getPreferredStorageF(precision);
+        break;
+    }
 }
 
-template<typename T>
 SYS_FORCE_INLINE
-static T
-degrees(
-    const T radians
+static GA_Storage
+getPreferredStorage(
+    const GA_Detail* const geo,
+    const GA_StorageClass storageClass
 )
 {
-    return radians * 180 / PI;
+    return getPreferredStorage(geo->getPreferredPrecision(), storageClass);
 }
 
+
+SYS_FORCE_INLINE
+static GA_Storage
+getPreferredStorageF(
+    const GA_Detail* const geo,
+    const GA_Storage storage
+)
+{
+    return storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageF(geo) : storage;
+}
+
+SYS_FORCE_INLINE
+static GA_Storage
+getPreferredStorageI(
+    const GA_Detail* const geo,
+    const GA_Storage storage
+)
+{
+    return storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
+}
+
+SYS_FORCE_INLINE
+static GA_Storage
+getPreferredStorage(
+    const GA_Detail* const geo,
+    const GA_Storage storage,
+    const GA_StorageClass storageClass
+)
+{
+    return storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorage(geo, storageClass) : storage;
+}
 
 
 
@@ -241,5 +286,23 @@ degrees(
 
 
 } // End of namespace GFE_Type
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif

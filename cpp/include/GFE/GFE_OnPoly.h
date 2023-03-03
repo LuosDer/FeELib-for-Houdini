@@ -18,7 +18,7 @@
 
 #include "GFE/GFE_Type.h"
 #include "GFE/GFE_TopologyReference.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
 
 namespace GFE_OnPoly {
@@ -56,7 +56,7 @@ static void
     UT_ASSERT_P(geoRef);
 
     GOP_Manager gop;
-    const GA_Group* const geoGroup = GFE_Group::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
+    const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
     if (!geoGroup)
         return;
 

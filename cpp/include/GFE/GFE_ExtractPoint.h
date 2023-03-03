@@ -9,15 +9,15 @@
 
 #include "GA/GA_Detail.h"
 
-#include "GFE/GFE_Type.h"
 #include "GFE/GFE_Detail.h"
-#include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
+#include "GFE/GFE_AttributeDelete.h"
 
 
 
 
-namespace GFE_ExtractPoint {
+namespace GFE_ExtractPoint_Namespace {
 
 
 
@@ -306,7 +306,7 @@ extractPoint(
     UT_VERIFY_P(geo);
 
     GOP_Manager gop;
-    GA_PointGroup* group = GFE_Group::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
+    GA_PointGroup* group = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
     extractPoint(geo, group,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         reverseGroup, delInputGroup);
@@ -338,7 +338,7 @@ extractPoint(
     UT_VERIFY_P(srcGeo);
     geo->replaceWithPoints(*srcGeo);
 
-    GFE_Attribute::delStdAttribute(geo, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+    GFE_AttributeDelete::delStdAttribute(geo, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
     GFE_Group::delStdGroup(geo, delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
 
     extractPoint(geo, srcGeo, group,
@@ -368,7 +368,7 @@ extractPoint(
     UT_VERIFY_P(geo);
     geo->replaceWithPoints(*geo);
 
-    GFE_Attribute::delStdAttribute(geo, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+    GFE_AttributeDelete::delStdAttribute(geo, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
     GFE_Group::delStdGroup(geo, delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
 
     extractPoint(geo, geo, group,
@@ -403,7 +403,7 @@ extractPoint(
     UT_VERIFY_P(geo);
 
     GOP_Manager gop;
-    const GA_PointGroup* const group = GFE_Group::findOrParsePointGroupDetached(cookparms, srcGeo, groupName, gop);
+    const GA_PointGroup* const group = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, srcGeo, groupName, gop);
     extractPoint(geo, srcGeo, group,
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
@@ -438,7 +438,7 @@ extractPoint(
     UT_VERIFY_P(geo);
 
     GOP_Manager gop;
-    const GA_PointGroup* const group = GFE_Group::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
+    const GA_PointGroup* const group = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geo, groupName, gop);
     extractPoint(geo, group,
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,

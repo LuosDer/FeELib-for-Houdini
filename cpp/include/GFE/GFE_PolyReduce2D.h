@@ -18,7 +18,7 @@
 #include "GFE/GFE_Array.h"
 #include "GFE/GFE_Math.h"
 #include "GFE/GFE_Detail.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_Adjacency.h"
 #include "GFE/GFE_GroupPromote.h"
 
@@ -789,7 +789,7 @@ polyReduce2D(
 )
 {
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const geoPrimGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, geo, inGroupName, gop);
+    const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, inGroupName, gop);
     if (geoPrimGroup && geoPrimGroup->isEmpty())
         return nullptr;
 

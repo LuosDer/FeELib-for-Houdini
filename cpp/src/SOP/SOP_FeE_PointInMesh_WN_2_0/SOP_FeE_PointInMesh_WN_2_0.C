@@ -396,8 +396,9 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
     pointInMeshWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    pointInMeshWN.getGFEWN().setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName(),
-        sopWNType(sopparms.getWNType()),
+    pointInMeshWN.getGFEWN().setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
+
+    pointInMeshWN.getGFEWN().setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 

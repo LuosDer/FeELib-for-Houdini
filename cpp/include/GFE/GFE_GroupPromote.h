@@ -717,6 +717,78 @@ namespace GFE_GroupPromote {
 
 
 
+    static const GA_Group*
+        groupFindPromoteDetached(
+            const GA_Detail* const geo,
+            const GA_Group* const group,
+            const GA_GroupType groupType,
+            GOP_Manager& gop
+        )
+    {
+        UT_ASSERT_P(geo);
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == groupType)
+            return group;
+
+        const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
+        if (!groupTable)
+            return group;
+
+        GA_Group* const newGroup = groupTable->newDetachedGroup();
+
+        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+
+        gop.appendAdhocGroup(newGroup, true);
+
+        return newGroup;
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_PrimitiveGroup*
+        groupFindPromotePrimitiveDetached(
+            const GA_Detail* const geo,
+            const GA_Group* const group,
+            GOP_Manager& gop
+        )
+    {
+        return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, gop));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_PointGroup*
+        groupFindPromotePointDetached(
+            const GA_Detail* const geo,
+            const GA_Group* const group,
+            GOP_Manager& gop
+        )
+    {
+        return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_POINT, gop));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_VertexGroup*
+        groupFindPromoteVertexDetached(
+            const GA_Detail* const geo,
+            const GA_Group* const group,
+            GOP_Manager& gop
+        )
+    {
+        return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_VERTEX, gop));
+    }
+
+    SYS_FORCE_INLINE
+        static const GA_EdgeGroup*
+        groupFindPromoteEdgeDetached(
+            const GA_Detail* const geo,
+            const GA_Group* const group,
+            GOP_Manager& gop
+        )
+    {
+        return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_EDGE, gop));
+    }
+
 
 
 

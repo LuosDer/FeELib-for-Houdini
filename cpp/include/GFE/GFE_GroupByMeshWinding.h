@@ -15,7 +15,7 @@
 
 
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_Measure.h"
 #include "GFE/GFE_MeshCap.h"
 
@@ -241,7 +241,7 @@ groupByMeshWinding(
 )
 {
 	GOP_Manager gop;
-	const GA_PrimitiveGroup* const geoPrimGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, geo, groupName, gop);
+	const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, groupName, gop);
 
 	const GA_PrimitiveGroup* const reversedGroup = groupByMeshWinding(geo, geoPrimGroup, method,
 		runOverPieces, findInputPieceAttrib, pieceAttribName,

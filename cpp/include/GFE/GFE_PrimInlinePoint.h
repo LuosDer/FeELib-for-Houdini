@@ -13,9 +13,14 @@
 
 //#include "GFE/GFE_Type.h
 #include "GFE/GFE_Detail.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
-#if 1
+
+
+
+
+
+
 
 class GFE_PrimInlinePoint {
 
@@ -23,40 +28,23 @@ class GFE_PrimInlinePoint {
 public:
     GFE_PrimInlinePoint(
         const GA_Detail* const geo,
-        const GA_PrimitiveGroup* const inGroup,
-        GA_PointGroup* const inlinePtGroup,
-        const fpreal threshold_radians,
-        const bool reverseGroup = false,
-        const exint subscribeRatio = 64,
-        const exint minGrainSize = 16
     )
         : geo(geo)
-        , inGroup(inGroup)
-        , inlinePtGroup(inlinePtGroup)
-        , threshold_radians(threshold_radians)
-        , reverseGroup(reverseGroup)
-        , subscribeRatio(subscribeRatio)
-        , minGrainSize(minGrainSize)
     {
     }
 
     ~GFE_PrimInlinePoint()
     {
-        if (!outWN && wnAttribPtr)
-        {
-            geoPoint->getAttributes().destroyAttribute(wnAttribPtr);
-        }
     }
 
     void
         setInGroup(
             const GA_GroupType inGroupType,
-            const UT_StringHolder& inGroupName,
+            const UT_StringHolder& inGroupName
         )
     {
-
-            GOP_Manager gop;
-        const GA_Group* const inGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
+        GOP_Manager gop;
+        const GA_Group* const inGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
         if (inGroup && inGroup->isEmpty())
             return;
         GA_PointGroup* const inlinePtGroup = static_cast<GA_PointGroup*>(geo->pointGroups().newGroup(outGroupName));
@@ -202,20 +190,10 @@ private:
 
 
 
-#else
 
 
 
-
-
-
-
-
-
-
-
-
-namespace GFE_PrimInlinePoint {
+namespace GFE_PrimInlinePoint_Namespace {
 
 
 
@@ -388,7 +366,7 @@ static void
     )
 {
     GOP_Manager gop;
-    const GA_Group* const inGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
+    const GA_Group* const inGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
     if (inGroup && inGroup->isEmpty())
         return;
     groupPrimInlinePoint_fast(geo, inGroup, inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
@@ -520,9 +498,6 @@ static void
 
 
 } // End of namespace GFE_PrimInlinePoint
-
-#endif
-
 
 
 #endif

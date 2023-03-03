@@ -11,7 +11,7 @@
 //#include "GA/GA_PageHandle.h"
 //#include "GA/GA_PageIterator.h"
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
 
 namespace GFE_DelVertex {
@@ -329,7 +329,7 @@ delVertex(
 )
 {
 	GOP_Manager gop;
-	const GA_Group* const geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+	const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
 	if (geoGroup && geoGroup->isEmpty())
 		return;
 

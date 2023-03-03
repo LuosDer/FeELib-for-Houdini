@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 #include "GFE/GFE_Type.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_Measure.h"
 
 
@@ -230,7 +230,7 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GFE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 

@@ -10,7 +10,7 @@
 
 
 //#include "GFE/GFE_Type.h"
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse_Namespace.h"
 #include "GFE/GFE_XformByAttrib.h"
 #include "GFE/GFE_Attribute.h"
 
@@ -113,7 +113,7 @@ matchAxis(
     //, const UT_Vector3T<FLOAT_T>& upVec
 ) {
     GOP_Manager gop;
-    const GA_PointGroup* const pointGroup = GFE_Group::findOrParsePointGroupDetached(cookparms, geo, pointGroupName, gop);
+    const GA_PointGroup* const pointGroup = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geo, pointGroupName, gop);
     //matchAxis(geo, pointGroup, owner, attribName, fromVec, toVec, upVec);
     matchAxis(geo, pointGroup, owner, attribName, fromVec, toVec);
 

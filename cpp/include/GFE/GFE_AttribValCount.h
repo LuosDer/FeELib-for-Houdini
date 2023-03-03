@@ -8,9 +8,6 @@
 
 #include "GA/GA_Detail.h"
 
-#include "GFE/GFE_Type.h"
-#include "GFE/GFE_Group.h"
-#include "GFE/GFE_Range.h"
 
 
 

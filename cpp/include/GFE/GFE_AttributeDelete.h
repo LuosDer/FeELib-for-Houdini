@@ -154,7 +154,7 @@ namespace GFE_AttributeDelete {
         GA_AttributeFilter attribFilterPublic = GA_AttributeFilter::selectAnd(attribFilter, GA_AttributeFilter::selectPublic());
         attribFilterPublic = GA_AttributeFilter::selectOr(attribFilterPublic, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectStandard()));
         //attribFilterPublic = GA_AttributeFilter::selectOr(attribFilterPublic, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectFactory()));
-        GFE_Attribute::keepAttribute(attribSet, attribClass, attribFilterPublic);
+        GFE_AttributeDelete::keepAttribute(attribSet, attribClass, attribFilterPublic);
     }
 
 

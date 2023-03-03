@@ -9,7 +9,6 @@
 #include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
-#include "GFE/GFE_Type.h"
 
 namespace GFE_ExtrudeBorder2D {
 

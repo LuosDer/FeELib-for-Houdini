@@ -14,7 +14,7 @@
 #include "GU/GU_UVPack.h"
 
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
 
 using namespace SOP_FeE_UVRectify_2_0_Namespace;
@@ -210,7 +210,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -230,7 +230,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const GA_EdgeGroup* const seamGroup = GFE_Group::findOrParseEdgeGroupDetached(cookparms, outGeo0, sopparms.getSeamGroup(), gop);
+    const GA_EdgeGroup* const seamGroup = GFE_GroupParse_Namespace::findOrParseEdgeGroupDetached(cookparms, outGeo0, sopparms.getSeamGroup(), gop);
     
 
 

@@ -11,7 +11,7 @@
 #include "GA/GA_Detail.h"
 //#include "GA/GA_Types.h"
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
 
 
@@ -188,13 +188,13 @@ extendCurveStraight(
         return;
 
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const primGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, geo, primGroupName, gop);
+    const GA_PrimitiveGroup* const primGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, primGroupName, gop);
     if (primGroup && primGroup->isEmpty())
     {
         return;
     }
 
-    const GA_PointGroup* const pointGroup = GFE_Group::findOrParsePointGroupDetached(cookparms, geo, pointGroupName, gop);
+    const GA_PointGroup* const pointGroup = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geo, pointGroupName, gop);
     if (pointGroup && pointGroup->isEmpty())
     {
         return;

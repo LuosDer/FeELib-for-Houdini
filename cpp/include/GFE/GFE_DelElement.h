@@ -9,7 +9,7 @@
 
 #include "GA/GA_Detail.h"
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 
 
 
@@ -107,7 +107,7 @@ delElement(
 )
 {
     GOP_Manager gop;
-    GA_Group* geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+    GA_Group* geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
 
     if (!doDelElement)
     {

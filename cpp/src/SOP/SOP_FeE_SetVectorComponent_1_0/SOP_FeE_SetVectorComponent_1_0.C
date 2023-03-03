@@ -63,7 +63,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "AttribName"
         label   "Attrib Name"
         type    string
-        default { "N" }
+        default { "P" }
     }
     parm {
         name    "comp"
@@ -88,14 +88,6 @@ static const char* theDsFile = R"THEDSFILE(
         type    float
         default { 0 }
         range   { -1 1 }
-    }
-    parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
-        type    float
-        default { 1 }
-        range   { -100 100 }
     }
 
 
@@ -225,22 +217,19 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     outGeo0->replaceWith(*inGeo0);
 
 
-    const fpreal64 uniScale = sopparms.getUniScale();
     const int comp = sopparms.getComp();
-
+    const fpreal64 constValueF = sopparms.getConstValueF();
+    const exint constValueI = sopparms.getConstValueI();
+    
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-    const UT_StringHolder& geo0AttribNames = sopparms.getAttribNames();
+    const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
 
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
         
-
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
     //const exint kernel = sopparms.getKernel();
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -249,9 +238,10 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GFE_SetVectorComponent setVectorComponent(cookparms, outGeo0);
 
     setVectorComponent.setInGroup(groupType, sopparms.getGroup());
-    setVectorComponent.setAttrib(geo0AttribClass, geo0AttribName, comp, uniScale, subscribeRatio, minGrainSize);
+    setVectorComponent.setOutAttrib(geo0AttribClass, geo0AttribName);
+    setVectorComponent.setComputeParm(comp, constValueF, subscribeRatio, minGrainSize);
     setVectorComponent.compute();
-
+    setVectorComponent.bumpDataId();
 
 
 

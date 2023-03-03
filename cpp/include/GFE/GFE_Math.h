@@ -18,6 +18,29 @@ namespace GFE_Math {
 
 
 
+template<typename T>
+SYS_FORCE_INLINE
+    static T
+    radians(
+        const T degrees
+    )
+{
+    return degrees * PI / 180;
+}
+
+template<typename T>
+SYS_FORCE_INLINE
+    static T
+    degrees(
+        const T radians
+    )
+{
+    return radians * 180 / PI;
+}
+
+
+
+
 
 #define ReverseROC 1
 

@@ -346,7 +346,7 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 #if 1
     outGeo0->replaceWith(*inGeo0);
-    GFE_ExtractPoint::extractPoint(cookparms, outGeo0, groupName,
+    GFE_ExtractPoint_Namespace::extractPoint(cookparms, outGeo0, groupName,
         delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
         delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
         sopparms.getReverseGroup(), sopparms.getDelInputGroup());

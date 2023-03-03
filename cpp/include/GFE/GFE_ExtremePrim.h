@@ -11,8 +11,6 @@
 #include "GA/GA_Detail.h"
 //#include "GA/GA_Types.h"
 
-#include "GFE/GFE_Type.h"
-
 
 
 namespace GFE_ExtremePrim {

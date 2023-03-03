@@ -9,6 +9,7 @@
 #include "GA/GA_Detail.h"
 
 #include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_GroupUnion.h"
 #include "GFE/GFE_Adjacency.h"
 
@@ -287,15 +288,15 @@ namespace GFE_GroupExpand {
         )
     {
         GOP_Manager gop;
-        const GA_Group* geo0Group = GFE_Group::findOrParseGroupDetached(cookparms, geo, baseGroupType, baseGroupName, gop);
+        const GA_Group* geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, baseGroupType, baseGroupName, gop);
 
         if (!geo0Group)
             return;
 
-        GFE_TopologyReference::outTopoAttrib(geo, );
+        GFE_TopologyReference::outTopoAttrib(geo, outTopoAttrib);
 
 
-        GFE_GroupExpand::groupExpand(geo, expandGroup, borderGroup, prevBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
+        GFE_GroupExpand::groupExpand(geo, expandGroup, borderGroup, prevBorderGroup, geo0Group, GA_GROUP_EDGE, numiter, subscribeRatio, minGrainSize);
         //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
         //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
         cookparms.getNode()->setHighlight(true);
