@@ -344,6 +344,19 @@ public:
     ~GFE_WindingNumber() {};
 
 
+    virtual void
+        reset(
+            GA_Detail* const geo,
+            const GA_Detail* const geoRef0,
+            GFE_WindingNumber_Cache* const sopcache = nullptr,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        resetGeoFilterRef(geoRef0, cookparms);
+        GFE_AttribFilter::reset(geo, cookparms);
+        this->sopcache = sopcache;
+    }
+
     void
         setGroup(
             const GA_PointGroup* const geoPointGroup = nullptr,
@@ -365,18 +378,6 @@ public:
     }
 
 
-    //virtual void
-    //    findOrCreateOutAttrib(
-    //        const bool detached = false,
-    //        const GA_Storage storage = GA_STORE_REAL64,
-    //        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
-    //        const UT_StringHolder& attribName = "__topo_windingNumber"
-    //    ) override
-    //{
-    //    GFE_AttribFilter::findOrCreateOutAttrib(detached, storage, storageClass, attribName);
-    
-    //using GFE_AttribFilter::findOrCreateOutAttrib;
-
     void
         findOrCreateOutAttrib(
             const GA_Storage storage = GA_STORE_REAL64,
@@ -384,12 +385,12 @@ public:
             const UT_StringHolder& attribName = "__topo_windingNumber"
         )
     {
-        GFE_AttribFilter::findOrCreateOutAttrib(GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, detached, attribName);
+        getOutAttribArray().findOrCreate(GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, detached, attribName);
     }
 
 
-    virtual void
-        setComputeParm(
+    void
+        setWNComputeParm(
             const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
             const bool fullAccuracy = false,
             const fpreal64 accuracyScale = 2.0,
@@ -397,8 +398,7 @@ public:
             const bool negate = false
         )
     {
-        hasParm_computeParm = true;
-
+        setHasComputed();
         this->wnType = wnType;
         this->fullAccuracy = fullAccuracy;
         this->accuracyScale = accuracyScale;
@@ -411,6 +411,39 @@ public:
     
 
 
+private:
+
+    virtual bool
+        computeCore() override
+    {
+        if (groupParser.getGroup() && groupParser.getGroup()->isEmpty())
+            return false;
+
+        if (!getOutAttribArray().size())
+            findOrCreateOutAttrib();
+        if (!getOutAttribArray().size())
+            return false;
+
+        for (int i = 0; i < getOutAttribArray().size(); i++)
+        {
+            GA_Attribute* const attribPtr = getOutAttribArray()[i];
+            switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+            {
+            case GA_STORE_REAL16:
+                computeWindingNumber<fpreal32>(attribPtr);
+                break;
+            case GA_STORE_REAL32:
+                computeWindingNumber<fpreal32>(attribPtr);
+                break;
+            case GA_STORE_REAL64:
+                computeWindingNumber<fpreal64>(attribPtr);
+                break;
+            default:
+                break;
+            }
+        }
+        return true;
+    }
 
 
     template<typename FLOAT_T>
@@ -420,8 +453,6 @@ public:
         )
     {
         UT_ASSERT_P(wn_h.isValid());
-
-        hasComputed = true;
 
         //const GA_SplittableRange geoPointRange(geo->getPointRange(groupParser.getPointGroup()));
         const GA_SplittableRange geoPointRange(groupParser.getPointRange());
@@ -509,43 +540,6 @@ public:
 
 
 
-
-
-    virtual bool
-        computeCore() override
-    {
-        if (!attribArray.size())
-            findOrCreateOutAttrib();
-        if (!attribArray.size())
-            return false;
-        if (!hasParm_computeParm)
-            setComputeParm();
-
-        for (int i = 0; i < attribArray.size(); i++)
-        {
-            GA_Attribute* wnAttribPtr = attribArray[i];
-            switch (wnAttribPtr->getAIFTuple()->getStorage(wnAttribPtr))
-            {
-            case GA_STORE_REAL16:
-                computeWindingNumber(GA_RWHandleT<fpreal32>(wnAttribPtr));
-                break;
-            case GA_STORE_REAL32:
-                computeWindingNumber(GA_RWHandleT<fpreal32>(wnAttribPtr));
-                break;
-            case GA_STORE_REAL64:
-                computeWindingNumber(GA_RWHandleT<fpreal64>(wnAttribPtr));
-                break;
-            default:
-                break;
-            }
-        }
-        return true;
-    }
-
-
-
-
-protected:
 
         // UT_SolidAngle doesn't currently have a special case to handle quads correctly
         // as bilinear patches; it always treats them as two triangles, which can result
@@ -1492,11 +1486,11 @@ protected:
 
 
 public:
-    GFE_WindingNumberType wnType;
-    bool fullAccuracy;
-    fpreal accuracyScale;
-    bool asSolidAngle;
-    bool negate;
+    GFE_WindingNumberType wnType = GFE_WNType_XYZ;
+    bool fullAccuracy = false;
+    fpreal64 accuracyScale = 2.0;
+    bool asSolidAngle = false;
+    bool negate = false;
 
 private:
     GFE_WindingNumber_Cache* sopcache;

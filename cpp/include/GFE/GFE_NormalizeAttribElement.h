@@ -13,109 +13,24 @@
 #include "GA/GA_PageHandle.h"
 #include "GA/GA_PageIterator.h"
 
-#include "GFE/GFE_GroupParse.h"
-#include "GFE/GFE_Range.h"
+#include "GFE/GFE_GeoFilter.h"
 
 #if 1
 
 
 
-class GFE_NormalizeAttribElement {
+class GFE_NormalizeAttribElement : public GFE_AttribFilter {
 
 
 public:
 
-    GFE_NormalizeAttribElement(
-        GA_Detail* const geo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : geo(geo)
-        , cookparms(cookparms)
-    {
-        UT_ASSERT_MSG(geo, "do not find geo");
-    }
-
-    GFE_NormalizeAttribElement(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
-    )
-        : geo(geo)
-        , cookparms(&cookparms)
-    {
-        UT_ASSERT_MSG(geo, "do not find geo");
-    }
-
-GFE_NormalizeAttribElement(
-    const GA_Detail* const geo,
-    const GA_ElementGroup* const geoGroup,
-    const GA_AttributeOwner attribClass,
-    const bool doNormalize = true,
-    const fpreal64 uniScale = 1
-)
-    : geo(geo)
-    , geoGroup(geoGroup)
-    , attribClass(attribClass)
-    , doNormalize(doNormalize)
-    , uniScale(uniScale)
-{
-}
+    using GFE_AttribFilter::GFE_AttribFilter;
 
 
 ~GFE_NormalizeAttribElement()
 {
 }
 
-
-void
-setOutAttrib(
-    const GA_Attribute* attribPtr
-)
-{
-    if (!attribPtr)
-        return;
-
-    attribClass = attribPtr->getOwner();
-    attribArray.clear();
-    attribArray.emplace_back(attribPtr);
-}
-
-void
-addOutAttrib(
-    const GA_Attribute* attribPtr
-)
-{
-    if (!attribPtr)
-        return;
-
-    if (attribArray.size() == 0)
-        return setOutAttrib(attribPtr);
-
-    attribArray.emplace_back(attribPtr);
-}
-
-void
-setOutAttrib(
-    const GA_AttributeOwner attribClass,
-    const UT_StringHolder& attribPattern
-)
-{
-    if (!attribPattern.isstring() || attribPattern.length() == 0)
-        return;
-
-    this->attribClass = attribClass;
-    //this->attribPattern = attribPattern;
-
-    attribArray.clear();
-
-    GA_Attribute* attribPtr = nullptr;
-    for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
-    {
-        attribPtr = it.attrib();
-        if (!attribPtr->getName().multiMatch(attribPattern))
-            continue;
-        attribArray.emplace_back(attribPtr);
-    }
-}
 
 void
 setComputeParm(
@@ -125,7 +40,7 @@ setComputeParm(
     const exint minGrainSize = 64
 )
 {
-    hasParm_computeParm = true;
+    setHasComputed();
     this->doNormalize = doNormalize;
     this->uniScale = uniScale;
     this->subscribeRatio = subscribeRatio;
@@ -134,94 +49,27 @@ setComputeParm(
 
 
 
-void
-setRange(
-    const GA_SplittableRange& geoSplittableRange
-)
-{
-    hasParm_geoSplittableRange = true;
-    this->geoSplittableRange = geoSplittableRange;
-}
-
-void
-setRange()
-{
-    if (!hasParm_inGroup)
-        setInGroup();
-    hasParm_geoSplittableRange = true;
-    //const GA_SplittableRange& geoSplittableRange(GA_Range(geo->getIndexMap(attribClass), geoGroup));
-    //const GA_SplittableRange geo0SplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribClass);
-    this->geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribClass);
-}
 
 
-void
-setInGroup(
-    const GA_Group* const geoGroup = nullptr
-)
-{
-    hasParm_inGroup = true;
-    this->geoGroup = geoGroup;
-}
+private:
 
-void
-setInGroup(
-    const GA_GroupType groupType,
-    const UT_StringHolder& groupName
-)
-{
-    hasParm_inGroup = true;
-    groupParse.setParm(cookparms);
-    groupParse.setParm(geo);
-    groupParse.setParm(groupName);
-    geoGroup = groupParse.parseConst(groupType);
-    //geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
-    setRange();
-}
-
-
-
-
-
-
-
-
-void
-compute()
-{
-    if (attribArray.size()==0)
-        return;
-
-    if (!hasParm_geoSplittableRange)
-        setRange();
-
-    if (geoGroup && geoGroup->isEmpty())
-        return;
-
-    for (int i = 0; i < attribArray.size(); i++)
+    virtual bool
+        computeCore() override
     {
-        normalizeAttribElement(attribArray[i]);
+        if (!getOutAttribArray().size())
+            return false;
+
+        if (groupParser.isEmpty())
+            return true;
+
+        const size_t len = getOutAttribArray().size();
+        for (size_t i = 0; i < len; i++)
+        {
+            normalizeAttribElement(getOutAttribArray()[i]);
+        }
+        return true;
     }
-}
 
-void
-bumpDataId() const
-{
-    for (int i = 0; i < attribArray.size(); i++)
-    {
-        attribArray[i]->bumpDataId();
-    }
-}
-
-
-const std::vector<GA_Attribute*>&
-getAttrib() const
-{
-    return attribArray;
-}
-
-
-protected:
 
     template<typename VECTOR_T>
     void
@@ -229,6 +77,7 @@ protected:
             GA_Attribute* const attribPtr
         ) const
     {
+        GA_SplittableRange geoSplittableRange(groupParser.getRange(attribPtr->getOwner()));
         UTparallelFor(geoSplittableRange, [attribPtr, this](const GA_SplittableRange& r)
         {
             GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
@@ -346,31 +195,13 @@ protected:
     }
 
 
-
+public:
+    bool doNormalize = true;
+    fpreal64 uniScale = 1;
 
 private:
-    const SOP_NodeVerb::CookParms* cookparms;
-    const GA_Detail* geo;
-
-
-    bool hasParm_inGroup = false;
-    GFE_GroupParse groupParse;
-    const GA_Group* geoGroup = nullptr;
-
-
-    bool hasParm_geoSplittableRange = false;
-    GA_SplittableRange geoSplittableRange;
-
-
-    GA_AttributeOwner attribClass;
-    //UT_StringHolder attribPattern;
-    std::vector<GA_Attribute*> attribArray;
-
-    bool hasParm_computeParm = false;
-    bool doNormalize;
-    fpreal64 uniScale;
-    exint subscribeRatio;
-    exint minGrainSize;
+    exint subscribeRatio = 64;
+    exint minGrainSize = 64;
 };
 
 

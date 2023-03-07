@@ -27,35 +27,12 @@
 
 
 
-class GFE_UVScaletoWorldSize : public GFE_UVFilter {
+class GFE_UVScaletoWorldSize : public GFE_AttribFilter {
 
 public:
 
-    using GFE_UVFilter::GFE_UVFilter;
-
-    //GFE_UVScaletoWorldSize(
-    //    GA_Detail* const geo,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : GFE_UVFilter(geo, cookparms)
-    //    , GFE_GeoFilter_OutTopoAttrib(geo)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_UVScaletoWorldSize(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GA_Detail* const geo
-    //)
-    //    : GFE_UVFilter(cookparms, geo)
-    //    , GFE_GeoFilter_OutTopoAttrib(geo)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-
-
-
+    using GFE_AttribFilter::GFE_AttribFilter;
+    
 
     void
         setComputeParm(
@@ -69,14 +46,13 @@ public:
             const exint minGrainSize = 64
         )
     {
-        hasParm_computeParm = true;
-        hasComputed = false;
+        setHasComputed();
+        setOutTopoAttrib(outTopoAttrib);
         this->computeUVAreaInPiece = computeUVAreaInPiece;
         this->uvScale = uvScale;
         this->doUVScalex = doUVScalex;
         this->doUVScaley = doUVScaley;
         this->doUVScalez = doUVScalez;
-        this->outTopoAttrib = outTopoAttrib;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
@@ -84,40 +60,48 @@ public:
 
 
 
+
+private:
+
+
     virtual bool
         computeCore() override
     {
         if (!doUVScalex && !doUVScaley && !doUVScalez)
+            return false;
+
+        if (groupParser.isEmpty())
             return true;
 
-        for (int i = 0; i < attribArray.size(); i++)
-        {
-            GA_Attribute* uvAttribPtr = attribArray[i];
+        const size_t len = getOutAttribArrayRef().size();
+        for (size_t i = 0; i < len; ++i) {
+            GA_Attribute* const attribPtr = getOutAttribArrayRef()[i];
             //static_cast<GA_ATINumeric*>(uvAttribPtr)->getStorage();
-            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+            switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
             {
             case GA_STORE_INT32:
-                uvScaletoWorldSize<int>(uvAttribPtr);
+                uvScaletoWorldSize<int>(attribPtr);
                 break;
             case GA_STORE_INT64:
-                uvScaletoWorldSize<int64>(uvAttribPtr);
+                uvScaletoWorldSize<int64>(attribPtr);
                 break;
             case GA_STORE_REAL16:
-                uvScaletoWorldSize<fpreal16>(uvAttribPtr);
+                uvScaletoWorldSize<fpreal16>(attribPtr);
                 break;
             case GA_STORE_REAL32:
-                uvScaletoWorldSize<fpreal32>(uvAttribPtr);
+                uvScaletoWorldSize<fpreal32>(attribPtr);
                 break;
             case GA_STORE_REAL64:
-                uvScaletoWorldSize<fpreal64>(uvAttribPtr);
+                uvScaletoWorldSize<fpreal64>(attribPtr);
                 break;
             default:
                 break;
             }
         }
+        return true;
     }
 
-protected:
+
 
     template<typename T>
     void
@@ -125,7 +109,7 @@ protected:
             const GA_RWHandleT<UT_Vector3T<T>>& uv_h
         )
     {
-        const GA_PrimitiveGroup* geoGroup = groupParser.getPrimGroup();
+        const GA_PrimitiveGroup* const geoGroup = groupParser.getPrimitiveGroup();
 
         const GA_Storage inStorage = uv_h.getAttribute()->getStorage();
 
@@ -209,14 +193,16 @@ protected:
 
 
 
-protected:
-    bool computeUVAreaInPiece;
-    UT_Vector3D uvScale;
-    bool doUVScalex;
-    bool doUVScaley;
-    bool doUVScalez;
-    exint subscribeRatio;
-    exint minGrainSize;
+public:
+    bool computeUVAreaInPiece = true;
+    UT_Vector3D uvScale = UT_Vector3D(1.0);
+    bool doUVScalex = true;
+    bool doUVScaley = true;
+    bool doUVScalez = true;
+
+private:
+    exint subscribeRatio = 64;
+    exint minGrainSize = 64;
 };
 
 

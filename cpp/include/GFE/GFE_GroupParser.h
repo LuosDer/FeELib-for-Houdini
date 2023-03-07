@@ -465,10 +465,52 @@ public:
     //    hasGroup = false;
     //}
 
+    void
+    copy(
+        const GFE_GroupParser& groupParser
+    )
+    {
+        geo = groupParser.geo;
+        cookparms = groupParser.cookparms;
+        gop = groupParser.gop;
 
+        findGroup = groupParser.findGroup;
 
+        hasGroup = groupParser.hasGroup;
+        geoGroup = groupParser.geoGroup;
 
+        hasPrimitiveGroup = groupParser.hasPrimitiveGroup;
+        geoPrimitiveGroup = groupParser.geoPrimitiveGroup;
 
+        hasPointGroup = groupParser.hasPointGroup;
+        geoPointGroup = groupParser.geoPointGroup;
+
+        hasVertexGroup = groupParser.hasVertexGroup;
+        geoVertexGroup = groupParser.geoVertexGroup;
+
+        hasEdgeGroup = groupParser.hasEdgeGroup;
+        geoEdgeGroup = groupParser.geoEdgeGroup;
+    }
+
+    virtual void
+    reset(
+        const GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+    {
+        this->geo = static_cast<const GEO_Detail*>(geo);
+        this->cookparms = cookparms;
+    }
+
+    virtual void
+    reset(
+        const GEO_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+    {
+        this->geo = geo;
+        this->cookparms = cookparms;
+    }
 
     bool
     getFindGroup()
@@ -547,18 +589,17 @@ public:
             return;
         }
 
+        if (!groupName.length())
+        {
+            setAllGroupFull();
+            return;
+        }
+
         if (!groupName.isstring())
         {
             if (cookparms)
                 cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
             hasGroup = false;
-            return;
-        }
-
-
-        if (!groupName.length())
-        {
-            setAllGroupFull();
             return;
         }
 
@@ -625,6 +666,14 @@ public:
     }
 
 
+    bool
+        isEmpty()
+    {
+        if(!hasGroup)
+            return true;
+        return bool(geoGroup) && geoGroup->isEmpty();
+    }
+
 
 
     bool
@@ -640,6 +689,18 @@ public:
             return nullptr;
         return geoGroup;
     }
+
+
+    GA_GroupType
+        groupType()
+    {
+        if (!hasGroup)
+            return GA_GROUP_INVALID;
+        if (!geoGroup)
+            return GA_GROUP_N;
+        return getGroup()->classType();
+    }
+
 
     const GA_PrimitiveGroup*
         getPrimitiveGroup()
@@ -707,13 +768,13 @@ public:
         switch (attribOwner)
         {
         case GA_ATTRIB_PRIMITIVE:
-            getPrimitiveRange();
+            return getPrimitiveRange();
             break;
         case GA_ATTRIB_POINT:
-            getPointRange();
+            return getPointRange();
             break;
         case GA_ATTRIB_VERTEX:
-            getVertexRange();
+            return getVertexRange();
             break;
         default:
             break;

@@ -14,7 +14,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 //#include "GFE/GFE_GroupParse.h"
-#include "GFE/GFE_Range.h"
+//#include "GFE/GFE_Range.h"
 
 #if 1
 
@@ -24,9 +24,6 @@ public:
 
     using GFE_AttribFilter::GFE_AttribFilter;
 
-    ~GFE_SetVectorComponent()
-    {
-    }
 
     void
         setComputeParm(
@@ -36,36 +33,38 @@ public:
             const exint minGrainSize = 1024
         )
     {
-        hasParm_computeParm = true;
+        setHasComputed();
         this->comp = comp;
         this->attribValF = attribValF;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
 
+private:
 
-    void
-        computeCore()
+
+    virtual bool
+        computeCore() override
     {
-        for (int i = 0; i < attribArray.size(); i++)
-        {
-            GA_Attribute* const attribPtr = attribArray[i];
+        if (groupParser.isEmpty())
+            return true;
+
+        size_t len = getOutAttribArrayRef().size();
+        for (size_t i = 0; i < len; ++i) {
+            GA_Attribute* const attribPtr = getOutAttribArrayRef()[i];
             switch (attribPtr->getTupleSize())
             {
             case 2:
                 switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
                 {
                 case GA_STORE_REAL16:
-                    setVectorComponent<UT_Vector2T<fpreal16>>(attribPtr, comp, attribValF,
-                        subscribeRatio, minGrainSize);
+                    setVectorComponent<UT_Vector2T<fpreal16>>(attribPtr, attribValF);
                     break;
                 case GA_STORE_REAL32:
-                    setVectorComponent<UT_Vector2T<fpreal32>>(attribPtr, comp, attribValF,
-                        subscribeRatio, minGrainSize);
+                    setVectorComponent<UT_Vector2T<fpreal32>>(attribPtr, attribValF);
                     break;
                 case GA_STORE_REAL64:
-                    setVectorComponent<UT_Vector2T<fpreal64>>(attribPtr, comp, attribValF,
-                        subscribeRatio, minGrainSize);
+                    setVectorComponent<UT_Vector2T<fpreal64>>(attribPtr, attribValF);
                     break;
                 default:
                     break;
@@ -75,16 +74,13 @@ public:
                 switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
                 {
                 case GA_STORE_REAL16:
-                    setVectorComponent<UT_Vector3T<fpreal16>>(attribPtr, comp, attribValF,
-                        subscribeRatio, minGrainSize);
+                    setVectorComponent<UT_Vector3T<fpreal16>>(attribPtr, attribValF);
                     break;
                 case GA_STORE_REAL32:
-                    setVectorComponent<UT_Vector3T<fpreal32>>(attribPtr, comp, attribValF,
-                        subscribeRatio, minGrainSize);
+                    setVectorComponent<UT_Vector3T<fpreal32>>(attribPtr, attribValF);
                     break;
                 case GA_STORE_REAL64:
-                    setVectorComponent<UT_Vector3T<fpreal64>>(attribPtr, comp, attribValF,
-                        subscribeRatio, minGrainSize);
+                    setVectorComponent<UT_Vector3T<fpreal64>>(attribPtr, attribValF);
                     break;
                 default:
                     break;
@@ -120,24 +116,23 @@ public:
                 break;
             }
         }
+        return true;
     }
-
-protected:
 
     template<typename T>
     void
         setVectorComponent(
             GA_Attribute* const attribPtr,
-            const int comp,
-            const typename T::value_type attribVal,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const typename T::value_type attribVal
         )
     {
         UT_ASSERT_P(attribPtr);
-        const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(&attribPtr->getDetail(), geoGroup, attribPtr->getOwner());
+        const GA_AttributeOwner owner = attribPtr->getOwner();
+        const GA_Range range = groupParser.getRange(owner);
+        const GA_SplittableRange geoSplittableRange(range);
+        //const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(&attribPtr->getDetail(), geoGroup, attribPtr->getOwner());
         //const GA_SplittableRange geoSplittableRange(GA_Range(attribPtr->getIndexMap(), geoGroup));
-        UTparallelFor(geoSplittableRange, [attribPtr, comp, attribVal](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribPtr, this, attribVal](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
@@ -160,19 +155,17 @@ protected:
         setVectorComponent(
             GA_Attribute* const attribPtr,
             const GA_Attribute* const attribRefPtr,
-            const int comp,
-            const typename T::value_type attribVal,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const typename T::value_type attribVal
         )
     {
         UT_ASSERT_P(attribPtr);
         if (!attribRefPtr)
-            return setVectorComponent(attribPtr, attribVal, subscribeRatio, minGrainSize);
+            return setVectorComponent<T>(attribPtr, attribVal);
 
-        const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(&attribPtr->getDetail(), geoGroup, attribPtr->getOwner());
+        const GA_SplittableRange geoSplittableRange = groupParser.getRange(attribPtr->getOwner());
+        //const GA_SplittableRange geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(&attribPtr->getDetail(), geoGroup, attribPtr->getOwner());
         //const GA_SplittableRange geoSplittableRange(GA_Range(attribPtr->getIndexMap(), geoGroup));
-        UTparallelFor(geoSplittableRange, [attribPtr, comp, attribVal, attribRefPtr](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [attribPtr, attribRefPtr, this, attribVal](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attribRef_ph(attribRefPtr);
@@ -193,10 +186,12 @@ protected:
     }
 
 protected:
-    int comp;
-    fpreal attribValF;
-    exint subscribeRatio;
-    exint minGrainSize;
+    int comp = 0;
+    fpreal attribValF = 0;
+
+private:
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
 };
 
 

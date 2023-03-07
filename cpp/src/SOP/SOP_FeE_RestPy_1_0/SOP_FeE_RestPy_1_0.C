@@ -85,12 +85,28 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
+        name    "setConstant"
+        cppname "SetConstant"
+        label   "Set Constant"
         type    toggle
-        default { "0" }
+        default { "1" }
     }
+    parm {
+        name    "constValueF"
+        cppname "ConstValueF"
+        label   "Constant Value F"
+        type    float
+        default { 0 }
+        disablewhen "{ setConstant == 0 }"
+        range   { -1 1 }
+    }
+    //parm {
+    //    name    "uniScale"
+    //    cppname "UniScale"
+    //    label   "Uniform Scale"
+    //    type    toggle
+    //    default { "0" }
+    //}
 
 
     parm {
@@ -231,8 +247,13 @@ SOP_FeE_RestPy_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_AttributeOwner vecAttribClass = sopAttribOwner(sopparms.getVecAttribClass());
     const UT_StringHolder& vecAttribName = sopparms.getVecAttrib();
-    const exint vecComp = sopparms.getVecComp();
+
     const UT_StringHolder& restAttribName = sopparms.getRestAttribName();
+
+
+    const exint vecComp = sopparms.getVecComp();
+    const bool setConstant = sopparms.getSetConstant();
+    const fpreal64 constValueF = sopparms.getConstValueF();
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const UT_StringHolder& groupName = sopparms.getGroup();
@@ -247,10 +268,20 @@ SOP_FeE_RestPy_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+
+    GFE_RestPy restPy(cookparms, outGeo0);
     
-    GA_Attribute* posAttribPtr = GFE_RestPy::restPy<fpreal>(cookparms, outGeo0, groupType, groupName,
-        vecAttribClass, vecAttribName, GA_STORE_INVALID, restAttribName, vecComp, false, 0,
-        subscribeRatio, minGrainSize);
+    restPy.groupParser.setGroup(groupType, groupName);
+    restPy.findOrCreateOutAttrib(vecAttribClass, GA_STORE_INVALID, false, restAttribName);
+    restPy.getInAttribArray().set(vecAttribClass, vecAttribName);
+    restPy.setComputeParm(vecComp, setConstant, constValueF, subscribeRatio, minGrainSize);
+    restPy.computeAndBumpDataId();
+
+
+
+    //GA_Attribute* posAttribPtr = GFE_RestPy::restPy<fpreal>(cookparms, outGeo0, groupType, groupName,
+    //    vecAttribClass, vecAttribName, GA_STORE_INVALID, restAttribName, vecComp, false, 0,
+    //    subscribeRatio, minGrainSize);
 }
 
 

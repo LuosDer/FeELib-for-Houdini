@@ -13,7 +13,7 @@
 
 #include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_Range.h"
-#include "GFE/GFE_GroupParse.h"
+#include "GFE/GFE_GroupParser.h"
 
 
 using namespace SOP_FeE_UVScaletoWorldSize_0_5_Namespace;
@@ -386,7 +386,7 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 

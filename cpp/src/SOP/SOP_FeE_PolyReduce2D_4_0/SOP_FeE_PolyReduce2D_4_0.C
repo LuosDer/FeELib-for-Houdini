@@ -12,7 +12,6 @@
 
 
 
-//#include "GFE/GFE_Detail.h"
 #include "GFE/GFE_PolyReduce2D.h"
 
 
@@ -24,9 +23,9 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "group"
-        cppname "Group"
-        label   "Group"
+        name    "primGroup"
+        cppname "PrimGroup"
+        label   "Prim Group"
         type    string
         default { "" }
         range   { 0 1 }
@@ -130,6 +129,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "ReverseGroup"
         label   "Reverse Group"
         type    toggle
+        disablewhen "{ coverSourcePoly == 1 }"
         default { "0" }
     }
 
@@ -138,6 +138,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "DeletePoint"
         label   "Delete Point"
         type    toggle
+        disablewhen "{ coverSourcePoly == 1 }"
         default { "1" }
     }
 
@@ -182,7 +183,7 @@ SOP_FeE_PolyReduce2D_4_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_PolyReduce2D_4_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
@@ -309,11 +310,11 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const fpreal threshold_maxDist = sopparms.getMaxDist();
 
     const fpreal threshold_maxAngle = sopparms.getMaxAngle();
-    const fpreal threshold_maxAngleRadians = GFE_Type::radians(threshold_maxAngle);
+    //const fpreal threshold_maxAngleRadians = GFE_Math::radians(threshold_maxAngle);
 
 
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
-    const fpreal threshold_inlineAngleRadians = GFE_Type::radians(threshold_inlineAngle);
+    //const fpreal threshold_inlineAngleRadians = GFE_Math::radians(threshold_inlineAngle);
 
     const bool reverseGroup = sopparms.getReverseGroup();
     const bool limitByGeoProperty = sopparms.getLimitByGeoProperty();
@@ -326,30 +327,46 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     const bool delPoint = sopparms.getDeletePoint();
 
+    GFE_PolyReduce2D polyReduce2D(outGeo0, &cookparms);
+    polyReduce2D.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
+    polyReduce2D.getOutGroupArray().findOrCreate(GA_GROUP_POINT, delPoint, sopparms.getPolyReduce2D_GroupName());
 
-    GA_PointGroup* const polyReduce2DPtGroup = GFE_PolyReduce2D::polyReduce2D(cookparms, outGeo0,
-        sopparms.getGroup(), sopparms.getPolyReduce2D_GroupName(),
-        sopparms.getDelInLinePoint(), threshold_inlineAngleRadians,
-        limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
+    polyReduce2D.setComputeParm(
+        sopparms.getDelInLinePoint(), 1e-05,
+        limitByGeoProperty, geoPropertyType, 1e-05, threshold_maxDist,
         limitMinPoint, minPoint,
         coverSourcePoly, reverseGroup, delPoint,
         subscribeRatio, minGrainSize);
 
+    polyReduce2D.primInlinePoint.setThreshold_inlineRadians(threshold_inlineAngle);
+    polyReduce2D.setThreshold_maxRadians(threshold_maxAngle);
 
-    if (delPoint || sopparms.getDelInLinePoint())
-    {
-        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    }
-    
-    if (!delPoint)
-    {
-        cookparms.getNode()->setHighlight(true);
-        if (polyReduce2DPtGroup)
-        {
-            cookparms.select(*polyReduce2DPtGroup);
-            polyReduce2DPtGroup->bumpDataId();
-        }
-    }
+    polyReduce2D.computeAndBumpDataId();
+    polyReduce2D.visualizeOutGroup();
+
+    //GA_PointGroup* const polyReduce2DPtGroup = GFE_PolyReduce2D::polyReduce2D(cookparms, outGeo0,
+    //    sopparms.getGroup(), sopparms.getPolyReduce2D_GroupName(),
+    //    sopparms.getDelInLinePoint(), threshold_inlineAngleRadians,
+    //    limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
+    //    limitMinPoint, minPoint,
+    //    coverSourcePoly, reverseGroup, delPoint,
+    //    subscribeRatio, minGrainSize);
+
+
+    //if (delPoint || sopparms.getDelInLinePoint())
+    //{
+    //    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    //}
+    //
+    //if (!delPoint)
+    //{
+    //    cookparms.getNode()->setHighlight(true);
+    //    if (polyReduce2DPtGroup)
+    //    {
+    //        cookparms.select(*polyReduce2DPtGroup);
+    //        polyReduce2DPtGroup->bumpDataId();
+    //    }
+    //}
 
     //GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 

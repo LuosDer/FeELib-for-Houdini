@@ -24,11 +24,11 @@ enum UVGridify_RowsOrColsNumMethod
     UVGridifyMethod_Columns,
 };
 
-class GFE_UVGridify : public GFE_UVFilter {
+class GFE_UVGridify : public GFE_AttribFilter {
 
 public:
 
-    using GFE_UVFilter::GFE_UVFilter;
+    using GFE_AttribFilter::GFE_AttribFilter;
 
     void
         setComputeParm(
@@ -41,7 +41,7 @@ public:
             const exint minGrainSize = 64
         )
     {
-        hasParm_computeParm = true;
+        setHasComputed();
         this->rowsOrColsNumMethod = rowsOrColsNumMethod;
         this->rowsOrColsNum = rowsOrColsNum;
         this->reverseUVu = reverseUVu;
@@ -52,12 +52,16 @@ public:
     }
 
 
-    virtual void
+private:
+
+
+    virtual bool
         computeCore() override
     {
-        for (int i = 0; i < attribArray.size(); i++)
+        const size_t len = getOutAttribArray().size();
+        for (size_t i = 0; i < len; i++)
         {
-            GA_Attribute* const uvAttribPtr = attribArray[i];
+            GA_Attribute* const uvAttribPtr = getOutAttribArray()[i];
             switch (uvAttribPtr->getTupleSize())
             {
             case 2:
@@ -112,11 +116,9 @@ public:
                 break;
             }
         }
+        return true;
     }
 
-
-
-private:
 
 
     template<typename VECTOR_T, typename POS_VECTOR_T>
@@ -174,7 +176,7 @@ private:
             const GA_RWHandleT<VECTOR_T>& uv_h
         )
     {
-        const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimGroup();
+        const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
         const GA_ROHandleT<UT_Vector3T<fpreal64>> pos_h(geo->getP());
         const bool isPointAttrib = uv_h.getAttribute()->getOwner() == GA_ATTRIB_POINT;
 
@@ -189,8 +191,6 @@ private:
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
                     GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-
-
 
                     GA_Size rows, cols;
                     switch (rowsOrColsNumMethod)
@@ -213,10 +213,6 @@ private:
                     }
                     rows = SYSmax(rows, 0);
                     cols = SYSmax(cols, 0);
-
-
-
-
 
 
                     GA_Size vtxpnum = 0;
@@ -252,24 +248,18 @@ private:
                 }
             }
         }, subscribeRatio, minGrainSize);
-
     }
 
 
 
-
-
-private:
-
-    //bool hasParm_geoSplittableRange = false;
-    //GA_SplittableRange geoSplittableRange;
-
-
+public:
     UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod;
     GA_Size rowsOrColsNum;
     bool reverseUVu;
     bool reverseUVv;
     bool uniScale;
+
+private:
     exint subscribeRatio;
     exint minGrainSize;
 };

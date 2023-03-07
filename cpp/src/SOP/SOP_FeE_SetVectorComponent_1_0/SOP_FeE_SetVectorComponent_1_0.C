@@ -73,14 +73,14 @@ static const char* theDsFile = R"THEDSFILE(
         default { 1 }
         range   { 0! 4! }
     }
-    parm {
-        name    "constValueI"
-        cppname "ConstValueI"
-        label   "Constant Value I"
-        type    integer
-        default { 0 }
-        range   { -10 10 }
-    }
+    //parm {
+    //    name    "constValueI"
+    //    cppname "ConstValueI"
+    //    label   "Constant Value I"
+    //    type    integer
+    //    default { 0 }
+    //    range   { -10 10 }
+    //}
     parm {
         name    "constValueF"
         cppname "ConstValueF"
@@ -219,7 +219,7 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     const int comp = sopparms.getComp();
     const fpreal64 constValueF = sopparms.getConstValueF();
-    const exint constValueI = sopparms.getConstValueI();
+    //const exint constValueI = sopparms.getConstValueI();
     
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
@@ -237,11 +237,10 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     GFE_SetVectorComponent setVectorComponent(cookparms, outGeo0);
 
-    setVectorComponent.setInGroup(groupType, sopparms.getGroup());
-    setVectorComponent.setOutAttrib(geo0AttribClass, geo0AttribName);
+    setVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
+    setVectorComponent.getOutAttribArray().set(geo0AttribClass, geo0AttribName);
     setVectorComponent.setComputeParm(comp, constValueF, subscribeRatio, minGrainSize);
-    setVectorComponent.compute();
-    setVectorComponent.bumpDataId();
+    setVectorComponent.computeAndBumpDataId();
 
 
 

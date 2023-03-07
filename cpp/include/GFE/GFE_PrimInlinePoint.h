@@ -11,9 +11,8 @@
 
 
 
-//#include "GFE/GFE_Type.h
-#include "GFE/GFE_Detail.h"
-#include "GFE/GFE_GroupParse.h"
+#include "GFE/GFE_GeoFilter.h"
+#include "GFE/GFE_Math.h"
 
 
 
@@ -22,161 +21,199 @@
 
 
 
-class GFE_PrimInlinePoint {
-
+class GFE_PrimInlinePoint : public GFE_AttribFilter {
 
 public:
-    GFE_PrimInlinePoint(
-        const GA_Detail* const geo,
-    )
-        : geo(geo)
-    {
-    }
+    using GFE_AttribFilter::GFE_AttribFilter;
 
     ~GFE_PrimInlinePoint()
     {
     }
 
     void
-        setInGroup(
-            const GA_GroupType inGroupType,
-            const UT_StringHolder& inGroupName
+        setThreshold_inlineRadians(
+            fpreal threshold_inlineAngle
         )
     {
-        GOP_Manager gop;
-        const GA_Group* const inGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
-        if (inGroup && inGroup->isEmpty())
-            return;
-        GA_PointGroup* const inlinePtGroup = static_cast<GA_PointGroup*>(geo->pointGroups().newGroup(outGroupName));
-
+        threshold_inlineRadians = GFE_Math::radians(threshold_inlineAngle);
     }
 
-    //groupPrimInlinePoint_fast(geo, groupName, reverseGroup, delGroup);
-    template<typename FLOAT_T>
-    GA_PointGroup*
-        groupPrimInlinePoint_fast()
+    void
+        setComputeParm(
+            const fpreal threshold_inlineRadians,
+            const bool reverseGroup = false,
+            const bool delInlinePoint = false,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 16
+        )
     {
-        UT_ASSERT_P(inlinePtGroup);
-
-        if (!inGroup || inGroup->classType() == GA_GROUP_PRIMITIVE)
-        {
-            groupPrimInlinePoint_fast(geo, static_cast<const GA_PrimitiveGroup*>(inGroup), inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
-        }
-        else
-        {
-            const GA_PrimitiveGroupUPtr promotedPrimGroupUPtr = geo->createDetachedPrimitiveGroup();
-            GA_PrimitiveGroup* promotedPrimGroup = promotedPrimGroupUPtr.get();
-            promotedPrimGroup->combine(inGroup);
-            groupPrimInlinePoint_fast(geo, promotedPrimGroup, inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
-
-            if (inGroup->classType() == GA_GROUP_POINT)
-            {
-                *inlinePtGroup &= *static_cast<const GA_PointGroup*>(inGroup);
-            }
-            else
-            {
-                const GA_PointGroupUPtr promotedPointGroupUPtr = geo->createDetachedPointGroup();
-                GA_PointGroup* promotedPointGroup = promotedPointGroupUPtr.get();
-                promotedPointGroup->combine(inGroup);
-                *inlinePtGroup &= *promotedPointGroup;
-            }
-        }
-
-        const fpreal threshold_dot = cos(threshold_radians);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(inGroup));
-        UTparallelFor(geoSplittableRange0, [this, threshold_dot](const GA_SplittableRange& r)
-            {
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        //const GA_Size numvtx = vertices.size();
-                        const GA_Size lastLastIndex = vertices.size() - 2;
-                        //if (numvtx <= 2)
-                        if (lastLastIndex <= 0)
-                            continue;
-
-                        UT_Vector3T<FLOAT_T> pos, pos_next, dir_prev, dir_next;
-                        GA_Offset ptoff, ptoff_next;
-
-                        const bool closed = geo->getPrimitiveClosedFlag(elemoff);
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 0 : 1));
-                        pos = geo->getPos3T<FLOAT_T>(ptoff);
-
-
-                        ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? vertices.size() - 1 : 0));
-                        pos_next = geo->getPos3T<FLOAT_T>(ptoff_next);
-                        dir_prev = pos - pos_next;
-                        dir_prev.normalize();
-
-                        ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 1 : 2));
-                        pos_next = geo->getPos3T<FLOAT_T>(ptoff_next);
-                        dir_next = pos_next - pos;
-                        dir_next.normalize();
-
-                        for (GA_Size vtxpnum = !closed; vtxpnum < lastLastIndex; ++vtxpnum)
-                        {
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum));
-
-                            inlinePtGroup->setElement(ptoff, dot(dir_prev, dir_next) >= threshold_dot ^ reverseGroup);
-
-                            pos = pos_next;
-
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum + 2));
-                            pos_next = geo->getPos3T<FLOAT_T>(ptoff);
-
-                            dir_prev = dir_next;
-                            dir_next = pos_next - pos;
-                            dir_next.normalize();
-                        }
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex));
-                        inlinePtGroup->setElement(ptoff, dot(dir_prev, dir_next) >= threshold_dot ^ reverseGroup);
-                        if (closed)
-                        {
-                            pos = pos_next;
-
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, 0));
-                            pos_next = geo->getPos3T<FLOAT_T>(ptoff);
-
-                            dir_prev = dir_next;
-                            dir_next = pos_next - pos;
-                            dir_next.normalize();
-
-
-                            ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex + 1));
-                            inlinePtGroup->setElement(ptoff, dot(dir_prev, dir_next) >= threshold_dot ^ reverseGroup);
-                        }
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        inlinePtGroup->invalidateGroupEntries();
+        setHasComputed();
+        this->threshold_inlineRadians = threshold_inlineRadians;
+        this->reverseGroup = reverseGroup;
+        this->delInlinePoint = delInlinePoint;
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
     }
 
+    virtual void
+        visualizeOutGroup() override
+    {
+        if (delInlinePoint)
+            return;
+        GFE_AttribFilter::visualizeOutGroup();
+    }
 
-
-
-
+    virtual void
+        bumpDataId() override
+    {
+        if (delInlinePoint)
+            GFE_AttribFilter::bumpDataIdsForAddOrRemove(true, true, true);
+        else
+            GFE_AttribFilter::bumpDataId();
+    }
 
 
 
 
 private:
 
-    const GA_Detail* geo;
+    virtual bool
+        computeCore() override
+    {
+        if (groupParser.isEmpty())
+            return true;
 
-    GA_PrimitiveGroupUPtr inPrimGroupUPtr;
-    const GA_PrimitiveGroup* inPrimGroup = nullptr;
-    const GA_Group* inGroup = nullptr;
+        const size_t len = getOutGroupArray().size();
+        for (size_t i = 0; i < len; i++)
+        {
+            if (getOutGroupArray()[i]->classType() != GA_GROUP_POINT)
+            {
+                UT_ASSERT_MSG(0, "not correct group type");
+                continue;
+            }
+            GA_PointGroup* const ptr = UTverify_cast<GA_PointGroup*>(getOutGroupArray()[i]);
+            switch (geo->getPreferredPrecision())
+            {
+            case GA_PRECISION_64:
+                groupPrimInlinePoint_fast<fpreal64>(ptr);
+                break;
+            default:
+                groupPrimInlinePoint_fast<fpreal32>(ptr);
+                break;
+            }
+        }
+        return true;
+    }
 
-    GA_PointGroup* inlinePtGroup = nullptr;
 
-    fpreal threshold_radians;
+    //groupPrimInlinePoint_fast(geo, groupName, reverseGroup, delGroup);
+    template<typename FLOAT_T>
+    void
+        groupPrimInlinePoint_fast(
+            GA_PointGroup* const inlinePtGroup
+        )
+    {
+        UT_ASSERT_P(inlinePtGroup);
+        const GA_PrimitiveGroup* const inGroup = groupParser.getPrimitiveGroup();
+
+        const fpreal threshold_dot = cos(threshold_inlineRadians);
+        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(inGroup));
+        UTparallelFor(geoSplittableRange0, [this, inlinePtGroup, threshold_dot](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(elemoff);
+                    //const GA_Size numvtx = vertices.size();
+                    const GA_Size lastLastIndex = vertices.size() - 2;
+                    //if (numvtx <= 2)
+                    if (lastLastIndex <= 0)
+                        continue;
+
+                    UT_Vector3T<FLOAT_T> pos, pos_next, dir_prev, dir_next;
+                    GA_Offset ptoff, ptoff_next;
+
+                    const bool closed = geo->getPrimitiveClosedFlag(elemoff);
+                    ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 0 : 1));
+                    pos = geo->getPos3T<FLOAT_T>(ptoff);
+
+
+                    ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? vertices.size() - 1 : 0));
+                    pos_next = geo->getPos3T<FLOAT_T>(ptoff_next);
+                    dir_prev = pos - pos_next;
+                    dir_prev.normalize();
+
+                    ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 1 : 2));
+                    pos_next = geo->getPos3T<FLOAT_T>(ptoff_next);
+                    dir_next = pos_next - pos;
+                    dir_next.normalize();
+
+                    for (GA_Size vtxpnum = !closed; vtxpnum < lastLastIndex; ++vtxpnum)
+                    {
+                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum));
+
+                        fpreal dotVal = dot(dir_prev, dir_next);
+                        inlinePtGroup->setElement(ptoff, (dotVal >= threshold_dot) ^ reverseGroup);
+
+                        pos = pos_next;
+
+                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum + 2));
+                        pos_next = geo->getPos3T<FLOAT_T>(ptoff);
+
+                        dir_prev = dir_next;
+                        dir_next = pos_next - pos;
+                        dir_next.normalize();
+                    }
+                    ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex));
+                    inlinePtGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_dot) ^ reverseGroup);
+                    if (closed)
+                    {
+                        pos = pos_next;
+
+                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, 0));
+                        pos_next = geo->getPos3T<FLOAT_T>(ptoff);
+
+                        dir_prev = dir_next;
+                        dir_next = pos_next - pos;
+                        dir_next.normalize();
+
+
+                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex + 1));
+                        inlinePtGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_dot) ^ reverseGroup);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+        inlinePtGroup->invalidateGroupEntries();
+
+        if (!groupParser.groupType() == GA_GROUP_PRIMITIVE)
+        {
+            *inlinePtGroup &= *groupParser.getPointGroup();
+        }
+
+        if (delInlinePoint)
+            geo->destroyPointOffsets(geo->getPointRange(inlinePtGroup), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
+    }
+
+
+
+
+
+
+
+public:
+    fpreal threshold_angle = 1e-05;
+    fpreal threshold_inlineRadians = 1e-05;
     bool reverseGroup = false;
-    exint subscribeRatio;
-    exint minGrainSize;
+    bool delInlinePoint = false;
 
+    //GA_PointGroup* inlinePtGroup = nullptr;
+
+private:
+    exint subscribeRatio = 64;
+    exint minGrainSize = 16;
 };
 
 
@@ -204,14 +241,14 @@ groupPrimInlinePoint_fast(
     const GA_Detail* const geo,
     const GA_PrimitiveGroup* const inGroup,
     GA_PointGroup* const inlinePtGroup,
-    const fpreal threshold_radians,
+    const fpreal threshold_inlineRadians,
     const bool reverseGroup = false,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 16
 )
 {
     UT_ASSERT_P(inlinePtGroup);
-    const fpreal threshold_dot = cos(threshold_radians);
+    const fpreal threshold_dot = cos(threshold_inlineRadians);
     const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(inGroup));
     UTparallelFor(geoSplittableRange0, [geo, inlinePtGroup, threshold_dot, reverseGroup](const GA_SplittableRange& r)
     {
@@ -292,7 +329,7 @@ groupPrimInlinePoint_fast(
     const GA_Detail* const geo,
     const GA_Group* const inGroup,
     GA_PointGroup* const inlinePtGroup,
-    const fpreal threshold_radians,
+    const fpreal threshold_inlineRadians,
     const bool reverseGroup = false,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 16
@@ -300,14 +337,14 @@ groupPrimInlinePoint_fast(
 {
     if (!inGroup || inGroup->classType() == GA_GROUP_PRIMITIVE)
     {
-        groupPrimInlinePoint_fast(geo, static_cast<const GA_PrimitiveGroup*>(inGroup), inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+        groupPrimInlinePoint_fast(geo, static_cast<const GA_PrimitiveGroup*>(inGroup), inlinePtGroup, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     }
     else
     {
         const GA_PrimitiveGroupUPtr promotedPrimGroupUPtr = geo->createDetachedPrimitiveGroup();
         GA_PrimitiveGroup* promotedPrimGroup = promotedPrimGroupUPtr.get();
         promotedPrimGroup->combine(inGroup);
-        groupPrimInlinePoint_fast(geo, promotedPrimGroup, inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+        groupPrimInlinePoint_fast(geo, promotedPrimGroup, inlinePtGroup, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
 
         if (inGroup->classType() == GA_GROUP_POINT)
         {
@@ -331,14 +368,14 @@ groupPrimInlinePoint_fast(
     GA_Detail* const geo,
     const GA_Group* const inGroup,
     const UT_StringHolder& outGroupName,
-    const fpreal threshold_radians,
+    const fpreal threshold_inlineRadians,
     const bool reverseGroup = false,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 16
 )
 {
     GA_PointGroup* const inlinePtGroup = static_cast<GA_PointGroup*>(geo->pointGroups().newGroup(outGroupName));
-    groupPrimInlinePoint_fast(static_cast<const GA_Detail*>(geo), inGroup, inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    groupPrimInlinePoint_fast(static_cast<const GA_Detail*>(geo), inGroup, inlinePtGroup, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     return inlinePtGroup;
 }
 
@@ -359,17 +396,17 @@ static void
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
         GA_PointGroup* const inlinePtGroup,
-        const fpreal threshold_radians,
+        const fpreal threshold_inlineRadians,
         const bool reverseGroup = false,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 16
     )
 {
     GOP_Manager gop;
-    const GA_Group* const inGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
+    const GA_Group* const inGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, geo, inGroupType, inGroupName, gop);
     if (inGroup && inGroup->isEmpty())
         return;
-    groupPrimInlinePoint_fast(geo, inGroup, inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    groupPrimInlinePoint_fast(geo, inGroup, inlinePtGroup, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
 }
 
 
@@ -382,7 +419,7 @@ static GA_PointGroup*
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
         const UT_StringHolder& outGroupName,
-        const fpreal threshold_radians,
+        const fpreal threshold_inlineRadians,
         const bool reverseGroup = false,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 16
@@ -397,7 +434,7 @@ static GA_PointGroup*
     if (!inlinePtGroup)
         GA_PointGroup* inlinePtGroup = static_cast<GA_PointGroup*>(pointGroups.newGroup(outGroupName));
 #endif
-    groupPrimInlinePoint_fast(cookparms, geo, inGroupType, inGroupName, inlinePtGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    groupPrimInlinePoint_fast(cookparms, geo, inGroupType, inGroupName, inlinePtGroup, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     return inlinePtGroup;
 }
 
@@ -413,7 +450,7 @@ static GA_PointGroupUPtr
 groupDetachedPrimInlinePoint_fast(
     const GA_Detail* const geo,
     const GA_Group* const inGroup,
-    const fpreal threshold_radians,
+    const fpreal threshold_inlineRadians,
     const bool reverseGroup = false,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 16
@@ -421,7 +458,7 @@ groupDetachedPrimInlinePoint_fast(
 {
     UT_ASSERT_P(geo);
     GA_PointGroupUPtr inlinePtGroupUPtr = geo->createDetachedPointGroup();
-    groupPrimInlinePoint_fast(geo, inGroup, inlinePtGroupUPtr.get(), threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    groupPrimInlinePoint_fast(geo, inGroup, inlinePtGroupUPtr.get(), threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     return inlinePtGroupUPtr;
 }
 
@@ -434,7 +471,7 @@ static GA_PointGroupUPtr
         const GA_Detail* const geo,
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
-        const fpreal threshold_radians,
+        const fpreal threshold_inlineRadians,
         const bool reverseGroup = false,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 16
@@ -442,7 +479,7 @@ static GA_PointGroupUPtr
 {
     UT_ASSERT_P(geo);
     GA_PointGroupUPtr inlinePtGroupUPtr = geo->createDetachedPointGroup();
-    groupPrimInlinePoint_fast(cookparms, geo, inGroupType, inGroupName, inlinePtGroupUPtr.get(), threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    groupPrimInlinePoint_fast(cookparms, geo, inGroupType, inGroupName, inlinePtGroupUPtr.get(), threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     return inlinePtGroupUPtr;
 }
 
@@ -452,25 +489,25 @@ static GA_PointGroupUPtr
 
 
 
-//delPrimInlinePoint_fast(geo, inlinePtGroupUPtr.get(), threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+//delPrimInlinePoint_fast(geo, inlinePtGroupUPtr.get(), threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
 SYS_FORCE_INLINE
 static void
 delPrimInlinePoint_fast(
     GA_Detail* const geo,
     const GA_Group* const inGroup,
-    const fpreal threshold_radians,
+    const fpreal threshold_inlineRadians,
     const bool reverseGroup = false,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 16
 )
 {
-    GA_PointGroupUPtr inlinePtGroupUPtr = groupDetachedPrimInlinePoint_fast(geo, inGroup, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    GA_PointGroupUPtr inlinePtGroupUPtr = groupDetachedPrimInlinePoint_fast(geo, inGroup, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     geo->destroyPointOffsets(geo->getPointRange(inlinePtGroupUPtr.get()), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
 }
 
 
 
-//delPrimInlinePoint_fast(cookparms,geo, inGroupType, inGroupName, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+//delPrimInlinePoint_fast(cookparms,geo, inGroupType, inGroupName, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
 SYS_FORCE_INLINE
 static void
     delPrimInlinePoint_fast(
@@ -478,13 +515,13 @@ static void
         GA_Detail* const geo,
         const GA_GroupType inGroupType,
         const UT_StringHolder& inGroupName,
-        const fpreal threshold_radians,
+        const fpreal threshold_inlineRadians,
         const bool reverseGroup = false,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 16
     )
 {
-    GA_PointGroupUPtr inlinePtGroupUPtr = groupDetachedPrimInlinePoint_fast(cookparms, geo, inGroupType, inGroupName, threshold_radians, reverseGroup, subscribeRatio, minGrainSize);
+    GA_PointGroupUPtr inlinePtGroupUPtr = groupDetachedPrimInlinePoint_fast(cookparms, geo, inGroupType, inGroupName, threshold_inlineRadians, reverseGroup, subscribeRatio, minGrainSize);
     geo->destroyPointOffsets(geo->getPointRange(inlinePtGroupUPtr.get()), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
 }
 

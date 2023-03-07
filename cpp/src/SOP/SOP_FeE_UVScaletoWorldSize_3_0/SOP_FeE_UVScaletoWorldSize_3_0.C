@@ -376,13 +376,13 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(cookparms, outGeo0);
 
     gfeUVScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
-    gfeUVScaletoWorldSize.setOutAttrib(geo0AttribClass, geo0AttribNames);
+    gfeUVScaletoWorldSize.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);
     gfeUVScaletoWorldSize.setComputeParm(computeUVAreaInPiece, uvScale,
         doUVScalex, doUVScaley, doUVScalez,
         sopparms.getOutTopoAttrib(),
         subscribeRatio, minGrainSize);
-    gfeUVScaletoWorldSize.compute();
-    gfeUVScaletoWorldSize.bumpDataId();
+
+    gfeUVScaletoWorldSize.computeAndBumpDataId();
 #else
     GFE_UVScaletoWorldSize_Namespace::uvScaletoWorldSize(cookparms, outGeo0,
         geo0AttribClass, geo0AttribNames,
