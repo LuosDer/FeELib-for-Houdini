@@ -40,7 +40,7 @@ public:
 
     void
         setComputeParm(
-            const fpreal threshold_inlineRadians,
+            const fpreal threshold_inlineRadians = 1e-05,
             const bool reverseGroup = false,
             const bool delInlinePoint = false,
             const exint subscribeRatio = 64,
@@ -204,7 +204,6 @@ private:
 
 
 public:
-    fpreal threshold_angle = 1e-05;
     fpreal threshold_inlineRadians = 1e-05;
     bool reverseGroup = false;
     bool delInlinePoint = false;

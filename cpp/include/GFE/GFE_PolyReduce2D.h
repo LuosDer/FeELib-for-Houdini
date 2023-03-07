@@ -79,7 +79,7 @@ setComputeParm(
 
     const bool limitByGeoProperty = true,
     const PolyReduce2D_GeoPropertyType geoPropertyType = PolyReduce2D_ANGLE,
-    fpreal threshold_maxRadians = 150,
+    fpreal threshold_maxRadians = GFE_Math::radians(150),
     const fpreal threshold_maxDist = 1e-04,
 
     const bool limitMinPoint = false,
@@ -525,31 +525,37 @@ private:
 
                         if (limitByGeoProperty)
                         {
-                            if (geoPropertyType == PolyReduce2D_ANGLE) {
-                                if (weights[minidx] >= threshold_maxAngle) {
-                                    fpreal weight = weights[minidx];
+                            bool flag = false;
+                            //fpreal weight = weights[minidx];
+                            switch (geoPropertyType)
+                            {
+                            case PolyReduce2D_ANGLE:
+                                if (weights[minidx] >= threshold_maxRadians) {
+                                    flag = true;
                                     break;
                                 }
-                            }
-                            else if (geoPropertyType == PolyReduce2D_DIST) {
+                                break;
+                            case PolyReduce2D_DIST:
                                 if (weights[minidx] >= threshold_maxDist) {
-                                    fpreal weight = weights[minidx];
+                                    flag = true;
                                     break;
                                 }
-                            }
-                            else {
+                                break;
+                            case PolyReduce2D_ROC:
 #if GFE_PolyReduce2D_ReverseROC
                                 if (weights[minidx] >= threshold_maxDist) {
-                                    fpreal weight = weights[minidx];
+                                    flag = true;
                                     break;
                                 }
 #else
                                 if (weights[minidx] <= threshold_maxDist) {
-                                    fpreal weight = weights[minidx];
+                                    flag = true;
                                     break;
                                 }
 #endif
                             }
+                            if (flag)
+                                break;
                         }
 
                         if (limitMinPoint && primpointscount <= minPoint) {
@@ -732,7 +738,7 @@ private:
                 polyReduce2DPtGroup->toggleAll(geo->getNumPoints());
             }
 #else
-            if (reverseGroup)
+            if (reverseGroup ^ delPoint)
             {
                 polyReduce2DPtGroup->toggleAll(geo->getNumPoints());
             }
@@ -889,7 +895,6 @@ public:
     bool limitByGeoProperty = true;
     PolyReduce2D_GeoPropertyType geoPropertyType = PolyReduce2D_ANGLE;
     fpreal threshold_maxRadians = GFE_Math::radians(150);
-    fpreal threshold_maxAngle = 150;
     fpreal threshold_maxDist = 1e-04;
 
     bool limitMinPoint = false;
