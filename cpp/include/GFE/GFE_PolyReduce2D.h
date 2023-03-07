@@ -63,77 +63,76 @@ public:
 
 
 
-void
-setThreshold_maxRadians(
-    fpreal threshold_maxAngle
-)
-{
-    threshold_maxRadians = GFE_Math::radians(threshold_maxAngle);
-    threshold_maxRadians = threshold_maxRadians > 0 ? cos(threshold_maxRadians) : 0;
-}
+    void
+    setThreshold_maxCosRadians(
+        fpreal threshold_maxAngle
+    )
+    {
+        threshold_maxCosRadians = threshold_maxAngle > 0 ? cos(GFE_Math::radians(threshold_maxAngle)) : 1.0;
+    }
 
-void
-setComputeParm(
-    const bool delInLinePoint = true,
-    const fpreal threshold_inlineRadians = 1e-05,
+    void
+    setComputeParm(
+        const bool delInLinePoint = true,
+        const fpreal threshold_inlineCosRadians = 1e-05,
 
-    const bool limitByGeoProperty = true,
-    const PolyReduce2D_GeoPropertyType geoPropertyType = PolyReduce2D_ANGLE,
-    fpreal threshold_maxRadians = GFE_Math::radians(150),
-    const fpreal threshold_maxDist = 1e-04,
+        const bool limitByGeoProperty = true,
+        const PolyReduce2D_GeoPropertyType geoPropertyType = PolyReduce2D_ANGLE,
+        fpreal threshold_maxCosRadians = cos(GFE_Math::radians(150.0)),
+        const fpreal threshold_maxDist = 1e-04,
 
-    const bool limitMinPoint = false,
-    const exint minPoint = 10,
+        const bool limitMinPoint = false,
+        const exint minPoint = 10,
 
-    const bool coverSourcePoly = false,
-    const bool reverseGroup = false,
-    const bool delPoint = false,
+        const bool coverSourcePoly = false,
+        const bool reverseGroup = false,
+        const bool delPoint = false,
 
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 16
-)
-{
-    setHasComputed();
-    this->delInLinePoint = delInLinePoint;
-    primInlinePoint.threshold_inlineRadians = threshold_inlineRadians;
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 16
+    )
+    {
+        setHasComputed();
+        this->delInLinePoint = delInLinePoint;
+        primInlinePoint.threshold_inlineCosRadians = threshold_inlineCosRadians;
 
-    this->limitByGeoProperty = limitByGeoProperty;
-    this->geoPropertyType = geoPropertyType;
-    this->threshold_maxRadians = threshold_maxRadians;
-    this->threshold_maxDist = threshold_maxDist;
+        this->limitByGeoProperty = limitByGeoProperty;
+        this->geoPropertyType = geoPropertyType;
+        this->threshold_maxCosRadians = threshold_maxCosRadians;
+        this->threshold_maxDist = threshold_maxDist;
 
-    this->limitMinPoint = limitMinPoint;
-    this->minPoint = minPoint;
+        this->limitMinPoint = limitMinPoint;
+        this->minPoint = minPoint;
 
-    this->coverSourcePoly = coverSourcePoly;
-    this->reverseGroup = reverseGroup;
-    this->delPoint = delPoint;
+        this->coverSourcePoly = coverSourcePoly;
+        this->reverseGroup = reverseGroup;
+        this->delPoint = delPoint;
 
-    this->subscribeRatio = subscribeRatio;
-    this->minGrainSize = minGrainSize;
-}
-
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
 
 
 
 
-virtual void
-bumpDataId() override
-{
-    if (delInLinePoint || coverSourcePoly || delPoint)
-        GFE_AttribFilter::bumpDataIdsForAddOrRemove(true, true, true);
-    else
-        GFE_AttribFilter::bumpDataId();
-}
+
+    virtual void
+    bumpDataId() override
+    {
+        if (delInLinePoint || coverSourcePoly || delPoint)
+            GFE_AttribFilter::bumpDataIdsForAddOrRemove(true, true, true);
+        else
+            GFE_AttribFilter::bumpDataId();
+    }
 
 
-virtual void
-visualizeOutGroup() override
-{
-    if (coverSourcePoly || delPoint)
-        return;
-    GFE_AttribFilter::visualizeOutGroup();
-}
+    virtual void
+    visualizeOutGroup() override
+    {
+        if (coverSourcePoly || delPoint)
+            return;
+        GFE_AttribFilter::visualizeOutGroup();
+    }
 
 
 
@@ -530,7 +529,7 @@ private:
                             switch (geoPropertyType)
                             {
                             case PolyReduce2D_ANGLE:
-                                if (weights[minidx] >= threshold_maxRadians) {
+                                if (weights[minidx] >= threshold_maxCosRadians) {
                                     flag = true;
                                     break;
                                 }
@@ -894,7 +893,7 @@ public:
 
     bool limitByGeoProperty = true;
     PolyReduce2D_GeoPropertyType geoPropertyType = PolyReduce2D_ANGLE;
-    fpreal threshold_maxRadians = GFE_Math::radians(150);
+    fpreal threshold_maxCosRadians = cos(GFE_Math::radians(150.0));
     fpreal threshold_maxDist = 1e-04;
 
     bool limitMinPoint = false;

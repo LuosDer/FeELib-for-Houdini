@@ -338,8 +338,8 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         coverSourcePoly, reverseGroup, delPoint,
         subscribeRatio, minGrainSize);
 
-    polyReduce2D.primInlinePoint.setThreshold_inlineRadians(threshold_inlineAngle);
-    polyReduce2D.setThreshold_maxRadians(threshold_maxAngle);
+    polyReduce2D.primInlinePoint.setThreshold_inlineCosRadians(threshold_inlineAngle);
+    polyReduce2D.setThreshold_maxCosRadians(threshold_maxAngle);
 
     polyReduce2D.computeAndBumpDataId();
     polyReduce2D.visualizeOutGroup();

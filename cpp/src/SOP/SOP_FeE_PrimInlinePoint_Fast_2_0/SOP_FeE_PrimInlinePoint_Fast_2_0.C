@@ -230,7 +230,7 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
     primInlinePoint.setComputeParm(
         1e-05, reverseGroup, delInlinePoint,
         subscribeRatio, minGrainSize);
-    primInlinePoint.setThreshold_inlineRadians(threshold_inlineAngle);
+    primInlinePoint.setThreshold_inlineCosRadians(threshold_inlineAngle);
 
     primInlinePoint.computeAndBumpDataId();
     primInlinePoint.visualizeOutGroup();
