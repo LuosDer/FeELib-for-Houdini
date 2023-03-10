@@ -72,7 +72,7 @@ static const char *theDsFile = R"THEDSFILE(
     parm {
         name    "createSrcPrimAttrib"
         cppname "CreateSrcPrimAttrib"
-        label   "Create Srcin Primitive Attribute"
+        label   "Create Source Primitive Attribute"
         type    toggle
         nolabel
         joinnext
@@ -81,7 +81,7 @@ static const char *theDsFile = R"THEDSFILE(
     parm {
         name    "srcPrimAttribName"
         cppname "SrcPrimAttribName"
-        label   "Srcin Primitive Attribute Name"
+        label   "Source Primitive Attribute Name"
         type    string
         default { "srcPrim" }
         disablewhen "{ createSrcPrimAttrib == 0 }"
@@ -89,7 +89,7 @@ static const char *theDsFile = R"THEDSFILE(
     parm {
         name    "createSrcPointAttrib"
         cppname "CreateSrcPointAttrib"
-        label   "Create Srcin Point Attribute"
+        label   "Create Source Point Attribute"
         type    toggle
         nolabel
         joinnext
@@ -99,7 +99,7 @@ static const char *theDsFile = R"THEDSFILE(
     parm {
         name    "srcPointAttribName"
         cppname "SrcPointAttribName"
-        label   "Srcin Point Attribute Name"
+        label   "Source Point Attribute Name"
         type    string
         default { "srcPoint" }
         disablewhen "{ createSrcPointAttrib == 0 } { cutPoint == 0 }"
@@ -274,12 +274,12 @@ sopPolyType(SOP_FeE_PolyCut_3_0Parms::PolyType parmgrouptype)
     using namespace SOP_FeE_PolyCut_3_0Enums;
     switch (parmgrouptype)
     {
-    case PolyType::AUTO:       return GFE_PolyCutType_AUTO;    break;
-    case PolyType::POLYLINE:   return GFE_PolyCutType_OPEN;    break;
-    case PolyType::POLY:       return GFE_PolyCutType_CLOSE;    break;
+    case PolyType::AUTO:       return GFE_PolyCutType::AUTO;    break;
+    case PolyType::POLYLINE:   return GFE_PolyCutType::OPEN;    break;
+    case PolyType::POLY:       return GFE_PolyCutType::CLOSE;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Poly type!");
-    return GFE_PolyCutType_AUTO;
+    return GFE_PolyCutType::AUTO;
 }
 
 
@@ -293,10 +293,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    //GU_DetailHandle tmpGeoH0;
-    //GU_Detail* tmpGeo0 = new GU_Detail();
-    //tmpGeoH0.allocateAndSet(tmpGeo0);
-    //tmpGeo0->replaceWith(*inGeo0);
+    outGeo0->replaceWith(*inGeo0);
 
 
 
@@ -308,7 +305,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GFE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
 
 
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -329,7 +326,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const bool createSrcPrimAttrib = sopparms.getCreateSrcPrimAttrib();
     const UT_StringHolder& srcPrimAttribName = createSrcPrimAttrib ? sopparms.getSrcPrimAttribName() : emptyStr;
 
-    const bool createSrcPointAttrib = sopparms.getCreateSrcPointAttrib();
+    const bool createSrcPointAttrib = sopparms.getCreateSrcPointAttrib() && cutPoint;
     const UT_StringHolder& srcPointAttribName = createSrcPointAttrib ? sopparms.getSrcPointAttribName() : emptyStr;
 
     
@@ -342,14 +339,27 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //    }
     //}
 
+    GFE_PolyCut polyCut(outGeo0, inGeo0, &cookparms);
+    polyCut.setGroup(sopparms.getCutPointGroup(), sopparms.getPrimGroup());
 
-    GFE_PolyCut::polyCut(cookparms, outGeo0, inGeo0,
-        sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
-        cutPoint, mergePrimEndsIfClosed, polyType,
-        inStorageI, srcPrimAttribName, srcPointAttribName);
+    if (createSrcPrimAttrib)
+        polyCut.createSrcPrimAttrib(srcPrimAttribName);
+
+    if (createSrcPointAttrib)
+        polyCut.createSrcPointAttrib(srcPointAttribName);
+
+    polyCut.groupParser_cutPoint.setDelGroup(delInputPointGroup);
+
+    polyCut.setComputeParm(cutPoint, mergePrimEndsIfClosed, polyType);
+
+    polyCut.computeAndBumpDataIdsForAddOrRemove();
+    //GFE_PolyCut_Namespace::polyCut(cookparms, outGeo0, inGeo0,
+    //    sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
+    //    cutPoint, mergePrimEndsIfClosed, polyType,
+    //    inStorageI, srcPrimAttribName, srcPointAttribName);
 
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    //outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
 
 }
 

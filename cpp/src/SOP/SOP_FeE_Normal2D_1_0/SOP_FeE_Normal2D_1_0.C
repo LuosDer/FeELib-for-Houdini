@@ -12,7 +12,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_Normal.h"
+#include "GFE/GFE_Normal2D.h"
 
 
 
@@ -296,15 +296,15 @@ sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
     using namespace SOP_FeE_Normal2D_1_0Enums;
     switch (attribClass)
     {
-    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder_PRIMITIVE;   break;
-    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder_POINT;       break;
-    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder_VERTEX;      break;
-    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder_DETAIL;      break;
-    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder_POINTVERTEX; break;
-    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder_N;           break;
+    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::PRIMITIVE;   break;
+    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::POINT;       break;
+    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::VERTEX;      break;
+    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::DETAIL;      break;
+    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::POINTVERTEX; break;
+    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::N;           break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
-    return GFE_NormalSearchOrder_INVALID;
+    return GFE_NormalSearchOrder::INVALID;
 }
 
 
@@ -362,7 +362,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
 
-    GFE_NormalSearchOrder geo0Normal3DSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
+    const GFE_NormalSearchOrder geo0Normal3DSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
 
 
 
@@ -409,24 +409,42 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
 
-    const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+    const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
-    const bool copy_orig_if_zero = false;
+    const bool copyOrigIfZero = false;
 
 
-    GA_Attribute* const normal2DAttrib = GFE_Normal::addAttribNormal2D(cookparms, outGeo0, posAttribName,
-        groupType, groupName0, inStorageF, geo0AttribNames,
+
+
+    GFE_Normal2D normal2D(outGeo0, &cookparms);
+    normal2D.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    normal2D.getOutAttribArray().findOrCreateDir(GA_ATTRIB_DETAIL, GA_STORE_INVALID, false, normal3DAttribName);
+
+    normal2D.setComputeParm(
         defaultNormal3D, scaleByTurns, normalize, uniScale,
-
-        useConstantNormal3D, normal3DAttribName,
+        useConstantNormal3D,
         findNormal3D, addNormal3DIfNoFind, geo0Normal3DSearchOrder,
-        cuspangledegrees, method, copy_orig_if_zero,
+        cuspAngleDegrees, method, copyOrigIfZero,
         subscribeRatio, minGrainSize);
 
+    normal2D.computeAndBumpDataId();
+    normal2D.visualizeOutGroup();
 
-    GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
-    normal2DAttrib->bumpDataId();
+    //GA_Attribute* const normal2DAttrib = GFE_Normal2D_Namespace::addAttribNormal2D(cookparms, outGeo0, posAttribName,
+    //    groupType, groupName0, inStorageF, geo0AttribNames,
+    //    defaultNormal3D, scaleByTurns, normalize, uniScale,
+
+    //    useConstantNormal3D, normal3DAttribName,
+    //    findNormal3D, addNormal3DIfNoFind, geo0Normal3DSearchOrder,
+    //    cuspAngleDegrees, method, copyOrigIfZero,
+    //    subscribeRatio, minGrainSize);
+
+
+    //GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
+
+    //normal2DAttrib->bumpDataId();
 }
 
 

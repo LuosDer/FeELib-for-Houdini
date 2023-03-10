@@ -42,12 +42,12 @@
 
 
 
-enum GFE_WindingNumberType
+enum class GFE_WNType
 {
-    GFE_WNType_XYZ,
-    GFE_WNType_XY,
-    GFE_WNType_YZ,
-    GFE_WNType_ZX,
+    XYZ,
+    XY,
+    YZ,
+    ZX,
 };
 
 
@@ -327,7 +327,7 @@ class GFE_WindingNumber : public GFE_AttribFilter, public GFE_GeoFilterRef {
 
 public:
 
-    //using GFE_GeoFilter::GFE_GeoFilter;
+    //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_WindingNumber(
         GA_Detail* const geo,
@@ -341,7 +341,9 @@ public:
     {
     }
 
-    ~GFE_WindingNumber() {};
+    ~GFE_WindingNumber()
+    {
+    }
 
 
     virtual void
@@ -385,13 +387,13 @@ public:
             const UT_StringHolder& attribName = "__topo_windingNumber"
         )
     {
-        getOutAttribArray().findOrCreate(GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, detached, attribName);
+        getOutAttribArray().findOrCreateTuple(GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, detached, attribName);
     }
 
 
     void
         setWNComputeParm(
-            const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
+            const GFE_WNType wnType = GFE_WNType::XYZ,
             const bool fullAccuracy = false,
             const fpreal64 accuracyScale = 2.0,
             const bool asSolidAngle = false,
@@ -416,13 +418,13 @@ private:
     virtual bool
         computeCore() override
     {
-        if (groupParser.getGroup() && groupParser.getGroup()->isEmpty())
-            return false;
-
         if (!getOutAttribArray().size())
             findOrCreateOutAttrib();
         if (!getOutAttribArray().size())
             return false;
+
+        if (groupParser.isEmpty())
+            return true;
 
         for (int i = 0; i < getOutAttribArray().size(); i++)
         {
@@ -459,7 +461,7 @@ private:
         const GA_PrimitiveGroup* geoRefMeshGroup = groupParserRef0.getPrimitiveGroup();
 
         return;
-        if (wnType == GFE_WNType_XYZ)
+        if (wnType == GFE_WNType::XYZ)
         {
             // NOTE: The negation is because Houdini's normals are
             //       left-handed with respect to the winding order,
@@ -1486,7 +1488,7 @@ private:
 
 
 public:
-    GFE_WindingNumberType wnType = GFE_WNType_XYZ;
+    GFE_WNType wnType = GFE_WNType::XYZ;
     bool fullAccuracy = false;
     fpreal64 accuracyScale = 2.0;
     bool asSolidAngle = false;
@@ -2499,7 +2501,7 @@ static void
         GFE_WindingNumber_Cache* sopcache = nullptr,
         const GA_PointGroup* const geoPointGroup = nullptr,
         const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
-        const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
+        const GFE_WNType wnType = GFE_WNType::XYZ,
         const bool fullAccuracy = false,
         const fpreal accuracyScale = 2.0,
         const bool asSolidAngle = false,
@@ -2512,7 +2514,7 @@ static void
 
     const GA_SplittableRange geoPointRange(geoPoint->getPointRange(geoPointGroup));
 
-    if (wnType == GFE_WNType_XYZ)
+    if (wnType == GFE_WNType::XYZ)
     {
         // NOTE: The negation is because Houdini's normals are
         //       left-handed with respect to the winding order,
@@ -2600,7 +2602,7 @@ computeWindingNumber(
     GFE_WindingNumber_Cache* sopcache = nullptr,
     const GA_PointGroup* const geoPointGroup = nullptr,
     const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
-    const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
+    const GFE_WNType wnType = GFE_WNType::XYZ,
     const bool fullAccuracy = false,
     const fpreal accuracyScale = 2.0,
     const bool asSolidAngle = false,
@@ -2644,7 +2646,7 @@ addAttribWindingNumber(
     const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
     const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringHolder& wnAttribName = "__topo_windingNumber",
-    const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
+    const GFE_WNType wnType = GFE_WNType::XYZ,
     const bool fullAccuracy = false,
     const fpreal accuracyScale = 2.0,
     const bool asSolidAngle = false,
@@ -2690,7 +2692,7 @@ addAttribWindingNumber(
     GFE_WindingNumber_Cache* const sopcache = nullptr,
     const GA_Storage storage = GA_STORE_REAL64,
     const UT_StringHolder& wnAttribName = "__topo_windingNumber",
-    const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
+    const GFE_WNType wnType = GFE_WNType::XYZ,
     const bool fullAccuracy = false,
     const fpreal accuracyScale = 2.0,
     const bool asSolidAngle = false,

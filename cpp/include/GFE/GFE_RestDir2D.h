@@ -9,28 +9,290 @@
 //#include "GFE/GFE_RestDir2D.h"
 
 #include "GA/GA_Detail.h"
+
+
+
 #include "GA/GA_PageHandle.h"
 #include "GA/GA_PageIterator.h"
 #include "UT/UT_OBBox.h"
 
 
-#include "GEO/GEO_Normal.h"
+
+#include "GFE/GFE_GeoFilter.h"
+#include "GFE/GFE_Normal3D.h"
 
 
-#include "GFE/GFE_Type.h"
-#include "GFE/GFE_GroupParse.h"
-#include "GFE/GFE_GroupPromote.h"
-
-
-
-enum GFE_RestDir2D_Method
+enum class GFE_RestDir2D_Method
 {
-	GFE_RestDir2D_AvgNormal,
-	GFE_RestDir2D_HouOBB,
+	AvgNormal,
+	HouOBB,
 };
 
 
-namespace GFE_RestDir2D {
+
+
+
+
+class GFE_RestDir2D : public GFE_AttribFilter {
+
+public:
+	GFE_RestDir2D(
+		GA_Detail* const geo,
+		const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	)
+		: GFE_AttribFilter(geo, cookparms)
+		, normal3D(geo, cookparms)
+	{
+	}
+
+	~GFE_RestDir2D()
+	{
+	}
+
+	void
+		setComputeParm(
+			const GFE_RestDir2D_Method method = GFE_RestDir2D_Method::AvgNormal,
+			const exint subscribeRatio = 64,
+			const exint minGrainSize = 1024
+		)
+	{
+		setHasComputed();
+		//setInAttribBumpDataId(method == GFE_RestDir2D_Method::AvgNormal);
+		//getInAttribArray().findOrCreateTuple();
+		this->method = method;
+		this->subscribeRatio = subscribeRatio;
+		this->minGrainSize = minGrainSize;
+	}
+
+
+	//UT_Vector3T<T> dir2D = restDir2D(geo);
+	template<typename T>
+	UT_Vector3T<T>
+		restDir2D()
+	{
+		switch (method)
+		{
+		case GFE_RestDir2D_Method::AvgNormal:
+			return restDir2D_avgNormal<T>();
+			break;
+		case GFE_RestDir2D_Method::HouOBB:
+			return restDir2D_houOBB<T>();
+			break;
+		default:
+			break;
+		}
+		return UT_Vector3T<T>();
+	}
+
+
+	void
+		restDir2D()
+	{
+		if (getOutAttribArray().isEmpty())
+			return;
+
+		GA_Attribute* const outAttrib = getOutAttribArray()[0];
+
+		switch (outAttrib->getAIFTuple()->getStorage(outAttrib))
+		{
+		case GA_STORE_REAL32:
+		{
+			GA_RWHandleT<UT_Vector3T<fpreal32>> attrib_h(outAttrib);
+			attrib_h.set(0, restDir2D<fpreal32>());
+		}
+		break;
+		case GA_STORE_REAL64:
+		{
+			GA_RWHandleT<UT_Vector3T<fpreal64>> attrib_h(outAttrib);
+			attrib_h.set(0, restDir2D<fpreal64>());
+		}
+		break;
+		default:
+			UT_ASSERT_MSG(0, "unhandled storage");
+			break;
+		}
+	}
+
+
+
+
+	//UT_Vector3T<T> dir2D = restDir2D(geo);
+	template<typename T>
+	UT_Vector3T<T>
+		restDir2D_avgNormal()
+	{
+		normal3D.groupParser.copy(groupParser);
+
+		if (normal3D.getOutAttribArray().isEmpty())
+		{
+			normal3D.getOutAttribArray().findOrCreateNormal3D(GFE_NormalSearchOrder::ALL, GA_STORE_INVALID, true, "N");
+		}
+
+		normal3D.compute();
+
+		const GA_Attribute* const normalAttrib = normal3D.getOutAttribArray()[0];
+
+		ComputeDir2D_AvgNormal<T> body(geo, normalAttrib);
+		const GA_SplittableRange geoSplittableRange(groupParser.getPrimitiveRange());
+		UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
+		return body.getSum();
+	}
+
+	//UT_Vector3T<T> dir2D = restDir2D(geo);
+	template<typename T>
+	UT_Vector3T<T>
+		restDir2D_houOBB()
+	{
+		//UT_Matrix4 transform;
+		//UT_Vector3 radii;
+		//static_cast<const GU_Detail*>(geo)->getOBBox(geoPrimGroup, transform, radii);
+		//int minAbsAxis = radii.findMinAbsAxis();
+		//
+		//switch (minAbsAxis)
+		//{
+		//case 0:
+		//	break;
+		//case 1:
+		//	break;
+		//case 2:
+		//	break;
+		//}
+
+		UT_OBBoxD obb;
+		//static_cast<const GEO_Detail*>(geo)->setDetailAttributeI("minAbsAxis", minAbsAxis);
+		static_cast<const GU_Detail*>(geo)->getOBBoxForPrims(groupParser.getPrimitiveGroup(), obb);
+
+		return obb.getMinAxis();
+	}
+
+
+
+
+private:
+
+
+	virtual bool
+		computeCore() override
+	{
+		if(groupParser.isEmpty())
+			return true;
+
+		restDir2D();
+
+		return true;
+	}
+
+
+	template<typename T>
+	class ComputeDir2D_AvgNormal {
+	public:
+		ComputeDir2D_AvgNormal(const GA_Detail* const geo, const GA_Attribute* const normal3DAttribPtr = nullptr)
+			: myGeo(geo)
+			, myNormal3DAttribPtr(normal3DAttribPtr)
+			//, mySum(UT_Vector3T<T>(T(0)))
+		{
+			mySum = 0;
+		}
+		ComputeDir2D_AvgNormal(ComputeDir2D_AvgNormal& src, UT_Split)
+			: myGeo(src.myGeo)
+			, myNormal3DAttribPtr(src.myNormal3DAttribPtr)
+			//, mySum(UT_Vector3T<T>(T(0)))
+		{
+			mySum = 0;
+		}
+		void operator()(const GA_SplittableRange& r)
+		{
+			UT_Vector3T<T> sumTmp(T(0));
+			if (myNormal3DAttribPtr)
+			{
+				GA_PageHandleT<UT_Vector3T<T>, typename UT_Vector3T<T>::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> normal_ph(myNormal3DAttribPtr);
+				for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+				{
+					GA_Offset start, end;
+					for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+					{
+						normal_ph.setPage(start);
+						for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+						{
+							sumTmp += normal_ph.value(elemoff).normalize();
+						}
+					}
+				}
+			}
+			else
+			{
+				GA_Offset start, end;
+				for (GA_Iterator it(r); it.blockAdvance(start, end); )
+				{
+					for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+					{
+						//sumTmp += myGeo->getPrimitive(elemoff)->computeNormalD();
+						sumTmp += static_cast<const GEO_Primitive*>(myGeo->getPrimitive(elemoff))->computeNormalD();
+					}
+				}
+			}
+			sumTmp /= T(r.getEntries());
+			mySum += sumTmp;
+		}
+
+		void join(const ComputeDir2D_AvgNormal& other)
+		{
+			mySum += other.mySum;
+		}
+		UT_Vector3T<T> getSum()
+		{
+			return mySum;
+		}
+	private:
+		UT_Vector3T<T> mySum;
+		const GA_Detail* const myGeo;
+		const GA_Attribute* const myNormal3DAttribPtr;
+	};
+
+
+public:
+	GFE_Normal3D normal3D;
+	GFE_RestDir2D_Method method = GFE_RestDir2D_Method::AvgNormal;
+
+private:
+	exint subscribeRatio = 64;
+	exint minGrainSize = 1024;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+namespace GFE_RestDir2D_Namespace {
 
 
 template<typename T>
@@ -349,17 +611,17 @@ static UT_Vector3T<T>
 restDir2D(
 	const GA_Detail* const geo,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_RestDir2D_Method method = GFE_RestDir2D_AvgNormal,
+	const GFE_RestDir2D_Method method = GFE_RestDir2D_Method::AvgNormal,
 	const exint subscribeRatio = 64,
 	const exint minGrainSize = 1024
 )
 {
 	switch (method)
 	{
-	case GFE_RestDir2D_AvgNormal:
+	case GFE_RestDir2D_Method::AvgNormal:
 		return restDir2D_avgNormal<T>(geo, geoPrimGroup, subscribeRatio, minGrainSize);
 		break;
-	case GFE_RestDir2D_HouOBB:
+	case GFE_RestDir2D_Method::HouOBB:
 		return restDir2D_houOBB<T>(geo, geoPrimGroup);
 		break;
 	}
@@ -374,7 +636,7 @@ computeRestDir2D(
 	const GA_Detail* const geo,
 	GA_Attribute* const attribPtr,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_RestDir2D_Method method = GFE_RestDir2D_AvgNormal,
+	const GFE_RestDir2D_Method method = GFE_RestDir2D_Method::AvgNormal,
 	const GA_Storage storage = GA_STORE_INVALID,
 	const exint subscribeRatio = 64,
 	const exint minGrainSize = 1024
@@ -410,7 +672,7 @@ static GA_Attribute*
 addAttribRestDir2D(
 	GA_Detail* const geo,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_RestDir2D_Method method = GFE_RestDir2D_AvgNormal,
+	const GFE_RestDir2D_Method method = GFE_RestDir2D_Method::AvgNormal,
 	const GA_Storage storage = GA_STORE_INVALID,
 	const UT_StringHolder& name = "__topo_restDir2D",
 	const UT_Options* const creation_args = nullptr,
@@ -449,7 +711,7 @@ addAttribRestDir2D(
 	UT_ASSERT_P(geo);
 
 	GOP_Manager gop;
-	const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
+	const GA_Group* const geoGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
 	const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupPromote::groupFindPromotePrimitiveDetached(geo, geoGroup);
 
 	return addAttribRestDir2D(geo, geoPrimGroup,

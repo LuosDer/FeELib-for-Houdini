@@ -740,7 +740,7 @@ namespace GFE_GroupPromote {
 
         GFE_GroupUnion::groupUnion(geo, newGroup, group);
 
-        gop.appendAdhocGroup(newGroup, true);
+        gop.appendAdhocGroup(newGroup, false);
 
         return newGroup;
     }

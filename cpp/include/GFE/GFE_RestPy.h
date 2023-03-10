@@ -47,7 +47,7 @@ public:
             const UT_StringHolder& attribName = "__topo_"
         )
     {
-        getOutAttribArray().findOrCreate(owner, GA_STORECLASS_FLOAT, storage, detached, attribName);
+        getOutAttribArray().findOrCreateTuple(owner, GA_STORECLASS_FLOAT, storage, detached, attribName);
     }
 
 private:

@@ -57,6 +57,12 @@ public:
     {
         return attribArray[i];
     }
+    
+    bool
+        isEmpty()
+    {
+        return attribArray.size() == 0;
+    }
 
     void
         clear()
@@ -108,7 +114,7 @@ set(
     set(attribPtr);
 }
 
-void
+void   
 append(
     GA_Attribute* attribPtr
 )
@@ -176,36 +182,53 @@ appends(
     }
 }
 
-
-
 void
-findOrCreate(
+findOrCreateTuple(
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
     const GA_Storage storage = GA_STORE_INVALID,
     const bool detached = false,
-    const UT_StringHolder& attribName = "__topo_"
+    const UT_StringHolder& attribName = "",
+    const int tuple_size = 1,
+    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const bool emplaceBack = true,
+    const UT_Options* create_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr
 )
 {
-    GA_Attribute* attribPtr = nullptr;
-
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+    GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
+    if (attribPtr)
+    {
+        const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+        if (attribPtr->getTupleSize() != tuple_size ||
+            aifTuple->getStorage(attribPtr) != finalStorage ||
+            aifTuple->getDefaults(attribPtr) != defaults)
+        {
+            geo->getAttributes().destroyAttribute(attribPtr);
+            attribPtr = nullptr;
+        }
+        else
+        {
+            if (emplaceBack)
+                attribArray.emplace_back(attribPtr);
+            return;
+        }
+    }
 
     if (detached)
     {
-        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+        if (emplaceBack)
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
     else
     {
-        attribPtr = geo->findAttribute(owner, attribName);
-
-        if (attribPtr && attribPtr->getAIFTuple()->getStorage(attribPtr) != finalStorage)
-            geo->getAttributes().destroyAttribute(attribPtr);
-
         if (!attribPtr)
-            attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage, 1);
+            attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
+                tuple_size, defaults, create_args, attribute_options);
 
         if (!attribPtr)
         {
@@ -215,7 +238,8 @@ findOrCreate(
             return;
         }
     }
-    attribArray.emplace_back(attribPtr);
+    if (emplaceBack)
+        attribArray.emplace_back(attribPtr);
 }
 
 //SYS_FORCE_INLINE
@@ -232,45 +256,70 @@ findOrCreate(
 void
 findOrCreateUV(
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
-    const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
     const GA_Storage storage = GA_STORE_INVALID,
     const bool detached = false,
-    const UT_StringHolder& attribName = ""
+    const UT_StringHolder& attribName = "",
+    const int tuple_size = 3,
+    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const bool emplaceBack = true,
+    const UT_Options* create_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    GA_Attribute* attribPtr = nullptr;
-
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
 
+    GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, owner, attribName);
+    if (attribPtr)
+    {
+        const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+        if (attribPtr->getTupleSize() != tuple_size ||
+            aifTuple->getStorage(attribPtr) != finalStorage ||
+            aifTuple->getDefaults(attribPtr) != defaults)
+        {
+            geo->getAttributes().destroyAttribute(attribPtr);
+            attribPtr = nullptr;
+        }
+        else
+        {
+            if (emplaceBack)
+                attribArray.emplace_back(attribPtr);
+            return;
+        }
+    }
+
+    const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
     if (detached)
     {
-        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+        if (emplaceBack)
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, 1));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
     else
     {
-        attribPtr = GFE_Attribute::findAttributePointVertex(geo, owner, attribName);
-
-        if (attribPtr && attribPtr->getAIFTuple()->getStorage(attribPtr) != finalStorage)
-        {
-            geo->getAttributes().destroyAttribute(attribPtr);
-            attribPtr = nullptr;
-        }
-
-        if (attribPtr)
-        {
-            int tupleSize = attribPtr->getTupleSize();
-            if (tupleSize < 2 || tupleSize > 4)
-            {
-                geo->getAttributes().destroyAttribute(attribPtr);
-                attribPtr = nullptr;
-            }
-        }
-
         if (!attribPtr)
+        {
+#if 1
+            const UT_Options& finalCreateArgs = create_args ? *create_args : UT_Options("uvw");
+
+            //GA_AttributeOptions& finalOptions = attribute_options ? *attribute_options : GA_AttributeOptions();
+            if (attribute_options)
+            {
+                attribPtr = geo->createTupleAttribute(validOwner, attribName, finalStorage,
+                    tuple_size, defaults, &finalCreateArgs, attribute_options);
+            }
+            else
+            {
+                GA_AttributeOptions finalOptions = GA_AttributeOptions();
+                finalOptions.setTypeInfo(GA_TYPE_TEXTURE_COORD);
+                attribPtr = geo->createTupleAttribute(validOwner, attribName, finalStorage,
+                    tuple_size, defaults, &finalCreateArgs, &finalOptions);
+            }
+#else
             attribPtr = static_cast<GEO_Detail*>(geo)->addTextureAttribute(owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorage);
-            //attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage, 1);
+#endif
+        }
 
         if (!attribPtr)
         {
@@ -279,10 +328,185 @@ findOrCreateUV(
             UT_ASSERT_MSG(attribPtr, "No Attrib");
             return;
         }
+        GFE_Attribute::renameAttribute(attribPtr, attribName);
     }
-    attribArray.emplace_back(attribPtr);
+    if (emplaceBack)
+        attribArray.emplace_back(attribPtr);
 }
 
+void
+findOrCreateDir(
+    const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const bool detached = false,
+    const UT_StringHolder& attribName = "",
+    const int tuple_size = 3,
+    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const bool emplaceBack = true,
+    const UT_Options* create_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+)
+{
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+    GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
+    if (attribPtr)
+    {
+        const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+        if (attribPtr->getTupleSize() != tuple_size ||
+            aifTuple->getStorage(attribPtr) != finalStorage ||
+            aifTuple->getDefaults(attribPtr) != defaults)
+        {
+            geo->getAttributes().destroyAttribute(attribPtr);
+            attribPtr = nullptr;
+        }
+        else
+        {
+            if (emplaceBack)
+                attribArray.emplace_back(attribPtr);
+            return;
+        }
+    }
+
+    if (detached)
+    {
+        if (emplaceBack)
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+        attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
+        //attribPtr = attribUPtr.get();
+    }
+    else
+    {
+        if (!attribPtr)
+        {
+#if 1
+            const UT_Options& finalCreateArgs = create_args ? *create_args : UT_Options("vector3");
+
+            //GA_AttributeOptions& finalOptions = attribute_options ? *attribute_options : GA_AttributeOptions();
+            if (attribute_options)
+            {
+                attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
+                    tuple_size, defaults, &finalCreateArgs, attribute_options);
+            }
+            else
+            {
+                GA_AttributeOptions finalOptions = GA_AttributeOptions();
+                finalOptions.setTypeInfo(GA_TYPE_NORMAL);
+                attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
+                    tuple_size, defaults, &finalCreateArgs, &finalOptions);
+            }
+#else
+            attribPtr = static_cast<GEO_Detail*>(geo)->addTextureAttribute(owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorage);
+#endif
+        }
+
+        if (!attribPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+            UT_ASSERT_MSG(attribPtr, "No Attrib");
+            return;
+        }
+        GFE_Attribute::renameAttribute(attribPtr, attribName);
+    }
+    if (emplaceBack)
+        attribArray.emplace_back(attribPtr);
+}
+
+
+void
+findOrCreateNormal3D(
+    const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const bool detached = false,
+    const UT_StringHolder& attribName = "",
+    const int tuple_size = 3,
+    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const bool emplaceBack = true,
+    const UT_Options* create_args = nullptr,
+    const GA_AttributeOptions* attribute_options = nullptr,
+    const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+)
+{
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+
+    GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(geo, owner, attribName);
+    if (attribPtr)
+    {
+        const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+        if (attribPtr->getTupleSize() != tuple_size ||
+            aifTuple->getStorage(attribPtr) != finalStorage ||
+            aifTuple->getDefaults(attribPtr) != defaults)
+        {
+            geo->getAttributes().destroyAttribute(attribPtr);
+            attribPtr = nullptr;
+        }
+        else
+        {
+            if (emplaceBack)
+                attribArray.emplace_back(attribPtr);
+            return;
+        }
+    }
+
+    const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
+    if (detached)
+    {
+        if (emplaceBack)
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, 1));
+        attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
+        //attribPtr = attribUPtr.get();
+    }
+    else
+    {
+        if (!attribPtr)
+        {
+#if 1
+            const UT_Options& finalCreateArgs = create_args ? *create_args : UT_Options("vector3");
+
+            //GA_AttributeOptions& finalOptions = attribute_options ? *attribute_options : GA_AttributeOptions();
+            if (attribute_options)
+            {
+                attribPtr = geo->createTupleAttribute(validOwner, attribName, finalStorage,
+                    tuple_size, defaults, &finalCreateArgs, attribute_options);
+            }
+            else
+            {
+                GA_AttributeOptions finalOptions = GA_AttributeOptions();
+                finalOptions.setTypeInfo(GA_TYPE_NORMAL);
+                attribPtr = geo->createTupleAttribute(validOwner, attribName, finalStorage,
+                    tuple_size, defaults, &finalCreateArgs, &finalOptions);
+            }
+#else
+            attribPtr = static_cast<GEO_Detail*>(geo)->addTextureAttribute(owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorage);
+#endif
+        }
+
+        if (!attribPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+            UT_ASSERT_MSG(attribPtr, "No Attrib");
+            return;
+        }
+        GFE_Attribute::renameAttribute(attribPtr, attribName);
+    }
+    if (emplaceBack)
+        attribArray.emplace_back(attribPtr);
+}
+
+
+
+
+
+SYS_FORCE_INLINE
+void
+pop_back()
+{
+    attribArray.pop_back();
+}
 
 
 
@@ -356,6 +580,12 @@ public:
         operator[](int i)
     {
         return groupArray[i];
+    }
+
+    bool
+        isEmpty()
+    {
+        return groupArray.size() == 0;
     }
 
     void

@@ -18,11 +18,41 @@ class GFE_GroupParser {
 public:
 
     GFE_GroupParser(
+        GA_Detail* const geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(static_cast<const GEO_Detail*>(geo))
+        , geoNonconst(geo)
+        , cookparms(cookparms)
+        , gop(gop)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_GroupParser(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo,
+        GOP_Manager& gop
+    )
+        : geo(static_cast<const GEO_Detail*>(geo))
+        , geoNonconst(geo)
+        , cookparms(&cookparms)
+        , gop(gop)
+    {
+        UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+
+
+
+    GFE_GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geo(static_cast<const GEO_Detail*>(geo))
+        , geoNonconst(nullptr)
         , cookparms(cookparms)
         , gop(gop)
     {
@@ -35,14 +65,22 @@ public:
         GOP_Manager& gop
     )
         : geo(static_cast<const GEO_Detail*>(geo))
+        , geoNonconst(nullptr)
         , cookparms(&cookparms)
         , gop(gop)
     {
         UT_ASSERT_MSG(geo, "do not find geo");
     }
 
+
+
+
     ~GFE_GroupParser()
     {
+        if (delGroup && geoNonconst && geoGroup && !geoGroup->isDetached())
+        {
+            geoNonconst->destroyGroup(geoNonconst->getGroupTable(geoGroup->classType())->find(geoGroup->getName()));
+        }
     }
 
 
@@ -526,6 +564,20 @@ public:
         this->findGroup = findGroup;
     }
 
+    bool
+        getDelGroup()
+    {
+        return delGroup;
+    }
+
+    void
+        setDelGroup(
+            const bool delGroup
+        )
+    {
+        this->delGroup = delGroup;
+    }
+    
     void
         setGroup(
             const GA_Group* const group
@@ -690,6 +742,48 @@ public:
         return geoGroup;
     }
 
+    const GA_Group*
+        getGroup(
+            const GA_GroupType groupType
+        )
+    {
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE:
+            return getPrimitiveGroup();
+            break;
+        case GA_GROUP_POINT:
+            return getPointGroup();
+            break;
+        case GA_GROUP_EDGE:
+            return getEdgeGroup();
+            break;
+        case GA_GROUP_VERTEX:
+            return getVertexGroup();
+            break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Group Type");
+        return nullptr;
+    }
+
+    SYS_FORCE_INLINE
+        const GA_Group*
+        getGroup(
+            const GA_AttributeOwner attribOwner
+        )
+    {
+        return getGroup(GFE_Type::attributeOwner_groupType(attribOwner));
+    }
+
+
+    SYS_FORCE_INLINE
+    const GA_Group*
+        getGroup(
+            const GA_Attribute* attribPtr
+        )
+    {
+        return getGroup(attribPtr->getOwner());
+    }
 
     GA_GroupType
         groupType()
@@ -836,7 +930,8 @@ private:
         hasPrimitiveGroup = true;
         geoPrimitiveGroup = GFE_GroupPromote::groupFindPromotePrimitiveDetached(geo, geoGroup, gop);
         if (geoPrimitiveGroup->isDetached())
-            gop.appendAdhocGroup(const_cast<GA_PrimitiveGroup*>(geoPrimitiveGroup), true);
+            //geoPrimitiveGroupUPtr.reset(geoPrimitiveGroup);
+            gop.appendAdhocGroup(const_cast<GA_PrimitiveGroup*>(geoPrimitiveGroup), false);
     }
 
 
@@ -849,7 +944,7 @@ private:
         hasPointGroup = true;
         geoPointGroup = GFE_GroupPromote::groupFindPromotePointDetached(geo, geoGroup, gop);
         if (geoPointGroup->isDetached())
-            gop.appendAdhocGroup(const_cast<GA_PointGroup*>(geoPointGroup), true);
+            gop.appendAdhocGroup(const_cast<GA_PointGroup*>(geoPointGroup), false);
     }
 
 
@@ -862,7 +957,7 @@ private:
         hasVertexGroup = true;
         geoVertexGroup = GFE_GroupPromote::groupFindPromoteVertexDetached(geo, geoGroup, gop);
         if (geoVertexGroup->isDetached())
-            gop.appendAdhocGroup(const_cast<GA_VertexGroup*>(geoVertexGroup), true);
+            gop.appendAdhocGroup(const_cast<GA_VertexGroup*>(geoVertexGroup), false);
     }
 
 
@@ -875,7 +970,7 @@ private:
         hasEdgeGroup = true;
         geoEdgeGroup = GFE_GroupPromote::groupFindPromoteEdgeDetached(geo, geoGroup, gop);
         if (geoEdgeGroup->isDetached())
-            gop.appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), true);
+            gop.appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), false);
     }
 
 private:
@@ -883,11 +978,14 @@ private:
     //GEO_Detail* geo = nullptr;
     const SOP_NodeVerb::CookParms* cookparms;
     const GEO_Detail* geo;
+    GA_Detail* geoNonconst;
+    
     GOP_Manager& gop;
     //GA_GroupType groupType;
     //UT_StringHolder groupName;
 
     bool findGroup = true;
+    bool delGroup = false;
 
 
     bool hasGroup = false;
@@ -904,7 +1002,25 @@ private:
 
     bool hasEdgeGroup = false;
     const GA_EdgeGroup* geoEdgeGroup = nullptr;
+
+    //GA_PrimitiveGroupUPtr geoPrimitiveGroupUPtr;
+    //GA_PointGroupUPtr     geoPointGroupUPtr;
+    //GA_VertexGroupUPtr    geoVertexGroupUPtr;
+    //GA_EdgeGroupUPtr      geoEdgeGroupUPtr;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

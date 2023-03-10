@@ -251,18 +251,18 @@ SOP_FeE_PolyReduce2D_4_0::cookVerb() const
 
 
 
-static PolyReduce2D_GeoPropertyType
+static GFE_PolyReduce2D_GeoPropertyType
 sopGeoPropertyType(SOP_FeE_PolyReduce2D_4_0Parms::GeoPropertyType parmgrouptype)
 {
     using namespace SOP_FeE_PolyReduce2D_4_0Enums;
     switch (parmgrouptype)
     {
-    case GeoPropertyType::ANGLE:     return PolyReduce2D_ANGLE;    break;
-    case GeoPropertyType::DIST:      return PolyReduce2D_DIST;     break;
-    case GeoPropertyType::ROC:       return PolyReduce2D_ROC;      break;
+    case GeoPropertyType::ANGLE:     return GFE_PolyReduce2D_GeoPropertyType::ANGLE;    break;
+    case GeoPropertyType::DIST:      return GFE_PolyReduce2D_GeoPropertyType::DIST;     break;
+    case GeoPropertyType::ROC:       return GFE_PolyReduce2D_GeoPropertyType::ROC;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo Property Type!");
-    return PolyReduce2D_ANGLE;
+    return GFE_PolyReduce2D_GeoPropertyType::ANGLE;
 }
 
 
@@ -323,7 +323,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const bool coverSourcePoly = sopparms.getCoverSourcePoly();
 
 
-    const PolyReduce2D_GeoPropertyType geoPropertyType = sopGeoPropertyType(sopparms.getGeoPropertyType());
+    const GFE_PolyReduce2D_GeoPropertyType geoPropertyType = sopGeoPropertyType(sopparms.getGeoPropertyType());
 
     const bool delPoint = sopparms.getDeletePoint();
 

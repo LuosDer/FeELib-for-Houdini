@@ -217,18 +217,18 @@ sopAttribOwner(SOP_FeE_UVGridify_1_0Parms::UVAttribClass attribClass)
 }
 
 
-static UVGridify_RowsOrColsNumMethod
+static GFE_UVGridify_RowColMethod
 sopRowsOrColsNumMethod(SOP_FeE_UVGridify_1_0Parms::RowsOrColsNumMethod parmgrouptype)
 {
     using namespace SOP_FeE_UVGridify_1_0Enums;
     switch (parmgrouptype)
     {
-    case RowsOrColsNumMethod::UNIFORM:     return UVGridifyMethod_Uniform;    break;
-    case RowsOrColsNumMethod::ROWS:        return UVGridifyMethod_Rows;       break;
-    case RowsOrColsNumMethod::COLS:        return UVGridifyMethod_Columns;    break;
+    case RowsOrColsNumMethod::UNIFORM:     return GFE_UVGridify_RowColMethod::Uniform;    break;
+    case RowsOrColsNumMethod::ROWS:        return GFE_UVGridify_RowColMethod::Rows;       break;
+    case RowsOrColsNumMethod::COLS:        return GFE_UVGridify_RowColMethod::Columns;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled UVGridify Rows Or Cols Num Method!");
-    return UVGridifyMethod_Uniform;
+    return GFE_UVGridify_RowColMethod::Uniform;
 }
 
 
@@ -266,7 +266,7 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVAttribClass());
     const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
-    const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = sopRowsOrColsNumMethod(sopparms.getRowsOrColsNumMethod());
+    const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = sopRowsOrColsNumMethod(sopparms.getRowsOrColsNumMethod());
     const exint rowsOrColsNum = sopparms.getRowsOrColsNum();
     const bool reverseUVu = sopparms.getReverseUVu();
     const bool reverseUVv = sopparms.getReverseUVv();
@@ -288,7 +288,7 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 #if 1
     GFE_UVGridify uvGridify(cookparms, outGeo0);
     uvGridify.groupParser.setGroup(groupType, groupName);
-    uvGridify.getOutAttribArray().set(uvAttribClass, uvAttribName);
+    uvGridify.getOutAttribArray().findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName);
     uvGridify.setComputeParm(
         rowsOrColsNumMethod, rowsOrColsNum,
         reverseUVu, reverseUVv, uniScale,

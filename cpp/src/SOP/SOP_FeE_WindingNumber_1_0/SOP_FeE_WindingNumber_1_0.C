@@ -205,19 +205,19 @@ sopWNStorage(SOP_FeE_WindingNumber_1_0Parms::WNPrecision wnPrecision)
     return GA_STORE_INVALID;
 }
 
-static GFE_WindingNumberType
+static GFE_WNType
 sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (wnType)
     {
-    case WNType::XYZ:      return GFE_WNType_XYZ;   break;
-    case WNType::XY:       return GFE_WNType_XY;    break;
-    case WNType::YZ:       return GFE_WNType_YZ;    break;
-    case WNType::ZX:       return GFE_WNType_ZX;    break;
+    case WNType::XYZ:      return GFE_WNType::XYZ;   break;
+    case WNType::XY:       return GFE_WNType::XY;    break;
+    case WNType::YZ:       return GFE_WNType::YZ;    break;
+    case WNType::ZX:       return GFE_WNType::ZX;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled WNType!");
-    return GFE_WNType_XYZ;
+    return GFE_WNType::XYZ;
 }
 
 

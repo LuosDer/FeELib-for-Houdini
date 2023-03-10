@@ -17,11 +17,11 @@
 #include "GFE/GFE_GroupPromote.h"
 
 
-enum UVGridify_RowsOrColsNumMethod
+enum class GFE_UVGridify_RowColMethod
 {
-    UVGridifyMethod_Uniform,
-    UVGridifyMethod_Rows,
-    UVGridifyMethod_Columns,
+    Uniform,
+    Rows,
+    Columns,
 };
 
 class GFE_UVGridify : public GFE_AttribFilter {
@@ -32,7 +32,7 @@ public:
 
     void
         setComputeParm(
-            const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = UVGridifyMethod_Uniform,
+            const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
             const GA_Size rowsOrColsNum = 2,
             const bool reverseUVu = false,
             const bool reverseUVv = false,
@@ -58,6 +58,9 @@ private:
     virtual bool
         computeCore() override
     {
+        if (groupParser.isEmpty())
+            return true;
+
         const size_t len = getOutAttribArray().size();
         for (size_t i = 0; i < len; i++)
         {
@@ -195,15 +198,15 @@ private:
                     GA_Size rows, cols;
                     switch (rowsOrColsNumMethod)
                     {
-                    case UVGridifyMethod_Uniform:
+                    case GFE_UVGridify_RowColMethod::Uniform:
                         rows = (GA_Size)ceil(numvtx / 4.0);
                         cols = (numvtx - rows - rows) / 2;
                         break;
-                    case UVGridifyMethod_Rows:
+                    case GFE_UVGridify_RowColMethod::Rows:
                         rows = rowsOrColsNum - 1;
                         cols = (numvtx - rows - rows) / 2;
                         break;
-                    case UVGridifyMethod_Columns:
+                    case GFE_UVGridify_RowColMethod::Columns:
                         cols = rowsOrColsNum - 1;
                         rows = (numvtx - cols - cols) / 2;
                         break;
@@ -253,15 +256,15 @@ private:
 
 
 public:
-    UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod;
-    GA_Size rowsOrColsNum;
-    bool reverseUVu;
-    bool reverseUVv;
-    bool uniScale;
+    GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform;
+    GA_Size rowsOrColsNum = 2;
+    bool reverseUVu = false;
+    bool reverseUVv = false;
+    bool uniScale = false;
 
 private:
-    exint subscribeRatio;
-    exint minGrainSize;
+    exint subscribeRatio = 64;
+    exint minGrainSize = 64;
 };
 
 
@@ -345,7 +348,7 @@ private:
 //        const GA_Detail* const geo,
 //        const GA_RWHandleT<VECTOR_T>& uv_h,
 //        const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//        const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = UVGridifyMethod_Uniform,
+//        const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //        const GA_Size rowsOrColsNum = 2,
 //        const bool reverseUVu = false,
 //        const bool reverseUVv = false,
@@ -374,15 +377,15 @@ private:
 //                GA_Size rows, cols;
 //                switch (rowsOrColsNumMethod)
 //                {
-//                case UVGridifyMethod_Uniform:
+//                case GFE_UVGridify_RowColMethod::Uniform:
 //                    rows = (GA_Size)ceil(numvtx / 4.0);
 //                    cols = (numvtx - rows - rows) / 2;
 //                    break;
-//                case UVGridifyMethod_Rows:
+//                case GFE_UVGridify_RowColMethod::Rows:
 //                    rows = rowsOrColsNum - 1;
 //                    cols = (numvtx - rows - rows) / 2;
 //                    break;
-//                case UVGridifyMethod_Columns:
+//                case GFE_UVGridify_RowColMethod::Columns:
 //                    cols = rowsOrColsNum - 1;
 //                    rows = (numvtx - cols - cols) / 2;
 //                    break;
@@ -440,7 +443,7 @@ private:
 //        const GA_Detail* const geo,
 //        GA_Attribute* const uvAttribPtr,
 //        const GA_PrimitiveGroup* const geoPrimGroup,
-//        const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = UVGridifyMethod_Uniform,
+//        const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //        const GA_Size rowsOrColsNum = 2,
 //        const bool reverseUVu = false,
 //        const bool reverseUVv = false,
@@ -544,7 +547,7 @@ private:
 //    const GA_Detail* const geo,
 //    GA_Attribute* const uvAttribPtr,
 //    const GA_Group* const geoGroup,
-//    const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = UVGridifyMethod_Uniform,
+//    const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //    const GA_Size rowsOrColsNum = 2,
 //    const bool reverseUVu = false,
 //    const bool reverseUVv = false,
@@ -567,7 +570,7 @@ private:
 //    const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
 //    const UT_StringHolder& uvAttribName = "uv",
 //    const GA_Group* const geoGroup = nullptr,
-//    const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = UVGridifyMethod_Uniform,
+//    const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //    const GA_Size rowsOrColsNum = 2,
 //    const bool reverseUVu = false,
 //    const bool reverseUVv = false,
@@ -595,7 +598,7 @@ private:
 //    const UT_StringHolder& groupName = "",
 //    const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
 //    const UT_StringHolder& uvAttribName = "uv",
-//    const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = UVGridifyMethod_Uniform,
+//    const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //    const GA_Size rowsOrColsNum = 2,
 //    const bool reverseUVu = false,
 //    const bool reverseUVv = false,

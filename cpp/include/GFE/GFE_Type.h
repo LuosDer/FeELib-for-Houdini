@@ -14,26 +14,13 @@
 #define PI 3.14159265358979323846
 #endif
 
-enum GFE_GroupMergeType
+enum class GFE_GroupMergeType
 {
-    GFE_GroupMerge_Replace,
-    GFE_GroupMerge_Union,
-    GFE_GroupMerge_Intersect,
-    GFE_GroupMerge_Subtract,
+    Replace,
+    Union,
+    Intersect,
+    Subtract,
 };
-
-enum GFE_PieceAttribSearchOrder
-{
-    GFE_PieceAttribSearchOrder_PRIM,
-    GFE_PieceAttribSearchOrder_POINT,
-    GFE_PieceAttribSearchOrder_VERTEX,
-    GFE_PieceAttribSearchOrder_PRIMPOINT,
-    GFE_PieceAttribSearchOrder_POINTPRIM,
-    GFE_PieceAttribSearchOrder_ALL,
-    GFE_PieceAttribSearchOrder_INVALID = -1,
-};
-
-
 
 
 

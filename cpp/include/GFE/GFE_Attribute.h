@@ -18,9 +18,104 @@
 #include "GFE/GFE_Type.h"
 
 
+enum class GFE_PieceAttribSearchOrder
+{
+    PRIM,
+    POINT,
+    VERTEX,
+    PRIMPOINT,
+    POINTPRIM,
+    ALL,
+    INVALID = -1,
+};
+
+
+enum class GFE_NormalSearchOrder
+{
+    PRIMITIVE,
+    POINT,
+    VERTEX,
+    DETAIL,
+    POINTVERTEX,
+    ALL,
+    GLOBAL = DETAIL,
+    INVALID = -1,
+};
+
+
+
+
+
+
 namespace GFE_Attribute {
 
-    
+
+static GA_AttributeOwner
+    toOwner(
+        const GFE_NormalSearchOrder normalSearchOrder
+    )
+{
+    switch (normalSearchOrder)
+    {
+    case GFE_NormalSearchOrder::PRIMITIVE:
+        return GA_ATTRIB_PRIMITIVE;
+        break;
+    case GFE_NormalSearchOrder::POINT:
+        return GA_ATTRIB_POINT;
+        break;
+    case GFE_NormalSearchOrder::VERTEX:
+        return GA_ATTRIB_VERTEX;
+        break;
+    case GFE_NormalSearchOrder::DETAIL:
+        return GA_ATTRIB_DETAIL;
+        break;
+    case GFE_NormalSearchOrder::POINTVERTEX:
+        return GA_ATTRIB_VERTEX;
+        break;
+    case GFE_NormalSearchOrder::ALL:
+        return GA_ATTRIB_OWNER_N;
+        break;
+    case GFE_NormalSearchOrder::INVALID:
+        return GA_ATTRIB_INVALID;
+        break;
+    default:
+        break;
+    }
+}
+
+static GA_AttributeOwner
+toValidOwner(
+    const GFE_NormalSearchOrder normalSearchOrder
+)
+{
+    switch (normalSearchOrder)
+    {
+    case GFE_NormalSearchOrder::PRIMITIVE:
+        return GA_ATTRIB_PRIMITIVE;
+        break;
+    case GFE_NormalSearchOrder::POINT:
+        return GA_ATTRIB_POINT;
+        break;
+    case GFE_NormalSearchOrder::VERTEX:
+        return GA_ATTRIB_VERTEX;
+        break;
+    case GFE_NormalSearchOrder::DETAIL:
+        return GA_ATTRIB_DETAIL;
+        break;
+    case GFE_NormalSearchOrder::POINTVERTEX:
+        return GA_ATTRIB_VERTEX;
+        break;
+    case GFE_NormalSearchOrder::ALL:
+        return GA_ATTRIB_VERTEX;
+        break;
+    case GFE_NormalSearchOrder::INVALID:
+        return GA_ATTRIB_VERTEX;
+        break;
+    default:
+        return GA_ATTRIB_VERTEX;
+        break;
+    }
+}
 
 
 static void
@@ -51,22 +146,22 @@ findPieceAttrib(
 
     switch (pieceAttribSearchOrder)
     {
-    case GFE_PieceAttribSearchOrder_PRIM:       attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder_POINT:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder_VERTEX:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder_PRIMPOINT:
+    case GFE_PieceAttribSearchOrder::PRIM:       attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::POINT:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::VERTEX:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::PRIMPOINT:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
         attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
-    case GFE_PieceAttribSearchOrder_POINTPRIM:
+    case GFE_PieceAttribSearchOrder::POINTPRIM:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
         attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
-    case GFE_PieceAttribSearchOrder_ALL:
+    case GFE_PieceAttribSearchOrder::ALL:
     {
         GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
         attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 3);
@@ -407,6 +502,64 @@ findOrCreateUVAttributePointVertex(
     }
     return uvAttribPtr;
 }
+
+
+
+
+
+static GA_Attribute*
+findNormal3D(
+    GA_Detail* const geo,
+    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
+    const UT_StringHolder& normal3DAttribName = "N"
+)
+{
+    GA_Attribute* normal3DAttrib = nullptr;
+    switch (normalSearchOrder)
+    {
+    case GFE_NormalSearchOrder::PRIMITIVE:
+        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::POINT:
+        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::VERTEX:
+        normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::DETAIL:
+        normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::POINTVERTEX:
+        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        if (!normal3DAttrib)
+        {
+            normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+        }
+        break;
+    case GFE_NormalSearchOrder::ALL:
+        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        if (!normal3DAttrib)
+        {
+            normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+            {
+                normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+                if (!normal3DAttrib)
+                {
+                    normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+                }
+            }
+        }
+        break;
+    default:
+        UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder");
+        break;
+    }
+    return normal3DAttrib;
+}
+
+
+
 
 
 

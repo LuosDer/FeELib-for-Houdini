@@ -82,6 +82,31 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+
+    parm {
+        name    "normal3DAttribClass"
+        cppname "Normal3DAttribClass"
+        label   "Normal 3D Attrib Class"
+        type    ordinal
+        default { "point" }
+        disablewhen "{ restDir2DMethod != avgNormal }"
+        menu {
+            "prim"          "Prim"
+            "point"         "Point"
+            "vertex"        "Vertex"
+            "detail"        "Detail"
+            "pointvertex"   "PointVertex"
+            "all"           "ALL"
+        }
+    }
+    parm {
+        name    "normal3DAttribName"
+        cppname "Normal3DAttribName"
+        label   "Normal 3D Attribute Name"
+        type    string
+        default { "N" }
+        disablewhen "{ restDir2DMethod != avgNormal }"
+    }
     parm {
         name    "restDir2DAttribName"
         cppname "RestDir2DAttribName"
@@ -234,11 +259,29 @@ sopMethod(SOP_FeE_RestDir2D_1_0Parms::RestDir2DMethod parmgrouptype)
     using namespace SOP_FeE_RestDir2D_1_0Enums;
     switch (parmgrouptype)
     {
-    case RestDir2DMethod::AVGNORMAL:   return GFE_RestDir2D_AvgNormal;   break;
-    case RestDir2DMethod::HOUOBB:      return GFE_RestDir2D_HouOBB;   break;
+    case RestDir2DMethod::AVGNORMAL:   return GFE_RestDir2D_Method::AvgNormal;   break;
+    case RestDir2DMethod::HOUOBB:      return GFE_RestDir2D_Method::HouOBB;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled RestDir2DMethod!");
-    return GFE_RestDir2D_AvgNormal;
+    return GFE_RestDir2D_Method::AvgNormal;
+}
+
+
+static GFE_NormalSearchOrder
+sopAttribSearchOrder(SOP_FeE_RestDir2D_1_0Parms::Normal3DAttribClass attribClass)
+{
+    using namespace SOP_FeE_RestDir2D_1_0Enums;
+    switch (attribClass)
+    {
+    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::PRIMITIVE;   break;
+    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::POINT;       break;
+    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::VERTEX;      break;
+    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::DETAIL;      break;
+    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::POINTVERTEX; break;
+    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::ALL;         break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
+    return GFE_NormalSearchOrder::INVALID;
 }
 
 
@@ -265,21 +308,40 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& pieceAttribName = sopparms.getPieceAttribName();
 
     const UT_StringHolder& restDir2DAttribName = sopparms.getRestDir2DAttribName();
+
+
+    const GFE_NormalSearchOrder normalSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
+    const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
     
     const GFE_RestDir2D_Method method = sopMethod(sopparms.getRestDir2DMethod());
-
-    const GA_Storage inStorgeF = GFE_Type::getPreferredStorageF(outGeo0);
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    GA_Attribute* const restDir2DAttrib = GFE_RestDir2D::addAttribRestDir2D(
-        cookparms, outGeo0, groupType, groupName,
-        method, inStorgeF, restDir2DAttribName,
-        nullptr, nullptr, GA_ReuseStrategy(),
-        subscribeRatio, minGrainSize);
+    GFE_RestDir2D restDir2D(outGeo0, &cookparms);
+    restDir2D.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    restDir2DAttrib->bumpDataId();
+    restDir2D.getOutAttribArray().findOrCreateDir(GA_ATTRIB_DETAIL, GA_STORE_INVALID, false, restDir2DAttribName);
+
+    if (method == GFE_RestDir2D_Method::AvgNormal)
+    {
+        restDir2D.getOutAttribArray().findOrCreateNormal3D(normalSearchOrder, GA_STORE_INVALID, true, normal3DAttribName);
+        //restDir2D.normal3D.setComputeParm();
+    }
+
+    restDir2D.setComputeParm(method, subscribeRatio, minGrainSize);
+
+    restDir2D.computeAndBumpDataId();
+    restDir2D.visualizeOutGroup();
+
+
+    //GA_Attribute* const restDir2DAttrib = GFE_RestDir2D::addAttribRestDir2D(
+    //    cookparms, outGeo0, groupType, groupName,
+    //    method, inStorgeF, restDir2DAttribName,
+    //    nullptr, nullptr, GA_ReuseStrategy(),
+    //    subscribeRatio, minGrainSize);
+
+    //restDir2DAttrib->bumpDataId();
 
 
 }
