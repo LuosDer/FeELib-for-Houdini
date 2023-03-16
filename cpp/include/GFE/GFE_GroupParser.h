@@ -928,7 +928,7 @@ private:
             return;
 
         hasPrimitiveGroup = true;
-        geoPrimitiveGroup = GFE_GroupPromote::groupFindPromotePrimitiveDetached(geo, geoGroup, gop);
+        geoPrimitiveGroup = GFE_GroupPromote::groupFindPromotePrimitiveDetached(geoGroup, gop);
         if (geoPrimitiveGroup->isDetached())
             //geoPrimitiveGroupUPtr.reset(geoPrimitiveGroup);
             gop.appendAdhocGroup(const_cast<GA_PrimitiveGroup*>(geoPrimitiveGroup), false);
@@ -942,7 +942,7 @@ private:
             return;
 
         hasPointGroup = true;
-        geoPointGroup = GFE_GroupPromote::groupFindPromotePointDetached(geo, geoGroup, gop);
+        geoPointGroup = GFE_GroupPromote::groupFindPromotePointDetached(geoGroup, gop);
         if (geoPointGroup->isDetached())
             gop.appendAdhocGroup(const_cast<GA_PointGroup*>(geoPointGroup), false);
     }
@@ -955,7 +955,7 @@ private:
             return;
 
         hasVertexGroup = true;
-        geoVertexGroup = GFE_GroupPromote::groupFindPromoteVertexDetached(geo, geoGroup, gop);
+        geoVertexGroup = GFE_GroupPromote::groupFindPromoteVertexDetached(geoGroup, gop);
         if (geoVertexGroup->isDetached())
             gop.appendAdhocGroup(const_cast<GA_VertexGroup*>(geoVertexGroup), false);
     }
@@ -968,7 +968,7 @@ private:
             return;
 
         hasEdgeGroup = true;
-        geoEdgeGroup = GFE_GroupPromote::groupFindPromoteEdgeDetached(geo, geoGroup, gop);
+        geoEdgeGroup = GFE_GroupPromote::groupFindPromoteEdgeDetached(geoGroup, gop);
         if (geoEdgeGroup->isDetached())
             gop.appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), false);
     }

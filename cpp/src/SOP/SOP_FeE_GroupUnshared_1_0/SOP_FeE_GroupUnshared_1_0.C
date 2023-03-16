@@ -90,6 +90,16 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
+        name    "fuseDist"
+        cppname "FuseDist"
+        label   "Fuse Distance"
+        type    log
+        default { 1e-05 }
+        range   { 1e-03 10 }
+        disablewhen "{ groupUnsharedAfterFuse == 0 }"
+    }
+
+    parm {
         name    "outTopoAttrib"
         cppname "OutTopoAttrib"
         label   "Output Topo Attribute"
@@ -277,19 +287,30 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
+
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
+    //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
 
-    GFE_GroupUnshared::groupUnshared(cookparms, outGeo0, groupType, sopparms.getGroup(),
-        geo0AttribNames,
-        unsharedAttribStorageClass, unsharedAttribClass,
-        groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
-        subscribeRatio, minGrainSize
-        );
+    GFE_GroupUnshared groupUnshared(cookparms, outGeo0);
+
+    groupUnshared.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    groupUnshared.findOrCreate(unsharedAttribClass, unsharedAttribStorageClass, GA_STORE_INVALID, false, geo0AttribNames);
+    groupUnshared.setComputeParm(groupUnsharedAfterFuse, sopparms.getFuseDist(), sopparms.getOutTopoAttrib(),
+        subscribeRatio, minGrainSize);
+
+    groupUnshared.computeAndBumpDataId();
+
+    groupUnshared.visualizeOutGroup();
+    //GFE_GroupUnshared::groupUnshared(cookparms, outGeo0, groupType, sopparms.getGroup(),
+    //    geo0AttribNames,
+    //    unsharedAttribStorageClass, unsharedAttribClass,
+    //    groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
+    //    subscribeRatio, minGrainSize);
 }
 
 

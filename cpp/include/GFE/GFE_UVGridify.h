@@ -54,6 +54,8 @@ public:
 
 private:
 
+    using TEMP_POS_VECTOR_TYPE = UT_Vector3T<fpreal64>;
+
 
     virtual bool
         computeCore() override
@@ -135,6 +137,8 @@ private:
             const GA_Size vtxpnum,
             const exint rows,
             const exint cols,
+            const typename POS_VECTOR_T::value_type scale,
+            const bool scaleIdx,
             const bool isPointAttrib
         )
     {
@@ -148,19 +152,9 @@ private:
         }
         if (!uniScale)
         {
-            const POS_VECTOR_T& pos0 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0)));
-            const POS_VECTOR_T& pos1 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows)));
-            const POS_VECTOR_T& pos2 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + cols)));
-            const POS_VECTOR_T& pos3 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + cols + rows)));
-            const typename POS_VECTOR_T::value_type dist0 = pos0.distance(pos1);
-            const typename POS_VECTOR_T::value_type dist1 = pos1.distance(pos2);
-            const typename POS_VECTOR_T::value_type dist2 = pos2.distance(pos3);
-            const typename POS_VECTOR_T::value_type dist3 = pos3.distance(pos0);
-
-            const typename POS_VECTOR_T::value_type scale = (dist0 + dist2) / (dist1 + dist3);
-            if (scale > 1.0)
+            if (scaleIdx)
             {
-                uv[1] *= 1.0 / scale;
+                uv[1] *= scale;
             }
             else
             {
@@ -180,13 +174,15 @@ private:
         )
     {
         const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
-        const GA_ROHandleT<UT_Vector3T<fpreal64>> pos_h(geo->getP());
+        const GA_ROHandleT<TEMP_POS_VECTOR_TYPE> pos_h(geo->getP());
         const bool isPointAttrib = uv_h.getAttribute()->getOwner() == GA_ATTRIB_POINT;
 
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
         UTparallelFor(geoSplittableRange, [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
             //const typename VECTOR_T::value_type zero = 0;
+            typename TEMP_POS_VECTOR_TYPE::value_type scale;
+            bool scaleIdx = true;
             VECTOR_T uv(typename VECTOR_T::value_type(0));
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -194,7 +190,8 @@ private:
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
                     GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-
+                    if (numvtx == 0)
+                        continue;
                     GA_Size rows, cols;
                     switch (rowsOrColsNumMethod)
                     {
@@ -218,35 +215,76 @@ private:
                     cols = SYSmax(cols, 0);
 
 
+                    if (!uniScale)
+                    {
+                        if (numvtx > rows + rows + cols && numvtx > 2)
+                        {
+                            const TEMP_POS_VECTOR_TYPE& pos0 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0)));
+                            const TEMP_POS_VECTOR_TYPE& pos1 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows)));
+                            const TEMP_POS_VECTOR_TYPE& pos2 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + cols)));
+                            //GA_Offset a = geo->getPrimitiveVertexOffset(primoff, rows + cols + rows);
+                            //GA_Offset b = geo->vertexPoint(a);
+                            //const POS_VECTOR_T& pos3 = pos_h.get(b);
+                            const TEMP_POS_VECTOR_TYPE& pos3 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + rows + cols)));
+                            const typename TEMP_POS_VECTOR_TYPE::value_type dist0 = pos0.distance(pos1);
+                            const typename TEMP_POS_VECTOR_TYPE::value_type dist1 = pos1.distance(pos2);
+                            const typename TEMP_POS_VECTOR_TYPE::value_type dist2 = pos2.distance(pos3);
+                            const typename TEMP_POS_VECTOR_TYPE::value_type dist3 = pos3.distance(pos0);
+
+                            scale = (dist0 + dist2) / (dist1 + dist3);
+
+                            typename TEMP_POS_VECTOR_TYPE::value_type tmpScale = dist0 + dist2;
+                            scale = dist1 + dist3;
+
+                            scaleIdx = tmpScale > scale;
+                            if (scaleIdx)
+                            {
+                                scale /= tmpScale;
+                            }
+                            else
+                            {
+                                scale = tmpScale / scale;
+                            }
+                        }
+                        else
+                        {
+                            scale = 1.0;
+                        }
+                    }
+
                     GA_Size vtxpnum = 0;
                     for (; vtxpnum < rows; vtxpnum++)
                     {
-                        uv[0] = fpreal(vtxpnum) / (rows - (cols <= 0));
+                        GA_Size tmpI = rows - (cols <= 0);
+                        uv[0] = tmpI==0 ? 0 : fpreal(vtxpnum) / tmpI;
                         uv[1] = 1;
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, isPointAttrib);
+                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
                     }
                     for (; vtxpnum < rows + cols; vtxpnum++)
                     {
+                        GA_Size tmpI = cols - (rows == 0);
                         uv[0] = 1;
-                        uv[1] = 1 - (float(vtxpnum - rows) / (cols - (rows == 0)));
+                        uv[1] = tmpI==0 ? 1 : 1 - (float(vtxpnum - rows) / tmpI);
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, isPointAttrib);
+                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
                     }
                     const GA_Size numvtx_preCols = numvtx - cols;
                     for (; vtxpnum < numvtx_preCols; vtxpnum++)
                     {
-                        uv[0] = (vtxpnum - rows - cols == 0) ? 1 : (1 - float(vtxpnum - rows - cols) / (numvtx - rows - cols - cols - 1));
+                        GA_Size tmpI = vtxpnum - rows - cols;
+                        uv[0] = tmpI == 0 ? 1 : (1 - float(tmpI) / (numvtx - rows - cols - cols - 1));
                         uv[1] = 0;
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, isPointAttrib);
+                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
                     }
                     for (; vtxpnum < numvtx; vtxpnum++)
                     {
+                        GA_Size tmpI = rows==0 ? numvtx - cols - 1 : cols;
                         uv[0] = 0;
-                        uv[1] = ((rows == 0 ? numvtx - cols - 1 : cols) == 0) ? 1 : (1 - float(numvtx - vtxpnum - (rows == 0)) / (rows == 0 ? numvtx - cols - 1 : cols));
+                        uv[1] = tmpI==0 ? 1 : (1 - float(numvtx - vtxpnum - (rows == 0)) / tmpI);
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, isPointAttrib);
+                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
                     }
                 }
             }

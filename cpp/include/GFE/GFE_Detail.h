@@ -36,6 +36,7 @@ SYS_FORCE_INLINE
     return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum));
 }
 
+
 SYS_FORCE_INLINE
 static UT_Vector3
 getPrimitivePointPos3(
@@ -47,6 +48,8 @@ getPrimitivePointPos3(
     return geo->getPos3(getPrimitivePointOffset(geo, primoff, vtxpnum));
 }
 
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+
 SYS_FORCE_INLINE
 static UT_Vector3D
 getPrimitivePointPos3D(
@@ -56,8 +59,22 @@ getPrimitivePointPos3D(
 )
 {
     return geo->getPos3D(getPrimitivePointOffset(geo, primoff, vtxpnum));
+
 }
 
+template<typename T>
+SYS_FORCE_INLINE
+static UT_Vector3T<T>
+getPrimitivePointPos3T(
+    const GA_Detail* const geo,
+    const GA_Size primoff,
+    const GA_Size vtxpnum
+)
+{
+    return geo->getPos3T<T>(getPrimitivePointOffset(geo, primoff, vtxpnum));
+}
+
+#endif
 
 
 SYS_FORCE_INLINE

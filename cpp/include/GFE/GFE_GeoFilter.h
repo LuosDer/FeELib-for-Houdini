@@ -654,10 +654,17 @@ public:
         GA_Detail* const geo
     )
         : GFE_AttribFilter(cookparms, geo)
-        , inAttribArray(geo, &cookparms)
-        , inGroupArray(geo, &cookparms)
+        , inAttribArray(cookparms, geo)
+        , inGroupArray(cookparms, geo)
     {
     }
+
+    ~GFE_AttribCreateFilter()
+    {
+    }
+
+
+
 
     virtual void
         reset(
@@ -668,10 +675,6 @@ public:
         GFE_AttribFilter::reset(geo, cookparms);
         inAttribArray.reset(geo, cookparms);
         inGroupArray.reset(geo, cookparms);
-    }
-
-    ~GFE_AttribCreateFilter()
-    {
     }
 
     GFE_AttributeArray&

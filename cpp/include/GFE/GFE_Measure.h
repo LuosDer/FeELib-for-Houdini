@@ -360,9 +360,17 @@ primArea(
     }
 
 
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
     UT_Vector3T<T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));
     UT_Vector3T<T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));
     const UT_Vector3T<T>& pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));
+#else
+    UT_Vector3T<T> pos0 = geo->getPos3(geo->vertexPoint(vertices[0]));
+    UT_Vector3T<T> pos1 = geo->getPos3(geo->vertexPoint(vertices[1]));
+    const UT_Vector3T<T>& pos2 = geo->getPos3(geo->vertexPoint(vertices[2]));
+#endif
+
+
 
     /*GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));*/
 
@@ -375,7 +383,11 @@ primArea(
     break;
     case 4:
     {
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
         const UT_Vector3T<T>& pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));
+#else
+        const UT_Vector3T<T>& pos3 = geo->getPos3(geo->vertexPoint(vertices[3]));
+#endif
         return bretschneidersFormula0(pos0, pos1, pos2, pos3);
     }
     break;
@@ -396,10 +408,18 @@ primArea(
     const T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
     T areaSum = 0.0;
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
     pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));
+#else
+    pos0 = geo->getPos3(geo->vertexPoint(vertices[numvtx - 1]));
+#endif
     for (GA_Size i(0); i < numvtx; ++i)
     {
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
         pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));
+#else
+        pos1 = geo->getPos3(geo->vertexPoint(vertices[i]));
+#endif
         areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
             + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
             + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
@@ -1110,10 +1130,18 @@ primPerimeter(
         return 0.0;
     }
 
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
     UT_Vector3T<T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
+#else
+    UT_Vector3T<T> pos0 = geo->getPos3(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
+#endif
     for (GA_Size i(!closed); i < numvtx; ++i)
     {
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
         UT_Vector3T<T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));
+#else
+        UT_Vector3T<T> pos1 = geo->getPos3(geo->vertexPoint(vertices[i]));
+#endif
         pSum += (pos1 - pos0).length();
         pos0 = pos1;
     }

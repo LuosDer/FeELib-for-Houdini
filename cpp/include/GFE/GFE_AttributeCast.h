@@ -175,8 +175,84 @@ namespace GFE_AttributeCast {
     }
 
 
+    
 
+    static bool
+        changeAttribStorageClass(
+            GA_Detail* const geo,
+            const GA_AttributeOwner attribClass,
+            const UT_StringHolder& attribName,
+            const GA_StorageClass newStorageClass,
+            const GA_Precision precision = GA_PRECISION_INVALID
+        )
+    {
+        GEO_Detail* const geoGEO = static_cast<GEO_Detail*>(geo);
+        const GA_Precision precisionFinal = precision == GA_PRECISION_INVALID ? geo->getPreferredPrecision() : precision;
 
+        //GA_Attribute* attrib = nullptr;
+        switch (newStorageClass)
+        {
+        case GA_STORECLASS_INT:
+        {
+            //attrib = geo->getAttributes().createTupleAttribute(attribClass, newNameFinal, GFE_Type::getPreferredStorageI(precisionFinal), 1, GA_Defaults(0));
+
+            switch (precision)
+            {
+            case GA_PRECISION_8:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT8);
+                break;
+            case GA_PRECISION_16:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT16);
+                break;
+            case GA_PRECISION_32:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT32);
+                break;
+            case GA_PRECISION_64:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT64);
+                break;
+            default:         break;
+            }
+        }
+        break;
+        case GA_STORECLASS_REAL:
+        {
+            //attrib = geo->getAttributes().createTupleAttribute(attribClass, newNameFinal, GFE_Type::getPreferredStorageF(precisionFinal), 1, GA_Defaults(0));
+
+            switch (precision)
+            {
+            case GA_PRECISION_16:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_REAL16);
+                break;
+            case GA_PRECISION_32:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_REAL32);
+                break;
+            case GA_PRECISION_64:
+                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_REAL64);
+                break;
+            default:         break;
+            }
+        }
+        break;
+        case GA_STORECLASS_STRING:
+        {
+            geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_STRING);
+            return true;
+        }
+        break;
+        case GA_STORECLASS_DICT:
+            geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_DICT);
+            return false;
+            break;
+        case GA_STORECLASS_OTHER:
+            return false;
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled Precision!");
+            break;
+        }
+        //return geo->changeAttributeStorage(attribClass, group->getName(), newStorage);
+        return true;
+    }
 
     static bool
         attribCast(
@@ -196,78 +272,12 @@ namespace GFE_AttributeCast {
         if (newStorageClass == inStorageClass)
             return false;
 
-        const UT_StringHolder& attribName = attribPtr->getName();
-        const UT_StringHolder& newNameFinal = (newName.isstring() && newName.length() != 0) ? attribName : newName;
-        //const GA_GroupType classType = attribPtr->classType();
         const GA_AttributeOwner attribClass = attribPtr->getOwner();
+        const UT_StringHolder& attribName = attribPtr->getName();
 
-        const GA_Precision precisionFinal = precision == GA_PRECISION_INVALID ? geo->getPreferredPrecision() : precision;
+        const UT_StringHolder& newNameFinal = (newName.isstring() && newName.length() != 0) ? attribName : newName;
 
-        GEO_Detail* const geoGEO = static_cast<GEO_Detail*>(geo);
-
-        GA_Attribute* attrib = nullptr;
-        switch (newStorageClass)
-        {
-        case GA_STORECLASS_INT:
-        {
-            attrib = geo->getAttributes().createTupleAttribute(attribClass, newNameFinal, GFE_Type::getPreferredStorageI(precisionFinal), 1, GA_Defaults(0));
-
-            switch (precision)
-            {
-            case GA_PRECISION_8:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT8);
-                return true; break;
-            case GA_PRECISION_16:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT16);
-                return true; break;
-            case GA_PRECISION_32:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT32);
-                return true; break;
-            case GA_PRECISION_64:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_INT64);
-                return true; break;
-            default:                              break;
-            }
-        }
-        break;
-        case GA_STORECLASS_REAL:
-        {
-            attrib = geo->getAttributes().createTupleAttribute(attribClass, newNameFinal, GFE_Type::getPreferredStorageF(precisionFinal), 1, GA_Defaults(0));
-
-            switch (precision)
-            {
-            case GA_PRECISION_16:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_REAL16);
-                return true; break;
-            case GA_PRECISION_32:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_REAL32);
-                return true; break;
-            case GA_PRECISION_64:
-                geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_REAL64);
-                return true; break;
-            default:                               break;
-            }
-        }
-        break;
-        case GA_STORECLASS_STRING:
-        {
-            geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_STRING);
-            return true;
-        }
-        break;
-        case GA_STORECLASS_DICT:
-            geoGEO->changeAttributeStorage(attribClass, attribName, GA_STORE_DICT);
-            break;
-
-        case GA_STORECLASS_OTHER:
-            return false;
-            break;
-        default:
-            break;
-        }
-        //return geo->changeAttributeStorage(attribClass, group->getName(), newStorage);
-        UT_ASSERT_MSG(0, "Unhandled Precision!");
-        return false;
+        return changeAttribStorageClass(geo, attribClass, attribName, newStorageClass, precision);
     }
 
     //SYS_FORCE_INLINE

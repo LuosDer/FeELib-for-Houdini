@@ -31,6 +31,15 @@ public:
     {
     }
 
+    GFE_Normal2D(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo
+    )
+        : GFE_AttribCreateFilter(cookparms, geo)
+        , normal3D(cookparms, geo)
+    {
+    }
+
     void
         setComputeParm(
             const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 },

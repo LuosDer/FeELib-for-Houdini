@@ -1956,12 +1956,21 @@ def convertDefiByFilter(selectedNode, targetHDAPath = '',
             newNodeTypeName = newNodeLabel if nodeTypeNameFromLabel else nodeNameComponents[2]
 
             if namespaceOriginal != '':
-                newNodeTypeName = newNodeTypeName.lstrip(namespaceOriginal + '_')
-                newNodeTypeName = newNodeTypeName.lstrip(namespaceOriginal.lower() + '_')
+                # newNodeTypeName = newNodeTypeName.lstrip(namespaceOriginal + '_')
+                # newNodeTypeName = newNodeTypeName.lstrip(namespaceOriginal.lower() + '_')
                 #newNodeTypeName = newNodeTypeName.lstrip(namespaceOriginal)
                 #newNodeTypeName = newNodeTypeName.lstrip(namespaceOriginal.lower())
-                newNodeTypeName = newNodeTypeName.rstrip('_' + namespaceOriginal)
-                newNodeTypeName = newNodeTypeName.rstrip('_' + namespaceOriginal.lower())
+                # newNodeTypeName = newNodeTypeName.rstrip('_' + namespaceOriginal)
+                # newNodeTypeName = newNodeTypeName.rstrip('_' + namespaceOriginal.lower())
+
+                if newNodeTypeName.startswith(namespaceOriginal + '_'):
+                    newNodeTypeName = newNodeTypeName[len(namespaceOriginal)+1:]
+                if newNodeTypeName.startswith(namespaceOriginal.lower() + '_'):
+                    newNodeTypeName = newNodeTypeName[len(namespaceOriginal)+1:]
+                if newNodeTypeName.endswith('_' + namespaceOriginal):
+                    newNodeTypeName = newNodeTypeName[:len(newNodeTypeName)-len(namespaceOriginal)-1]
+                if newNodeTypeName.endswith('_' + namespaceOriginal.lower()):
+                    newNodeTypeName = newNodeTypeName[:len(newNodeTypeName)-len(namespaceOriginal)-1]
             if name_lower:
                 newNodeTypeName = newNodeTypeName.lower()
             newNodeTypeName = re.sub('generator', 'gen', newNodeTypeName)

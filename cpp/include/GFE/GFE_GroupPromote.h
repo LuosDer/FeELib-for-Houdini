@@ -39,7 +39,7 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(group->getName());
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return newGroup;
     }
@@ -63,7 +63,7 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(group->getName());
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return newGroup;
     }
@@ -91,7 +91,7 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(newName);
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return newGroup;
     }
@@ -119,7 +119,7 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(newName);
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return newGroup;
     }
@@ -129,25 +129,44 @@ namespace GFE_GroupPromote {
 
     static GA_GroupUPtr
     groupPromoteDetached(
-        const GA_Detail* const geo,
         const GA_Group* const group,
         const GA_GroupType newType
     )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return GA_GroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(newType);
         if (!groupTable)
             return GA_GroupUPtr();
         
         GA_Group* const newGroup = groupTable->newDetachedGroup();
         
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return GA_GroupUPtr(newGroup);
     }
+
+    //static GA_GroupUPtr
+    //    groupPromoteDetached(
+    //        const GA_Detail* const geo,
+    //        const GA_Group* const group,
+    //        const GA_GroupType newType
+    //    )
+    //{
+    //    if (!group)
+    //        return GA_GroupUPtr();
+
+    //    const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+    //    if (!groupTable)
+    //        return GA_GroupUPtr();
+
+    //    GA_Group* const newGroup = groupTable->newDetachedGroup();
+
+    //    GFE_GroupUnion::groupUnion(newGroup, group);
+
+    //    return GA_GroupUPtr(newGroup);
+    //}
 
     static GA_Group*
         groupFindPromoteDetached(
@@ -168,7 +187,29 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
+
+        return newGroup;
+    }
+
+    static GA_Group*
+        groupFindPromoteDetached(
+            GA_Group* const group,
+            const GA_GroupType newType
+        )
+    {
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == newType)
+            return group;
+
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(newType);
+        if (!groupTable)
+            return nullptr;
+
+        GA_Group* const newGroup = groupTable->newDetachedGroup();
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return newGroup;
     }
@@ -192,7 +233,29 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
+
+        return newGroup;
+    }
+
+    static const GA_Group*
+        groupFindPromoteDetached(
+            const GA_Group* const group,
+            const GA_GroupType newType
+        )
+    {
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == newType)
+            return group;
+
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(newType);
+        if (!groupTable)
+            return nullptr;
+
+        GA_Group* const newGroup = groupTable->newDetachedGroup();
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return newGroup;
     }
@@ -227,23 +290,21 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_GroupUPtr
         groupPromoteDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             const GA_AttributeOwner newType
         )
     {
-        return groupPromoteDetached(geo, group, GFE_Type::attributeOwner_groupType(newType));
+        return groupPromoteDetached(group, GFE_Type::attributeOwner_groupType(newType));
     }
 
     SYS_FORCE_INLINE
         static const GA_Group*
         groupFindPromoteDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             const GA_AttributeOwner newType
         )
     {
-        return groupFindPromoteDetached(geo, group, GFE_Type::attributeOwner_groupType(newType));
+        return groupFindPromoteDetached(group, GFE_Type::attributeOwner_groupType(newType));
     }
 
 
@@ -286,6 +347,8 @@ namespace GFE_GroupPromote {
         }
         return newGroup;
     }
+
+
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
@@ -304,6 +367,8 @@ namespace GFE_GroupPromote {
         }
         return newGroup;
     }
+
+
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
@@ -322,6 +387,8 @@ namespace GFE_GroupPromote {
         }
         return newGroup;
     }
+
+
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
@@ -350,7 +417,7 @@ namespace GFE_GroupPromote {
         const bool delOriginal
     )
     {
-        GA_GroupUPtr newGroupUPtr = groupPromoteDetached(geo, group, newType);
+        GA_GroupUPtr newGroupUPtr = groupPromoteDetached(group, newType);
         if (delOriginal && group != newGroupUPtr.get())
         {
             geo->destroyGroup(group);
@@ -368,7 +435,7 @@ namespace GFE_GroupPromote {
         const bool delOriginal
     )
     {
-        const GA_Group* newGroup = groupFindPromoteDetached(geo, group, newType);
+        const GA_Group* const newGroup = groupFindPromoteDetached(geo, group, newType);
         if (delOriginal && group != newGroup)
         {
             geo->destroyGroup(group);
@@ -632,84 +699,76 @@ namespace GFE_GroupPromote {
 
     static GA_PrimitiveGroupUPtr
         groupPromotePrimitiveDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return GA_PrimitiveGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_PRIMITIVE);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(GA_GROUP_PRIMITIVE);
         if (!groupTable)
             return GA_PrimitiveGroupUPtr();
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return GA_PrimitiveGroupUPtr(static_cast<GA_PrimitiveGroup*>(newGroup));
     }
 
     static GA_PointGroupUPtr
         groupPromotePointDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return GA_PointGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_POINT);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(GA_GROUP_POINT);
         if (!groupTable)
             return GA_PointGroupUPtr();
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return GA_PointGroupUPtr(static_cast<GA_PointGroup*>(newGroup));
     }
 
     static GA_VertexGroupUPtr
         groupPromoteVertexDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return GA_VertexGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_VERTEX);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(GA_GROUP_VERTEX);
         if (!groupTable)
             return GA_VertexGroupUPtr();
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return GA_VertexGroupUPtr(static_cast<GA_VertexGroup*>(newGroup));
     }
 
     static GA_EdgeGroupUPtr
         groupPromoteEdgeDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return GA_EdgeGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(GA_GROUP_EDGE);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(GA_GROUP_EDGE);
         if (!groupTable)
             return GA_EdgeGroupUPtr();
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return GA_EdgeGroupUPtr(static_cast<GA_EdgeGroup*>(newGroup));
     }
@@ -719,26 +778,24 @@ namespace GFE_GroupPromote {
 
     static const GA_Group*
         groupFindPromoteDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             const GA_GroupType groupType,
             GOP_Manager& gop
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == groupType)
             return group;
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(groupType);
         if (!groupTable)
             return group;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         gop.appendAdhocGroup(newGroup, false);
 
@@ -748,45 +805,41 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PrimitiveGroup*
         groupFindPromotePrimitiveDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             GOP_Manager& gop
         )
     {
-        return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_PRIMITIVE, gop));
+        return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(group, GA_GROUP_PRIMITIVE, gop));
     }
 
     SYS_FORCE_INLINE
         static const GA_PointGroup*
         groupFindPromotePointDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             GOP_Manager& gop
         )
     {
-        return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_POINT, gop));
+        return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(group, GA_GROUP_POINT, gop));
     }
 
     SYS_FORCE_INLINE
         static const GA_VertexGroup*
         groupFindPromoteVertexDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             GOP_Manager& gop
         )
     {
-        return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_VERTEX, gop));
+        return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(group, GA_GROUP_VERTEX, gop));
     }
 
     SYS_FORCE_INLINE
         static const GA_EdgeGroup*
         groupFindPromoteEdgeDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group,
             GOP_Manager& gop
         )
     {
-        return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(geo, group, GA_GROUP_EDGE, gop));
+        return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(group, GA_GROUP_EDGE, gop));
     }
 
 
@@ -800,7 +853,7 @@ namespace GFE_GroupPromote {
             const bool delOriginal
         )
     {
-        GA_PrimitiveGroupUPtr newGroupUPtr = groupPromotePrimitiveDetached(geo, group);
+        GA_PrimitiveGroupUPtr newGroupUPtr = groupPromotePrimitiveDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
             geo->destroyGroup(group);
@@ -817,7 +870,7 @@ namespace GFE_GroupPromote {
             const bool delOriginal
         )
     {
-        GA_PointGroupUPtr newGroupUPtr = groupPromotePointDetached(geo, group);
+        GA_PointGroupUPtr newGroupUPtr = groupPromotePointDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
             geo->destroyGroup(group);
@@ -834,7 +887,7 @@ namespace GFE_GroupPromote {
             const bool delOriginal
         )
     {
-        GA_VertexGroupUPtr newGroupUPtr = groupPromoteVertexDetached(geo, group);
+        GA_VertexGroupUPtr newGroupUPtr = groupPromoteVertexDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
             geo->destroyGroup(group);
@@ -851,7 +904,7 @@ namespace GFE_GroupPromote {
         const bool delOriginal
     )
     {
-        GA_EdgeGroupUPtr newGroupUPtr = groupPromoteEdgeDetached(geo, group);
+        GA_EdgeGroupUPtr newGroupUPtr = groupPromoteEdgeDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
             geo->destroyGroup(group);
@@ -1014,22 +1067,20 @@ namespace GFE_GroupPromote {
 
     static GA_ElementGroupUPtr
     elementGroupPromoteDetached(
-        const GA_Detail* const geo,
         const GA_Group* const group,
         const GA_GroupType newType
     )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return GA_ElementGroupUPtr();
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(newType);
         if (!groupTable)
             return GA_ElementGroupUPtr();
 
         GA_ElementGroup* const newGroup = static_cast<GA_ElementGroup*>(groupTable->newDetachedGroup());
 
-        GFE_GroupUnion::groupUnion(geo, newGroup, group);
+        GFE_GroupUnion::groupUnion(newGroup, group);
 
         return GA_ElementGroupUPtr(static_cast<GA_ElementGroup*>(newGroup));
     }
@@ -1037,31 +1088,28 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_ElementGroupUPtr
         elementGroupPromotePrimitiveDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        return elementGroupPromoteDetached(geo, group, GA_GROUP_PRIMITIVE);
+        return elementGroupPromoteDetached(group, GA_GROUP_PRIMITIVE);
     }
 
     SYS_FORCE_INLINE
         static GA_ElementGroupUPtr
         elementGroupPromotePointDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        return elementGroupPromoteDetached(geo, group, GA_GROUP_POINT);
+        return elementGroupPromoteDetached(group, GA_GROUP_POINT);
     }
 
     SYS_FORCE_INLINE
         static GA_ElementGroupUPtr
         elementGroupPromoteVertexDetached(
-            const GA_Detail* const geo,
             const GA_Group* const group
         )
     {
-        return elementGroupPromoteDetached(geo, group, GA_GROUP_VERTEX);
+        return elementGroupPromoteDetached(group, GA_GROUP_VERTEX);
     }
 
 

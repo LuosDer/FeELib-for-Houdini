@@ -42,18 +42,29 @@ public:
         attribArray.reserve(16);
     }
 
+    GFE_AttributeArray(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+
     ~GFE_AttributeArray()
     {
     }
 
-    GA_Attribute*
-        operator[](size_t i)
+    GA_Attribute*&
+        operator[](const size_t i)
     {
         return attribArray[i];
     }
 
-    GA_Attribute*
-        operator[](int i)
+    GA_Attribute*&
+        operator[](const int i)
     {
         return attribArray[i];
     }
@@ -62,6 +73,17 @@ public:
         isEmpty()
     {
         return attribArray.size() == 0;
+    }
+
+    
+
+    void
+        destroy(
+            const int i
+        )
+    {
+        geo->getAttributes().destroyAttribute(attribArray[i]);
+        attribArray.erase(attribArray.begin()+i);
     }
 
     void
@@ -139,14 +161,14 @@ append(
 
 void
 appendUV(
-    const GA_AttributeOwner attribClass,
-    const UT_StringHolder& attribPattern
+    const UT_StringHolder& attribPattern,
+    const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID
 )
 {
     if (!attribPattern.isstring() || attribPattern.length() == 0)
         return;
 
-    GA_Attribute* attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
+    GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
     //GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, attribClass, attribPattern);
     //if (attribPtr)
     //{
@@ -511,6 +533,14 @@ pop_back()
 
 
 
+SYS_FORCE_INLINE
+GA_Attribute*
+last()
+{
+    return attribArray[attribArray.size()-1];
+}
+
+
 void
 bumpDataId()
 {
@@ -566,18 +596,29 @@ public:
         groupArray.reserve(16);
     }
 
+    GFE_GroupArray(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+
     ~GFE_GroupArray()
     {
     }
 
-    GA_Group*
-        operator[](size_t i)
+    GA_Group*&
+        operator[](const size_t i)
     {
         return groupArray[i];
     }
 
-    GA_Group*
-        operator[](int i)
+    GA_Group*&
+        operator[](const int i)
     {
         return groupArray[i];
     }
@@ -599,6 +640,13 @@ public:
         size()
     {
         return groupArray.size();
+    }
+
+    SYS_FORCE_INLINE
+        GA_Group*
+        last()
+    {
+        return groupArray[groupArray.size() - 1];
     }
 
     void

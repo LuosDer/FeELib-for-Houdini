@@ -301,7 +301,7 @@ sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
     case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::VERTEX;      break;
     case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::DETAIL;      break;
     case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::POINTVERTEX; break;
-    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::N;           break;
+    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::ALL;           break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
     return GFE_NormalSearchOrder::INVALID;

@@ -9,6 +9,10 @@
 #include "GA/GA_Detail.h"
 
 
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+#else
+#endif
+
 
 #ifndef PI
 #define PI 3.14159265358979323846

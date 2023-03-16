@@ -8,23 +8,116 @@
 
 #include "GA/GA_Detail.h"
 
-#include "GEO/GEO_Curve.h"
+//#include "GEO/GEO_Curve.h"
 
+#include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_Type.h"
+//#include "GFE/GFE_Type.h"
 #include "GFE/GFE_Attribute.h"
-#include "GFE/GFE_GroupParse.h"
-#include "GFE/GFE_Measure.h"
+//#include "GFE/GFE_GroupParser.h"
+//#include "GFE/GFE_Measure.h"
 
-enum GFE_CurveUVMethod
+enum class GFE_CurveUVMethod
 {
-    GFE_CurveUVMethod_WorldArcLength,
-    GFE_CurveUVMethod_WorldAverage,
-    GFE_CurveUVMethod_LocalArcLength,
-    GFE_CurveUVMethod_LocalAverage,
+    WorldArcLength,
+    WorldAverage,
+    LocalArcLength,
+    LocalAverage,
 };
 
-namespace GFE_CurveUV {
+
+
+
+
+class GFE_CurveUV : public GFE_AttribFilter {
+
+
+
+public:
+    using GFE_AttribFilter::GFE_AttribFilter;
+
+    ~GFE_CurveUV()
+    {
+    }
+
+
+    void
+        setGroup(
+            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
+        )
+    {
+        groupParser.setGroup(geoPrimGroup);
+    }
+
+    void
+        setGroup(
+            const UT_StringHolder& primGroupName = ""
+        )
+    {
+        groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
+    }
+
+
+    void
+        setComputeParm(
+            const bool cutPoint = false,
+            const bool mergePrimEndsIfClosed = true,
+            const GFE_PolyCutType polyType = GFE_PolyCutType::AUTO
+        )
+    {
+        setHasComputed();
+        this->cutPoint = cutPoint;
+        this->mergePrimEndsIfClosed = mergePrimEndsIfClosed;
+        this->polyType = polyType;
+    }
+
+
+private:
+
+    // can not use in parallel unless for each GA_Detail
+    virtual bool
+        computeCore() override
+    {
+        if (groupParser.isEmpty())
+            return true;
+
+        polyCut();
+
+        return true;
+    }
+
+
+
+
+public:
+
+private:
+
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+namespace GFE_CurveUV_Namespace {
 
     template<typename FLOAT_T>
     SYS_FORCE_INLINE
@@ -171,7 +264,7 @@ SYS_FORCE_INLINE
         GA_Detail* const geo,
         GA_Attribute* const uvAttribPtr,
         const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-        const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
+        const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod::WorldArcLength,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 64
     )
@@ -208,7 +301,7 @@ curveUV(
     const GA_Storage storage = GA_STORE_INVALID,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
     const UT_StringHolder& uvAttribName = "uv",
-    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
+    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod::WorldArcLength,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
 )
@@ -232,13 +325,13 @@ curveUV(
     const GA_Storage storage = GA_STORE_INVALID,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
     const UT_StringHolder& uvAttribName = "uv",
-    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod_WorldArcLength,
+    const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod::WorldArcLength,
     const exint subscribeRatio = 64,
     const exint minGrainSize = 64
 )
 {
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, primGroupName, gop);
+    const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, primGroupName, gop);
 
     return curveUV(geo, geoPrimGroup,
         storage, uvAttribClass, uvAttribName, curveUVMethod,

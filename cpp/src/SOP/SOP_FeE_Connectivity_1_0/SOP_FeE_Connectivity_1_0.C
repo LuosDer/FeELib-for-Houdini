@@ -12,14 +12,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GU/GU_Promote.h"
-
-#include "GFE/GFE_Attribute.h"
-#include "GFE/GFE_GroupParse.h"
-#include "GFE/GFE_GroupPromote.h"
 #include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_AttributeCast.h"
-
 
 
 using namespace SOP_FeE_Connectivity_1_0_Namespace;
@@ -172,10 +165,24 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Seam Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('seamGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
         parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "seamGroupType"
+        cppname "SeamGroupType"
+        label   "Seam Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "useUVConnectivity"
@@ -326,17 +333,17 @@ sopConnectivityConstraint(SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint 
 }
 
 
-static bool
-sopAttribType(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
+static GA_StorageClass
+sopStorageClass(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (attribType)
     {
-    case ConnectivityAttribType::INT:        return false;      break;
-    case ConnectivityAttribType::STRING:     return true;      break;
+    case ConnectivityAttribType::INT:        return GA_STORECLASS_INT;      break;
+    case ConnectivityAttribType::STRING:     return GA_STORECLASS_STRING;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Attrib Type!");
-    return false;
+    return GA_STORECLASS_INT;
 }
 
 
@@ -371,6 +378,23 @@ sopGroupType(SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
     return GA_GROUP_INVALID;
 }
 
+static GA_GroupType
+sopGroupType(SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmgrouptype)
+{
+    using namespace SOP_FeE_Connectivity_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case SeamGroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case SeamGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case SeamGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case SeamGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case SeamGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
 
 
 static GFE_PieceAttribSearchOrder
@@ -379,16 +403,19 @@ sopPieceAttribSearchOrder(SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder 
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmgrouptype)
     {
-    case PieceAttribSearchOrder::PRIM:       return GFE_PieceAttribSearchOrder_PRIM;         break;
-    case PieceAttribSearchOrder::POINT:      return GFE_PieceAttribSearchOrder_POINT;        break;
-    case PieceAttribSearchOrder::VERTEX:     return GFE_PieceAttribSearchOrder_VERTEX;       break;
-    case PieceAttribSearchOrder::PRIMPOINT:  return GFE_PieceAttribSearchOrder_PRIMPOINT;    break;
-    case PieceAttribSearchOrder::POINTPRIM:  return GFE_PieceAttribSearchOrder_POINTPRIM;    break;
-    case PieceAttribSearchOrder::ALL:        return GFE_PieceAttribSearchOrder_ALL;          break;
+    case PieceAttribSearchOrder::PRIM:       return GFE_PieceAttribSearchOrder::PRIM;         break;
+    case PieceAttribSearchOrder::POINT:      return GFE_PieceAttribSearchOrder::POINT;        break;
+    case PieceAttribSearchOrder::VERTEX:     return GFE_PieceAttribSearchOrder::VERTEX;       break;
+    case PieceAttribSearchOrder::PRIMPOINT:  return GFE_PieceAttribSearchOrder::PRIMPOINT;    break;
+    case PieceAttribSearchOrder::POINTPRIM:  return GFE_PieceAttribSearchOrder::POINTPRIM;    break;
+    case PieceAttribSearchOrder::ALL:        return GFE_PieceAttribSearchOrder::ALL;          break;
     }
     UT_ASSERT_MSG(0, "Unhandled Piece Attrib Search Order!");
-    return GFE_PieceAttribSearchOrder_INVALID;
+    return GFE_PieceAttribSearchOrder::INVALID;
 }
+
+
+
 
 
 void
@@ -405,22 +432,25 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
+    //const GA_Precision preferedPrecision = outGeo0->getPreferredPrecision();
+
+
     const UT_StringHolder& geo0AttribNames = sopparms.getConnectivityAttribName();
     if (!geo0AttribNames.isstring())
         return;
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
-    const bool connectivityAttribType = sopAttribType(sopparms.getConnectivityAttribType());
-    //const GA_AttributeType connectivityAttribType = sopparms.getConnectivityAttribType();
 
-    const GA_Precision preferedPrecision = outGeo0->getPreferredPrecision();
+    const GA_StorageClass connectivityStorageClass = sopStorageClass(sopparms.getConnectivityAttribType());
+
+
 
     const UT_StringHolder& stringPrefix = sopparms.getStringPrefix();
     const UT_StringHolder& stringSufix = sopparms.getStringSufix();
 
     if (sopparms.getFindInputPieceAttrib())
     {
-        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = sopPieceAttribSearchOrder(sopparms.getFindPieceAttribClass());
+        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = sopPieceAttribSearchOrder(sopparms.getPieceAttribSearchOrder());
         GA_Attribute* attribPtr = GFE_Attribute::findPieceAttrib(outGeo0, pieceAttribSearchOrder, geo0AttribNames);
 
         if (attribPtr)
@@ -430,33 +460,25 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             {
                 if (geo0AttribClass != attribPtr->getOwner())
                 {
-                    attribPtr = GU_Promote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
+                    attribPtr = GFE_AttribPromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
+                    //attribPtr = GFE_AttribPromote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
                 }
             }
 
             const bool forceCastAttribType = sopparms.getForceCastAttribType();
             if (forceCastAttribType)
             {
-                GFE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityAttribType ? GA_STORECLASS_STRING : GA_STORECLASS_INT, "", preferedPrecision);
+                GFE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityStorageClass, "", outGeo0->getPreferredPrecision());
             }
             return;
         }
     }
 
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-    GOP_Manager gop;
-    const GA_Group* geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-
-    const bool useUVConnectivity = sopparms.getUseUVConnectivity();
-
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
-    if (useUVConnectivity && !uvAttribName.isstring())
-        return;
+    //GOP_Manager gop;
+    //const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
+    //if (geo0Group && geo0Group->isEmpty())
+    //    return;
 
 
     UT_AutoInterrupt boss("Processing");
@@ -465,44 +487,60 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
 
-    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
-    const bool useSeamGroup = seamGroupName.isstring();
-
-
-    const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
-
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();
 
 
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferedPrecision);
+    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferedPrecision);
 
 
-    const GA_GroupUPtr geo0GroupUPtr = GFE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
-    const GA_Group* const geo0GroupPromoted = geo0GroupUPtr.get();
+    //const GA_GroupUPtr geo0GroupUPtr = GFE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
+    //const GA_Group* const geo0GroupPromoted = geo0GroupUPtr.get();
 
-    const GA_Group* const geo0SeamGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
+    //const GA_Group* const geo0SeamGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
 
 
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
-    GA_Attribute* attribPtr = outGeo0->findAttribute(geo0AttribClass, geo0AttribNames);
-    if (attribPtr)
-        outGeo0->getAttributes().destroyAttribute(attribPtr);
+    //GA_Attribute* attribPtr = outGeo0->findAttribute(geo0AttribClass, geo0AttribNames);
+    //if (attribPtr)
+    //    outGeo0->getAttributes().destroyAttribute(attribPtr);
 
 
-    attribPtr = GFE_Connectivity::addAttribConnectivity(outGeo0,
-        geo0GroupPromoted, geo0SeamGroup,
-        connectivityConstraint, geo0AttribClass,
-        inStorageI, geo0AttribNames
-        //, subscribeRatio, minGrainSize
-    );
 
-    if (connectivityAttribType) // string type
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType seamGroupType = sopGroupType(sopparms.getSeamGroupType());
+
+    const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
+    
+
+
+
+
+    GFE_Connectivity connectivity(cookparms, outGeo0);
+    //GFE_Connectivity connectivity(outGeo0, &cookparms);
+
+    //const bool useUVConnectivity = sopparms.getUseUVConnectivity();
+
+
+    if (sopparms.getUseUVConnectivity())
     {
-        GFE_AttributeCast::attribCast(outGeo0, attribPtr, GA_STORECLASS_STRING, "", preferedPrecision);
+        const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
+        if (uvAttribName.isstring())
+        {
+            connectivity.getInAttribArray().appendUV(uvAttribName);
+        }
     }
+
+    connectivity.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    connectivity.groupParserSeam.setGroup(seamGroupType, sopparms.getSeamGroup());
+
+    connectivity.setComputeParm(connectivityConstraint, sopparms.getOutTopoAttrib());
+    connectivity.findOrCreateTuple(geo0AttribClass, connectivityStorageClass, GA_STORE_INVALID, false, geo0AttribNames);
+    
+    connectivity.computeAndBumpDataId();
 
 
     //timeEnd = std::chrono::steady_clock::now();
@@ -512,8 +550,6 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //outGeo0->setDetailAttributeF("timeTotal", timeTotal * 1000);
     //outGeo0->setDetailAttributeF("timeTotal1", timeTotal1 * 1000);
 
-
-    GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
 
 
 }
