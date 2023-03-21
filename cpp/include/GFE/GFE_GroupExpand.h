@@ -6,15 +6,72 @@
 
 //#include "GFE/GFE_GroupExpand.h"
 
-#include "GA/GA_Detail.h"
+
+#include "GFE/GFE_GeoFilter.h"
 
 #include "GFE/GFE_Group.h"
-#include "GFE/GFE_GroupParse.h"
+#include "GFE/GFE_GroupParser.h"
 #include "GFE/GFE_GroupUnion.h"
 #include "GFE/GFE_Adjacency.h"
 
+#include "GFE/GFE_Measure.h"
+#include "GFE/GFE_Connectivity.h"
+#include "GFE/GFE_TopologyReference.h"
 
-namespace GFE_GroupExpand {
+
+
+
+class GFE_GroupExpand : public GFE_AttribFilter {
+
+public:
+
+    using GFE_AttribFilter::GFE_AttribFilter;
+
+    void
+        setComputeParm(
+            const GA_GroupType baseGroupType,
+            const UT_StringHolder& baseGroupName,
+            const GA_GroupType connectivityGroupType,
+            const exint numiter,
+            const bool outTopoAttrib,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 64
+        )
+    {
+        setHasComputed();
+        setOutTopoAttrib(outTopoAttrib);
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
+
+
+private:
+
+    using TEMP_POS_VECTOR_TYPE = UT_Vector3T<fpreal64>;
+
+
+    virtual bool
+        computeCore() override
+    {
+        if (groupParser.isEmpty())
+            return true;
+
+        return true;
+    }
+
+public:
+    GA_GroupType baseGroupType;
+    UT_StringHolder baseGroupName;
+    GA_GroupType connectivityGroupType;
+    exint numiter;
+
+private:
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
+
+};
+
+namespace GFE_GroupExpand_Namespace {
 
 
 
@@ -70,7 +127,7 @@ namespace GFE_GroupExpand {
 
         const GA_GroupType groupType = baseGroup->classType();
 
-        GFE_GroupUnion::groupUnion(geo, expandGroup, baseGroup);
+        GFE_GroupUnion::groupUnion(expandGroup, baseGroup);
 
         if (groupType == GA_GROUP_EDGE)
         {
@@ -202,8 +259,8 @@ namespace GFE_GroupExpand {
         //GFE_GroupBoolean::groupUnion(geo, borderGroup, baseGroup);
         if (groupType == GA_GROUP_EDGE)
         {
-            GFE_GroupUnion::edgeGroupUnion(geo, expandGroup, baseGroup);
-            GFE_GroupUnion::edgeGroupUnion(geo, borderGroup, baseGroup);
+            GFE_GroupUnion::edgeGroupUnion(expandGroup, baseGroup);
+            GFE_GroupUnion::edgeGroupUnion(borderGroup, baseGroup);
             //const GA_EdgeGroup* baseEdgeGroup = UTverify_cast<const GA_EdgeGroup*>(baseGroup);
             switch (connectivityGroupType)
             {
@@ -288,7 +345,7 @@ namespace GFE_GroupExpand {
         )
     {
         GOP_Manager gop;
-        const GA_Group* geo0Group = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, baseGroupType, baseGroupName, gop);
+        const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, geo, baseGroupType, baseGroupName, gop);
 
         if (!geo0Group)
             return;
@@ -296,7 +353,7 @@ namespace GFE_GroupExpand {
         GFE_TopologyReference::outTopoAttrib(geo, outTopoAttrib);
 
 
-        GFE_GroupExpand::groupExpand(geo, expandGroup, borderGroup, prevBorderGroup, geo0Group, GA_GROUP_EDGE, numiter, subscribeRatio, minGrainSize);
+        groupExpand(geo, expandGroup, borderGroup, prevBorderGroup, geo0Group, GA_GROUP_EDGE, numiter, subscribeRatio, minGrainSize);
         //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
         //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
         cookparms.getNode()->setHighlight(true);

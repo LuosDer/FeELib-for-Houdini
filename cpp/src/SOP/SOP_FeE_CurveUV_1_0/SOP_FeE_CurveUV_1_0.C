@@ -187,13 +187,13 @@ sopCurveUVMethod(SOP_FeE_CurveUV_1_0Parms::CurveUVMethod curveUVMethod)
     using namespace SOP_FeE_CurveUV_1_0Enums;
     switch (curveUVMethod)
     {
-    case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod_WorldArcLength;    break;
-    case CurveUVMethod::WORLDAVERAGE:       return GFE_CurveUVMethod_WorldAverage;      break;
-    case CurveUVMethod::LOCALARCLENGTH:     return GFE_CurveUVMethod_LocalArcLength;    break;
-    case CurveUVMethod::LOCALAVERAGE:       return GFE_CurveUVMethod_LocalAverage;      break;
+    case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod::WorldArcLength;    break;
+    case CurveUVMethod::WORLDAVERAGE:       return GFE_CurveUVMethod::WorldAverage;      break;
+    case CurveUVMethod::LOCALARCLENGTH:     return GFE_CurveUVMethod::LocalArcLength;    break;
+    case CurveUVMethod::LOCALAVERAGE:       return GFE_CurveUVMethod::LocalAverage;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled CurveUVMethod!");
-    return GFE_CurveUVMethod_WorldArcLength;
+    return GFE_CurveUVMethod::WorldArcLength;
 }
 
 
@@ -210,7 +210,7 @@ SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0->replaceWith(*inGeo0);
 
 
-    const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
+    //const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
 
     const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVClass());
     const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
@@ -228,12 +228,24 @@ SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
     
-    //GA_Attribute* uvAttribPtr = GFE_CurveUV::curveUV(cookparms, outGeo0, primGroupName,
-    //    uvAttribClass, uvAttribName, curveUVMethod,
+
+
+
+
+    GFE_CurveUV curveUV(cookparms, outGeo0);
+
+    curveUV.setComputeParm(curveUVMethod, subscribeRatio, minGrainSize);
+
+
+    curveUV.setGroup(sopparms.getPrimGroup());
+    curveUV.findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName, 3);
+
+    curveUV.computeAndBumpDataId();
+
+
+    //GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
+    //    GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
     //    subscribeRatio, minGrainSize);
-    GFE_CurveUV::curveUV(cookparms, outGeo0, primGroupName,
-        GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
-        subscribeRatio, minGrainSize);
 }
 
 

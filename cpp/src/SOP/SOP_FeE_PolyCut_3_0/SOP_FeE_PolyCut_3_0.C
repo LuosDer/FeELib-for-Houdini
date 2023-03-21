@@ -339,7 +339,14 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //    }
     //}
 
+#if 1
     GFE_PolyCut polyCut(outGeo0, inGeo0, &cookparms);
+#else
+    outGeo0->replaceWith(*inGeo0);
+    GFE_PolyCut polyCut(outGeo0, nullptr, &cookparms);
+#endif
+    polyCut.setComputeParm(cutPoint, mergePrimEndsIfClosed, polyType);
+
     polyCut.setGroup(sopparms.getCutPointGroup(), sopparms.getPrimGroup());
 
     if (createSrcPrimAttrib)
@@ -350,9 +357,10 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     polyCut.groupParser_cutPoint.setDelGroup(delInputPointGroup);
 
-    polyCut.setComputeParm(cutPoint, mergePrimEndsIfClosed, polyType);
-
     polyCut.computeAndBumpDataIdsForAddOrRemove();
+
+
+
     //GFE_PolyCut_Namespace::polyCut(cookparms, outGeo0, inGeo0,
     //    sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
     //    cutPoint, mergePrimEndsIfClosed, polyType,

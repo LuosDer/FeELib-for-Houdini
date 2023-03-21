@@ -453,8 +453,7 @@ static GA_Attribute*
 findUVAttributePointVertex(
     GA_Detail* const geo,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
-    const UT_StringRef& uvAttribName = "uv",
-    const GA_Storage storage = GA_STORE_INVALID
+    const UT_StringRef& uvAttribName = "uv"
 )
 {
     GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);

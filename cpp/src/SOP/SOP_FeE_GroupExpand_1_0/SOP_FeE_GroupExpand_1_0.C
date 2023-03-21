@@ -11,11 +11,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_Group.h"
+
 #include "GFE/GFE_GroupExpand.h"
-#include "GFE/GFE_Measure.h"
-#include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_TopologyReference.h"
 
 
 using namespace SOP_FeE_GroupExpand_1_0_Namespace;
@@ -383,12 +380,13 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     
 
-    const UT_StringHolder& groupName0 = sopparms.getGroup();
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
     const exint numsteps = sopparms.getNumsteps();
 
+
+    const bool outTopoAttrib = sopparms.getOutTopoAttrib();
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -406,7 +404,7 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //GA_Group* geo0OutGroup = GEO_FeE_Group::groupDuplicate(outGeo0, geo0Group, geo0AttribNames);
 
 
-    const GA_GroupType geo0finalGroupType = geo0Group->classType();
+    //const GA_GroupType geo0finalGroupType = geo0Group->classType();
 
     GA_Group* expandGroup     = GFE_Group::newGroup(outGeo0, geo0Group, expandGroupName);
     GA_Group* borderGroup     = GFE_Group::newGroup(outGeo0, geo0Group, borderGroupName);
@@ -414,13 +412,21 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     return outGeo0->getGroupTable(group->classType())->newGroup(groupName);
 
-    const bool outTopoAttrib = sopparms.getOutTopoAttrib();
-
-    GFE_GroupExpand::groupExpand(cookparms, outGeo0,
+#if 1
+    GFE_GroupExpand groupExpand(cookparms, outGeo0);
+    groupExpand.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupExpand.getOutGroupArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName);
+    groupExpand.setComputeParm(
+        numsteps, outTopoAttrib,
+        subscribeRatio, minGrainSize);
+    groupExpand.computeAndBumpDataId();
+#else
+    GFE_GroupExpand_Namespace::groupExpand(cookparms, outGeo0,
         expandGroup, borderGroup, prevBorderGroup,
         groupType, groupName0,
         GA_GROUP_EDGE, numsteps,
         outTopoAttrib, subscribeRatio, minGrainSize);
+#endif
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 

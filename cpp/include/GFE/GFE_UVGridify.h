@@ -6,8 +6,6 @@
 
 //#include "GFE/GFE_UVGridify.h"
 
-#include "GA/GA_Detail.h"
-
 
 #include "GFE/GFE_GeoFilter.h"
 

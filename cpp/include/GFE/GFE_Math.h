@@ -40,6 +40,48 @@ SYS_FORCE_INLINE
 
 
 
+template<typename VECTOR_T, typename T_value_type>
+inline VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
+{
+    return lerp(a, b, t);
+}
+
+template<>
+inline int16 vlerp<int16, fpreal16>(const int16 a, const int16 b, const fpreal16 t)
+{
+    return a + (b - a) * t;
+}
+
+template<>
+inline int vlerp<int, fpreal32>(const int a, const int b, const fpreal32 t)
+{
+    return a + (b - a) * t;
+}
+
+template<>
+inline int64 vlerp<int64, fpreal64>(const int64 a, const int64 b, const fpreal64 t)
+{
+    return a + (b - a) * t;
+}
+
+template<>
+inline fpreal16 vlerp<fpreal16, fpreal16>(const fpreal16 a, const fpreal16 b, const fpreal16 t)
+{
+    return a + (b - a) * t;
+}
+
+template<>
+inline fpreal32 vlerp<fpreal32, fpreal32>(const fpreal32 a, const fpreal32 b, const fpreal32 t)
+{
+    return SYSlerp(a, b, t);
+}
+
+template<>
+inline fpreal vlerp<fpreal, fpreal>(const fpreal a, const fpreal b, const fpreal t)
+{
+    return SYSlerp(a, b, t);
+}
+
 
 
 #define ReverseROC 1

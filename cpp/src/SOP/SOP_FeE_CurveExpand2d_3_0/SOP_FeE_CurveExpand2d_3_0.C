@@ -242,7 +242,9 @@ SOP_FeE_CurveExpand2d_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
+
+    GFE_CurveExpand2d curveExpand2d(cookparms, outGeo0);
+
     GA_Attribute* posAttribPtr = GFE_CurveExpand2d::curveExpand2d(cookparms, outGeo0, groupType, groupName,
         uvAttribClass, uvAttribName,
         rowsOrColsNumMethod, rowsOrColsNum, 

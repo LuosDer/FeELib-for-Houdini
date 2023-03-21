@@ -61,6 +61,7 @@ public:
     }
 
 
+    SYS_FORCE_INLINE
     bool
         getHasComputed() const
     {
@@ -68,6 +69,7 @@ public:
     }
 
 
+    SYS_FORCE_INLINE
     void
         setOutTopoAttrib(
             bool outTopoAttrib = true
@@ -76,6 +78,7 @@ public:
         this->outTopoAttrib = outTopoAttrib;
     }
 
+    SYS_FORCE_INLINE
     bool
         getOutTopoAttrib() const
     {
@@ -90,6 +93,7 @@ public:
     }
     
 
+    SYS_FORCE_INLINE
     void
         compute()
     {
@@ -97,7 +101,8 @@ public:
     }
 
 
-    virtual void
+    SYS_FORCE_INLINE
+    void
         bumpDataIdsForAddOrRemove(
             const bool added_or_removed_points,
             const bool added_or_removed_vertices,
@@ -113,7 +118,8 @@ public:
         geo->bumpDataIdsForAddOrRemove(true, true, true);
     }
 
-    virtual void
+    SYS_FORCE_INLINE
+    void
         computeAndBumpDataIdsForAddOrRemove(
             const bool added_or_removed_points,
             const bool added_or_removed_vertices,
@@ -124,7 +130,8 @@ public:
         bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives);
     }
 
-    virtual void
+    SYS_FORCE_INLINE
+    void
         computeAndBumpDataIdsForAddOrRemove()
     {
         compute();
@@ -132,6 +139,7 @@ public:
     }
 
 protected:
+    SYS_FORCE_INLINE
     void
         setHasComputed(
             const bool hasComputed = false
@@ -555,6 +563,7 @@ public:
         outGroupArray.bumpDataId();
     }
 
+    SYS_FORCE_INLINE
     void
         computeAndBumpDataId()
     {
@@ -579,24 +588,28 @@ public:
 
 
 
+    SYS_FORCE_INLINE
     GFE_AttributeArray&
         getOutAttribArray()
     {
         return outAttribArray;
     }
 
+    SYS_FORCE_INLINE
     GFE_GroupArray&
         getOutGroupArray()
     {
         return outGroupArray;
     }
 
+    SYS_FORCE_INLINE
     std::vector<GA_Attribute*>&
         getOutAttribArrayRef()
     {
         return outAttribArray.ref();
     }
 
+    SYS_FORCE_INLINE
     std::vector<GA_Group*>&
         getOutGroupArrayRef()
     {
@@ -677,24 +690,28 @@ public:
         inGroupArray.reset(geo, cookparms);
     }
 
+    SYS_FORCE_INLINE
     GFE_AttributeArray&
         getInAttribArray()
     {
         return inAttribArray;
     }
 
+    SYS_FORCE_INLINE
     GFE_GroupArray&
         getInGroupArray()
     {
         return inGroupArray;
     }
 
+    SYS_FORCE_INLINE
     std::vector<GA_Attribute*>&
         getInAttribArrayRef()
     {
         return inAttribArray.ref();
     }
 
+    SYS_FORCE_INLINE
     std::vector<GA_Group*>&
         getInGroupArrayRef()
     {
@@ -702,6 +719,7 @@ public:
     }
 
 
+    SYS_FORCE_INLINE
     void
         setInAttribBumpDataId(
             bool val = true
@@ -710,6 +728,7 @@ public:
         inAttribBumpDataId = val;
     }
 
+    SYS_FORCE_INLINE
     void
         setInGroupBumpDataId(
             bool val = true

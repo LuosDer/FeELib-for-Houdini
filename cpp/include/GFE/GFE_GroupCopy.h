@@ -273,7 +273,7 @@ copyGroup(
         attribNew = attribsDst->find(attribNameNew);
         if (attribNew)
         {
-            GFE_GroupCopy::groupBumpDataId(attribNew);
+            GFE_Group::groupBumpDataId(attribNew);
         }
         else
         {

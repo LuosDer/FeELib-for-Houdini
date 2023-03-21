@@ -75,7 +75,7 @@ private:
     void
         normalizeAttribElement(
             GA_Attribute* const attribPtr
-        ) const
+        )
     {
         GA_SplittableRange geoSplittableRange(groupParser.getRange(attribPtr->getOwner()));
         UTparallelFor(geoSplittableRange, [attribPtr, this](const GA_SplittableRange& r)
@@ -130,7 +130,7 @@ private:
     bool
         normalizeAttribElement(
             GA_Attribute* const attribPtr
-        ) const
+        )
     {
         UT_ASSERT_P(attribPtr);
         const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);

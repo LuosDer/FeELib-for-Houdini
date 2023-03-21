@@ -132,13 +132,45 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ outSrcPrim == 0 }"
     }
 
+
+
+
+
     parm {
         name    "copyPrimAttrib"
         cppname "CopyPrimAttrib"
         label   "Copy Prim Attrib"
         type    toggle
         default { 0 }
+        nolabel
+        joinnext
     }
+    parm {
+        name    "copyPrimAttribName"
+        cppname "CopyPrimAttribName"
+        label   "Copy Prim Attrib Name"
+        type    string
+        default { "*" }
+        disablewhen "{ copyPrimAttrib == 0 }"
+    }
+    parm {
+        name    "copyVertexAttrib"
+        cppname "CopyVertexAttrib"
+        label   "Copy Vertex Attrib"
+        type    toggle
+        default { 0 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "copyVertexAttribName"
+        cppname "CopyVertexAttribName"
+        label   "Copy Vertex Attrib Name"
+        type    string
+        default { "*" }
+        disablewhen "{ copyVertexAttrib == 0 }"
+    }
+
 
     parm {
         name    "primType"
@@ -408,7 +440,6 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
-    //outGeo0->replaceWithPoints(*inGeo0);
 
     
     const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
@@ -434,23 +465,37 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const UT_StringHolder& srcPrimAttribName = sopparms.getSrcPrimAttribName();
 
 
-    const bool copyPrimAttrib = sopparms.getCopyPrimAttrib();
-    
-        
 #if 1
-    GFE_ConvertLine::convertLine(outGeo0, inGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+    GFE_ConvertLine convertLine(outGeo0, inGeo0, &cookparms);
+#else
+    outGeo0->replaceWith(*inGeo0);
+    GFE_ConvertLine convertLine(outGeo0, nullptr, &cookparms);
+#endif
+
+    convertLine.setCopyPrimitiveAttrib(sopparms.getCopyPrimAttrib(), sopparms.getCopyPrimAttribName());
+    convertLine.setCopyVertexAttrib(sopparms.getCopyVertexAttrib(), sopparms.getCopyVertexAttribName());
+
+    convertLine.setComputeParm(isClosed, keepSourcePrim);
+    if (outSrcPrim)
+        convertLine.createSrcPrimAttrib(GA_STORE_INVALID, false, srcPrimAttribName);
+
+    convertLine.setGroup(sopparms.getPrimGroup());
+
+    convertLine.computeAndBumpDataIdsForAddOrRemove();
+
+
+#if 1
+    //GFE_ConvertLine_Namespace::convertLine(outGeo0, inGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
 #else
     outGeo0->replaceWith(*inGeo0);
     GFE_ConvertLine::convertLine(outGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
 #endif
+    //outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
+
     
     
 
 
-
-
-
-    outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
 
 
 

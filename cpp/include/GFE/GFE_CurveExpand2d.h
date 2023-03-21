@@ -11,6 +11,7 @@
 #include "GA/GA_Detail.h"
 //#include "GA/GA_Types.h"
 
+#include "GFE/GFE_GeoFilter.h"
 
 enum GFE_CurveExpand2dType
 {
@@ -19,31 +20,164 @@ enum GFE_CurveExpand2dType
     GFE_CurveExpand2dType_CLOSE,
 };
 
-namespace GFE_CurveExpand2d {
 
 
 
 
-#define TMP_CutPointGroup_GFE_CurveExpand2d "__tmp_cutPointGroup_GFE_CurveExpand2d"
-
-
-SYS_FORCE_INLINE
-static void
-curveExpand2d(
-    GA_Detail* const geoPoint,
-    GA_Offset& primpoint,
-    GA_PointGroup* const cutPointGroup
-) {
-    UT_ASSERT_MSG(!cutPointGroup->isDetached(), "cutPointGroup must be Not Detached");
-    GA_Offset new_primpoint = geoPoint->appendPoint();
-    geoPoint->copyPoint(new_primpoint, primpoint);
-    //bool a = cutPointGroup->isOrdered();
-    cutPointGroup->setElement(new_primpoint, false);
-    primpoint = new_primpoint;
-}
 
 
 
-} // End of namespace GFE_CurveExpand2d
+
+
+class GFE_CurveExpand2d : public GFE_AttribFilter {
+
+
+
+    
+
+
+public:
+    using GFE_AttribFilter::GFE_AttribFilter;
+
+    ~GFE_CurveExpand2d()
+    {
+    }
+
+
+    void
+        setGroup(
+            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
+        )
+    {
+        groupParser.setGroup(geoPrimGroup);
+    }
+
+    void
+        setGroup(
+            const UT_StringHolder& primGroupName = ""
+        )
+    {
+        groupParser.setPrimitiveGroup(primGroupName);
+    }
+
+
+    void
+        findOrCreateUV(
+            const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const bool detached = false,
+            const UT_StringHolder& name = "uv",
+            const int tuple_size = 3
+        )
+    {
+        getOutAttribArray().findOrCreateUV(uvAttribClass, storage, detached, name, tuple_size);
+    }
+
+    void
+        setComputeParm(
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 64
+        )
+    {
+        setHasComputed();
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
+
+
+private:
+
+    // can not use in parallel unless for each GA_Detail
+    virtual bool
+        computeCore() override
+    {
+        if (groupParser.isEmpty())
+            return true;
+
+
+        GA_Attribute* const uvAttribPtr = getOutAttribArray()[0];
+        switch (uvAttribPtr->getAIFTuple()->getTupleSize(uvAttribPtr))
+        {
+        case 2:
+            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+            {
+            case GA_STORE_REAL16:
+                curveUV<UT_Vector2T<fpreal16>>(uvAttribPtr);
+                break;
+            case GA_STORE_REAL32:
+                curveUV<UT_Vector2T<fpreal32>>(uvAttribPtr);
+                break;
+            case GA_STORE_REAL64:
+                curveUV<UT_Vector2T<fpreal64>>(uvAttribPtr);
+                break;
+            default:
+                break;
+            }
+            break;
+        case 3:
+            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+            {
+            case GA_STORE_REAL16:
+                curveUV<UT_Vector3T<fpreal16>>(uvAttribPtr);
+                break;
+            case GA_STORE_REAL32:
+                curveUV<UT_Vector3T<fpreal32>>(uvAttribPtr);
+                break;
+            case GA_STORE_REAL64:
+                curveUV<UT_Vector3T<fpreal64>>(uvAttribPtr);
+                break;
+            default:
+                break;
+            }
+            break;
+            //case 4:
+            //    switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+            //    {
+            //    case GA_STORE_REAL16:
+            //        curveUV<UT_Vector4T<fpreal16>>(uvAttribPtr);
+            //        break;
+            //    case GA_STORE_REAL32:
+            //        curveUV<UT_Vector4T<fpreal32>>(uvAttribPtr);
+            //        break;
+            //    case GA_STORE_REAL64:
+            //        curveUV<UT_Vector4T<fpreal64>>(uvAttribPtr);
+            //        break;
+            //    default:
+            //        break;
+            //    }
+            //break;
+        default:
+            break;
+        }
+
+
+        return true;
+    }
+
+
+
+    template<typename VECTOR_T>
+    SYS_FORCE_INLINE
+    void
+        curveExpand2d(
+        )
+    {
+    }
+
+
+    
+
+public:
+
+
+private:
+    exint subscribeRatio = 64;
+    exint minGrainSize = 64;
+
+
+}; // End of class GFE_CurveExpand2d
+
+
+
 
 #endif

@@ -22,20 +22,53 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
+        name    "primGroup"
+        cppname "PrimGroup"
+        label   "Prim Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "carveStartPrimGroup"
+        cppname "CarveStartPrimGroup"
+        label   "Carve Start Prim Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "carveEndPrimGroup"
+        cppname "CarveEndPrimGroup"
+        label   "Carve End Prim Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+
+    parm {
         name    "carveSpace"
-        cppname "interpAttrib"
+        cppname "CarveSpace"
         label   "Carve Space"
         type    ordinal
-        default { "world" }
+        default { "worldArcLength" }
         menu {
-            "customAttrib"  "CustomAttrib"
-            "average"       "Average"
-            "arcLength"     "Arc Length"
-            "world"         "World"
+            "customAttrib"       "CustomAttrib"
+            "localAverage"       "Local Average"
+            "localArcLength"     "Local Arc Length"
+            "worldAverage"       "World Average"
+            "worldArcLength"     "World Arc Length"
         }
     }
     parm {
         name    "customCarveUVAttribName"
+        cppname "CustomCarveUVAttribName"
         label   "Custom Carve UV Attrib Name"
         type    string
         default { "" }
@@ -48,347 +81,370 @@ static const char *theDsFile = R"THEDSFILE(
         default { "" }
     }
     parm {
-        name    "firstptgroup"
-        label   "First Point Group"
-        type    string
-        default { "" }
-        range   { 0 1 }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points, )\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-    }
-    parm {
         name    "startCarveULocal"
+        cppname "StartCarveULocal"
         label   "Start Carve U Local"
         type    float
         default { "0.25" }
-        hidewhen "{ carveSpace != uv }"
+        hidewhen "{ carveSpace != localAverage carveSpace != localArcLength }"
         range   { 0! 1! }
     }
     parm {
         name    "startCarveUWorld"
+        cppname "StartCarveUWorld"
         label   "Start Carve U Local World"
         type    log
         default { "0.25" }
+        hidewhen "{ carveSpace == localAverage } { carveSpace == localArcLength }"
         range   { 0.01 100 }
     }
     parm {
         name    "startCarveUAttrib"
+        cppname "StartCarveUAttrib"
         label   "Start CarveU Attrib"
         type    string
         default { "startCarveU" }
     }
     parm {
-        name    "outBreakPtsGrp_outside1"
-        label   "Output Break Points Group Outside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { "0" }
-    }
-    parm {
-        name    "breakPtsGrp_outside1"
-        label   "Break Points Group Outside1"
-        type    string
-        default { "breakpt" }
-        disablewhen "{ outBreakPtsGrp_outside1 == 0 }"
-    }
-    parm {
-        name    "outCurveGrp_outside1"
-        label   "Output Curve Group Outside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { "0" }
-    }
-    parm {
-        name    "curveGrp_outside1"
-        label   "Curve Group Outside1"
-        type    string
-        default { "outside" }
-        disablewhen "{ outCurveGrp_outside1 == 0 }"
-    }
-    parm {
-        name    "outSourcePt_outside1"
-        label   "Output Source Points Outside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { "0" }
-    }
-    parm {
-        name    "sourcePt_outside1"
-        label   "Source Points Outside1"
-        type    string
-        default { "sourcept" }
-        disablewhen "{ outSourcePt_outside1 == 0 }"
-    }
-    parm {
-        name    "keepoutside1"
-        label   "Keep Outside"
+        name    "absCarveUEnd"
+        cppname "AbsCarveUEnd"
+        label   "Absolute Carve U End"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "sepparm2"
-        label   "Separator"
-        type    separator
-        default { "" }
-    }
-    parm {
-        name    "secondptgroup"
-        label   "Second Point Group"
-        type    string
-        default { "" }
-        range   { 0 1 }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('grouptype')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-    }
-    parm {
-        name    "absdomainuworld2"
-        label   "Absolute Second U"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "domainu2"
-        label   "Second U"
+        name    "endCarveULocal"
+        cppname "EndCarveULocal"
+        label   "End Carve U Local"
         type    float
         default { "0.75" }
-        hidewhen "{ carveSpace != uv }"
+        hidewhen "{ carveSpace != localAverage carveSpace != localArcLength }"
         range   { 0! 1! }
     }
     parm {
-        name    "domainuworld2"
-        label   "Second U World"
+        name    "endCarveUWorld"
+        cppname "EndCarveUWorld"
+        label   "End Carve U World"
         type    log
-        default { "0.75" }
+        default { "0.25" }
+        hidewhen "{ carveSpace == localAverage } { carveSpace == localArcLength }"
         range   { 0.01 100 }
     }
     parm {
-        name    "endCarveU_attribName"
-        label   "End CarveU Attrib Name"
+        name    "useEndCarveUAttrib"
+        cppname "UseEndCarveUAttrib"
+        label   "Use End CarveU Attrib"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "endCarveUAttrib"
+        cppname "EndCarveUAttrib"
+        label   "End CarveU Attrib"
         type    string
+        hidewhen "{ useEndCarveUAttrib == 1 }"
         default { "endCarveU" }
     }
-    parm {
-        name    "outBreakPtsGrp_outside2"
-        label   "Output Break Points Group Outside2"
-        type    toggle
-        nolabel
-        joinnext
-        default { "ch(\"outBreakPtsGrp_outside1\")" }
-    }
-    parm {
-        name    "breakPtsGrp_outside2"
-        label   "Break Points Group Outside2"
-        type    string
-        default { [ "chs(\"breakPtsGrp_outside1\")" hscript-expr ] }
-        disablewhen "{ outBreakPtsGrp_outside2 == 0 }"
-    }
-    parm {
-        name    "outCurveGrp_outside2"
-        label   "Output Curve Group Outside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { "ch(\"outCurveGrp_outside1\")" }
-    }
-    parm {
-        name    "curveGrp_outside2"
-        label   "Curve Group Outside1"
-        type    string
-        default { [ "chs(\"curveGrp_outside1\")" hscript-expr ] }
-        disablewhen "{ outCurveGrp_outside2 == 0 }"
-    }
-    parm {
-        name    "outSourcePt_outside2"
-        label   "Output Source Points Outside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { [ "ch(\"outSourcePt_outside1\")" hscript-expr ] }
-    }
-    parm {
-        name    "sourcePt_outside2"
-        label   "Source Points Outside1"
-        type    string
-        default { [ "chs(\"sourcePt_outside1\")" hscript-expr ] }
-        disablewhen "{ outSourcePt_outside2 == 0 }"
-    }
-    parm {
-        name    "reverseoutside2"
-        label   "Reverse Outside2"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "keepoutside2"
-        label   "Keep Outside"
-        type    toggle
-        default { "0" }
-    }
+
     parm {
         name    "sepparm3"
         label   "Separator"
         type    separator
         default { "" }
     }
+
+
+
+
+
     parm {
-        name    "outBreakPtsGrp_inside1"
-        label   "Output Break Points Group Inside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { "ch(\"outBreakPtsGrp_outside1\")" }
-    }
-    parm {
-        name    "breakPtsGrp_inside1"
-        label   "Break Points Group Inside1"
-        type    string
-        default { [ "chs(\"breakPtsGrp_outside1\")" hscript-expr ] }
-        disablewhen "{ outBreakPtsGrp_inside1 == 0 }"
-    }
-    parm {
-        name    "outBreakPtsGrp_inside2"
-        label   "Output Break Points Group Inside"
-        type    toggle
-        nolabel
-        joinnext
-        default { "ch(\"outBreakPtsGrp_inside1\")" }
-    }
-    parm {
-        name    "breakPtsGrp_inside2"
-        label   "Break Points Group Inside2"
-        type    string
-        default { [ "chs(\"breakPtsGrp_inside1\")" hscript-expr ] }
-        disablewhen "{ outBreakPtsGrp_inside2 == 0 }"
-    }
-    parm {
-        name    "outCurveGrp_inside"
-        label   "Output Curve Group Inside"
-        type    toggle
-        nolabel
-        joinnext
-        default { "0" }
-    }
-    parm {
-        name    "curveGrp_inside"
-        label   "Curve Group Inside"
-        type    string
-        default { "inside" }
-        disablewhen "{ outCurveGrp_inside == 0 }"
-    }
-    parm {
-        name    "outSourcePt_inside1"
-        label   "Output Source Points Inside1"
-        type    toggle
-        nolabel
-        joinnext
-        default { [ "ch(\"outSourcePt_outside1\")" hscript-expr ] }
-    }
-    parm {
-        name    "sourcePt_inside1"
-        label   "Source Points Inside1"
-        type    string
-        default { [ "chs(\"sourcePt_outside1\")" hscript-expr ] }
-        disablewhen "{ outSourcePt_inside1 == 0 }"
-    }
-    parm {
-        name    "outSourcePt_inside2"
-        label   "Output Source Points Inside"
-        type    toggle
-        nolabel
-        joinnext
-        default { [ "ch(\"outSourcePt_outside1\")" hscript-expr ] }
-    }
-    parm {
-        name    "sourcePt_inside2"
-        label   "Source Points Inside"
-        type    string
-        default { [ "chs(\"sourcePt_outside1\")" hscript-expr ] }
-        disablewhen "{ outSourcePt_inside1 == 0 }"
-    }
-    parm {
-        name    "delReversedInsideCurve"
-        label   "Delete Reversed Inside Curve"
+        name    "keepOutsideStart"
+        cppname "KeepOutsideStart"
+        label   "Keep Outside Start"
         type    toggle
         default { "0" }
-        disablewhen "{ keepinside == 0 }"
     }
+    groupsimple {
+        name    "outsideStart_folder"
+        label   "Outside Start"
+        disablewhen "{ keepOutsideStart == 0 }"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "outBreakPointGroupOutsideStart"
+            cppname "OutBreakPointGroupOutsideStart"
+            label   "Output Break Point Group Outside Start"
+            type    toggle
+            nolabel
+            joinnext
+            default { "0" }
+        }
+        parm {
+            name    "breakPointGroupOutsideStart"
+            cppname "BreakPointGroupOutsideStart"
+            label   "Break Point Group Outside Start"
+            type    string
+            default { "breakpt" }
+            disablewhen "{ outBreakPointGroupOutsideStart == 0 }"
+        }
+        parm {
+            name    "outPrimGroupOutsideStart"
+            cppname "OutPrimGroupOutsideStart"
+            label   "Output Prim Group Outside Start"
+            type    toggle
+            nolabel
+            joinnext
+            default { "0" }
+        }
+        parm {
+            name    "primGroupOutsideStart"
+            cppname "PrimGroupOutsideStart"
+            label   "Prim Group Outside Start"
+            type    string
+            default { "outside" }
+            disablewhen "{ outPrimGroupOutsideStart == 0 }"
+        }
+        parm {
+            name    "reverseOutsideStart"
+            cppname "ReverseOutsideStart"
+            label   "Reverse Outside Start"
+            type    toggle
+            default { "0" }
+        }
+    }
+
     parm {
-        name    "keepinside"
+        name    "keepOutsideEnd"
+        cppname "KeepOutsideEnd"
+        label   "Keep Outside End"
+        type    toggle
+        default { "0" }
+    }
+    groupsimple {
+        name    "outsideEnd_folder"
+        label   "Outside End"
+        disablewhen "{ keepOutsideEnd == 0 }"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "outBreakPointGroupOutsideEnd"
+            cppname "OutBreakPointGroupOutsideEnd"
+            label   "Output Break Point Group Outside End"
+            type    toggle
+            nolabel
+            joinnext
+            default { "ch('outBreakPointGroupOutsideStart')" }
+        }
+        parm {
+            name    "breakPointGroupOutsideEnd"
+            cppname "BreakPointGroupOutsideEnd"
+            label   "Break Point Group Outside End"
+            type    string
+            default { "chs('outBreakPointGroupOutsideStart')" }
+            disablewhen "{ outBreakPointGroupOutsideEnd == 0 }"
+        }
+        parm {
+            name    "outPrimGroupOutsideEnd"
+            cppname "OutPrimGroupOutsideEnd"
+            label   "Output Prim Group Outside End"
+            type    toggle
+            nolabel
+            joinnext
+            default { "ch('outPrimGroupOutsideStart')" }
+        }
+        parm {
+            name    "primGroupOutsideEnd"
+            cppname "PrimGroupOutsideEnd"
+            label   "Prim Group Outside End"
+            type    string
+            default { "chs('primGroupOutsideStart')" }
+            disablewhen "{ outPrimGroupOutsideEnd == 0 }"
+        }
+        parm {
+            name    "reverseOutsideEnd"
+            cppname "ReverseOutsideEnd"
+            label   "Reverse Outside End"
+            type    toggle
+            default { "0" }
+        }
+    }
+
+    parm {
+        name    "keepInside"
+        cppname "KeepInside"
         label   "Keep Inside"
         type    toggle
         default { "1" }
     }
+    groupsimple {
+        name    "inside_folder"
+        label   "Inside"
+        disablewhen "{ keepInside == 0 }"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "outBreakPointGroupInsideStart"
+            cppname "OutBreakPointGroupInsideStart"
+            label   "Output Break Point Group Inside Start"
+            type    toggle
+            nolabel
+            joinnext
+            default { "ch('outBreakPointGroupOutsideStart')" }
+        }
+        parm {
+            name    "breakPointGroupInsideStart"
+            cppname "BreakPointGroupInsideStart"
+            label   "Break Point Group Inside Start"
+            type    string
+            default { "chs('breakPointGroupOutsideStart')" }
+            disablewhen "{ outBreakPointGroupInsideStart == 0 }"
+        }
+        parm {
+            name    "outBreakPointGroupInsideEnd"
+            cppname "OutBreakPointGroupInsideEnd"
+            label   "Output Break Point Group Inside End"
+            type    toggle
+            nolabel
+            joinnext
+            default { "ch('outBreakPointGroupInsideStart')" }
+        }
+        parm {
+            name    "breakPointGroupInsideEnd"
+            cppname "BreakPointGroupInsideEnd"
+            label   "Break Point Group Inside End"
+            type    string
+            default { "chs('breakPointGroupInsideStart')" }
+            disablewhen "{ outBreakPointGroupInsideEnd == 0 }"
+        }
+        parm {
+            name    "outPrimGroupInside"
+            cppname "OutPrimGroupInside"
+            label   "Output Prim Group Inside"
+            type    toggle
+            nolabel
+            joinnext
+            default { "ch('outPrimGroupOutsideStart')" }
+        }
+        parm {
+            name    "primGroupInside"
+            cppname "PrimGroupInside"
+            label   "Output Prim Group Inside"
+            type    string
+            default { "inside" }
+            disablewhen "{ outPrimGroupInside == 0 }"
+        }
+        parm {
+            name    "delReversedInsidePrim"
+            cppname "DelReversedInsidePrim"
+            label   "Delete Reversed Inside Prim"
+            type    toggle
+            default { "0" }
+            disablewhen "{ keepInside == 0 }"
+        }
+    }
+
+
+
     parm {
-        name    "sepparm4"
-        label   "Separator"
-        type    separator
-        default { "" }
+        name    "outSrcPointAttrib"
+        cppname "OutSrcPointAttrib"
+        label   "Output Source Point Attrib"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
     }
     parm {
+        name    "srcPointAttribName"
+        cppname "SrcPointAttribName"
+        label   "Source Point Attrib Name"
+        type    string
+        default { "srcPoint" }
+        disablewhen "{ outSrcPointAttrib == 0 }"
+    }
+
+    parm {
+        name    "outSrcPrimAttrib"
+        cppname "OutSrcPrimAttrib"
+        label   "Output Source Prim Attrib"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "srcPrimAttribName"
+        cppname "SrcPrimAttribName"
+        label   "Source Prim Attrib Name"
+        type    string
+        default { "srcPrim" }
+        disablewhen "{ outSrcPrimAttrib == 0 }"
+    }
+
+
+    parm {
         name    "interpAttrib"
-        cppname "interpAttrib"
-        label   "Interp Attribs Name"
+        cppname "InterpAttrib"
+        label   "Interp Attrib"
         type    string
         default { "P" }
     }
+
+
+
     parm {
-        name    "sort_ptsorder"
+        name    "sortPointOrder"
+        cppname "SortPointOrder"
         label   "Sort Points Order"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "sort_primsorder"
-        label   "Sort Primitives Order"
+        name    "sortPrimOrder"
+        cppname "SortPrimOrder"
+        label   "Sort Primitive Order"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "del_startCarveU_attrib"
+        name    "delStartCarveUAttrib"
+        cppname "DelStartCarveUAttrib"
         label   "Delete Start Carve U Attrib"
         type    toggle
         default { "1" }
     }
     parm {
-        name    "del_endCarveU_attrib"
+        name    "delEndCarveUAttrib"
+        cppname "DelEndCarveUAttrib"
         label   "Delete End CarveU Attrib"
         type    toggle
-        default { [ "ch('del_startCarveU_attrib')" hscript-expr ] }
+        default { "ch('del_startCarveU_attrib')" }
     }
 
 
-    //parm {
-    //    name    "kernel"
-    //    cppname "Kernel"
-    //    label   "Kernel"
-    //    type    integer
-    //    default { 0 }
-    //    range   { 0! 1! }
-    //}
 
 
 
-    //parm {
-    //    name    "subscribeRatio"
-    //    cppname "SubscribeRatio"
-    //    label   "Subscribe Ratio"
-    //    type    integer
-    //    default { 64 }
-    //    range   { 0! 256 }
-    //}
-    //parm {
-    //    name    "minGrainSize"
-    //    cppname "MinGrainSize"
-    //    label   "Min Grain Size"
-    //    type    intlog
-    //    default { 64 }
-    //    range   { 0! 2048 }
-    //}
+
+
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 64 }
+        range   { 0! 2048 }
+    }
+
+
 }
 )THEDSFILE";
 
@@ -398,14 +454,11 @@ SOP_FeE_Carve_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_Carve_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("cutPointGroup"_sh, &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("primGroup"_sh,            &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("carveStartPrimGroup"_sh,  &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("carveEndPrimGroup"_sh,    &SOP_Node::primGroupMenu);
 
-        templ.setChoiceListPtr("keepPrimAttribName"_sh, &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("keepPointAttribName"_sh, &SOP_Node::pointAttribMenu);
-        templ.setChoiceListPtr("keepPrimGroupName"_sh, &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("keepPointGroupName"_sh, &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("keepEdgeGroupName"_sh, &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("interpAttrib"_sh,         &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -467,23 +520,23 @@ SOP_FeE_Carve_1_0::cookVerb() const
 
 
 
+ 
 
-
-
-static GFE_PolyCutType
-sopPolyType(SOP_FeE_Carve_1_0Parms::PolyType parmgrouptype)
+static GFE_CarveSpace
+sopCarveSpace(SOP_FeE_Carve_1_0Parms::CarveSpace parmgrouptype)
 {
     using namespace SOP_FeE_Carve_1_0Enums;
     switch (parmgrouptype)
     {
-    case PolyType::AUTO:       return GFE_PolyCutType_AUTO;    break;
-    case PolyType::POLYLINE:   return GFE_PolyCutType_OPEN;    break;
-    case PolyType::POLY:       return GFE_PolyCutType_CLOSE;    break;
+    case CarveSpace::CUSTOMATTRIB:     return GFE_CarveSpace::CustomAttrib;    break;
+    case CarveSpace::LOCALAVERAGE:     return GFE_CarveSpace::LocalAverage;    break;
+    case CarveSpace::LOCALARCLENGTH:   return GFE_CarveSpace::LocalArcLength;  break;
+    case CarveSpace::WORLDAVERAGE:     return GFE_CarveSpace::WorldAverage;    break;
+    case CarveSpace::WORLDARCLENGTH:   return GFE_CarveSpace::WorldArcLength;  break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Poly type!");
-    return GFE_PolyCutType_AUTO;
+    UT_ASSERT_MSG(0, "Unhandled Carve Space!");
+    return GFE_CarveSpace::WorldArcLength;
 }
-
 
 
 void
@@ -495,55 +548,57 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
+    outGeo0->replaceWith(*inGeo0);
 
+    const GFE_CarveSpace carveSpace = sopCarveSpace(sopparms.getCarveSpace());
+    //const exint subscribeRatio = sopparms.getSubscribeRatio();
+    //const exint minGrainSize = sopparms.getMinGrainSize();
 
-    const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();
-    const bool cutPoint = sopparms.getCutPoint();
-    const GFE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
-
-
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
+    const UT_StringHolder& customCarveUVAttribName = sopparms.getCustomCarveUVAttribName();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-
-    const UT_StringHolder& keepPrimAttribName  = sopparms.getKeepPrimAttribName();
-    const UT_StringHolder& keepPointAttribName = sopparms.getKeepPointAttribName();
-    const UT_StringHolder& keepPrimGroupName   = sopparms.getKeepPrimGroupName();
-    const UT_StringHolder& keepPointGroupName  = sopparms.getKeepPointGroupName();
-    const UT_StringHolder& keepEdgeGroupName   = sopparms.getKeepEdgeGroupName();
-
-    const bool delInputPointGroup = sopparms.getDelInputPointGroup();
-
-
-    const UT_StringHolder& emptyStr = "";
-
-    const bool createSrcPrimAttrib = sopparms.getCreateSrcPrimAttrib();
-    const UT_StringHolder& srcPrimAttribName = createSrcPrimAttrib ? sopparms.getSrcPrimAttribName() : emptyStr;
-
-    const bool createSrcPointAttrib = sopparms.getCreateSrcPointAttrib();
-    const UT_StringHolder& srcPointAttribName = createSrcPointAttrib ? sopparms.getSrcPointAttribName() : emptyStr;
-
     
-    //if (cutPoint)
-    //{
-    //    if (createSrcPointAttrib || keepPointAttribName.length() > 0 || keepPointGroupName.length() > 0)
-    //    {
-    //        const UT_StringHolder& srcPointAttribName = sopparms.getSrcPointAttribName();
-    //        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, srcPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
-    //    }
-    //}
+#if 1
+    GFE_Carve carve(outGeo0, &cookparms);
+#else
+    outGeo0->replaceWith(*inGeo0);
+    GFE_PolyCut polyCut(outGeo0, nullptr, &cookparms);
+#endif
+    carve.setGroup(sopparms.getPrimGroup());
+
+    carve.setComputeParm(carveSpace,
+        sopparms.getKeepOutsideStart(), sopparms.getKeepOutsideEnd(), sopparms.getKeepInside(),
+        sopparms.getAbsCarveUEnd());
+
+    carve.setCarveU<true>(sopparms.getEndCarveULocal(), sopparms.getEndCarveUWorld());
+    carve.setCarveU<false>(sopparms.getStartCarveULocal(), sopparms.getStartCarveUWorld());
+
+    carve.setUVAttrib(customCarveUVAttribName);
+
+    carve.setStartCarveUAttrib(sopparms.getStartCarveUAttrib(), sopparms.getDelStartCarveUAttrib());
+    carve.setEndCarveUAttrib(sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
+
+    carve.setCarveStartGroup(sopparms.getCarveStartPrimGroup());
+    carve.setCarveEndGroup(sopparms.getCarveEndPrimGroup());
+
+    if (sopparms.getOutSrcPrimAttrib())
+        carve.createSrcPrimAttrib(sopparms.getSrcPrimAttribName());
+
+    if (sopparms.getOutSrcPointAttrib())
+        carve.createSrcPointAttrib(sopparms.getSrcPrimAttribName());
+
+    carve.getOutAttribArray().appendPointVertexs(sopparms.getInterpAttrib());
+
+    carve.computeAndBumpDataIdsForAddOrRemove();
+
+    carve.visualizeOutGroup();
 
 
-    GFE_Carve::carve(cookparms, outGeo0, inGeo0,
-        sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
-        cutPoint, mergePrimEndsIfClosed, polyType,
-        inStorageI, srcPrimAttribName, srcPointAttribName);
 
 
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
 
 }
 

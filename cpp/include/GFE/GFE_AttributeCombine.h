@@ -1,10 +1,10 @@
 
 #pragma once
 
-#ifndef __GFE_AttribCombine_h__
-#define __GFE_AttribCombine_h__
+#ifndef __GFE_AttributeCombine_h__
+#define __GFE_AttributeCombine_h__
 
-//#include "GFE/GFE_AttribCombine.h"
+//#include "GFE/GFE_AttributeCombine.h"
 
 #include "GA/GA_Detail.h"
 
@@ -12,7 +12,7 @@
 #include "GFE/GFE_GroupUnion.h"
 #include "GFE/GFE_GroupPromote.h"
 
-namespace GFE_AttribCombine {
+namespace GFE_AttributeCombine {
 
 
     static void
@@ -138,6 +138,6 @@ namespace GFE_AttribCombine {
         return true;
     }
 
-} // End of namespace GFE_AttribCombine
+} // End of namespace GFE_AttributeCombine
 
 #endif

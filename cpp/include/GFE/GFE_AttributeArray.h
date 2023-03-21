@@ -204,12 +204,22 @@ appends(
     }
 }
 
+SYS_FORCE_INLINE
 void
+appendPointVertexs(
+    const UT_StringHolder& attribPattern
+)
+{
+    appends(GA_ATTRIB_POINT, attribPattern);
+    appends(GA_ATTRIB_VERTEX, attribPattern);
+}
+
+GA_Attribute*
 findOrCreateTuple(
+    const bool detached = false,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
     const GA_Storage storage = GA_STORE_INVALID,
-    const bool detached = false,
     const UT_StringHolder& attribName = "",
     const int tuple_size = 1,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
@@ -235,7 +245,7 @@ findOrCreateTuple(
         {
             if (emplaceBack)
                 attribArray.emplace_back(attribPtr);
-            return;
+            return attribPtr;
         }
     }
 
@@ -257,11 +267,12 @@ findOrCreateTuple(
             if (cookparms)
                 cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
             UT_ASSERT_MSG(attribPtr, "No Attrib");
-            return;
+            return nullptr;
         }
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
+    return attribPtr;
 }
 
 //SYS_FORCE_INLINE
@@ -275,11 +286,11 @@ findOrCreateTuple(
 //    findOrCreate(owner, storage, attribName);
 //}
 
-void
+GA_Attribute*
 findOrCreateUV(
+    const bool detached = false,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_Storage storage = GA_STORE_INVALID,
-    const bool detached = false,
     const UT_StringHolder& attribName = "",
     const int tuple_size = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
@@ -306,7 +317,7 @@ findOrCreateUV(
         {
             if (emplaceBack)
                 attribArray.emplace_back(attribPtr);
-            return;
+            return attribPtr;
         }
     }
 
@@ -348,19 +359,20 @@ findOrCreateUV(
             if (cookparms)
                 cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
             UT_ASSERT_MSG(attribPtr, "No Attrib");
-            return;
+            return nullptr;
         }
         GFE_Attribute::renameAttribute(attribPtr, attribName);
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
+    return attribPtr;
 }
 
-void
+GA_Attribute*
 findOrCreateDir(
+    const bool detached = false,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_Storage storage = GA_STORE_INVALID,
-    const bool detached = false,
     const UT_StringHolder& attribName = "",
     const int tuple_size = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
@@ -387,7 +399,7 @@ findOrCreateDir(
         {
             if (emplaceBack)
                 attribArray.emplace_back(attribPtr);
-            return;
+            return attribPtr;
         }
     }
 
@@ -428,20 +440,21 @@ findOrCreateDir(
             if (cookparms)
                 cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
             UT_ASSERT_MSG(attribPtr, "No Attrib");
-            return;
+            return nullptr;
         }
         GFE_Attribute::renameAttribute(attribPtr, attribName);
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
+    return attribPtr;
 }
 
 
-void
+GA_Attribute*
 findOrCreateNormal3D(
+    const bool detached = false,
     const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
     const GA_Storage storage = GA_STORE_INVALID,
-    const bool detached = false,
     const UT_StringHolder& attribName = "",
     const int tuple_size = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
@@ -469,7 +482,7 @@ findOrCreateNormal3D(
         {
             if (emplaceBack)
                 attribArray.emplace_back(attribPtr);
-            return;
+            return attribPtr;
         }
     }
 
@@ -511,12 +524,13 @@ findOrCreateNormal3D(
             if (cookparms)
                 cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
             UT_ASSERT_MSG(attribPtr, "No Attrib");
-            return;
+            return nullptr;
         }
         GFE_Attribute::renameAttribute(attribPtr, attribName);
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
+    return attribPtr;
 }
 
 
@@ -728,10 +742,10 @@ public:
     }
 
 
-    void
+    GA_Group*
         findOrCreate(
-            const GA_GroupType groupType = GA_GROUP_POINT,
             const bool detached = false,
+            const GA_GroupType groupType = GA_GROUP_POINT,
             const UT_StringHolder& groupName = ""
         )
     {
@@ -757,7 +771,7 @@ public:
                 if (cookparms)
                     cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
                 UT_ASSERT_MSG(groupPtr, "No Group");
-                return;
+                return nullptr;
                 break;
             }
             groupPtr = groupUPtrArray[groupUPtrArray.size()-1].get();
@@ -775,10 +789,11 @@ public:
                 if (cookparms)
                     cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
                 UT_ASSERT_MSG(groupPtr, "No Group");
-                return;
+                return nullptr;
             }
         }
         groupArray.emplace_back(groupPtr);
+        return groupPtr;
     }
 
 

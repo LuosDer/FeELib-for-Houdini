@@ -1,10 +1,10 @@
 
 #pragma once
 
-#ifndef __GFE_AttribPromote_h__
-#define __GFE_AttribPromote_h__
+#ifndef __GFE_AttributePromote_h__
+#define __GFE_AttributePromote_h__
 
-//#include "GFE/GFE_AttribPromote.h"
+//#include "GFE/GFE_AttributePromote.h"
 
 #include "GA/GA_Detail.h"
 
@@ -16,7 +16,7 @@
 
 //#include "GFE/GFE_Type.h"
 
-namespace GFE_AttribPromote {
+namespace GFE_AttributePromote {
 
 
 static void
@@ -246,6 +246,6 @@ attribFindPromote(
 
 
 
-} // End of namespace GFE_AttribPromote
+} // End of namespace GFE_AttributePromote
 
 #endif

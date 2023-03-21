@@ -1,17 +1,17 @@
 
 #pragma once
 
-#ifndef __GFE_AttribValCount_h__
-#define __GFE_AttribValCount_h__
+#ifndef __GFE_AttributeValueCount_h__
+#define __GFE_AttributeValueCount_h__
 
-//#include "GFE/GFE_AttribValCount.h"
+//#include "GFE/GFE_AttributeValueCount.h"
 
 #include "GA/GA_Detail.h"
 
 
 
 
-namespace GFE_AttribValCount {
+namespace GFE_AttributeValueCount {
 
 
 
@@ -105,6 +105,6 @@ namespace GFE_AttribValCount {
 
 
 
-} // End of namespace GFE_AttribValCount
+} // End of namespace GFE_AttributeValueCount
 
 #endif

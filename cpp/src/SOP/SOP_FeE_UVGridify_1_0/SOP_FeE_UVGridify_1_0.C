@@ -288,7 +288,7 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 #if 1
     GFE_UVGridify uvGridify(cookparms, outGeo0);
     uvGridify.groupParser.setGroup(groupType, groupName);
-    uvGridify.getOutAttribArray().findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName);
+    uvGridify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName);
     uvGridify.setComputeParm(
         rowsOrColsNumMethod, rowsOrColsNum,
         reverseUVu, reverseUVv, uniScale,
