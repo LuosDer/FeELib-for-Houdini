@@ -206,12 +206,8 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
 
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
-    const bool reverseGroup = sopparms.getReverseGroup();
-
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-    const bool delInlinePoint = sopparms.getDelInlinePoint();
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -224,13 +220,15 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
 
     GFE_PrimInlinePoint primInlinePoint(cookparms, outGeo0);
-    primInlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
-    primInlinePoint.getOutGroupArray().findOrCreate(GA_GROUP_POINT, delInlinePoint, sopparms.getPrimInlinePoint_groupName());
-
-    primInlinePoint.setComputeParm(
-        1e-05, reverseGroup, delInlinePoint,
-        subscribeRatio, minGrainSize);
+    primInlinePoint.setComputeParm(1e-05, subscribeRatio, minGrainSize);
     primInlinePoint.setThreshold_inlineCosRadians(threshold_inlineAngle);
+    primInlinePoint.reverseOutGroup = sopparms.getReverseGroup();
+    primInlinePoint.doDelOutGroup = sopparms.getDelInlinePoint();
+
+
+    primInlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    primInlinePoint.findOrCreateOutGroup(GA_GROUP_POINT, sopparms.getPrimInlinePoint_groupName());
 
     primInlinePoint.computeAndBumpDataId();
     primInlinePoint.visualizeOutGroup();

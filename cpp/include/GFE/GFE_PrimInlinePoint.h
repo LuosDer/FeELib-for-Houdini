@@ -49,27 +49,8 @@ public:
     {
         setHasComputed();
         this->threshold_inlineCosRadians = threshold_inlineCosRadians;
-        this->reverseGroup = reverseGroup;
-        this->delInlinePoint = delInlinePoint;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
-    }
-
-    virtual void
-        visualizeOutGroup() override
-    {
-        if (delInlinePoint)
-            return;
-        GFE_AttribFilter::visualizeOutGroup();
-    }
-
-    virtual void
-        bumpDataId() override
-    {
-        if (delInlinePoint)
-            GFE_AttribFilter::bumpDataIdsForAddOrRemove(true, true, true);
-        else
-            GFE_AttribFilter::bumpDataId();
     }
 
 
@@ -192,8 +173,11 @@ private:
             *inlinePtGroup &= *groupParser.getPointGroup();
         }
 
-        if (delInlinePoint)
+        if (doDelOutGroup)
+        {
+            //delOutGroup();
             geo->destroyPointOffsets(geo->getPointRange(inlinePtGroup), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
+        }
     }
 
 
@@ -204,8 +188,6 @@ private:
 
 public:
     fpreal threshold_inlineCosRadians = 1e-05;
-    bool reverseGroup = false;
-    bool delInlinePoint = false;
 
     //GA_PointGroup* inlinePtGroup = nullptr;
 

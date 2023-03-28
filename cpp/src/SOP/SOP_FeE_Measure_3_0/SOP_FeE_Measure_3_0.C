@@ -9,8 +9,9 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GFE/GFE_Type.h"
-#include "GFE/GFE_GroupParser.h"
+
+
+
 #include "GFE/GFE_Measure.h"
 
 
@@ -52,11 +53,11 @@ static const char *theDsFile = R"THEDSFILE(
         type    ordinal
         default { "area" }
         menu {
-            "area"          "Area"
             "perimeter"     "Perimeter"
+            "area"          "Area"
             "volume"        "Volume"
-            "meshArea"      "Mesh Area"
             "meshPerimeter" "Mesh Perimeter"
+            "meshArea"      "Mesh Area"
             "meshVolume"    "Mesh Volume "
         }
     }
@@ -69,8 +70,8 @@ static const char *theDsFile = R"THEDSFILE(
     }
     parm {
         name    "posAttribName"
-        cppname "PAttribName"
-        label   "Position Attribute Name"
+        cppname "PosAttribName"
+        label   "Position Attribute"
         type    string
         default { "P" }
     }
@@ -108,6 +109,7 @@ SOP_FeE_Measure_3_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -198,6 +200,22 @@ sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmgrouptype)
 }
 
 
+static GFE_MeasureType
+sopMeasureType(SOP_FeE_Measure_3_0Parms::MeasureType parmgrouptype)
+{
+    using namespace SOP_FeE_Measure_3_0Enums;
+    switch (parmgrouptype)
+    {
+    case MeasureType::PERIMETER:          return GFE_MeasureType::Perimeter;       break;
+    case MeasureType::AREA:               return GFE_MeasureType::Area;            break;
+    case MeasureType::VOLUME:             return GFE_MeasureType::Area;            break;
+    case MeasureType::MESHPERIMETER:      return GFE_MeasureType::MeshPerimeter;   break;
+    case MeasureType::MESHAREA:           return GFE_MeasureType::MeshArea;        break;
+    case MeasureType::MESHVOLUME:         return GFE_MeasureType::MeshVolume;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GFE_MeasureType::Area;
+}
 
 
 
@@ -214,67 +232,55 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-    const UT_StringHolder& geo0PosAttribName = sopparms.getPAttribName();
-    if (!geo0PosAttribName.isstring())
-        return;
-
     const UT_StringHolder& measureAttribName = sopparms.getMeasureAttribName();
     if (!measureAttribName.isstring())
         return;
 
+
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+
+    const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasureType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GOP_Manager gop;
-    const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
+    GFE_Measure measure(outGeo0, &cookparms);
+    measure.groupParser.setGroup(groupType, sopparms.getGroup());
+    measure.setPositionAttrib(sopparms.getPosAttribName());
+    measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, measureAttribName);
 
-    const GA_GroupType geo0finalGroupType = geo0Group ? geo0Group->classType() : GA_GROUP_INVALID;
+    measure.setComputeParm(measureType,
+        subscribeRatio, minGrainSize);
 
-
-
-
-
-    //const fpreal uniScale = sopparms.getUniScale();
+    measure.computeAndBumpDataId();
 
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(outGeo0);
-    
-
-    //GA_Attribute* measureAttribPtr = outGeo0->addFloatTuple(GA_ATTRIB_PRIMITIVE, measureAttribName, 1, GA_Defaults(0.0), 0, 0, inStorageF);
-    //GA_RWHandleT<attribPrecisonF> measureAttribHandle(measureAttribPtr);
-
-    //const SOP_FeE_Measure_3_0Parms::MeasureType measureType = sopparms.getMeasureType();
-    switch (sopparms.getMeasureType())
-    {
-    case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-        GFE_Measure::addAttribPrimArea(     outGeo0, geo0PosAttribName,
-            static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-            GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-        break;
-    case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-        GFE_Measure::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
-            static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-            GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-        break;
-    case SOP_FeE_Measure_3_0Enums::MeasureType::MESHVOLUME:
-        GFE_Measure::addAttribMeshVolume(outGeo0, geo0PosAttribName,
-            static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-            GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-        break;
-    default:
-        cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");
-        return;
-    }
+    //switch ()
+    //{
+    //case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
+    //    GFE_Measure_Namespace::addAttribPrimArea(     outGeo0, geo0PosAttribName,
+    //        static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
+    //        GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    //    break;
+    //case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
+    //    GFE_Measure_Namespace::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
+    //        static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
+    //        GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    //    break;
+    //case SOP_FeE_Measure_3_0Enums::MeasureType::MESHVOLUME:
+    //    GFE_Measure_Namespace::addAttribMeshVolume(outGeo0, geo0PosAttribName,
+    //        static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
+    //        GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    //    break;
+    //default:
+    //    cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");
+    //    return;
+    //}
 
 
     

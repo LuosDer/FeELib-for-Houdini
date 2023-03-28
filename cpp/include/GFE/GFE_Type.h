@@ -27,6 +27,13 @@ enum class GFE_GroupMergeType
 };
 
 
+enum class GFE_StatisticalFunction
+{
+    Min,
+    Max,
+};
+
+
 
 
 namespace GFE_Type {

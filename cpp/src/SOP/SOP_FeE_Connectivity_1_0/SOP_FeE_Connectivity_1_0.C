@@ -460,7 +460,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             {
                 if (geo0AttribClass != attribPtr->getOwner())
                 {
-                    attribPtr = GFE_AttribPromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
+                    attribPtr = GFE_AttributePromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
                     //attribPtr = GFE_AttribPromote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
                 }
             }

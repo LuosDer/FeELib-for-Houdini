@@ -111,76 +111,80 @@ public:
     }
 
     
-void
-set(
-    GA_Attribute* attribPtr
-)
-{
-    clear();
-    if (!attribPtr)
-        return;
+    void
+    set(
+        GA_Attribute* attribPtr
+    )
+    {
+        clear();
+        if (!attribPtr)
+            return;
 
-    attribArray.emplace_back(attribPtr);
-}
+        attribArray.emplace_back(attribPtr);
+    }
 
-void
-set(
-    const GA_AttributeOwner attribClass,
-    const UT_StringHolder& attribPattern
-)
-{
-    if (!attribPattern.isstring() || attribPattern.length() == 0)
-        return;
+    GA_Attribute*
+    set(
+        const GA_AttributeOwner attribClass,
+        const UT_StringHolder& attribPattern
+    )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return nullptr;
 
-    GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
-    set(attribPtr);
-}
+        GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        set(attribPtr);
+        return attribPtr;
+    }
 
-void   
-append(
-    GA_Attribute* attribPtr
-)
-{
-    if (!attribPtr)
-        return;
-    attribArray.emplace_back(attribPtr);
-}
 
-void
-append(
-    const GA_AttributeOwner attribClass,
-    const UT_StringHolder& attribPattern
-)
-{
-    if (!attribPattern.isstring() || attribPattern.length() == 0)
-        return;
+    void
+    append(
+        GA_Attribute* attribPtr
+    )
+    {
+        if (!attribPtr)
+            return;
+        attribArray.emplace_back(attribPtr);
+    }
 
-    GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
-    append(attribPtr);
-}
+    GA_Attribute*
+    append(
+        const GA_AttributeOwner attribClass,
+        const UT_StringHolder& attribPattern
+    )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return nullptr;
 
-void
-appendUV(
-    const UT_StringHolder& attribPattern,
-    const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID
-)
-{
-    if (!attribPattern.isstring() || attribPattern.length() == 0)
-        return;
+        GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        append(attribPtr);
+        return attribPtr;
+    }
 
-    GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
-    //GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, attribClass, attribPattern);
-    //if (attribPtr)
-    //{
-    //    int tupleSize = attribPtr->getTupleSize();
-    //    if (tupleSize < 2 || tupleSize > 4)
-    //    {
-    //        //geo->getAttributes().destroyAttribute(uvAttribPtr);
-    //        attribPtr = nullptr;
-    //    }
-    //}
-    append(attribPtr);
-}
+    GA_Attribute*
+    appendUV(
+        const UT_StringHolder& attribPattern,
+        const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID
+    )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return nullptr;
+
+        GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
+        //GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, attribClass, attribPattern);
+        //if (attribPtr)
+        //{
+        //    int tupleSize = attribPtr->getTupleSize();
+        //    if (tupleSize < 2 || tupleSize > 4)
+        //    {
+        //        //geo->getAttributes().destroyAttribute(uvAttribPtr);
+        //        attribPtr = nullptr;
+        //    }
+        //}
+        append(attribPtr);
+        return attribPtr;
+    }
 
 
 

@@ -244,6 +244,11 @@ private:
 
 
 
+
+
+
+
+
 class GFE_AttribFilter : public GFE_GeoFilter {
 
 public:
@@ -556,11 +561,17 @@ public:
     //    }
     //}
 
+
     virtual void
         bumpDataId()
     {
-        outAttribArray.bumpDataId();
-        outGroupArray.bumpDataId();
+        if (doDelOutGroup)
+            bumpDataIdsForAddOrRemove();
+        else
+        {
+            outAttribArray.bumpDataId();
+            outGroupArray.bumpDataId();
+        }
     }
 
     SYS_FORCE_INLINE
@@ -571,14 +582,82 @@ public:
         bumpDataId();
     }
 
+
+    void
+        findOrCreateOutGroup(
+            const bool detached,
+            const GA_GroupType groupType = GA_GROUP_POINT,
+            const UT_StringHolder& groupName = ""
+        )
+    {
+        getOutGroupArray().findOrCreate(detached, groupType, groupName);
+    }
+
+    void
+        findOrCreateOutGroup(
+            const GA_GroupType groupType = GA_GROUP_POINT,
+            const UT_StringHolder& groupName = ""
+        )
+    {
+        getOutGroupArray().findOrCreate(doDelOutGroup, groupType, groupName);
+    }
+
+
+
+
+    virtual void
+        delOutGroup()
+    {
+        if (outGroupArray.isEmpty() || !outGroupArray[0])
+            return;
+
+        const GA_Group* const outGroup = outGroupArray[0];
+
+        if (outGroup->classType() == GA_GROUP_EDGE)
+        {
+
+        }
+        else
+        {
+            const GA_ElementGroup* const outElementGroup = static_cast<const GA_ElementGroup*>(outGroup);
+            //GA_Range range(outElementGroup->getIndexMap());
+            GA_Range range(*outElementGroup);
+            switch (outGroup->classType())
+            {
+            case GA_GROUP_PRIMITIVE:
+                geo->destroyPrimitiveOffsets(range, true);
+                break;
+            case GA_GROUP_POINT:
+                geo->destroyPointOffsets(range, GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
+                break;
+            case GA_GROUP_VERTEX:
+                geo->destroyVertexOffsets(range);
+                break;
+            }
+        }
+    }
+
     virtual void
         visualizeOutGroup()
     {
-        if (!cookparms || !outGroupArray[0])
+        if (doDelOutGroup || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0])
             return;
 
         cookparms->getNode()->setHighlight(true);
         cookparms->select(*outGroupArray[0]);
+    }
+
+    void
+        delOrVisualizeOutGroup()
+    {
+        if (doDelOutGroup)
+        {
+            delOutGroup();
+        }
+        else
+        {
+            visualizeOutGroup();
+        }
     }
 
     
@@ -616,6 +695,10 @@ public:
         return outGroupArray.ref();
     }
 
+//protected:
+public:
+    bool reverseOutGroup = false;
+    bool doDelOutGroup = false;
 private:
     //std::vector<GA_AttributeUPtr> attribUPtrArray;
     //std::vector<GA_Attribute*> attribArray;

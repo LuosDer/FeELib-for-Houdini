@@ -21,6 +21,31 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
+        name    "group"
+        cppname "Group"
+        label   "Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
         name    "statisticalFunction"
         cppname "StatisticalFunction"
         label   "Statistical Function"
@@ -55,24 +80,42 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group Name"
         type    string
         default { "extremePrim" }
-        disablewhen "{ blastgroup == 1 }"
+        disablewhen "{ delOutGroupGeo == 1 }"
         parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Primitives kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "blastgroup"
-        label   "Blast Group"
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
         type    toggle
-        default { "on" }
+        default { "off" }
+    }
+
+    parm {
+        name    "delOutGroupGeo"
+        cppname "DelOutGroupGeo"
+        label   "Delete Out Group Geo"
+        type    toggle
+        default { "off" }
+    }
+
+    parm {
+       name    "subscribeRatio"
+       cppname "SubscribeRatio"
+       label   "Subscribe Ratio"
+       type    integer
+       default { 16 }
+       range   { 0! 256 }
     }
     parm {
-        name    "negate"
-        cppname "Negate"
-        label   "Delete Non Selected"
-        type    toggle
-        default { "on" }
-        disablewhen "{ blastgroup == 0 }"
+       name    "minGrainSize"
+       cppname "MinGrainSize"
+       label   "Min Grain Size"
+       type    intlog
+       default { 1024 }
+       range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -98,7 +141,7 @@ newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_ExtremePrim_1_0::theSOPTypeName,
-        "FeE Extreme Prim",
+        "FeE Extreme Primitive",
         SOP_FeE_ExtremePrim_1_0::myConstructor,
         SOP_FeE_ExtremePrim_1_0::buildTemplates(),
         1,
@@ -159,7 +202,6 @@ SOP_FeE_ExtremePrim_1_0::cookVerb() const
 
 
 
-
 static GA_GroupType
 sopGroupType(SOP_FeE_ExtremePrim_1_0Parms::GroupType parmgrouptype)
 {
@@ -177,6 +219,36 @@ sopGroupType(SOP_FeE_ExtremePrim_1_0Parms::GroupType parmgrouptype)
 }
 
 
+
+static GFE_StatisticalFunction
+sopStatisticalFunction(SOP_FeE_ExtremePrim_1_0Parms::StatisticalFunction parmgrouptype)
+{
+    using namespace SOP_FeE_ExtremePrim_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case StatisticalFunction::MIN:     return GFE_StatisticalFunction::Min;    break;
+    case StatisticalFunction::MAX:     return GFE_StatisticalFunction::Max;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Statistical Function!");
+    return GFE_StatisticalFunction::Min;
+}
+
+
+
+static GFE_MeasureType
+sopMeasureType(SOP_FeE_ExtremePrim_1_0Parms::Measure parmgrouptype)
+{
+    using namespace SOP_FeE_ExtremePrim_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case Measure::PERIMETER:     return GFE_MeasureType::Perimeter;    break;
+    case Measure::AREA:          return GFE_MeasureType::Area;         break;
+    }
+    //UT_ASSERT_MSG(0, "Unhandled GFE_MeasureType!");
+    return GFE_MeasureType::Area;
+}
+
+
 void
 SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -189,19 +261,38 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
+
+    const GFE_StatisticalFunction statisticalFunction = sopStatisticalFunction(sopparms.getStatisticalFunction());
+    const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
+        
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+
+
+
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const GA_Group* const geo0Group = GFE_ExtremePrim::extremePrim(outGeo0, groupType, groupName);
 
-    if (!geo0Group)
-        return;
 
-    cookparms.getNode()->setHighlight(true);
-    cookparms.select(*geo0Group);
+
+    GFE_ExtremePrim extremePrim(cookparms, outGeo0);
+    extremePrim.setComputeParm(
+        statisticalFunction, measureType,
+        subscribeRatio, minGrainSize);
+    extremePrim.doDelOutGroup = sopparms.getDelOutGroupGeo();
+    extremePrim.reverseOutGroup = sopparms.getReverseGroup();
+
+    extremePrim.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    extremePrim.findOrCreateOutGroup(GA_GROUP_PRIMITIVE, sopparms.getGroupName());
+
+    extremePrim.computeAndBumpDataId();
+
+    extremePrim.delOrVisualizeOutGroup();
+
 
 }
 

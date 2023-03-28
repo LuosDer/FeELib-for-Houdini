@@ -12,7 +12,7 @@
 #include "GFE/GFE_GeoFilter.h"
 
 #include "GFE/GFE_Adjacency.h"
-#include "GFE/GFE_AttribPromote.h"
+#include "GFE/GFE_AttributePromote.h"
 #include "GFE/GFE_AttributeCast.h"
 
 
@@ -74,9 +74,9 @@ public:
         if (isDetached)
             getOutAttribArray().findOrCreateTuple(attribOwner, storageClass, storage, detached, name);
 #else
-        getOutAttribArray().findOrCreateTuple(connectivityOwner, GA_STORECLASS_INT, storage, false, isDetached ? TEMP_ConnectivityAttribName : name);
+        getOutAttribArray().findOrCreateTuple(false, connectivityOwner, GA_STORECLASS_INT, storage, isDetached ? TEMP_ConnectivityAttribName : name);
         if (isDetached)
-            getOutAttribArray().findOrCreateTuple(attribOwner, storageClass, storage, detached, name);
+            getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name);
 #endif
     }
 
@@ -120,7 +120,7 @@ private:
             const GA_StorageClass outAttribStorageClass = outAttribPtr->getStorageClass();
             if (outAttribOwner != connectivityOwner)
             {
-                finalAttribPtr = GFE_AttribPromote::attribPromote(geo, inAttribPtr, outAttribOwner);
+                finalAttribPtr = GFE_AttributePromote::attribPromote(geo, inAttribPtr, outAttribOwner);
                 geo->getAttributes().destroyAttribute(inAttribPtr);
             }
             if (outAttribStorageClass != GA_STORECLASS_INT)
@@ -713,7 +713,7 @@ addAttribConnectivity(
         {
             //attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
             GA_Attribute* const origAttribPtr = attribPtr;
-            attribPtr = GFE_AttribPromote::attribPromote(geo, attribPtr, attribOwner);
+            attribPtr = GFE_AttributePromote::attribPromote(geo, attribPtr, attribOwner);
             geo->getAttributes().destroyAttribute(origAttribPtr);
         }
     }
@@ -736,7 +736,7 @@ addAttribConnectivity(
         {
             //attribPtr = GU_Promote::promote(*geo, attribPtr, attribOwner, true, GU_Promote::GU_PROMOTE_FIRST);
             GA_Attribute* const origAttribPtr = attribPtr;
-            attribPtr = GFE_AttribPromote::attribPromote(geo, attribPtr, attribOwner);
+            attribPtr = GFE_AttributePromote::attribPromote(geo, attribPtr, attribOwner);
             geo->getAttributes().destroyAttribute(origAttribPtr);
         }
     }

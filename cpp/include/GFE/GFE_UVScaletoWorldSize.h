@@ -120,8 +120,20 @@ private:
         GA_Attribute* areaATIPtr = areaUPtr.get();
         GA_Attribute* areaUVATIPtr = areaUVUPtr.get();
 #else
-        GA_Attribute* areaATIPtr = GFE_Measure::addAttribPrimArea(geo, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaAttribName);
-        GA_Attribute* areaUVATIPtr = GFE_Measure::addAttribPrimArea(geo, uv_h, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaUVAttribName);
+        GFE_Measure measure(geo, cookparms);
+        measure.groupParser.setGroup(geoGroup);
+        //measure.setPositionAttrib();
+        //measure.setComputeParm(GFE_MeasureType::Area);
+
+        GA_Attribute* areaATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaAttribName);
+        measure.compute();
+
+        GA_Attribute* areaUVATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaUVAttribName);
+        measure.setPositionAttrib(uv_h.getAttribute());
+        measure.compute();
+        
+        //GA_Attribute* areaATIPtr = GFE_Measure::addAttribPrimArea(geo, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaAttribName);
+        //GA_Attribute* areaUVATIPtr = GFE_Measure::addAttribPrimArea(geo, uv_h, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaUVAttribName);
 #endif
 
         const GA_AttributeUPtr uvScaleATI_deleter = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorage, 3);
@@ -131,7 +143,9 @@ private:
 
         if (computeUVAreaInPiece)
         {
-            const GA_Attribute* const connectivityATIPtr = GFE_Connectivity::addAttribConnectivity(geo);
+            const GA_Attribute* const connectivityATIPtr = GFE_Connectivity_Namespace::addAttribConnectivity(geo);
+            //const GA_Attribute* const connectivityATIPtr = GFE_Connectivity::addAttribConnectivity(geo);
+
             //areaAttrib_h   = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr,   GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
             //areaUVAttrib_h = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
             areaATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);

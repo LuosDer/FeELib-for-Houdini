@@ -47,7 +47,7 @@ namespace GFE_Range {
         if (!group->isElementGroup())
             return GA_Range();
 
-        return GA_Range(geo->getIndexMap(GFE_Type::attributeOwner_groupType(groupType)), GFE_GroupPromote::elementGroupPromoteDetached(geo, group, groupType).get());
+        return GA_Range(geo->getIndexMap(GFE_Type::attributeOwner_groupType(groupType)), GFE_GroupPromote::elementGroupPromoteDetached(group, groupType).get());
     }
 
 
