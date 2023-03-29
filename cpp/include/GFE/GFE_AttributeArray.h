@@ -745,6 +745,36 @@ public:
         }
     }
 
+    inline
+    void
+        set(
+            const GA_AttributeOwner groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
+    inline
+        void
+        append(
+            const GA_AttributeOwner groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
+    inline
+    void
+        appends(
+            const GA_AttributeOwner groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
 
     GA_Group*
         findOrCreate(
@@ -837,6 +867,643 @@ private:
 
 
 }; // End of class GFE_GroupArray
+
+
+
+
+
+
+
+class GFE_RefAttribArray {
+
+public:
+    GFE_RefAttribArray(
+        const GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(geo)
+        , cookparms(cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+
+    GFE_RefAttribArray(
+        const SOP_NodeVerb::CookParms& cookparms,
+        const GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+
+    ~GFE_RefAttribArray()
+    {
+    }
+
+    const GA_Attribute*&
+        operator[](const size_t i)
+    {
+        return attribArray[i];
+    }
+
+    const GA_Attribute*&
+        operator[](const int i)
+    {
+        return attribArray[i];
+    }
+
+    bool
+        isEmpty()
+    {
+        return attribArray.size() == 0;
+    }
+
+
+    void
+        clear()
+    {
+        attribArray.clear();
+        attribUPtrArray.clear();
+    }
+
+    size_t
+        size()
+    {
+        return attribArray.size();
+    }
+
+    void
+        reset(
+            const GA_Detail* const geo,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        this->geo = geo;
+        this->cookparms = cookparms;
+        clear();
+    }
+
+
+    void
+        set(
+            const GA_Attribute* attribPtr
+        )
+    {
+        clear();
+        if (!attribPtr)
+            return;
+
+        attribArray.emplace_back(attribPtr);
+    }
+
+    const GA_Attribute*
+        set(
+            const GA_AttributeOwner attribClass,
+            const UT_StringHolder& attribPattern
+        )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return nullptr;
+
+        const GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        set(attribPtr);
+        return attribPtr;
+    }
+
+
+    void
+        append(
+            const GA_Attribute* attribPtr
+        )
+    {
+        if (!attribPtr)
+            return;
+        attribArray.emplace_back(attribPtr);
+    }
+
+    const GA_Attribute*
+        append(
+            const GA_AttributeOwner attribClass,
+            const UT_StringHolder& attribPattern
+        )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return nullptr;
+
+        const GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        append(attribPtr);
+        return attribPtr;
+    }
+
+    const GA_Attribute*
+        appendUV(
+            const UT_StringHolder& attribPattern,
+            const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID
+        )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return nullptr;
+
+        const GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
+        append(attribPtr);
+        return attribPtr;
+    }
+
+
+
+
+    void
+        appends(
+            const GA_AttributeOwner attribClass,
+            const UT_StringHolder& attribPattern
+        )
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return;
+
+        GA_Attribute* attribPtr = nullptr;
+        for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
+        {
+            attribPtr = it.attrib();
+            if (!attribPtr->getName().multiMatch(attribPattern))
+                continue;
+            attribArray.emplace_back(attribPtr);
+        }
+    }
+
+    SYS_FORCE_INLINE
+        void
+        appendPointVertexs(
+            const UT_StringHolder& attribPattern
+        )
+    {
+        appends(GA_ATTRIB_POINT, attribPattern);
+        appends(GA_ATTRIB_VERTEX, attribPattern);
+    }
+
+    const GA_Attribute*
+        findTuple(
+            const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+            const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const UT_StringHolder& attribName = "",
+            const int tuple_size = 1,
+            const GA_Defaults& defaults = GA_Defaults(0.0f),
+            const bool emplaceBack = true,
+            const GA_AttributeOptions* attribute_options = nullptr
+        )
+    {
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+        const GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
+        if (attribPtr)
+        {
+            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            if (attribPtr->getTupleSize() != tuple_size ||
+                aifTuple->getStorage(attribPtr) != finalStorage ||
+                aifTuple->getDefaults(attribPtr) != defaults)
+            {
+                attribPtr = nullptr;
+            }
+            else
+            {
+                if (emplaceBack)
+                    attribArray.emplace_back(attribPtr);
+                return attribPtr;
+            }
+        }
+
+        if (!attribPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+            UT_ASSERT_MSG(attribPtr, "No Attrib");
+            return nullptr;
+        }
+        if (emplaceBack)
+            attribArray.emplace_back(attribPtr);
+        return attribPtr;
+    }
+
+    //SYS_FORCE_INLINE
+    //void
+    //findOrCreate(
+    //    const GA_AttributeOwner owner,
+    //    const GA_Storage storage,
+    //    const UT_StringHolder& attribName
+    //)
+    //{
+    //    findOrCreate(owner, storage, attribName);
+    //}
+
+    const GA_Attribute*
+        findUV(
+            const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const UT_StringHolder& attribName = "",
+            const int tuple_size = 3,
+            const GA_Defaults& defaults = GA_Defaults(0.0f),
+            const bool emplaceBack = true,
+            const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+        )
+    {
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+        const GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, owner, attribName);
+        if (attribPtr)
+        {
+            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            if (attribPtr->getTupleSize() != tuple_size ||
+                aifTuple->getStorage(attribPtr) != finalStorage ||
+                aifTuple->getDefaults(attribPtr) != defaults)
+            {
+                attribPtr = nullptr;
+            }
+            else
+            {
+                if (emplaceBack)
+                    attribArray.emplace_back(attribPtr);
+                return attribPtr;
+            }
+        }
+
+        const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
+        if (!attribPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+            UT_ASSERT_MSG(attribPtr, "No Attrib");
+            return nullptr;
+        }
+        if (emplaceBack)
+            attribArray.emplace_back(attribPtr);
+        return attribPtr;
+    }
+
+    const GA_Attribute*
+        findDir(
+            const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const UT_StringHolder& attribName = "",
+            const int tuple_size = 3,
+            const GA_Defaults& defaults = GA_Defaults(0.0f),
+            const bool emplaceBack = true,
+            const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+        )
+    {
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+        const GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
+        if (attribPtr)
+        {
+            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            if (attribPtr->getTupleSize() != tuple_size ||
+                aifTuple->getStorage(attribPtr) != finalStorage ||
+                aifTuple->getDefaults(attribPtr) != defaults)
+            {
+                attribPtr = nullptr;
+            }
+            else
+            {
+                if (emplaceBack)
+                    attribArray.emplace_back(attribPtr);
+                return attribPtr;
+            }
+        }
+
+        if (!attribPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+            UT_ASSERT_MSG(attribPtr, "No Attrib");
+            return nullptr;
+        }
+        if (emplaceBack)
+            attribArray.emplace_back(attribPtr);
+        return attribPtr;
+    }
+
+
+    const GA_Attribute*
+        findNormal3D(
+            const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
+            const GA_Storage storage = GA_STORE_INVALID,
+            const UT_StringHolder& attribName = "",
+            const int tuple_size = 3,
+            const GA_Defaults& defaults = GA_Defaults(0.0f),
+            const bool emplaceBack = true,
+            const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+        )
+    {
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+        const GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(geo, owner, attribName);
+        if (attribPtr)
+        {
+            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            if (attribPtr->getTupleSize() != tuple_size ||
+                aifTuple->getStorage(attribPtr) != finalStorage ||
+                aifTuple->getDefaults(attribPtr) != defaults)
+            {
+                attribPtr = nullptr;
+            }
+            else
+            {
+                if (emplaceBack)
+                    attribArray.emplace_back(attribPtr);
+                return attribPtr;
+            }
+        }
+
+        const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
+
+        if (!attribPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+            UT_ASSERT_MSG(attribPtr, "No Attrib");
+            return nullptr;
+        }
+        if (emplaceBack)
+            attribArray.emplace_back(attribPtr);
+        return attribPtr;
+    }
+
+
+
+
+
+    SYS_FORCE_INLINE
+        void
+        pop_back()
+    {
+        attribArray.pop_back();
+    }
+
+
+
+
+    SYS_FORCE_INLINE
+        const GA_Attribute*
+        last()
+    {
+        return attribArray[attribArray.size() - 1];
+    }
+
+
+    std::vector<const GA_Attribute*>&
+        ref()
+    {
+        return attribArray;
+    }
+
+
+protected:
+    const GA_Detail* geo;
+    const SOP_NodeVerb::CookParms* cookparms;
+
+private:
+    std::vector<GA_AttributeUPtr> attribUPtrArray;
+    std::vector<const GA_Attribute*> attribArray;
+
+
+}; // End of class GFE_RefAttribArray
+
+
+
+
+
+
+
+
+
+
+
+class GFE_RefGroupArray {
+
+public:
+    GFE_RefGroupArray(
+        const GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(geo)
+        , cookparms(cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+
+    GFE_RefGroupArray(
+        const SOP_NodeVerb::CookParms& cookparms,
+        const GA_Detail* const geo
+    )
+        : geo(geo)
+        , cookparms(&cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+
+    ~GFE_RefGroupArray()
+    {
+    }
+
+    const GA_Group*&
+        operator[](const size_t i)
+    {
+        return groupArray[i];
+    }
+
+    const GA_Group*&
+        operator[](const int i)
+    {
+        return groupArray[i];
+    }
+
+    bool
+        isEmpty()
+    {
+        return groupArray.size() == 0;
+    }
+
+    void
+        clear()
+    {
+        groupArray.clear();
+        groupUPtrArray.clear();
+    }
+
+    size_t
+        size()
+    {
+        return groupArray.size();
+    }
+
+    SYS_FORCE_INLINE
+        const GA_Group*
+        last()
+    {
+        return groupArray[groupArray.size() - 1];
+    }
+
+    void
+        reset(
+            const GA_Detail* const geo,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        this->geo = geo;
+        this->cookparms = cookparms;
+        clear();
+    }
+
+    void
+        set(
+            GA_Group* groupPtr
+        )
+    {
+        clear();
+        if (!groupPtr)
+            return;
+
+        groupArray.emplace_back(groupPtr);
+    }
+
+    void
+        set(
+            const GA_GroupType groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        if (!groupPattern.isstring() || groupPattern.length() == 0)
+            return;
+
+        GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
+        set(groupPtr);
+    }
+
+    void
+        append(
+            GA_Group* groupPtr
+        )
+    {
+        if (!groupPtr)
+            return;
+        groupArray.emplace_back(groupPtr);
+    }
+
+    void
+        append(
+            const GA_GroupType groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        if (!groupPattern.isstring() || groupPattern.length() == 0)
+            return;
+
+        GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
+        append(groupPtr);
+    }
+
+    void
+        appends(
+            const GA_GroupType groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        if (!groupPattern.isstring() || groupPattern.length() == 0)
+            return;
+
+        GA_Group* groupPtr = nullptr;
+        for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupClass)->beginTraverse(); !it.atEnd(); ++it)
+        {
+            groupPtr = it.group();
+            if (!groupPtr->getName().multiMatch(groupPattern))
+                continue;
+            groupArray.emplace_back(groupPtr);
+        }
+    }
+
+    inline
+        void
+        set(
+            const GA_AttributeOwner groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
+    inline
+        void
+        append(
+            const GA_AttributeOwner groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
+    inline
+        void
+        appends(
+            const GA_AttributeOwner groupClass,
+            const UT_StringHolder& groupPattern
+        )
+    {
+        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
+
+    GA_Group*
+        find(
+            const GA_GroupType groupType = GA_GROUP_POINT,
+            const UT_StringHolder& groupName = ""
+        )
+    {
+        GA_Group* groupPtr = geo->getGroupTable(groupType)->find(groupName);
+
+        if (!groupPtr)
+        {
+            if (cookparms)
+                cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
+            UT_ASSERT_MSG(groupPtr, "No Group");
+            return nullptr;
+        }
+        groupArray.emplace_back(groupPtr);
+        return groupPtr;
+    }
+
+
+
+    std::vector<const GA_Group*>&
+        ref()
+    {
+        return groupArray;
+    }
+
+
+protected:
+    const GA_Detail* geo;
+    const SOP_NodeVerb::CookParms* cookparms;
+
+private:
+    std::vector<GA_GroupUPtr> groupUPtrArray;
+    std::vector<const GA_Group*> groupArray;
+
+
+}; // End of class GFE_RefGroupArray
+
+
+
+
+
+
+
+
 
 
 

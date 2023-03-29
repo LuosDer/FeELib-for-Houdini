@@ -13,8 +13,8 @@
 
 //#include "GA/GA_Types.h"
 
-#include "GFE/GFE_AttribValCount.h"
-#include "GFE/GFE_AttribPromote.h"
+#include "GFE/GFE_AttributeValueCount.h"
+#include "GFE/GFE_AttributePromote.h"
 #include "GFE/GFE_ConvertLine.h"
 #include "GFE/GFE_Connectivity.h"
 #include "GFE/GFE_VertexNextEquiv.h"
@@ -39,8 +39,8 @@ skin(
     const exint minGrainSize = 1024
 )
 {
-    const GA_Attribute* const connectivityPointAttrib = GFE_Connectivity::addAttribConnectivityPoint(geo, nullptr, nullptr, storage);
-    const GA_Attribute* const connectivityPrimAttrib = GFE_AttribPromote::attribPromote(geo, connectivityPointAttrib, GA_ATTRIB_PRIMITIVE);
+    const GA_Attribute* const connectivityPointAttrib = GFE_Connectivity_Namespace::addAttribConnectivityPoint(geo, nullptr, nullptr, storage);
+    const GA_Attribute* const connectivityPrimAttrib = GFE_AttributePromote::attribPromote(geo, connectivityPointAttrib, GA_ATTRIB_PRIMITIVE);
 
     const GA_PrimitiveGroupUPtr endGroupTmpUPtr = geo->createDetachedPrimitiveGroup();
     GA_PrimitiveGroup* const endGroupTmp = endGroupTmpUPtr.get();
@@ -53,7 +53,7 @@ skin(
     //GA_Offset val11 = connectivityPrim_h1.get(geo->primitiveOffset(1));
     //GA_Offset val12 = connectivityPrim_h1.get(geo->primitiveOffset(2));
 
-    const GA_Offset primoff_first = GFE_ConvertLine::convertLine(geo, true, true, false, "", true, "", "", "", "", storage);
+    const GA_Offset primoff_first = GFE_ConvertLine_Namespace::convertLine(geo, true, true, false, "", true, "", "", "", "", storage);
     //GFE_ConvertLine::convertLine(geo, inGeo0, true);
 
     //const GA_ROHandleT<GA_Offset> connectivityPrim_h(connectivityPrimAttrib);
@@ -89,7 +89,7 @@ skin(
                 const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
                 const GA_Size lastIndex = vertices.size() - 1;
 
-                GA_Size attribValCount = GFE_AttribValCount::getAttribValCount<GA_Offset>(connectivityPointAttrib, connectivityPrim_ph.value(primoff));
+                GA_Size attribValCount = GFE_AttributeValueCount::getAttribValCount<GA_Offset>(connectivityPointAttrib, connectivityPrim_ph.value(primoff));
                 if (closed)
                 {
                     if (endGroupTmp->contains(primoff))
@@ -102,7 +102,7 @@ skin(
                     }
                     else
                     {
-                        GA_Size primAttribValCount = GFE_AttribValCount::getAttribValCount<GA_Offset>(connectivityPrimAttrib, connectivityPrim_ph.value(primoff));
+                        GA_Size primAttribValCount = GFE_AttributeValueCount::getAttribValCount<GA_Offset>(connectivityPrimAttrib, connectivityPrim_ph.value(primoff));
                         GA_Size depth = 0;
                         for (GA_Size i = geo->getPrimitiveMap().indexFromOffset(primoff) - primAttribValCount; i >= 0; i -= primAttribValCount)
                         {

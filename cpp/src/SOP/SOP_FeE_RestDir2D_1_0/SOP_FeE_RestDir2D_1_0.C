@@ -321,11 +321,11 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GFE_RestDir2D restDir2D(outGeo0, &cookparms);
     restDir2D.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    restDir2D.getOutAttribArray().findOrCreateDir(GA_ATTRIB_DETAIL, GA_STORE_INVALID, false, restDir2DAttribName);
+    restDir2D.getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_DETAIL, GA_STORE_INVALID, restDir2DAttribName);
 
     if (method == GFE_RestDir2D_Method::AvgNormal)
     {
-        restDir2D.getOutAttribArray().findOrCreateNormal3D(normalSearchOrder, GA_STORE_INVALID, true, normal3DAttribName);
+        restDir2D.getOutAttribArray().findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, normal3DAttribName);
         //restDir2D.normal3D.setComputeParm();
     }
 

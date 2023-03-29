@@ -375,7 +375,7 @@ private:
 #else
     const exint UNREACHED_NUMBER = -1;
 #endif
-};
+}; // End of class GFE_Connectivity
 
 
 

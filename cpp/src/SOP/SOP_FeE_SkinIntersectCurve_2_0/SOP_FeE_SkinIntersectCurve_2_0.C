@@ -16,7 +16,7 @@
 
 
 
-#include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupParser.h"
 
 
 
@@ -227,7 +227,7 @@ SOP_FeE_SkinIntersectCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     
     GOP_Manager gop;
-    const GA_PrimitiveGroup* const primGroup = GFE_Group::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
+    const GA_PrimitiveGroup* const primGroup = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
     if (primGroup && primGroup->isEmpty())
         return;
 

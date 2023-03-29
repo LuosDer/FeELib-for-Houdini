@@ -86,7 +86,7 @@ public:
             const GA_Storage storage = GA_STORE_INVALID
         )
     {
-        getOutAttribArray().findOrCreateTuple(GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, false, attribName, 1, GA_Defaults(-1), false);
+        getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false);
     }
 
     SYS_FORCE_INLINE
@@ -96,7 +96,7 @@ public:
             const GA_Storage storage = GA_STORE_INVALID
         )
     {
-        getOutAttribArray().findOrCreateTuple(GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, false, attribName, 1, GA_Defaults(-1));
+        getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
     }
 
 

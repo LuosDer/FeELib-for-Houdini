@@ -382,12 +382,12 @@ public:
 
     void
         findOrCreateOutAttrib(
-            const GA_Storage storage = GA_STORE_REAL64,
             const bool detached = false,
+            const GA_Storage storage = GA_STORE_REAL64,
             const UT_StringHolder& attribName = "__topo_windingNumber"
         )
     {
-        getOutAttribArray().findOrCreateTuple(GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, detached, attribName);
+        getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, attribName);
     }
 
 

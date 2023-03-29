@@ -459,7 +459,27 @@ findUVAttributePointVertex(
     GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
     if (uvAttribPtr)
     {
-        int tupleSize = uvAttribPtr->getTupleSize();
+        const int tupleSize = uvAttribPtr->getTupleSize();
+        if (tupleSize < 2 || tupleSize > 4)
+        {
+            //geo->getAttributes().destroyAttribute(uvAttribPtr);
+            uvAttribPtr = nullptr;
+        }
+    }
+    return uvAttribPtr;
+}
+
+static const GA_Attribute*
+findUVAttributePointVertex(
+    const GA_Detail* const geo,
+    const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
+    const UT_StringRef& uvAttribName = "uv"
+)
+{
+    const GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
+    if (uvAttribPtr)
+    {
+        const int tupleSize = uvAttribPtr->getTupleSize();
         if (tupleSize < 2 || tupleSize > 4)
         {
             //geo->getAttributes().destroyAttribute(uvAttribPtr);
@@ -504,6 +524,58 @@ findOrCreateUVAttributePointVertex(
 
 
 
+
+
+static const GA_Attribute*
+findNormal3D(
+    const GA_Detail* const geo,
+    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
+    const UT_StringHolder& normal3DAttribName = "N"
+)
+{
+    const GA_Attribute* normal3DAttrib = nullptr;
+    switch (normalSearchOrder)
+    {
+    case GFE_NormalSearchOrder::PRIMITIVE:
+        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::POINT:
+        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::VERTEX:
+        normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::DETAIL:
+        normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+        break;
+    case GFE_NormalSearchOrder::POINTVERTEX:
+        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        if (!normal3DAttrib)
+        {
+            normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+        }
+        break;
+    case GFE_NormalSearchOrder::ALL:
+        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        if (!normal3DAttrib)
+        {
+            normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+            if (!normal3DAttrib)
+            {
+                normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+                if (!normal3DAttrib)
+                {
+                    normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+                }
+            }
+        }
+        break;
+    default:
+        UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder");
+        break;
+    }
+    return normal3DAttrib;
+}
 
 
 static GA_Attribute*

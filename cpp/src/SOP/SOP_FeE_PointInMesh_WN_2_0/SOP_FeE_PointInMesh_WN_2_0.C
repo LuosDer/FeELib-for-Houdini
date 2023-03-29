@@ -334,19 +334,19 @@ sopWNStorage(SOP_FeE_PointInMesh_WN_2_0Parms::WNPrecision wnPrecision)
     return GA_STORE_INVALID;
 }
 
-static GFE_WindingNumberType
+static GFE_WNType
 sopWNType(SOP_FeE_PointInMesh_WN_2_0Parms::WNType wnType)
 {
     using namespace SOP_FeE_PointInMesh_WN_2_0Enums;
     switch (wnType)
     {
-    case WNType::XYZ:      return GFE_WNType_XYZ;   break;
-    case WNType::XY:       return GFE_WNType_XY;    break;
-    case WNType::YZ:       return GFE_WNType_YZ;    break;
-    case WNType::ZX:       return GFE_WNType_ZX;    break;
+    case WNType::XYZ:      return GFE_WNType::XYZ;   break;
+    case WNType::XY:       return GFE_WNType::XY;    break;
+    case WNType::YZ:       return GFE_WNType::YZ;    break;
+    case WNType::ZX:       return GFE_WNType::ZX;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled WNType!");
-    return GFE_WNType_XYZ;
+    return GFE_WNType::XYZ;
 }
 
 static GFE_GroupMergeType
@@ -355,13 +355,13 @@ sopGroupMergeType(SOP_FeE_PointInMesh_WN_2_0Parms::GroupMergeType groupMergeType
     using namespace SOP_FeE_PointInMesh_WN_2_0Enums;
     switch (groupMergeType)
     {
-    case GroupMergeType::REPLACE:     return GFE_GroupMerge_Replace;    break;
-    case GroupMergeType::UNION:       return GFE_GroupMerge_Union;      break;
-    case GroupMergeType::INTERSECT:   return GFE_GroupMerge_Intersect;  break;
-    case GroupMergeType::SUBTRACT:    return GFE_GroupMerge_Subtract;   break;
+    case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
+    case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
+    case GroupMergeType::INTERSECT:   return GFE_GroupMergeType::Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GFE_GroupMergeType::Subtract;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
-    return GFE_GroupMerge_Replace;
+    return GFE_GroupMergeType::Replace;
 }
 
 
@@ -392,15 +392,16 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     
         
 #if 1
-    GFE_PointInMeshWN pointInMeshWN(cookparms, outGeo0, inGeo1, sopcache, subscribeRatio, minGrainSize);
+    GFE_PointInMeshWN pointInMeshWN(outGeo0, inGeo1, sopcache, &cookparms);
 
-    pointInMeshWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    pointInMeshWN.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
     pointInMeshWN.getGFEWN().setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
 
     pointInMeshWN.getGFEWN().setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
-        sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
+        sopparms.getWNAsSolidAngle(), sopparms.getWNNegate(),
+        subscribeRatio, minGrainSize);
 
     pointInMeshWN.setOutGroup(
         !sopparms.getOutGroup(),

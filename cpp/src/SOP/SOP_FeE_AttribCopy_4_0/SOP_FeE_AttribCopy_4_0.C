@@ -13,9 +13,9 @@
 
 
 
-#include "GFE/GFE_GroupParser.h"
+//#include "GFE/GFE_GroupParser.h"
 #include "GFE/GFE_AttributeCopy.h"
-#include "GFE/GFE_GroupCopy.h"
+//#include "GFE/GFE_GroupCopy.h"
 
 
 
@@ -105,6 +105,13 @@ static const char *theDsFile = R"THEDSFILE(
             "source"        "Source"
             "destination"   "Destination"
         }
+    }
+    parm {
+        name    "iDAttribIsOffset"
+        cppname "IDAttribIsOffset"
+        label   "ID Attrib is Offset"
+        type    toggle
+        default { "0" }
     }
 
 
@@ -207,7 +214,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "SubscribeRatio"
         label   "Subscribe Ratio"
         type    integer
-        default { 16 }
+        default { 8 }
         range   { 0! 256 }
     }
     parm {
@@ -344,7 +351,26 @@ sopIDAttribInput(SOP_FeE_AttribCopy_4_0Parms::IDAttribInput iDAttribInput)
     return false;
 }
 
-
+static GFE_AttribMergeType
+sopAttribMergeType(SOP_FeE_AttribCopy_4_0Parms::AttribMergeType attribMergeType)
+{
+    using namespace SOP_FeE_AttribCopy_4_0Enums;
+    switch (attribMergeType)
+    {
+    case AttribMergeType::SET:          return GFE_AttribMergeType::Set;        break;
+    case AttribMergeType::ADD:          return GFE_AttribMergeType::Add;        break;
+    case AttribMergeType::SUB:          return GFE_AttribMergeType::Sub;        break;
+    case AttribMergeType::MULT:         return GFE_AttribMergeType::Mult;       break;
+    case AttribMergeType::MIN:          return GFE_AttribMergeType::Min;        break;
+    case AttribMergeType::MAX:          return GFE_AttribMergeType::Max;        break;
+    case AttribMergeType::XOR:          return GFE_AttribMergeType::Xor;        break;
+    case AttribMergeType::TOGGLE:       return GFE_AttribMergeType::Toggle;     break;
+    case AttribMergeType::APPEND:       return GFE_AttribMergeType::Append;     break;
+    case AttribMergeType::INTERSECT:    return GFE_AttribMergeType::Intersect;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Merge type!");
+    return GFE_AttribMergeType::Set;
+}
 
 
 void
@@ -380,95 +406,73 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const UT_StringHolder& newCopyGroupName = sopparms.getUseNewCopyGroupName() ? sopparms.getNewCopyGroupName() : emptyString;
 
 
-    GOP_Manager gop;
-    const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, destinationGroupType, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
+    //GOP_Manager gop;
+    //const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, destinationGroupType, sopparms.getGroup(), gop);
+    //if (geo0Group && geo0Group->isEmpty())
+    //    return;
 
-    const GA_Group* geo1Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, inGeo1, destinationGroupType, sopparms.getSrcGroup(), gop);
-    if (geo1Group && geo1Group->isEmpty())
-        return;
+    //const GA_Group* geo1Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, inGeo1, destinationGroupType, sopparms.getSrcGroup(), gop);
+    //if (geo1Group && geo1Group->isEmpty())
+    //    return;
     //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
 
     //GA_AttributeSet& attribSet = outGeo0->getAttributes();
 
 
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
+    const bool iDAttribInput = sopIDAttribInput(sopparms.getIDAttribInput());
+
+    const bool useIDAttrib = sopparms.getUseIDAttrib();
+    const bool iDAttribIsOffset = sopparms.getIDAttribIsOffset();
+    
+
+    const GFE_AttribMergeType attribMergeType = sopAttribMergeType(sopparms.getAttribMergeType());
+
+
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+    
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    const bool useIDAttrib = sopparms.getUseIDAttrib();
 
-    const SOP_FeE_AttribCopy_4_0Parms::AttribMergeType attribMergeType = sopparms.getAttribMergeType();
-    using namespace SOP_FeE_AttribCopy_4_0Enums;
-    if (useIDAttrib)
+    GFE_AttribCopy attribCopy(outGeo0, inGeo1, &cookparms);
+
+    attribCopy.ownerDst = destinationClass;
+    attribCopy.ownerSrc = sourceClass;
+    attribCopy.setComputeParm(attribMergeType, iDAttribInput,
+        subscribeRatio, minGrainSize);
+    
+    if (sopparms.getUseIDAttrib())
     {
-        const UT_StringHolder& iDAttribName = sopparms.getIDAttribName();
-        const bool iDAttribInput = sopIDAttribInput(sopparms.getIDAttribInput());
+        attribCopy.setOffsetAttrib(sopparms.getIDAttribName(), iDAttribIsOffset);
+    }
+    attribCopy.appendGroups(copyGroupName);
+    attribCopy.appendAttribs(copyAttribName);
 
-        switch (attribMergeType)
-        {
-        case AttribMergeType::SET:
-            GFE_AttributeCopy::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName, iDAttribName, iDAttribInput);
-            GFE_GroupCopy::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName, iDAttribName, iDAttribInput);
-            break;
-        case AttribMergeType::ADD:
-            break;
-        case AttribMergeType::SUB:
-            break;
-        case AttribMergeType::MULT:
-            break;
-        case AttribMergeType::MIN:
-            break;
-        case AttribMergeType::MAX:
-            break;
-        case AttribMergeType::XOR:
-            break;
-        case AttribMergeType::TOGGLE:
-            break;
-        case AttribMergeType::APPEND:
-            break;
-        case AttribMergeType::INTERSECT:
-            break;
-        default:
-            break;
-        }
+    attribCopy.compute();
+    attribCopy.visualizeOutGroup();
+    //attribCopy.computeAndBumpDataId();
+
+
+
+
+    if (sopparms.getUseIDAttrib())
+    {
+        GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass,
+            copyAttribName, sopparms.getIDAttribName(), iDAttribInput);
+        //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType,
+        //  copyGroupName, sopparms.getIDAttribName(), iDAttribInput);
     }
     else
     {
-        switch (attribMergeType)
-        {
-        case AttribMergeType::SET:
-            GFE_AttributeCopy::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
-            GFE_GroupCopy::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
-            break;
-        case AttribMergeType::ADD:
-            break;
-        case AttribMergeType::SUB:
-            break;
-        case AttribMergeType::MULT:
-            break;
-        case AttribMergeType::MIN:
-            break;
-        case AttribMergeType::MAX:
-            break;
-        case AttribMergeType::XOR:
-            break;
-        case AttribMergeType::TOGGLE:
-            break;
-        case AttribMergeType::APPEND:
-            break;
-        case AttribMergeType::INTERSECT:
-            break;
-        default:
-            break;
-        }
+        GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+        //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
     }
+
     //GFE_AttributeCopy::copyAttribute(attribSet, copyAttribName, copyPointAttribName, copyVertexAttribName, copyDetailAttribName);
 
     //GFE_GroupCopy::copyGroup(outGeo0, copyPrimGroupName, copyPointGroupName, copyVertexGroupName, copyEdgeGroupName);

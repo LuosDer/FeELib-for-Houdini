@@ -15,7 +15,9 @@
 
 
 
-namespace GFE_GroupCopy {
+
+
+namespace GFE_GroupCopy_Namespace {
 
 
 
@@ -30,39 +32,38 @@ namespace GFE_GroupCopy {
 
 
 static void
-copyGroupDst(
-    const GA_SplittableRange& geoSplittableRange,
-    GA_EdgeGroup* const attribNew,
-    const GA_EdgeGroup* const attribRef,
+copyGroup(
+    GA_EdgeGroup& attribNew,
+    const GA_EdgeGroup& attribRef,
     const GA_Attribute* const attribID = nullptr
 )
 {
     if (attribID)
     {
-        const GA_ROHandleT<exint> attribID_h(attribID);
-        for (GA_EdgeGroup::const_iterator it = attribRef->begin(); it.atEnd(); ++it)
+        const GA_ROHandleT<exint> iDAttrib_h(attribID);
+        for (GA_EdgeGroup::const_iterator it = attribRef.begin(); it.atEnd(); ++it)
         {
-            GA_Edge edge = it.getEdge();
-            exint id0 = attribID_h.get(edge.p0());
-            exint id1 = attribID_h.get(edge.p1());
-            attribNew->add(id0, id1);
+            const GA_Edge edge = it.getEdge();
+            const exint id0 = iDAttrib_h.get(edge.p0());
+            const exint id1 = iDAttrib_h.get(edge.p1());
+            attribNew.add(id0, id1);
         }
     }
     else
     {
-        for (GA_EdgeGroup::const_iterator it = attribRef->begin(); it.atEnd(); ++it)
+        for (GA_EdgeGroup::const_iterator it = attribRef.begin(); it.atEnd(); ++it)
         {
             GA_Edge edge = it.getEdge();
-            attribNew->add(edge.p0(), edge.p1());
+            attribNew.add(edge.p0(), edge.p1());
         }
     }
 }
 
 static void
-copyGroupDst(
+copyGroup(
     const GA_SplittableRange& geoSplittableRange,
-    GA_ElementGroup* const attribNew,
-    const GA_ElementGroup* const attribRef,
+    GA_ElementGroup& attribNew,
+    const GA_ElementGroup& attribRef,
     const GA_Attribute* const attribID = nullptr,
     const int subscribeRatio = 8,
     const int minGrainSize = 1024
@@ -70,30 +71,32 @@ copyGroupDst(
 {
     if (attribID)
     {
-        const GA_ROHandleT<exint> attribID_h(attribID);
-        UTparallelFor(geoSplittableRange, [attribNew, attribRef, &attribID_h](const GA_SplittableRange& r)
+        const GA_ROHandleT<exint> iDAttrib_h(attribID);
+        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &iDAttrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    exint id = attribID_h.get(elemoff);
-                    attribNew->copy(id, *attribRef, elemoff);
+                    const exint id = iDAttrib_h.get(elemoff);
+                    //attribNew.copy(id, attribRef, elemoff);
+                    attribNew.setElement(id, attribRef.contains(elemoff));
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
     else
     {
-        UTparallelFor(geoSplittableRange, [attribNew, attribRef](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [&attribNew, &attribRef](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    attribNew->copy(elemoff, *attribRef, elemoff);
+                    //attribNew.copy(elemoff, attribRef, elemoff);
+                    attribNew.setElement(elemoff, attribRef.contains(elemoff));
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -105,118 +108,25 @@ copyGroupDst(
 
 
 static void
-copyGroupRef(
+copyGroup(
     const GA_SplittableRange& geoSplittableRange,
-    GA_EdgeGroup* const attribNew,
-    const GA_EdgeGroup* const attribRef,
-    const GA_Attribute* const attribID = nullptr
-)
-{
-    if (attribID)
-    {
-        const GA_ROHandleT<exint> attribID_h(attribID);
-        for (GA_EdgeGroup::const_iterator it = attribRef->begin(); it.atEnd(); ++it)
-        {
-            GA_Edge edge = it.getEdge();
-            exint id0 = attribID_h.get(edge.p0());
-            exint id1 = attribID_h.get(edge.p1());
-            attribNew->add(id0, id1);
-        }
-    }
-    else
-    {
-        for (GA_EdgeGroup::const_iterator it = attribRef->begin(); it.atEnd(); ++it)
-        {
-            GA_Edge edge = it.getEdge();
-            attribNew->add(edge.p0(), edge.p1());
-        }
-    }
-}
-
-static void
-copyGroupRef(
-    const GA_SplittableRange& geoSplittableRange,
-    GA_ElementGroup* const attribNew,
-    const GA_ElementGroup* const attribRef,
+    GA_Group& attribNew,
+    const GA_Group& attribRef,
     const GA_Attribute* const attribID = nullptr,
     const int subscribeRatio = 8,
     const int minGrainSize = 1024
 )
 {
-    if (attribID)
+    if (attribNew.classType() == GA_GROUP_EDGE)
     {
-        const GA_ROHandleT<exint> attribID_h(attribID);
-        UTparallelFor(geoSplittableRange, [attribNew, attribRef, &attribID_h](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    exint id = attribID_h.get(elemoff);
-                    attribNew->copy(id, *attribRef, elemoff);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
+        copyGroup(static_cast<GA_EdgeGroup&>(attribNew), static_cast<const GA_EdgeGroup&>(attribRef), attribID);
     }
     else
     {
-        UTparallelFor(geoSplittableRange, [attribNew, attribRef](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    attribNew->copy(elemoff, *attribRef, elemoff);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
+        copyGroup(geoSplittableRange, static_cast<GA_ElementGroup&>(attribNew), static_cast<const GA_ElementGroup&>(attribRef), attribID, subscribeRatio, minGrainSize);
     }
 }
 
-
-
-
-static void
-copyGroupDst(
-    const GA_SplittableRange& geoSplittableRange,
-    GA_Group* const attribNew,
-    const GA_Group* const attribRef,
-    const GA_Attribute* const attribID = nullptr,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
-)
-{
-    if (attribNew->classType() == GA_GROUP_EDGE)
-    {
-        copyGroupDst(geoSplittableRange, static_cast<GA_EdgeGroup*>(attribNew), static_cast<const GA_EdgeGroup*>(attribRef), attribID);
-    }
-    else
-    {
-        copyGroupDst(geoSplittableRange, static_cast<GA_ElementGroup*>(attribNew), static_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
-    }
-}
-
-static void
-copyGroupRef(
-    const GA_SplittableRange& geoSplittableRange,
-    GA_Group* const attribNew,
-    const GA_Group* const attribRef,
-    const GA_Attribute* const attribID = nullptr,
-    const int subscribeRatio = 8,
-    const int minGrainSize = 1024
-)
-{
-    if (attribNew->classType() == GA_GROUP_EDGE)
-    {
-        copyGroupRef(geoSplittableRange, static_cast<GA_EdgeGroup*>(attribNew), static_cast<const GA_EdgeGroup*>(attribRef), attribID);
-    }
-    else
-    {
-        copyGroupRef(geoSplittableRange, static_cast<GA_ElementGroup*>(attribNew), static_cast<const GA_ElementGroup*>(attribRef), attribID, subscribeRatio, minGrainSize);
-    }
-}
 
 static void
 copyGroup(
@@ -288,14 +198,15 @@ copyGroup(
             }
         }
 
-        if (iDAttribInput)//DESTINATION
-        {
-            copyGroupDst(geoSplittableRange, attribNew, attribRef, iDAttrib, subscribeRatio, minGrainSize);
-        }
-        else//Src
-        {
-            copyGroupRef(geoSplittableRange, attribNew, attribRef, iDAttrib, subscribeRatio, minGrainSize);
-        }
+        copyGroup(geoSplittableRange, *attribNew, *attribRef, iDAttrib, subscribeRatio, minGrainSize);
+        //if (iDAttribInput)//DESTINATION
+        //{
+        //    copyGroup(geoSplittableRange, *attribNew, *attribRef, iDAttrib, subscribeRatio, minGrainSize);
+        //}
+        //else//Src
+        //{
+        //    copyGroup(geoSplittableRange, *attribNew, *attribRef, iDAttrib, subscribeRatio, minGrainSize);
+        //}
     }
 }
 

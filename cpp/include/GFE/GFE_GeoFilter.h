@@ -191,6 +191,8 @@ public:
         , cookparms(cookparms)
         , gop(gop)
         , groupParserRef0(geoRef0, gop, cookparms)
+        , ref0AttribArray(geoRef0, cookparms)
+        , ref0GroupArray(geoRef0, cookparms)
     {
         UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
@@ -204,6 +206,8 @@ public:
         , cookparms(&cookparms)
         , gop(gop)
         , groupParserRef0(cookparms, geoRef0, gop)
+        , ref0AttribArray(cookparms, geoRef0)
+        , ref0GroupArray(cookparms, geoRef0)
     {
         UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
@@ -222,6 +226,8 @@ public:
     {
         this->geoRef0 = geoRef0;
         this->cookparms = cookparms;
+        ref0AttribArray.reset(geoRef0, cookparms);
+        ref0GroupArray.reset(geoRef0, cookparms);
     }
 
     GFE_GroupParser&
@@ -229,6 +235,38 @@ public:
     {
         return groupParserRef0;
     }
+
+
+
+    SYS_FORCE_INLINE
+        GFE_RefAttribArray&
+        getRef0AttribArray()
+    {
+        return ref0AttribArray;
+    }
+
+    SYS_FORCE_INLINE
+        GFE_RefGroupArray&
+        getRef0GroupArray()
+    {
+        return ref0GroupArray;
+    }
+
+    SYS_FORCE_INLINE
+        std::vector<const GA_Attribute*>&
+        getRef0AttribArrayRef()
+    {
+        return ref0AttribArray.ref();
+    }
+
+    SYS_FORCE_INLINE
+        std::vector<const GA_Group*>&
+        getRef0GroupArrayRef()
+    {
+        return ref0GroupArray.ref();
+    }
+
+
 
 
 public:
@@ -240,6 +278,9 @@ protected:
 private:
     const SOP_NodeVerb::CookParms* cookparms;
     GOP_Manager& gop;
+
+    GFE_RefAttribArray ref0AttribArray;
+    GFE_RefGroupArray ref0GroupArray;
 };
 
 

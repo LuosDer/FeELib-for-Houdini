@@ -14,7 +14,7 @@
 
 
 
-#include "GFE/GFE_GroupParse.h"
+#include "GFE/GFE_GroupParser.h"
 #include "GFE/GFE_Range.h"
 #include "GFE/GFE_Attribute.h"
 
@@ -627,7 +627,7 @@ xformByAttrib(
 )
 {
     GOP_Manager gop;
-    const GA_Group* const geoGroup = GFE_GroupParse_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, geoGroupName, gop);
+    const GA_Group* const geoGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, geoGroupName, gop);
     xformByAttrib(geo, refGeo, geoGroup, xformAttribName, owner, attribToXformName, invertXform, preserveLength, delXformAttrib, subscribeRatio, minGrainSize);
 
     GFE_Attribute::bumpDataId(geo, owner, attribToXformName);

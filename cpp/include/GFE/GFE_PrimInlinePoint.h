@@ -41,14 +41,16 @@ public:
     void
         setComputeParm(
             const fpreal threshold_inlineCosRadians = 1e-05,
-            const bool reverseGroup = false,
-            const bool delInlinePoint = false,
+            //const bool reverseGroup = false,
+            //const bool delInlinePoint = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 16
         )
     {
         setHasComputed();
         this->threshold_inlineCosRadians = threshold_inlineCosRadians;
+        //this->reverseOutGroup = reverseGroup;
+        //this->doDelOutGroup = delInlinePoint;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
@@ -87,7 +89,6 @@ private:
     }
 
 
-    //groupPrimInlinePoint_fast(geo, groupName, reverseGroup, delGroup);
     template<typename FLOAT_T>
     void
         groupPrimInlinePoint_fast(
@@ -135,7 +136,7 @@ private:
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum));
 
                         fpreal dotVal = dot(dir_prev, dir_next);
-                        inlinePtGroup->setElement(ptoff, (dotVal >= threshold_inlineCosRadians) ^ reverseGroup);
+                        inlinePtGroup->setElement(ptoff, (dotVal >= threshold_inlineCosRadians) ^ reverseOutGroup);
 
                         pos = pos_next;
 
@@ -147,7 +148,7 @@ private:
                         dir_next.normalize();
                     }
                     ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex));
-                    inlinePtGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseGroup);
+                    inlinePtGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseOutGroup);
                     if (closed)
                     {
                         pos = pos_next;
@@ -161,7 +162,7 @@ private:
 
 
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex + 1));
-                        inlinePtGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseGroup);
+                        inlinePtGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseOutGroup);
                     }
                 }
             }
@@ -188,7 +189,6 @@ private:
 
 public:
     fpreal threshold_inlineCosRadians = 1e-05;
-
     //GA_PointGroup* inlinePtGroup = nullptr;
 
 private:

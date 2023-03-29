@@ -6,19 +6,346 @@
 
 //#include "GFE/GFE_AttributeCopy.h"
 
-#include "GA/GA_Detail.h"
+#include "GFE/GFE_GeoFilter.h"
 
 
-#include "GA/GA_AttributeFilter.h"
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
+#include "GFE/GFE_OffsetAttribute.h"
 
 
 
-#include "GFE/GFE_Type.h"
+class GFE_AttribCopy : public GFE_AttribFilter, public GFE_GeoFilterRef {
+
+public:
+    //using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
+
+    GFE_AttribCopy(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
+    {
+    }
+
+    //GFE_AttribCopy(
+    //    const SOP_NodeVerb::CookParms& cookparms,
+    //    GA_Detail* const geo
+    //)
+    //    : GFE_AttribCreateFilter(cookparms, geo)
+    //    , groupParserSeam(cookparms, geo, groupParser.getGOP())
+    //{
+    //}
+
+    void
+        setComputeParm(
+            const GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set,
+            const bool iDAttribInput = false,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 1024
+        )
+    {
+        setHasComputed();
+        this->attribMergeType = attribMergeType;
+        this->iDAttribInput = iDAttribInput;
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
+
+    void
+        appendGroups(
+            const UT_StringHolder& pattern
+        )
+    {
+        getRef0GroupArray().appends(ownerSrc, pattern);
+    }
+
+    void
+        appendAttribs(
+            const UT_StringHolder& pattern
+        )
+    {
+        getRef0AttribArray().appends(ownerSrc, pattern);
+    }
+
+    void
+        setOffsetAttrib(
+            const GA_Attribute& attrib,
+            const bool isOffset
+        )
+    {
+        iDAttrib.bind(attrib, isOffset);
+        iDAttrib.bindIndexMap(
+            iDAttribInput ?
+            geoRef0->getIndexMap(ownerSrc) :
+            geo->getIndexMap(ownerDst));
+    }
+
+    void
+        setOffsetAttrib(
+            const UT_StringHolder& iDAttribName,
+            const bool isOffset
+        )
+    {
+        if (iDAttribName.length() == 0)
+        {
+            iDAttrib.clear();
+            return;
+        }
+
+        if (iDAttribInput)//DESTINATION
+        {
+            iDAttrib.bind(*geo, ownerDst, iDAttribName, isOffset);
+            iDAttrib.bindIndexMap(geoRef0->getIndexMap(ownerSrc));
+        }
+        else//Src
+        {
+            iDAttrib.bind(*geoRef0, ownerSrc, iDAttribName, isOffset);
+            iDAttrib.bindIndexMap(geo->getIndexMap(ownerDst));
+        }
+    }
 
 
-namespace GFE_AttributeCopy {
+
+
+
+
+private:
+
+
+    virtual bool
+        computeCore() override
+    {
+        const bool isAttribEmpty = getRef0AttribArray().isEmpty();
+
+        if (isAttribEmpty && getRef0GroupArray().isEmpty())
+            return false;
+
+        //if (groupParser.isEmpty())
+        //    return true;
+
+        //const GA_AttributeOwner owner =
+        //    isAttribEmpty ? 
+        //    GFE_Type::attributeOwner_groupType(getRef0GroupArray()[0]->classType()) :
+        //    getRef0AttribArray()[0]->getOwner();
+
+        //const GA_GroupType groupType =
+        //    isAttribEmpty ?
+        //    getRef0GroupArray()[0]->classType() :
+        //    GFE_Type::attributeOwner_groupType(getRef0AttribArray()[0]->getOwner());
+
+
+        const GA_Range range =
+            iDAttribInput ?
+            GA_Range(geo->getIndexMap(ownerDst)) :
+            GA_Range(geoRef0->getIndexMap(ownerSrc));
+
+        const GA_SplittableRange geoSplittableRange(range);
+
+
+
+        const GA_GroupType groupType = GFE_Type::attributeOwner_groupType(ownerDst);
+
+        GA_GroupTable* const groupDst = geo->getGroupTable(groupType);
+
+        const size_t sizeRefGroup = getRef0GroupArray().size();
+        for (size_t i = 0; i < sizeRefGroup; i++)
+        {
+            const GA_Group& groupRef = *getRef0GroupArray()[i];
+
+            const UT_StringHolder& attribName = groupRef.getName();
+            const UT_StringHolder& attribNameNew = attribName;
+
+            GA_Group* groupNew = groupDst->find(attribNameNew);
+            if (groupNew)
+                GFE_Group::groupBumpDataId(groupNew);
+            else
+            {
+                groupNew = groupDst->newGroup(attribNameNew);
+                //if (groupType == GA_GROUP_EDGE)
+                //{
+                //    groupNew = groupDst->newGroup(attribNameNew);
+                //}
+                //else
+                //{
+                //    groupNew = static_cast<GA_ElementGroupTable*>(groupDst)->cloneAttribute(owner, attribNameNew, *attribRef, true);
+                //}
+            }
+            getOutGroupArray().append(groupNew);
+            copyGroup(geoSplittableRange, *groupNew, groupRef);
+        }
+
+        GA_AttributeSet& attribDst = geo->getAttributes();
+
+        const size_t sizeRefAttrib = getRef0AttribArray().size();
+        for (size_t i = 0; i < sizeRefAttrib; i++)
+        {
+            const GA_Attribute& attribRef = *getRef0AttribArray()[i];
+
+            const UT_StringHolder& attribName = attribRef.getName();
+            const UT_StringHolder& attribNameNew = attribName;
+
+            GA_Attribute* attribNew = attribDst.findAttribute(ownerDst, attribNameNew);
+            if (attribNew)
+                attribNew->bumpDataId();
+            else
+                attribNew = attribDst.cloneAttribute(ownerDst, attribNameNew, attribRef, true);
+
+            getOutAttribArray().append(attribNew);
+            //copyAttrib(geoSplittableRange, *attribNew, attribRef);
+        }
+
+
+        return true;
+    }
+
+
+    void
+        copyGroup(
+            GA_EdgeGroup& attribNew,
+            const GA_EdgeGroup& attribRef
+        )
+    {
+        if (iDAttrib.isValidh())
+        {
+            for (GA_EdgeGroup::const_iterator it = attribRef.begin(); it.atEnd(); ++it)
+            {
+                const GA_Edge edge = it.getEdge();
+                const exint id0 = iDAttrib.getOffset(edge.p0());
+                const exint id1 = iDAttrib.getOffset(edge.p1());
+                attribNew.add(id0, id1);
+            }
+        }
+        else
+        {
+            for (GA_EdgeGroup::const_iterator it = attribRef.begin(); it.atEnd(); ++it)
+            {
+                const GA_Edge edge = it.getEdge();
+                attribNew.add(edge.p0(), edge.p1());
+            }
+        }
+    }
+
+    void
+        copyGroup(
+            const GA_SplittableRange& geoSplittableRange,
+            GA_ElementGroup& attribNew,
+            const GA_ElementGroup& attribRef
+        )
+    {
+        //const GA_IndexMap& indexMap = geo->getIndexMap(GFE_Type::attributeOwner_groupType(attribNew.classType()));
+        const GA_IndexMap& indexMap = attribNew.getIndexMap();
+        if (iDAttrib.isValidh())
+        {
+            UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, this, &indexMap](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const exint id = iDAttrib.getOffset(elemoff);
+                        if (!indexMap.isOffsetActive(id) && !indexMap.isOffsetTransient(id))
+                            continue;
+                        //attribNew.copy(id, attribRef, elemoff);
+                        attribNew.setElement(id, attribRef.contains(elemoff));
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        //attribNew.copy(elemoff, attribRef, elemoff);
+                        if (!indexMap.isOffsetActive(elemoff) && !indexMap.isOffsetTransient(elemoff))
+                            continue;
+                        attribNew.setElement(elemoff, attribRef.contains(elemoff));
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+
+    void
+        copyGroup(
+            const GA_SplittableRange& geoSplittableRange,
+            GA_Group& attribNew,
+            const GA_Group& attribRef
+        )
+    {
+        if (attribNew.classType() == GA_GROUP_EDGE)
+        {
+            copyGroup(static_cast<GA_EdgeGroup&>(attribNew), static_cast<const GA_EdgeGroup&>(attribRef));
+        }
+        else
+        {
+            copyGroup(geoSplittableRange, static_cast<GA_ElementGroup&>(attribNew), static_cast<const GA_ElementGroup&>(attribRef));
+        }
+    }
+
+
+
+
+
+
+public:
+    //const bool useIDAttrib;
+    GA_AttributeOwner ownerDst;
+    GA_AttributeOwner ownerSrc;
+    GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set;
+    bool iDAttribInput = false;//True means id attrib is on DESTINATION(geoRef0), While false means id attrib is on Source(geo) 
+    //GA_GroupType owner;
+    //GA_GroupType ownerRef;
+private:
+    GFE_OffsetAttrib iDAttrib;
+    //const GA_Attribute* iDAttrib = nullptr;
+    int subscribeRatio = 8;
+    int minGrainSize = 1024;
+
+}; // End of class GFE_GroupCopy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+namespace GFE_AttributeCopy_Namespace {
 
     
 

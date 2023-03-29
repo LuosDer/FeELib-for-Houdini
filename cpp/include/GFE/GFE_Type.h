@@ -26,6 +26,20 @@ enum class GFE_GroupMergeType
     Subtract,
 };
 
+enum class GFE_AttribMergeType
+{
+    Set = 0,
+    Add,
+    Sub,
+    Mult,
+    Min,
+    Max,
+    Xor,
+    Toggle,
+    Append,
+    Intersect
+};
+
 
 enum class GFE_StatisticalFunction
 {

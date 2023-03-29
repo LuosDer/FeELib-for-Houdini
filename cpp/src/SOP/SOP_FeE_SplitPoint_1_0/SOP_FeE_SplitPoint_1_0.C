@@ -13,7 +13,7 @@
 
 
 
-#include "GA_FeE/GA_FeE_SplitPoint.h"
+#include "GFE/GFE_SplitPoint.h"
 
 
 using namespace SOP_FeE_SplitPoint_1_0_Namespace;
@@ -353,7 +353,7 @@ SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
 
 
-    GA_FeE_SplitPoint::splitPoint(cookparms, outGeo0, inGeo0,
+    GFE_SplitPoint::splitPoint(cookparms, outGeo0, inGeo0,
         sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
         cutPoint, mergePrimEndsIfClosed, polyType,
         inStorageI, srcPrimAttribName, srcPointAttribName);

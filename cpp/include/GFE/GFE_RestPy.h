@@ -41,13 +41,13 @@ public:
 
     void
         findOrCreateOutAttrib(
+            const bool detached = false,
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
             const GA_Storage storage = GA_STORE_INVALID,
-            const bool detached = false,
             const UT_StringHolder& attribName = "__topo_"
         )
     {
-        getOutAttribArray().findOrCreateTuple(owner, GA_STORECLASS_FLOAT, storage, detached, attribName);
+        getOutAttribArray().findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, storage, attribName);
     }
 
 private:
