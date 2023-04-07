@@ -11,7 +11,6 @@
 #include "GFE/GFE_AttributeArray.h"
 #include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_GroupParser.h"
-#include "GFE/GFE_TopologyReference.h"
 #include "GFE/GFE_GroupPromote.h"
 
 
@@ -45,7 +44,7 @@ public:
 
     ~GFE_GeoFilter()
     {
-        GFE_TopologyReference::outTopoAttrib(geo, outTopoAttrib);
+        delTopoAttrib();
     }
 
     virtual void
@@ -138,6 +137,9 @@ public:
         bumpDataIdsForAddOrRemove();
     }
 
+
+
+    
 protected:
     SYS_FORCE_INLINE
     void
@@ -148,6 +150,41 @@ protected:
         this->hasComputed = hasComputed;
     }
 
+    SYS_FORCE_INLINE
+    void
+    delTopoAttrib()
+    {
+        if (outTopoAttrib)
+            return;
+        GA_AttributeSet& AttribSet = geo->getAttributes();
+        GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern("__topo_*");
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectPublic());
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectGroup()));
+        AttribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
+        AttribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
+        AttribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
+        AttribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
+
+        GA_GroupTable* groupTable = nullptr;
+        GA_Group* groupPtr = nullptr;
+        for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
+        {
+            groupTable = geo->getGroupTable(groupType);
+            //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
+            for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
+            {
+                groupPtr = it.group();
+                //if (groupPtr->isDetached())
+                //    continue;
+                if (!groupPtr->getName().startsWith("__topo_"))
+                    continue;
+                groupTable->destroy(groupPtr);
+            }
+        }
+    }
+
+
+    
 private:
     virtual bool
         computeCore()
@@ -684,7 +721,7 @@ public:
         if (doDelOutGroup || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0])
             return;
 
-        cookparms->getNode()->setHighlight(true);
+        //cookparms->getNode()->setHighlight(true);
         cookparms->select(*outGroupArray[0]);
     }
 
@@ -762,7 +799,7 @@ private:
 //
 //    ~GFE_GeoFilter_OutTopoAttrib()
 //    {
-//        GFE_TopologyReference::outTopoAttrib(geo, outTopoAttrib);
+//        GFE_TopologyReference_Namespace::outTopoAttrib(geo, outTopoAttrib);
 //    }
 //
 //protected:

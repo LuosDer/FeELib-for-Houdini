@@ -14,10 +14,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_TopologyReference.h"
+//#include "GFE/GFE_TopologyReference.h"
 #include "GFE/GFE_Adjacency.h"
-#include "GFE/GFE_GroupParser.h"
-#include "GFE/GFE_GroupUnion.h"
+//#include "GFE/GFE_GroupParser.h"
+//#include "GFE/GFE_GroupUnion.h"
 
 
 
@@ -504,24 +504,72 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //const bool& useEdgeSeamGroup = edgeSeamGroupName.isstring() && calPrimPrimEdge;
 
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const exint kernel = sopparms.getKernel();
-    //const bool& outAsOffset = sopparms.getOutAsOffset();
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
+#if 1
+    GFE_Adjacency adjacency(outGeo0, &cookparms);
+    adjacency.setKernel(sopparms.getKernel());
+    adjacency.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    if(calVertexPrimIndex)
+    {
+        adjacency.setVertexPrimIndex(false, vertexPrimIndexAttribName);
+    }
+    if(calVertexVertexPrim)
+    {
+        adjacency.setVertexVertexPrim(false, vertexVertexPrimPrevAttribName, vertexVertexPrimNextAttribName);
+    }
+    if(calVertexPointDst)
+    {
+        adjacency.setVertexPointDst(false, vertexPointDstAttribName);
+    }
+    if(calVertexNextEquiv)
+    {
+        adjacency.setVertexNextEquiv(false, vertexNextEquivAttribName);
+    }
+    if(calVertexNextEquivNoLoop)
+    {
+        adjacency.setVertexNextEquivNoLoop(false, vertexNextEquivNoLoopAttribName);
+    }
+    if(calPointPointEdge)
+    {
+        adjacency.setPointPointEdge(false, pointPointEdgeAttribName);
+    }
+    if(calPointPointPrim)
+    {
+        adjacency.setPointPointPrim(false, pointPointPrimAttribName);
+    }
+    if(calPrimPrimEdge)
+    {
+        adjacency.setPrimPrimEdge(false, primPrimEdgeAttribName);
+    }
+    if(calPrimPrimPoint)
+    {
+        adjacency.setPrimPrimPoint(false, primPrimPointAttribName);
+    }
+    adjacency.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    //adjacency.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
 
+    adjacency.computeAndBumpDataId();
 
+#else
+    
+    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
+    const exint kernel = sopparms.getKernel();
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    
+    const exint subscribeRatio = sopparms.getSubscribeRatio();
+    const exint minGrainSize = sopparms.getMinGrainSize();
+
 
     GOP_Manager gop;
     const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
@@ -562,7 +610,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
     if (calVertexPrimIndex || calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
     {
-        GFE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
+        GFE_TopologyReference_Namespace::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
         //GFE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, static_cast<const GA_VertexGroup*>(geo0Group), subscribeRatio, minGrainSize);
@@ -658,14 +706,14 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
     if (calVertexNextEquiv || calPrimPrimEdge)
     {
-        GFE_VertexNextEquiv::vertexNextEquiv(outGeo0, vtxNextEquivAttribHandle, dstptAttribHandle,
+        GFE_VertexNextEquiv_Namespace::vertexNextEquiv(outGeo0, vtxNextEquivAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
         vtxNextEquivAttribHandle.bumpDataId();
     }
 
 
-
+    
 
     GA_RWHandleT<GA_Offset> intAttribHandle;
     GA_RWHandleT<UT_ValArray<GA_Offset>> attribHandle;
@@ -674,7 +722,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     {
         GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, inStorageI, 1, GA_Defaults(-1));
         intAttribHandle.bind(attribPtr);
-        GFE_VertexNextEquiv::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
+        GFE_VertexNextEquiv_Namespace::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
             subscribeRatio, minGrainSize);
         attribPtr->bumpDataId();
@@ -688,17 +736,17 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         switch (kernel)
         {
         case 0:
-            GFE_Adjacency::pointPointEdge(outGeo0, attribHandle, vtxpnumAttribHandle,
+            GFE_Adjacency_Namespace::pointPointEdge(outGeo0, attribHandle, vtxpnumAttribHandle,
                 static_cast<const GA_PointGroup*>(geo0Group), nullptr,
                 subscribeRatio, minGrainSize);
             break;
         case 1:
-            GFE_Adjacency::pointPointEdge(outGeo0, attribHandle, vtxPrevAttribHandle, vtxNextAttribHandle,
+            GFE_Adjacency_Namespace::pointPointEdge(outGeo0, attribHandle, vtxPrevAttribHandle, vtxNextAttribHandle,
                 static_cast<const GA_PointGroup*>(geo0Group), nullptr,
                 subscribeRatio, minGrainSize);
             break;
         case 2:
-            GFE_Adjacency::pointPointEdge(outGeo0, attribHandle,
+            GFE_Adjacency_Namespace::pointPointEdge(outGeo0, attribHandle,
                 static_cast<const GA_PointGroup*>(geo0Group), nullptr,
                 subscribeRatio, minGrainSize);
             break;
@@ -713,7 +761,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointPrimAttribName, inStorageI, 1);
         //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(-1));
         attribHandle.bind(attribPtr);
-        //GFE_Adjacency::pointPointPrim(outGeo0, attribHandle,
+        //GFE_Adjacency_Namespace::pointPointPrim(outGeo0, attribHandle,
         //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
         //    subscribeRatio, minGrainSize);
         attribPtr->bumpDataId();
@@ -723,7 +771,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     {
         if (0 && kernel==0)
         {
-            GFE_Adjacency::addAttribPrimPrimEdge(outGeo0,
+            GFE_Adjacency_Namespace::addAttribPrimPrimEdge(outGeo0,
                 static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup, 
                 inStorageI, primPrimEdgeAttribName,
                 nullptr, nullptr, GA_ReuseStrategy(),
@@ -737,27 +785,27 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
             switch (kernel)
             {
             case 0:
-                GFE_Adjacency::primPrimEdge(outGeo0, attribHandle, vtxNextEquivAttribHandle,
+                GFE_Adjacency_Namespace::primPrimEdge(outGeo0, attribHandle, vtxNextEquivAttribHandle,
                     static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
                     subscribeRatio, minGrainSize);
                 break;
             case 1:
-                GFE_Adjacency::primPrimEdge1(outGeo0, attribHandle, dstptAttribHandle,
+                GFE_Adjacency_Namespace::primPrimEdge1(outGeo0, attribHandle, dstptAttribHandle,
                     static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
                     subscribeRatio, minGrainSize);
                 break;
             case 2:
-                GFE_Adjacency::primPrimEdge2(outGeo0, attribHandle, dstptAttribHandle,
+                GFE_Adjacency_Namespace::primPrimEdge2(outGeo0, attribHandle, dstptAttribHandle,
                     static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
                     subscribeRatio, minGrainSize);
                 break;
             case 3:
-                GFE_Adjacency::primPrimEdge3(outGeo0, attribHandle, dstptAttribHandle,
+                GFE_Adjacency_Namespace::primPrimEdge3(outGeo0, attribHandle, dstptAttribHandle,
                     static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
                     subscribeRatio, minGrainSize);
                 break;
             case 4:
-                GFE_Adjacency::primPrimEdge4(outGeo0, attribHandle,
+                GFE_Adjacency_Namespace::primPrimEdge4(outGeo0, attribHandle,
                     static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
                     subscribeRatio, minGrainSize);
                 break;
@@ -773,13 +821,14 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimPointAttribName, inStorageI, 1);
         //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(-1));
         attribHandle.bind(attribPtr);
-        GFE_Adjacency::primPrimPoint(outGeo0, attribHandle,
+        GFE_Adjacency_Namespace::primPrimPoint(outGeo0, attribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), pointSeamGroup,
             subscribeRatio, minGrainSize);
         attribPtr->bumpDataId();
     }
 
-
+#endif
+    
 }
 
 

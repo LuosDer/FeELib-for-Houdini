@@ -38,14 +38,14 @@ public:
 
 	inline
 	bool
-		isValidh()
+		isValidh() const
 	{
 		return attrib_h.isValid();
 	}
 
 	inline
 	bool
-		isValidph()
+		isValidph() const
 	{
 		return attrib_ph.isValid();
 	}
@@ -146,7 +146,7 @@ public:
 	inline
 	void
 		setPage(
-			GA_Offset pageBase
+			const GA_Offset pageBase
 		)
 	{
 		UT_ASSERT(attrib_ph.getAttribute());
@@ -167,8 +167,8 @@ public:
 	inline
 	GA_Offset
 		getOffset(
-			GA_Offset elemoff
-		)
+			const GA_Offset elemoff
+		) const
 	{
 		UT_ASSERT(attrib_h.getAttribute());
 		if (isOffset)
@@ -180,8 +180,8 @@ public:
 	inline
 	GA_Index
 		getIndex(
-			GA_Offset elemoff
-		)
+			const GA_Offset elemoff
+		) const
 	{
 		UT_ASSERT(attrib_h.getAttribute());
 		if (isOffset)
@@ -193,8 +193,8 @@ public:
 	inline
 	GA_Offset
 		getPageOffset(
-			GA_Offset elemoff
-		)
+			const GA_Offset elemoff
+		) const
 	{
 		UT_ASSERT(attrib_ph.getAttribute());
 		if (isOffset)
@@ -206,8 +206,8 @@ public:
 	inline
 	GA_Index
 		getPageIndex(
-			GA_Offset elemoff
-		)
+			const GA_Offset elemoff
+		) const
 	{
 		UT_ASSERT(attrib_ph.getAttribute());
 		if (isOffset)

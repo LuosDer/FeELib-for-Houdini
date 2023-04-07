@@ -530,6 +530,7 @@ public:
         geoEdgeGroup = groupParser.geoEdgeGroup;
     }
 
+    inline
     virtual void
     reset(
         const GA_Detail* const geo,
@@ -540,6 +541,7 @@ public:
         this->cookparms = cookparms;
     }
 
+    inline
     virtual void
     reset(
         const GEO_Detail* const geo,
@@ -550,26 +552,30 @@ public:
         this->cookparms = cookparms;
     }
 
+    inline
     bool
-    getFindGroup()
+    getFindGroup() const
     {
         return findGroup;
     }
 
+    inline
     void
-    setFindGroup(
-        const bool findGroup
-    )
+        setFindGroup(
+            const bool findGroup
+        )
     {
         this->findGroup = findGroup;
     }
 
+    inline
     bool
-        getDelGroup()
+        getDelGroup() const
     {
         return delGroup;
     }
 
+    inline
     void
         setDelGroup(
             const bool delGroup
@@ -578,6 +584,7 @@ public:
         this->delGroup = delGroup;
     }
     
+    inline
     void
         setGroup(
             const GA_Group* const group
@@ -588,6 +595,7 @@ public:
         clearElementGroup();
     }
 
+    inline
     void
         setGroup(
             const GA_PrimitiveGroup* const group
@@ -598,6 +606,7 @@ public:
         geoPrimitiveGroup = group;
     }
 
+    inline
     void
         setGroup(
             const GA_PointGroup* const group
@@ -608,6 +617,7 @@ public:
         geoPointGroup = group;
     }
 
+    inline
     void
         setGroup(
             const GA_VertexGroup* const group
@@ -618,6 +628,7 @@ public:
         geoVertexGroup = group;
     }
 
+    inline
     void
         setGroup(
             const GA_EdgeGroup* const group
@@ -630,17 +641,11 @@ public:
 
 
     void
-    setGroup(
-        const GA_GroupType groupType,
-        const UT_StringHolder& groupName
-    )
+        setGroup(
+            const GA_GroupType groupType,
+            const UT_StringHolder& groupName
+        )
     {
-        if (!geo)
-        {
-            UT_ASSERT_MSG(geo, "do not find geo");
-            return;
-        }
-
         if (!groupName.length())
         {
             setAllGroupFull();
@@ -681,6 +686,7 @@ public:
         }
     }
 
+    inline
     SYS_FORCE_INLINE
     void
         setPrimitiveGroup(
@@ -690,6 +696,7 @@ public:
         setGroup(GA_GROUP_PRIMITIVE, groupName);
     }
 
+    inline
     SYS_FORCE_INLINE
     void
         setPointGroup(
@@ -699,6 +706,7 @@ public:
         setGroup(GA_GROUP_POINT, groupName);
     }
 
+    inline
     SYS_FORCE_INLINE
         void
         setVertexGroup(
@@ -708,6 +716,7 @@ public:
         setGroup(GA_GROUP_VERTEX, groupName);
     }
 
+    inline
     SYS_FORCE_INLINE
         void
         setEdgeGroup(
@@ -718,30 +727,41 @@ public:
     }
 
 
+    inline
     bool
         isEmpty()
     {
-        if(!hasGroup)
-            return true;
-        return bool(geoGroup) && geoGroup->isEmpty();
+        return hasGroup ? ( bool(geoGroup) && geoGroup->isEmpty() ) : true;
+    }
+
+
+    inline
+    bool
+        isFull()
+    {
+        return hasGroup ? ( !bool(geoGroup) || !geoGroup->isEmpty() ) : true;
     }
 
 
 
+
+    inline
     bool
-        getHasGroup()
+        getHasGroup() const
     {
         return hasGroup;
     }
 
+    inline
     const GA_Group*
-        getGroup()
+        getGroup() const
     {
         if (!hasGroup)
             return nullptr;
         return geoGroup;
     }
 
+    inline
     const GA_Group*
         getGroup(
             const GA_GroupType groupType
@@ -766,6 +786,7 @@ public:
         return nullptr;
     }
 
+    inline
     SYS_FORCE_INLINE
         const GA_Group*
         getGroup(
@@ -776,6 +797,7 @@ public:
     }
 
 
+    inline
     SYS_FORCE_INLINE
     const GA_Group*
         getGroup(
@@ -785,6 +807,7 @@ public:
         return getGroup(attribPtr->getOwner());
     }
 
+    inline
     GA_GroupType
         groupType()
     {
@@ -796,6 +819,7 @@ public:
     }
 
 
+    inline
     const GA_PrimitiveGroup*
         getPrimitiveGroup()
     {
@@ -806,6 +830,7 @@ public:
         return geoPrimitiveGroup;
     }
 
+    inline
     const GA_PointGroup*
         getPointGroup()
     {
@@ -816,6 +841,7 @@ public:
         return geoPointGroup;
     }
 
+    inline
     const GA_VertexGroup*
         getVertexGroup()
     {
@@ -826,6 +852,7 @@ public:
         return geoVertexGroup;
     }
 
+    inline
     const GA_EdgeGroup*
         getEdgeGroup()
     {
@@ -836,24 +863,28 @@ public:
         return geoEdgeGroup;
     }
 
+    inline
     GA_Range
         getPrimitiveRange()
     {
         return GA_Range(geo->getPrimitiveMap(), getPrimitiveGroup());
     }
 
+    inline
     GA_Range
         getPointRange()
     {
         return GA_Range(geo->getPointMap(), getPointGroup());
     }
 
+    inline
     GA_Range
         getVertexRange()
     {
         return GA_Range(geo->getVertexMap(), getVertexGroup());
     }
 
+    inline
     GA_Range
         getRange(
             const GA_AttributeOwner attribOwner
@@ -877,10 +908,56 @@ public:
     }
 
     
+    inline
+    GA_SplittableRange
+        getPrimitiveSplittableRange()
+    {
+        return GA_SplittableRange(getPrimitiveRange());
+    }
+
+    inline
+    GA_SplittableRange
+        getPointSplittableRange()
+    {
+        return GA_SplittableRange(getPointRange());
+    }
+
+    inline
+    GA_SplittableRange
+        getVertexSplittableRange()
+    {
+        return GA_SplittableRange(getVertexRange());
+    }
+
+    inline
+    GA_SplittableRange
+        getSplittableRange(
+            const GA_AttributeOwner attribOwner
+        )
+    {
+        switch (attribOwner)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            return getPrimitiveSplittableRange();
+            break;
+        case GA_ATTRIB_POINT:
+            return getPointSplittableRange();
+            break;
+        case GA_ATTRIB_VERTEX:
+            return getVertexSplittableRange();
+            break;
+        default:
+            break;
+        }
+        return GA_SplittableRange();
+    }
+
+    
 
 
+    inline
     GOP_Manager&
-        getGOP()
+        getGOP() const
     {
         return gop;
     }

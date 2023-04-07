@@ -9,8 +9,6 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
-#include "GFE/GFE_OffsetAttribute.h"
-
 
 
 class GFE_AttribCopy : public GFE_AttribFilter, public GFE_GeoFilterRef {
@@ -135,18 +133,19 @@ private:
         //    GFE_Type::attributeOwner_groupType(getRef0AttribArray()[0]->getOwner());
 
 
-        const GA_Range range =
+        const GA_IndexMap& indexMap_runOver =
             iDAttribInput ?
-            GA_Range(geo->getIndexMap(ownerDst)) :
-            GA_Range(geoRef0->getIndexMap(ownerSrc));
+            geo->getIndexMap(ownerDst) :
+            geoRef0->getIndexMap(ownerSrc);
 
-        const GA_SplittableRange geoSplittableRange(range);
+        const GA_Range geoRange(indexMap_runOver);
+        const GA_SplittableRange geoSplittableRange(geoRange);
 
 
 
-        const GA_GroupType groupType = GFE_Type::attributeOwner_groupType(ownerDst);
+        const GA_GroupType groupTypeDst = GFE_Type::attributeOwner_groupType(ownerDst);
 
-        GA_GroupTable* const groupDst = geo->getGroupTable(groupType);
+        GA_GroupTable* const groupDst = geo->getGroupTable(groupTypeDst);
 
         const size_t sizeRefGroup = getRef0GroupArray().size();
         for (size_t i = 0; i < sizeRefGroup; i++)
@@ -192,7 +191,7 @@ private:
                 attribNew = attribDst.cloneAttribute(ownerDst, attribNameNew, attribRef, true);
 
             getOutAttribArray().append(attribNew);
-            //copyAttrib(geoSplittableRange, *attribNew, attribRef);
+            copyAttrib(geoSplittableRange, *attribNew, attribRef);
         }
 
 
@@ -233,29 +232,50 @@ private:
             const GA_ElementGroup& attribRef
         )
     {
-        //const GA_IndexMap& indexMap = geo->getIndexMap(GFE_Type::attributeOwner_groupType(attribNew.classType()));
-        const GA_IndexMap& indexMap = attribNew.getIndexMap();
+        const GA_IndexMap& indexMap_target = iDAttribInput ? attribRef.getIndexMap() : attribNew.getIndexMap();
+        const GFE_OffsetAttrib& iDAttribRef = iDAttrib;
         if (iDAttrib.isValidh())
         {
-            UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, this, &indexMap](const GA_SplittableRange& r)
+            if (iDAttribInput)//Dst
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &iDAttribRef, &indexMap_target](const GA_SplittableRange& r)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    GA_Offset start, end;
+                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
                     {
-                        const exint id = iDAttrib.getOffset(elemoff);
-                        if (!indexMap.isOffsetActive(id) && !indexMap.isOffsetTransient(id))
-                            continue;
-                        //attribNew.copy(id, attribRef, elemoff);
-                        attribNew.setElement(id, attribRef.contains(elemoff));
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const exint id = iDAttribRef.getOffset(elemoff);
+                            if (!indexMap_target.isOffsetActive(id) && !indexMap_target.isOffsetTransient(id))
+                                continue;
+                            //attribNew.copy(id, attribRef, elemoff);
+                            attribNew.setElement(elemoff, attribRef.contains(id));
+                        }
                     }
-                }
-            }, subscribeRatio, minGrainSize);
+                }, subscribeRatio, minGrainSize);
+            }
+            else//Src
+            {
+                UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &iDAttribRef, &indexMap_target](const GA_SplittableRange& r)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                    {
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const exint id = iDAttribRef.getOffset(elemoff);
+                            if (!indexMap_target.isOffsetActive(id) && !indexMap_target.isOffsetTransient(id))
+                                continue;
+                            //attribNew.copy(id, attribRef, elemoff);
+                            attribNew.setElement(id, attribRef.contains(elemoff));
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
         }
         else
         {
-            UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap](const GA_SplittableRange& r)
+            UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap_target](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -263,7 +283,7 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         //attribNew.copy(elemoff, attribRef, elemoff);
-                        if (!indexMap.isOffsetActive(elemoff) && !indexMap.isOffsetTransient(elemoff))
+                        if (!indexMap_target.isOffsetActive(elemoff) && !indexMap_target.isOffsetTransient(elemoff))
                             continue;
                         attribNew.setElement(elemoff, attribRef.contains(elemoff));
                     }
@@ -272,6 +292,7 @@ private:
         }
     }
 
+    inline
     void
         copyGroup(
             const GA_SplittableRange& geoSplittableRange,
@@ -291,6 +312,74 @@ private:
 
 
 
+    void
+        copyAttrib(
+            const GA_SplittableRange& geoSplittableRange,
+            GA_Attribute& attribNew,
+            const GA_Attribute& attribRef
+        )
+    {
+        //const GA_IndexMap& indexMap = geo->getIndexMap(GFE_Type::attributeOwner_groupType(attribNew.classType()));
+        const GA_IndexMap& indexMap_target = iDAttribInput ? attribRef.getIndexMap() : attribNew.getIndexMap();
+        const GFE_OffsetAttrib& iDAttribRef = iDAttrib;
+        if (iDAttrib.isValidh())
+        {
+            if (iDAttribInput)//Dst
+            {
+                UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &iDAttribRef, &indexMap_target](const GA_SplittableRange& r)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                    {
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const exint id = iDAttribRef.getOffset(elemoff);
+                            if (!indexMap_target.isOffsetActive(id) && !indexMap_target.isOffsetTransient(id))
+                                continue;
+                            attribNew.copy(elemoff, attribRef, id);
+                            //attribNew.set(elemoff, attribRef.contains(id));
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+            else//Src
+            {
+                UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &iDAttribRef, &indexMap_target](const GA_SplittableRange& r)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                    {
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const exint id = iDAttribRef.getOffset(elemoff);
+                            if (!indexMap_target.isOffsetActive(id) && !indexMap_target.isOffsetTransient(id))
+                                continue;
+                            attribNew.copy(id, attribRef, elemoff);
+                            //attribNew.setElement(id, attribRef.contains(elemoff));
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+        }
+        else
+        {
+            UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap_target](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        //attribNew.copy(elemoff, attribRef, elemoff);
+                        if (!indexMap_target.isOffsetActive(elemoff) && !indexMap_target.isOffsetTransient(elemoff))
+                            continue;
+                        attribNew.copy(elemoff, attribRef, elemoff);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+
 
 
 
@@ -308,7 +397,7 @@ private:
     int subscribeRatio = 8;
     int minGrainSize = 1024;
 
-}; // End of class GFE_GroupCopy
+}; // End of class GFE_AttribCopy
 
 
 

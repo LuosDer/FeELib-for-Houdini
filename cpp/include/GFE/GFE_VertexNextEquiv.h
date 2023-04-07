@@ -6,11 +6,91 @@
 
 //#include "GFE/GFE_VertexNextEquiv.h"
 
-#include "GA/GA_Detail.h"
 
 #include "GFE/GFE_TopologyReference.h"
 
-namespace GFE_VertexNextEquiv {
+#include "GFE/GFE_GeoFilter.h"
+
+
+
+
+
+class GFE_VertexNextEquiv : public GFE_AttribFilter {
+
+public:
+    using GFE_AttribFilter::GFE_AttribFilter;
+
+    void
+        setComputeParm(
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 1024
+        )
+    {
+        setHasComputed();
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
+
+
+
+private:
+
+
+    virtual bool
+        computeCore() override
+    {
+
+        return true;
+    }
+
+
+public:
+    
+private:
+    int subscribeRatio = 8;
+    int minGrainSize = 1024;
+
+}; // End of class GFE_VertexNextEquiv
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+namespace GFE_VertexNextEquiv_Namespace {
 
 
 
@@ -35,7 +115,7 @@ namespace GFE_VertexNextEquiv {
 
         for (vtxoff_next = vtxNextRef->getLink(vtxoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
         {
-            if (GFE_TopologyReference::vertexPointDst(geo, vtxoff_next) != dstpt)
+            if (GFE_TopologyReference_Namespace::vertexPointDst(geo, vtxoff_next) != dstpt)
                 continue;
             return vtxoff_next;
         }
@@ -43,7 +123,7 @@ namespace GFE_VertexNextEquiv {
         ptnum = vtxPointRef->getLink(vtxoff);
         for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
         {
-            if (GFE_TopologyReference::vertexPointDst(geo, vtxoff_next) != ptnum)
+            if (GFE_TopologyReference_Namespace::vertexPointDst(geo, vtxoff_next) != ptnum)
                 continue;
             if (dstpt > ptnum)
             {
@@ -63,7 +143,7 @@ namespace GFE_VertexNextEquiv {
             const GA_Size vtxpnum
         )
     {
-        return vertexNextEquivNoLoop(geo, vtxoff, GFE_TopologyReference::vertexPointDst(geo, primoff, vtxpnum));
+        return vertexNextEquivNoLoop(geo, vtxoff, GFE_TopologyReference_Namespace::vertexPointDst(geo, primoff, vtxpnum));
     }
 
     static GA_Offset
@@ -72,7 +152,7 @@ namespace GFE_VertexNextEquiv {
             const GA_Offset vtxoff
         )
     {
-        return vertexNextEquivNoLoop(geo, vtxoff, GFE_TopologyReference::vertexPointDst(geo, vtxoff));
+        return vertexNextEquivNoLoop(geo, vtxoff, GFE_TopologyReference_Namespace::vertexPointDst(geo, vtxoff));
     }
 
 
@@ -102,7 +182,7 @@ namespace GFE_VertexNextEquiv {
 
         for (vtxoff_next = vtxNextRef->getLink(vtxoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
         {
-            if (GFE_TopologyReference::vertexPointDst(geo, vtxoff_next) != dstpt)
+            if (GFE_TopologyReference_Namespace::vertexPointDst(geo, vtxoff_next) != dstpt)
                 continue;
             return vtxoff_next;
         }
@@ -110,7 +190,7 @@ namespace GFE_VertexNextEquiv {
         ptnum = vtxPointRef->getLink(vtxoff);
         for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
         {
-            if (GFE_TopologyReference::vertexPointDst(geo, vtxoff_next) != ptnum)
+            if (GFE_TopologyReference_Namespace::vertexPointDst(geo, vtxoff_next) != ptnum)
                 continue;
             return vtxoff_next;
         }
@@ -129,7 +209,7 @@ namespace GFE_VertexNextEquiv {
             const GA_Size vtxpnum
         )
     {
-        return vertexNextEquiv(geo, vtxoff, GFE_TopologyReference::vertexPointDst(geo, primoff, vtxpnum));
+        return vertexNextEquiv(geo, vtxoff, GFE_TopologyReference_Namespace::vertexPointDst(geo, primoff, vtxpnum));
     }
 
     static GA_Offset
@@ -138,7 +218,7 @@ namespace GFE_VertexNextEquiv {
             const GA_Offset vtxoff
         )
     {
-        return vertexNextEquiv(geo, vtxoff, GFE_TopologyReference::vertexPointDst(geo, vtxoff));
+        return vertexNextEquiv(geo, vtxoff, GFE_TopologyReference_Namespace::vertexPointDst(geo, vtxoff));
     }
 
 
@@ -660,7 +740,7 @@ namespace GFE_VertexNextEquiv {
         //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GFE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
 
         validGroup = geo->newVertexGroup(groupName);
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo, geoGroup, finalStorage);
         vertexNextEquivNoLoop(geo, attribPtr, validGroup, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -683,7 +763,7 @@ namespace GFE_VertexNextEquiv {
         //attribPtr = geo->addIntTuple(GA_ATTRIB_VERTEX, GFE_TOPO_SCOPE, name, 1, defaults, creation_args, attribute_options, finalStorage, reuse);
 
         validGroup = geo->createDetachedVertexGroup();
-        const GA_AttributeUPtr refAttrib = GFE_TopologyReference::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_AttributeUPtr refAttrib = GFE_TopologyReference_Namespace::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
         vertexNextEquivNoLoop(geo, attribPtr.get(), validGroup.get(), refAttrib.get(), geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -711,7 +791,7 @@ namespace GFE_VertexNextEquiv {
             return groupPtr;
 
         groupPtr = geo->newVertexGroup(name);
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo, geoGroup, storage);
         vertexNextEquivNoLoop(geo, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
     }
@@ -726,7 +806,7 @@ namespace GFE_VertexNextEquiv {
         )
     {
         GA_VertexGroupUPtr groupPtr = geo->createDetachedVertexGroup();
-        const GA_AttributeUPtr refAttrib = GFE_TopologyReference::addDetachedAttribVertexPointDst(geo, geoGroup, storage);
+        const GA_AttributeUPtr refAttrib = GFE_TopologyReference_Namespace::addDetachedAttribVertexPointDst(geo, geoGroup, storage);
         vertexNextEquivNoLoop(geo, groupPtr.get(), refAttrib.get(), geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
     }
@@ -759,7 +839,7 @@ namespace GFE_VertexNextEquiv {
             return attribPtr;
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
         attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo, geoGroup, finalStorage);
         vertexNextEquivNoLoop(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -777,7 +857,7 @@ namespace GFE_VertexNextEquiv {
     {
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
         GA_AttributeUPtr attribPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
-        const GA_AttributeUPtr refAttrib = GFE_TopologyReference::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_AttributeUPtr refAttrib = GFE_TopologyReference_Namespace::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
         vertexNextEquivNoLoop(geo, attribPtr.get(), refAttrib.get(), geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -816,7 +896,7 @@ namespace GFE_VertexNextEquiv {
         if (attribPtr)
             return attribPtr;
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo, geoGroup, finalStorage);
         attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
         groupPtr = geo->newVertexGroup(groupName);
         vertexNextEquiv(geo, attribPtr, groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
@@ -837,7 +917,7 @@ namespace GFE_VertexNextEquiv {
         )
     {
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
-        const GA_AttributeUPtr refAttribUPtr = GFE_TopologyReference::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_AttributeUPtr refAttribUPtr = GFE_TopologyReference_Namespace::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
         GA_AttributeUPtr attribPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
         groupPtr = geo->createDetachedVertexGroup();
         vertexNextEquiv(geo, attribPtr.get(), groupPtr.get(), refAttribUPtr.get(), geoGroup, subscribeRatio, minGrainSize);
@@ -871,7 +951,7 @@ namespace GFE_VertexNextEquiv {
             return attribPtr;
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
         attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo, geoGroup, finalStorage);
         vertexNextEquiv(geo, attribPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -890,7 +970,7 @@ namespace GFE_VertexNextEquiv {
     {
         const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
         GA_AttributeUPtr attribPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_VERTEX, finalStorage, 1, defaults, attribute_options);
-        const GA_AttributeUPtr refAttribUPtr = GFE_TopologyReference::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
+        const GA_AttributeUPtr refAttribUPtr = GFE_TopologyReference_Namespace::addDetachedAttribVertexPointDst(geo, geoGroup, finalStorage);
         vertexNextEquiv(geo, attribPtr.get(), refAttribUPtr.get(), geoGroup, subscribeRatio, minGrainSize);
         return attribPtr;
     }
@@ -913,7 +993,7 @@ namespace GFE_VertexNextEquiv {
         GA_VertexGroup* groupPtr = geo->findVertexGroup(name);
         if (groupPtr)
             return groupPtr;
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo, geoGroup, storage);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo, geoGroup, storage);
         groupPtr = geo->newVertexGroup(name);
         vertexNextEquiv(static_cast<const GA_Detail*>(geo), groupPtr, refAttrib, geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;
@@ -930,7 +1010,7 @@ namespace GFE_VertexNextEquiv {
             const exint minGrainSize = 1024
         )
     {
-        const GA_AttributeUPtr refAttribUPtr = GFE_TopologyReference::addDetachedAttribVertexPointDst(geo, geoGroup, storage);
+        const GA_AttributeUPtr refAttribUPtr = GFE_TopologyReference_Namespace::addDetachedAttribVertexPointDst(geo, geoGroup, storage);
         GA_VertexGroupUPtr groupPtr = geo->createDetachedVertexGroup();
         vertexNextEquiv(static_cast<const GA_Detail*>(geo), groupPtr.get(), refAttribUPtr.get(), geoGroup, subscribeRatio, minGrainSize);
         return groupPtr;

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GA_FeE/GA_FeE_SmallPiece.h"
+#include "GFE/GFE_SmallPiece.h"
 
 using namespace SOP_FeE_SmallPiece_1_0_Namespace;
 

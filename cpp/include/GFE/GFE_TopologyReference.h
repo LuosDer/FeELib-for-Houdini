@@ -6,16 +6,145 @@
 
 //#include "GFE/GFE_TopologyReference.h"
 
-#include "GA/GA_Detail.h"
-#include "GA/GA_SplittableRange.h"
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
+// #include "GA/GA_SplittableRange.h"
+// #include "GA/GA_PageHandle.h"
+// #include "GA/GA_PageIterator.h"
 
 #include "GA/GA_AttributeFilter.h"
 
-#include "GFE/GFE_Type.h"
+#include "GFE/GFE_GeoFilter.h"
 
-namespace GFE_TopologyReference {
+
+//
+//
+// class GFE_TopologyReference : public GFE_AttribFilter {
+//
+// public:
+//     using GFE_AttribFilter::GFE_AttribFilter;
+//
+//     
+//     void
+//         setComputeParm(
+//             const exint subscribeRatio = 64,
+//             const exint minGrainSize = 1024
+//         )
+//     {
+//         setHasComputed();
+//         this->subscribeRatio = subscribeRatio;
+//         this->minGrainSize = minGrainSize;
+//     }
+//
+//     inline
+//     void
+//         setKernel(
+//             const int kernel
+//         )
+//     {
+//         setHasComputed();
+//         this->kernel = kernel;
+//     }
+//     
+//
+//
+// private:
+//
+//
+//     virtual bool
+//         computeCore() override
+//     {
+//
+//         return true;
+//     }
+//
+//
+// public:
+//
+//
+//     
+// private:
+//
+//     int kernel = 0;
+//     
+//     int subscribeRatio = 64;
+//     int minGrainSize = 64;
+//
+// }; // End of class GFE_TopologyReference
+//
+//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+namespace GFE_TopologyReference_Namespace {
 
 
 SYS_FORCE_INLINE

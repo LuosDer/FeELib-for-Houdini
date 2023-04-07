@@ -87,6 +87,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribCopy_4_0
     #SOP_FeE_AttribCopyFast_1_0
     SOP_FeE_AttribCopyFromSingleElem_1_0
+    SOP_FeE_AttribInterpRay_2_0
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
     SOP_FeE_Carve_1_0
@@ -101,16 +102,20 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_DelElement_1_0
     SOP_FeE_DelVertex_1_0
     SOP_FeE_EdgeGroupTransfer_3_0
+    SOP_FeE_Enumerate_1_0
     SOP_FeE_ExtendCurveStraight_1_0
     SOP_FeE_ExtremePrim_1_0
     SOP_FeE_ExtrudeBorder2D_1_0
     SOP_FeE_ExtractPoint_1_0
+    SOP_FeE_GroupAttribBoundary_1_0
     SOP_FeE_GroupByMeshWinding_1_0
     SOP_FeE_GroupByPolyWinding_1_0
+    SOP_FeE_GroupClosedSharedPoint_2_0
     SOP_FeE_GroupCombine_1_0
     SOP_FeE_GroupCurveEnds_2_0
     SOP_FeE_GroupExpand_1_0
     SOP_FeE_GroupNewEdge_1_0
+    SOP_FeE_GroupOneNebPoint_1_0
     SOP_FeE_GroupReverse_1_0
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
@@ -122,6 +127,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_MatchBBox_2_0
     SOP_FeE_MatchDirOrient_1_0
     SOP_FeE_Measure_3_0
+    SOP_FeE_OffsetVertexOrder_2_0
     SOP_FeE_OnPoly_1_0
     SOP_FeE_OrientAlongCurve_1_0
     SOP_FeE_Normal2D_1_0
@@ -136,6 +142,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_Skin_1_0
     SOP_FeE_SkinIntersectCurve_2_0
     SOP_FeE_SkinPiece_4_0
+    SOP_FeE_SmallPiece_1_0
     SOP_FeE_SplitPoint_1_0
     SOP_FeE_Triangulate2D_2_0
     SOP_FeE_UVGridify_1_0

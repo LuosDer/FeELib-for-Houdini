@@ -428,12 +428,6 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
     outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
-    //const GA_Precision preferedPrecision = outGeo0->getPreferredPrecision();
-
 
     const UT_StringHolder& geo0AttribNames = sopparms.getConnectivityAttribName();
     if (!geo0AttribNames.isstring())
@@ -475,39 +469,9 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     }
 
 
-    //GOP_Manager gop;
-    //const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    //if (geo0Group && geo0Group->isEmpty())
-    //    return;
-
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
-
-
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferedPrecision);
-
-
-    //const GA_GroupUPtr geo0GroupUPtr = GFE_GroupPromote::groupPromoteDetached(outGeo0, geo0Group, connectivityConstraint ? GA_GROUP_PRIMITIVE : GA_GROUP_POINT);
-    //const GA_Group* const geo0GroupPromoted = geo0GroupUPtr.get();
-
-    //const GA_Group* const geo0SeamGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, connectivityConstraint ? GA_GROUP_VERTEX : GA_GROUP_POINT, sopparms.getGroup(), gop);
-
-
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-
-    //GA_Attribute* attribPtr = outGeo0->findAttribute(geo0AttribClass, geo0AttribNames);
-    //if (attribPtr)
-    //    outGeo0->getAttributes().destroyAttribute(attribPtr);
-
-
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GA_GroupType seamGroupType = sopGroupType(sopparms.getSeamGroupType());
@@ -529,7 +493,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
         if (uvAttribName.isstring())
         {
-            connectivity.getInAttribArray().appendUV(uvAttribName);
+            //connectivity.getInAttribArray().appendUV(uvAttribName);
         }
     }
 

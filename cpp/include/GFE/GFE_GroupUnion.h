@@ -123,7 +123,7 @@ namespace GFE_GroupUnion {
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                const GA_Offset dstpt = GFE_TopologyReference::vertexPointDst(geo, elemoff);
+                const GA_Offset dstpt = GFE_TopologyReference_Namespace::vertexPointDst(geo, elemoff);
                 group->add(geo->vertexPoint(elemoff), dstpt);
             }
         }
@@ -160,7 +160,7 @@ namespace GFE_GroupUnion {
             const GA_VertexGroup* const groupRef
         )
     {
-        const GA_Attribute* const refAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo);
+        const GA_Attribute* const refAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(geo);
         groupUnion(group, groupRef, refAttrib);
     }
 
@@ -362,7 +362,7 @@ namespace GFE_GroupUnion {
     //                        {
     //                            const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
     //                            const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-    //                            const GA_Size vtxpnum = GFE_TopologyReference::vertexPrimIndex(geo, primoff, vtxoff_next);
+    //                            const GA_Size vtxpnum = GFE_TopologyReference_Namespace::vertexPrimIndex(geo, primoff, vtxoff_next);
 
     //                            if (vtxpnum == 0)
     //                            {
@@ -407,7 +407,7 @@ namespace GFE_GroupUnion {
     //                {
     //                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     //                    {
-    //                        const GA_Offset dstpt = GFE_TopologyReference::vertexPointDst(geo, elemoff);
+    //                        const GA_Offset dstpt = GFE_TopologyReference_Namespace::vertexPointDst(geo, elemoff);
     //                        group->add(geo->vertexPoint(elemoff), dstpt);
     //                    }
     //                }

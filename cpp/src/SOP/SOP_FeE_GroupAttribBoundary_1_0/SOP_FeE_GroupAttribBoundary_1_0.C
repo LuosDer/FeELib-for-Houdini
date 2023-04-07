@@ -1,9 +1,9 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_CurveUV_1_0.h"
+#include "SOP_FeE_GroupAttribBoundary_1_0.h"
 
 
-#include "SOP_FeE_CurveUV_1_0.proto.h"
+#include "SOP_FeE_GroupAttribBoundary_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -18,7 +18,7 @@
 
 
 
-using namespace SOP_FeE_CurveUV_1_0_Namespace;
+using namespace SOP_FeE_GroupAttribBoundary_1_0_Namespace;
 
 
 static const char *theDsFile = R"THEDSFILE(
@@ -96,9 +96,9 @@ static const char *theDsFile = R"THEDSFILE(
 )THEDSFILE";
 
 PRM_Template*
-SOP_FeE_CurveUV_1_0::buildTemplates()
+SOP_FeE_GroupAttribBoundary_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_CurveUV_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_GroupAttribBoundary_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allTextureCoordMenu);
@@ -108,25 +108,25 @@ SOP_FeE_CurveUV_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_CurveUV_1_0::theSOPTypeName("FeE::curveUV::1.0"_sh);
+const UT_StringHolder SOP_FeE_GroupAttribBoundary_1_0::theSOPTypeName("FeE::groupAttribBoundary::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_CurveUV_1_0::theSOPTypeName,
-        "FeE Curve UV",
-        SOP_FeE_CurveUV_1_0::myConstructor,
-        SOP_FeE_CurveUV_1_0::buildTemplates(),
+        SOP_FeE_GroupAttribBoundary_1_0::theSOPTypeName,
+        "FeE Group Attribute Boundary",
+        SOP_FeE_GroupAttribBoundary_1_0::myConstructor,
+        SOP_FeE_GroupAttribBoundary_1_0::buildTemplates(),
         1,
         1,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/UV");
+        "Five elements Elf/Data/Topology");
 
-    newOp->setIconName("SOP_texture");
+    newOp->setIconName("SOP_groupfromattribboundary");
     table->addOperator(newOp);
 
 }
@@ -135,14 +135,14 @@ newSopOperator(OP_OperatorTable* table)
 
 
 
-class SOP_FeE_CurveUV_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_GroupAttribBoundary_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_CurveUV_1_0Verb() {}
-    virtual ~SOP_FeE_CurveUV_1_0Verb() {}
+    SOP_FeE_GroupAttribBoundary_1_0Verb() {}
+    virtual ~SOP_FeE_GroupAttribBoundary_1_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_CurveUV_1_0Parms(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_CurveUV_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupAttribBoundary_1_0Parms(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_GroupAttribBoundary_1_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -150,26 +150,26 @@ public:
     
     /// This static data member automatically registers
     /// this verb class at library load time.
-    static const SOP_NodeVerb::Register<SOP_FeE_CurveUV_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_GroupAttribBoundary_1_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_CurveUV_1_0Verb> SOP_FeE_CurveUV_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_GroupAttribBoundary_1_0Verb> SOP_FeE_GroupAttribBoundary_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_CurveUV_1_0::cookVerb() const 
+SOP_FeE_GroupAttribBoundary_1_0::cookVerb() const 
 { 
-    return SOP_FeE_CurveUV_1_0Verb::theVerb.get();
+    return SOP_FeE_GroupAttribBoundary_1_0Verb::theVerb.get();
 }
 
 
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_CurveUV_1_0Parms::UVClass attribClass)
+sopAttribOwner(SOP_FeE_GroupAttribBoundary_1_0Parms::UVClass attribClass)
 {
-    using namespace SOP_FeE_CurveUV_1_0Enums;
+    using namespace SOP_FeE_GroupAttribBoundary_1_0Enums;
     switch (attribClass)
     {
     case UVClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
@@ -182,9 +182,9 @@ sopAttribOwner(SOP_FeE_CurveUV_1_0Parms::UVClass attribClass)
 
 
 static GFE_CurveUVMethod
-sopCurveUVMethod(SOP_FeE_CurveUV_1_0Parms::CurveUVMethod curveUVMethod)
+sopCurveUVMethod(SOP_FeE_GroupAttribBoundary_1_0Parms::CurveUVMethod curveUVMethod)
 {
-    using namespace SOP_FeE_CurveUV_1_0Enums;
+    using namespace SOP_FeE_GroupAttribBoundary_1_0Enums;
     switch (curveUVMethod)
     {
     case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod::WorldArcLength;    break;
@@ -199,11 +199,11 @@ sopCurveUVMethod(SOP_FeE_CurveUV_1_0Parms::CurveUVMethod curveUVMethod)
 
 
 void
-SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_GroupAttribBoundary_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto&& sopparms = cookparms.parms<SOP_FeE_CurveUV_1_0Parms>();
+    auto&& sopparms = cookparms.parms<SOP_FeE_GroupAttribBoundary_1_0Parms>();
     GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_CurveUV_1_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_GroupAttribBoundary_1_0Cache*)cookparms.cache();
 
     const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
 
@@ -238,7 +238,7 @@ SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     curveUV.setGroup(sopparms.getPrimGroup());
-    curveUV.findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName, 3);
+    curveUV.findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName, 3);
 
     curveUV.computeAndBumpDataId();
 
@@ -250,6 +250,6 @@ SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-namespace SOP_FeE_CurveUV_1_0_Namespace {
+namespace SOP_FeE_GroupAttribBoundary_1_0_Namespace {
 
-} // End SOP_FeE_CurveUV_1_0_Namespace namespace
+} // End SOP_FeE_GroupAttribBoundary_1_0_Namespace namespace

@@ -224,7 +224,7 @@ def findFeENodeType(inputNodeTypeName, nodeTypeCategory = hou.sopNodeTypeCategor
         
     # nodeTypeName = combineNameComponents(nameComponents)
     # nodeType = tryFindNodeType(nodeTypeName) if fuzzy else hou.nodeType(nodeTypeCategory, nodeTypeName)
-    #return hasNodeType(nodeTypeName)
+    # return hasNodeType(nodeTypeName)
     print('can not found node type' + inputNodeTypeName)
     return None
     

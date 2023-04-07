@@ -16,6 +16,10 @@
 
 
 
+class GFE_ExtractPoint {
+
+
+
 
 namespace GFE_ExtractPoint_Namespace {
 

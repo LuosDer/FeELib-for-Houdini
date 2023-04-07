@@ -13,9 +13,7 @@
 
 
 
-//#include "GFE/GFE_GroupParser.h"
 #include "GFE/GFE_AttributeCopy.h"
-//#include "GFE/GFE_GroupCopy.h"
 
 
 
@@ -460,18 +458,18 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    if (sopparms.getUseIDAttrib())
-    {
-        GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass,
-            copyAttribName, sopparms.getIDAttribName(), iDAttribInput);
-        //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType,
-        //  copyGroupName, sopparms.getIDAttribName(), iDAttribInput);
-    }
-    else
-    {
-        GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
-        //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
-    }
+    // if (sopparms.getUseIDAttrib())
+    // {
+    //     GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass,
+    //         copyAttribName, sopparms.getIDAttribName(), iDAttribInput);
+    //     //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType,
+    //     //  copyGroupName, sopparms.getIDAttribName(), iDAttribInput);
+    // }
+    // else
+    // {
+    //     GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
+    //     //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
+    // }
 
     //GFE_AttributeCopy::copyAttribute(attribSet, copyAttribName, copyPointAttribName, copyVertexAttribName, copyDetailAttribName);
 

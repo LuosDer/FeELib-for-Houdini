@@ -74,6 +74,7 @@ attributeOwner_groupType(
     case GA_ATTRIB_PRIMITIVE:       return GA_GROUP_PRIMITIVE; break;
     case GA_ATTRIB_POINT:           return GA_GROUP_POINT;     break;
     case GA_ATTRIB_VERTEX:          return GA_GROUP_VERTEX;    break;
+    case GA_ATTRIB_DETAIL:          return GA_GROUP_N;         break;
     case GA_ATTRIB_OWNER_N:         return GA_GROUP_N;         break;
     }
     UT_ASSERT_MSG(0, "Unhandled Group Type!");
@@ -236,15 +237,11 @@ getPreferredStorage(
 {
     switch (storageClass)
     {
-    case GA_STORECLASS_REAL:
-        return getPreferredStorageF(precision);
-        break;
-    case GA_STORECLASS_INT:
-        return getPreferredStorageI(precision);
-        break;
-    default:
-        return getPreferredStorageF(precision);
-        break;
+    case GA_STORECLASS_REAL:    return getPreferredStorageF(precision);  break;
+    case GA_STORECLASS_INT:     return getPreferredStorageI(precision);  break;
+    case GA_STORECLASS_STRING:  return GA_STORE_STRING;                  break;
+    case GA_STORECLASS_DICT:    return GA_STORE_DICT;                    break;
+    default:                    return getPreferredStorageF(precision);  break;
     }
 }
 

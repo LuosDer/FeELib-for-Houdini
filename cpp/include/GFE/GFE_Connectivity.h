@@ -18,14 +18,14 @@
 
 
 
-class GFE_Connectivity : public GFE_AttribCreateFilter {
+class GFE_Connectivity : public GFE_AttribFilter {
 
 public:
     GFE_Connectivity(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
+        : GFE_AttribFilter(geo, cookparms)
         , groupParserSeam(geo, groupParser.getGOP(), cookparms)
     {
     }
@@ -34,7 +34,7 @@ public:
         const SOP_NodeVerb::CookParms& cookparms,
         GA_Detail* const geo
     )
-        : GFE_AttribCreateFilter(cookparms, geo)
+        : GFE_AttribFilter(cookparms, geo)
         , groupParserSeam(cookparms, geo, groupParser.getGOP())
     {
     }
@@ -100,11 +100,12 @@ private:
         {
             return true;
         }
+        attrib_h.bind(getOutAttribArray()[0]);
 
-        if (!getInAttribArray().isEmpty())
-        {
-            //return false;
-        }
+        //if (!getInAttribArray().isEmpty())
+        //{
+        //    //return false;
+        //}
 
         connectivity();
 
@@ -140,10 +141,7 @@ private:
 
 
     void
-        connectivityPoint(
-            const GA_RWHandleT<GA_Size>& attrib_h,
-            const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttrib_h
-        )
+        connectivityPoint()
     {
         //double timeTotal = 0;
         //double timeTotal1 = 0;
@@ -155,13 +153,13 @@ private:
 
         //::std::vector<::std::vector<GA_Offset>> adjElems;
 
-        const GA_PointGroup* const geoGroup = groupParser.getPointGroup();
-        GA_Detail* geo = this->geo;
+        //const GA_PointGroup* const geoGroup = groupParser.getPointGroup();
 
-        GA_Size nelems = geo->getNumPoints();
+        const GA_Size nelems = geo->getNumPoints();
 
         ::std::vector<GA_Offset> elemHeap;
-        elemHeap.reserve(__min(pow(2, 15), nelems));
+        //elemHeap.reserve(__min(maxElemHeapSize, nelems));
+        elemHeap.reserve(SYSmin(maxElemHeapSize, nelems));
 
         ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
 
@@ -180,7 +178,7 @@ private:
         }
         else
         {
-            UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+            UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [this, &rawData](const UT_BlockedRange<GA_Size>& r) {
                 for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
                 {
                     rawData[elemoff] = geo->pointIndex(rawData[elemoff]);
@@ -221,7 +219,7 @@ private:
 
         const GA_SplittableRange geoSplittableRange0(geo->getPointRange());
         //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
-        UTparallelFor(geoSplittableRange0, [geo, &attrib_h, &classnumArray](const GA_SplittableRange& r) {
+        UTparallelFor(geoSplittableRange0, [this, &classnumArray](const GA_SplittableRange& r) {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -247,10 +245,7 @@ private:
 
 
     void
-        connectivityPrim(
-            const GA_RWHandleT<GA_Size>& attrib_h,
-            const GA_ROHandleT<UT_ValArray<GA_Offset>>& adjElemsAttrib_h
-        )
+        connectivityPrim()
     {
         //double timeTotal = 0;
         //double timeTotal1 = 0;
@@ -262,13 +257,13 @@ private:
 
         //::std::vector<::std::vector<GA_Offset>> adjElems;
 
-        const GA_PrimitiveGroup* const geoGroup = groupParser.getPrimitiveGroup();
-        GA_Detail* geo = this->geo;
+        //const GA_PrimitiveGroup* const geoGroup = groupParser.getPrimitiveGroup();
 
-        GA_Size nelems = geo->getNumPrimitives();
+        const GA_Size nelems = geo->getNumPrimitives();
 
         ::std::vector<GA_Offset> elemHeap;
-        elemHeap.reserve(__min(pow(2, 15), nelems));
+        //elemHeap.reserve(__min(maxElemHeapSize, nelems));
+        elemHeap.reserve(SYSmin(maxElemHeapSize, nelems));
 
         ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
 
@@ -288,7 +283,7 @@ private:
         }
         else
         {
-            UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [geo, &rawData](const UT_BlockedRange<GA_Size>& r) {
+            UTparallelFor(UT_BlockedRange<GA_Size>(0, rawData.size()), [this, &rawData](const UT_BlockedRange<GA_Size>& r) {
                 for (GA_Offset elemoff = r.begin(); elemoff != r.end(); ++elemoff)
                 {
                     rawData[elemoff] = geo->primitiveIndex(rawData[elemoff]);
@@ -323,7 +318,7 @@ private:
 
         const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
         //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange());
-        UTparallelFor(geoSplittableRange0, [geo, &attrib_h, &classnumArray](const GA_SplittableRange& r) {
+        UTparallelFor(geoSplittableRange0, [this, &classnumArray](const GA_SplittableRange& r) {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -350,15 +345,15 @@ private:
         {
             adjElemsAttrib = GFE_Adjacency::addAttribPointPointEdge(geo, groupParser.getPointGroup(), groupParserSeam.getPointGroup());
         }
-        const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h(adjElemsAttrib);
+        adjElemsAttrib_h.bind(adjElemsAttrib);
 
         if (connectivityConstraint)
         {
-            connectivityPrim(getOutAttribArray()[0], adjElemsAttrib_h);
+            connectivityPrim();
         }
         else
         {
-            connectivityPoint(getOutAttribArray()[0], adjElemsAttrib_h);
+            connectivityPoint();
         }
     }
 
@@ -369,13 +364,48 @@ public:
     bool connectivityConstraint = false; // false means point  and  true means edge 
 
 private:
+    const GA_Size maxElemHeapSize = pow(2, 15);
+    GA_RWHandleT<GA_Size> attrib_h;
+    GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h;
     const UT_StringHolder TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
 #if 0
-    const exint UNREACHED_NUMBER = SYS_EXINT_MAX;
+    const GA_Offset UNREACHED_NUMBER = SYS_EXINT_MAX;
 #else
-    const exint UNREACHED_NUMBER = -1;
+    const GA_Offset UNREACHED_NUMBER = -1;
 #endif
 }; // End of class GFE_Connectivity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -238,7 +238,8 @@ findOrCreateTuple(
     if (attribPtr)
     {
         const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-        if (attribPtr->getTupleSize() != tuple_size ||
+        if (!aifTuple ||
+            attribPtr->getTupleSize() != tuple_size ||
             aifTuple->getStorage(attribPtr) != finalStorage ||
             aifTuple->getDefaults(attribPtr) != defaults)
         {
@@ -279,6 +280,100 @@ findOrCreateTuple(
     return attribPtr;
 }
 
+
+
+    GA_Attribute*
+    findOrCreateArray(
+        const bool detached = false,
+        const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringHolder& attribName = "",
+        const int tuple_size = 1,
+        const bool emplaceBack = true,
+        const UT_Options* create_args = nullptr,
+        const GA_AttributeOptions* attribute_options = nullptr
+    )
+    {
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+
+        GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
+        if (attribPtr)
+        {
+            const GA_AIFNumericArray* const aifNumericArray = attribPtr->getAIFNumericArray();
+            if (!aifNumericArray ||
+                attribPtr->getTupleSize() != tuple_size ||
+                aifNumericArray->getStorage(attribPtr) != finalStorage)
+            {
+                geo->getAttributes().destroyAttribute(attribPtr);
+                attribPtr = nullptr;
+            }
+            else
+            {
+                if (emplaceBack)
+                    attribArray.emplace_back(attribPtr);
+                return attribPtr;
+            }
+        }
+
+        if (detached)
+        {
+            if (emplaceBack)
+            {
+#if 0
+                switch (finalStorage)
+                {
+                case GA_STORE_INT16:
+                    break;
+                case GA_STORE_INT32:
+                    break;
+                case GA_STORE_INT64:
+                    break;
+                case GA_STORE_REAL16:
+                    break;
+                case GA_STORE_REAL32:
+                    break;
+                case GA_STORE_REAL64:
+                    break;
+                case GA_STORE_STRING:
+                    break;
+                case GA_STORE_DICT:
+                    break;
+                default:
+                    break;
+                }
+                attribUPtrArray.emplace_back(static_cast<GEO_Detail*>(geo)->createDetachedAttribute(owner, "arraydata", tuple_size, create_args, attribute_options));
+#else
+                attribUPtrArray.emplace_back(geo->getAttributes().createDetachedAttribute(owner, "arraydata", create_args, attribute_options));
+#endif
+            }
+            attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
+            //attribPtr = attribUPtr.get();
+        }
+        else
+        {
+            if (!attribPtr)
+                attribPtr = geo->getAttributes().createArrayAttribute(owner, GA_SCOPE_PUBLIC, attribName, finalStorage,
+                    tuple_size, create_args, attribute_options);
+
+            if (!attribPtr)
+            {
+                if (cookparms)
+                    cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+                UT_ASSERT_MSG(attribPtr, "No Attrib");
+                return nullptr;
+            }
+        }
+        if (emplaceBack)
+            attribArray.emplace_back(attribPtr);
+        return attribPtr;
+    }
+
+
+
+
+
+    
 //SYS_FORCE_INLINE
 //void
 //findOrCreate(
@@ -310,7 +405,8 @@ findOrCreateUV(
     if (attribPtr)
     {
         const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-        if (attribPtr->getTupleSize() != tuple_size ||
+        if (!aifTuple ||
+            attribPtr->getTupleSize() != tuple_size ||
             aifTuple->getStorage(attribPtr) != finalStorage ||
             aifTuple->getDefaults(attribPtr) != defaults)
         {
@@ -392,7 +488,8 @@ findOrCreateDir(
     if (attribPtr)
     {
         const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-        if (attribPtr->getTupleSize() != tuple_size ||
+        if (!aifTuple ||
+            attribPtr->getTupleSize() != tuple_size ||
             aifTuple->getStorage(attribPtr) != finalStorage ||
             aifTuple->getDefaults(attribPtr) != defaults)
         {
@@ -475,7 +572,8 @@ findOrCreateNormal3D(
     if (attribPtr)
     {
         const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-        if (attribPtr->getTupleSize() != tuple_size ||
+        if (!aifTuple ||
+            attribPtr->getTupleSize() != tuple_size ||
             aifTuple->getStorage(attribPtr) != finalStorage ||
             aifTuple->getDefaults(attribPtr) != defaults)
         {
@@ -1116,7 +1214,8 @@ public:
         if (attribPtr)
         {
             const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-            if (attribPtr->getTupleSize() != tuple_size ||
+            if (!aifTuple ||
+                attribPtr->getTupleSize() != tuple_size ||
                 aifTuple->getStorage(attribPtr) != finalStorage ||
                 aifTuple->getDefaults(attribPtr) != defaults)
             {
