@@ -7,8 +7,8 @@
 //#include "GFE/GFE_TopologyReference.h"
 
 // #include "GA/GA_SplittableRange.h"
-// #include "GA/GA_PageHandle.h"
-// #include "GA/GA_PageIterator.h"
+#include "GA/GA_PageHandle.h"
+#include "GA/GA_PageIterator.h"
 
 #include "GA/GA_AttributeFilter.h"
 
@@ -147,7 +147,6 @@
 namespace GFE_TopologyReference_Namespace {
 
 
-SYS_FORCE_INLINE
     static GA_Offset
     offsetPromote(
         const GA_Detail* const geo,
@@ -221,7 +220,6 @@ SYS_FORCE_INLINE
 
     
 
-SYS_FORCE_INLINE
 static void
 outTopoAttrib(
     GA_Detail* const geo,

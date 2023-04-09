@@ -121,7 +121,15 @@ private:
             const GA_StorageClass outAttribStorageClass = outAttribPtr->getStorageClass();
             if (outAttribOwner != connectivityOwner)
             {
+#if 1
+                GFE_AttribPromote attribPromote(geo);
+                attribPromote.setSourceAttribute(inAttribPtr);
+                attribPromote.setDestinationAttribute(outAttribPtr);
+                attribPromote.compute();
+                finalAttribPtr = attribPromote.getDestinationAttribute();
+#else
                 finalAttribPtr = GFE_AttributePromote::attribPromote(geo, inAttribPtr, outAttribOwner);
+#endif
                 geo->getAttributes().destroyAttribute(inAttribPtr);
             }
             if (outAttribStorageClass != GA_STORECLASS_INT)
@@ -336,16 +344,35 @@ private:
     void
         connectivity()
     {
-        GA_Attribute* adjElemsAttrib = nullptr;
+#if 1
+        GFE_Adjacency adjacency(geo);
         if (connectivityConstraint)
         {
-            adjElemsAttrib = GFE_Adjacency::addAttribPrimPrimEdge(geo, groupParser.getPrimitiveGroup(), groupParserSeam.getVertexGroup());
+            adjacency.groupParser.setGroup(groupParser.getPrimitiveGroup());
+            adjacency.setPrimPrimEdge(true);
+            adjacency.compute();
+            adjElemsAttrib_h.bind(adjacency.getPrimPrimEdge());
         }
         else
         {
-            adjElemsAttrib = GFE_Adjacency::addAttribPointPointEdge(geo, groupParser.getPointGroup(), groupParserSeam.getPointGroup());
+            adjacency.groupParser.setGroup(groupParser.getPointGroup());
+            adjacency.setPointPointEdge(true);
+            adjacency.compute();
+            adjElemsAttrib_h.bind(adjacency.getPointPointEdge());
+        }
+#else
+        GA_Attribute* adjElemsAttrib = nullptr;
+        if (connectivityConstraint)
+        {
+            adjElemsAttrib = GFE_Adjacency_Namespace::addAttribPrimPrimEdge(geo, groupParser.getPrimitiveGroup(), groupParserSeam.getVertexGroup());
+        }
+        else
+        {
+            adjElemsAttrib = GFE_Adjacency_Namespace::addAttribPointPointEdge(geo, groupParser.getPointGroup(), groupParserSeam.getPointGroup());
         }
         adjElemsAttrib_h.bind(adjElemsAttrib);
+#endif
+
 
         if (connectivityConstraint)
         {
@@ -362,6 +389,7 @@ private:
 public:
     GFE_GroupParser groupParserSeam;
     bool connectivityConstraint = false; // false means point  and  true means edge 
+    // bool outAsOffset = true;
 
 private:
     const GA_Size maxElemHeapSize = pow(2, 15);
@@ -660,8 +688,8 @@ addAttribConnectivityPoint(
     attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, GFE_TOPO_SCOPE, name, finalStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);
 
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h =
-        GFE_Adjacency::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup, finalStorage);
-    //    GFE_Adjacency::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup, finalStorage,
+          GFE_Adjacency_Namespace::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup, finalStorage);
+    //    GFE_Adjacency_Namespace::addAttribPointPointEdge(geo, geoGroup, geoSeamGroup, finalStorage,
     //        "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 
     connectivityPoint(geo, attribPtr, adjElemsAttrib_h, geoGroup);
@@ -698,8 +726,8 @@ addAttribConnectivityPrim(
     const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
 
     const GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h =
-        GFE_Adjacency::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup, finalStorage);
-    //    GFE_Adjacency::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup, finalStorage,
+        GFE_Adjacency_Namespace::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup, finalStorage);
+    //    GFE_Adjacency_Namespace::addAttribPrimPrimEdge(geo, geoGroup, geoSeamGroup, finalStorage,
     //        "__topo_nebs", nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
 
     attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, GA_Defaults(-1), creation_args, attribute_options, reuse);

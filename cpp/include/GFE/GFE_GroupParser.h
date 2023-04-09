@@ -1050,6 +1050,70 @@ private:
             gop.appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), false);
     }
 
+
+
+protected:
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            const GA_Detail* const geo
+        )
+    {
+        this->geo = static_cast<const GEO_Detail*>(geo);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            const GEO_Detail* const geo
+        )
+    {
+        this->geo = geo;
+    }
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            const GU_Detail* const geo
+        )
+    {
+        //this->geo = static_cast<const GEO_Detail*>(geo);
+        this->geo = geo;
+    }
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            GA_Detail* const geo
+        )
+    {
+        this->geo = static_cast<const GEO_Detail*>(geo);
+        geoNonconst = geo;
+    }
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            GEO_Detail* const geo
+        )
+    {
+        this->geo = geo;
+        geoNonconst = geo;
+    }
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            GU_Detail* const geo
+        )
+    {
+        //this->geo = static_cast<const GEO_Detail*>(geo);
+        this->geo = geo;
+        geoNonconst = geo;
+    }
+
+
 private:
 
     //GEO_Detail* geo = nullptr;
@@ -1084,6 +1148,9 @@ private:
     //GA_PointGroupUPtr     geoPointGroupUPtr;
     //GA_VertexGroupUPtr    geoVertexGroupUPtr;
     //GA_EdgeGroupUPtr      geoEdgeGroupUPtr;
+
+
+    friend class GFE_GeoFilter;
 };
 
 

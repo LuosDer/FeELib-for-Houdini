@@ -7,6 +7,7 @@
 //#include "GFE/GFE_OffsetAttribute.h"
 
 #include "GA/GA_Detail.h"
+#include "GA/GA_PageHandle.h"
 
 #include "GFE/GFE_Type.h"
 

@@ -10,8 +10,6 @@
 
 
 #include "GA/GA_AttributeFilter.h"
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
 
 
 

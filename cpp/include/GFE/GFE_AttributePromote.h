@@ -8,6 +8,7 @@
 
 #include "GA/GA_Detail.h"
 
+#include "GFE/GFE_GeoFilter.h"
 
 
 
@@ -15,6 +16,319 @@
 #include "GFE/GFE_TopologyReference.h"
 
 //#include "GFE/GFE_Type.h"
+
+
+class GFE_AttribPromote : public GFE_AttribFilter {
+
+public:
+    //using GFE_AttribFilter::GFE_AttribFilter;
+
+    GFE_AttribPromote(
+        GA_Detail* const geo = nullptr,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+    {
+    }
+
+    GFE_AttribPromote(
+        const SOP_NodeVerb::CookParms& cookparms,
+        GA_Detail* const geo = nullptr
+    )
+        : GFE_AttribFilter(cookparms, geo)
+    {
+    }
+
+    void
+        setComputeParm(
+            const bool outTopoAttrib = false,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 1024
+        )
+    {
+        setHasComputed();
+
+        setOutTopoAttrib(outTopoAttrib);
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
+
+    void
+        setSourceAttribute(
+            const GA_Attribute* const srcAttribPtr
+        )
+    {
+        this->srcAttribPtr = srcAttribPtr;
+    }
+
+    void
+        setSourceAttribute(
+            GA_Attribute* const srcAttribPtr
+        )
+    {
+        this->srcAttribPtr = srcAttribPtr;
+        this->srcAttribPtr_nonConst = srcAttribPtr;
+    }
+
+
+    void
+        setDestinationAttribute(
+            GA_Attribute* const dstAttribPtr
+        )
+    {
+        dstOwner = dstAttribPtr->getOwner();
+        this->dstAttribPtr = dstAttribPtr;
+        getOutAttribArray().set(dstAttribPtr);
+    }
+
+    void
+        createDestinationAttribute(
+            const GA_AttributeOwner owner
+        )
+    {
+        UT_ASSERT_MSG(srcAttribPtr, "Can NOT with no srcAttribPtr");
+        UT_ASSERT_MSG(geo, "Can NOT with no geo");
+
+        if (srcAttribPtr->getOwner() == owner)
+            return;
+
+        if (srcAttribPtr->isDetached())
+        {
+            return;
+        }
+        else
+        {
+            dstAttribPtr = geo->findAttribute(owner, srcAttribPtr->getName());
+            if (!dstAttribPtr)
+                dstAttribPtr = geo->getAttributes().cloneAttribute(owner, srcAttribPtr->getName(), *srcAttribPtr, true);
+        }
+        setDestinationAttribute(dstAttribPtr);
+    }
+
+
+    void
+        createDestinationAttribute(
+            const GA_AttributeOwner owner,
+            const UT_StringHolder& name
+        )
+    {
+        UT_ASSERT_MSG(srcAttribPtr, "Can NOT with no srcAttribPtr");
+        UT_ASSERT_MSG(geo, "Can NOT with no geo");
+
+        if (srcAttribPtr->getOwner() == owner)
+            return;
+
+        if (srcAttribPtr->isDetached())
+        {
+            dstAttribPtr = geo->getAttributes().cloneAttribute(owner, name, *srcAttribPtr, true);
+        }
+        else
+        {
+            dstAttribPtr = geo->findAttribute(owner, srcAttribPtr->getName());
+            if (!dstAttribPtr)
+                dstAttribPtr = geo->getAttributes().cloneAttribute(owner, name, *srcAttribPtr, true);
+        }
+        setDestinationAttribute(dstAttribPtr);
+    }
+
+
+    void
+        createDetachedDestinationAttribute(
+            const GA_AttributeOwner owner
+        )
+    {
+        UT_ASSERT_MSG(srcAttribPtr, "Can NOT with no srcAttribPtr");
+        UT_ASSERT_MSG(geo,          "Can NOT with no geo");
+        
+        if (srcAttribPtr->getOwner() == owner)
+            return;
+        
+        dstAttribPtr = getOutAttribArray().createDetachedAttribute(
+            owner, GA_STORECLASS_FLOAT, GA_STORE_INVALID, false,
+            srcAttribPtr->getType(), srcAttribPtr->getOptions().options(), &srcAttribPtr->getOptions());
+
+        setDestinationAttribute(dstAttribPtr);
+    }
+
+    SYS_FORCE_INLINE
+    GA_Attribute*
+        getDestinationAttribute() const
+    {
+        return dstAttribPtr;
+    }
+
+
+
+    
+
+
+
+    
+
+
+private:
+
+
+    virtual bool
+        computeCore() override
+    {
+        UT_ASSERT_P(dstAttribPtr);
+        UT_ASSERT_P(srcAttribPtr);
+
+        if (getOutAttribArray().isEmpty())
+            return true;
+
+        if (!srcAttribPtr || !dstAttribPtr)
+            return false;
+
+        if (dstAttribPtr == srcAttribPtr)
+            return false;
+
+        if (!geo)
+            setDetail(dstAttribPtr);
+
+        UT_ASSERT_P(geo == &dstAttribPtr->getDetail());
+        UT_ASSERT_P(geo == &srcAttribPtr->getDetail());
+
+        if (groupParser.isEmpty())
+            return true;
+
+        attribPromote();
+
+        return true;
+    }
+
+
+    void
+        attribPromote()
+    {
+        const GA_Attribute& srcAttrib = *srcAttribPtr;
+        srcOwner = srcAttribPtr->getOwner();
+
+        const GA_SplittableRange geoSplittableRange(GA_Range(dstAttribPtr->getIndexMap()));
+        UTparallelFor(geoSplittableRange, [this, &srcAttrib](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    //dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference_Namespace::offsetPromote(geo, srcOwner, dstOwner, elemoff));
+                    dstAttribPtr->copy(elemoff, srcAttrib, offsetPromote(elemoff));
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+    GA_Offset
+        offsetPromote(
+            const GA_Offset elemoff
+        )
+    {
+        //const GA_Topology& topo = geo->getTopology();
+        switch (srcOwner)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            switch (dstOwner)
+            {
+            case GA_ATTRIB_PRIMITIVE:
+                return elemoff;
+                break;
+            case GA_ATTRIB_POINT:
+                return geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, 0));
+                break;
+            case GA_ATTRIB_VERTEX:
+                return geo->getPrimitiveVertexOffset(elemoff, 0);
+                break;
+            default:
+                UT_ASSERT_MSG(0, "Unhandled newClass!");
+                break;
+            }
+            break;
+        case GA_ATTRIB_POINT:
+            switch (dstOwner)
+            {
+            case GA_ATTRIB_PRIMITIVE:
+                return geo->vertexPrimitive(geo->pointVertex(elemoff));
+                break;
+            case GA_ATTRIB_POINT:
+                return elemoff;
+                break;
+            case GA_ATTRIB_VERTEX:
+                return geo->pointVertex(elemoff);
+                break;
+            default:
+                UT_ASSERT_MSG(0, "Unhandled newClass!");
+                break;
+            }
+            break;
+        case GA_ATTRIB_VERTEX:
+            switch (dstOwner)
+            {
+            case GA_ATTRIB_PRIMITIVE:
+                return geo->vertexPrimitive(elemoff);
+                break;
+            case GA_ATTRIB_POINT:
+                return geo->vertexPoint(elemoff);
+                break;
+            case GA_ATTRIB_VERTEX:
+                return elemoff;
+                break;
+            default:
+                UT_ASSERT_MSG(0, "Unhandled newClass!");
+                break;
+            }
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled origClass!");
+            break;
+        }
+        return -1;
+    }
+
+
+
+
+public:
+    GA_Attribute* dstAttribPtr;
+
+private:
+    const GA_Attribute* srcAttribPtr;
+    GA_Attribute* srcAttribPtr_nonConst;
+
+    GA_AttributeOwner srcOwner;
+    GA_AttributeOwner dstOwner;
+
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
+
+}; // End of class GFE_AttribPromote
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 namespace GFE_AttributePromote {
 
@@ -35,21 +349,21 @@ static void
     UT_ASSERT_P(geo == &dstAttribPtr->getDetail());
     UT_ASSERT_P(geo == &srcAttribPtr->getDetail());
 
-    const GA_AttributeOwner dstClass = dstAttribPtr->getOwner();
-    const GA_AttributeOwner srcClass = srcAttribPtr->getOwner();
+    const GA_AttributeOwner dstOwner = dstAttribPtr->getOwner();
+    const GA_AttributeOwner srcOwner = srcAttribPtr->getOwner();
 
     //GA_RWHandleT<> newAttrib_h(newAttribPtr);
     //GA_ROHandleT<> attrib_h(attribPtr);
     const GA_SplittableRange geoSplittableRange(GA_Range(dstAttribPtr->getIndexMap()));
-    UTparallelFor(geoSplittableRange, [geo, dstAttribPtr, srcAttribPtr, srcClass, dstClass](const GA_SplittableRange& r)
+    UTparallelFor(geoSplittableRange, [geo, dstAttribPtr, srcAttribPtr, srcOwner, dstOwner](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                //dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference::offsetPromote(geo, srcClass, dstClass, elemoff));
-                dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference::offsetPromote(geo, dstClass, srcClass, elemoff));
+                //dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference_Namespace::offsetPromote(geo, srcOwner, dstOwner, elemoff));
+                dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference_Namespace::offsetPromote(geo, dstOwner, srcOwner, elemoff));
             }
         }
     }, subscribeRatio, minGrainSize);

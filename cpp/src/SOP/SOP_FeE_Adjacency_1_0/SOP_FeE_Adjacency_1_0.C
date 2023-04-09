@@ -14,8 +14,8 @@
 #include "UT/UT_DSOVersion.h"
 
 
-//#include "GFE/GFE_TopologyReference.h"
 #include "GFE/GFE_Adjacency.h"
+//#include "GFE/GFE_TopologyReference.h"
 //#include "GFE/GFE_GroupParser.h"
 //#include "GFE/GFE_GroupUnion.h"
 
@@ -276,13 +276,13 @@ static const char *theDsFile = R"THEDSFILE(
        range   { 0! 4 }
     }
 
-    //parm {
-    //    name    "outAsOffset"
-    //    cppname "OutAsOffset"
-    //    label   "Output as Offset"
-    //    type    toggle
-    //    default { "1" }
-    //}
+    parm {
+        name    "outAsOffset"
+        cppname "OutAsOffset"
+        label   "Output as Offset"
+        type    toggle
+        default { "1" }
+    }
 
     parm {
        name    "subscribeRatio"
@@ -516,7 +516,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 #if 1
     GFE_Adjacency adjacency(outGeo0, &cookparms);
     adjacency.setKernel(sopparms.getKernel());
-    adjacency.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    adjacency.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     if(calVertexPrimIndex)
     {

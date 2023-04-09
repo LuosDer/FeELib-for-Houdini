@@ -60,6 +60,7 @@ public:
     }
 
 
+
     SYS_FORCE_INLINE
     bool
         getHasComputed() const
@@ -106,13 +107,13 @@ public:
             const bool added_or_removed_points,
             const bool added_or_removed_vertices,
             const bool added_or_removed_primitives
-        )
+        ) const
     {
         geo->bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives);
     }
 
     virtual void
-        bumpDataIdsForAddOrRemove()
+        bumpDataIdsForAddOrRemove() const
     {
         geo->bumpDataIdsForAddOrRemove(true, true, true);
     }
@@ -139,8 +140,121 @@ public:
 
 
 
+
+
+private:
+
+    virtual bool
+        computeCore()
+    {
+        if (groupParser.getGroup() && groupParser.getGroup()->isEmpty())
+            return false;
+        return true;
+    }
+
+
+private:
+    SYS_FORCE_INLINE
+        virtual void
+        setDetailBase(
+            GA_Detail* const inGeo
+        )
+    {
+        this->geo = inGeo;
+        groupParser.setDetail(inGeo);
+    }
+
     
 protected:
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Detail* const inGeo
+        )
+    {
+        setDetailBase(inGeo);
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Detail& inGeo
+        )
+    {
+        setDetail(&inGeo);
+    }
+
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Attribute& attrib
+        )
+    {
+        setDetail(attrib.getDetail());
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Attribute* const attrib
+        )
+    {
+        UT_ASSERT_P(attrib);
+        setDetail(*attrib);
+    }
+
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_ElementGroup& group
+        )
+    {
+        setDetail(static_cast<GA_ElementGroup&>(group).getDetail());
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_ElementGroup* const group
+        )
+    {
+        setDetail(*group);
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Group& group
+        )
+    {
+        UT_ASSERT_MSG(group.classType() != GA_GROUP_EDGE, "can not be edge group");
+#if 1
+        setDetail(static_cast<GA_ElementGroup&>(group));
+#else
+        if (group.classType() == GA_GROUP_EDGE)
+            setDetail(static_cast<GA_EdgeGroup&>(group).getDetail());
+        else
+            setDetail(static_cast<GA_ElementGroup&>(group));
+#endif
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Group* const group
+        )
+    {
+        UT_ASSERT_P(group);
+        setDetail(*group);
+    }
+
+
+
+
+
     SYS_FORCE_INLINE
     void
         setHasComputed(
@@ -152,7 +266,7 @@ protected:
 
     SYS_FORCE_INLINE
     void
-    delTopoAttrib()
+    delTopoAttrib() const
     {
         if (outTopoAttrib)
             return;
@@ -181,17 +295,6 @@ protected:
                 groupTable->destroy(groupPtr);
             }
         }
-    }
-
-
-    
-private:
-    virtual bool
-        computeCore()
-    {
-        if (groupParser.getGroup() && groupParser.getGroup()->isEmpty())
-            return false;
-        return true;
     }
 
 
@@ -303,6 +406,18 @@ public:
         return ref0GroupArray.ref();
     }
 
+
+private:
+    SYS_FORCE_INLINE
+        virtual void
+        setDetailBase(
+            const GA_Detail* const inGeo
+        )
+    {
+        geoRef0 = inGeo;
+        ref0AttribArray.setDetail(inGeo);
+        ref0GroupArray.setDetail(inGeo);
+    }
 
 
 
@@ -684,7 +799,7 @@ public:
 
 
     virtual void
-        delOutGroup()
+        delOutGroup() const
     {
         if (outGroupArray.isEmpty() || !outGroupArray[0])
             return;
@@ -773,7 +888,21 @@ public:
         return outGroupArray.ref();
     }
 
-//protected:
+private:
+
+    SYS_FORCE_INLINE
+        virtual void
+        setDetailBase(
+            GA_Detail* const inGeo
+        ) override
+    {
+        GFE_GeoFilter::setDetail(inGeo);
+        outAttribArray.setDetail(inGeo);
+        outGroupArray.setDetail(inGeo);
+    }
+
+
+
 public:
     bool reverseOutGroup = false;
     bool doDelOutGroup = false;
@@ -918,7 +1047,20 @@ public:
         cookparms->select(*inGroupArray[0]);
     }
 
-    
+
+private:
+
+    SYS_FORCE_INLINE
+        virtual void
+        setDetailBase(
+            GA_Detail* const inGeo
+        ) override
+    {
+        GFE_AttribFilter::setDetail(inGeo);
+        inAttribArray.setDetail(inGeo);
+        inGroupArray.setDetail(inGeo);
+    }
+
 
 private:
     bool inAttribBumpDataId = false;
