@@ -4,14 +4,18 @@
 #ifndef __GFE_GeoFilter_h__
 #define __GFE_GeoFilter_h__
 
-#include "GA/GA_Detail.h"
 
 //#include "GFE/GFE_GeoFilter.h"
 
+
+//#include "GA/GA_Detail.h"
+
+
+#include "GFE/GFE_Detail.h"
 #include "GFE/GFE_AttributeArray.h"
-#include "GFE/GFE_Attribute.h"
+//#include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_GroupParser.h"
-#include "GFE/GFE_GroupPromote.h"
+//#include "GFE/GFE_GroupPromote.h"
 
 
 
@@ -19,27 +23,104 @@
 class GFE_GeoFilter {
 
 public:
+    //
+    // GFE_GeoFilter(
+    //     const GFE_Detail* const geo,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : geo(nullptr)
+    //     , geoConst(geo)
+    //     , cookparms(cookparms)
+    //     , groupParser(geo, gop, cookparms)
+    // {
+    // }
+    //
+    // GFE_GeoFilter(
+    //     const GA_Detail& geo,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : geo(nullptr)
+    //     , geoConst(static_cast<const GFE_Detail*>(&geo))
+    //     , cookparms(cookparms)
+    //     , groupParser(geo, gop, cookparms)
+    // {
+    // }
+    //
+    // GFE_GeoFilter(
+    //     const GA_Detail* const geo,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : geo(nullptr)
+    //     , geoConst(static_cast<const GFE_Detail*>(&geo))
+    //     , cookparms(cookparms)
+    //     , groupParser(*geo, gop, cookparms)
+    // {
+    //     //UT_ASSERT_MSG(geo, "do not find geo");
+    // }
+
+
+
+
+
+
+
+    
+    GFE_GeoFilter(
+        GFE_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(geo)
+        //, geoConst(geo)
+        , cookparms(cookparms)
+        , groupParser(geo, gop, cookparms)
+    {
+    }
+
+    GFE_GeoFilter(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(static_cast<GFE_Detail*>(&geo))
+        //, geoConst(static_cast<GFE_Detail*>(&geo))
+        , cookparms(cookparms)
+        , groupParser(geo, gop, cookparms)
+    {
+    }
+
+    GFE_GeoFilter(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(static_cast<GFE_Detail*>(&geo))
+        //, geoConst(static_cast<GFE_Detail*>(&geo))
+        , cookparms(&cookparms)
+        , groupParser(geo, gop, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
 
     GFE_GeoFilter(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(geo)
+        : geo(static_cast<GFE_Detail*>(geo))
+        //, geoConst(static_cast<GFE_Detail*>(&geo))
         , cookparms(cookparms)
-        , groupParser(geo, gop, cookparms)
+        , groupParser(*geo, gop, cookparms)
     {
-        UT_ASSERT_MSG(geo, "do not find geo");
+        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
     GFE_GeoFilter(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
-        : geo(geo)
+        : geo(static_cast<GFE_Detail*>(geo))
+        //, geoConst(static_cast<GFE_Detail*>(&geo))
         , cookparms(&cookparms)
-        , groupParser(cookparms, geo, gop)
+        , groupParser(*geo, gop, cookparms)
     {
-        UT_ASSERT_MSG(geo, "do not find geo");
+        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
     ~GFE_GeoFilter()
@@ -49,16 +130,27 @@ public:
 
     virtual void
         reset(
-            GA_Detail* const geo,
+            GA_Detail* const inGeo,
             const SOP_NodeVerb::CookParms* const cookparms = nullptr
         )
     {
-        this->geo = geo;
+        geo = static_cast<GFE_Detail*>(inGeo);
         this->cookparms = cookparms;
         groupParser.reset(geo, cookparms);
         setHasComputed();
     }
 
+    virtual void
+        reset(
+            GA_Detail& inGeo,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        geo = static_cast<GFE_Detail*>(&inGeo);
+        this->cookparms = cookparms;
+        groupParser.reset(geo, cookparms);
+        setHasComputed();
+    }
 
 
     SYS_FORCE_INLINE
@@ -68,23 +160,23 @@ public:
         return hasComputed;
     }
 
-
-    SYS_FORCE_INLINE
-    void
-        setOutTopoAttrib(
-            bool outTopoAttrib = true
-        )
-    {
-        this->outTopoAttrib = outTopoAttrib;
-    }
-
-    SYS_FORCE_INLINE
-    bool
-        getOutTopoAttrib() const
-    {
-        return outTopoAttrib;
-    }
-
+    
+    // SYS_FORCE_INLINE
+    // void
+    //     setOutTopoAttrib(
+    //         const bool outTopoAttrib = true
+    //     )
+    // {
+    //     this->outTopoAttrib = outTopoAttrib;
+    // }
+    //
+    // SYS_FORCE_INLINE
+    // bool
+    //     getOutTopoAttrib() const
+    // {
+    //     return outTopoAttrib;
+    // }
+    
 
     GFE_GroupParser&
         getGroupParser()
@@ -140,6 +232,27 @@ public:
 
 
 
+    virtual void
+        bumpDataId()
+    {
+    }
+
+    SYS_FORCE_INLINE
+    void
+        computeAndBumpDataId()
+    {
+        compute();
+        bumpDataId();
+    }
+
+    SYS_FORCE_INLINE
+    GFE_Detail*
+        getDetail() const
+    {
+        return geo;
+    }
+
+    
 
 
 private:
@@ -157,127 +270,26 @@ private:
     SYS_FORCE_INLINE
         virtual void
         setDetailBase(
-            GA_Detail* const inGeo
-        )
-    {
-        this->geo = inGeo;
-        groupParser.setDetail(inGeo);
-    }
-
-    
-protected:
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Detail* const inGeo
-        )
-    {
-        setDetailBase(inGeo);
-    }
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
             GA_Detail& inGeo
         )
     {
-        setDetail(&inGeo);
+        geo = static_cast<GFE_Detail*>(&inGeo);
+        groupParser.setDetail(geo);
     }
 
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Attribute& attrib
-        )
-    {
-        setDetail(attrib.getDetail());
-    }
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Attribute* const attrib
-        )
-    {
-        UT_ASSERT_P(attrib);
-        setDetail(*attrib);
-    }
-
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_ElementGroup& group
-        )
-    {
-        setDetail(static_cast<GA_ElementGroup&>(group).getDetail());
-    }
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_ElementGroup* const group
-        )
-    {
-        setDetail(*group);
-    }
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Group& group
-        )
-    {
-        UT_ASSERT_MSG(group.classType() != GA_GROUP_EDGE, "can not be edge group");
-#if 1
-        setDetail(static_cast<GA_ElementGroup&>(group));
-#else
-        if (group.classType() == GA_GROUP_EDGE)
-            setDetail(static_cast<GA_EdgeGroup&>(group).getDetail());
-        else
-            setDetail(static_cast<GA_ElementGroup&>(group));
-#endif
-    }
-
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Group* const group
-        )
-    {
-        UT_ASSERT_P(group);
-        setDetail(*group);
-    }
-
-
-
-
-
-    SYS_FORCE_INLINE
-    void
-        setHasComputed(
-            const bool hasComputed = false
-        )
-    {
-        this->hasComputed = hasComputed;
-    }
-
-    SYS_FORCE_INLINE
-    void
+    virtual void
     delTopoAttrib() const
     {
         if (outTopoAttrib)
             return;
-        GA_AttributeSet& AttribSet = geo->getAttributes();
+        GA_AttributeSet& attribSet = geo->getAttributes();
         GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern("__topo_*");
         filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectPublic());
         filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectGroup()));
-        AttribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
-        AttribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
+        attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
+        attribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
+        attribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
+        attribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
 
         GA_GroupTable* groupTable = nullptr;
         GA_Group* groupPtr = nullptr;
@@ -297,17 +309,84 @@ protected:
         }
     }
 
+    
+protected:
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Detail* const inGeo
+        )
+    {
+        setDetailBase(*inGeo);
+    }
+    
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Detail& inGeo
+        )
+    {
+        setDetail(&inGeo);
+    }
+    
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Attribute& attrib
+        )
+    {
+        setDetail(attrib.getDetail());
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_ElementGroup& group
+        )
+    {
+        setDetail(static_cast<GA_ElementGroup&>(group).getDetail());
+    }
+
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Group& group
+        )
+    {
+        UT_ASSERT_MSG(group.classType() != GA_GROUP_EDGE, "can not be edge group");
+#if 1
+        setDetail(static_cast<GA_ElementGroup&>(group));
+#else
+        if (group.classType() == GA_GROUP_EDGE)
+            setDetail(static_cast<GA_EdgeGroup&>(group).getDetail());
+        else
+            setDetail(static_cast<GA_ElementGroup&>(group));
+#endif
+    }
+    
+    SYS_FORCE_INLINE
+    void
+        setHasComputed(
+            const bool hasComputed = false
+        )
+    {
+        this->hasComputed = hasComputed;
+    }
+
 
 public:
     GFE_GroupParser groupParser;
+    bool outTopoAttrib = false;
 
 protected:
+    GFE_Detail* geo;
+    //const GFE_Detail* geoConst;
     const SOP_NodeVerb::CookParms* cookparms;
-    GA_Detail* geo;
 
 private:
     GOP_Manager gop;
-    bool outTopoAttrib = false;
     bool hasComputed = false;
 };
 
@@ -323,7 +402,7 @@ class GFE_GeoFilterRef {
 public:
 
     GFE_GeoFilterRef(
-        const GA_Detail* const geoRef0,
+        const GFE_Detail* const geoRef0,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -338,18 +417,61 @@ public:
     }
 
     GFE_GeoFilterRef(
-        const SOP_NodeVerb::CookParms& cookparms,
         const GA_Detail* const geoRef0,
-        GOP_Manager& gop
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geoRef0(geoRef0)
-        , cookparms(&cookparms)
+        : geoRef0(static_cast<const GFE_Detail*>(geoRef0))
+        , cookparms(cookparms)
         , gop(gop)
-        , groupParserRef0(cookparms, geoRef0, gop)
-        , ref0AttribArray(cookparms, geoRef0)
-        , ref0GroupArray(cookparms, geoRef0)
+        , groupParserRef0(geoRef0, gop, cookparms)
+        , ref0AttribArray(geoRef0, cookparms)
+        , ref0GroupArray(geoRef0, cookparms)
     {
         UT_ASSERT_MSG(geoRef0, "do not find geo");
+    }
+
+    GFE_GeoFilterRef(
+        const GA_Detail* const geoRef0,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geoRef0(static_cast<const GFE_Detail*>(geoRef0))
+        , cookparms(&cookparms)
+        , gop(gop)
+        , groupParserRef0(geoRef0, gop, cookparms)
+        , ref0AttribArray(geoRef0, cookparms)
+        , ref0GroupArray(geoRef0, cookparms)
+    {
+        UT_ASSERT_MSG(geoRef0, "do not find geo");
+    }
+
+    GFE_GeoFilterRef(
+        const GA_Detail& geoRef0,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geoRef0(static_cast<const GFE_Detail*>(&geoRef0))
+        , cookparms(cookparms)
+        , gop(gop)
+        , groupParserRef0(geoRef0, gop, cookparms)
+        , ref0AttribArray(geoRef0, cookparms)
+        , ref0GroupArray(geoRef0, cookparms)
+    {
+    }
+
+    GFE_GeoFilterRef(
+        const GA_Detail& geoRef0,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geoRef0(static_cast<const GFE_Detail*>(&geoRef0))
+        , cookparms(&cookparms)
+        , gop(gop)
+        , groupParserRef0(geoRef0, gop, cookparms)
+        , ref0AttribArray(geoRef0, cookparms)
+        , ref0GroupArray(geoRef0, cookparms)
+    {
     }
 
     ~GFE_GeoFilterRef()
@@ -360,7 +482,7 @@ public:
 
     void
         resetGeoFilterRef(
-            const GA_Detail* const geoRef0,
+            const GFE_Detail* const geoRef0,
             const SOP_NodeVerb::CookParms* const cookparms = nullptr
         )
     {
@@ -368,6 +490,16 @@ public:
         this->cookparms = cookparms;
         ref0AttribArray.reset(geoRef0, cookparms);
         ref0GroupArray.reset(geoRef0, cookparms);
+    }
+    
+    SYS_FORCE_INLINE
+    void
+        resetGeoFilterRef(
+            const GA_Detail* const geoRef0,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        resetGeoFilterRef(static_cast<const GFE_Detail*>(geoRef0), cookparms);
     }
 
     GFE_GroupParser&
@@ -411,12 +543,21 @@ private:
     SYS_FORCE_INLINE
         virtual void
         setDetailBase(
-            const GA_Detail* const inGeo
+            const GFE_Detail* const inGeo
         )
     {
         geoRef0 = inGeo;
         ref0AttribArray.setDetail(inGeo);
         ref0GroupArray.setDetail(inGeo);
+    }
+
+    SYS_FORCE_INLINE
+        virtual void
+        setDetailBase(
+            const GA_Detail* const inGeo
+        )
+    {
+        setDetailBase(static_cast<const GFE_Detail*>(inGeo));
     }
 
 
@@ -425,7 +566,7 @@ public:
     GFE_GroupParser groupParserRef0;
 
 protected:
-    const GA_Detail* geoRef0;
+    const GFE_Detail* geoRef0;
 
 private:
     const SOP_NodeVerb::CookParms* cookparms;
@@ -447,6 +588,36 @@ class GFE_AttribFilter : public GFE_GeoFilter {
 public:
 
     //using GFE_GeoFilter::GFE_GeoFilter;
+    //
+    // GFE_AttribFilter(
+    //     const GA_Detail& geo,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : GFE_GeoFilter(geo, cookparms)
+    //     , outAttribArray(geo, cookparms)
+    //     , outGroupArray(geo, cookparms)
+    // {
+    // }
+    //
+    // GFE_AttribFilter(
+    //     const GA_Detail* const geo,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : GFE_GeoFilter(geo, cookparms)
+    //     , outAttribArray(geo, cookparms)
+    //     , outGroupArray(geo, cookparms)
+    // {
+    // }
+    
+    GFE_AttribFilter(
+        GFE_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilter(geo, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+    }
 
     GFE_AttribFilter(
         GA_Detail* const geo,
@@ -459,12 +630,32 @@ public:
     }
 
     GFE_AttribFilter(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilter(cookparms, geo)
-        , outAttribArray(geo, &cookparms)
-        , outGroupArray(geo, &cookparms)
+        : GFE_GeoFilter(geo, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+    }
+
+    GFE_AttribFilter(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilter(geo, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+    }
+
+    GFE_AttribFilter(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_GeoFilter(geo, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
     {
     }
 
@@ -479,284 +670,19 @@ public:
         outGroupArray.reset(geo, cookparms);
     }
 
-    //void
-    //    setOutAttrib(
-    //        GA_Attribute* attribPtr
-    //    )
-    //{
-    //    attribArray.clear();
-    //    if (!attribPtr)
-    //        return;
-
-    //    attribArray.emplace_back(attribPtr);
-    //}
-
-    //void
-    //    setOutGroup(
-    //        GA_Group* groupPtr
-    //    )
-    //{
-    //    groupArray.clear();
-    //    if (!groupPtr)
-    //        return;
-
-    //    groupArray.emplace_back(groupPtr);
-    //}
-
-    //virtual void
-    //    setOutAttrib(
-    //        const GA_AttributeOwner attribClass,
-    //        const UT_StringHolder& attribPattern
-    //    )
-    //{
-    //    if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //        return;
-
-    //    GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
-    //    setOutAttrib(attribPtr);
-    //}
-
-    //virtual void
-    //    setOutGroup(
-    //        const GA_GroupType groupClass,
-    //        const UT_StringHolder& groupPattern
-    //    )
-    //{
-    //    if (!groupPattern.isstring() || groupPattern.length() == 0)
-    //        return;
-
-    //    GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
-    //    setOutGroup(groupPtr);
-    //}
-
-    //void
-    //    addOutAttrib(
-    //        GA_Attribute* attribPtr
-    //    )
-    //{
-    //    if (!attribPtr)
-    //        return;
-    //    attribArray.emplace_back(attribPtr);
-    //}
-    //void
-    //    addOutGroup(
-    //        GA_Group* groupPtr
-    //    )
-    //{
-    //    if (!groupPtr)
-    //        return;
-    //    groupArray.emplace_back(groupPtr);
-    //}
-
-
-    //virtual void
-    //    addOutAttrib(
-    //        const GA_AttributeOwner attribClass,
-    //        const UT_StringHolder& attribPattern
-    //    )
-    //{
-    //    if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //        return;
-
-    //    GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
-    //    addOutAttrib(attribPtr);
-    //}
-
-    //virtual void
-    //    addOutGroup(
-    //        const GA_GroupType groupClass,
-    //        const UT_StringHolder& groupPattern
-    //    )
-    //{
-    //    if (!groupPattern.isstring() || groupPattern.length() == 0)
-    //        return;
-
-    //    GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
-    //    addOutGroup(groupPtr);
-    //}
-
-
-
-    //virtual void
-    //    addOutAttribs(
-    //        const GA_AttributeOwner attribClass,
-    //        const UT_StringHolder& attribPattern
-    //    )
-    //{
-    //    if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //        return;
-
-    //    GA_Attribute* attribPtr = nullptr;
-    //    for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
-    //    {
-    //        attribPtr = it.attrib();
-    //        if (!attribPtr->getName().multiMatch(attribPattern))
-    //            continue;
-    //        attribArray.emplace_back(attribPtr);
-    //    }
-    //}
-
-    //virtual void
-    //    addOutGroups(
-    //        const GA_GroupType groupClass,
-    //        const UT_StringHolder& groupPattern
-    //    )
-    //{
-    //    if (!groupPattern.isstring() || groupPattern.length() == 0)
-    //        return;
-
-    //    GA_Group* groupPtr = nullptr;
-    //    for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupClass)->beginTraverse(); !it.atEnd(); ++it)
-    //    {
-    //        groupPtr = it.group();
-    //        if (!groupPtr->getName().multiMatch(groupPattern))
-    //            continue;
-    //        groupArray.emplace_back(groupPtr);
-    //    }
-    //}
-
-    //virtual void
-    //    findOrCreateOutAttrib(
-    //        const GA_AttributeOwner owner = GA_ATTRIB_POINT,
-    //        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
-    //        const GA_Storage storage = GA_STORE_INVALID,
-    //        const bool detached = false,
-    //        const UT_StringHolder& attribName = "__topo_"
-    //    )
-    //{
-    //    GA_Attribute* attribPtr = nullptr;
-
-    //    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
-
-    //    if (detached)
-    //    {
-    //        //const GA_AttributeUPtr& attribUPtr = geo->createDetachedTupleAttribute(owner, finalStorage, 1);
-    //        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
-    //        attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
-    //        //attribPtr = attribUPtr.get();
-    //    }
-    //    else
-    //    {
-    //        attribPtr = geo->findAttribute(owner, attribName);
-
-    //        if (attribPtr && attribPtr->getAIFTuple()->getStorage(attribPtr) != finalStorage)
-    //            geo->getAttributes().destroyAttribute(attribPtr);
-
-    //        if (!attribPtr)
-    //            attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage, 1);
-
-    //        if (!attribPtr)
-    //        {
-    //            if (cookparms)
-    //                cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
-    //            UT_ASSERT_MSG(attribPtr, "No Attrib");
-    //            return;
-    //        }
-    //    }
-    //    attribArray.emplace_back(attribPtr);
-    //}
-
-
-    //virtual void
-    //    findOrCreateOutGroup(
-    //        const GA_GroupType groupType = GA_GROUP_POINT,
-    //        const bool detached = false,
-    //        const UT_StringHolder& groupName = "__topo_"
-    //    )
-    //{
-    //    GA_Group* groupPtr = nullptr;
-
-    //    if (detached)
-    //    {
-    //        switch (groupType)
-    //        {
-    //        case GA_GROUP_PRIMITIVE:
-    //            groupUPtrArray.emplace_back(geo->createDetachedPrimitiveGroup());
-    //            break;
-    //        case GA_GROUP_POINT:
-    //            groupUPtrArray.emplace_back(geo->createDetachedPointGroup());
-    //            break;
-    //        case GA_GROUP_VERTEX:
-    //            groupUPtrArray.emplace_back(geo->createDetachedVertexGroup());
-    //            break;
-    //        case GA_GROUP_EDGE:
-    //            groupUPtrArray.emplace_back(geo->createDetachedEdgeGroup());
-    //            break;
-    //        default:
-    //            if (cookparms)
-    //                cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
-    //            UT_ASSERT_MSG(groupPtr, "No Group");
-    //            return;
-    //            break;
-    //        }
-    //        groupPtr = groupUPtrArray[groupUPtrArray.size() - 1].get();
-    //        //groupPtr = attribUPtr.get();
-    //    }
-    //    else
-    //    {
-    //        groupPtr = geo->getGroupTable(groupType)->find(groupName);
-
-    //        if (!groupPtr)
-    //            groupPtr = geo->getGroupTable(groupType)->newGroup(groupName);
-
-    //        if (!groupPtr)
-    //        {
-    //            if (cookparms)
-    //                cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
-    //            UT_ASSERT_MSG(groupPtr, "No Group");
-    //            return;
-    //        }
-    //    }
-    //    groupArray.emplace_back(groupPtr);
-    //}
-
-    //const std::vector<GA_Attribute*>&
-    //    getAttrib() const
-    //{
-    //    return attribArray;
-    //}
-
-    //std::vector<GA_Attribute*>&
-    //    getAttrib()
-    //{
-    //    return attribArray;
-    //}
-
-    //const std::vector<GA_Group*>&
-    //    getGroup() const
-    //{
-    //    return groupArray;
-    //}
-
-    //std::vector<GA_Group*>&
-    //    getGroup()
-    //{
-    //    return groupArray;
-    //}
-
-    //void
-    //    bumpDataId() const
-    //{
-    //    for (int i = 0; i < attribArray.size(); i++)
-    //    {
-    //        if (attribArray[i]->isDetached())
-    //            continue;
-    //        attribArray[i]->bumpDataId();
-    //    }
-    //    for (int i = 0; i < groupArray.size(); i++)
-    //    {
-    //        if (groupArray[i]->isDetached())
-    //            continue;
-    //        if(groupArray[i]->classType() == GA_GROUP_EDGE)
-    //            static_cast<GA_EdgeGroup*>(groupArray[i])->bumpDataId();
-    //        else
-    //            static_cast<GA_ElementGroup*>(groupArray[i])->bumpDataId();
-    //    }
-    //}
-
-
     virtual void
-        bumpDataId()
+        reset(
+            GA_Detail& geo,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        ) override
+    {
+        GFE_GeoFilter::reset(geo, cookparms);
+        outAttribArray.reset(geo, cookparms);
+        outGroupArray.reset(geo, cookparms);
+    }
+    
+    virtual void
+        bumpDataId() override
     {
         if (doDelOutGroup)
             bumpDataIdsForAddOrRemove();
@@ -766,15 +692,6 @@ public:
             outGroupArray.bumpDataId();
         }
     }
-
-    SYS_FORCE_INLINE
-    void
-        computeAndBumpDataId()
-    {
-        compute();
-        bumpDataId();
-    }
-
 
     void
         findOrCreateOutGroup(
@@ -794,12 +711,9 @@ public:
     {
         getOutGroupArray().findOrCreate(doDelOutGroup, groupType, groupName);
     }
-
-
-
-
+    
     virtual void
-        delOutGroup() const
+        delOutGroup()
     {
         if (outGroupArray.isEmpty() || !outGroupArray[0])
             return;
@@ -888,15 +802,45 @@ public:
         return outGroupArray.ref();
     }
 
+
+    
+    SYS_FORCE_INLINE
+    const GFE_AttributeArray&
+        getOutAttribArray() const
+    {
+        return outAttribArray;
+    }
+
+    SYS_FORCE_INLINE
+    const GFE_GroupArray&
+        getOutGroupArray() const
+    {
+        return outGroupArray;
+    }
+
+    SYS_FORCE_INLINE
+    const std::vector<GA_Attribute*>&
+        getOutAttribArrayRef() const
+    {
+        return outAttribArray.ref();
+    }
+
+    SYS_FORCE_INLINE
+    const std::vector<GA_Group*>&
+        getOutGroupArrayRef() const
+    {
+        return outGroupArray.ref();
+    }
+
 private:
 
     SYS_FORCE_INLINE
         virtual void
         setDetailBase(
-            GA_Detail* const inGeo
+            GA_Detail& inGeo
         ) override
     {
-        GFE_GeoFilter::setDetail(inGeo);
+        setDetail(inGeo);
         outAttribArray.setDetail(inGeo);
         outGroupArray.setDetail(inGeo);
     }
@@ -918,29 +862,19 @@ private:
 
 
 
-//class GFE_GeoFilter_OutTopoAttrib {
-//
-//public:
-//    GFE_GeoFilter_OutTopoAttrib(GA_Detail* geo)
-//        : geo(geo)
-//    {
-//    }
-//
-//    ~GFE_GeoFilter_OutTopoAttrib()
-//    {
-//        GFE_TopologyReference_Namespace::outTopoAttrib(geo, outTopoAttrib);
-//    }
-//
-//protected:
-//    bool outTopoAttrib = false;
-//
-//private:
-//    GA_Detail* geo;
-//};
-
 class GFE_AttribCreateFilter : public GFE_AttribFilter {
 
 public:
+
+    GFE_AttribCreateFilter(
+        GFE_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , inAttribArray(geo, cookparms)
+        , inGroupArray(geo, cookparms)
+    {
+    }
 
     GFE_AttribCreateFilter(
         GA_Detail* const geo,
@@ -953,12 +887,32 @@ public:
     }
 
     GFE_AttribCreateFilter(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribFilter(cookparms, geo)
-        , inAttribArray(cookparms, geo)
-        , inGroupArray(cookparms, geo)
+        : GFE_AttribFilter(geo, cookparms)
+        , inAttribArray(geo, cookparms)
+        , inGroupArray(geo, cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilter(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , inAttribArray(geo, cookparms)
+        , inGroupArray(geo, cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilter(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , inAttribArray(geo, cookparms)
+        , inGroupArray(geo, cookparms)
     {
     }
 
@@ -1053,10 +1007,10 @@ private:
     SYS_FORCE_INLINE
         virtual void
         setDetailBase(
-            GA_Detail* const inGeo
+            GA_Detail& inGeo
         ) override
     {
-        GFE_AttribFilter::setDetail(inGeo);
+        setDetail(inGeo);
         inAttribArray.setDetail(inGeo);
         inGroupArray.setDetail(inGeo);
     }
@@ -1068,108 +1022,6 @@ private:
     GFE_AttributeArray inAttribArray;
     GFE_GroupArray inGroupArray;
 };
-
-
-//class GFE_UVFilter : public GFE_AttribFilter {
-//
-//public:
-//
-//    using GFE_AttribFilter::GFE_AttribFilter;
-
-    //GFE_UVFilter(
-    //    GA_Detail* const geo,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : GFE_AttribFilter(geo, cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_UVFilter(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GA_Detail* const geo
-    //)
-    //    : GFE_AttribFilter(cookparms, geo)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-
-
-
-
-
-
-
-    //void
-    //    setInGroup(
-    //        const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-    //    )
-    //{
-    //    this->geoPrimGroup = geoPrimGroup;
-    //}
-
-    //virtual void
-    //    setInGroup(
-    //        const GA_Group* const geoGroup
-    //    ) override
-    //{
-    //    hasParm_inGroup = true;
-    //    geoPrimGroup = GFE_GroupPromote::groupFindPromotePrimitiveDetached(geo, geoGroup, groupParser.getGOP());
-    //}
-
-    ////using GFE_GeoFilter::setInGroup;
-    //void
-    //    setInGroup(
-    //        const GA_GroupType groupType,
-    //        const UT_StringHolder& groupName
-    //    )
-    //{
-    //    GFE_GeoFilter::setInGroup(groupType, groupName);
-    //}
-
-
-    //void
-    //    setOutAttrib(
-    //        GA_Attribute* attribPtr
-    //    )
-    //{
-    //    GFE_AttribFilter::setOutAttrib(attribPtr);
-    //}
-
-    //virtual void
-    //    setOutAttrib(
-    //        const GA_AttributeOwner attribClass,
-    //        const UT_StringHolder& attribPattern
-    //    ) override
-    //{
-    //    if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //        return;
-
-    //    GA_Attribute* attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
-    //    setOutAttrib(attribPtr);
-    //}
-
-    //virtual void
-    //    setOrCreateOutAttrib(
-    //        const GA_AttributeOwner attribClass,
-    //        const UT_StringHolder& attribPattern,
-    //        const GA_Storage storage = GA_STORE_INVALID
-    //    )
-    //{
-    //    if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //        return;
-
-    //    GA_Attribute* attribPtr = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, attribClass, attribPattern, storage);
-    //    setOutAttrib(attribPtr);
-    //}
-
-//protected:
-//    GA_PrimitiveGroupUPtr geoPrimGroupUPtr;
-//    const GA_PrimitiveGroup* geoPrimGroup = nullptr;
-// 
-// 
-//};
 
 
 

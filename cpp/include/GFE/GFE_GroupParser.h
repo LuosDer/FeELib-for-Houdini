@@ -7,10 +7,9 @@
 //#include "GFE/GFE_GroupParser.h"
 
 #include "GA/GA_Detail.h"
+#include "GA/GA_SplittableRange.h"
 
-
-#include "GFE/GFE_GroupPromote.h"
-
+#include "GFE/GFE_GroupUnion.h"
 
 
 class GFE_GroupParser {
@@ -20,6 +19,17 @@ public:
     GFE_GroupParser(
         GA_Detail* const geo,
         GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(static_cast<const GEO_Detail*>(geo))
+        , geoNonconst(geo)
+        , cookparms(&cookparms)
+        , gop(gop)
+    {
+    }
+    GFE_GroupParser(
+        GA_Detail* const geo,
+        GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geo(static_cast<const GEO_Detail*>(geo))
@@ -27,25 +37,18 @@ public:
         , cookparms(cookparms)
         , gop(gop)
     {
-        UT_ASSERT_MSG(geo, "do not find geo");
     }
-
     GFE_GroupParser(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo,
-        GOP_Manager& gop
+        const GA_Detail* const geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms& cookparms
     )
         : geo(static_cast<const GEO_Detail*>(geo))
-        , geoNonconst(geo)
+        , geoNonconst(nullptr)
         , cookparms(&cookparms)
         , gop(gop)
     {
-        UT_ASSERT_MSG(geo, "do not find geo");
     }
-
-
-
-
     GFE_GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
@@ -56,22 +59,53 @@ public:
         , cookparms(cookparms)
         , gop(gop)
     {
-        UT_ASSERT_MSG(geo, "do not find geo");
     }
 
+
     GFE_GroupParser(
-        const SOP_NodeVerb::CookParms& cookparms,
-        const GA_Detail* const geo,
-        GOP_Manager& gop
+        GA_Detail& geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms& cookparms
     )
-        : geo(static_cast<const GEO_Detail*>(geo))
+        : geo(&static_cast<const GEO_Detail&>(geo))
+        , geoNonconst(&geo)
+        , cookparms(&cookparms)
+        , gop(gop)
+    {
+    }
+    GFE_GroupParser(
+        GA_Detail& geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(&static_cast<const GEO_Detail&>(geo))
+        , geoNonconst(&geo)
+        , cookparms(cookparms)
+        , gop(gop)
+    {
+    }
+    GFE_GroupParser(
+        const GA_Detail& geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(&static_cast<const GEO_Detail&>(geo))
         , geoNonconst(nullptr)
         , cookparms(&cookparms)
         , gop(gop)
     {
-        UT_ASSERT_MSG(geo, "do not find geo");
     }
-
+    GFE_GroupParser(
+        const GA_Detail& geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(&static_cast<const GEO_Detail&>(geo))
+        , geoNonconst(nullptr)
+        , cookparms(cookparms)
+        , gop(gop)
+    {
+    }
 
 
 
@@ -82,426 +116,6 @@ public:
             geoNonconst->destroyGroup(geoNonconst->getGroupTable(geoGroup->classType())->find(geoGroup->getName()));
         }
     }
-
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : cookparms(cookparms)
-    //{
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms
-    //)
-    //    : cookparms(&cookparms)
-    //{
-    //}
-
-    //GFE_GroupParser(
-    //    const GA_Detail* const geo,
-    //    const UT_StringHolder& groupName,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : geoConst(static_cast<const GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(cookparms)
-    //{
-    //    UT_ASSERT_MSG(geoConst, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const GEO_Detail* const geo,
-    //    const UT_StringHolder& groupName,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : geoConst(geo)
-    //    , groupName(groupName)
-    //    , cookparms(cookparms)
-    //{
-    //    UT_ASSERT_MSG(geoConst, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const GU_Detail* const geo,
-    //    const UT_StringHolder& groupName,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : geoConst(static_cast<const GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(cookparms)
-    //{
-    //    UT_ASSERT_MSG(geoConst, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    const GA_Detail* const geo,
-    //    const UT_StringHolder& groupName
-    //)
-    //    : geoConst(static_cast<const GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(&cookparms)
-    //{
-    //    UT_ASSERT_MSG(geoConst, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    const GEO_Detail* const geo,
-    //    const UT_StringHolder& groupName
-    //)
-    //    : geoConst(geo)
-    //    , groupName(groupName)
-    //    , cookparms(&cookparms)
-    //{
-    //    UT_ASSERT_MSG(geoConst, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    const GU_Detail* const geo,
-    //    const UT_StringHolder& groupName
-    //    )
-    //    : geoConst(static_cast<const GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(&cookparms)
-    //{
-    //    UT_ASSERT_MSG(geoConst, "do not find geo");
-    //}
-
-
-
-
-
-
-
-
-    //GFE_GroupParser(
-    //    GA_Detail* const geo,
-    //    const UT_StringHolder& groupName,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : geo(static_cast<GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    GEO_Detail* const geo,
-    //    const UT_StringHolder& groupName,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : geo(geo)
-    //    , groupName(groupName)
-    //    , cookparms(cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    GU_Detail* const geo,
-    //    const UT_StringHolder& groupName,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr,
-    //    bool findGroup = true
-    //)
-    //    : geo(static_cast<GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GA_Detail* const geo,
-    //    const UT_StringHolder& groupName
-    //)
-    //    : geo(static_cast<GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(&cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GEO_Detail* const geo,
-    //    const UT_StringHolder& groupName
-    //)
-    //    : geo(geo)
-    //    , groupName(groupName)
-    //    , cookparms(&cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-    //GFE_GroupParser(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GU_Detail* const geo,
-    //    const UT_StringHolder& groupName
-    //)
-    //    : geo(static_cast<GEO_Detail*>(geo))
-    //    , groupName(groupName)
-    //    , cookparms(&cookparms)
-    //{
-    //    UT_ASSERT_MSG(geo, "do not find geo");
-    //}
-
-
-    //
-
-
-    //GA_Group*
-    //    parse(
-    //        const GA_GroupType groupType
-    //    )
-    //{
-    //    if (!geo)
-    //    {
-    //        UT_ASSERT_MSG(geo, "do not find geo");
-    //        return nullptr;
-    //    }
-
-    //    if (!groupName.length())
-    //        return nullptr;
-
-    //    if (!groupName.isstring())
-    //    {
-    //        if (cookparms)
-    //            cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
-    //        return nullptr;
-    //    }
-
-    //    if (findGroup && groupType >= 0 && groupType <= 4)
-    //    {
-    //        GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
-    //        if (groupTable)
-    //        {
-    //            GA_Group* const anyGroup = groupTable->find(groupName);
-    //            if (anyGroup)
-    //                return anyGroup;
-    //        }
-    //    }
-
-    //    bool success = true;
-    //    GA_Group* const anyGroup = const_cast<GA_Group*>(gop.parseGroupDetached(groupName, groupType, geo, true, false, success));
-    //    //if (cookparms) notifyGroupParmListeners(cookparms.getNode(), 0, 1, geo, group);
-
-    //    if (!success)
-    //    {
-    //        if (cookparms)
-    //            cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
-    //        return nullptr;
-    //    }
-    //    return anyGroup;
-    //}
-
-
-    //const GA_Group*
-    //    parseConst(
-    //        const GA_GroupType groupType
-    //    )
-    //{
-    //    if (!geoConst)
-    //    {
-    //        UT_ASSERT_MSG(geoConst, "do not find geo");
-    //        return nullptr;
-    //    }
-
-    //    if (!groupName.length())
-    //        return nullptr;
-
-    //    if (!groupName.isstring())
-    //    {
-    //        if (cookparms)
-    //            cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
-    //        return nullptr;
-    //    }
-
-    //    if (findGroup && groupType >= 0 && groupType <= 4)
-    //    {
-    //        const GA_GroupTable* const groupTable = geoConst->getGroupTable(groupType);
-    //        if (groupTable)
-    //        {
-    //            const GA_Group* const anyGroup = groupTable->find(groupName);
-    //            if (anyGroup)
-    //                return anyGroup;
-    //        }
-    //    }
-
-    //    bool success = true;
-    //    const GA_Group* const anyGroup = gop.parseGroupDetached(groupName, groupType, geoConst, true, false, success);
-    //    //if (cookparms) notifyGroupParmListeners(cookparms.getNode(), 0, 1, geoConst, group);
-
-    //    if (!success)
-    //    {
-    //        if (cookparms)
-    //            cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
-    //        return nullptr;
-    //    }
-    //    return anyGroup;
-    //}
-
-
-
-    //SYS_FORCE_INLINE
-    //    const GA_PrimitiveGroup*
-    //    parsePrimitiveConst()
-    //{
-    //    return static_cast<const GA_PrimitiveGroup*>(parseConst(GA_GROUP_PRIMITIVE));
-    //}
-
-    //SYS_FORCE_INLINE
-    //    const GA_PointGroup*
-    //    parsePointConst()
-    //{
-    //    return static_cast<const GA_PointGroup*>(parseConst(GA_GROUP_POINT));
-    //}
-
-    //SYS_FORCE_INLINE
-    //    const GA_VertexGroup*
-    //    parseVertexConst()
-    //{
-    //    return static_cast<const GA_VertexGroup*>(parseConst(GA_GROUP_VERTEX));
-    //}
-
-    //SYS_FORCE_INLINE
-    //    const GA_EdgeGroup*
-    //    parseEdgeConst()
-    //{
-    //    return static_cast<const GA_EdgeGroup*>(parseConst(GA_GROUP_EDGE));
-    //}
-
-
-
-    //SYS_FORCE_INLINE
-    //    GA_PrimitiveGroup*
-    //    parsePrimitive()
-    //{
-    //    return static_cast<GA_PrimitiveGroup*>(parse(GA_GROUP_PRIMITIVE));
-    //}
-
-    //SYS_FORCE_INLINE
-    //    GA_PointGroup*
-    //    parsePoint()
-    //{
-    //    return static_cast<GA_PointGroup*>(parse(GA_GROUP_POINT));
-    //}
-
-    //SYS_FORCE_INLINE
-    //    GA_VertexGroup*
-    //    parseVertex()
-    //{
-    //    return static_cast<GA_VertexGroup*>(parse(GA_GROUP_VERTEX));
-    //}
-
-    //SYS_FORCE_INLINE
-    //    GA_EdgeGroup*
-    //    parseEdge()
-    //{
-    //    return static_cast<GA_EdgeGroup*>(parse(GA_GROUP_EDGE));
-    //}
-
-
-
-
-
-
-
-
-    //SYS_FORCE_INLINE
-    //    void
-    //    setParm(
-    //        const SOP_NodeVerb::CookParms& cookparms
-    //    )
-    //{
-    //    this->cookparms = &cookparms;
-    //}
-
-    //SYS_FORCE_INLINE
-    //    void
-    //    setParm(
-    //        const SOP_NodeVerb::CookParms* const cookparms
-    //    )
-    //{
-    //    this->cookparms = cookparms;
-    //}
-
-    //SYS_FORCE_INLINE
-    //    void
-    //    setParm(
-    //        const UT_StringHolder& groupName
-    //    )
-    //{
-    //    this->groupName = groupName;
-    //}
-
-    //SYS_FORCE_INLINE
-    //    void
-    //    setParm(
-    //        const SOP_NodeVerb::CookParms& cookparms,
-    //        const UT_StringHolder& groupName
-    //    )
-    //{
-    //    this->cookparms = &cookparms;
-    //    this->groupName = groupName;
-    //}
-
-    //SYS_FORCE_INLINE
-    //    void
-    //    setParm(
-    //        GA_Detail* geo
-    //    )
-    //{
-    //    this->geo = static_cast<GEO_Detail*>(geo);
-    //}
-
-    //SYS_FORCE_INLINE
-    //    void
-    //    setParm(
-    //        const GA_Detail* geo
-    //    )
-    //{
-    //    this->geoConst = static_cast<const GEO_Detail*>(geo);
-    //}
-
-
-
-
-    //void
-    //    setParm(
-    //        const SOP_NodeVerb::CookParms& cookparms,
-    //        const GA_Detail* geo,
-    //        const GA_GroupType groupType,
-    //        const UT_StringHolder& groupName
-    //    )
-    //{
-    //    this->cookparms = &cookparms;
-    //    this->geo = static_cast<const GEO_Detail*>(geo);
-    //    this->groupType = groupType;
-    //    this->groupName = groupName;
-
-    //    hasGroup = false;
-    //}
-
-    //void
-    //    setParm(
-    //        const GA_Detail* geo,
-    //        const GA_GroupType groupType,
-    //        const UT_StringHolder& groupName,
-    //        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //    )
-    //{
-    //    this->cookparms = cookparms;
-    //    this->geo = static_cast<const GEO_Detail*>(geo);
-    //    this->groupType = groupType;
-    //    this->groupName = groupName;
-
-    //    hasGroup = false;
-    //}
 
     void
     copy(
@@ -533,28 +147,28 @@ public:
     inline
     virtual void
     reset(
-        const GA_Detail* const geo,
+        const GA_Detail* const inGeo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
     {
-        this->geo = static_cast<const GEO_Detail*>(geo);
+        geo = static_cast<const GEO_Detail*>(inGeo);
         this->cookparms = cookparms;
     }
 
     inline
     virtual void
     reset(
-        const GEO_Detail* const geo,
+        const GEO_Detail* const inGeo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
     {
-        this->geo = geo;
+        geo = inGeo;
         this->cookparms = cookparms;
     }
 
     inline
     bool
-    getFindGroup() const
+        getFindGroup() const
     {
         return findGroup;
     }
@@ -807,9 +421,8 @@ public:
         return getGroup(attribPtr->getOwner());
     }
 
-    inline
     GA_GroupType
-        groupType()
+        classType()
     {
         if (!hasGroup)
             return GA_GROUP_INVALID;
@@ -818,6 +431,12 @@ public:
         return getGroup()->classType();
     }
 
+    inline
+    GA_GroupType
+        groupType()
+    {
+        return groupType();
+    }
 
     inline
     const GA_PrimitiveGroup*
@@ -952,6 +571,66 @@ public:
         return GA_SplittableRange();
     }
 
+    inline
+    GA_SplittableRange
+        getSplittableRange(
+            const GA_GroupType groupType
+        )
+    {
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE:
+            return getPrimitiveSplittableRange();
+            break;
+        case GA_GROUP_POINT:
+            return getPointSplittableRange();
+            break;
+        case GA_GROUP_VERTEX:
+            return getVertexSplittableRange();
+            break;
+        default:
+            break;
+        }
+        return GA_SplittableRange();
+    }
+    
+    SYS_FORCE_INLINE
+    GA_SplittableRange
+        getSplittableRange(
+            const GA_Attribute* const attrib
+        )
+    {
+        UT_ASSERT_P(attrib);
+        return getSplittableRange(attrib->getOwner());
+    }
+    
+    SYS_FORCE_INLINE
+    GA_SplittableRange
+        getSplittableRange(
+            const GA_Group* const group
+        )
+    {
+        UT_ASSERT_P(group);
+        return getSplittableRange(group->classType());
+    }
+    
+    SYS_FORCE_INLINE
+    GA_SplittableRange
+        getSplittableRange(
+            const GA_Attribute& attrib
+        )
+    {
+        return getSplittableRange(attrib.getOwner());
+    }
+    
+    SYS_FORCE_INLINE
+    GA_SplittableRange
+        getSplittableRange(
+            const GA_Group& group
+        )
+    {
+        return getSplittableRange(group.classType());
+    }
     
 
 
@@ -1005,8 +684,8 @@ private:
             return;
 
         hasPrimitiveGroup = true;
-        geoPrimitiveGroup = GFE_GroupPromote::groupFindPromotePrimitiveDetached(geoGroup, gop);
-        if (geoPrimitiveGroup->isDetached())
+        geoPrimitiveGroup = groupFindPromotePrimitiveDetached(geoGroup);
+        if (geoPrimitiveGroup && geoPrimitiveGroup->isDetached())
             //geoPrimitiveGroupUPtr.reset(geoPrimitiveGroup);
             gop.appendAdhocGroup(const_cast<GA_PrimitiveGroup*>(geoPrimitiveGroup), false);
     }
@@ -1019,8 +698,8 @@ private:
             return;
 
         hasPointGroup = true;
-        geoPointGroup = GFE_GroupPromote::groupFindPromotePointDetached(geoGroup, gop);
-        if (geoPointGroup->isDetached())
+        geoPointGroup = groupFindPromotePointDetached(geoGroup);
+        if (geoPointGroup && geoPointGroup->isDetached())
             gop.appendAdhocGroup(const_cast<GA_PointGroup*>(geoPointGroup), false);
     }
 
@@ -1032,8 +711,8 @@ private:
             return;
 
         hasVertexGroup = true;
-        geoVertexGroup = GFE_GroupPromote::groupFindPromoteVertexDetached(geoGroup, gop);
-        if (geoVertexGroup->isDetached())
+        geoVertexGroup = groupFindPromoteVertexDetached(geoGroup);
+        if (geoVertexGroup && geoVertexGroup->isDetached())
             gop.appendAdhocGroup(const_cast<GA_VertexGroup*>(geoVertexGroup), false);
     }
 
@@ -1045,11 +724,82 @@ private:
             return;
 
         hasEdgeGroup = true;
-        geoEdgeGroup = GFE_GroupPromote::groupFindPromoteEdgeDetached(geoGroup, gop);
-        if (geoEdgeGroup->isDetached())
+        geoEdgeGroup = groupFindPromoteEdgeDetached(geoGroup);
+        if (geoEdgeGroup && geoEdgeGroup->isDetached())
             gop.appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), false);
     }
 
+
+
+
+    const GA_Group*
+        groupFindPromoteDetached(
+            const GA_Group* const group,
+            const GA_GroupType groupType
+        )
+    {
+        if (!group)
+            return nullptr;
+
+        if (group->classType() == groupType)
+            return group;
+
+        const GA_GroupTable* const groupTable = group->getDetail().getGroupTable(groupType);
+        if (!groupTable)
+            return group;
+
+        GA_Group* const newGroup = groupTable->newDetachedGroup();
+
+        //GFE_GroupUnion::groupUnion(newGroup, group);
+        if (groupType == GA_GROUP_EDGE)
+        {
+            GFE_GroupUnion::groupUnion(*static_cast<GA_EdgeGroup*>(newGroup), group);
+        }
+        else
+        {
+            static_cast<GA_ElementGroup*>(newGroup)->combine(group);
+        }
+
+        gop.appendAdhocGroup(newGroup, false);
+
+        return newGroup;
+    }
+
+    SYS_FORCE_INLINE
+        const GA_PrimitiveGroup*
+        groupFindPromotePrimitiveDetached(
+            const GA_Group* const group
+        )
+    {
+        return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(group, GA_GROUP_PRIMITIVE));
+    }
+
+    SYS_FORCE_INLINE
+        const GA_PointGroup*
+        groupFindPromotePointDetached(
+            const GA_Group* const group
+        )
+    {
+        return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(group, GA_GROUP_POINT));
+    }
+
+    SYS_FORCE_INLINE
+        const GA_VertexGroup*
+        groupFindPromoteVertexDetached(
+            const GA_Group* const group
+        )
+    {
+        return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(group, GA_GROUP_VERTEX));
+    }
+
+    SYS_FORCE_INLINE
+        const GA_EdgeGroup*
+        groupFindPromoteEdgeDetached(
+            const GA_Group* const group
+        )
+    {
+        return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(group, GA_GROUP_EDGE));
+    }
 
 
 protected:
@@ -1151,7 +901,8 @@ private:
 
 
     friend class GFE_GeoFilter;
-};
+}; // End of class GFE_GroupParser
+
 
 
 
@@ -1503,6 +1254,6 @@ parseEdgeGroupDetached(
 
 
 
-} // End of namespace GFE_GroupParser
+} // End of namespace GFE_GroupParser_Namespace
 
 #endif

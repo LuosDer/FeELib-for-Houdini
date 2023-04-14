@@ -43,10 +43,32 @@ public:
     }
 
     GFE_AttributeArray(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
         : geo(geo)
+        , cookparms(&cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+
+    GFE_AttributeArray(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(&geo)
+        , cookparms(cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+
+    GFE_AttributeArray(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(&geo)
         , cookparms(&cookparms)
     {
         attribUPtrArray.reserve(16);
@@ -57,6 +79,9 @@ public:
     {
     }
 
+
+
+    
     GA_Attribute*&
         operator[](const size_t i)
     {
@@ -101,11 +126,22 @@ public:
 
     void
         reset(
-            GA_Detail* const geo,
+            GA_Detail* const inGeo,
             const SOP_NodeVerb::CookParms* const cookparms = nullptr
         )
     {
-        this->geo = geo;
+        geo = inGeo;
+        this->cookparms = cookparms;
+        clear();
+    }
+
+    void
+        reset(
+            GA_Detail& inGeo,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        geo = &inGeo;
         this->cookparms = cookparms;
         clear();
     }
@@ -113,14 +149,23 @@ public:
     
     void
     set(
-        GA_Attribute* attribPtr
+        GA_Attribute* const attribPtr
     )
     {
         clear();
         if (!attribPtr)
             return;
-
         attribArray.emplace_back(attribPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+    set(
+        GA_Attribute& attribPtr
+    )
+    {
+        clear();
+        attribArray.emplace_back(&attribPtr);
     }
 
     GA_Attribute*
@@ -138,14 +183,24 @@ public:
     }
 
 
+    SYS_FORCE_INLINE
     void
     append(
-        GA_Attribute* attribPtr
+        GA_Attribute* const attribPtr
     )
     {
         if (!attribPtr)
             return;
         attribArray.emplace_back(attribPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+    append(
+        GA_Attribute& attribPtr
+    )
+    {
+        attribArray.emplace_back(&attribPtr);
     }
 
     GA_Attribute*
@@ -171,7 +226,7 @@ public:
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
 
-        GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
+        GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
         //GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, attribClass, attribPattern);
         //if (attribPtr)
         //{
@@ -198,10 +253,11 @@ appends(
     if (!attribPattern.isstring() || attribPattern.length() == 0)
         return;
 
-    GA_Attribute* attribPtr = nullptr;
     for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
     {
-        attribPtr = it.attrib();
+        GA_Attribute* const attribPtr = it.attrib();
+        if (attribPtr->getScope() != GA_SCOPE_PUBLIC)
+            continue;
         if (!attribPtr->getName().multiMatch(attribPattern))
             continue;
         attribArray.emplace_back(attribPtr);
@@ -232,7 +288,7 @@ createDetachedAttribute(
     const GA_AttributeOptions* attribute_options = nullptr
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
     attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, attribtype, create_args, attribute_options));
     GA_Attribute* attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -254,7 +310,7 @@ createDetachedAttribute(
     const GA_AttributeOptions* attribute_options = nullptr
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
     attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, attribtype, create_args, attribute_options));
     GA_Attribute* attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -276,7 +332,7 @@ createDetachedTupleAttribute(
     const GA_AttributeOptions* attribute_options = nullptr
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
     
     attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tuple_size, defaults, attribute_options));
     GA_Attribute* attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -298,7 +354,7 @@ createDetachedArrayAttribute(
     const GA_AttributeOptions* attribute_options = nullptr
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
     attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, "arraydata", create_args, attribute_options));
     GA_Attribute* attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -325,7 +381,7 @@ findOrCreateTuple(
     const GA_AttributeOptions* attribute_options = nullptr
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
     if (attribPtr)
@@ -349,15 +405,21 @@ findOrCreateTuple(
 
     if (detached)
     {
-        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+        if(finalStorage == GA_STORE_STRING)
+            attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, "string", create_args, attribute_options));
+        else
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
     else
     {
         if (!attribPtr)
-            attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
-                tuple_size, defaults, create_args, attribute_options);
+            if(finalStorage == GA_STORE_STRING)
+                attribPtr = geo->createStringAttribute(owner, attribName, create_args, attribute_options);
+            else
+                attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
+                            tuple_size, defaults, create_args, attribute_options);
 
         if (!attribPtr)
         {
@@ -387,7 +449,7 @@ findOrCreateTuple(
         const GA_AttributeOptions* attribute_options = nullptr
     )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
         GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
         if (attribPtr)
@@ -474,6 +536,137 @@ findOrCreateTuple(
 //    findOrCreate(owner, storage, attribName);
 //}
 
+
+
+
+
+    GA_Attribute*
+    findOrCreatePiece(
+        const bool detached = false,
+        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = GFE_PieceAttribSearchOrder::PRIM,
+        const GA_AttributeOwner owner = GA_ATTRIB_PRIMITIVE,
+        const GA_StorageClass storageClass = GA_STORECLASS_INT,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringHolder& attribName = "",
+        const int tuple_size = 1,
+        const GA_Defaults& defaults = GA_Defaults(0.0f),
+        const bool emplaceBack = true,
+        const UT_Options* create_args = nullptr,
+        const GA_AttributeOptions* attribute_options = nullptr
+    )
+    {
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
+
+        GA_Attribute* attribPtr = findPieceAttrib(pieceAttribSearchOrder, attribName);
+
+        // if (attribPtr)
+        // {
+        //     const bool promoteFromOtherClass = sopparms.getPromoteFromOtherClass();
+        //     if (promoteFromOtherClass)
+        //     {
+        //         if (geo0AttribClass != attribPtr->getOwner())
+        //         {
+        //             attribPtr = GFE_Attribpr::attribPromote(outGeo0, attribPtr, geo0AttribClass);
+        //             //attribPtr = GFE_AttribPromote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
+        //         }
+        //     }
+        //
+        //     const bool forceCastAttribType = sopparms.getForceCastAttribType();
+        //     if (forceCastAttribType)
+        //     {
+        //         GFE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityStorageClass, "", outGeo0->getPreferredPrecision());
+        //     }
+        //     return;
+        // }
+        
+        if (attribPtr)
+        {
+            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            if (!aifTuple ||
+                attribPtr->getTupleSize() != tuple_size ||
+                aifTuple->getStorage(attribPtr) != finalStorage ||
+                aifTuple->getDefaults(attribPtr) != defaults)
+            {
+                geo->getAttributes().destroyAttribute(attribPtr);
+                attribPtr = nullptr;
+            }
+            else
+            {
+                if (emplaceBack)
+                    attribArray.emplace_back(attribPtr);
+                return attribPtr;
+            }
+        }
+
+        if (detached)
+        {
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+            attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
+            //attribPtr = attribUPtr.get();
+        }
+        else
+        {
+            if (!attribPtr)
+                attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
+                    tuple_size, defaults, create_args, attribute_options);
+
+            if (!attribPtr)
+            {
+                if (cookparms)
+                    cookparms->sopAddError(SOP_ATTRIBUTE_INVALID, attribName);
+                UT_ASSERT_MSG(attribPtr, "No Attrib");
+                return nullptr;
+            }
+        }
+        if (emplaceBack)
+            attribArray.emplace_back(attribPtr);
+        return attribPtr;
+    }
+
+
+    GA_Attribute*
+    findPieceAttrib(
+        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
+        const UT_StringHolder& pieceAttribName
+    )
+    {
+        GA_Attribute* attribPtr = nullptr;
+
+        switch (pieceAttribSearchOrder)
+        {
+        case GFE_PieceAttribSearchOrder::PRIM:       attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+        case GFE_PieceAttribSearchOrder::POINT:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+        case GFE_PieceAttribSearchOrder::VERTEX:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+        case GFE_PieceAttribSearchOrder::PRIMPOINT:
+            {
+                GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
+                attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
+            }
+            break;
+        case GFE_PieceAttribSearchOrder::POINTPRIM:
+            {
+                GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
+                attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
+            }
+            break;
+        case GFE_PieceAttribSearchOrder::ALL:
+            {
+                GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
+                attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 3);
+            }
+            break;
+        default:
+            UT_ASSERT_MSG(0, "Unhandled Geo Piece Attrib Search Order!");
+            break;
+        }
+        return attribPtr;
+    }
+
+
+
+
+
+    
 GA_Attribute*
 findOrCreateUV(
     const bool detached = false,
@@ -488,9 +681,9 @@ findOrCreateUV(
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
-    GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, owner, attribName);
+    GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(*geo, owner, attribName);
     if (attribPtr)
     {
         const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
@@ -549,7 +742,7 @@ findOrCreateUV(
             UT_ASSERT_MSG(attribPtr, "No Attrib");
             return nullptr;
         }
-        GFE_Attribute::renameAttribute(attribPtr, attribName);
+        GFE_Attribute::renameAttribute(*attribPtr, attribName);
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
@@ -570,7 +763,7 @@ findOrCreateDir(
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
     if (attribPtr)
@@ -630,7 +823,7 @@ findOrCreateDir(
             UT_ASSERT_MSG(attribPtr, "No Attrib");
             return nullptr;
         }
-        GFE_Attribute::renameAttribute(attribPtr, attribName);
+        GFE_Attribute::renameAttribute(*attribPtr, attribName);
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
@@ -652,10 +845,10 @@ findOrCreateNormal3D(
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
 
-    GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(geo, owner, attribName);
+    GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(*geo, owner, attribName);
     if (attribPtr)
     {
         const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
@@ -714,7 +907,7 @@ findOrCreateNormal3D(
             UT_ASSERT_MSG(attribPtr, "No Attrib");
             return nullptr;
         }
-        GFE_Attribute::renameAttribute(attribPtr, attribName);
+        GFE_Attribute::renameAttribute(*attribPtr, attribName);
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
@@ -757,6 +950,12 @@ bumpDataId() const
 }
 
 std::vector<GA_Attribute*>&
+ref()
+{
+    return attribArray;
+}
+
+const std::vector<GA_Attribute*>&
 ref() const
 {
     return attribArray;
@@ -772,6 +971,14 @@ protected:
         geo = inGeo;
     }
 
+    SYS_FORCE_INLINE
+        void
+        setDetail(
+            GA_Detail& inGeo
+        )
+    {
+        geo = &inGeo;
+    }
 
 protected:
     GA_Detail* geo;
@@ -811,8 +1018,8 @@ public:
     }
 
     GFE_GroupArray(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
+        GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
         : geo(geo)
         , cookparms(&cookparms)
@@ -821,10 +1028,36 @@ public:
         groupArray.reserve(16);
     }
 
+    GFE_GroupArray(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(&geo)
+        , cookparms(cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+
+    GFE_GroupArray(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(&geo)
+        , cookparms(&cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+    
     ~GFE_GroupArray()
     {
     }
 
+
+
+
+    
     GA_Group*&
         operator[](const size_t i)
     {
@@ -865,18 +1098,30 @@ public:
 
     void
         reset(
-            GA_Detail* const geo,
+            GA_Detail* const inGeo,
             const SOP_NodeVerb::CookParms* const cookparms = nullptr
         )
     {
-        this->geo = geo;
+        geo = inGeo;
         this->cookparms = cookparms;
         clear();
     }
 
     void
+        reset(
+            GA_Detail& inGeo,
+            const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        )
+    {
+        geo = &inGeo;
+        this->cookparms = cookparms;
+        clear();
+    }
+
+    SYS_FORCE_INLINE
+    void
         set(
-            GA_Group* groupPtr
+            GA_Group* const groupPtr
         )
     {
         clear();
@@ -884,6 +1129,16 @@ public:
             return;
 
         groupArray.emplace_back(groupPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        set(
+            GA_Group& groupPtr
+        )
+    {
+        clear();
+        groupArray.emplace_back(&groupPtr);
     }
 
     void
@@ -898,15 +1153,25 @@ public:
         GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
         set(groupPtr);
     }
-
+    
+    SYS_FORCE_INLINE
     void
         append(
-            GA_Group* groupPtr
+            GA_Group* const groupPtr
         )
     {
         if (!groupPtr)
             return;
         groupArray.emplace_back(groupPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        append(
+            GA_Group& groupPtr
+        )
+    {
+        groupArray.emplace_back(&groupPtr);
     }
 
     void
@@ -931,17 +1196,16 @@ public:
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
 
-        GA_Group* groupPtr = nullptr;
         for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupClass)->beginTraverse(); !it.atEnd(); ++it)
         {
-            groupPtr = it.group();
+            GA_Group* const groupPtr = it.group();
             if (!groupPtr->getName().multiMatch(groupPattern))
                 continue;
             groupArray.emplace_back(groupPtr);
         }
     }
 
-    inline
+    SYS_FORCE_INLINE
     void
         set(
             const GA_AttributeOwner groupClass,
@@ -951,8 +1215,8 @@ public:
         set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    inline
-        void
+    SYS_FORCE_INLINE
+    void
         append(
             const GA_AttributeOwner groupClass,
             const UT_StringHolder& groupPattern
@@ -961,7 +1225,7 @@ public:
         append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    inline
+    SYS_FORCE_INLINE
     void
         appends(
             const GA_AttributeOwner groupClass,
@@ -976,7 +1240,8 @@ public:
         findOrCreate(
             const bool detached = false,
             const GA_GroupType groupType = GA_GROUP_POINT,
-            const UT_StringHolder& groupName = ""
+            const UT_StringHolder& groupName = "",
+            const bool emplaceBack = true
         )
     {
         GA_Group* groupPtr = nullptr;
@@ -1022,12 +1287,23 @@ public:
                 return nullptr;
             }
         }
-        groupArray.emplace_back(groupPtr);
+        if (emplaceBack)
+            groupArray.emplace_back(groupPtr);
         return groupPtr;
     }
 
 
-
+SYS_FORCE_INLINE
+    GA_Group*
+        findOrCreate(
+            const bool detached = false,
+            const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+            const UT_StringHolder& groupName = "",
+            const bool emplaceBack = true
+        )
+    {
+        return findOrCreate(detached, GFE_Type::attributeOwner_groupType(owner), groupName, emplaceBack);
+    }
 
 
     void
@@ -1052,15 +1328,30 @@ public:
         return groupArray;
     }
 
+    const std::vector<GA_Group*>&
+        ref() const
+    {
+        return groupArray;
+    }
+
 
 protected:
     SYS_FORCE_INLINE
-        void
+    void
         setDetail(
             GA_Detail* const inGeo
         )
     {
         geo = inGeo;
+    }
+
+    SYS_FORCE_INLINE
+    void
+        setDetail(
+            GA_Detail& inGeo
+        )
+    {
+        geo = &inGeo;
     }
 
 
@@ -1100,8 +1391,8 @@ public:
     }
 
     GFE_RefAttribArray(
-        const SOP_NodeVerb::CookParms& cookparms,
-        const GA_Detail* const geo
+        const GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
         : geo(geo)
         , cookparms(&cookparms)
@@ -1110,6 +1401,28 @@ public:
         attribArray.reserve(16);
     }
 
+    GFE_RefAttribArray(
+        const GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(&geo)
+        , cookparms(cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+
+    GFE_RefAttribArray(
+        const GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(&geo)
+        , cookparms(&cookparms)
+    {
+        attribUPtrArray.reserve(16);
+        attribArray.reserve(16);
+    }
+    
     ~GFE_RefAttribArray()
     {
     }
@@ -1141,7 +1454,7 @@ public:
     }
 
     size_t
-        size()
+        size() const
     {
         return attribArray.size();
     }
@@ -1157,17 +1470,26 @@ public:
         clear();
     }
 
-
+    SYS_FORCE_INLINE
     void
         set(
-            const GA_Attribute* attribPtr
+            const GA_Attribute* const attribPtr
         )
     {
         clear();
         if (!attribPtr)
             return;
-
         attribArray.emplace_back(attribPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        set(
+            const GA_Attribute& attribPtr
+        )
+    {
+        clear();
+        attribArray.emplace_back(&attribPtr);
     }
 
     const GA_Attribute*
@@ -1184,15 +1506,24 @@ public:
         return attribPtr;
     }
 
-
+    SYS_FORCE_INLINE
     void
         append(
-            const GA_Attribute* attribPtr
+            const GA_Attribute* const attribPtr
         )
     {
         if (!attribPtr)
             return;
         attribArray.emplace_back(attribPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        append(
+            const GA_Attribute& attribPtr
+        )
+    {
+        attribArray.emplace_back(&attribPtr);
     }
 
     const GA_Attribute*
@@ -1218,7 +1549,7 @@ public:
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
 
-        const GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(geo, attribClass, attribPattern);
+        const GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
         append(attribPtr);
         return attribPtr;
     }
@@ -1235,10 +1566,11 @@ public:
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return;
 
-        GA_Attribute* attribPtr = nullptr;
         for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
         {
-            attribPtr = it.attrib();
+            GA_Attribute* const attribPtr = it.attrib();
+            if (attribPtr->getScope() != GA_SCOPE_PUBLIC)
+                continue;
             if (!attribPtr->getName().multiMatch(attribPattern))
                 continue;
             attribArray.emplace_back(attribPtr);
@@ -1267,7 +1599,7 @@ public:
             const GA_AttributeOptions* attribute_options = nullptr
         )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
         const GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
         if (attribPtr)
@@ -1321,9 +1653,9 @@ public:
             const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
         )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
-        const GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, owner, attribName);
+        const GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(*geo, owner, attribName);
         if (attribPtr)
         {
             const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
@@ -1366,7 +1698,7 @@ public:
             const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
         )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
         const GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
         if (attribPtr)
@@ -1410,9 +1742,9 @@ public:
             const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
         )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storage, storageClass);
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(*geo, storage, storageClass);
 
-        const GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(geo, owner, attribName);
+        const GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(*geo, owner, attribName);
         if (attribPtr)
         {
             const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
@@ -1525,10 +1857,32 @@ public:
     }
 
     GFE_RefGroupArray(
-        const SOP_NodeVerb::CookParms& cookparms,
-        const GA_Detail* const geo
+        const GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms& cookparms
     )
         : geo(geo)
+        , cookparms(&cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+
+    GFE_RefGroupArray(
+        const GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(&geo)
+        , cookparms(cookparms)
+    {
+        groupUPtrArray.reserve(16);
+        groupArray.reserve(16);
+    }
+
+    GFE_RefGroupArray(
+        const GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : geo(&geo)
         , cookparms(&cookparms)
     {
         groupUPtrArray.reserve(16);
@@ -1552,7 +1906,7 @@ public:
     }
 
     bool
-        isEmpty()
+        isEmpty() const
     {
         return groupArray.size() == 0;
     }
@@ -1565,13 +1919,13 @@ public:
     }
 
     size_t
-        size()
+        size() const
     {
         return groupArray.size();
     }
 
     SYS_FORCE_INLINE
-        const GA_Group*
+    const GA_Group*
         last()
     {
         return groupArray[groupArray.size() - 1];
@@ -1588,16 +1942,26 @@ public:
         clear();
     }
 
+    SYS_FORCE_INLINE
     void
         set(
-            GA_Group* groupPtr
+            GA_Group* const groupPtr
         )
     {
         clear();
         if (!groupPtr)
             return;
-
         groupArray.emplace_back(groupPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        set(
+            GA_Group& groupPtr
+        )
+    {
+        clear();
+        groupArray.emplace_back(&groupPtr);
     }
 
     void
@@ -1613,14 +1977,24 @@ public:
         set(groupPtr);
     }
 
+    SYS_FORCE_INLINE
     void
         append(
-            GA_Group* groupPtr
+            GA_Group* const groupPtr
         )
     {
         if (!groupPtr)
             return;
         groupArray.emplace_back(groupPtr);
+    }
+
+    SYS_FORCE_INLINE
+    void
+        append(
+            GA_Group& groupPtr
+        )
+    {
+        groupArray.emplace_back(&groupPtr);
     }
 
     void
@@ -1645,17 +2019,16 @@ public:
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
 
-        GA_Group* groupPtr = nullptr;
         for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupClass)->beginTraverse(); !it.atEnd(); ++it)
         {
-            groupPtr = it.group();
+            GA_Group* const groupPtr = it.group();
             if (!groupPtr->getName().multiMatch(groupPattern))
                 continue;
             groupArray.emplace_back(groupPtr);
         }
     }
 
-    inline
+    SYS_FORCE_INLINE
         void
         set(
             const GA_AttributeOwner groupClass,
@@ -1665,7 +2038,7 @@ public:
         set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    inline
+    SYS_FORCE_INLINE
         void
         append(
             const GA_AttributeOwner groupClass,
@@ -1675,7 +2048,7 @@ public:
         append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    inline
+    SYS_FORCE_INLINE
         void
         appends(
             const GA_AttributeOwner groupClass,

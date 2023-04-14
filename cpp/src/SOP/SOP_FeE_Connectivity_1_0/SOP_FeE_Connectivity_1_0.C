@@ -422,12 +422,12 @@ void
 SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Connectivity_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (GFE_Connectivity_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& geo0AttribNames = sopparms.getConnectivityAttribName();
     if (!geo0AttribNames.isstring())
@@ -445,33 +445,30 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (sopparms.getFindInputPieceAttrib())
     {
         const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = sopPieceAttribSearchOrder(sopparms.getPieceAttribSearchOrder());
-        GA_Attribute* attribPtr = GFE_Attribute::findPieceAttrib(outGeo0, pieceAttribSearchOrder, geo0AttribNames);
+        const GA_Attribute* attribPtr = GFE_Attribute::findPieceAttrib(outGeo0, pieceAttribSearchOrder, geo0AttribNames);
 
         if (attribPtr)
         {
-            const bool promoteFromOtherClass = sopparms.getPromoteFromOtherClass();
-            if (promoteFromOtherClass)
+            if (sopparms.getPromoteFromOtherClass())
             {
                 if (geo0AttribClass != attribPtr->getOwner())
                 {
-                    attribPtr = GFE_AttributePromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
+                    GFE_AttribPromote attribPromote(outGeo0);
+                    attribPromote.setSourceAttribute(attribPtr);
+                    attribPromote.createDestinationAttribute(geo0AttribClass);
+                    attribPromote.computeAndBumpDataId();
+                    //attribPtr = GFE_AttributePromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
                     //attribPtr = GFE_AttribPromote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
                 }
             }
 
-            const bool forceCastAttribType = sopparms.getForceCastAttribType();
-            if (forceCastAttribType)
+            if (sopparms.getForceCastAttribType())
             {
-                GFE_AttributeCast::attribCast(outGeo0, attribPtr, connectivityStorageClass, "", outGeo0->getPreferredPrecision());
+                GFE_AttributeCast::attribCast(outGeo0, *attribPtr, connectivityStorageClass, "", outGeo0.getPreferredPrecision());
             }
             return;
         }
     }
-
-
-    UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
-        return;
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GA_GroupType seamGroupType = sopGroupType(sopparms.getSeamGroupType());
@@ -479,10 +476,13 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const bool connectivityConstraint = sopConnectivityConstraint(sopparms.getConnectivityConstraint());
     
 
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
 
 
 
-    GFE_Connectivity connectivity(cookparms, outGeo0);
+    GFE_Connectivity connectivity(outGeo0, cookparms);
     //GFE_Connectivity connectivity(outGeo0, &cookparms);
 
     //const bool useUVConnectivity = sopparms.getUseUVConnectivity();
@@ -502,7 +502,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     connectivity.groupParserSeam.setGroup(seamGroupType, sopparms.getSeamGroup());
 
     connectivity.setComputeParm(connectivityConstraint, sopparms.getOutTopoAttrib());
-    connectivity.findOrCreateTuple(geo0AttribClass, connectivityStorageClass, GA_STORE_INVALID, false, geo0AttribNames);
+    connectivity.findOrCreateTuple(false, geo0AttribClass, connectivityStorageClass, GA_STORE_INVALID, geo0AttribNames);
     
     connectivity.computeAndBumpDataId();
 

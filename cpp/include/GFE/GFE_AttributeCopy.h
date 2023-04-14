@@ -8,7 +8,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-
+#include "GFE/GFE_OffsetAttrib.h"
 
 
 class GFE_AttribCopy : public GFE_AttribFilter, public GFE_GeoFilterRef {
@@ -26,14 +26,35 @@ public:
     {
     }
 
-    //GFE_AttribCopy(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GA_Detail* const geo
-    //)
-    //    : GFE_AttribCreateFilter(cookparms, geo)
-    //    , groupParserSeam(cookparms, geo, groupParser.getGOP())
-    //{
-    //}
+    GFE_AttribCopy(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
+    {
+    }
+
+    GFE_AttribCopy(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
+    {
+    }
+
+    GFE_AttribCopy(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
+    {
+    }
 
     void
         setComputeParm(
@@ -157,7 +178,17 @@ private:
 
             GA_Group* groupNew = groupDst->find(attribNameNew);
             if (groupNew)
-                GFE_Group::groupBumpDataId(groupNew);
+            {
+                //GFE_Group::groupBumpDataId(groupNew);
+                if (groupTypeDst == GA_GROUP_EDGE)
+                {
+                    static_cast<GA_EdgeGroup*>(groupNew)->bumpDataId();
+                }
+                else
+                {
+                    static_cast<GA_ElementGroup*>(groupNew)->bumpDataId();
+                }
+            }
             else
             {
                 groupNew = groupDst->newGroup(attribNameNew);
@@ -432,157 +463,157 @@ private:
 
 
 
-
-
-namespace GFE_AttributeCopy_Namespace {
-
-    
-
-
 /*
-template<typename T>
-static void
-    copyAttributeNumeric(
-        GA_Attribute* const attribNew,
-        const GA_Attribute* const attribRef,
-        const exint subscribeRatio,
-        const exint minGrainSize
-    )
-{
-    UT_ASSERT_P(attribNew);
-    UT_ASSERT_P(attribRef);
-    UT_ASSERT(attribNew->matchesStorage(attribRef));
-
-    GA_ROHandleT<T> attribRef_h(attribRef);
-    GA_RWHandleT<T> attribNew_h(attribNew);
-    const GA_SplittableRange geoSplittableRange(GA_Range(attribNew->getIndexMap()));
-    UTparallelFor(geoSplittableRange, [&attribNew_h, &attribRef_h](const GA_SplittableRange& r)
-    {
-        GA_Offset start, end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
-        {
-            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-            {
-                T value = attribRef_h.get(elemoff);
-                attribNew_h.set(elemoff, value);
-            }
-        }
-    }, subscribeRatio, minGrainSize);
-}
-
-static void
-copyAttributeString(
-    GA_Attribute* const attribNew,
-    const GA_Attribute* const attribRef,
-    const exint subscribeRatio,
-    const exint minGrainSize
-)
-{
-    UT_ASSERT_P(attribNew);
-    UT_ASSERT_P(attribRef);
-    UT_ASSERT(attribNew->matchesStorage(attribRef));
-
-    GA_ROHandleS attribRef_h(attribRef);
-    GA_RWHandleS attribNew_h(attribNew);
-    const GA_SplittableRange geoSplittableRange(GA_Range(attribNew->getIndexMap()));
-    UTparallelFor(geoSplittableRange, [&attribNew_h, &attribRef_h](const GA_SplittableRange& r)
-    {
-        GA_Offset start, end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
-        {
-            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-            {
-                UT_StringHolder value = attribRef_h.get(elemoff);
-                attribNew_h.set(elemoff, value);
-            }
-        }
-    }, subscribeRatio, minGrainSize);
-}
-
-static void
-copyAttributeAnyType(
-    GA_Attribute* const attribNew,
-    const GA_Attribute* const attribRef,
-    const exint subscribeRatio,
-    const exint minGrainSize
-)
-{
-    UT_ASSERT_P(attribNew);
-    UT_ASSERT_P(attribRef);
-    UT_ASSERT(attribNew->matchesStorage(attribRef));
-
-    switch (attribNew->getStorageClass())
-    {
-    case GA_STORECLASS_INT:
-        copyAttributeNumeric<int>(attribNew, attribRef, subscribeRatio, minGrainSize);
-        break;
-    case GA_STORECLASS_FLOAT:
-        copyAttributeNumeric<float>(attribNew, attribRef, subscribeRatio, minGrainSize);
-        break;
-    case GA_STORECLASS_STRING:
-        copyAttributeString(attribNew, attribRef, subscribeRatio, minGrainSize);
-        break;
-    case GA_STORECLASS_DICT:
-        break;
-    default:
-        break;
-    }
-}
-
-static void
-    copyAttribute(
-        GA_Detail* const geo,
-        const GA_AttributeOwner owner,
-        const GA_Detail* const geoRef,
-        const GA_AttributeOwner ownerRef,
-        const UT_StringHolder& attribPattern,
-        const exint subscribeRatio = 8,
-        const exint minGrainSize = 1024
-    )
-{
-    if (attribPattern.length()==0)
-        return;
-
-    GA_AttributeSet& attribsDst = geo->getAttributes();
-    GA_Attribute* attribNew = nullptr;
-    GA_Attribute* attribRef = nullptr;
-
-    GA_Range rangeSrc(geo->getIndexMap(owner));
-    GA_Range rangeDst(geoRef->getIndexMap(ownerRef));
-
-    for (GA_AttributeDict::iterator it = geoRef->getAttributes().begin(ownerRef); !it.atEnd(); ++it)
-    {
-        attribRef = it.attrib();
-        if (attribRef->isDetached())
-            continue;
-        if (attribRef->getScope() != GA_SCOPE_PUBLIC)
-            continue;
-        const UT_StringHolder& attribName = attribRef->getName();
-        const UT_StringHolder& attribNameNew = attribName;
-        
-        if (!attribName.match(attribPattern))
-            continue;
-
-        attribNew = attribsDst.findAttribute(owner, attribNameNew);
-        //if (attribNew)
-        //{
-        //    attribsDst.destroyAttribute(attribNew);
-        //    attribNew = nullptr;
-        //}
-        if (attribNew)
-        {
-            attribNew->bumpDataId();
-        }
-        else
-        {
-            //attrib = attribsDst.createAttribute(owner, attribRef, nullptr, nullptr, attribRef->getType(), GA_ReuseStrategy());
-            attribNew = attribsDst.cloneAttribute(owner, attribNameNew, *attribRef, true);
-        }
-        attribNew->copy(rangeDst, *attribRef, rangeSrc);
-        //copyAttributeAnyType(attribNew, attribRef, subscribeRatio, minGrainSize);
-    }
-}
-*/
+//
+// namespace GFE_AttributeCopy_Namespace {
+//
+//     
+//
+//
+//
+// template<typename T>
+// static void
+//     copyAttributeNumeric(
+//         GA_Attribute* const attribNew,
+//         const GA_Attribute* const attribRef,
+//         const exint subscribeRatio,
+//         const exint minGrainSize
+//     )
+// {
+//     UT_ASSERT_P(attribNew);
+//     UT_ASSERT_P(attribRef);
+//     UT_ASSERT(attribNew->matchesStorage(attribRef));
+//
+//     GA_ROHandleT<T> attribRef_h(attribRef);
+//     GA_RWHandleT<T> attribNew_h(attribNew);
+//     const GA_SplittableRange geoSplittableRange(GA_Range(attribNew->getIndexMap()));
+//     UTparallelFor(geoSplittableRange, [&attribNew_h, &attribRef_h](const GA_SplittableRange& r)
+//     {
+//         GA_Offset start, end;
+//         for (GA_Iterator it(r); it.blockAdvance(start, end); )
+//         {
+//             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+//             {
+//                 T value = attribRef_h.get(elemoff);
+//                 attribNew_h.set(elemoff, value);
+//             }
+//         }
+//     }, subscribeRatio, minGrainSize);
+// }
+//
+// static void
+// copyAttributeString(
+//     GA_Attribute* const attribNew,
+//     const GA_Attribute* const attribRef,
+//     const exint subscribeRatio,
+//     const exint minGrainSize
+// )
+// {
+//     UT_ASSERT_P(attribNew);
+//     UT_ASSERT_P(attribRef);
+//     UT_ASSERT(attribNew->matchesStorage(attribRef));
+//
+//     GA_ROHandleS attribRef_h(attribRef);
+//     GA_RWHandleS attribNew_h(attribNew);
+//     const GA_SplittableRange geoSplittableRange(GA_Range(attribNew->getIndexMap()));
+//     UTparallelFor(geoSplittableRange, [&attribNew_h, &attribRef_h](const GA_SplittableRange& r)
+//     {
+//         GA_Offset start, end;
+//         for (GA_Iterator it(r); it.blockAdvance(start, end); )
+//         {
+//             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+//             {
+//                 UT_StringHolder value = attribRef_h.get(elemoff);
+//                 attribNew_h.set(elemoff, value);
+//             }
+//         }
+//     }, subscribeRatio, minGrainSize);
+// }
+//
+// static void
+// copyAttributeAnyType(
+//     GA_Attribute* const attribNew,
+//     const GA_Attribute* const attribRef,
+//     const exint subscribeRatio,
+//     const exint minGrainSize
+// )
+// {
+//     UT_ASSERT_P(attribNew);
+//     UT_ASSERT_P(attribRef);
+//     UT_ASSERT(attribNew->matchesStorage(attribRef));
+//
+//     switch (attribNew->getStorageClass())
+//     {
+//     case GA_STORECLASS_INT:
+//         copyAttributeNumeric<int>(attribNew, attribRef, subscribeRatio, minGrainSize);
+//         break;
+//     case GA_STORECLASS_FLOAT:
+//         copyAttributeNumeric<float>(attribNew, attribRef, subscribeRatio, minGrainSize);
+//         break;
+//     case GA_STORECLASS_STRING:
+//         copyAttributeString(attribNew, attribRef, subscribeRatio, minGrainSize);
+//         break;
+//     case GA_STORECLASS_DICT:
+//         break;
+//     default:
+//         break;
+//     }
+// }
+//
+// static void
+//     copyAttribute(
+//         GA_Detail* const geo,
+//         const GA_AttributeOwner owner,
+//         const GA_Detail* const geoRef,
+//         const GA_AttributeOwner ownerRef,
+//         const UT_StringHolder& attribPattern,
+//         const exint subscribeRatio = 8,
+//         const exint minGrainSize = 1024
+//     )
+// {
+//     if (attribPattern.length()==0)
+//         return;
+//
+//     GA_AttributeSet& attribsDst = geo->getAttributes();
+//     GA_Attribute* attribNew = nullptr;
+//     GA_Attribute* attribRef = nullptr;
+//
+//     GA_Range rangeSrc(geo->getIndexMap(owner));
+//     GA_Range rangeDst(geoRef->getIndexMap(ownerRef));
+//
+//     for (GA_AttributeDict::iterator it = geoRef->getAttributes().begin(ownerRef); !it.atEnd(); ++it)
+//     {
+//         attribRef = it.attrib();
+//         if (attribRef->isDetached())
+//             continue;
+//         if (attribRef->getScope() != GA_SCOPE_PUBLIC)
+//             continue;
+//         const UT_StringHolder& attribName = attribRef->getName();
+//         const UT_StringHolder& attribNameNew = attribName;
+//         
+//         if (!attribName.match(attribPattern))
+//             continue;
+//
+//         attribNew = attribsDst.findAttribute(owner, attribNameNew);
+//         //if (attribNew)
+//         //{
+//         //    attribsDst.destroyAttribute(attribNew);
+//         //    attribNew = nullptr;
+//         //}
+//         if (attribNew)
+//         {
+//             attribNew->bumpDataId();
+//         }
+//         else
+//         {
+//             //attrib = attribsDst.createAttribute(owner, attribRef, nullptr, nullptr, attribRef->getType(), GA_ReuseStrategy());
+//             attribNew = attribsDst.cloneAttribute(owner, attribNameNew, *attribRef, true);
+//         }
+//         attribNew->copy(rangeDst, *attribRef, rangeSrc);
+//         //copyAttributeAnyType(attribNew, attribRef, subscribeRatio, minGrainSize);
+//     }
+// }
+// 
 
 
 template<typename T>
@@ -1359,5 +1390,11 @@ copyAttribute(
 
 
 } // End of namespace GFE_AttributeCopy
+
+*/
+
+
+
+
 
 #endif

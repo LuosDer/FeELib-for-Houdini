@@ -270,12 +270,12 @@ void
 SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Enumerate_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Enumerate_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     //const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
@@ -298,7 +298,7 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 
 
-    GFE_Enumerate enumerate(cookparms, outGeo0);
+    GFE_Enumerate enumerate(outGeo0, cookparms);
     enumerate.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
     enumerate.setComputeParm(outAsOffset, subscribeRatio, minGrainSize);
 

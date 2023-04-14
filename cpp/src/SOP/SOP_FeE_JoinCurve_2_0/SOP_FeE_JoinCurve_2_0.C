@@ -345,7 +345,7 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (sopparms.getCheckInputError())
     {
-        GFE_JoinCurve::joinCurveCheckInputError(cookparms, outGeo0);
+        GFE_JoinCurve_Namespace::joinCurveCheckInputError(cookparms, outGeo0);
     }
 
     //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
@@ -407,7 +407,7 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GFE_JoinCurve::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, GA_STORE_INVALID, srcPrimsAttribName);
+    GFE_JoinCurve_Namespace::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, GA_STORE_INVALID, srcPrimsAttribName);
 
 
     outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);

@@ -22,104 +22,100 @@ namespace GFE_GroupPromote {
 
     static const GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const GA_GroupType newType
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == newType)
             return group;
 
-        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo.getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(group->getName());
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
 
     static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const GA_GroupType newType
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == newType)
             return group;
 
-        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo.getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(group->getName());
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
 
     static const GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const GA_GroupType newType,
             const UT_StringHolder& newName
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == newType)
         {
-            GFE_Group::groupRename(geo, group, newName);
+            GFE_Group::groupRename(geo, *group, newName);
             return group;
         }
 
-        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo.getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(newName);
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
 
     static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const GA_GroupType newType,
             const UT_StringHolder& newName
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == newType)
         {
-            GFE_Group::groupRename(geo, group, newName);
+            GFE_Group::groupRename(geo, *group, newName);
             return group;
         }
 
-        GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        GA_GroupTable* const groupTable = geo.getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newGroup(newName);
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
@@ -142,14 +138,14 @@ namespace GFE_GroupPromote {
         
         GA_Group* const newGroup = groupTable->newDetachedGroup();
         
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return GA_GroupUPtr(newGroup);
     }
 
     //static GA_GroupUPtr
     //    groupPromoteDetached(
-    //        const GA_Detail* const geo,
+    //        const GA_Detail& geo,
     //        const GA_Group* const group,
     //        const GA_GroupType newType
     //    )
@@ -157,7 +153,7 @@ namespace GFE_GroupPromote {
     //    if (!group)
     //        return GA_GroupUPtr();
 
-    //    const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+    //    const GA_GroupTable* const groupTable = geo.getGroupTable(newType);
     //    if (!groupTable)
     //        return GA_GroupUPtr();
 
@@ -170,24 +166,23 @@ namespace GFE_GroupPromote {
 
     static GA_Group*
         groupFindPromoteDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             GA_Group* const group,
             const GA_GroupType newType
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == newType)
             return group;
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        const GA_GroupTable* const groupTable = geo.getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
@@ -209,31 +204,30 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
 
     static const GA_Group*
         groupFindPromoteDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group,
             const GA_GroupType newType
         )
     {
-        UT_ASSERT_P(geo);
         if (!group)
             return nullptr;
 
         if (group->classType() == newType)
             return group;
 
-        const GA_GroupTable* const groupTable = geo->getGroupTable(newType);
+        const GA_GroupTable* const groupTable = geo.getGroupTable(newType);
         if (!groupTable)
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
@@ -255,7 +249,7 @@ namespace GFE_GroupPromote {
             return nullptr;
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return newGroup;
     }
@@ -266,7 +260,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const GA_AttributeOwner newType,
             const UT_StringHolder& newName
@@ -278,7 +272,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const GA_AttributeOwner newType,
             const UT_StringHolder& newName
@@ -313,7 +307,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
     static GA_Group*
     groupPromote(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         GA_Group*& group,
         const GA_GroupType newType,
         const UT_StringHolder& newName,
@@ -323,7 +317,7 @@ namespace GFE_GroupPromote {
         GA_Group* newGroup = groupPromote(geo, group, newType, newName);
         if (delOriginal && group != newGroup)
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroup;
@@ -332,7 +326,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_PrimitiveGroup*& group,
             const GA_GroupType newType,
             const UT_StringHolder& newName,
@@ -342,7 +336,7 @@ namespace GFE_GroupPromote {
         GA_Group* newGroup = groupPromote(geo, group, newType, newName);
         if (delOriginal && group != newGroup)
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroup;
@@ -352,7 +346,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_PointGroup*& group,
             const GA_GroupType newType,
             const UT_StringHolder& newName,
@@ -362,7 +356,7 @@ namespace GFE_GroupPromote {
         GA_Group* newGroup = groupPromote(geo, group, newType, newName);
         if (delOriginal && group != newGroup)
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroup;
@@ -372,7 +366,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_VertexGroup*& group,
             const GA_GroupType newType,
             const UT_StringHolder& newName,
@@ -382,7 +376,7 @@ namespace GFE_GroupPromote {
         GA_Group* newGroup = groupPromote(geo, group, newType, newName);
         if (delOriginal && group != newGroup)
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroup;
@@ -392,7 +386,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_Group*
         groupPromote(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_EdgeGroup*& group,
             const GA_GroupType newType,
             const UT_StringHolder& newName,
@@ -402,7 +396,7 @@ namespace GFE_GroupPromote {
         GA_Group* newGroup = groupPromote(geo, group, newType, newName);
         if (delOriginal && group != newGroup)
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroup;
@@ -411,7 +405,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
     static GA_GroupUPtr
     groupPromoteDetached(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         GA_Group*& group,
         const GA_GroupType newType,
         const bool delOriginal
@@ -420,7 +414,7 @@ namespace GFE_GroupPromote {
         GA_GroupUPtr newGroupUPtr = groupPromoteDetached(group, newType);
         if (delOriginal && group != newGroupUPtr.get())
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroupUPtr;
@@ -429,7 +423,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
     static const GA_Group*
     groupFindPromoteDetached(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         GA_Group*& group,
         const GA_GroupType newType,
         const bool delOriginal
@@ -438,7 +432,7 @@ namespace GFE_GroupPromote {
         const GA_Group* const newGroup = groupFindPromoteDetached(geo, group, newType);
         if (delOriginal && group != newGroup)
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroup;
@@ -451,7 +445,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PrimitiveGroup*
         groupPromotePrimitive(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -462,7 +456,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PointGroup*
         groupPromotePoint(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -473,7 +467,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_VertexGroup*
         groupPromoteVertex(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -484,7 +478,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_EdgeGroup*
         groupPromoteEdge(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -500,7 +494,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_PrimitiveGroup*
         groupPromotePrimitive(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -511,7 +505,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_PointGroup*
         groupPromotePoint(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -522,7 +516,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_VertexGroup*
         groupPromoteVertex(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -533,7 +527,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_EdgeGroup*
         groupPromoteEdge(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group,
             const UT_StringHolder& newName
         )
@@ -550,7 +544,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PrimitiveGroup*
         groupPromotePrimitive(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -560,7 +554,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PointGroup*
         groupPromotePoint(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -570,7 +564,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_VertexGroup*
         groupPromoteVertex(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -580,7 +574,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_EdgeGroup*
         groupPromoteEdge(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -594,7 +588,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_PrimitiveGroup*
         groupPromotePrimitive(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group
         )
     {
@@ -604,7 +598,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_PointGroup*
         groupPromotePoint(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group
         )
     {
@@ -614,7 +608,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_VertexGroup*
         groupPromoteVertex(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group
         )
     {
@@ -624,7 +618,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_EdgeGroup*
         groupPromoteEdge(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group* const group
         )
     {
@@ -638,7 +632,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PrimitiveGroup*
         groupPromotePrimitive(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const UT_StringHolder& newName,
             const bool delOriginal
@@ -650,7 +644,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PointGroup*
         groupPromotePoint(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const UT_StringHolder& newName,
             const bool delOriginal
@@ -662,7 +656,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_VertexGroup*
         groupPromoteVertex(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const UT_StringHolder& newName,
             const bool delOriginal
@@ -674,7 +668,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_EdgeGroup*
         groupPromoteEdge(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const UT_StringHolder& newName,
             const bool delOriginal
@@ -711,7 +705,7 @@ namespace GFE_GroupPromote {
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return GA_PrimitiveGroupUPtr(static_cast<GA_PrimitiveGroup*>(newGroup));
     }
@@ -730,7 +724,7 @@ namespace GFE_GroupPromote {
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return GA_PointGroupUPtr(static_cast<GA_PointGroup*>(newGroup));
     }
@@ -749,7 +743,7 @@ namespace GFE_GroupPromote {
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return GA_VertexGroupUPtr(static_cast<GA_VertexGroup*>(newGroup));
     }
@@ -768,7 +762,7 @@ namespace GFE_GroupPromote {
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return GA_EdgeGroupUPtr(static_cast<GA_EdgeGroup*>(newGroup));
     }
@@ -795,7 +789,7 @@ namespace GFE_GroupPromote {
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         gop.appendAdhocGroup(newGroup, false);
 
@@ -848,7 +842,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_PrimitiveGroupUPtr
         groupPromotePrimitiveDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const bool delOriginal
         )
@@ -856,7 +850,7 @@ namespace GFE_GroupPromote {
         GA_PrimitiveGroupUPtr newGroupUPtr = groupPromotePrimitiveDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroupUPtr;
@@ -865,7 +859,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_PointGroupUPtr
         groupPromotePointDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const bool delOriginal
         )
@@ -873,7 +867,7 @@ namespace GFE_GroupPromote {
         GA_PointGroupUPtr newGroupUPtr = groupPromotePointDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroupUPtr;
@@ -882,7 +876,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static GA_VertexGroupUPtr
         groupPromoteVertexDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const bool delOriginal
         )
@@ -890,7 +884,7 @@ namespace GFE_GroupPromote {
         GA_VertexGroupUPtr newGroupUPtr = groupPromoteVertexDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroupUPtr;
@@ -899,7 +893,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
     static GA_EdgeGroupUPtr
     groupPromoteEdgeDetached(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         GA_Group*& group,
         const bool delOriginal
     )
@@ -907,7 +901,7 @@ namespace GFE_GroupPromote {
         GA_EdgeGroupUPtr newGroupUPtr = groupPromoteEdgeDetached(group);
         if (delOriginal && group != newGroupUPtr.get())
         {
-            geo->destroyGroup(group);
+            geo.destroyGroup(group);
             group = nullptr;
         }
         return newGroupUPtr;
@@ -922,7 +916,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PrimitiveGroup*
         groupFindPromotePrimitiveDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -933,7 +927,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_PointGroup*
         groupFindPromotePointDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -944,7 +938,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_VertexGroup*
         groupFindPromoteVertexDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -955,7 +949,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_EdgeGroup*
         groupFindPromoteEdgeDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -977,7 +971,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromoteDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group,
             const GA_GroupType newType
         )
@@ -988,7 +982,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromotePrimitiveDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -998,7 +992,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromotePointDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -1008,7 +1002,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromoteVertexDetached(
-            const GA_Detail* const geo,
+            const GA_Detail& geo,
             const GA_Group* const group
         )
     {
@@ -1019,7 +1013,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromoteDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const GA_GroupType newType,
             const bool delOriginal
@@ -1031,7 +1025,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromotePrimitiveDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const bool delOriginal
         )
@@ -1042,7 +1036,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromotePointDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const bool delOriginal
         )
@@ -1053,7 +1047,7 @@ namespace GFE_GroupPromote {
     SYS_FORCE_INLINE
         static const GA_ElementGroup*
         elementGroupFindPromoteVertexDetached(
-            GA_Detail* const geo,
+            GA_Detail& geo,
             GA_Group*& group,
             const bool delOriginal
         )
@@ -1080,7 +1074,7 @@ namespace GFE_GroupPromote {
 
         GA_ElementGroup* const newGroup = static_cast<GA_ElementGroup*>(groupTable->newDetachedGroup());
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        GFE_GroupUnion::groupUnion(*newGroup, group);
 
         return GA_ElementGroupUPtr(static_cast<GA_ElementGroup*>(newGroup));
     }

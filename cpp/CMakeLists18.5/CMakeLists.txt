@@ -84,10 +84,12 @@ endfunction ()
 
 houdini_sop_add_library_std( FILES
     SOP_FeE_Adjacency_1_0
+    SOP_FeE_AttribCast_1_0
     SOP_FeE_AttribCopy_4_0
     #SOP_FeE_AttribCopyFast_1_0
     SOP_FeE_AttribCopyFromSingleElem_1_0
     SOP_FeE_AttribInterpRay_2_0
+    SOP_FeE_AttribPromote_1_0
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
     SOP_FeE_Carve_1_0
@@ -119,7 +121,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupReverse_1_0
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
-    SOP_FeE_HasEdgeGroup_2_0
+    SOP_FeE_HasGroup_1_0
     SOP_FeE_JoinCurve_2_0
     SOP_FeE_KuhnMunkres_2_0
     SOP_FeE_LeaveElement_1_0
@@ -131,6 +133,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_OnPoly_1_0
     SOP_FeE_OrientAlongCurve_1_0
     SOP_FeE_Normal2D_1_0
+    SOP_FeE_OffsetAttribToIndex_1_0
     SOP_FeE_PointInBBox_2_0
     SOP_FeE_PointInMesh_WN_2_0
     SOP_FeE_PolyCut_3_0

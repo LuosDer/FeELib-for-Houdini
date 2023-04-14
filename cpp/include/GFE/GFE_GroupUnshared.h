@@ -12,10 +12,12 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_AttribCombine.h"
-#include "GFE/GFE_VertexNextEquiv.h"
-#include "GFE/GFE_GroupPromote.h"
+#include "GFE/GFE_AttributeCombine.h"
+//#include "GFE/GFE_VertexNextEquiv.h"
+//#include "GFE/GFE_GroupPromote.h"
 #include "GFE/GFE_GroupUnion.h"
+
+#include "GFE/GFE_Adjacency.h"
 
 
 
@@ -45,7 +47,7 @@ public:
 
     void
         setComputeParm(
-            const bool groupUnsharedAfterFuse = false,
+            const bool preFusePoint = false,
             const bool outTopoAttrib = false,
             const fpreal fuseDist = 1e-05,
             const exint subscribeRatio = 64,
@@ -54,12 +56,11 @@ public:
     {
         setHasComputed();
 
-        this->groupUnsharedAfterFuse = groupUnsharedAfterFuse;
+        this->outTopoAttrib = outTopoAttrib;
+        this->preFusePoint = preFusePoint;
         this->fuseDist = fuseDist;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
-
-        setOutTopoAttrib(outTopoAttrib);
     }
 
     void
@@ -108,10 +109,10 @@ private:
             return true;
 
         GU_DetailHandle geoOrigin_h;
-        GU_Detail* geoOriginTmp = nullptr;
-        if (groupUnsharedAfterFuse)
+        GA_Detail* geoOriginTmp = nullptr;
+        if (preFusePoint)
         {
-            geoOriginTmp = new GU_Detail();
+            geoOriginTmp = new GA_Detail();
             geoOrigin_h.allocateAndSet(geoOriginTmp);
             geoOriginTmp->replaceWith(*geo);
 
@@ -127,12 +128,17 @@ private:
         }
         else
         {
-            geoOriginTmp = static_cast<GU_Detail*>(geo);
+            geoOriginTmp = static_cast<GA_Detail*>(geo);
         }
-
         const GA_Storage finalStorageI = GFE_Type::getPreferredStorageI(geo);
 
-        GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(geoOriginTmp, groupParser.getVertexGroup(), GA_STORE_INVALID);
+        GFE_Adjacency adjacency(geo, cookparms);
+        adjacency.setComputeParm(true, subscribeRatio, minGrainSize);
+        adjacency.setVertexNextEquivGroup();
+        
+        adjacency.groupParser.setGroup(groupParser.getVertexGroup());
+        
+        //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv_Namespace::addGroupVertexNextEquiv(geoOriginTmp, groupParser.getVertexGroup(), GA_STORE_INVALID);
 
         if (isGroup)
         {
@@ -152,7 +158,7 @@ private:
 
 
 public:
-    bool groupUnsharedAfterFuse = false;
+    bool preFusePoint = false;
     fpreal fuseDist = 1e-05;
 
 private:
@@ -161,7 +167,8 @@ private:
 
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
-};
+    
+};// End of class GFE_GroupUnshared
 
 
 
@@ -190,7 +197,7 @@ private:
 //            const UT_StringHolder& unsharedAttribName = "unshared",
 //            const GA_StorageClass unsharedAttribStorageClass = GA_STORECLASS_REAL,
 //            const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
-//            const bool groupUnsharedAfterFuse = false,
+//            const bool preFusePoint = false,
 //            const GA_Storage inStorageI = GA_STORE_INVALID,
 //            const bool outTopoAttrib = false,
 //            const exint subscribeRatio = 64,
@@ -201,8 +208,8 @@ private:
 //
 //        const GA_Storage finalStorageI = GFE_Type::getPreferredStorageI(geo);
 //
-//        //GA_VertexGroup* const unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(geo, geoVtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
-//        GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(geo, geoVtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
+//        //GA_VertexGroup* const unsharedGroup = GFE_VertexNextEquiv_Namespace::addGroupVertexNextEquiv(geo, geoVtxGroup, inStorageI, "__topo_unshared_SOP_FeE_GroupUnshared_1_0");
+//        GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv_Namespace::addGroupVertexNextEquiv(geo, geoVtxGroup, inStorageI, "__topo_unshared", subscribeRatio, minGrainSize);
 //        GA_Group* const unshared_promoGroup = GFE_GroupPromote::groupPromote(geo, unsharedGroup, unsharedAttribClass, unsharedAttribName, true);
 //        return unshared_promoGroup;
 //    }
@@ -217,7 +224,7 @@ private:
 //            const UT_StringHolder& unsharedAttribName = "unshared",
 //            const GA_StorageClass unsharedAttribStorageClass = GA_STORECLASS_REAL,
 //            const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
-//            const bool groupUnsharedAfterFuse = false,
+//            const bool preFusePoint = false,
 //            const GA_Storage inStorageI = GA_STORE_INVALID,
 //            const bool outTopoAttrib = false,
 //            const exint subscribeRatio = 64,
@@ -231,7 +238,7 @@ private:
 //            return groupUnshared(cookparms, geo, groupType, sopparms.getGroup()
 //                geo0AttribNames
 //                unsharedAttribStorageClass, unsharedAttribClass
-//                groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
+//                preFusePoint, sopparms.getOutTopoAttrib(),
 //                subscribeRatio, minGrainSize
 //            );
 //        }
@@ -243,7 +250,7 @@ private:
 //        return groupUnshared(geo, geoVtxGroup,
 //            geo0AttribNames
 //            unsharedAttribStorageClass, unsharedAttribClass
-//            groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
+//            preFusePoint, sopparms.getOutTopoAttrib(),
 //            subscribeRatio, minGrainSize
 //        );
 //
@@ -263,7 +270,7 @@ private:
 //    const UT_StringHolder& unsharedAttribName = "unshared",
 //    const GA_StorageClass unsharedAttribStorageClass = GA_STORECLASS_REAL,
 //    const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
-//    const bool groupUnsharedAfterFuse = false,
+//    const bool preFusePoint = false,
 //    const GA_Storage inStorageI = GA_STORE_INVALID,
 //    const bool outTopoAttrib = false,
 //    const exint subscribeRatio = 64,
@@ -282,7 +289,7 @@ private:
 //    groupUnshared(cookparms, geo, groupType, sopparms.getGroup(),
 //        geo0AttribNames,
 //        unsharedAttribStorageClass, unsharedAttribClass
-//        groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
+//        preFusePoint, sopparms.getOutTopoAttrib(),
 //        subscribeRatio, minGrainSize
 //    );
 //

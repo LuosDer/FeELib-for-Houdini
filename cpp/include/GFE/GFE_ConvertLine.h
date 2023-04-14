@@ -18,12 +18,11 @@ class GFE_ConvertLine : public GFE_AttribFilter {
 
 public:
     GFE_ConvertLine(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         const GA_Detail* const geoOrigin = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        //, groupParser_cutPoint(geo, groupParser.getGOP(), cookparms)
     {
         geoOriginTmp = new GU_Detail();
         geoOrigin_h.allocateAndSet(geoOriginTmp);
@@ -31,7 +30,7 @@ public:
         if (geoOrigin)
         {
             hasInGeo = true;
-            geo->replaceWith(*geoOrigin);
+            geo.replaceWith(*geoOrigin);
             this->geoOrigin = geoOrigin;
         }
         else
@@ -66,14 +65,14 @@ public:
 
     void
         createSrcPrimAttrib(
-            const GA_Storage storage = GA_STORE_INVALID,
             const bool detached = false,
+            const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& srcPrimAttribName = "srcPrims"
         )
     {
-        outSrcPrimAttrib = true;
-        srcPrimAttribStorage = storage;
         srcPrimAttribDetached = detached;
+        srcPrimAttribStorage = storage;
+        outSrcPrimAttrib = true;
         this->srcPrimAttribName = srcPrimAttribName;
     }
 
@@ -81,16 +80,12 @@ public:
         setComputeParm(
             const bool isClosed = false,
             const bool keepSourcePrim = false
-            //,const exint subscribeRatio = 64,
-            //const exint minGrainSize = 64
         )
     {
         setHasComputed();
         primoff_first = -1;
         this->isClosed = isClosed;
         this->keepSourcePrim = keepSourcePrim;
-        //this->subscribeRatio = subscribeRatio;
-        //this->minGrainSize = minGrainSize;
     }
 
     void
@@ -115,13 +110,13 @@ public:
 
 
     virtual void
-        bumpDataIdsForAddOrRemove() override
+        bumpDataIdsForAddOrRemove() const override
     {
         geo->bumpDataIdsForAddOrRemove(false, true, true);
     }
 
     GA_Offset
-        get_primoff_first()
+        get_primoff_first() const
     {
         return primoff_first;
     }
@@ -343,11 +338,6 @@ private:
     GU_DetailHandle geoOrigin_h;
     const GA_Detail* geoOrigin;
     GU_Detail* geoOriginTmp;
-
-    //exint subscribeRatio = 64;
-    //exint minGrainSize = 64;
-
-
 }; // End of class GFE_ConvertLine
 
 

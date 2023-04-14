@@ -210,12 +210,11 @@ void
 SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_AttribScale_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-
+    outGeo0.replaceWith(inGeo0);
 
     const fpreal64 uniScale = sopparms.getUniScale();
     const bool doNormalize = sopparms.getNormalize();
@@ -223,36 +222,18 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (!doNormalize && uniScale==1.0)
         return;
 
-
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-
-
-    //const exint kernel = sopparms.getKernel();
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
-#if 0
-    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0,
-        UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,
-        doNormalize, uniScale,
-        subscribeRatio, minGrainSize);
-
-#else
-    GFE_NormalizeAttribElement normalizeAttribElement(cookparms, outGeo0);
+    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0, cookparms);
     
     normalizeAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
     normalizeAttribElement.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
     normalizeAttribElement.setComputeParm(doNormalize, uniScale, subscribeRatio, minGrainSize);
     normalizeAttribElement.computeAndBumpDataId();
-#endif
-
-    //GFE_NormalizeAttribElement_Namespace::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,
-    //    doNormalize, uniScale,
-    //    subscribeRatio, minGrainSize);
-
 
 
 }

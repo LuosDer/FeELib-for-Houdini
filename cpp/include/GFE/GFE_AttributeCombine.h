@@ -8,16 +8,19 @@
 
 #include "GA/GA_Detail.h"
 
+#include "GA/GA_PageHandle.h"
+#include "GA/GA_PageIterator.h"
+
 
 #include "GFE/GFE_GroupUnion.h"
 #include "GFE/GFE_GroupPromote.h"
 
-namespace GFE_AttributeCombine {
+namespace GFE_AttribCombine {
 
-
+SYS_FORCE_INLINE
     static void
         attribCombine(
-            GA_Group* const group,
+            GA_Group& group,
             const GA_Group* const groupRef
         )
     {
@@ -97,8 +100,7 @@ namespace GFE_AttributeCombine {
             groupRefPromoted = groupRefPromotedUPtr.get();
         }
 
-        GA_Storage s = attrib->getAIFTuple()->getStorage(attrib);
-        switch (s)
+        switch (attrib->getAIFTuple()->getStorage(attrib))
         {
         //case GA_STORE_BOOL:
         //    attribCombine<bool>(attrib, groupRefPromoted, subscribeRatio, minGrainSize);

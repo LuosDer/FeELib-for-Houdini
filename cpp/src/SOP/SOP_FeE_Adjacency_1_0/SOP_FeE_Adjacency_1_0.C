@@ -107,7 +107,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexPrimIndexAttribName"
         label   "Vertex Prim Index Attribute Name"
         type    string
-        default { "__topo_vtxpnum" }
+        default { "vtxpnum" }
         disablewhen "{ calVertexPrimIndex == 0 }"
     }
 
@@ -123,7 +123,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexPrimPrevAttribName"
         label   "Vertex Vertex Prim Prev Attribute Name"
         type    string
-        default { "__topo_vtxPrimPrev" }
+        default { "vtxPrimPrev" }
         disablewhen "{ calVertexVertexPrim == 0 }"
     }
     parm {
@@ -131,7 +131,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexVertexPrimNextAttribName"
         label   "Vertex Vertex Prim Next Attribute Name"
         type    string
-        default { "__topo_vtxPrimNext" }
+        default { "vtxPrimNext" }
         disablewhen "{ calVertexVertexPrim == 0 }"
     }
 
@@ -151,7 +151,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexPointDstAttribName"
         label   "Vertex Point Destination Attribute Name"
         type    string
-        default { "__topo_dstpt" }
+        default { "dstpt" }
         disablewhen "{ calVertexPointDst == 0 }"
     }
 
@@ -169,7 +169,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexNextEquivAttribName"
         label   "Vertex Next Equiv Attribute Name"
         type    string
-        default { "__topo_nextEquiv" }
+        default { "nextEquiv" }
         disablewhen "{ calVertexNextEquiv == 0 }"
     }
 
@@ -187,7 +187,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "VertexNextEquivNoLoopAttribName"
         label   "Vertex Next Equiv No Loop Attribute Name"
         type    string
-        default { "__topo_nextEquivNoLoop" }
+        default { "nextEquivNoLoop" }
         disablewhen "{ calVertexNextEquivNoLoop == 0 }"
     }
 
@@ -205,7 +205,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PointPointEdgeAttribName"
         label   "Point Point Edge Attribute Name"
         type    string
-        default { "__topo_nebs" }
+        default { "nebs" }
         disablewhen "{ calPointPointEdge == 0 }"
     }
 
@@ -223,7 +223,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PointPointPrimAttribName"
         label   "Point Point Prim Attribute Name"
         type    string
-        default { "__topo_nebsPrim" }
+        default { "nebsPrim" }
         disablewhen "{ calPointPointPrim == 0 }"
     }
 
@@ -241,7 +241,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PrimPrimEdgeAttribName"
         label   "Prim Prim Edge Attribute Name"
         type    string
-        default { "__topo_nebs" }
+        default { "nebs" }
         disablewhen "{ calPrimPrimEdge == 0 }"
     }
 
@@ -259,7 +259,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PrimPrimPointAttribName"
         label   "Prim Prim Point Attribute Name"
         type    string
-        default { "__topo_nebsPoint" }
+        default { "nebsPoint" }
         disablewhen "{ calPrimPrimPoint == 0 }"
     }
 
@@ -282,6 +282,16 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Output as Offset"
         type    toggle
         default { "1" }
+    }
+
+
+
+    parm {
+        name    "outTopoAttrib"
+        cppname "OutTopoAttrib"
+        label   "Output Topo Attribute"
+        type    toggle
+        default { "0" }
     }
 
     parm {
@@ -405,13 +415,12 @@ void
 SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Adjacency_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Adjacency_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
+    outGeo0.replaceWith(inGeo0);
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
@@ -516,6 +525,7 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 #if 1
     GFE_Adjacency adjacency(outGeo0, &cookparms);
     adjacency.setKernel(sopparms.getKernel());
+    adjacency.outTopoAttrib = sopparms.getOutTopoAttrib();
     adjacency.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     if(calVertexPrimIndex)
@@ -555,7 +565,6 @@ SOP_FeE_Adjacency_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         adjacency.setPrimPrimPoint(false, primPrimPointAttribName);
     }
     adjacency.groupParser.setGroup(groupType, sopparms.getGroup());
-    
     //adjacency.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
 

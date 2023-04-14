@@ -173,6 +173,23 @@ isElementGroup(
 
 
 
+    static GA_Storage
+    getPreferredStorageF(
+        const GA_Precision precision
+    )
+{
+    switch (precision)
+    {
+    case GA_PRECISION_16:        return  GA_STORE_REAL16;   break;
+    case GA_PRECISION_32:        return  GA_STORE_REAL32;   break;
+    case GA_PRECISION_64:        return  GA_STORE_REAL64;   break;
+    default:                     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Precision!");
+    return GA_STORE_INVALID;
+}
+    
+
 static GA_Storage
 getPreferredStorageI(
     const GA_Precision precision
@@ -191,49 +208,12 @@ getPreferredStorageI(
     return GA_STORE_INVALID;
 }
 
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorageI(
-    const GA_Detail* const geo
-)
-{
-    return getPreferredStorageI(geo->getPreferredPrecision());
-}
-
-
-
-static GA_Storage
-getPreferredStorageF(
-    const GA_Precision precision
-)
-{
-    switch (precision)
-    {
-    case GA_PRECISION_16:        return  GA_STORE_REAL16;   break;
-    case GA_PRECISION_32:        return  GA_STORE_REAL32;   break;
-    case GA_PRECISION_64:        return  GA_STORE_REAL64;   break;
-    default:                     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Precision!");
-    return GA_STORE_INVALID;
-}
-
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorageF(
-    const GA_Detail* const geo
-)
-{
-    return getPreferredStorageF(geo->getPreferredPrecision());
-}
-
-
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorage(
-    const GA_Precision precision,
-    const GA_StorageClass storageClass
-)
+    SYS_FORCE_INLINE
+    static GA_Storage
+        getPreferredStorage(
+            const GA_Precision precision,
+            const GA_StorageClass storageClass
+        )
 {
     switch (storageClass)
     {
@@ -244,47 +224,68 @@ getPreferredStorage(
     default:                    return getPreferredStorageF(precision);  break;
     }
 }
-
+    
 SYS_FORCE_INLINE
 static GA_Storage
-getPreferredStorage(
-    const GA_Detail* const geo,
-    const GA_StorageClass storageClass
+getPreferredStorageI(
+    const GA_Detail& geo
 )
 {
-    return getPreferredStorage(geo->getPreferredPrecision(), storageClass);
+    return getPreferredStorageI(geo.getPreferredPrecision());
 }
 
 
 SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorageF(
-    const GA_Detail* const geo,
+    const GA_Detail& geo
+)
+{
+    return getPreferredStorageF(geo.getPreferredPrecision());
+}
+
+
+
+SYS_FORCE_INLINE
+static GA_Storage
+getPreferredStorage(
+    const GA_Detail& geo,
+    const GA_StorageClass storageClass
+)
+{
+    return getPreferredStorage(geo.getPreferredPrecision(), storageClass);
+}
+
+
+SYS_FORCE_INLINE
+static GA_Storage
+getPreferredStorageF(
+    const GA_Detail& geo,
     const GA_Storage storage
 )
 {
-    return storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageF(geo) : storage;
+    return storage == GA_STORE_INVALID ? getPreferredStorageF(geo) : storage;
 }
 
 SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorageI(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_Storage storage
 )
 {
-    return storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
+    return storage == GA_STORE_INVALID ? getPreferredStorageI(geo) : storage;
 }
 
 SYS_FORCE_INLINE
 static GA_Storage
 getPreferredStorage(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_Storage storage,
     const GA_StorageClass storageClass
 )
 {
-    return storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorage(geo, storageClass) : storage;
+    return storage == GA_STORE_INVALID ? getPreferredStorage(geo, storageClass) : storage;
 }
 
 

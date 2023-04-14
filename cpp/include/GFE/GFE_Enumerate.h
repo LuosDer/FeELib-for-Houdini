@@ -6,6 +6,10 @@
 
 //#include "GFE/GFE_Enumerate.h"
 
+#include "GA/GA_PageHandle.h"
+#include "GA/GA_PageIterator.h"
+
+
 #include "GFE/GFE_GeoFilter.h"
 
 

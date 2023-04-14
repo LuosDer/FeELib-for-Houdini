@@ -118,14 +118,14 @@ toValidOwner(
 
 static void
 bumpDataId(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner owner,
     const UT_StringHolder& attribPattern
 )
 {
     GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribPattern);
     UT_Array<GA_Attribute*> attribList;
-    geo->getAttributes().matchAttributes(filter, owner, attribList);
+    geo.getAttributes().matchAttributes(filter, owner, attribList);
     for (GA_Size i = 0; i < attribList.size(); ++i)
     {
         attribList[i]->bumpDataId();
@@ -135,7 +135,7 @@ bumpDataId(
 
 static GA_Attribute*
 findPieceAttrib(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
     const UT_StringHolder& pieceAttribName
 )
@@ -144,25 +144,25 @@ findPieceAttrib(
 
     switch (pieceAttribSearchOrder)
     {
-    case GFE_PieceAttribSearchOrder::PRIM:       attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::POINT:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::VERTEX:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::PRIM:       attribPtr = geo.findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::POINT:      attribPtr = geo.findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::VERTEX:     attribPtr = geo.findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
     case GFE_PieceAttribSearchOrder::PRIMPOINT:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
-        attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
+        attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
     case GFE_PieceAttribSearchOrder::POINTPRIM:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
-        attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
+        attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
     case GFE_PieceAttribSearchOrder::ALL:
     {
         GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
-        attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 3);
+        attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 3);
     }
         break;
     default:
@@ -172,60 +172,52 @@ findPieceAttrib(
     return attribPtr;
 }
 
+// SYS_FORCE_INLINE
+// static bool
+// renameAttribute(
+//     GA_Detail& geo,
+//     const GA_Attribute& attrib,
+//     const UT_StringHolder& newName
+// )
+// {
+//     return geo.renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
+// }
+//
+//
+//
 SYS_FORCE_INLINE
 static bool
 renameAttribute(
-    GA_Detail* const geo,
-    const GA_Attribute* const attrib,
+    GA_Attribute& attrib,
     const UT_StringHolder& newName
 )
 {
-    UT_ASSERT_P(geo);
-    UT_ASSERT_P(attrib);
-    return geo->renameAttribute(attrib->getOwner(), attrib->getScope(), attrib->getName(), newName);
+    return attrib.getDetail().renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
 }
 
-
-
-SYS_FORCE_INLINE
-static bool
-renameAttribute(
-    GA_Attribute* const attrib,
-    const UT_StringHolder& newName
-)
-{
-    UT_ASSERT_P(attrib);
-    return attrib->getDetail().renameAttribute(attrib->getOwner(), attrib->getScope(), attrib->getName(), newName);
-}
-
-
-
-
-
+    
 static bool
 forceRenameAttribute(
-    GA_Detail* geo,
-    GA_Attribute* const attrib,
+    GA_Detail& geo,
+    GA_Attribute& attrib,
     const UT_StringHolder& newName
 )
 {
-    GA_Attribute* const existAttribute = geo->findAttribute(attrib->getOwner(), newName);
+    GA_Attribute* const existAttribute = geo.findAttribute(attrib.getOwner(), newName);
     if (existAttribute)
-        geo->getAttributes().destroyAttribute(existAttribute);
-    return geo->renameAttribute(attrib->getOwner(), GA_SCOPE_PUBLIC, attrib->getName(), newName);
+        geo.getAttributes().destroyAttribute(existAttribute);
+    return geo.renameAttribute(attrib.getOwner(), GA_SCOPE_PUBLIC, attrib.getName(), newName);
 }
 
 
 SYS_FORCE_INLINE
 static bool
 forceRenameAttribute(
-    GA_Attribute* const attrib,
+    GA_Attribute& attrib,
     const UT_StringHolder& newName
 )
 {
-    return forceRenameAttribute(&(attrib->getDetail()), attrib, newName);
-    //GA_Detail& geo = attrib->getDetail();
-    //return forceRenameAttribute(&geo, attrib, newName);
+    return forceRenameAttribute(attrib.getDetail(), attrib, newName);
 }
 
 
@@ -238,7 +230,7 @@ forceRenameAttribute(
 
 static const GA_Attribute*
 findAttributePointVertex(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const GA_AttributeScope scope,
     const UT_StringRef& attribName,
@@ -246,7 +238,7 @@ findAttributePointVertex(
 )
 {
     const GA_Attribute* attribPtr = nullptr;
-    const GA_AttributeSet& geoAttribs = geo->getAttributes();
+    const GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
@@ -278,14 +270,14 @@ findAttributePointVertex(
 
 static const GA_Attribute*
 findAttributePointVertex(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const GA_AttributeScope scope,
     const UT_StringRef& attribName
 )
 {
     const GA_Attribute* attribPtr = nullptr;
-    const GA_AttributeSet& geoAttribs = geo->getAttributes();
+    const GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
@@ -315,7 +307,7 @@ findAttributePointVertex(
 
 static GA_Attribute*
 findAttributePointVertex(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const GA_AttributeScope scope,
     const UT_StringRef& attribName,
@@ -323,7 +315,7 @@ findAttributePointVertex(
 )
 {
     GA_Attribute* attribPtr = nullptr;
-    GA_AttributeSet& geoAttribs = geo->getAttributes();
+    GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
@@ -357,14 +349,14 @@ findAttributePointVertex(
 
 static GA_Attribute*
 findAttributePointVertex(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const GA_AttributeScope scope,
     const UT_StringRef& attribName
 )
 {
     GA_Attribute* attribPtr = nullptr;
-    GA_AttributeSet& geoAttribs = geo->getAttributes();
+    GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
@@ -399,7 +391,7 @@ findAttributePointVertex(
 SYS_FORCE_INLINE
 static const GA_Attribute*
 findAttributePointVertex(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
     GA_AttributeOwner& attribOwnerFianl
@@ -411,7 +403,7 @@ findAttributePointVertex(
 SYS_FORCE_INLINE
 static const GA_Attribute*
 findAttributePointVertex(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName
 )
@@ -424,7 +416,7 @@ findAttributePointVertex(
 SYS_FORCE_INLINE
 static GA_Attribute*
 findAttributePointVertex(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName,
     GA_AttributeOwner& attribOwnerFianl
@@ -436,7 +428,7 @@ findAttributePointVertex(
 SYS_FORCE_INLINE
 static GA_Attribute*
 findAttributePointVertex(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName
 )
@@ -449,7 +441,7 @@ findAttributePointVertex(
 
 static GA_Attribute*
 findUVAttributePointVertex(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
     const UT_StringRef& uvAttribName = "uv"
 )
@@ -460,7 +452,7 @@ findUVAttributePointVertex(
         const int tupleSize = uvAttribPtr->getTupleSize();
         if (tupleSize < 2 || tupleSize > 4)
         {
-            //geo->getAttributes().destroyAttribute(uvAttribPtr);
+            //geo.getAttributes().destroyAttribute(uvAttribPtr);
             uvAttribPtr = nullptr;
         }
     }
@@ -469,7 +461,7 @@ findUVAttributePointVertex(
 
 static const GA_Attribute*
 findUVAttributePointVertex(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
     const UT_StringRef& uvAttribName = "uv"
 )
@@ -480,7 +472,7 @@ findUVAttributePointVertex(
         const int tupleSize = uvAttribPtr->getTupleSize();
         if (tupleSize < 2 || tupleSize > 4)
         {
-            //geo->getAttributes().destroyAttribute(uvAttribPtr);
+            //geo.getAttributes().destroyAttribute(uvAttribPtr);
             uvAttribPtr = nullptr;
         }
     }
@@ -491,7 +483,7 @@ findUVAttributePointVertex(
 
 static GA_Attribute*
 findOrCreateUVAttributePointVertex(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_AttributeOwner uvAttribClass = GA_ATTRIB_INVALID,
     const UT_StringRef& uvAttribName = "uv",
     const GA_Storage storage = GA_STORE_INVALID
@@ -503,7 +495,7 @@ findOrCreateUVAttributePointVertex(
         int tupleSize = uvAttribPtr->getTupleSize();
         if (tupleSize < 2 || tupleSize > 4)
         {
-            geo->getAttributes().destroyAttribute(uvAttribPtr);
+            geo.getAttributes().destroyAttribute(uvAttribPtr);
             uvAttribPtr = nullptr;
         }
     }
@@ -511,9 +503,9 @@ findOrCreateUVAttributePointVertex(
     {
         const GA_Storage finalStorageF = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageF(geo) : storage;
 #if 1
-        uvAttribPtr = static_cast<GEO_Detail*>(geo)->addTextureAttribute(uvAttribClass == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorageF);
+        uvAttribPtr = static_cast<GEO_Detail&>(geo).addTextureAttribute(uvAttribClass == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorageF);
 #else
-        uvAttribPtr = geo->getAttributes().createTupleAttribute(
+        uvAttribPtr = geo.getAttributes().createTupleAttribute(
             uvAttribClass == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, uvAttribName, finalStorageF, 3, GA_Defaults(0));
 #endif
     }
@@ -526,7 +518,7 @@ findOrCreateUVAttributePointVertex(
 
 static const GA_Attribute*
 findNormal3D(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
     const UT_StringHolder& normal3DAttribName = "N"
 )
@@ -535,35 +527,35 @@ findNormal3D(
     switch (normalSearchOrder)
     {
     case GFE_NormalSearchOrder::PRIMITIVE:
-        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::POINT:
-        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::VERTEX:
-        normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::DETAIL:
-        normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::POINTVERTEX:
-        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
-            normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+            normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         }
         break;
     case GFE_NormalSearchOrder::ALL:
-        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
-            normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+            normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
             if (!normal3DAttrib)
             {
-                normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+                normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
                 {
-                    normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+                    normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
                 }
             }
         }
@@ -578,7 +570,7 @@ findNormal3D(
 
 static GA_Attribute*
 findNormal3D(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
     const UT_StringHolder& normal3DAttribName = "N"
 )
@@ -587,35 +579,35 @@ findNormal3D(
     switch (normalSearchOrder)
     {
     case GFE_NormalSearchOrder::PRIMITIVE:
-        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::POINT:
-        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::VERTEX:
-        normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::DETAIL:
-        normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
         break;
     case GFE_NormalSearchOrder::POINTVERTEX:
-        normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
-            normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+            normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         }
         break;
     case GFE_NormalSearchOrder::ALL:
-        normal3DAttrib = geo->findPrimitiveAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
-            normal3DAttrib = geo->findPointAttribute(normal3DAttribName);
+            normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
             if (!normal3DAttrib)
             {
-                normal3DAttrib = geo->findVertexAttribute(normal3DAttribName);
+                normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
                 {
-                    normal3DAttrib = geo->findGlobalAttribute(normal3DAttribName);
+                    normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
                 }
             }
         }

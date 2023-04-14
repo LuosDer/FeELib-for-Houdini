@@ -23,56 +23,85 @@ using namespace SOP_FeE_GroupOneNebPoint_1_0_Namespace;
 
 static const char *theDsFile = R"THEDSFILE(
 {
-    name        parameters
+    name	parameters
+
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "curveUVMethod"
-        cppname "CurveUVMethod"
-        label   "Curve UV Method"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
         type    ordinal
-        default { "arcLength" }
+        default { "point" }
         menu {
-            "worldArcLength"  "World Arc Length"
-            "worldAverage"    "World Average"
-            "localArcLength"  "Local Arc Length"
-            "localAverage"    "Local Average"
-        }
-    }
-    parm {
-        name    "uvAttrib"
-        cppname "UVAttrib"
-        label   "UV Attribute"
-        type    string
-        default { "uv" }
-    }
-    parm {
-        name    "uvClass"
-        cppname "UVClass"
-        label   "UV Class"
-        type    ordinal
-        default { "auto" }
-        menu {
-            "auto"      "Auto"
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
             "point"     "Point"
             "vertex"    "Vertex"
+            "edge"      "Edge"
         }
     }
-
     parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
+        name    "oneNebGroupName"
+        cppname "OneNebGroupName"
+        label   "One Neb Group Name"
+        type    string
+        default { "oneNeb" }
+    }
+    parm {
+        name    "preFusePoint"
+        name    "PreFusePoint"
+        label   "preFusePoint"
         type    toggle
         default { "0" }
+    }
+    parm {
+        name    "fuseDist"
+        cppname "FuseDist"
+        label   "Fuse Distance"
+        type    log
+        default { "1e-05" }
+        range   { 1e-05 0.1 }
+    }
+    parm {
+        name    "outDirAttrib"
+        cppname "OutDirAttrib"
+        label   "Output Direction Attribute"
+        type    toggle
+        default { "0" }
+    }
+    groupsimple {
+        name    "dirAttrib_folder"
+        label   "Direction Attribute"
+        disablewhen "{ outDirAttrib == 0 }"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "dirAttribName"
+            label   "Direction Attribute Name"
+            type    string
+            default { "N" }
+        }
+        parm {
+            name    "reverseDir"
+            label   "Reverse Direction"
+            type    toggle
+            default { "0" }
+        }
+        parm {
+            name    "normalizeDir"
+            label   "Normalize Direction"
+            type    toggle
+            default { "0" }
+        }
     }
 
 
@@ -101,9 +130,7 @@ SOP_FeE_GroupOneNebPoint_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_GroupOneNebPoint_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allTextureCoordMenu);
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
     }
     return templ.templates();
 }
@@ -166,35 +193,6 @@ SOP_FeE_GroupOneNebPoint_1_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_GroupOneNebPoint_1_0Parms::UVClass attribClass)
-{
-    using namespace SOP_FeE_GroupOneNebPoint_1_0Enums;
-    switch (attribClass)
-    {
-    case UVClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
-    case UVClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case UVClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-
-static GFE_CurveUVMethod
-sopCurveUVMethod(SOP_FeE_GroupOneNebPoint_1_0Parms::CurveUVMethod curveUVMethod)
-{
-    using namespace SOP_FeE_GroupOneNebPoint_1_0Enums;
-    switch (curveUVMethod)
-    {
-    case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod::WorldArcLength;    break;
-    case CurveUVMethod::WORLDAVERAGE:       return GFE_CurveUVMethod::WorldAverage;      break;
-    case CurveUVMethod::LOCALARCLENGTH:     return GFE_CurveUVMethod::LocalArcLength;    break;
-    case CurveUVMethod::LOCALAVERAGE:       return GFE_CurveUVMethod::LocalAverage;      break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled CurveUVMethod!");
-    return GFE_CurveUVMethod::WorldArcLength;
-}
 
 
 
@@ -209,14 +207,6 @@ SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
 
     outGeo0->replaceWith(*inGeo0);
 
-
-    //const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-
-    const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVClass());
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
-
-    const GFE_CurveUVMethod curveUVMethod = sopCurveUVMethod(sopparms.getCurveUVMethod());
-        
     
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -232,20 +222,20 @@ SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
 
 
 
-    GFE_CurveUV curveUV(cookparms, outGeo0);
+    GFE_GroupOneNebPoint groupOneNebPoint(cookparms, outGeo0);
 
-    curveUV.setComputeParm(curveUVMethod, subscribeRatio, minGrainSize);
+    groupOneNebPoint.setComputeParm(sopparms.getPreFusePoint(), subscribeRatio, minGrainSize);
+    groupOneNebPoint.findOrCreate(false, groupName);
+
+    groupOneNebPoint.setGroup(sopparms.getPrimGroup());
+    groupOneNebPoint.findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName, 3);
+
+    groupOneNebPoint.computeAndBumpDataId();
 
 
-    curveUV.setGroup(sopparms.getPrimGroup());
-    curveUV.findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName, 3);
-
-    curveUV.computeAndBumpDataId();
-
-
-    //GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
-    //    GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
-    //    subscribeRatio, minGrainSize);
+    // GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
+    //     GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
+    //     subscribeRatio, minGrainSize);
 }
 
 

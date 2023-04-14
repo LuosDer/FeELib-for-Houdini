@@ -260,16 +260,14 @@ void
 SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupUnshared_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_GroupUnshared_1_0Cache*)cookparms.cache();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
+    //auto sopcache = (SOP_FeE_HasGroup_1_0Cache*)cookparms.cache();
+
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+
+    outGeo0.replaceWith(inGeo0);
+
     
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-
-    outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
 
     const UT_StringHolder& geo0AttribNames = sopparms.getUnsharedAttribName();
     if (!geo0AttribNames.isstring())
@@ -295,7 +293,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
     //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
 
-    GFE_GroupUnshared groupUnshared(cookparms, outGeo0);
+    GFE_GroupUnshared groupUnshared(outGeo0, cookparms);
 
     groupUnshared.groupParser.setGroup(groupType, sopparms.getGroup());
 

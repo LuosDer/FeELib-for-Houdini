@@ -8,12 +8,11 @@
 
 #include "GA/GA_Detail.h"
 
+
 #include "GFE/GFE_GeoFilter.h"
 
 
 
-
-#include "GFE/GFE_TopologyReference.h"
 
 //#include "GFE/GFE_Type.h"
 
@@ -21,23 +20,7 @@
 class GFE_AttribPromote : public GFE_AttribFilter {
 
 public:
-    //using GFE_AttribFilter::GFE_AttribFilter;
-
-    GFE_AttribPromote(
-        GA_Detail* const geo = nullptr,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, cookparms)
-    {
-    }
-
-    GFE_AttribPromote(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo = nullptr
-    )
-        : GFE_AttribFilter(cookparms, geo)
-    {
-    }
+    using GFE_AttribFilter::GFE_AttribFilter;
 
     void
         setComputeParm(
@@ -48,7 +31,7 @@ public:
     {
         setHasComputed();
 
-        setOutTopoAttrib(outTopoAttrib);
+        this->outTopoAttrib = outTopoAttrib;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
@@ -102,9 +85,8 @@ public:
             if (!dstAttribPtr)
                 dstAttribPtr = geo->getAttributes().cloneAttribute(owner, srcAttribPtr->getName(), *srcAttribPtr, true);
         }
-        setDestinationAttribute(dstAttribPtr);
+        dstOwner = owner;
     }
-
 
     void
         createDestinationAttribute(
@@ -128,7 +110,7 @@ public:
             if (!dstAttribPtr)
                 dstAttribPtr = geo->getAttributes().cloneAttribute(owner, name, *srcAttribPtr, true);
         }
-        setDestinationAttribute(dstAttribPtr);
+        dstOwner = owner;
     }
 
 
@@ -147,7 +129,7 @@ public:
             owner, GA_STORECLASS_FLOAT, GA_STORE_INVALID, false,
             srcAttribPtr->getType(), srcAttribPtr->getOptions().options(), &srcAttribPtr->getOptions());
 
-        setDestinationAttribute(dstAttribPtr);
+        dstOwner = owner;
     }
 
     SYS_FORCE_INLINE
@@ -185,7 +167,7 @@ private:
             return false;
 
         if (!geo)
-            setDetail(dstAttribPtr);
+            setDetail(*dstAttribPtr);
 
         UT_ASSERT_P(geo == &dstAttribPtr->getDetail());
         UT_ASSERT_P(geo == &srcAttribPtr->getDetail());
@@ -327,7 +309,7 @@ private:
 
 
 
-
+/*
 
 
 namespace GFE_AttributePromote {
@@ -335,27 +317,25 @@ namespace GFE_AttributePromote {
 
 static void
     attribPromote(
-        const GA_Detail* const geo,
-        GA_Attribute* const dstAttribPtr,
-        const GA_Attribute* const srcAttribPtr,
+        const GA_Detail& geo,
+        GA_Attribute& dstAttrib,
+        const GA_Attribute& srcAttrib,
         const exint subscribeRatio = 16,
         const exint minGrainSize = 1024
     )
 {
-    UT_ASSERT_P(dstAttribPtr);
-    UT_ASSERT_P(srcAttribPtr);
-    UT_ASSERT_P(dstAttribPtr != srcAttribPtr);
+    UT_ASSERT_P(&dstAttrib != &srcAttrib);
 
-    UT_ASSERT_P(geo == &dstAttribPtr->getDetail());
-    UT_ASSERT_P(geo == &srcAttribPtr->getDetail());
+    UT_ASSERT_P(&geo == &dstAttrib.getDetail());
+    UT_ASSERT_P(&geo == &srcAttrib.getDetail());
 
-    const GA_AttributeOwner dstOwner = dstAttribPtr->getOwner();
-    const GA_AttributeOwner srcOwner = srcAttribPtr->getOwner();
+    const GA_AttributeOwner dstOwner = dstAttrib.getOwner();
+    const GA_AttributeOwner srcOwner = srcAttrib.getOwner();
 
     //GA_RWHandleT<> newAttrib_h(newAttribPtr);
     //GA_ROHandleT<> attrib_h(attribPtr);
-    const GA_SplittableRange geoSplittableRange(GA_Range(dstAttribPtr->getIndexMap()));
-    UTparallelFor(geoSplittableRange, [geo, dstAttribPtr, srcAttribPtr, srcOwner, dstOwner](const GA_SplittableRange& r)
+    const GA_SplittableRange geoSplittableRange(GA_Range(dstAttrib.getIndexMap()));
+    UTparallelFor(geoSplittableRange, [&geo, &dstAttrib, &srcAttrib, srcOwner, dstOwner](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -363,7 +343,7 @@ static void
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 //dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference_Namespace::offsetPromote(geo, srcOwner, dstOwner, elemoff));
-                dstAttribPtr->copy(elemoff, *srcAttribPtr, GFE_TopologyReference_Namespace::offsetPromote(geo, dstOwner, srcOwner, elemoff));
+                dstAttrib.copy(elemoff, srcAttrib, GFE_TopologyReference_Namespace::offsetPromote(geo, dstOwner, srcOwner, elemoff));
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -373,14 +353,13 @@ static void
 SYS_FORCE_INLINE
 static void
     attribPromote(
-        GA_Attribute* const dstAttribPtr,
-        const GA_Attribute* const srcAttribPtr,
+        GA_Attribute& dstAttribPtr,
+        const GA_Attribute& srcAttribPtr,
         const exint subscribeRatio = 16,
         const exint minGrainSize = 1024
     )
 {
-    UT_ASSERT_P(srcAttribPtr);
-    attribPromote(&srcAttribPtr->getDetail(), dstAttribPtr, srcAttribPtr, subscribeRatio, minGrainSize);
+    attribPromote(srcAttribPtr.getDetail(), dstAttribPtr, srcAttribPtr, subscribeRatio, minGrainSize);
 }
 
 
@@ -392,14 +371,13 @@ static void
 SYS_FORCE_INLINE
 static GA_AttributeUPtr
 attribPromoteDetached(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_Attribute* const attribPtr,
     const GA_AttributeOwner newClass,
     const exint subscribeRatio = 16,
     const exint minGrainSize = 1024
 )
 {
-    UT_ASSERT_P(geo);
     if (!attribPtr)
         return GA_AttributeUPtr();
 #if 0
@@ -407,8 +385,8 @@ attribPromoteDetached(
     GA_AttributeUPtr newAttribUPtr(newAttribPtr);
     attribPromote(newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
 #else
-    GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
-    attribPromote(geo, newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+    GA_AttributeUPtr newAttribUPtr = geo.getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
+    attribPromote(geo, *newAttribUPtr.get(), *attribPtr, subscribeRatio, minGrainSize);
 #endif
 
     return newAttribUPtr;
@@ -431,7 +409,7 @@ attribPromoteDetached(
     attribPromote(newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
 #else
     GA_AttributeUPtr newAttribUPtr = attribPtr->getDetail().getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
-    attribPromote(newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+    attribPromote(*newAttribUPtr.get(), *attribPtr, subscribeRatio, minGrainSize);
 #endif
 
     return newAttribUPtr;
@@ -441,19 +419,18 @@ attribPromoteDetached(
 
 static GA_Attribute*
     attribPromote(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         const GA_Attribute* const attribPtr,
         const GA_AttributeOwner newClass,
         const exint subscribeRatio = 16,
         const exint minGrainSize = 1024
     )
 {
-    UT_ASSERT_P(geo);
     if (!attribPtr)
         return nullptr;
 
-    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
-    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+    GA_Attribute* const newAttribPtr = geo.getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
+    attribPromote(geo, *newAttribPtr, *attribPtr, subscribeRatio, minGrainSize);
 
     return newAttribPtr;
 }
@@ -463,44 +440,42 @@ static GA_Attribute*
 
 static GA_ConstAttributeUPtr
 attribFindPromoteDetached(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     const GA_Attribute* const attribPtr,
     const GA_AttributeOwner newClass,
     const exint subscribeRatio = 16,
     const exint minGrainSize = 1024
 )
 {
-    UT_ASSERT_P(geo);
     if (!attribPtr)
         return nullptr;
 
     if (attribPtr->getOwner() == newClass)
         return UT_UniquePtr<const GA_Attribute>(attribPtr);
 
-    GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
-    attribPromote(geo, newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+    GA_AttributeUPtr newAttribUPtr = geo.getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
+    attribPromote(geo, *newAttribUPtr.get(), *attribPtr, subscribeRatio, minGrainSize);
 
     return newAttribUPtr;
 }
 
 static const GA_Attribute*
 attribFindPromote(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     const GA_Attribute* const attribPtr,
     const GA_AttributeOwner newClass,
     const exint subscribeRatio = 16,
     const exint minGrainSize = 1024
 )
 {
-    UT_ASSERT_P(geo);
     if (!attribPtr)
         return nullptr;
 
     if (attribPtr->getOwner() == newClass)
         return attribPtr;
 
-    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
-    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+    GA_Attribute* const newAttribPtr = geo.getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
+    attribPromote(geo, *newAttribPtr, *attribPtr, subscribeRatio, minGrainSize);
 
     return newAttribPtr;
 }
@@ -508,44 +483,42 @@ attribFindPromote(
 
 static GA_AttributeUPtr
 attribFindPromoteDetached(
-    const GA_Detail* const geo,
+    const GA_Detail& geo,
     GA_Attribute* const attribPtr,
     const GA_AttributeOwner newClass,
     const exint subscribeRatio = 16,
     const exint minGrainSize = 1024
 )
 {
-    UT_ASSERT_P(geo);
     if (!attribPtr)
         return nullptr;
 
     if (attribPtr->getOwner() == newClass)
         return UT_UniquePtr<GA_Attribute>(attribPtr);
 
-    GA_AttributeUPtr newAttribUPtr = geo->getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
-    attribPromote(geo, newAttribUPtr.get(), attribPtr, subscribeRatio, minGrainSize);
+    GA_AttributeUPtr newAttribUPtr = geo.getAttributes().createDetachedAttribute(newClass, attribPtr->getType(), attribPtr->getOptions().options(), &attribPtr->getOptions());
+    attribPromote(geo, *newAttribUPtr.get(), *attribPtr, subscribeRatio, minGrainSize);
 
     return newAttribUPtr;
 }
 
 static GA_Attribute*
 attribFindPromote(
-    GA_Detail* const geo,
+    GA_Detail& geo,
     GA_Attribute* const attribPtr,
     const GA_AttributeOwner newClass,
     const exint subscribeRatio = 16,
     const exint minGrainSize = 1024
 )
 {
-    UT_ASSERT_P(geo);
     if (!attribPtr)
         return nullptr;
 
     if (attribPtr->getOwner() == newClass)
         return attribPtr;
 
-    GA_Attribute* const newAttribPtr = geo->getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
-    attribPromote(geo, newAttribPtr, attribPtr, subscribeRatio, minGrainSize);
+    GA_Attribute* const newAttribPtr = geo.getAttributes().cloneAttribute(newClass, attribPtr->getName(), *attribPtr, true);
+    attribPromote(geo, *newAttribPtr, *attribPtr, subscribeRatio, minGrainSize);
 
     return newAttribPtr;
 }
@@ -561,5 +534,16 @@ attribFindPromote(
 
 
 } // End of namespace GFE_AttributePromote
+
+
+
+
+
+*/
+
+
+
+
+
 
 #endif
