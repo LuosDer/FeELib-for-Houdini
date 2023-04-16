@@ -462,10 +462,13 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
                 }
             }
 
-            if (sopparms.getForceCastAttribType())
-            {
-                GFE_AttributeCast::attribCast(outGeo0, *attribPtr, connectivityStorageClass, "", outGeo0.getPreferredPrecision());
-            }
+            //if (sopparms.getForceCastAttribType())
+            //{
+            //    GFE_AttribCast attribCast(outGeo0);
+            //    attribCast.getOutAttribArray().set(attribPtr);
+            //    attribCast.computeAndBumpDataId();
+            //    GFE_AttribCast::attribCast(outGeo0, *attribPtr, connectivityStorageClass, "", outGeo0.getPreferredPrecision());
+            //}
             return;
         }
     }

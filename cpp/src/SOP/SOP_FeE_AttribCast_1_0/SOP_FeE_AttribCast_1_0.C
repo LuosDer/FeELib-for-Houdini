@@ -234,21 +234,22 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0.replaceWith(inGeo0);
     
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
         
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
     
     GFE_AttribCast attribCast(outGeo0, cookparms);
-    
-    attribCast.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
-    attribCast.getOutGroupArray().set(geo0AttribClass, sopparms.getGroupName());
+    GFE_AttribDuplicate
+    attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
+    attribCast.getInGroupArray(). set(geo0AttribClass, sopparms.getGroupName());
 
-    attribCast.newStorageClass = sopStorageClass(sopparms.getGroupType());
+    attribCast.newStorageClass = sopStorageClass(sopparms.getAttribType());
     if(attribCast.newStorageClass == GA_STORECLASS_STRING)
     {
+        attribCast.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
         attribCast.prefix = sopparms.getPrefix();
-        attribCast.sufix = sopparms.getSufix();
+        attribCast.sufix  = sopparms.getSufix();
     }
     
     attribCast.setComputeParm(sopparms.getRenameAttrib(), sopparms.getDelOriginAttrib(), subscribeRatio, minGrainSize);

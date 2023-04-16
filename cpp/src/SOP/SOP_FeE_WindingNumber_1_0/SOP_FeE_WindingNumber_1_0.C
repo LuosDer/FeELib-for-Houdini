@@ -228,8 +228,8 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     auto &&sopparms = cookparms.parms<SOP_FeE_WindingNumber_1_0Parms>();
     auto sopcache = (GFE_WindingNumber_Cache*)cookparms.cache();
 
-    GA_Detail* const geoPoint = cookparms.gdh().gdpNC();
-    const GA_Detail* const geoRefMesh = cookparms.inputGeo(1);
+    GA_Detail& geoPoint = *cookparms.gdh().gdpNC();
+    const GA_Detail& geoRefMesh = *cookparms.inputGeo(1);
     
 
     const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
@@ -254,11 +254,11 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         sopWNType(sopparms.getWNType()), sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(), sopparms.getWNAsSolidAngle(), sopparms.getWNNegate()
     );
 #else
-    GFE_WindingNumber wn(geoPoint, geoRefMesh, sopcache, &cookparms);
+    GFE_WindingNumber wn(&geoPoint, &geoRefMesh, sopcache, &cookparms);
 
     wn.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    wn.findOrCreateOutAttrib(wnStorage, false, sopparms.getWNAttribName());
+    wn.findOrCreateOutAttrib(false, wnStorage, sopparms.getWNAttribName());
 
     wn.setWNComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),

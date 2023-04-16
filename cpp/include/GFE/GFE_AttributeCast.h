@@ -13,11 +13,11 @@
     
 
 
-class GFE_AttribCast : public GFE_AttribFilter
+class GFE_AttribCast : public GFE_AttribCreateFilter
 {
 public:
 
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
 
 
     void
@@ -74,7 +74,7 @@ public:
         const size_t attribArrayLen = getOutAttribArray().size();
         for (size_t i = 0; i < attribArrayLen; i++)
         {
-            attribCast(*getOutAttribArray()[i], "");
+            attribCast(*getOutAttribArray()[i], getOutAttribArray()[i]->getName());
         }
         
         if (newStorageClass == GA_STORECLASS_OTHER)
@@ -83,7 +83,7 @@ public:
         const size_t groupArrayLen = getOutGroupArray().size();
         for (size_t i = 0; i < groupArrayLen; i++)
         {
-            attribCast(*getOutGroupArray()[i], "");
+            attribCast(*getOutGroupArray()[i], getOutGroupArray()[i]->getName());
         }
         
         return true;
@@ -127,16 +127,14 @@ public:
            const UT_StringHolder& newName
        )
     {
-        const GA_AttributeOwner attribClass = GFE_Type::attributeOwner_groupType(group.getOwner());
+        const GA_AttributeOwner attribClass = GFE_Type::attributeOwner_groupType(group.classType());
         
         const bool detached = !newName.isstring() || newName.length() == 0;
 
         GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
             detached, attribClass, newStorageClass, GA_STORE_INVALID, newName);
         
-        attribDuplicate(newAttrib, group);
-        
-        return true;
+        return attribDuplicate(newAttrib, group);
     }
 
 
@@ -153,20 +151,20 @@ public:
         const GA_Attribute& attribRef
     )
     {
-        return attribDuplicate(UTverify_cast<const GA_ElementGroup&>(group), attribRef);
+        return attribDuplicate(static_cast<GA_ElementGroup&>(group), attribRef);
     }
     
 
 
 
-    void
+    bool
     attribDuplicate(
         GA_Attribute& attrib,
         const GA_ElementGroup& groupRef
     )
     {
         //const GA_SplittableRange geoSplittableRange = GFE_Group::getSplittableRangeByAnyGroup(*this, &group);
-        const GA_SplittableRange geoSplittableRange = geo->getSplittableRangeByAnyGroup(group);
+        const GA_SplittableRange geoSplittableRange = geo->getSplittableRangeByAnyGroup(groupRef);
 
         switch (newStorageClass)
         {
@@ -174,16 +172,16 @@ public:
             switch (precision)
             {
             case GA_PRECISION_8:
-                setAttribValueTo1<int8> (attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<int8> (attrib, geoSplittableRange);
                 return true; break;
             case GA_PRECISION_16:
-                setAttribValueTo1<int16>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<int16>(attrib, geoSplittableRange);
                 return true; break;
             case GA_PRECISION_32:
-                setAttribValueTo1<int32>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<int32>(attrib, geoSplittableRange);
                 return true; break;
             case GA_PRECISION_64:
-                setAttribValueTo1<int64>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<int64>(attrib, geoSplittableRange);
                 return true; break;
             default:         break;
             }
@@ -192,32 +190,29 @@ public:
             switch (precision)
             {
             case GA_PRECISION_16:
-                setAttribValueTo1<fpreal16>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<fpreal16>(attrib, geoSplittableRange);
                 return true; break;
             case GA_PRECISION_32:
-                setAttribValueTo1<fpreal32>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<fpreal32>(attrib, geoSplittableRange);
                 return true; break;
             case GA_PRECISION_64:
-                setAttribValueTo1<fpreal64>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
+                setAttribValueTo1<fpreal64>(attrib, geoSplittableRange);
                 return true; break;
             default:         break;
             }
             break;
         case GA_STORECLASS_STRING:
-            GA_Attribute& attrib = *geo->getAttributes().createStringAttribute(owner, newNameFinal, 1);
-            setAttribValueTo1<UT_StringHolder>(attrib, geoSplittableRange, subscribeRatio, minGrainSize);
-            return true;
-            break;
+            setAttribValueTo1<UT_StringHolder>(attrib, geoSplittableRange);
+            return true;     break;
         case GA_STORECLASS_DICT:
             break;
 
         case GA_STORECLASS_OTHER:
-            return false;
-            break;
-        default:
-            break;
+            return false;    break;
+        default:             break;
         }
         UT_ASSERT_MSG(0, "Unhandled Precision!");
+        return false;
     }
     
 
@@ -227,7 +222,7 @@ public:
            const UT_StringHolder& newName
        )
     {
-        return attribCast(UTverify_cast<const GA_ElementGroup&>(group), newName);
+        return attribCast(static_cast<const GA_ElementGroup&>(group), newName);
     }
     
 
@@ -243,22 +238,12 @@ private:
     {
         return SCALAR_T(inScalar);
     }
-    template<typename SCALAR_T>
-    SYS_FORCE_INLINE SCALAR_T scalarConvert(const UT_StringHolder& inScalar)
-    {
-        return scalarConvert<SCALAR_T>(inScalar.c_str());
-    }
 
-    template<typename SCALAR_T>
-    SYS_FORCE_INLINE SCALAR_T scalarConvert(const char* const inScalar)
-    {
-        return atof(inScalar);
-    }
-    
+#if 0
     template<>
-    SYS_FORCE_INLINE int16 scalarConvert<int16>(const char* const inScalar)
+    SYS_FORCE_INLINE int16 scalarConvert<int16, UT_StringHolder>(const UT_StringHolder inScalar)
     {
-        return int16(atoi(inScalar));
+        return int16(atoi(inScalar.c_str()));
     }
     template<>
     SYS_FORCE_INLINE int32 scalarConvert<int32>(const char* const inScalar)
@@ -285,37 +270,92 @@ private:
     {
         return atof(inScalar);
     }
-    
+#else
+    template<typename SCALAR_T>
+    SYS_FORCE_INLINE SCALAR_T scalarConvertFromString(const char* const inScalar)
+    {
+        return atof(inScalar);
+    }
+
+    template<typename SCALAR_T>
+    SYS_FORCE_INLINE SCALAR_T scalarConvertFromString(const UT_StringHolder& inScalar)
+    {
+        return scalarConvertFromString<SCALAR_T>(inScalar.c_str());
+    }
+
+    template<>
+    SYS_FORCE_INLINE int16 scalarConvertFromString<int16>(const char* const inScalar)
+    {
+        return int16(atoi(inScalar));
+    }
+    template<>
+    SYS_FORCE_INLINE int32 scalarConvertFromString<int32>(const char* const inScalar)
+    {
+        return atoi(inScalar);
+    }
+    template<>
+    SYS_FORCE_INLINE int64 scalarConvertFromString<int64>(const char* const inScalar)
+    {
+        return atol(inScalar);
+    }
+    template<>
+    SYS_FORCE_INLINE fpreal16 scalarConvertFromString<fpreal16>(const char* const inScalar)
+    {
+        return fpreal16(atof(inScalar));
+    }
+    template<>
+    SYS_FORCE_INLINE fpreal32 scalarConvertFromString<fpreal32>(const char* const inScalar)
+    {
+        return fpreal32(atof(inScalar));
+    }
+    template<>
+    SYS_FORCE_INLINE fpreal64 scalarConvertFromString<fpreal64>(const char* const inScalar)
+    {
+        return atof(inScalar);
+    }
+#endif
     
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, int16>(const int16 inScalar)
     {
-        return UT_StringHolder(sprintf("%d", inScalar));
+        char buffer[20];
+        sprintf(buffer, "%d", inScalar);
+        return UT_StringHolder(buffer);
     }
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, int32>(const int32 inScalar)
     {
-        return UT_StringHolder(sprintf("%d", inScalar));
+        char buffer[20];
+        sprintf(buffer, "%d", inScalar);
+        return UT_StringHolder(buffer);
     }
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, int64>(const int64 inScalar)
     {
-        return UT_StringHolder(sprintf("%d", inScalar));
+        char buffer[20];
+        sprintf(buffer, "%I64d", inScalar);
+        return UT_StringHolder(buffer);
     }
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, fpreal16>(const fpreal16 inScalar)
     {
-        return UT_StringHolder(sprintf("%f", inScalar));
+        char buffer[20];
+        sprintf(buffer, "%f", fpreal32(inScalar));
+        return UT_StringHolder(buffer);
     }
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, fpreal32>(const fpreal32 inScalar)
     {
-        return UT_StringHolder(sprintf("%f", inScalar));
+        char buffer[20];
+        sprintf(buffer, "%f20", inScalar);
+        return UT_StringHolder(buffer);
     }
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, fpreal64>(const fpreal64 inScalar)
     {
-        return UT_StringHolder(sprintf("%f", inScalar));
+        char buffer[20];
+        sprintf(buffer, "%f20", inScalar);
+        return UT_StringHolder(buffer);
     }
     
     template<typename SCALAR_T, typename SCALAR_T_REF>
@@ -326,7 +366,7 @@ private:
     )
     {
         UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
-            [&attrib, &attribRef](const GA_SplittableRange& r)
+            [this, &attrib, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
@@ -345,6 +385,171 @@ private:
             }
         }, subscribeRatio, minGrainSize);
     }
+
+
+
+#if 0
+    template<typename SCALAR_T_REF>
+    void
+        attribDuplicate<UT_StringHolder, SCALAR_T_REF>(
+            GA_Attribute& attrib,
+            const GA_Attribute& attribRef
+            )
+    {
+        const GA_RWHandleS attrib_h(&attrib);
+        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+            [this, &attrib_h, &attribRef](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attribRef_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            attrib_h.set(elemoff, scalarConvert<UT_StringHolder, SCALAR_T_REF>(attribRef_ph.value(elemoff)));
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+#else
+    template<typename SCALAR_T_REF>
+    void
+        attribDuplicateString(
+            GA_Attribute& attrib,
+            const GA_Attribute& attribRef
+        )
+    {
+        const GA_RWHandleS attrib_h(&attrib);
+        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+            [this, &attrib_h, &attribRef](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attribRef_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            attrib_h.set(elemoff, scalarConvert<UT_StringHolder, SCALAR_T_REF>(attribRef_ph.value(elemoff)));
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+#endif
+
+
+
+#if 0
+    template<typename SCALAR_T>
+    void
+        attribDuplicate<SCALAR_T, UT_StringHolder>(
+            GA_Attribute& attrib,
+            const GA_Attribute& attribRef
+        )
+    {
+        const GA_ROHandleS attribRef_h(&attribRef);
+        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+            [this, &attrib, &attribRef_h](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            attrib_ph.value(elemoff) = scalarConvert<SCALAR_T, UT_StringHolder>(attribRef_h.get(elemoff));
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+#else
+    template<typename SCALAR_T>
+    void
+        attribDuplicateFromString(
+            GA_Attribute& attrib,
+            const GA_Attribute& attribRef
+            )
+    {
+        const GA_ROHandleS attribRef_h(&attribRef);
+        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+            [this, &attrib, &attribRef_h](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            attrib_ph.value(elemoff) = scalarConvertFromString<SCALAR_T>(attribRef_h.get(elemoff));
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+    }
+
+
+#define GFE_ATTRIBDUPLICATE_SPECIALIZATION(SCALAR_T)              \
+    template<>                                                    \
+    SYS_FORCE_INLINE                                              \
+    void                                                          \
+        attribDuplicate<SCALAR_T, UT_StringHolder>(               \
+            GA_Attribute& attrib,                                 \
+            const GA_Attribute& attribRef                         \
+            )                                                     \
+    {                                                             \
+        attribDuplicateFromString<SCALAR_T>(attrib, attribRef);   \
+    }                                                             \
+
+
+    GFE_ATTRIBDUPLICATE_SPECIALIZATION(int16)
+    GFE_ATTRIBDUPLICATE_SPECIALIZATION(int32)
+    GFE_ATTRIBDUPLICATE_SPECIALIZATION(int64)
+    GFE_ATTRIBDUPLICATE_SPECIALIZATION(fpreal16)
+    GFE_ATTRIBDUPLICATE_SPECIALIZATION(fpreal32)
+    GFE_ATTRIBDUPLICATE_SPECIALIZATION(fpreal64)
+
+#undef GFE_ATTRIBDUPLICATE_SPECIALIZATION
+    
+
+
+#define GFE_ATTRIBDUPLICATE_SPECIALIZATION(SCALAR_T_REF)          \
+    template<>                                                    \
+    SYS_FORCE_INLINE                                              \
+    void                                                          \
+        attribDuplicate<UT_StringHolder, SCALAR_T_REF>(           \
+            GA_Attribute& attrib,                                 \
+            const GA_Attribute& attribRef                         \
+            )                                                     \
+    {                                                             \
+        attribDuplicateString<SCALAR_T_REF>(attrib, attribRef);   \
+    }                                                             \
+
+
+        GFE_ATTRIBDUPLICATE_SPECIALIZATION(int16)
+        GFE_ATTRIBDUPLICATE_SPECIALIZATION(int32)
+        GFE_ATTRIBDUPLICATE_SPECIALIZATION(int64)
+        GFE_ATTRIBDUPLICATE_SPECIALIZATION(fpreal16)
+        GFE_ATTRIBDUPLICATE_SPECIALIZATION(fpreal32)
+        GFE_ATTRIBDUPLICATE_SPECIALIZATION(fpreal64)
+
+#undef GFE_ATTRIBDUPLICATE_SPECIALIZATION
+
+#endif
+
 
     // template<typename SCALAR_T>
     // void
@@ -396,7 +601,7 @@ private:
         case GA_STORE_INT32:
             switch (storageRef)
             {
-                case GA_STORE_INT16:  attribDuplicate<int32, int16>                                break;
+                case GA_STORE_INT16:  attribDuplicate<int32, int16>           (attrib, attribRef); break;
                 //case GA_STORE_INT32:  attribDuplicate<int32, int32>           (attrib, attribRef); break;
                 case GA_STORE_INT64:  attribDuplicate<int16, int64>           (attrib, attribRef); break;
                 case GA_STORE_REAL16: attribDuplicate<int16, fpreal16>        (attrib, attribRef); break;
@@ -409,7 +614,7 @@ private:
         case GA_STORE_INT64:
             switch (storageRef)
             {
-                case GA_STORE_INT16:  attribDuplicate<int64, int16>                                break;
+                case GA_STORE_INT16:  attribDuplicate<int64, int16>           (attrib, attribRef); break;
                 case GA_STORE_INT32:  attribDuplicate<int64, int32>           (attrib, attribRef); break;
                 //case GA_STORE_INT64:  attribDuplicate<int64, int64>           (attrib, attribRef); break;
                 case GA_STORE_REAL16: attribDuplicate<int64, fpreal16>        (attrib, attribRef); break;
@@ -422,7 +627,7 @@ private:
         case GA_STORE_REAL16:
             switch (storageRef)
             {
-                case GA_STORE_INT16:  attribDuplicate<fpreal16, int16>                                break;
+                case GA_STORE_INT16:  attribDuplicate<fpreal16, int16>           (attrib, attribRef); break;
                 case GA_STORE_INT32:  attribDuplicate<fpreal16, int32>           (attrib, attribRef); break;
                 case GA_STORE_INT64:  attribDuplicate<fpreal16, int64>           (attrib, attribRef); break;
                 //case GA_STORE_REAL16: attribDuplicate<fpreal16, fpreal16>        (attrib, attribRef); break;
@@ -435,7 +640,7 @@ private:
         case GA_STORE_REAL32:
             switch (storageRef)
             {
-                case GA_STORE_INT16:  attribDuplicate<fpreal32, int16>                                break;
+                case GA_STORE_INT16:  attribDuplicate<fpreal32, int16>           (attrib, attribRef); break;
                 case GA_STORE_INT32:  attribDuplicate<fpreal32, int32>           (attrib, attribRef); break;
                 case GA_STORE_INT64:  attribDuplicate<fpreal32, int64>           (attrib, attribRef); break;
                 case GA_STORE_REAL16: attribDuplicate<fpreal32, fpreal16>        (attrib, attribRef); break;
@@ -448,7 +653,7 @@ private:
         case GA_STORE_REAL64:
             switch (storageRef)
             {
-                case GA_STORE_INT16:  attribDuplicate<fpreal64, int16>                                break;
+                case GA_STORE_INT16:  attribDuplicate<fpreal64, int16>           (attrib, attribRef); break;
                 case GA_STORE_INT32:  attribDuplicate<fpreal64, int32>           (attrib, attribRef); break;
                 case GA_STORE_INT64:  attribDuplicate<fpreal64, int64>           (attrib, attribRef); break;
                 case GA_STORE_REAL16: attribDuplicate<fpreal64, fpreal16>        (attrib, attribRef); break;
@@ -461,12 +666,21 @@ private:
         case GA_STORE_STRING:
             switch (storageRef)
             {
-                case GA_STORE_INT16:  attribDuplicate<UT_StringHolder, int16>                                break;
-                case GA_STORE_INT32:  attribDuplicate<UT_StringHolder, int32>           (attrib, attribRef); break;
-                case GA_STORE_INT64:  attribDuplicate<UT_StringHolder, int64>           (attrib, attribRef); break;
-                case GA_STORE_REAL16: attribDuplicate<UT_StringHolder, fpreal16>        (attrib, attribRef); break;
-                case GA_STORE_REAL32: attribDuplicate<UT_StringHolder, fpreal32>        (attrib, attribRef); break;
-                case GA_STORE_REAL64: attribDuplicate<UT_StringHolder, fpreal64>        (attrib, attribRef); break;
+#if 0
+                case GA_STORE_INT16:  attribDuplicateString<int16>               (attrib, attribRef); break;
+                case GA_STORE_INT32:  attribDuplicateString<int32>               (attrib, attribRef); break;
+                case GA_STORE_INT64:  attribDuplicateString<int64>               (attrib, attribRef); break;
+                case GA_STORE_REAL16: attribDuplicateString<fpreal16>            (attrib, attribRef); break;
+                case GA_STORE_REAL32: attribDuplicateString<fpreal32>            (attrib, attribRef); break;
+                case GA_STORE_REAL64: attribDuplicateString<fpreal64>            (attrib, attribRef); break;
+#else
+                case GA_STORE_INT16:  attribDuplicate<UT_StringHolder, int16>    (attrib, attribRef); break;
+                case GA_STORE_INT32:  attribDuplicate<UT_StringHolder, int32>    (attrib, attribRef); break;
+                case GA_STORE_INT64:  attribDuplicate<UT_StringHolder, int64>    (attrib, attribRef); break;
+                case GA_STORE_REAL16: attribDuplicate<UT_StringHolder, fpreal16> (attrib, attribRef); break;
+                case GA_STORE_REAL32: attribDuplicate<UT_StringHolder, fpreal32> (attrib, attribRef); break;
+                case GA_STORE_REAL64: attribDuplicate<UT_StringHolder, fpreal64> (attrib, attribRef); break;
+#endif
                 //case GA_STORE_STRING: attribDuplicate<UT_StringHolder, UT_StringHolder> (attrib, attribRef); break;
                 default: UT_ASSERT_MSG(0, "unhandled attrib storage"); break;
             }

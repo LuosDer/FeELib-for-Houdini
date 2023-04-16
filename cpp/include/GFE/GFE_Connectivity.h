@@ -10,8 +10,8 @@
 #include "GFE/GFE_GeoFilter.h"
 
 #include "GFE/GFE_Adjacency.h"
-//#include "GFE/GFE_AttributePromote.h"
-//#include "GFE/GFE_AttributeCast.h"
+#include "GFE/GFE_AttributePromote.h"
+#include "GFE/GFE_AttributeCast.h"
 
 
 
@@ -148,6 +148,10 @@ private:
             }
             if (outAttribStorageClass != GA_STORECLASS_INT)
             {
+                GFE_AttribCast attribCast(geo);
+                attribCast.getOutAttribArray().set(attribPtr);
+                attribCast.computeAndBumpDataId();
+                GFE_AttribCast::attribCast(outGeo0, *attribPtr, connectivityStorageClass, "", outGeo0.getPreferredPrecision());
                 geo->changeAttribStorageClass(outAttribOwner, GFE_TEMP_ConnectivityAttribName, outAttribStorageClass);
                 //GFE_AttributeCast::changeAttribStorageClass(*geo, outAttribOwner, GFE_TEMP_ConnectivityAttribName, outAttribStorageClass);
             }
@@ -300,7 +304,7 @@ private:
     
     const GA_IndexMap& indexMap = geo->getIndexMap(connectivityOwner);
     UTparallelFor(groupParser.getSplittableRange(connectivityOwner),
-        [&indexMap, &classnumArray](const GA_SplittableRange& r)
+        [&indexMap, &classnumArray, this](const GA_SplittableRange& r)
     {
         GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(connectivityAttribPtr);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)

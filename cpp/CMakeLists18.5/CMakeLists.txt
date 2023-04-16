@@ -88,6 +88,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribCopy_4_0
     #SOP_FeE_AttribCopyFast_1_0
     SOP_FeE_AttribCopyFromSingleElem_1_0
+    SOP_FeE_AttribDuplicate_1_0
     SOP_FeE_AttribInterpRay_2_0
     SOP_FeE_AttribPromote_1_0
     SOP_FeE_AttribScale_1_0
