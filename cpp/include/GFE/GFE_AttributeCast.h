@@ -31,45 +31,45 @@ public:
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
+
     
-    
-    SYS_FORCE_INLINE void setRenameAttrib(const GA_Attribute& inAttrib)
-    {
-        setRenameAttrib(inAttrib.isDetached() ? "" : inAttrib.getName().c_str());
-    }
-    SYS_FORCE_INLINE void setRenameAttrib(const char* inNewNames)
-    {
-        newAttribNames = inNewNames;
-        renameAttrib = newAttribNames.getIsValid();
-    }
-    SYS_FORCE_INLINE void setRenameAttrib(const UT_StringHolder& inNewNames)
-    {
-        newAttribNames = inNewNames;
-        renameAttrib = newAttribNames.getIsValid();
-    }
-    SYS_FORCE_INLINE void setRenameAttrib()
-    {
-        renameAttrib = false;
-    }
-    
-    SYS_FORCE_INLINE void setRenameGroup(const GA_Group& inGroup)
-    {
-        setRenameGroup(inGroup.isDetached() ? "" : inGroup.getName().c_str());
-    }
-    SYS_FORCE_INLINE void setRenameGroup(const char* inNewNames)
-    {
-        newGroupNames = inNewNames;
-        renameGroup = newGroupNames.getIsValid();
-    }
-    SYS_FORCE_INLINE void setRenameGroup(const UT_StringHolder& inNewNames)
-    {
-        newGroupNames = inNewNames;
-        renameGroup = newGroupNames.getIsValid();
-    }
-    SYS_FORCE_INLINE void setRenameGroup()
-    {
-        renameGroup = false;
-    }
+    // SYS_FORCE_INLINE void setRenameAttrib(const GA_Attribute& inAttrib)
+    // {
+    //     setRenameAttrib(inAttrib.isDetached() ? "" : inAttrib.getName().c_str());
+    // }
+    // SYS_FORCE_INLINE void setRenameAttrib(const char* inNewNames)
+    // {
+    //     newAttribNames = inNewNames;
+    //     renameAttrib = newAttribNames.getIsValid();
+    // }
+    // SYS_FORCE_INLINE void setRenameAttrib(const UT_StringHolder& inNewNames)
+    // {
+    //     newAttribNames = inNewNames;
+    //     renameAttrib = newAttribNames.getIsValid();
+    // }
+    // SYS_FORCE_INLINE void setRenameAttrib()
+    // {
+    //     renameAttrib = false;
+    // }
+    //
+    // SYS_FORCE_INLINE void setRenameGroup(const GA_Group& inGroup)
+    // {
+    //     setRenameGroup(inGroup.isDetached() ? "" : inGroup.getName().c_str());
+    // }
+    // SYS_FORCE_INLINE void setRenameGroup(const char* inNewNames)
+    // {
+    //     newGroupNames = inNewNames;
+    //     renameGroup = newGroupNames.getIsValid();
+    // }
+    // SYS_FORCE_INLINE void setRenameGroup(const UT_StringHolder& inNewNames)
+    // {
+    //     newGroupNames = inNewNames;
+    //     renameGroup = newGroupNames.getIsValid();
+    // }
+    // SYS_FORCE_INLINE void setRenameGroup()
+    // {
+    //     renameGroup = false;
+    // }
     
     void setDestinationAttribute(const GA_Attribute& inAttrib)
     {
@@ -86,14 +86,16 @@ public:
         {
             precision = GA_PRECISION_INVALID;
         }
-        setRenameAttrib(inAttrib);
+        newAttribNames = inAttrib;
+        //setRenameAttrib(inAttrib);
     }
 
     SYS_FORCE_INLINE void setDestinationGroup(const GA_Group& inGroup)
     {
         newStorageClass = GA_STORECLASS_OTHER;
         precision = GA_PRECISION_1;
-        setRenameGroup(inGroup);
+        newGroupNames = inGroup;
+        //setRenameGroup(inGroup);
     }
 
 
@@ -161,7 +163,7 @@ private:
             
         const GA_AttributeOwner attribClass = attrib.getOwner();
         
-        const UT_StringHolder& newName = renameAttrib ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
+        const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
         const bool detached = !newName.isstring() || newName.length() == 0;
 
         if(newStorageClass == GA_STORECLASS_OTHER)
@@ -203,7 +205,7 @@ private:
     {
         const GA_AttributeOwner attribClass = GFE_Type::attributeOwner_groupType(group.classType());
         
-        const UT_StringHolder& newName = renameGroup ? newGroupNames.getNext<UT_StringHolder>() : group.getName();
+        const UT_StringHolder& newName = newGroupNames.getIsValid() ? newGroupNames.getNext<UT_StringHolder>() : group.getName();
         const bool detached = !newName.isstring() || newName.length() == 0;
 
         GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
@@ -976,6 +978,8 @@ public:
         GA_Precision precision = GA_PRECISION_INVALID;
         bool delOrigin = true;
 
+        UFE_SplittableString newAttribNames;
+        UFE_SplittableString newGroupNames;
     
         const char* prefix = "";
         const char* sufix  = "";
@@ -986,8 +990,6 @@ private:
         bool renameGroup = false;
         // ::std::string newAttribNames;
         // ::std::string newGroupNames;
-        UFE_SplittableString newAttribNames;
-        UFE_SplittableString newGroupNames;
         //UT_String newAttribNames;
         //UT_String newGroupNames;
 

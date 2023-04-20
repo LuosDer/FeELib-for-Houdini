@@ -46,24 +46,43 @@ public:
     {
     }
 
+    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Group& attribPtr)
+    {
+        set(attribPtr.isDetached() ? "" : attribPtr.getName().c_str());
+        return *this;
+    }
+    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Group* const attribPtr)
+    {
+        UT_ASSERT_P(attribPtr);
+        set(attribPtr->isDetached() ? "" : attribPtr->getName().c_str());
+        return *this;
+    }
+    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Attribute& attribPtr)
+    {
+        set(attribPtr.isDetached() ? "" : attribPtr.getName().c_str());
+        return *this;
+    }
+    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Attribute* const attribPtr)
+    {
+        UT_ASSERT_P(attribPtr);
+        set(attribPtr->isDetached() ? "" : attribPtr->getName().c_str());
+        return *this;
+    }
     SYS_FORCE_INLINE UFE_SplittableString &operator=(const UT_StringHolder& s)
     {
         set(s.c_str());
         return *this;
     }
-    
     SYS_FORCE_INLINE UFE_SplittableString &operator=(const char* s)
     {
         set(s);
         return *this;
     }
-    
     SYS_FORCE_INLINE UFE_SplittableString &operator=(UFE_SplittableString &s)
     {
         set(s.fullStr);
         return *this;
     }
-    
     SYS_FORCE_INLINE UFE_SplittableString &operator=(UFE_SplittableString &&s)
     {
         set(::std::move(s).fullStr);
@@ -129,15 +148,20 @@ public:
     // {
     //     return !isInvalid();
     // }
-
-    SYS_FORCE_INLINE bool getIsValid()
+    
+    void computeIsValid()
     {
-        if (shouldComputeIsValid && !isValid)
+        if (shouldComputeIsValid)
         {
             shouldComputeIsValid = false;
             getNextCore();
             reset();
         }
+    }
+    
+    SYS_FORCE_INLINE bool getIsValid()
+    {
+        computeIsValid();
         return isValid;
     }
     SYS_FORCE_INLINE bool getIsInvalid()
@@ -145,6 +169,10 @@ public:
         return !getIsValid();
     }
 
+    SYS_FORCE_INLINE bool forceGetIsValid()
+    {
+        return isValid;
+    }
 
     template<typename T>
     SYS_FORCE_INLINE T getNext()
