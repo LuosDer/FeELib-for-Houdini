@@ -217,12 +217,12 @@ void
 SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_EdgeGroupTransfer_3_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_EdgeGroupTransfer_3_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -250,7 +250,8 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     if (boss.wasInterrupted())
         return;
     
-    GFE_EdgeGroupTransfer::edgeGroupTransfer(cookparms,
+    GFE_EdgeGroupTransfer edgeGroupTransfer(outGeo0, cookparms);
+    edgeGroupTransfer.gro
         outGeo0, inGeo0,
         groupType, groupName, edgeGroupName,
         useSnapDist, snapDist,

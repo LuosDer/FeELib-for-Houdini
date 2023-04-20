@@ -48,7 +48,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Unique Neb Source Prims"
         type    toggle
         default { "1" }
-        disablewhen "{ outSrcPrims == 0 }"
+        disablewhen "{ outSrcPrim == 0 }"
     }
     parm {
         name    "keepEdgeGroup"
@@ -158,21 +158,21 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-       name    "outSrcPrims"
-       cppname "OutSrcPrims"
-       label   "Output Source Prims"
-       type    toggle
-       default { 0 }
-       nolabel
-       joinnext
+        name    "outSrcPrim"
+        cppname "OutSrcPrim"
+        label   "Output Source Prim"
+        type    toggle
+        default { 0 }
+        nolabel
+        joinnext
     }
     parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
+        name    "srcPrimAttribName"
+        cppname "SrcPrimAttribName"
+        label   "Source Prim Attrib Name"
         type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
+        default { "srcPrim" }
+        disablewhen "{ outSrcPrim == 0 }"
     }
 
 
@@ -335,84 +335,31 @@ void
 SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_JoinCurve_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_JoinCurve_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    //outGeo0->replaceWithPoints(*inGeo0);
-    outGeo0->replaceWith(*inGeo0);
-
-    if (sopparms.getCheckInputError())
-    {
-        GFE_JoinCurve_Namespace::joinCurveCheckInputError(cookparms, outGeo0);
-    }
-
-    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-
-    const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-    const UT_StringHolder& pointGroupName = sopparms.getPointGroup();
-    const UT_StringHolder& vertexGroupName = sopparms.getVertexGroup();
-    const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
-
-
-    
-    const bool keepOrder = sopparms.getKeepOrder();
-    const bool keepLoop = sopparms.getKeepLoop();
-    const bool closeLoop = sopparms.getCloseLoop();
-    
-
-
-    const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
-    GA_VertexGroup* geo0VtxGroup = nullptr;
-    GA_VertexGroupUPtr geo0vtxGroupUPtr;
-    if (hasInputGroup)
-    {
-        //geo0vtxGroupUPtr = tmpGeo0->createDetachedVertexGroup();
-        geo0VtxGroup = geo0vtxGroupUPtr.get();
-        if (primGroupName.isstring())
-        {
-
-        }
-
-        if (pointGroupName.isstring())
-        {
-
-        }
-
-        if (vertexGroupName.isstring())
-        {
-
-        }
-
-        if (edgeGroupName.isstring())
-        {
-
-        }
-    }
-
-    const UT_StringHolder& srcPrimsAttribName = sopparms.getSrcPrimsAttribName();
-    const bool outSrcPrims = sopparms.getOutSrcPrims();
-
-    //const exint kernel = sopparms.getKernel();
-
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-    
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GFE_JoinCurve_Namespace::joinCurve(cookparms, outGeo0, sopparms.getStopPointGroup(), keepOrder, keepLoop, closeLoop, outSrcPrims, GA_STORE_INVALID, srcPrimsAttribName);
+    GFE_JoinCurve joinCurve(outGeo0, cookparms);
+    
+    if (sopparms.getCheckInputError())
+    {
+        joinCurve.checkInputError();
+    }
 
-
-    outGeo0->bumpDataIdsForAddOrRemove(0, 1, 1);
-    //outGeo0->bumpDataIdsForRewire();
-
+    joinCurve.groupParser.setPointGroup(sopparms.getStopPointGroup());
+    joinCurve.setComputeParm(sopparms.getKeepOrder(), sopparms.getKeepLoop(), sopparms.getCloseLoop());
+    if(sopparms.getOutSrcPrim())
+        joinCurve.setSrcPrim(false, GA_STORE_INVALID, sopparms.getSrcPrimAttribName());
+        
+    joinCurve.computeAndBumpDataIdsForAddOrRemove();
     
 }
 

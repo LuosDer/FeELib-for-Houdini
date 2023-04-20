@@ -64,10 +64,7 @@ namespace GFE_Type {
 
 #endif
 
-static GA_GroupType
-attributeOwner_groupType(
-    const GA_AttributeOwner attribOwner
-)
+static GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner)
 {
     switch (attribOwner)
     {
@@ -81,10 +78,7 @@ attributeOwner_groupType(
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-attributeOwner_groupType(
-    const GA_GroupType groupType
-)
+static GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType)
 {
     switch (groupType)
     {
@@ -98,12 +92,32 @@ attributeOwner_groupType(
     return GA_ATTRIB_INVALID;
 }
 
+    
+static GA_Precision precisionFromStorage(const GA_Storage storage)
+{
+    switch (storage)
+    {
+    case GA_STORE_INVALID:       return GA_PRECISION_INVALID; break;
+    case GA_STORE_BOOL:          return GA_PRECISION_1;       break;
+    case GA_STORE_UINT8:         return GA_PRECISION_8;       break;
+    case GA_STORE_INT8:          return GA_PRECISION_8;       break;
+    case GA_STORE_INT16:         return GA_PRECISION_16;      break;
+    case GA_STORE_INT32:         return GA_PRECISION_32;      break;
+    case GA_STORE_INT64:         return GA_PRECISION_64;      break;
+    case GA_STORE_REAL16:        return GA_PRECISION_16;      break;
+    case GA_STORE_REAL32:        return GA_PRECISION_32;      break;
+    case GA_STORE_REAL64:        return GA_PRECISION_64;      break;
+    case GA_STORE_STRING:        return GA_PRECISION_INVALID; break;
+    case GA_STORE_DICT:          return GA_PRECISION_INVALID; break;
+    // case GA_STORE_UTF8:          return GA_PRECISION_8;       break;
+    // case GA_STORE_UTF16:         return GA_PRECISION_16;      break;
+    // case GA_STORE_UTF32:         return GA_PRECISION_32;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Storage!");
+    return GA_PRECISION_INVALID;
+}
 
-SYS_FORCE_INLINE
-static bool
-isValid(
-    const GA_AttributeOwner attribOwner
-)
+SYS_FORCE_INLINE static bool isValid(const GA_AttributeOwner attribOwner)
 {
     return attribOwner == GA_ATTRIB_PRIMITIVE ||
            attribOwner == GA_ATTRIB_POINT     ||
@@ -111,11 +125,7 @@ isValid(
            attribOwner == GA_ATTRIB_GLOBAL    ;
 }
 
-SYS_FORCE_INLINE
-static bool
-isValid(
-    const GA_GroupType groupType
-)
+SYS_FORCE_INLINE static bool isValid(const GA_GroupType groupType)
 {
     return groupType == GA_GROUP_PRIMITIVE ||
            groupType == GA_GROUP_POINT     ||
@@ -123,11 +133,7 @@ isValid(
            groupType == GA_GROUP_EDGE;
 }
 
-SYS_FORCE_INLINE
-static bool
-isInvalid(
-    const GA_AttributeOwner attribOwner
-)
+SYS_FORCE_INLINE static bool isInvalid(const GA_AttributeOwner attribOwner)
 {
     return attribOwner != GA_ATTRIB_PRIMITIVE &&
            attribOwner != GA_ATTRIB_POINT     &&
@@ -135,11 +141,7 @@ isInvalid(
            attribOwner != GA_ATTRIB_GLOBAL;
 }
 
-SYS_FORCE_INLINE
-static bool
-isInvalid(
-    const GA_GroupType groupType
-)
+SYS_FORCE_INLINE static bool isInvalid(const GA_GroupType groupType)
 {
     return groupType != GA_GROUP_PRIMITIVE &&
            groupType != GA_GROUP_POINT     &&
@@ -148,21 +150,13 @@ isInvalid(
 }
 
 
-SYS_FORCE_INLINE
-static bool
-isElementGroup(
-    const GA_AttributeOwner attribOwner
-)
+SYS_FORCE_INLINE static bool isElementGroup(const GA_AttributeOwner attribOwner)
 {
     return attribOwner == GA_ATTRIB_PRIMITIVE || attribOwner == GA_ATTRIB_POINT || attribOwner == GA_ATTRIB_VERTEX;
 }
 
 
-SYS_FORCE_INLINE
-static bool
-isElementGroup(
-    const GA_GroupType groupType
-)
+SYS_FORCE_INLINE static bool isElementGroup(const GA_GroupType groupType)
 {
     return groupType == GA_GROUP_PRIMITIVE || groupType == GA_GROUP_POINT || groupType == GA_GROUP_VERTEX;
 }
@@ -172,11 +166,7 @@ isElementGroup(
 
 
 
-
-    static GA_Storage
-    getPreferredStorageF(
-        const GA_Precision precision
-    )
+static GA_Storage getPreferredStorageF(const GA_Precision precision)
 {
     switch (precision)
     {
@@ -190,10 +180,7 @@ isElementGroup(
 }
     
 
-static GA_Storage
-getPreferredStorageI(
-    const GA_Precision precision
-)
+static GA_Storage getPreferredStorageI(const GA_Precision precision)
 {
     switch (precision)
     {
@@ -207,13 +194,8 @@ getPreferredStorageI(
     UT_ASSERT_MSG(0, "Unhandled Precision!");
     return GA_STORE_INVALID;
 }
-
-    SYS_FORCE_INLINE
-    static GA_Storage
-        getPreferredStorage(
-            const GA_Precision precision,
-            const GA_StorageClass storageClass
-        )
+    
+SYS_FORCE_INLINE static GA_Storage getPreferredStorage(const GA_StorageClass storageClass, const GA_Precision precision)
 {
     switch (storageClass)
     {
@@ -225,41 +207,29 @@ getPreferredStorageI(
     }
 }
     
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorageI(
-    const GA_Detail& geo
-)
+SYS_FORCE_INLINE static GA_Storage getPreferredStorageI(const GA_Detail& geo)
 {
     return getPreferredStorageI(geo.getPreferredPrecision());
 }
 
 
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorageF(
-    const GA_Detail& geo
-)
+SYS_FORCE_INLINE static GA_Storage getPreferredStorageF(const GA_Detail& geo)
 {
     return getPreferredStorageF(geo.getPreferredPrecision());
 }
 
 
 
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorage(
+SYS_FORCE_INLINE static GA_Storage getPreferredStorage(
     const GA_Detail& geo,
     const GA_StorageClass storageClass
 )
 {
-    return getPreferredStorage(geo.getPreferredPrecision(), storageClass);
+    return getPreferredStorage(storageClass, geo.getPreferredPrecision());
 }
 
 
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorageF(
+SYS_FORCE_INLINE static GA_Storage getPreferredStorageF(
     const GA_Detail& geo,
     const GA_Storage storage
 )
@@ -267,9 +237,7 @@ getPreferredStorageF(
     return storage == GA_STORE_INVALID ? getPreferredStorageF(geo) : storage;
 }
 
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorageI(
+SYS_FORCE_INLINE static GA_Storage getPreferredStorageI(
     const GA_Detail& geo,
     const GA_Storage storage
 )
@@ -277,15 +245,22 @@ getPreferredStorageI(
     return storage == GA_STORE_INVALID ? getPreferredStorageI(geo) : storage;
 }
 
-SYS_FORCE_INLINE
-static GA_Storage
-getPreferredStorage(
+SYS_FORCE_INLINE static GA_Storage getPreferredStorage(
     const GA_Detail& geo,
-    const GA_Storage storage,
-    const GA_StorageClass storageClass
+    const GA_StorageClass storageClass,
+    const GA_Storage storage
 )
 {
     return storage == GA_STORE_INVALID ? getPreferredStorage(geo, storageClass) : storage;
+}
+
+SYS_FORCE_INLINE static GA_Storage getPreferredStorage(
+    const GA_Detail* const geo,
+    const GA_StorageClass storageClass,
+    const GA_Storage storage
+)
+{
+    return getPreferredStorage(*geo, storageClass, storage);
 }
 
 

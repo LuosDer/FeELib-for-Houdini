@@ -235,6 +235,8 @@ SOP_FeE_AttribCopy_4_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribCopy_4_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
+        templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("srcGroup"_sh,       &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("iDAttribName"_sh,   &SOP_Node::allAttribMenu);
         templ.setChoiceListPtr("copyAttribName"_sh, &SOP_Node::allAttribMenu);
         templ.setChoiceListPtr("copyGroupName"_sh,  &SOP_Node::allGroupMenu);

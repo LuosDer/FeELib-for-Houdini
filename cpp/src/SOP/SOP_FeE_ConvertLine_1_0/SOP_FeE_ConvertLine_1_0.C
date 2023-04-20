@@ -466,7 +466,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 #if 1
-    GFE_ConvertLine convertLine(outGeo0, inGeo0, &cookparms);
+    GFE_ConvertLine convertLine(outGeo0, &inGeo0, &cookparms);
 #else
     outGeo0->replaceWith(*inGeo0);
     GFE_ConvertLine convertLine(outGeo0, nullptr, &cookparms);
@@ -477,27 +477,11 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     convertLine.setComputeParm(isClosed, keepSourcePrim);
     if (outSrcPrim)
-        convertLine.createSrcPrimAttrib(GA_STORE_INVALID, false, srcPrimAttribName);
+        convertLine.createSrcPrimAttrib(false, GA_STORE_INVALID, srcPrimAttribName);
 
     convertLine.setGroup(sopparms.getPrimGroup());
 
     convertLine.computeAndBumpDataIdsForAddOrRemove();
-
-
-#if 1
-    //GFE_ConvertLine_Namespace::convertLine(outGeo0, inGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
-#else
-    outGeo0->replaceWith(*inGeo0);
-    GFE_ConvertLine::convertLine(outGeo0, isClosed, copyPrimAttrib, outSrcPrim, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
-#endif
-    //outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
-
-    
-    
-
-
-
-
 
 
 }

@@ -61,8 +61,7 @@ public:
     }
 
     
-    void
-        setComputeParm(
+    void setComputeParm(
             const bool outAsOffset = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
@@ -74,11 +73,7 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setKernel(
-            const int kernel
-        )
+    SYS_FORCE_INLINE void setKernel(const int kernel)
     {
         setHasComputed();
         this->kernel = kernel;
@@ -86,9 +81,7 @@ public:
 
 
 
-    SYS_FORCE_INLINE
-    void
-        setVertexVertexPrim(
+    SYS_FORCE_INLINE void setVertexVertexPrim(
             const bool detached = false,
             const UT_StringHolder& attribName0 = "__topo_vertexVertexPrimPrev",
             const UT_StringHolder& attribName1 = "__topo_vertexVertexPrimNext",
@@ -100,26 +93,16 @@ public:
         vertexVertexPrimNextAttrib = getOutAttribArray().findOrCreateTuple(detached,
             GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName1, 1, GA_Defaults(-1));
     }
-    SYS_FORCE_INLINE
-    void
-        setVertexVertexPrim(
-            GA_Attribute* const attribPtr0,
-            GA_Attribute* const attribPtr1
-        )
+    SYS_FORCE_INLINE void setVertexVertexPrim(GA_Attribute* const attribPtr0,GA_Attribute* const attribPtr1)
     {
         vertexVertexPrimPrevAttrib = attribPtr0;
         vertexVertexPrimNextAttrib = attribPtr1;
     }
 
 
-#if 1
-
-
 
 #define GFE_SETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)           \
-    SYS_FORCE_INLINE                                                                                \
-    void                                                                                            \
-        set##ATTRIB_NAME_UPPER(                                                                     \
+    SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                          \
             const bool detached = false,                                                            \
             const UT_StringHolder& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                       \
             const GA_Storage storage = GA_STORE_INVALID                                             \
@@ -127,12 +110,9 @@ public:
     {                                                                                               \
         ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateTuple(detached,                \
             ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));              \
+        return ATTRIB_NAME_LOWNER##Attrib;                                                          \
     }                                                                                               \
-    SYS_FORCE_INLINE                                                                                \
-    void                                                                                            \
-    set##ATTRIB_NAME_UPPER(                                                                         \
-            GA_Attribute* const attribPtr                                                           \
-        )                                                                                           \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                     \
     {                                                                                               \
         ATTRIB_NAME_LOWNER##Attrib = attribPtr;                                                     \
     }                                                                                               \
@@ -150,9 +130,7 @@ public:
 
 
 #define GFE_SETATTRIB_ARRAY_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)  \
-    SYS_FORCE_INLINE                                                                             \
-    void                                                                                         \
-        set##ATTRIB_NAME_UPPER(                                                                  \
+    SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                       \
             const bool detached = false,                                                         \
             const UT_StringHolder& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                    \
             const GA_Storage storage = GA_STORE_INVALID                                          \
@@ -160,12 +138,9 @@ public:
     {                                                                                            \
         ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateArray(detached,             \
             ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName);                               \
+        return ATTRIB_NAME_LOWNER##Attrib;                                                       \
     }                                                                                            \
-    SYS_FORCE_INLINE                                                                             \
-    void                                                                                         \
-    set##ATTRIB_NAME_UPPER(                                                                      \
-            GA_Attribute* const attribPtr                                                        \
-        )                                                                                        \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                  \
     {                                                                                            \
         ATTRIB_NAME_LOWNER##Attrib = attribPtr;                                                  \
     }                                                                                            \
@@ -182,21 +157,16 @@ public:
     
 
 #define GFE_SETGROUP_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)     \
-    SYS_FORCE_INLINE                                                                         \
-    void                                                                                     \
-        set##ATTRIB_NAME_UPPER##Group(                                                       \
+    SYS_FORCE_INLINE GA_VertexGroup* set##ATTRIB_NAME_UPPER##Group(                          \
             const bool detached = false,                                                     \
             const UT_StringHolder& groupName = "__topo_"#ATTRIB_NAME_LOWNER                  \
         )                                                                                    \
     {                                                                                        \
         ATTRIB_NAME_LOWNER##Group = static_cast<GA_VertexGroup*>(                            \
             getOutGroupArray().findOrCreate(detached, ATTRIB_OWNER, groupName));             \
+        return ATTRIB_NAME_LOWNER##Group;                                                    \
     }                                                                                        \
-    SYS_FORCE_INLINE                                                                         \
-    void                                                                                     \
-        set##ATTRIB_NAME_UPPER(                                                              \
-            GA_VertexGroup* const groupPtr                                                   \
-        )                                                                                    \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_VertexGroup* const groupPtr)             \
     {                                                                                        \
         ATTRIB_NAME_LOWNER##Group = groupPtr;                                                \
     }                                                                                        \
@@ -206,357 +176,13 @@ public:
     
 #undef GFE_SETGROUP_SPECIALIZATION
 
-    // SYS_FORCE_INLINE
-    // void
-    // setVertexNextEquivNoLoopGroup(
-    //     const bool detached,
-    //     const UT_StringHolder& groupName = ""
-    // )
-    // {
-    //     vertexNextEquivNoLoopGroup = getOutGroupArray().findOrCreate(detached, ATTRIB_OWNER, groupName);
-    // }
-    // SYS_FORCE_INLINE
-    // void
-    // setVertexNextEquivNoLoop(
-    //     GA_Group* const groupPtr = nullptr
-    // )
-    // {
-    //     vertexNextEquivNoLoopGroup = groupPtr;
-    // }
-    //
-    //
-    // SYS_FORCE_INLINE
-    // void
-    // setVertexNextEquivGroup(
-    //     const bool detached,
-    //     const UT_StringHolder& groupName = ""
-    // )
-    // {
-    //     vertexNextEquivGroup = getOutGroupArray().findOrCreate(detached, GA_GROUP_VERTEX, groupName);
-    // }
-    // SYS_FORCE_INLINE
-    // void
-    // setVertexNextEquiv(
-    //     GA_Group* const groupPtr = nullptr
-    // )
-    // {
-    //     vertexNextEquivGroup = groupPtr;
-    // }
+    
 
-
-#else
-
-
-inline
-void
-setVertexPrimIndex()
-{
-    calVertexPrimIndex = false;
-}
-
-void
-setVertexPrimIndex(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calVertexPrimIndex = true;
-    vertexPrimIndexAttrib = getOutAttribArray().findOrCreateTuple(detached,
-        GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
-}
-
-void
-setVertexPrimIndex(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calVertexPrimIndex = true;
-        vertexPrimIndexAttrib = attribPtr;
-    }
-    else
-    {
-        calVertexPrimIndex = false;
-    }
-}
-
-
-
-
-inline
-void
-setVertexPointDst()
-{
-    calVertexPointDst = false;
-}
-
-void
-setVertexPointDst(
-    //const bool asOffset,
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calVertexPointDst = true;
-    //vertexPointDst_asOffset = asOffset;
-    vertexPointDstAttrib = getOutAttribArray().findOrCreateTuple(detached,
-        GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
-}
-
-void
-setVertexPointDst(
-    //const bool asOffset,
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calVertexPointDst = true;
-        vertexPointDstAttrib = attribPtr;
-        //vertexPointDst_asOffset = asOffset;
-    }
-    else
-    {
-        calVertexPointDst = false;
-    }
-}
-
-
-inline
-void
-setVertexNextEquiv()
-{
-    calVertexNextEquiv = false;
-}
-
-void
-setVertexNextEquiv(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calVertexNextEquiv = true;
-    vertexNextEquivAttrib = getOutAttribArray().findOrCreateTuple(detached,
-        GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
-}
-
-void
-setVertexNextEquiv(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calVertexNextEquiv = true;
-        vertexNextEquivAttrib = attribPtr;
-    }
-    else
-    {
-        calVertexNextEquiv = false;
-    }
-}
-
-
-
-
-inline
-void
-setVertexNextEquivNoLoop()
-{
-    calVertexNextEquivNoLoop = false;
-}
-
-void
-setVertexNextEquivNoLoop(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calVertexNextEquivNoLoop = true;
-    vertexNextEquivNoLoopAttrib = getOutAttribArray().findOrCreateTuple(detached,
-        GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
-}
-
-void
-setVertexNextEquivNoLoop(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calVertexNextEquivNoLoop = true;
-        vertexNextEquivNoLoopAttrib = attribPtr;
-    }
-    else
-    {
-        calVertexNextEquivNoLoop = false;
-    }
-}
-
-
-inline
-void
-setPointPointEdge()
-{
-    calPointPointEdge = false;
-}
-
-void
-setPointPointEdge(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calPointPointEdge = true;
-    pointPointEdgeAttrib = getOutAttribArray().findOrCreateArray(detached,
-        GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName);
-}
-
-void
-setPointPointEdge(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calPointPointEdge = true;
-        pointPointEdgeAttrib = attribPtr;
-    }
-    else
-    {
-        calPointPointEdge = false;
-    }
-}
-
-
-
-
-inline
-void
-setPointPointPrim()
-{
-    calPointPointPrim = false;
-}
-
-void
-setPointPointPrim(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calPointPointPrim = true;
-    pointPointPrimAttrib = getOutAttribArray().findOrCreateArray(detached,
-        GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName);
-}
-
-void
-setPointPointPrim(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calPointPointPrim = true;
-        pointPointPrimAttrib = attribPtr;
-    }
-    else
-    {
-        calPointPointPrim = false;
-    }
-}
-
-
-
-inline
-void
-setPrimPrimEdge()
-{
-    calPrimPrimEdge = false;
-}
-
-void
-setPrimPrimEdge(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calPrimPrimEdge = true;
-    primPrimEdgeAttrib = getOutAttribArray().findOrCreateArray(detached,
-        GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName);
-}
-
-void
-setPrimPrimEdge(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calPrimPrimEdge = true;
-        primPrimEdgeAttrib = attribPtr;
-    }
-    else
-    {
-        calPrimPrimEdge = false;
-    }
-}
-
-
-
-
-inline
-void
-setPrimPrimPoint()
-{
-    calPrimPrimPoint = false;
-}
-
-void
-setPrimPrimPoint(
-    const bool detached,
-    const UT_StringHolder& attribName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    calPrimPrimPoint = true;
-    primPrimPointAttrib = getOutAttribArray().findOrCreateArray(detached,
-        GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName);
-}
-
-void
-setPrimPrimPoint(
-    GA_Attribute* const attribPtr
-)
-{
-    if (attribPtr)
-    {
-        calPrimPrimPoint = true;
-        primPrimPointAttrib = attribPtr;
-    }
-    else
-    {
-        calPrimPrimPoint = false;
-    }
-}
-
-#endif
-
-
-#define GFE_GETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER)                         \
-    SYS_FORCE_INLINE                                                                                \
-    GA_Attribute*                                                                                   \
-        get##ATTRIB_NAME_UPPER() const                                                              \
-    {                                                                                               \
-        return ATTRIB_NAME_LOWNER##Attrib;                                                          \
-    }                                                                                               \
+#define GFE_GETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER)   \
+    SYS_FORCE_INLINE GA_Attribute* get##ATTRIB_NAME_UPPER() const             \
+    {                                                                         \
+        return ATTRIB_NAME_LOWNER##Attrib;                                    \
+    }                                                                         \
 
     GFE_GETATTRIB_SPECIALIZATION(VertexPrimIndex,       vertexPrimIndex)
     GFE_GETATTRIB_SPECIALIZATION(VertexPointDst,        vertexPointDst)
@@ -574,9 +200,7 @@ setPrimPrimPoint(
         
 
 #define GFE_GETGROUP_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER)     \
-SYS_FORCE_INLINE                                                               \
-GA_VertexGroup*                                                                \
-    get##ATTRIB_NAME_UPPER##Group() const                                      \
+SYS_FORCE_INLINE GA_VertexGroup* get##ATTRIB_NAME_UPPER##Group() const         \
 {                                                                              \
     return ATTRIB_NAME_LOWNER##Group;                                          \
 }                                                                              \
@@ -797,8 +421,7 @@ private:
 
     //Get all vertices NextEquiv Vertex
     //template<typename T>
-    void
-        vertexPrimIndex()
+    void vertexPrimIndex()
     {
         if(!vertexPrimIndexAttrib)
             setVertexPrimIndex(!outIntermediateAttrib);
@@ -852,91 +475,11 @@ private:
 
 
 
-#if 1
-    //This is Faster than use linear vertex offset
-    GA_Offset
-        vertexPointDst(
-            const GA_Offset primoff,
-            const GA_Size vtxpnum
-        )
-    {
-        const GA_Size vtxpnum_next = vtxpnum + 1;
-        if (vtxpnum_next == geo->getPrimitiveVertexCount(primoff)) {
-            if (geo->getPrimitiveClosedFlag(primoff))
-            {
-                return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        else
-        {
-            return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum_next));
-        }
-    }
-    
-    GA_Size
-        vertexPrimIndex(
-            const GA_Offset primoff,
-            const GA_Offset vtxoff
-        )
-    {
-        return geo->getPrimitiveVertexList(primoff).find(vtxoff);
-    }
-
-    GA_Offset
-        vertexPointDst(
-            const GA_Offset vtxoff
-        )
-    {
-        const GA_Offset primoff = geo->vertexPrimitive(vtxoff);
-        return vertexPointDst(primoff, vertexPrimIndex(primoff, vtxoff));
-    }
-#else
-    GA_Offset
-        vertexPointDst(
-            const GA_Offset vtxoff
-        )
-    {
-        const GA_Offset vertexVertexDst = vertexPointDst(geo, vtxoff);
-        if (vertexVertexDst == -1)
-        {
-            return -1;
-        }
-        else
-        {
-            return geo->vertexPoint(vertexVertexDst);
-        }
-    }
-    
-    GA_Offset
-        vertexPointDst(
-            const GA_Offset primoff,
-            const GA_Size vtxpnum
-        )
-    {
-        const GA_Offset vertexVertexDst = vertexPointDst(geo, primoff, vtxpnum);
-        if (vertexVertexDst == -1)
-        {
-            return -1;
-        }
-        else
-        {
-            return geo->vertexPoint(vertexVertexDst);
-        }
-    }
-#endif
 
 
 
 
-
-
-
-    void
-        vertexPointDstByVtxpnum()
+    void vertexPointDstByVtxpnum()
     {
         if(!vertexPointDstAttrib)
             setVertexPointDst(!outIntermediateAttrib);
@@ -955,14 +498,13 @@ private:
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    int_wh.set(elemoff, vertexPointDst(vtxPrimRef->getLink(elemoff), int_oh.get(elemoff)));
+                    int_wh.set(elemoff, geo->vertexPointDst(vtxPrimRef->getLink(elemoff), int_oh.get(elemoff)));
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
 
-    void
-        vertexPointDst()
+    void vertexPointDst()
     {
         if(!vertexPointDstAttrib)
             setVertexPointDst(!outIntermediateAttrib);
@@ -1195,6 +737,9 @@ private:
                 }
             }
         }, subscribeRatio, minGrainSize);
+        
+        if (vertexNextEquivGroup)
+            vertexNextEquivGroup->invalidateGroupEntries();
     }
 
 
@@ -1267,23 +812,29 @@ private:
                 }
             }
         }, subscribeRatio, minGrainSize);
+        
+        if (vertexNextEquivNoLoopGroup)
+            vertexNextEquivNoLoopGroup->invalidateGroupEntries();
     }
 
 
 
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        pointPointEdge()
+    void pointPointEdge()
     {
         if(!pointPointEdgeAttrib)
             setPointPointEdge(!outIntermediateAttrib);
         
         intArray_wh.bind(pointPointEdgeAttrib);
         int_oh.bind(vertexPrimIndexAttrib);
+
+        const GFE_Detail* const geo = this->geo;
+        const GA_RWHandleT<UT_ValArray<GA_Offset>>& intArray_wh = this->intArray_wh;
+        const GA_ROHandleT<GA_Size>& int_oh = this->int_oh;
         
         const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
-        UTparallelFor(groupParser.getPointSplittableRange(), [this, seamGroup](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPointSplittableRange(), [seamGroup, &intArray_wh, &int_oh, geo](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> ptoffArray;
             GA_Offset start, end;
@@ -1416,7 +967,7 @@ private:
         {
             const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
             const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-            const GA_Size vtxpnum = vertexPrimIndex(primoff, vtxoff_next);
+            const GA_Size vtxpnum = geo->vertexPrimIndex(primoff, vtxoff_next);
 
             if (vtxpnum == 0)
             {
@@ -1993,7 +1544,7 @@ private:
     
 public:
     bool outAsOffset = true;
-    bool outIntermediateAttrib = false;
+    bool outIntermediateAttrib = true;
 
 private:
     GA_Attribute*   vertexPrimIndexAttrib       = nullptr;

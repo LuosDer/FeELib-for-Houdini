@@ -92,17 +92,22 @@ public:
 
         const GA_AttributeOwner connectivityOwner = connectivityConstraint ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT;
         const bool isDetached = connectivityOwner != attribOwner || storageClass != GA_STORECLASS_INT;
-#if 0
-        getOutAttribArray().findOrCreateTuple(connectivityOwner, GA_STORECLASS_INT, storage, isDetached || detached, name);
+#if 1
         if (isDetached)
-            getOutAttribArray().findOrCreateTuple(attribOwner, storageClass, storage, detached, name);
+            getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name);
+        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(isDetached, connectivityOwner, GA_STORECLASS_INT, GA_STORE_INVALID, isDetached ? UT_StringHolder("") : name);
 #else
-        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(false, connectivityOwner, GA_STORECLASS_INT, storage, isDetached ? GFE_TEMP_ConnectivityAttribName : name);
+        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(true, connectivityOwner, GA_STORECLASS_INT, storage, isDetached ? GFE_TEMP_ConnectivityAttribName : name);
         if (isDetached)
             getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name);
 #endif
     }
 
+    SYS_FORCE_INLINE GA_Attribute* getConnectivityAttrib() const
+    {
+        return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
+    }
+            
 
 
 
@@ -126,40 +131,42 @@ private:
 
         if (getOutAttribArray().size() > 1)
         {
-            GA_Attribute* const outAttribPtr = getOutAttribArray()[1];
-            GA_Attribute* finalAttribPtr = nullptr;
-            const GA_AttributeOwner outAttribOwner = outAttribPtr->getOwner();
-            const GA_AttributeOwner connectivityOwner = connectivityConstraint ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT;
+            GA_Attribute* const outAttribPtr = getOutAttribArray()[0];
+            const GA_AttributeOwner connectivityOriginOwner = connectivityConstraint ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT;
             //const bool isDetached = connectivityOwner != outAttrib->get || storageClass != GA_STORECLASS_INT;
 
-            const GA_StorageClass outAttribStorageClass = outAttribPtr->getStorageClass();
-            if (outAttribOwner != connectivityOwner)
+            const bool shouldPromote = outAttribPtr->getOwner() != connectivityOriginOwner;
+            const bool shouldCast = outAttribPtr->getStorageClass() != GA_STORECLASS_INT;
+        
+            GFE_AttribPromote attribPromote(geo);
+            if (shouldPromote)
             {
-#if 1
-                GFE_AttribPromote attribPromote(geo);
+                //GA_Storage sto = GFE_Attribute::getStorage(connectivityAttribPtr);
                 attribPromote.setSourceAttribute(connectivityAttribPtr);
-                attribPromote.setDestinationAttribute(outAttribPtr);
+                
+                if (shouldCast)
+                    attribPromote.setDetachedDestinationAttribute(outAttribPtr->getOwner());
+                else
+                    attribPromote.setDestinationAttribute(outAttribPtr);
+                
                 attribPromote.compute();
-                finalAttribPtr = attribPromote.getDestinationAttribute();
-#else
-                finalAttribPtr = GFE_AttributePromote::attribPromote(geo, connectivityAttribPtr, outAttribOwner);
-#endif
-                geo->getAttributes().destroyAttribute(connectivityAttribPtr);
             }
-            if (outAttribStorageClass != GA_STORECLASS_INT)
+            if (shouldCast)
             {
+                GA_Attribute* const inAttribPtr = shouldPromote ? attribPromote.getDestinationAttribute() : connectivityAttribPtr;
+                //GA_StorageClass storage537 = inAttribPtr->getStorageClass();
+                //GA_Storage storage124 = GFE_Attribute::getStorage(inAttribPtr);
                 GFE_AttribCast attribCast(geo);
-                attribCast.getOutAttribArray().set(attribPtr);
-                attribCast.computeAndBumpDataId();
-                GFE_AttribCast::attribCast(outGeo0, *attribPtr, connectivityStorageClass, "", outGeo0.getPreferredPrecision());
-                geo->changeAttribStorageClass(outAttribOwner, GFE_TEMP_ConnectivityAttribName, outAttribStorageClass);
-                //GFE_AttributeCast::changeAttribStorageClass(*geo, outAttribOwner, GFE_TEMP_ConnectivityAttribName, outAttribStorageClass);
+                attribCast.getInAttribArray().set(inAttribPtr);
+                attribCast.setDestinationAttribute(*outAttribPtr);
+                //attribCast.newStorageClass = outAttribStorageClass;
+                //attribCast.precision = GA_PRECISION_INVALID;
+                attribCast.compute();
+                //GA_Attribute* const attrib = attribCast.getOutAttribArray()[0];
+                //const char* a = attrib->getName().c_str();
+                //const char* b = outAttribPtr->getName().c_str();
             }
-            geo->getAttributes().destroyAttribute(outAttribPtr);
-            geo->forceRenameAttribute(finalAttribPtr, outAttribPtr->getName());
-            //GFE_Attribute::forceRenameAttribute(*geo, *finalAttribPtr, outAttribPtr->getName());
-            getOutAttribArray()[0] = finalAttribPtr;
-            getOutAttribArray().pop_back();
+            //geo->forceRenameAttribute(outAttribPtr, outAttribPtr->getName());
         }
 
         return true;
@@ -179,14 +186,14 @@ private:
         if (connectivityConstraint)
         {
             adjacency.groupParser.setGroup(groupParser.getPrimitiveGroup());
-            adjacency.setPrimPrimEdge(false);
+            adjacency.setPrimPrimEdge(true);
             adjacency.compute();
             adjElemsAttrib_h.bind(adjacency.getPrimPrimEdge());
         }
         else
         {
             adjacency.groupParser.setGroup(groupParser.getPointGroup());
-            adjacency.setPointPointEdge(false);
+            adjacency.setPointPointEdge(true);
             adjacency.compute();
             adjElemsAttrib_h.bind(adjacency.getPointPointEdge());
         }
@@ -277,7 +284,7 @@ private:
     //timeStart = std::chrono::steady_clock::now();
 
 
-    GA_Size classnum = 0;
+    GA_Index classnum = startClassnum;
     for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
     {
         if (classnumArray[elemoff] != UNREACHED_NUMBER)
@@ -301,10 +308,10 @@ private:
         ++classnum;
     }
     
-    
+    GA_Attribute* const connectivityAttribPtr = this->connectivityAttribPtr;
     const GA_IndexMap& indexMap = geo->getIndexMap(connectivityOwner);
     UTparallelFor(groupParser.getSplittableRange(connectivityOwner),
-        [&indexMap, &classnumArray, this](const GA_SplittableRange& r)
+        [&indexMap, &classnumArray, connectivityAttribPtr](const GA_SplittableRange& r)
     {
         GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(connectivityAttribPtr);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
@@ -338,7 +345,9 @@ private:
     
 public:
     GFE_GroupParser groupParserSeam;
+    GA_Size startClassnum = 0;
     bool connectivityConstraint = false; // false means point  and  true means edge 
+    //GA_AttributeOwner connectivityOwner = GA_ATTRIB_PRIMITIVE;
     // bool outAsOffset = true;
 
 private:

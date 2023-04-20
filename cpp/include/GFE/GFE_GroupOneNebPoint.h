@@ -93,10 +93,7 @@ private:
     }
 
 
-    void
-        groupOneNeb(
-            const GA_PrimitiveGroup* const geoGroup
-        )
+    void groupOneNeb(const GA_PrimitiveGroup* const geoGroup)
     {
         // UT_ASSERT_P(geoGroup);
         
@@ -245,7 +242,7 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize = 256;
 
-};
+}; // End of class GFE_GroupOneNebPoint
 
 
 

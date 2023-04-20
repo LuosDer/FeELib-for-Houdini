@@ -153,9 +153,7 @@ public:
     }
 
 
-    SYS_FORCE_INLINE
-    bool
-        getHasComputed() const
+    SYS_FORCE_INLINE bool getHasComputed() const
     {
         return hasComputed;
     }
@@ -178,53 +176,43 @@ public:
     // }
     
 
-    GFE_GroupParser&
-        getGroupParser()
+    GFE_GroupParser& getGroupParser()
     {
         return groupParser;
     }
     
 
-    SYS_FORCE_INLINE
-    void
-        compute()
+    SYS_FORCE_INLINE void compute()
     {
         hasComputed = computeCore();
     }
 
 
-    SYS_FORCE_INLINE
-    void
-        bumpDataIdsForAddOrRemove(
-            const bool added_or_removed_points,
-            const bool added_or_removed_vertices,
-            const bool added_or_removed_primitives
-        ) const
+    SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove(
+        const bool added_or_removed_points,
+        const bool added_or_removed_vertices,
+        const bool added_or_removed_primitives
+    ) const
     {
         geo->bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives);
     }
 
-    virtual void
-        bumpDataIdsForAddOrRemove() const
+    virtual void bumpDataIdsForAddOrRemove() const
     {
         geo->bumpDataIdsForAddOrRemove(true, true, true);
     }
 
-    SYS_FORCE_INLINE
-    void
-        computeAndBumpDataIdsForAddOrRemove(
-            const bool added_or_removed_points,
-            const bool added_or_removed_vertices,
-            const bool added_or_removed_primitives
-        )
+    SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove(
+        const bool added_or_removed_points,
+        const bool added_or_removed_vertices,
+        const bool added_or_removed_primitives
+    )
     {
         compute();
         bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives);
     }
 
-    SYS_FORCE_INLINE
-    void
-        computeAndBumpDataIdsForAddOrRemove()
+    SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove()
     {
         compute();
         bumpDataIdsForAddOrRemove();
@@ -232,22 +220,17 @@ public:
 
 
 
-    virtual void
-        bumpDataId()
+    virtual void bumpDataId() const
     {
     }
 
-    SYS_FORCE_INLINE
-    void
-        computeAndBumpDataId()
+    SYS_FORCE_INLINE void computeAndBumpDataId()
     {
         compute();
         bumpDataId();
     }
 
-    SYS_FORCE_INLINE
-    GFE_Detail*
-        getDetail() const
+    SYS_FORCE_INLINE GFE_Detail* getDetail() const
     {
         return geo;
     }
@@ -267,11 +250,7 @@ private:
 
 
 private:
-    SYS_FORCE_INLINE
-        virtual void
-        setDetailBase(
-            GA_Detail& inGeo
-        )
+    SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo)
     {
         geo = static_cast<GFE_Detail*>(&inGeo);
         groupParser.setDetail(geo);
@@ -312,48 +291,28 @@ private:
     
 protected:
 
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Detail* const inGeo
-        )
+    SYS_FORCE_INLINE void setDetail(GA_Detail* const inGeo)
     {
         setDetailBase(*inGeo);
     }
     
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Detail& inGeo
-        )
+    SYS_FORCE_INLINE void setDetail(GA_Detail& inGeo)
     {
         setDetail(&inGeo);
     }
     
 
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Attribute& attrib
-        )
+    SYS_FORCE_INLINE void setDetail(GA_Attribute& attrib)
     {
         setDetail(attrib.getDetail());
     }
 
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_ElementGroup& group
-        )
+    SYS_FORCE_INLINE void setDetail(GA_ElementGroup& group)
     {
         setDetail(static_cast<GA_ElementGroup&>(group).getDetail());
     }
 
-    SYS_FORCE_INLINE
-        void
-        setDetail(
-            GA_Group& group
-        )
+    SYS_FORCE_INLINE void setDetail(GA_Group& group)
     {
         UT_ASSERT_MSG(group.classType() != GA_GROUP_EDGE, "can not be edge group");
 #if 1
@@ -378,7 +337,7 @@ protected:
 
 public:
     GFE_GroupParser groupParser;
-    bool outTopoAttrib = false;
+    bool outTopoAttrib = true;
 
 protected:
     GFE_Detail* geo;
@@ -386,6 +345,7 @@ protected:
     const SOP_NodeVerb::CookParms* cookparms;
 
 private:
+    //bool outTopoAttrib = true;
     GOP_Manager gop;
     bool hasComputed = false;
 };
@@ -492,9 +452,7 @@ public:
         ref0GroupArray.reset(geoRef0, cookparms);
     }
     
-    SYS_FORCE_INLINE
-    void
-        resetGeoFilterRef(
+    SYS_FORCE_INLINE void resetGeoFilterRef(
             const GA_Detail* const geoRef0,
             const SOP_NodeVerb::CookParms* const cookparms = nullptr
         )
@@ -502,60 +460,43 @@ public:
         resetGeoFilterRef(static_cast<const GFE_Detail*>(geoRef0), cookparms);
     }
 
-    GFE_GroupParser&
-        getGroupParser()
+    GFE_GroupParser& getGroupParser()
     {
         return groupParserRef0;
     }
 
 
 
-    SYS_FORCE_INLINE
-        GFE_RefAttribArray&
-        getRef0AttribArray()
+    SYS_FORCE_INLINE GFE_RefAttribArray& getRef0AttribArray()
     {
         return ref0AttribArray;
     }
 
-    SYS_FORCE_INLINE
-        GFE_RefGroupArray&
-        getRef0GroupArray()
+    SYS_FORCE_INLINE GFE_RefGroupArray& getRef0GroupArray()
     {
         return ref0GroupArray;
     }
 
-    SYS_FORCE_INLINE
-        std::vector<const GA_Attribute*>&
-        getRef0AttribArrayRef()
+    SYS_FORCE_INLINE ::std::vector<const GA_Attribute*>& getRef0AttribArrayRef()
     {
         return ref0AttribArray.ref();
     }
 
-    SYS_FORCE_INLINE
-        std::vector<const GA_Group*>&
-        getRef0GroupArrayRef()
+    SYS_FORCE_INLINE ::std::vector<const GA_Group*>& getRef0GroupArrayRef()
     {
         return ref0GroupArray.ref();
     }
 
 
 private:
-    SYS_FORCE_INLINE
-        virtual void
-        setDetailBase(
-            const GFE_Detail* const inGeo
-        )
+    SYS_FORCE_INLINE virtual void setDetailBase(const GFE_Detail* const inGeo)
     {
         geoRef0 = inGeo;
         ref0AttribArray.setDetail(inGeo);
         ref0GroupArray.setDetail(inGeo);
     }
 
-    SYS_FORCE_INLINE
-        virtual void
-        setDetailBase(
-            const GA_Detail* const inGeo
-        )
+    SYS_FORCE_INLINE virtual void setDetailBase(const GA_Detail* const inGeo)
     {
         setDetailBase(static_cast<const GFE_Detail*>(inGeo));
     }
@@ -681,8 +622,7 @@ public:
         outGroupArray.reset(geo, cookparms);
     }
     
-    virtual void
-        bumpDataId() override
+    virtual void bumpDataId() const override
     {
         if (doDelOutGroup)
             bumpDataIdsForAddOrRemove();
@@ -693,7 +633,7 @@ public:
         }
     }
 
-    void
+    SYS_FORCE_INLINE void
         findOrCreateOutGroup(
             const bool detached,
             const GA_GroupType groupType = GA_GROUP_POINT,
@@ -703,17 +643,15 @@ public:
         getOutGroupArray().findOrCreate(detached, groupType, groupName);
     }
 
-    void
-        findOrCreateOutGroup(
-            const GA_GroupType groupType = GA_GROUP_POINT,
-            const UT_StringHolder& groupName = ""
-        )
+    SYS_FORCE_INLINE void findOrCreateOutGroup(
+        const GA_GroupType groupType = GA_GROUP_POINT,
+        const UT_StringHolder& groupName = ""
+    )
     {
         getOutGroupArray().findOrCreate(doDelOutGroup, groupType, groupName);
     }
     
-    virtual void
-        delOutGroup()
+    virtual void delOutGroup()
     {
         if (outGroupArray.isEmpty() || !outGroupArray[0])
             return;
@@ -744,27 +682,20 @@ public:
         }
     }
 
-    virtual void
-        visualizeOutGroup()
+    virtual void visualizeOutGroup()
     {
-        if (doDelOutGroup || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0])
+        if (doDelOutGroup || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
             return;
-
         //cookparms->getNode()->setHighlight(true);
         cookparms->select(*outGroupArray[0]);
     }
 
-    void
-        delOrVisualizeOutGroup()
+    void delOrVisualizeOutGroup()
     {
         if (doDelOutGroup)
-        {
             delOutGroup();
-        }
         else
-        {
             visualizeOutGroup();
-        }
     }
 
     
@@ -774,71 +705,51 @@ public:
 
 
 
-    SYS_FORCE_INLINE
-    GFE_AttributeArray&
-        getOutAttribArray()
+    SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
     {
         return outAttribArray;
     }
 
-    SYS_FORCE_INLINE
-    GFE_GroupArray&
-        getOutGroupArray()
+    SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
     {
         return outGroupArray;
     }
 
-    SYS_FORCE_INLINE
-    std::vector<GA_Attribute*>&
-        getOutAttribArrayRef()
+    SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getOutAttribArrayRef()
     {
         return outAttribArray.ref();
     }
 
-    SYS_FORCE_INLINE
-    std::vector<GA_Group*>&
-        getOutGroupArrayRef()
+    SYS_FORCE_INLINE ::std::vector<GA_Group*>& getOutGroupArrayRef()
     {
         return outGroupArray.ref();
     }
 
 
     
-    SYS_FORCE_INLINE
-    const GFE_AttributeArray&
-        getOutAttribArray() const
+    SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
     {
         return outAttribArray;
     }
 
-    SYS_FORCE_INLINE
-    const GFE_GroupArray&
-        getOutGroupArray() const
+    SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
     {
         return outGroupArray;
     }
 
-    SYS_FORCE_INLINE
-    const std::vector<GA_Attribute*>&
-        getOutAttribArrayRef() const
+    SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getOutAttribArrayRef() const
     {
         return outAttribArray.ref();
     }
 
-    SYS_FORCE_INLINE
-    const std::vector<GA_Group*>&
-        getOutGroupArrayRef() const
+    SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getOutGroupArrayRef() const
     {
         return outGroupArray.ref();
     }
 
 private:
 
-    SYS_FORCE_INLINE
-        virtual void
-        setDetailBase(
-            GA_Detail& inGeo
-        ) override
+    SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo) override
     {
         setDetail(inGeo);
         outAttribArray.setDetail(inGeo);
@@ -851,10 +762,10 @@ public:
     bool reverseOutGroup = false;
     bool doDelOutGroup = false;
 private:
-    //std::vector<GA_AttributeUPtr> attribUPtrArray;
-    //std::vector<GA_Attribute*> attribArray;
-    //std::vector<GA_GroupUPtr> groupUPtrArray;
-    //std::vector<GA_Group*> groupArray;
+    //::std::vector<GA_AttributeUPtr> attribUPtrArray;
+    //::std::vector<GA_Attribute*> attribArray;
+    //::std::vector<GA_GroupUPtr> groupUPtrArray;
+    //::std::vector<GA_Group*> groupArray;
     GFE_AttributeArray outAttribArray;
     GFE_GroupArray outGroupArray;
 };
@@ -934,55 +845,34 @@ public:
         inGroupArray.reset(geo, cookparms);
     }
 
-    SYS_FORCE_INLINE
-    GFE_AttributeArray&
-        getInAttribArray()
+    SYS_FORCE_INLINE GFE_AttributeArray& getInAttribArray()
     {
         return inAttribArray;
     }
-
-    SYS_FORCE_INLINE
-    GFE_GroupArray&
-        getInGroupArray()
+    SYS_FORCE_INLINE GFE_GroupArray& getInGroupArray()
     {
         return inGroupArray;
     }
-
-    SYS_FORCE_INLINE
-    std::vector<GA_Attribute*>&
-        getInAttribArrayRef()
+    SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getInAttribArrayRef()
     {
         return inAttribArray.ref();
     }
-
-    SYS_FORCE_INLINE
-    std::vector<GA_Group*>&
-        getInGroupArrayRef()
+    SYS_FORCE_INLINE ::std::vector<GA_Group*>& getInGroupArrayRef()
     {
         return inGroupArray.ref();
     }
 
 
-    SYS_FORCE_INLINE
-    void
-        setInAttribBumpDataId(
-            bool val = true
-        )
+    SYS_FORCE_INLINE void setInAttribBumpDataId(bool val = true)
     {
         inAttribBumpDataId = val;
     }
-
-    SYS_FORCE_INLINE
-    void
-        setInGroupBumpDataId(
-            bool val = true
-        )
+    SYS_FORCE_INLINE void setInGroupBumpDataId(bool val = true)
     {
         inGroupBumpDataId = val;
     }
 
-    virtual void
-        bumpDataId() override
+    virtual void bumpDataId() const override
     {
         GFE_AttribFilter::bumpDataId();
         if (inAttribBumpDataId)
@@ -991,24 +881,18 @@ public:
             inGroupArray.bumpDataId();
     }
 
-    void
-        visualizeInGroup()
+    void visualizeInGroup()
     {
-        if (!cookparms || !inGroupArray[0])
+        if (!cookparms || inGroupArray.isEmpty() || !inGroupArray[0] || inGroupArray[0]->isDetached())
             return;
-
-        cookparms->getNode()->setHighlight(true);
+        //cookparms->getNode()->setHighlight(true);
         cookparms->select(*inGroupArray[0]);
     }
 
 
 private:
 
-    SYS_FORCE_INLINE
-        virtual void
-        setDetailBase(
-            GA_Detail& inGeo
-        ) override
+    SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo) override
     {
         setDetail(inGeo);
         inAttribArray.setDetail(inGeo);

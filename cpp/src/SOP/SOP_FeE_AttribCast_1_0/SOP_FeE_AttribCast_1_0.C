@@ -27,10 +27,10 @@ static const char* theDsFile = R"THEDSFILE(
         type    ordinal
         default { "points" }
         menu {
-            "detail"    "Detail"
             "prim"      "Primitive"
             "point"     "Point"
             "vertex"    "Vertex"
+            "detail"    "Detail"
         }
     }
     parm {
@@ -57,12 +57,29 @@ static const char* theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "newName"
-        cppname "NewName"
-        label   "New Name"
+        name    "newAttribName"
+        cppname "NewAttribName"
+        label   "New Attrib Name"
         type    string
         default { "" }
         disablewhen "{ renameAttrib == 0 }"
+    }
+    parm {
+        name    "renameGroup"
+        cppname "RenameGroup"
+        label   "Rename Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "newGroupName"
+        cppname "NewGroupName"
+        label   "New Group Name"
+        type    string
+        default { "" }
+        disablewhen "{ renameGroup == 0 }"
     }
     parm {
         name    "attribType"
@@ -83,6 +100,22 @@ static const char* theDsFile = R"THEDSFILE(
             "matrix4"   "Matrix4"
         }
     }
+    parm {
+        name    "precision"
+        cppname "Precision"
+        label   "Precision"
+        type    ordinal
+        default { "string" }
+        menu {
+            "auto"    "Auto"
+            "1"       "1"
+            "8"       "8"
+            "16"      "16"
+            "32"      "32"
+            "64"      "64"
+        }
+    }
+
     parm {
         name    "prefix"
         cppname "Prefix"
@@ -220,6 +253,25 @@ sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType attribType)
 
 
 
+static GA_Precision
+sopPrecision(SOP_FeE_AttribCast_1_0Parms::Precision precision)
+{
+    using namespace SOP_FeE_AttribCast_1_0Enums;
+    switch (precision)
+    {
+    case Precision::AUTO:      return GA_PRECISION_INVALID;      break;
+    case Precision::_1:        return GA_PRECISION_1;            break;
+    case Precision::_8:        return GA_PRECISION_8;            break;
+    case Precision::_16:       return GA_PRECISION_16;           break;
+    case Precision::_32:       return GA_PRECISION_32;           break;
+    case Precision::_64:       return GA_PRECISION_64;           break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Precision!");
+    return GA_PRECISION_INVALID;
+}
+
+
+
 
 void
 SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -240,19 +292,28 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const exint minGrainSize = sopparms.getMinGrainSize();
     
     GFE_AttribCast attribCast(outGeo0, cookparms);
-    GFE_AttribDuplicate
     attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
     attribCast.getInGroupArray(). set(geo0AttribClass, sopparms.getGroupName());
 
     attribCast.newStorageClass = sopStorageClass(sopparms.getAttribType());
+    attribCast.precision = sopPrecision(sopparms.getPrecision());
+    
     if(attribCast.newStorageClass == GA_STORECLASS_STRING)
     {
-        attribCast.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
-        attribCast.prefix = sopparms.getPrefix();
-        attribCast.sufix  = sopparms.getSufix();
+        attribCast.prefix = sopparms.getPrefix().c_str();
+        attribCast.sufix  = sopparms.getSufix().c_str();
     }
     
-    attribCast.setComputeParm(sopparms.getRenameAttrib(), sopparms.getDelOriginAttrib(), subscribeRatio, minGrainSize);
+    if(sopparms.getRenameAttrib())
+    {
+        attribCast.setRenameAttrib(sopparms.getNewAttribName());
+    }
+    if(sopparms.getRenameGroup())
+    {
+        attribCast.setRenameGroup(sopparms.getNewGroupName());
+    }
+    
+    attribCast.setComputeParm(sopparms.getDelOriginAttrib(), subscribeRatio, minGrainSize);
     attribCast.computeAndBumpDataId();
 
 

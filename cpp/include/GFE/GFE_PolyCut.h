@@ -31,7 +31,7 @@ public:
     //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_PolyCut(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         const GA_Detail* const geoOrigin = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -40,14 +40,14 @@ public:
     {
         if (geoOrigin)
         {
-            geo->replaceWith(*geoOrigin);
+            geo.replaceWith(*geoOrigin);
             this->geoOrigin = geoOrigin;
         }
         else
         {
             geoOriginTmp = new GU_Detail();
             geoOrigin_h.allocateAndSet(geoOriginTmp);
-            geoOriginTmp->replaceWith(*geo);
+            geoOriginTmp->replaceWith(geo);
 
             this->geoOrigin = geoOriginTmp;
         }
@@ -59,53 +59,46 @@ public:
     }
 
 
-    void
-        setGroup(
-            const GA_PointGroup* const geoPointGroup = nullptr,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
+    void setGroup(
+        const GA_PointGroup* const geoPointGroup = nullptr,
+        const GA_PrimitiveGroup* const geoPrimGroup = nullptr
+    )
     {
         groupParser_cutPoint.setGroup(geoPointGroup);
         groupParser.setGroup(geoPrimGroup);
     }
 
-    void
-        setGroup(
-            const UT_StringHolder& cutPointGroupName = "",
-            const UT_StringHolder& primGroupName = ""
-        )
+    void setGroup(
+        const UT_StringHolder& cutPointGroupName = "",
+        const UT_StringHolder& primGroupName = ""
+    )
     {
         groupParser_cutPoint.setGroup(GA_GROUP_POINT, cutPointGroupName);
         groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
     }
 
-    SYS_FORCE_INLINE
-    void
-        createSrcPrimAttrib(
-            const UT_StringHolder& attribName = "srcPrim",
-            const GA_Storage storage = GA_STORE_INVALID
-        )
+    SYS_FORCE_INLINE void createSrcPrimAttrib(
+        const UT_StringHolder& attribName = "srcPrim",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
     {
         getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false);
     }
 
-    SYS_FORCE_INLINE
-    void
-        createSrcPointAttrib(
-            const UT_StringHolder& attribName = "srcPoint",
-            const GA_Storage storage = GA_STORE_INVALID
-        )
+    SYS_FORCE_INLINE void createSrcPointAttrib(
+        const UT_StringHolder& attribName = "srcPoint",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
     {
         getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
     }
 
 
-    void
-        setComputeParm(
-            const bool cutPoint = false,
-            const bool mergePrimEndsIfClosed = true,
-            const GFE_PolyCutType polyType = GFE_PolyCutType::AUTO
-        )
+    void setComputeParm(
+        const bool cutPoint = false,
+        const bool mergePrimEndsIfClosed = true,
+        const GFE_PolyCutType polyType = GFE_PolyCutType::AUTO
+    )
     {
         setHasComputed();
         this->cutPoint = cutPoint;
@@ -115,15 +108,12 @@ public:
 
 
 
-    virtual void
-        bumpDataIdsForAddOrRemove() override
+    virtual SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove() const override
     {
         geo->bumpDataIdsForAddOrRemove(cutPoint, true, true);
         if (!cutPoint)
             bumpDataId();
     }
-
-
 
 private:
 
@@ -144,12 +134,11 @@ private:
 #define TMP_CutPointGroup_GFE_PolyCut "__tmp_cutPointGroup_GFE_PolyCut"
 
 
-    SYS_FORCE_INLINE
-        void
-        appendPoint_polyCut(
-            GA_Offset& primpoint,
-            GA_PointGroup* const cutPointGroup
-        ) {
+    SYS_FORCE_INLINE void appendPoint_polyCut(
+        GA_Offset& primpoint,
+        GA_PointGroup* const cutPointGroup
+    )
+    {
         UT_ASSERT_MSG(!cutPointGroup->isDetached(), "cutPointGroup must be Not Detached");
         GA_Offset new_primpoint = geo->appendPoint();
         geo->copyPoint(new_primpoint, primpoint);
@@ -159,13 +148,12 @@ private:
     }
 
 
-    SYS_FORCE_INLINE
-        GEO_PrimPoly*
-        appendPrimitive_polyCut(
-            const bool closeFlag,
-            const GA_Offset primpoint,
-            const GA_Offset elemoff
-        ) {
+    SYS_FORCE_INLINE GEO_PrimPoly* appendPrimitive_polyCut(
+        const bool closeFlag,
+        const GA_Offset primpoint,
+        const GA_Offset elemoff
+    )
+    {
         GEO_PrimPoly* const newPrim = static_cast<GEO_PrimPoly*>(geo->appendPrimitive(GA_PrimitiveTypeId(1)));
         geo->copyAttributes(GA_ATTRIB_PRIMITIVE, newPrim->getMapOffset(), *geoOrigin, elemoff);
         geo->setPrimitiveClosedFlag(newPrim->getMapOffset(), closeFlag);
@@ -176,8 +164,7 @@ private:
 
 
     // can not use in parallel unless for each GA_Detail
-    void
-        polyCut()
+    void polyCut()
     {
         geo->replaceWithPoints(*geoOrigin);
         

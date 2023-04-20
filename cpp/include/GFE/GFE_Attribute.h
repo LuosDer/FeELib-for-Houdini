@@ -47,11 +47,51 @@ enum class GFE_NormalSearchOrder
 
 namespace GFE_Attribute {
 
+    
 
-static GA_AttributeOwner
-    toOwner(
-        const GFE_NormalSearchOrder normalSearchOrder
-    )
+
+static GA_Storage getStorage(const GA_Attribute& attrib)
+{
+    const GA_AIFTuple* const aifTuple = attrib.getAIFTuple();
+    if (aifTuple)
+    {
+        return aifTuple->getStorage(&attrib);
+    }
+    const GA_AIFNumericArray* const aifNumericArray = attrib.getAIFNumericArray();
+    if (aifNumericArray)
+    {
+        return aifNumericArray->getStorage(&attrib);
+    }
+    //const GA_AIFStringTuple* const aifString = attrib.getAIFStringTuple();
+    if (attrib.getAIFStringTuple() || attrib.getAIFSharedStringArray())
+    {
+        return GA_STORE_STRING;
+    }
+    return GA_STORE_INVALID;
+}
+    
+SYS_FORCE_INLINE static GA_Storage getStorage(const GA_Attribute* const attrib)
+{
+    UT_ASSERT_P(attrib);
+    return getStorage(*attrib);
+}
+
+
+
+SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute& attrib)
+{
+    return GFE_Type::precisionFromStorage(getStorage(attrib));
+}
+    
+SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute* const attrib)
+{
+    UT_ASSERT_P(attrib);
+    return getPrecision(*attrib);
+}
+    
+
+    
+static GA_AttributeOwner toOwner(const GFE_NormalSearchOrder normalSearchOrder)
 {
     switch (normalSearchOrder)
     {
@@ -81,10 +121,7 @@ static GA_AttributeOwner
     }
 }
 
-static GA_AttributeOwner
-toValidOwner(
-    const GFE_NormalSearchOrder normalSearchOrder
-)
+static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOrder)
 {
     switch (normalSearchOrder)
     {
@@ -116,8 +153,7 @@ toValidOwner(
 }
 
 
-static void
-bumpDataId(
+static void bumpDataId(
     GA_Detail& geo,
     const GA_AttributeOwner owner,
     const UT_StringHolder& attribPattern
@@ -133,8 +169,7 @@ bumpDataId(
 }
 
 
-static GA_Attribute*
-findPieceAttrib(
+static GA_Attribute* findPieceAttrib(
     GA_Detail& geo,
     const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
     const UT_StringHolder& pieceAttribName
@@ -185,19 +220,13 @@ findPieceAttrib(
 //
 //
 //
-SYS_FORCE_INLINE
-static bool
-renameAttribute(
-    GA_Attribute& attrib,
-    const UT_StringHolder& newName
-)
+SYS_FORCE_INLINE static bool renameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
 {
     return attrib.getDetail().renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
 }
 
     
-static bool
-forceRenameAttribute(
+static bool forceRenameAttribute(
     GA_Detail& geo,
     GA_Attribute& attrib,
     const UT_StringHolder& newName
@@ -210,12 +239,7 @@ forceRenameAttribute(
 }
 
 
-SYS_FORCE_INLINE
-static bool
-forceRenameAttribute(
-    GA_Attribute& attrib,
-    const UT_StringHolder& newName
-)
+SYS_FORCE_INLINE static bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
 {
     return forceRenameAttribute(attrib.getDetail(), attrib, newName);
 }

@@ -210,17 +210,17 @@ void
 SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_AttribInterpRay_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const fpreal64 uniScale = sopparms.getUniScale();
     const bool doNormalize = sopparms.getNormalize();
 
-    if (!doNormalize && uniScale==1)
+    if (!doNormalize && uniScale == 1.0)
         return;
 
 
@@ -242,7 +242,7 @@ SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
         subscribeRatio, minGrainSize);
 
 #else
-    GFE_NormalizeAttribElement normalizeAttribElement(cookparms, outGeo0);
+    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0, cookparms);
     
     normalizeAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
     normalizeAttribElement.getOutAttribArray().set(geo0AttribClass, geo0AttribName);

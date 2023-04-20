@@ -59,11 +59,28 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
+        name    "attrib"
+        cppname "Attrib"
+        label   "Attrib"
         type    string
         default { "P" }
+    }
+    parm {
+        name    "useRefAttrib"
+        cppname "UseRefAttrib"
+        label   "Use Ref Attrib"
+        type    toggle
+        default { 0 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "refAttrib"
+        cppname "RefAttrib"
+        label   "Ref Attrib"
+        type    string
+        default { "P" }
+        disablewhen "{ useRefAttrib == 0 }"
     }
     parm {
         name    "comp"
@@ -88,6 +105,23 @@ static const char* theDsFile = R"THEDSFILE(
         type    float
         default { 0 }
         range   { -1 1 }
+    }
+
+    parm {
+        name    "restAttrib"
+        cppname "RestAttrib"
+        label   "Rest Attrib"
+        type    toggle
+        default { 0 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "restAttribName"
+        cppname "RestAttribName"
+        label   "Rest Attrib Name"
+        type    string
+        default { "" }
     }
 
 
@@ -117,7 +151,8 @@ SOP_FeE_SetVectorComponent_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("attribName"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("attrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("refAttrib"_sh, &SOP_Node::allAttribMenu);
     }
     return templ.templates();
 }
@@ -210,36 +245,37 @@ void
 SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_SetVectorComponent_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
-
-    const int comp = sopparms.getComp();
-    const fpreal64 constValueF = sopparms.getConstValueF();
-    //const exint constValueI = sopparms.getConstValueI();
-    
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-    const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
+    GFE_SetVectorComponent setVectorComponent(outGeo0, inGeo1, &cookparms);
 
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-        
-    //const exint kernel = sopparms.getKernel();
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    GFE_SetVectorComponent setVectorComponent(cookparms, outGeo0);
-
+    
     setVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
-    setVectorComponent.getOutAttribArray().set(geo0AttribClass, geo0AttribName);
-    setVectorComponent.setComputeParm(comp, constValueF, subscribeRatio, minGrainSize);
+    
+    setVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),
+        sopparms.getConstValueF(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    
+    setVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
+    if (sopparms.getUseRefAttrib())
+    {
+        setVectorComponent.setRefAttrib(geo0AttribClass, sopparms.getRefAttrib());
+    }
+    if (sopparms.getRestAttrib())
+    {
+        setVectorComponent.setRefAttrib(geo0AttribClass, sopparms.getRestAttribName());
+    }
     setVectorComponent.computeAndBumpDataId();
 
 

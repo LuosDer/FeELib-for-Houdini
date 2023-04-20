@@ -8,7 +8,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_OffsetAttrib.h"
+#include "GFE/GFE_OffsetAttribute.h"
 
 
 class GFE_AttribCopy : public GFE_AttribFilter, public GFE_GeoFilterRef {

@@ -8,7 +8,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_VertexNextEquiv.h"
+#include "GFE/GFE_Adjacency.h"
 
 
 
@@ -17,6 +17,8 @@
 class GFE_ConvertLine : public GFE_AttribFilter {
 
 public:
+    //using GFE_AttribFilter::GFE_AttribFilter;
+    
     GFE_ConvertLine(
         GA_Detail& geo,
         const GA_Detail* const geoOrigin = nullptr,
@@ -38,7 +40,7 @@ public:
             hasInGeo = false;
             this->geoOrigin = geoOriginTmp;
         }
-        geoOriginTmp->replaceWith(*geo);
+        geoOriginTmp->replaceWith(geo);
     }
 
     ~GFE_ConvertLine()
@@ -46,25 +48,16 @@ public:
     }
 
 
-    void
-        setGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
+    SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
     {
         groupParser.setGroup(geoPrimGroup);
     }
-
-    void
-        setGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
+    SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
     {
         groupParser.setPrimitiveGroup(primGroupName);
     }
 
-
-    void
-        createSrcPrimAttrib(
+    SYS_FORCE_INLINE void createSrcPrimAttrib(
             const bool detached = false,
             const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& srcPrimAttribName = "srcPrims"
@@ -84,39 +77,28 @@ public:
     {
         setHasComputed();
         primoff_first = -1;
+        
         this->isClosed = isClosed;
         this->keepSourcePrim = keepSourcePrim;
     }
 
-    void
-        setCopyPrimitiveAttrib(
-            const bool copyAttrib = false,
-            const UT_StringHolder& copyAttribName = "*"
-        )
+    SYS_FORCE_INLINE void setCopyPrimitiveAttrib(const bool copyAttrib = false,const UT_StringHolder& copyAttribName = "*")
     {
         copyPrimAttrib = copyAttrib;
         copyPrimAttribName = copyAttribName;
     }
 
-    void
-        setCopyVertexAttrib(
-            const bool copyAttrib = false,
-            const UT_StringHolder& copyAttribName = "*"
-        )
+    SYS_FORCE_INLINE void setCopyVertexAttrib(const bool copyAttrib = false,const UT_StringHolder& copyAttribName = "*")
     {
         copyVertexAttrib = copyAttrib;
         copyVertexAttribName = copyAttribName;
     }
-
-
-    virtual void
-        bumpDataIdsForAddOrRemove() const override
+    
+    virtual SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove() const override
     {
         geo->bumpDataIdsForAddOrRemove(false, true, true);
     }
-
-    GA_Offset
-        get_primoff_first() const
+    SYS_FORCE_INLINE GA_Offset get_primoff_first() const
     {
         return primoff_first;
     }
@@ -145,8 +127,8 @@ private:
         //}
         GA_AttributeSet& geoAttribSet = geo->getAttributes();
         GA_Attribute* attribPtr = nullptr;
-        std::vector<GA_Attribute*> copyPrimAttribArray;
-        std::vector<GA_Attribute*> copyVertexAttribArray;
+        ::std::vector<GA_Attribute*> copyPrimAttribArray;
+        ::std::vector<GA_Attribute*> copyVertexAttribArray;
         copyPrimAttribArray.reserve(16);
         copyVertexAttribArray.reserve(16);
 
@@ -188,11 +170,21 @@ private:
 
         //const bool hasInputGroup = !groupParser.isEmpty();
 
-
-        const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoOriginTmp, groupParser.getVertexGroup());
-        //const GA_Attribute* dstptAttrib = geoPoint->findVertexAttribute("__topo_dstpt");
-        const GA_RWHandleT<GA_Offset> dstpt_h = GFE_TopologyReference::addAttribVertexPointDst(geoOriginTmp, groupParser.getVertexGroup());
-        //const GA_RWHandleT<GA_Offset> dstpt_h = geoOriginTmp->findVertexAttribute(GFE_TOPO_SCOPE, "__topo_dstpt");
+        
+        GFE_Adjacency adjacency(geoOriginTmp);
+        //adjacency.outAsOffset = false;
+        adjacency.outIntermediateAttrib = false;
+        adjacency.groupParser.setGroup(groupParser.getVertexGroup());
+        
+        const GA_VertexGroup* const creatingGroup = adjacency.setVertexNextEquivNoLoopGroup(true);
+        const GA_RWHandleT<GA_Offset> dstpt_h(adjacency.setVertexPointDst(true));
+        
+        adjacency.compute();
+        // const GA_VertexGroup* const creatingGroup = adjacency.getVertexNextEquivNoLoopGroup();
+        // const GA_RWHandleT<GA_Offset> dstpt_h(adjacency.getVertexPointDst());
+        
+        //const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoOriginTmp, groupParser.getVertexGroup());
+        //const GA_RWHandleT<GA_Offset> dstpt_h = GFE_TopologyReference::addAttribVertexPointDst(geoOriginTmp, groupParser.getVertexGroup());
 
         UT_ASSERT_P(dstpt_h.getAttribute());
 
@@ -206,7 +198,7 @@ private:
         const bool createSrcPrimAttrib = copyPrimAttrib || outSrcPrimAttrib;
 
         GA_Attribute* srcPrimAttrib = nullptr;
-        GA_Attribute* srcVtxAttrib = nullptr;
+        GA_Attribute* srcVtxAttrib  = nullptr;
         if (createSrcPrimAttrib)
             srcPrimAttrib = getOutAttribArray().
             findOrCreateTuple(srcPrimAttribDetached || !outSrcPrimAttrib,
@@ -386,520 +378,520 @@ private:
 
 
 
-
-
-
-namespace GFE_ConvertLine_Namespace {
-
-
-#define TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib 1
-
-#if !TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-#define TMP_GFE_ConvertLine_SrcPrimAttribName "GFE_ConvertLine_srcPrim"
-#endif
-
-
-static GA_Offset
-convertLine(
-    GA_Detail* const geoPoint,
-    const GA_Detail* const geoFull,
-    const bool isClosed = false,
-    const bool copyPrimAttrib = false,
-    bool outSrcPrimAttrib = false,
-    const UT_StringHolder& srcPrimAttribName = "",
-    const bool keepSourcePrim = false,
-    const UT_StringHolder& primGroupName = "",
-    const UT_StringHolder& pointGroupName = "",
-    const UT_StringHolder& vertexGroupName = "",
-    const UT_StringHolder& edgeGroupName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    UT_ASSERT_P(geoPoint);
-    UT_ASSERT_P(geoFull);
-
-    if (keepSourcePrim)
-    {
-        geoPoint->replaceWith(*geoFull);
-    }
-    else
-    {
-        geoPoint->replaceWithPoints(*geoFull);
-    }
-
-    GU_DetailHandle geoTmp_h;
-    GU_Detail* const geoTmp = new GU_Detail();
-    geoTmp_h.allocateAndSet(geoTmp);
-    geoTmp->replaceWith(*geoFull);
-
-
-    const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
-
-    GA_VertexGroupUPtr geo0vtxGroupUPtr;
-    GA_VertexGroup* geoVtxGroup = nullptr;
-    if (hasInputGroup)
-    {
-        geo0vtxGroupUPtr = geoTmp->createDetachedVertexGroup();
-        geoVtxGroup = geo0vtxGroupUPtr.get();
-        if (primGroupName.isstring())
-        {
-
-        }
-
-        if (pointGroupName.isstring())
-        {
-
-        }
-
-        if (vertexGroupName.isstring())
-        {
-
-        }
-
-        if (edgeGroupName.isstring())
-        {
-
-        }
-    }
-
-    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geoPoint) : storage;
-    //const GA_VertexGroup* creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, "__topo_nextEquivValid", geoVtxGroup, subscribeRatio, minGrainSize);
-    const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, geoVtxGroup, finalStorage);
-    //const GA_Attribute* dstptAttrib = geoPoint->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstpt_h = geoTmp->findVertexAttribute(GFE_TOPO_SCOPE, "__topo_dstpt");
-
-    UT_ASSERT_P(dstpt_h.getAttribute());
-
-
-    GA_Size entries = creatingGroup->getGroupEntries();
-
-    GA_Offset vtxoff_first;
-    GA_Offset primoff_first = geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-    //geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-
-
-
-#if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-    GA_AttributeUPtr srcPrimAttribUPtr;
-#endif
-    GA_Attribute* srcPrimAttrib = nullptr;
-    if (copyPrimAttrib || outSrcPrimAttrib)
-    {
-        if (outSrcPrimAttrib)
-        {
-            if (srcPrimAttribName.isstring() && !srcPrimAttribName.isEmpty())
-            {
-                srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
-            }
-            else
-            {
-                if (copyPrimAttrib)
-                {
-#if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-                    srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
-                    srcPrimAttrib = srcPrimAttribUPtr.get();
-#else
-                    srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
-                    //srcPrimAttribUPtr.reset(srcPrimAttrib);
-#endif
-                }
-                outSrcPrimAttrib = false;
-                UT_ASSERT_MSG(0, "srcPrimAttribName invliad");
-            }
-        }
-        else
-        {
-#if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-            srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
-            srcPrimAttrib = srcPrimAttribUPtr.get();
-#else
-            srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
-            //srcPrimAttribUPtr.reset(srcPrimAttrib);
-#endif
-        }
-    }
-    //if (srcPrimAttrib)
-    //{
-    //    exint indexSize = srcPrimAttrib->getIndexMap().indexSize();
-    //    exint offsetSize = srcPrimAttrib->getIndexMap().offsetSize();
-    //}
-    GA_RWHandleT<GA_Offset> srcPrim_h(srcPrimAttrib);
-
-
-
-    GA_Topology& topo = geoPoint->getTopology();
-    const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
-
-
-    const GA_Topology& topo_tmpGeo0 = geoTmp->getTopology();
-    //topo_tmpGeo0.makePrimitiveRef();
-    const GA_ATITopology* const vtxPointRef_geoTmp = topo_tmpGeo0.getPointRef();
-    const GA_ATITopology* const vtxPrimRef_geoTmp = topo_tmpGeo0.getPrimitiveRef();
-
-    GA_Offset start, end;
-    for (GA_Iterator it(geoTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
-        {
-            if (copyPrimAttrib || outSrcPrimAttrib)
-            {
-                srcPrim_h.set(vtxPrimRef->getLink(vtxoff_first), vtxPrimRef_geoTmp->getLink(vtxoff));
-            }
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
-            ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, dstpt_h.get(vtxoff));
-            ++vtxoff_first;
-        }
-    }
-
-    //////////////////// copy attributes //////////////////////
-
-    if (copyPrimAttrib)
-    {
-#if 1
-        GA_Offset primoff_last = primoff_first + entries;
-
-        for (GA_AttributeDict::iterator it = geoPoint->getAttributes().begin(GA_ATTRIB_PRIMITIVE); !it.atEnd(); ++it)
-        {
-            GA_Attribute* const attribPtr = it.attrib();
-            if (attribPtr == srcPrimAttrib)
-                continue;
-            attribPtr->bumpDataId();
-            const UT_StringHolder& name = attribPtr->getName();
-            //if (attribPtr->isDetached())
-            //    continue;
-            if (keepSourcePrim)
-            {
-                for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
-                {
-                    const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
-                    attribPtr->copy(primoff, srcPrim_h.get(primoff));
-                }
-            }
-            else
-            {
-                GA_Attribute* const srcAttribPtr = geoTmp->findPrimitiveAttribute(it.name());
-                for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
-                {
-                    const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
-                    attribPtr->copy(primoff, *srcAttribPtr, srcPrim_h.get(primoff));
-                }
-            }
-        }
-#else
-        GA_Offset start, end;
-        for (GA_Iterator it(GA_Range(geoPoint->getPrimitiveMap(), primoff_first, geoPoint->getNumPrimitiveOffsets())); it.fullBlockAdvance(start, end); )
-        {
-            for (GA_Offset primoff = start; primoff < end; ++primoff)
-            {
-            }
-        }
-#endif
-
-#if !TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-        if (!outSrcPrimAttrib)
-        {
-            geoPoint->getAttributes().destroyAttribute(srcPrimAttrib);
-        }
-#endif
-    }
-
-
-
-    //geoTmp_h.deleteGdp();
-
-    return primoff_first;
-}
-
-
-#if 1
-
-
-
-SYS_FORCE_INLINE
-static GA_Offset
-convertLine(
-    GA_Detail* const geoPoint,
-    const bool isClosed = false,
-    const bool copyPrimAttrib = false,
-    bool outSrcPrimAttrib = false,
-    const UT_StringHolder& srcPrimAttribName = "",
-    const bool keepSourcePrim = false,
-    const UT_StringHolder& primGroupName = "",
-    const UT_StringHolder& pointGroupName = "",
-    const UT_StringHolder& vertexGroupName = "",
-    const UT_StringHolder& edgeGroupName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    UT_ASSERT_P(geoPoint);
-
-    GU_DetailHandle geoFullTmp_h;
-    GU_Detail* const geoFullTmp = new GU_Detail();
-    geoFullTmp_h.allocateAndSet(geoFullTmp);
-    geoFullTmp->replaceWith(*geoPoint);
-
-#if 1
-    if (!keepSourcePrim)
-    {
-        geoPoint->replaceWithPoints(*geoFullTmp);
-    }
-#else
-    if (keepSourcePrim)
-    {
-        geoPoint->replaceWith(*geoFullTmp);
-    }
-    else
-    {
-        geoPoint->replaceWithPoints(*geoFullTmp);
-    }
-#endif
-
-
-    const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
-
-    GA_VertexGroupUPtr geo0vtxGroupUPtr;
-    GA_VertexGroup* geoVtxGroup = nullptr;
-    if (hasInputGroup)
-    {
-        geo0vtxGroupUPtr = geoFullTmp->createDetachedVertexGroup();
-        geoVtxGroup = geo0vtxGroupUPtr.get();
-        if (primGroupName.isstring())
-        {
-
-        }
-
-        if (pointGroupName.isstring())
-        {
-
-        }
-
-        if (vertexGroupName.isstring())
-        {
-
-        }
-
-        if (edgeGroupName.isstring())
-        {
-
-        }
-}
-
-    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geoPoint) : storage;
-    //const GA_VertexGroup* creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoFullTmp, "__topo_nextEquivValid", geoVtxGroup, subscribeRatio, minGrainSize);
-    const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoFullTmp, geoVtxGroup, finalStorage);
-    //const GA_Attribute* dstptAttrib = geoPoint->findVertexAttribute("__topo_dstpt");
-    const GA_RWHandleT<GA_Offset> dstpt_h = geoFullTmp->findVertexAttribute(GFE_TOPO_SCOPE, "__topo_dstpt");
-
-    UT_ASSERT_P(dstpt_h.getAttribute());
-
-
-    GA_Size entries = creatingGroup->getGroupEntries();
-
-    GA_Offset vtxoff_first;
-    GA_Offset primoff_first = geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-    //geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
-
-
-
-#if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-    GA_AttributeUPtr srcPrimAttribUPtr;
-#endif
-    GA_Attribute* srcPrimAttrib = nullptr;
-    if (copyPrimAttrib || outSrcPrimAttrib)
-    {
-        if (outSrcPrimAttrib)
-        {
-            if (srcPrimAttribName.isstring() && !srcPrimAttribName.isEmpty())
-            {
-                srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
-            }
-            else
-            {
-                if (copyPrimAttrib)
-                {
-#if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-                    srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
-                    srcPrimAttrib = srcPrimAttribUPtr.get();
-#else
-                    srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
-                    //srcPrimAttribUPtr.reset(srcPrimAttrib);
-#endif
-                }
-                outSrcPrimAttrib = false;
-                UT_ASSERT_MSG(0, "srcPrimAttribName invliad");
-            }
-        }
-        else
-        {
-#if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-            srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
-            srcPrimAttrib = srcPrimAttribUPtr.get();
-#else
-            srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
-            //srcPrimAttribUPtr.reset(srcPrimAttrib);
-#endif
-        }
-    }
-    //if (srcPrimAttrib)
-    //{
-    //    exint indexSize = srcPrimAttrib->getIndexMap().indexSize();
-    //    exint offsetSize = srcPrimAttrib->getIndexMap().offsetSize();
-    //}
-    GA_RWHandleT<GA_Offset> srcPrim_h(srcPrimAttrib);
-
-
-
-    GA_Topology& topo = geoPoint->getTopology();
-    const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
-
-
-    const GA_Topology& topo_tmpGeo0 = geoFullTmp->getTopology();
-    //topo_tmpGeo0.makePrimitiveRef();
-    const GA_ATITopology* const vtxPointRef_geoTmp = topo_tmpGeo0.getPointRef();
-    const GA_ATITopology* const vtxPrimRef_geoTmp = topo_tmpGeo0.getPrimitiveRef();
-
-    GA_Offset start, end;
-    for (GA_Iterator it(geoFullTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
-        {
-            if (copyPrimAttrib || outSrcPrimAttrib)
-            {
-                srcPrim_h.set(vtxPrimRef->getLink(vtxoff_first), vtxPrimRef_geoTmp->getLink(vtxoff));
-            }
-            topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
-            ++vtxoff_first;
-            topo.wireVertexPoint(vtxoff_first, dstpt_h.get(vtxoff));
-            ++vtxoff_first;
-        }
-    }
-
-    //////////////////// copy attributes //////////////////////
-
-    if (copyPrimAttrib)
-    {
-#if 1
-        GA_Offset primoff_last = primoff_first + entries;
-
-        for (GA_AttributeDict::iterator it = geoPoint->getAttributes().begin(GA_ATTRIB_PRIMITIVE); !it.atEnd(); ++it)
-        {
-            GA_Attribute* const attribPtr = it.attrib();
-            if (attribPtr == srcPrimAttrib)
-                continue;
-            //attribPtr->bumpDataId();
-            //const UT_StringHolder& name = attribPtr->getName();
-            //if (attribPtr->isDetached())
-            //    continue;
-            if (keepSourcePrim)
-            {
-                for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
-                {
-                    //const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
-                    attribPtr->copy(primoff, srcPrim_h.get(primoff));
-                }
-            }
-            else
-            {
-                GA_Attribute* const srcAttribPtr = geoFullTmp->findPrimitiveAttribute(it.name());
-                for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
-                {
-                    //const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
-                    attribPtr->copy(primoff, *srcAttribPtr, srcPrim_h.get(primoff));
-                }
-            }
-        }
-#else
-        GA_Offset start, end;
-        for (GA_Iterator it(GA_Range(geoPoint->getPrimitiveMap(), primoff_first, geoPoint->getNumPrimitiveOffsets())); it.fullBlockAdvance(start, end); )
-        {
-            for (GA_Offset primoff = start; primoff < end; ++primoff)
-            {
-            }
-        }
-#endif
-
-#if !TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
-        if (!outSrcPrimAttrib)
-        {
-            geoPoint->getAttributes().destroyAttribute(srcPrimAttrib);
-        }
-#endif
-    }
-
-
-
-    //geoTmp_h.deleteGdp();
-
-    return primoff_first;
-}
-
-
-#else
-
-
-SYS_FORCE_INLINE
-static GA_Offset
-convertLine(
-    GA_Detail* const geoFull,
-    const bool isClosed = false,
-    const bool copyPrimAttrib = false,
-    const bool outSrcPrimAttrib = false,
-    const UT_StringHolder& srcPrimAttribName = "",
-    const bool keepSourcePrim = false,
-    const UT_StringHolder& primGroupName = "",
-    const UT_StringHolder& pointGroupName = "",
-    const UT_StringHolder& vertexGroupName = "",
-    const UT_StringHolder& edgeGroupName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    UT_ASSERT_P(geoFull);
-
-    GU_DetailHandle geoFullTmp_h;
-    GU_Detail* const geoFullTmp = new GU_Detail();
-    geoFullTmp_h.allocateAndSet(geoFullTmp);
-    geoFullTmp->replaceWith(*geoFull);
-
-    geoFull->replaceWithPoints(*geoFullTmp);
-
-    return convertLine(geoFull, geoFullTmp, isClosed, copyPrimAttrib, outSrcPrimAttrib, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
-}
-
-
-
-#endif
-
-
-
-SYS_FORCE_INLINE
-static GU_DetailHandle
-convertLine(
-    const GA_Detail* const geoFull,
-    const bool isClosed = false,
-    const bool copyPrimAttrib = false,
-    const bool outSrcPrimAttrib = false,
-    const UT_StringHolder& srcPrimAttribName = "",
-    const bool keepSourcePrim = false,
-    const UT_StringHolder& primGroupName = "",
-    const UT_StringHolder& pointGroupName = "",
-    const UT_StringHolder& vertexGroupName = "",
-    const UT_StringHolder& edgeGroupName = "",
-    const GA_Storage storage = GA_STORE_INVALID
-)
-{
-    UT_ASSERT_P(geoFull);
-
-    GU_DetailHandle geoOut_h;
-    GU_Detail* const geoOut = new GU_Detail();
-    geoOut_h.allocateAndSet(geoOut);
-
-    convertLine(geoOut, geoFull, isClosed, copyPrimAttrib, outSrcPrimAttrib, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
-    return geoOut_h;
-}
-
-
-
-} // End of namespace GFE_ConvertLine
+//
+//
+//
+// namespace GFE_ConvertLine_Namespace {
+//
+//
+// #define TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib 1
+//
+// #if !TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+// #define TMP_GFE_ConvertLine_SrcPrimAttribName "GFE_ConvertLine_srcPrim"
+// #endif
+//
+//
+// static GA_Offset
+// convertLine(
+//     GA_Detail* const geoPoint,
+//     const GA_Detail* const geoFull,
+//     const bool isClosed = false,
+//     const bool copyPrimAttrib = false,
+//     bool outSrcPrimAttrib = false,
+//     const UT_StringHolder& srcPrimAttribName = "",
+//     const bool keepSourcePrim = false,
+//     const UT_StringHolder& primGroupName = "",
+//     const UT_StringHolder& pointGroupName = "",
+//     const UT_StringHolder& vertexGroupName = "",
+//     const UT_StringHolder& edgeGroupName = "",
+//     const GA_Storage storage = GA_STORE_INVALID
+// )
+// {
+//     UT_ASSERT_P(geoPoint);
+//     UT_ASSERT_P(geoFull);
+//
+//     if (keepSourcePrim)
+//     {
+//         geoPoint->replaceWith(*geoFull);
+//     }
+//     else
+//     {
+//         geoPoint->replaceWithPoints(*geoFull);
+//     }
+//
+//     GU_DetailHandle geoTmp_h;
+//     GU_Detail* const geoTmp = new GU_Detail();
+//     geoTmp_h.allocateAndSet(geoTmp);
+//     geoTmp->replaceWith(*geoFull);
+//
+//
+//     const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
+//
+//     GA_VertexGroupUPtr geo0vtxGroupUPtr;
+//     GA_VertexGroup* geoVtxGroup = nullptr;
+//     if (hasInputGroup)
+//     {
+//         geo0vtxGroupUPtr = geoTmp->createDetachedVertexGroup();
+//         geoVtxGroup = geo0vtxGroupUPtr.get();
+//         if (primGroupName.isstring())
+//         {
+//
+//         }
+//
+//         if (pointGroupName.isstring())
+//         {
+//
+//         }
+//
+//         if (vertexGroupName.isstring())
+//         {
+//
+//         }
+//
+//         if (edgeGroupName.isstring())
+//         {
+//
+//         }
+//     }
+//
+//     const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geoPoint) : storage;
+//     //const GA_VertexGroup* creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, "__topo_nextEquivValid", geoVtxGroup, subscribeRatio, minGrainSize);
+//     const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoTmp, geoVtxGroup, finalStorage);
+//     //const GA_Attribute* dstptAttrib = geoPoint->findVertexAttribute("__topo_dstpt");
+//     const GA_RWHandleT<GA_Offset> dstpt_h = geoTmp->findVertexAttribute(GFE_TOPO_SCOPE, "__topo_dstpt");
+//
+//     UT_ASSERT_P(dstpt_h.getAttribute());
+//
+//
+//     GA_Size entries = creatingGroup->getGroupEntries();
+//
+//     GA_Offset vtxoff_first;
+//     GA_Offset primoff_first = geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+//     //geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+//
+//
+//
+// #if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//     GA_AttributeUPtr srcPrimAttribUPtr;
+// #endif
+//     GA_Attribute* srcPrimAttrib = nullptr;
+//     if (copyPrimAttrib || outSrcPrimAttrib)
+//     {
+//         if (outSrcPrimAttrib)
+//         {
+//             if (srcPrimAttribName.isstring() && !srcPrimAttribName.isEmpty())
+//             {
+//                 srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
+//             }
+//             else
+//             {
+//                 if (copyPrimAttrib)
+//                 {
+// #if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//                     srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
+//                     srcPrimAttrib = srcPrimAttribUPtr.get();
+// #else
+//                     srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
+//                     //srcPrimAttribUPtr.reset(srcPrimAttrib);
+// #endif
+//                 }
+//                 outSrcPrimAttrib = false;
+//                 UT_ASSERT_MSG(0, "srcPrimAttribName invliad");
+//             }
+//         }
+//         else
+//         {
+// #if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//             srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
+//             srcPrimAttrib = srcPrimAttribUPtr.get();
+// #else
+//             srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
+//             //srcPrimAttribUPtr.reset(srcPrimAttrib);
+// #endif
+//         }
+//     }
+//     //if (srcPrimAttrib)
+//     //{
+//     //    exint indexSize = srcPrimAttrib->getIndexMap().indexSize();
+//     //    exint offsetSize = srcPrimAttrib->getIndexMap().offsetSize();
+//     //}
+//     GA_RWHandleT<GA_Offset> srcPrim_h(srcPrimAttrib);
+//
+//
+//
+//     GA_Topology& topo = geoPoint->getTopology();
+//     const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+//
+//
+//     const GA_Topology& topo_tmpGeo0 = geoTmp->getTopology();
+//     //topo_tmpGeo0.makePrimitiveRef();
+//     const GA_ATITopology* const vtxPointRef_geoTmp = topo_tmpGeo0.getPointRef();
+//     const GA_ATITopology* const vtxPrimRef_geoTmp = topo_tmpGeo0.getPrimitiveRef();
+//
+//     GA_Offset start, end;
+//     for (GA_Iterator it(geoTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
+//     {
+//         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
+//         {
+//             if (copyPrimAttrib || outSrcPrimAttrib)
+//             {
+//                 srcPrim_h.set(vtxPrimRef->getLink(vtxoff_first), vtxPrimRef_geoTmp->getLink(vtxoff));
+//             }
+//             topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
+//             ++vtxoff_first;
+//             topo.wireVertexPoint(vtxoff_first, dstpt_h.get(vtxoff));
+//             ++vtxoff_first;
+//         }
+//     }
+//
+//     //////////////////// copy attributes //////////////////////
+//
+//     if (copyPrimAttrib)
+//     {
+// #if 1
+//         GA_Offset primoff_last = primoff_first + entries;
+//
+//         for (GA_AttributeDict::iterator it = geoPoint->getAttributes().begin(GA_ATTRIB_PRIMITIVE); !it.atEnd(); ++it)
+//         {
+//             GA_Attribute* const attribPtr = it.attrib();
+//             if (attribPtr == srcPrimAttrib)
+//                 continue;
+//             attribPtr->bumpDataId();
+//             const UT_StringHolder& name = attribPtr->getName();
+//             //if (attribPtr->isDetached())
+//             //    continue;
+//             if (keepSourcePrim)
+//             {
+//                 for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+//                 {
+//                     const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
+//                     attribPtr->copy(primoff, srcPrim_h.get(primoff));
+//                 }
+//             }
+//             else
+//             {
+//                 GA_Attribute* const srcAttribPtr = geoTmp->findPrimitiveAttribute(it.name());
+//                 for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+//                 {
+//                     const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
+//                     attribPtr->copy(primoff, *srcAttribPtr, srcPrim_h.get(primoff));
+//                 }
+//             }
+//         }
+// #else
+//         GA_Offset start, end;
+//         for (GA_Iterator it(GA_Range(geoPoint->getPrimitiveMap(), primoff_first, geoPoint->getNumPrimitiveOffsets())); it.fullBlockAdvance(start, end); )
+//         {
+//             for (GA_Offset primoff = start; primoff < end; ++primoff)
+//             {
+//             }
+//         }
+// #endif
+//
+// #if !TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//         if (!outSrcPrimAttrib)
+//         {
+//             geoPoint->getAttributes().destroyAttribute(srcPrimAttrib);
+//         }
+// #endif
+//     }
+//
+//
+//
+//     //geoTmp_h.deleteGdp();
+//
+//     return primoff_first;
+// }
+//
+//
+// #if 1
+//
+//
+//
+// SYS_FORCE_INLINE
+// static GA_Offset
+// convertLine(
+//     GA_Detail* const geoPoint,
+//     const bool isClosed = false,
+//     const bool copyPrimAttrib = false,
+//     bool outSrcPrimAttrib = false,
+//     const UT_StringHolder& srcPrimAttribName = "",
+//     const bool keepSourcePrim = false,
+//     const UT_StringHolder& primGroupName = "",
+//     const UT_StringHolder& pointGroupName = "",
+//     const UT_StringHolder& vertexGroupName = "",
+//     const UT_StringHolder& edgeGroupName = "",
+//     const GA_Storage storage = GA_STORE_INVALID
+// )
+// {
+//     UT_ASSERT_P(geoPoint);
+//
+//     GU_DetailHandle geoFullTmp_h;
+//     GU_Detail* const geoFullTmp = new GU_Detail();
+//     geoFullTmp_h.allocateAndSet(geoFullTmp);
+//     geoFullTmp->replaceWith(*geoPoint);
+//
+// #if 1
+//     if (!keepSourcePrim)
+//     {
+//         geoPoint->replaceWithPoints(*geoFullTmp);
+//     }
+// #else
+//     if (keepSourcePrim)
+//     {
+//         geoPoint->replaceWith(*geoFullTmp);
+//     }
+//     else
+//     {
+//         geoPoint->replaceWithPoints(*geoFullTmp);
+//     }
+// #endif
+//
+//
+//     const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
+//
+//     GA_VertexGroupUPtr geo0vtxGroupUPtr;
+//     GA_VertexGroup* geoVtxGroup = nullptr;
+//     if (hasInputGroup)
+//     {
+//         geo0vtxGroupUPtr = geoFullTmp->createDetachedVertexGroup();
+//         geoVtxGroup = geo0vtxGroupUPtr.get();
+//         if (primGroupName.isstring())
+//         {
+//
+//         }
+//
+//         if (pointGroupName.isstring())
+//         {
+//
+//         }
+//
+//         if (vertexGroupName.isstring())
+//         {
+//
+//         }
+//
+//         if (edgeGroupName.isstring())
+//         {
+//
+//         }
+// }
+//
+//     const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geoPoint) : storage;
+//     //const GA_VertexGroup* creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoFullTmp, "__topo_nextEquivValid", geoVtxGroup, subscribeRatio, minGrainSize);
+//     const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoFullTmp, geoVtxGroup, finalStorage);
+//     //const GA_Attribute* dstptAttrib = geoPoint->findVertexAttribute("__topo_dstpt");
+//     const GA_RWHandleT<GA_Offset> dstpt_h = geoFullTmp->findVertexAttribute(GFE_TOPO_SCOPE, "__topo_dstpt");
+//
+//     UT_ASSERT_P(dstpt_h.getAttribute());
+//
+//
+//     GA_Size entries = creatingGroup->getGroupEntries();
+//
+//     GA_Offset vtxoff_first;
+//     GA_Offset primoff_first = geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+//     //geoPoint->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+//
+//
+//
+// #if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//     GA_AttributeUPtr srcPrimAttribUPtr;
+// #endif
+//     GA_Attribute* srcPrimAttrib = nullptr;
+//     if (copyPrimAttrib || outSrcPrimAttrib)
+//     {
+//         if (outSrcPrimAttrib)
+//         {
+//             if (srcPrimAttribName.isstring() && !srcPrimAttribName.isEmpty())
+//             {
+//                 srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
+//             }
+//             else
+//             {
+//                 if (copyPrimAttrib)
+//                 {
+// #if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//                     srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
+//                     srcPrimAttrib = srcPrimAttribUPtr.get();
+// #else
+//                     srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
+//                     //srcPrimAttribUPtr.reset(srcPrimAttrib);
+// #endif
+//                 }
+//                 outSrcPrimAttrib = false;
+//                 UT_ASSERT_MSG(0, "srcPrimAttribName invliad");
+//             }
+//         }
+//         else
+//         {
+// #if TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//             srcPrimAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, GA_Defaults(0));
+//             srcPrimAttrib = srcPrimAttribUPtr.get();
+// #else
+//             srcPrimAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, TMP_GFE_ConvertLine_SrcPrimAttribName, finalStorage, 1, GA_Defaults(-1));
+//             //srcPrimAttribUPtr.reset(srcPrimAttrib);
+// #endif
+//         }
+//     }
+//     //if (srcPrimAttrib)
+//     //{
+//     //    exint indexSize = srcPrimAttrib->getIndexMap().indexSize();
+//     //    exint offsetSize = srcPrimAttrib->getIndexMap().offsetSize();
+//     //}
+//     GA_RWHandleT<GA_Offset> srcPrim_h(srcPrimAttrib);
+//
+//
+//
+//     GA_Topology& topo = geoPoint->getTopology();
+//     const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+//
+//
+//     const GA_Topology& topo_tmpGeo0 = geoFullTmp->getTopology();
+//     //topo_tmpGeo0.makePrimitiveRef();
+//     const GA_ATITopology* const vtxPointRef_geoTmp = topo_tmpGeo0.getPointRef();
+//     const GA_ATITopology* const vtxPrimRef_geoTmp = topo_tmpGeo0.getPrimitiveRef();
+//
+//     GA_Offset start, end;
+//     for (GA_Iterator it(geoFullTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
+//     {
+//         for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
+//         {
+//             if (copyPrimAttrib || outSrcPrimAttrib)
+//             {
+//                 srcPrim_h.set(vtxPrimRef->getLink(vtxoff_first), vtxPrimRef_geoTmp->getLink(vtxoff));
+//             }
+//             topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
+//             ++vtxoff_first;
+//             topo.wireVertexPoint(vtxoff_first, dstpt_h.get(vtxoff));
+//             ++vtxoff_first;
+//         }
+//     }
+//
+//     //////////////////// copy attributes //////////////////////
+//
+//     if (copyPrimAttrib)
+//     {
+// #if 1
+//         GA_Offset primoff_last = primoff_first + entries;
+//
+//         for (GA_AttributeDict::iterator it = geoPoint->getAttributes().begin(GA_ATTRIB_PRIMITIVE); !it.atEnd(); ++it)
+//         {
+//             GA_Attribute* const attribPtr = it.attrib();
+//             if (attribPtr == srcPrimAttrib)
+//                 continue;
+//             //attribPtr->bumpDataId();
+//             //const UT_StringHolder& name = attribPtr->getName();
+//             //if (attribPtr->isDetached())
+//             //    continue;
+//             if (keepSourcePrim)
+//             {
+//                 for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+//                 {
+//                     //const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
+//                     attribPtr->copy(primoff, srcPrim_h.get(primoff));
+//                 }
+//             }
+//             else
+//             {
+//                 GA_Attribute* const srcAttribPtr = geoFullTmp->findPrimitiveAttribute(it.name());
+//                 for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+//                 {
+//                     //const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
+//                     attribPtr->copy(primoff, *srcAttribPtr, srcPrim_h.get(primoff));
+//                 }
+//             }
+//         }
+// #else
+//         GA_Offset start, end;
+//         for (GA_Iterator it(GA_Range(geoPoint->getPrimitiveMap(), primoff_first, geoPoint->getNumPrimitiveOffsets())); it.fullBlockAdvance(start, end); )
+//         {
+//             for (GA_Offset primoff = start; primoff < end; ++primoff)
+//             {
+//             }
+//         }
+// #endif
+//
+// #if !TMP_GFE_ConvertLine_UseDetached_SrcPrimAttrib
+//         if (!outSrcPrimAttrib)
+//         {
+//             geoPoint->getAttributes().destroyAttribute(srcPrimAttrib);
+//         }
+// #endif
+//     }
+//
+//
+//
+//     //geoTmp_h.deleteGdp();
+//
+//     return primoff_first;
+// }
+//
+//
+// #else
+//
+//
+// SYS_FORCE_INLINE
+// static GA_Offset
+// convertLine(
+//     GA_Detail* const geoFull,
+//     const bool isClosed = false,
+//     const bool copyPrimAttrib = false,
+//     const bool outSrcPrimAttrib = false,
+//     const UT_StringHolder& srcPrimAttribName = "",
+//     const bool keepSourcePrim = false,
+//     const UT_StringHolder& primGroupName = "",
+//     const UT_StringHolder& pointGroupName = "",
+//     const UT_StringHolder& vertexGroupName = "",
+//     const UT_StringHolder& edgeGroupName = "",
+//     const GA_Storage storage = GA_STORE_INVALID
+// )
+// {
+//     UT_ASSERT_P(geoFull);
+//
+//     GU_DetailHandle geoFullTmp_h;
+//     GU_Detail* const geoFullTmp = new GU_Detail();
+//     geoFullTmp_h.allocateAndSet(geoFullTmp);
+//     geoFullTmp->replaceWith(*geoFull);
+//
+//     geoFull->replaceWithPoints(*geoFullTmp);
+//
+//     return convertLine(geoFull, geoFullTmp, isClosed, copyPrimAttrib, outSrcPrimAttrib, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+// }
+//
+//
+//
+// #endif
+//
+//
+//
+// SYS_FORCE_INLINE
+// static GU_DetailHandle
+// convertLine(
+//     const GA_Detail* const geoFull,
+//     const bool isClosed = false,
+//     const bool copyPrimAttrib = false,
+//     const bool outSrcPrimAttrib = false,
+//     const UT_StringHolder& srcPrimAttribName = "",
+//     const bool keepSourcePrim = false,
+//     const UT_StringHolder& primGroupName = "",
+//     const UT_StringHolder& pointGroupName = "",
+//     const UT_StringHolder& vertexGroupName = "",
+//     const UT_StringHolder& edgeGroupName = "",
+//     const GA_Storage storage = GA_STORE_INVALID
+// )
+// {
+//     UT_ASSERT_P(geoFull);
+//
+//     GU_DetailHandle geoOut_h;
+//     GU_Detail* const geoOut = new GU_Detail();
+//     geoOut_h.allocateAndSet(geoOut);
+//
+//     convertLine(geoOut, geoFull, isClosed, copyPrimAttrib, outSrcPrimAttrib, srcPrimAttribName, keepSourcePrim, primGroupName, pointGroupName, vertexGroupName, edgeGroupName, GA_STORE_INVALID);
+//     return geoOut_h;
+// }
+//
+//
+//
+// } // End of namespace GFE_ConvertLine
 
 #endif

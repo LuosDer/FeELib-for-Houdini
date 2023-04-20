@@ -6,12 +6,6 @@
 
 //#include "GFE/GFE_UVScaletoWorldSize.h"
 
-#include "GA/GA_Detail.h"
-
-#define GFE_UVScaletoWorldSize_UseDetachedAttrib 0
-
-#define GFE_UVScaletoWorldSize_AreaAttribName   "__area_GFE_UVScaletoWorldSize"
-#define GFE_UVScaletoWorldSize_AreaUVAttribName "__areaUV_GFE_UVScaletoWorldSize"
 
 
 #include "GU/GU_Promote.h"
@@ -28,6 +22,9 @@
 
 
 class GFE_UVScaletoWorldSize : public GFE_AttribFilter {
+
+#define GFE_UVScaletoWorldSize_AreaAttribName   "__area_GFE_UVScaletoWorldSize"
+#define GFE_UVScaletoWorldSize_AreaUVAttribName "__areaUV_GFE_UVScaletoWorldSize"
 
 public:
 
@@ -111,33 +108,25 @@ private:
     {
         const GA_PrimitiveGroup* const geoGroup = groupParser.getPrimitiveGroup();
 
-        const GA_Storage inStorage = uv_h.getAttribute()->getStorage();
+        const GA_Storage inStorage = uv_h->getStorage();
 
-#if GFE_UVScaletoWorldSize_UseDetachedAttrib
-        GA_AttributeUPtr areaUPtr = GFE_Measure::addDetachedAttribPrimArea(geo, geoGroup, inStorage);
-        GA_AttributeUPtr areaUVUPtr = GFE_Measure::addDetachedAttribPrimArea(geo, uv_h, geoGroup, inStorage);
-        //const GA_ATINumericUPtr areaUVUPtr = GFE_Measure::addDetachedAttribPrimArea(geo, static_cast<const GA_ROHandleT<UT_Vector3T<T>>>(uv_h), geoGroup, inStorage);
-        GA_Attribute* areaATIPtr = areaUPtr.get();
-        GA_Attribute* areaUVATIPtr = areaUVUPtr.get();
-#else
         GFE_Measure measure(geo, cookparms);
         measure.groupParser.setGroup(geoGroup);
         //measure.setPositionAttrib();
         //measure.setComputeParm(GFE_MeasureType::Area);
 
-        GA_Attribute* areaATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaAttribName);
+        //GA_Attribute* areaATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaAttribName);
+        GA_Attribute* areaATIPtr = measure.getOutAttribArray().findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE);
         measure.compute();
 
-        GA_Attribute* areaUVATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaUVAttribName);
+        //GA_Attribute* areaUVATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaUVAttribName);
+        GA_Attribute* areaUVATIPtr = measure.getOutAttribArray().findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE);
         measure.setPositionAttrib(uv_h.getAttribute());
         measure.compute();
         
-        //GA_Attribute* areaATIPtr = GFE_Measure::addAttribPrimArea(geo, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaAttribName);
-        //GA_Attribute* areaUVATIPtr = GFE_Measure::addAttribPrimArea(geo, uv_h, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaUVAttribName);
-#endif
 
-        const GA_AttributeUPtr uvScaleATI_deleter = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorage, 3);
-        GA_Attribute* const uvScaleATIPtr = uvScaleATI_deleter.get();
+        const GA_AttributeUPtr uvScaleATIUPtr = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorage, 3);
+        GA_Attribute* const uvScaleATIPtr = uvScaleATIUPtr.get();
 
         //GA_ROHandleT<exint> connectivityAttrib_h;
 
@@ -150,10 +139,6 @@ private:
             //areaUVAttrib_h = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
             areaATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
             areaUVATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-#if GFE_UVScaletoWorldSize_UseDetachedAttrib
-            areaUPtr.reset(areaATIPtr);
-            areaUVUPtr.reset(areaUVATIPtr);
-#endif
         }
 
 
@@ -199,10 +184,6 @@ private:
             }
         }, subscribeRatio, minGrainSize);
 
-#if !GFE_UVScaletoWorldSize_UseDetachedAttrib
-        geo->getAttributes().destroyAttribute(areaATIPtr);
-        geo->getAttributes().destroyAttribute(areaUVATIPtr);
-#endif
     }
 
 
@@ -283,16 +264,9 @@ private:
 //
 //    const GA_Storage inStorage = uv_h.getAttribute()->getStorage();
 //
-//#if GFE_UVScaletoWorldSize_UseDetachedAttrib
-//    GA_AttributeUPtr areaUPtr   = GFE_Measure::addDetachedAttribPrimArea(geo,                geoGroup, inStorage);
-//    GA_AttributeUPtr areaUVUPtr = GFE_Measure::addDetachedAttribPrimArea(geo, uv_h, geoGroup, inStorage);
-//    //const GA_ATINumericUPtr areaUVUPtr = GFE_Measure::addDetachedAttribPrimArea(geo, static_cast<const GA_ROHandleT<UT_Vector3T<T>>>(uv_h), geoGroup, inStorage);
-//    GA_Attribute* areaATIPtr   = areaUPtr.get();
-//    GA_Attribute* areaUVATIPtr = areaUVUPtr.get();
-//#else
 //    GA_Attribute* areaATIPtr   = GFE_Measure::addAttribPrimArea(geo,                geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaAttribName);
 //    GA_Attribute* areaUVATIPtr = GFE_Measure::addAttribPrimArea(geo, uv_h, geoGroup, inStorage, GFE_UVScaletoWorldSize_AreaUVAttribName);
-//#endif
+
 //
 //    const GA_AttributeUPtr uvScaleATI_deleter = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorage, 3);
 //    GA_Attribute* const uvScaleATIPtr = uvScaleATI_deleter.get();
@@ -306,10 +280,7 @@ private:
 //        //areaUVAttrib_h = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
 //        areaATIPtr   = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr,   GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
 //        areaUVATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-//#if GFE_UVScaletoWorldSize_UseDetachedAttrib
-//        areaUPtr.reset(areaATIPtr);
-//        areaUVUPtr.reset(areaUVATIPtr);
-//#endif
+
 //    }
 //
 //
@@ -358,10 +329,6 @@ private:
 //        }, subscribeRatio, minGrainSize);
 //    }
 //
-//#if !GFE_UVScaletoWorldSize_UseDetachedAttrib
-//    geo->getAttributes().destroyAttribute(areaATIPtr);
-//    geo->getAttributes().destroyAttribute(areaUVATIPtr);
-//#endif
 //}
 //
 //

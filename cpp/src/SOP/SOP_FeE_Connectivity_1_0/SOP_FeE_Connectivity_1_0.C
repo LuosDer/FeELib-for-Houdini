@@ -105,8 +105,8 @@ static const char *theDsFile = R"THEDSFILE(
         type    ordinal
         default { "point" }
         menu {
-            "point"     "Point"
             "edge"      "Edge"
+            "point"     "Point"
         }
     }
     parm {
@@ -114,7 +114,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "ConnectivityAttribClass"
         label   "Connectivity Attribute Class"
         type    ordinal
-        default { "prim" }
+        default { "point" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"
@@ -325,8 +325,8 @@ sopConnectivityConstraint(SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint 
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmConnectivityConstraint)
     {
-    case ConnectivityConstraint::POINT:    return false;     break;
     case ConnectivityConstraint::EDGE:     return true;      break;
+    case ConnectivityConstraint::POINT:    return false;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Connectivity Constraint!");
     return false;
@@ -357,6 +357,7 @@ sopAttribOwner(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attribClas
     {
     case ConnectivityAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case ConnectivityAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case ConnectivityAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -455,7 +456,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
                 {
                     GFE_AttribPromote attribPromote(outGeo0);
                     attribPromote.setSourceAttribute(attribPtr);
-                    attribPromote.createDestinationAttribute(geo0AttribClass);
+                    attribPromote.setDestinationAttribute(geo0AttribClass);
                     attribPromote.computeAndBumpDataId();
                     //attribPtr = GFE_AttributePromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
                     //attribPtr = GFE_AttribPromote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
@@ -508,7 +509,6 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     connectivity.findOrCreateTuple(false, geo0AttribClass, connectivityStorageClass, GA_STORE_INVALID, geo0AttribNames);
     
     connectivity.computeAndBumpDataId();
-
 
     //timeEnd = std::chrono::steady_clock::now();
     //diff = timeEnd - timeStart;

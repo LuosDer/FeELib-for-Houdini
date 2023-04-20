@@ -29,35 +29,75 @@ static const char *theDsFile = R"THEDSFILE(
         name    "srcAttribClass"
         cppname "SrcAttribClass"
         label   "Source Attribute Class"
-        type    toggle
-        default { "" }
+        type    ordinal
+        default { "points" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
     }
 
     parm {
         name    "srcAttrib"
         cppname "SrcAttrib"
         label   "Source Attribute"
-        type    toggle
+        type    string
         default { "" }
     }
 
     parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Output as Offset"
-        type    toggle
-        default { "1" }
+        name    "dstAttribClass"
+        cppname "DstAttribClass"
+        label   "Destination Attribute Class"
+        type    ordinal
+        default { "points" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
     }
-
-
 
     parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
+        name    "renameAttrib"
+        cppname "RenameAttrib"
+        label   "Rename Attrib"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
+    parm {
+        name    "newAttribName"
+        cppname "NewAttribName"
+        label   "New Attrib Name"
+        type    string
+        default { "" }
+        disablewhen "{ renameAttrib == 0 }"
+    }
+
+
+
+    // parm {
+    //     name    "renameGroup"
+    //     cppname "RenameGroup"
+    //     label   "Rename Group"
+    //     type    toggle
+    //     nolabel
+    //     joinnext
+    //     default { "0" }
+    // }
+    // parm {
+    //     name    "newGroupName"
+    //     cppname "NewGroupName"
+    //     label   "New Group Name"
+    //     type    string
+    //     default { "" }
+    //     disablewhen "{ renameGroup == 0 }"
+    // }
 
     parm {
        name    "subscribeRatio"
@@ -156,24 +196,35 @@ SOP_FeE_AttribPromote_1_0::cookVerb() const
 
 
 
-
-static GA_GroupType
-sopGroupType(SOP_FeE_AttribPromote_1_0Parms::GroupType parmgrouptype)
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_AttribPromote_1_0Parms::SrcAttribClass attribClass)
 {
     using namespace SOP_FeE_AttribPromote_1_0Enums;
-    switch (parmgrouptype)
+    switch (attribClass)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case SrcAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case SrcAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case SrcAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case SrcAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
 }
 
-
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_AttribPromote_1_0Parms::DstAttribClass attribClass)
+{
+    using namespace SOP_FeE_AttribPromote_1_0Enums;
+    switch (attribClass)
+    {
+    case DstAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case DstAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case DstAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case DstAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
 
 
 void
@@ -192,13 +243,16 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     if (boss.wasInterrupted())
         return;
 
+    const GA_AttributeOwner srcAttribClass = sopAttribOwner(sopparms.getSrcAttribClass());
+    const GA_AttributeOwner dstAttribClass = sopAttribOwner(sopparms.getDstAttribClass());
+    
     GFE_AttribPromote attribPromote(outGeo0, cookparms);
 
-    attribPromote.setSourceAttribute(connectivityAttribPtr);
-    attribPromote.setDestinationAttribute(outAttribPtr);
-    attribPromote.compute();
+    attribPromote.setSourceAttribute(srcAttribClass, sopparms.getSrcAttrib());
+    attribPromote.setDestinationAttribute(dstAttribClass);
+    attribPromote.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    GA_Attribute* const finalAttribPtr = attribPromote.getDestinationAttribute();
+    //GA_Attribute* const finalAttribPtr = attribPromote.getDestinationAttribute();
     attribPromote.computeAndBumpDataId();
 
     

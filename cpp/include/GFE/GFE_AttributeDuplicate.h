@@ -28,38 +28,26 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setSourceAttribute(
-            const GA_Attribute* const srcAttribPtr
-        )
+    SYS_FORCE_INLINE void setSourceAttribute(const GA_Attribute* const srcAttribPtr)
     {
         this->srcAttribPtr = srcAttribPtr;
         attribOwner = srcAttribPtr->getOwner();
     }
 
-    SYS_FORCE_INLINE
-    void
-        setSourceAttribute(
-            GA_Attribute* const srcAttribPtr
-        )
+    SYS_FORCE_INLINE void setSourceAttribute(GA_Attribute* const srcAttribPtr)
     {
         this->srcAttribPtr_nonConst = srcAttribPtr;
         setSourceAttribute(static_cast<const GA_Attribute*>(srcAttribPtr));
     }
 
 
-    void
-        setDestinationAttribute(
-            GA_Attribute* const dstAttribPtr
-        )
+    void setDestinationAttribute(GA_Attribute* const dstAttribPtr)
     {
         if (dstAttribPtr->getOwner() != attribOwner)
         {
             UT_ASSERT_MSG(0, "not same owner");
             if (cookparms)
-            {
-            }
+                cookparms->sopAddWarning("not same owner");
             return;
         }
 
@@ -67,10 +55,7 @@ public:
         getOutAttribArray().set(dstAttribPtr);
     }
 
-    void
-        setDestinationAttribute(
-            const UT_StringHolder& attribName
-        )
+    void setDestinationAttribute()
     {
         UT_ASSERT_MSG(srcAttribPtr, "Can NOT with no srcAttribPtr");
         UT_ASSERT_MSG(geo, "Can NOT with no geo");
@@ -87,10 +72,7 @@ public:
         }
     }
 
-    void
-        setDestinationAttribute(
-            const UT_StringHolder& name
-        )
+    void setDestinationAttribute(const UT_StringHolder& name)
     {
         UT_ASSERT_MSG(srcAttribPtr, "Can NOT with no srcAttribPtr");
         UT_ASSERT_MSG(geo, "Can NOT with no geo");
@@ -108,8 +90,7 @@ public:
     }
 
 
-    void
-        setDetachedDestinationAttribute()
+    void setDetachedDestinationAttribute()
     {
         UT_ASSERT_MSG(srcAttribPtr, "Can NOT with no srcAttribPtr");
         UT_ASSERT_MSG(geo, "Can NOT with no geo");
@@ -121,9 +102,7 @@ public:
 
     }
 
-    SYS_FORCE_INLINE
-        GA_Attribute*
-        getDestinationAttribute() const
+    SYS_FORCE_INLINE GA_Attribute* getDestinationAttribute() const
     {
         return dstAttribPtr;
     }
