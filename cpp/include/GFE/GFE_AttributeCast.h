@@ -13,8 +13,10 @@
     
 
 
-class GFE_AttribCast : public GFE_AttribCreateFilter
-{
+class GFE_AttribCast : public GFE_AttribCreateFilter {
+    
+#define GFE_TEMP_ATTRIBCAST_ATTRIBNAME "__GFE_TEMP_ATTRIBCAST_ATTRIBNAME"
+    
 public:
 
     using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
@@ -148,7 +150,6 @@ private:
         return true;
     }
 
-#define GFE_TEMP_ATTRIBCAST_ATTRIBNAME "__GFE_TEMP_ATTRIBCAST_ATTRIBNAME"
 
     void attribCast(GA_Attribute& attrib)
     {
@@ -160,8 +161,6 @@ private:
             if (GFE_Attribute::getPrecision(attrib) == precision)
                 return;
         }
-            
-        const GA_AttributeOwner attribClass = attrib.getOwner();
         
         const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
         const bool detached = !newName.isstring() || newName.length() == 0;
@@ -178,6 +177,7 @@ private:
         else
         {
             const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, precision);
+            //if(!detached && !attrib.isDetached() && attrib.getName() == newName)
             if(!detached && !attrib.isDetached() && strcmp(attrib.getName().c_str(), newName.c_str()) == 0)
             {
                 GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
@@ -535,7 +535,7 @@ private:
         UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
             [this, &attrib, &attribRef](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+            GA_PageHandleT<SCALAR_T,     SCALAR_T,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -669,17 +669,13 @@ private:
     }
 
 
-#define GFE_ATTRIBDUPLICATE_SPECIALIZATION(SCALAR_T)              \
-    template<>                                                    \
-    SYS_FORCE_INLINE                                              \
-    void                                                          \
-        attribDuplicate<SCALAR_T, UT_StringHolder>(               \
-            GA_Attribute& attrib,                                 \
-            const GA_Attribute& attribRef                         \
-            )                                                     \
-    {                                                             \
-        attribDuplicateFromString<SCALAR_T>(attrib, attribRef);   \
-    }                                                             \
+#define GFE_ATTRIBDUPLICATE_SPECIALIZATION(SCALAR_T)                     \
+    template<>                                                           \
+    SYS_FORCE_INLINE void attribDuplicate<SCALAR_T, UT_StringHolder>     \
+        (GA_Attribute& attrib, const GA_Attribute& attribRef)            \
+    {                                                                    \
+        attribDuplicateFromString<SCALAR_T>(attrib, attribRef);          \
+    }                                                                    \
 
 
     GFE_ATTRIBDUPLICATE_SPECIALIZATION(int16)
@@ -970,9 +966,6 @@ private:
 
 
 
-//#undef GFE_TEMP_ATTRIBCAST_ATTRIBNAME
-    
-
 public:
         GA_StorageClass newStorageClass = GA_STORECLASS_INVALID;
         GA_Precision precision = GA_PRECISION_INVALID;
@@ -996,6 +989,9 @@ private:
         exint subscribeRatio = 64;
         exint minGrainSize = 1024;
 
+
+#undef GFE_TEMP_ATTRIBCAST_ATTRIBNAME
+    
 }; // End of class GFE_AttribCast
 
 

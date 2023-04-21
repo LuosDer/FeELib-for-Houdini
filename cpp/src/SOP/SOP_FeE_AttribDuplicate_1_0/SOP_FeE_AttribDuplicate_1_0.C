@@ -1,4 +1,3 @@
-
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribDuplicate_1_0.h"
 
@@ -17,14 +16,12 @@
 #include "GFE/GFE_AttributeDuplicate.h"
 
 
-
 using namespace SOP_FeE_AttribDuplicate_1_0_Namespace;
 
 
-static const char *theDsFile = R"THEDSFILE(
+static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
-
     parm {
         name    "srcAttribClass"
         cppname "SrcAttribClass"
@@ -127,16 +124,21 @@ newSopOperator(OP_OperatorTable* table)
 class SOP_FeE_AttribDuplicate_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_AttribDuplicate_1_0Verb() {}
-    virtual ~SOP_FeE_AttribDuplicate_1_0Verb() {}
+    SOP_FeE_AttribDuplicate_1_0Verb()
+    {
+    }
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_AttribDuplicate_1_0Parms(); }
+    virtual ~SOP_FeE_AttribDuplicate_1_0Verb()
+    {
+    }
+
+    virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_AttribDuplicate_1_0Parms(); }
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_AttribDuplicate_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribDuplicate_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_GENERIC; }
 
-    virtual void cook(const CookParms &cookparms) const;
+    virtual void cook(const CookParms& cookparms) const;
 
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
@@ -147,14 +149,11 @@ public:
 // The declaration is inside the class.
 const SOP_NodeVerb::Register<SOP_FeE_AttribDuplicate_1_0Verb> SOP_FeE_AttribDuplicate_1_0Verb::theVerb;
 
-const SOP_NodeVerb *
-SOP_FeE_AttribDuplicate_1_0::cookVerb() const 
-{ 
+const SOP_NodeVerb*
+SOP_FeE_AttribDuplicate_1_0::cookVerb() const
+{
     return SOP_FeE_AttribDuplicate_1_0Verb::theVerb.get();
 }
-
-
-
 
 
 static GA_GroupType
@@ -163,17 +162,20 @@ sopGroupType(SOP_FeE_AttribDuplicate_1_0Parms::GroupType parmgrouptype)
     using namespace SOP_FeE_AttribDuplicate_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case GroupType::GUESS: return GA_GROUP_INVALID;
+        break;
+    case GroupType::PRIM: return GA_GROUP_PRIMITIVE;
+        break;
+    case GroupType::POINT: return GA_GROUP_POINT;
+        break;
+    case GroupType::VERTEX: return GA_GROUP_VERTEX;
+        break;
+    case GroupType::EDGE: return GA_GROUP_EDGE;
+        break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
 }
-
-
 
 
 void
@@ -192,7 +194,7 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
     if (boss.wasInterrupted())
         return;
 
-    GFE_AttribDuplicate attribDuplicate(outGeo0, cookparms);
+    GFE_AttribDuplicate attribDuplicate(outGeo0, &cookparms);
 
     attribDuplicate.setSourceAttribute(connectivityAttribPtr);
     attribDuplicate.setDestinationAttribute(outAttribPtr);
@@ -200,12 +202,9 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
 
     GA_Attribute* const finalAttribPtr = attribPromote.getDestinationAttribute();
     attribDuplicate.computeAndBumpDataId();
-
-    
 }
 
 
-
-namespace SOP_FeE_AttribDuplicate_1_0_Namespace {
-
+namespace SOP_FeE_AttribDuplicate_1_0_Namespace
+{
 } // End SOP_FeE_AttribDuplicate_1_0_Namespace namespace

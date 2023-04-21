@@ -308,12 +308,12 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     attribCast.getInGroupArray().set(geo0AttribClass, sopparms.getGroupName());
 
     attribCast.newStorageClass = sopStorageClass(sopparms.getAttribType());
-    attribCast.precision = sopPrecision(sopparms.getPrecision());
+    attribCast.precision       = sopPrecision(sopparms.getPrecision());
 
     if (attribCast.newStorageClass == GA_STORECLASS_STRING)
     {
         attribCast.prefix = sopparms.getPrefix().c_str();
-        attribCast.sufix = sopparms.getSufix().c_str();
+        attribCast.sufix  = sopparms.getSufix().c_str();
     }
 
     if (sopparms.getRenameAttrib())

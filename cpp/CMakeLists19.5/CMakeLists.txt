@@ -141,7 +141,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_PolyReduce2D_4_0
     SOP_FeE_PrimInlinePoint_Fast_2_0
     SOP_FeE_RestDir2D_1_0
-    SOP_FeE_RestPy_1_0
+    SOP_FeE_RestVectorComponent_1_0
     SOP_FeE_SetVectorComponent_1_0
     SOP_FeE_Skin_1_0
     SOP_FeE_SkinIntersectCurve_2_0

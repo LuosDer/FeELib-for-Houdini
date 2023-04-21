@@ -1,4 +1,3 @@
-
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_SetVectorComponent_1_0.h"
 #include "SOP_FeE_SetVectorComponent_1_0.proto.h"
@@ -14,7 +13,6 @@
 
 
 using namespace SOP_FeE_SetVectorComponent_1_0_Namespace;
-
 
 
 static const char* theDsFile = R"THEDSFILE(
@@ -182,8 +180,13 @@ newSopOperator(OP_OperatorTable* table)
 class SOP_FeE_SetVectorComponent_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_SetVectorComponent_1_0Verb() {}
-    virtual ~SOP_FeE_SetVectorComponent_1_0Verb() {}
+    SOP_FeE_SetVectorComponent_1_0Verb()
+    {
+    }
+
+    virtual ~SOP_FeE_SetVectorComponent_1_0Verb()
+    {
+    }
 
     virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_SetVectorComponent_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_SetVectorComponent_1_0::theSOPTypeName; }
@@ -204,18 +207,20 @@ SOP_FeE_SetVectorComponent_1_0::cookVerb() const
 }
 
 
-
-
 static GA_AttributeOwner
 sopAttribOwner(SOP_FeE_SetVectorComponent_1_0Parms::AttribClass attribClass)
 {
     using namespace SOP_FeE_SetVectorComponent_1_0Enums;
     switch (attribClass)
     {
-    case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case AttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case AttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    case AttribClass::PRIM: return GA_ATTRIB_PRIMITIVE;
+        break;
+    case AttribClass::POINT: return GA_ATTRIB_POINT;
+        break;
+    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;
+        break;
+    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;
+        break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -228,23 +233,26 @@ sopGroupType(SOP_FeE_SetVectorComponent_1_0Parms::GroupType parmgrouptype)
     using namespace SOP_FeE_SetVectorComponent_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case GroupType::GUESS: return GA_GROUP_INVALID;
+        break;
+    case GroupType::PRIM: return GA_GROUP_PRIMITIVE;
+        break;
+    case GroupType::POINT: return GA_GROUP_POINT;
+        break;
+    case GroupType::VERTEX: return GA_GROUP_VERTEX;
+        break;
+    case GroupType::EDGE: return GA_GROUP_EDGE;
+        break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
 }
 
 
-
-
 void
-SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_SetVectorComponent_1_0Parms>();
+    auto&& sopparms = cookparms.parms<SOP_FeE_SetVectorComponent_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
@@ -256,30 +264,28 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    
+
     GFE_SetVectorComponent setVectorComponent(outGeo0, inGeo1, &cookparms);
 
-    
-    setVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
-    
-    setVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),
-        sopparms.getConstValueF(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    
-    setVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
+    setVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    setVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),
+                                      sopparms.getConstValueF(),
+                                      sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+
+    const GA_Attribute* const outAttrib = setVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
+    if (!outAttrib)
+        return;
+
     if (sopparms.getUseRefAttrib())
     {
-        setVectorComponent.setRefAttrib(geo0AttribClass, sopparms.getRefAttrib());
+        setVectorComponent.setRefAttrib(sopparms.getRefAttrib());
     }
     if (sopparms.getRestAttrib())
     {
-        setVectorComponent.setRefAttrib(geo0AttribClass, sopparms.getRestAttribName());
+        setVectorComponent.setRestAttrib(sopparms.getRestAttribName());
     }
     setVectorComponent.computeAndBumpDataId();
-
-
-
-
 }
-
