@@ -50,11 +50,20 @@ public:
     }
     
 
-    SYS_FORCE_INLINE void setRestAttrib(const GA_Attribute& inAttrib)
+    SYS_FORCE_INLINE void setRestAttrib(const GA_AttributeOwner owner, const UT_StringHolder& name)
     {
-        newAttribNames = inAttrib;
+        if(geoRef0)
+        {
+            getInAttribArray().clear();
+            getRef0AttribArray().append(owner, name);
+        }
+        else
+        {
+            getRef0AttribArray().clear();
+            getInAttribArray().append(owner, name);
+        }
     }
-
+    
 private:
 
 
@@ -77,7 +86,7 @@ private:
             restVectorComponent();
         }
         const size_t ref0AttribLen = getRef0AttribArray().size();
-        for (size_t i = 0; i < len; ++i)
+        for (size_t i = 0; i < ref0AttribLen; ++i)
         {
             attribRefPtr = getRef0AttribArray()[i];
             attribRefPtrNonConst = nullptr;
@@ -93,7 +102,7 @@ private:
         
         
         const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attribRef.getName();
-        const bool detached = !newName.isstring() || newName.length() == 0;
+        const bool detached = !GFE_Type::isPublicAttribName(newName);
 
         const GA_Storage storage = GFE_Attribute::getStorage(attribRef);
         //if(!detached && !attrib.isDetached() && attrib.getName() == newName)
@@ -180,7 +189,7 @@ private:
     {
         UTparallelFor(groupParser.getSplittableRange(attribRefPtr), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRestPtr);
+            GA_PageHandleT<typename T::value_type, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRestPtr);
             GA_PageHandleT<T, typename T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -222,7 +231,7 @@ private:
     }
 
 
-protected:
+public:
     UFE_SplittableString newAttribNames;
     
     int8 comp = 0;

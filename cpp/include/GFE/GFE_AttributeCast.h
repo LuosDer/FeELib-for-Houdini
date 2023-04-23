@@ -163,7 +163,7 @@ private:
         }
         
         const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
-        const bool detached = !newName.isstring() || newName.length() == 0;
+        const bool detached = !GFE_Type::isPublicAttribName(newName);
 
         if(newStorageClass == GA_STORECLASS_OTHER)
         {
@@ -206,8 +206,8 @@ private:
         const GA_AttributeOwner attribClass = GFE_Type::attributeOwner_groupType(group.classType());
         
         const UT_StringHolder& newName = newGroupNames.getIsValid() ? newGroupNames.getNext<UT_StringHolder>() : group.getName();
-        const bool detached = !newName.isstring() || newName.length() == 0;
-
+        const bool detached = !GFE_Type::isPublicAttribName(newName);
+        
         GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
             detached, attribClass, newStorageClass, GA_STORE_INVALID, newName);
         

@@ -879,7 +879,7 @@ DEFINEFUNCall(FUNCuniquepush0)
             int len = len(arr);\
             resize(arr, len + len(arg));\
             foreach (type item; arg) {\
-                if ( find(arr, item) < 0 ) {\
+                if ( find(arr, item, 0, len) < 0 ) {\
                     arr[len++] = item;\
                 }\
             }\

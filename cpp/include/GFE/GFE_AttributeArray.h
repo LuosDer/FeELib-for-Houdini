@@ -181,7 +181,7 @@ public:
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
 
-        GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        GA_Attribute* const attribPtr = geo->findAttribute(attribClass, attribPattern);
         append(attribPtr);
         return attribPtr;
     }

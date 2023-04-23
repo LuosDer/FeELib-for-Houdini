@@ -367,13 +367,13 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geoRef0(geoRef0)
-        , cookparms(cookparms)
-        , gop(gop)
+        , cookparmsRef0(cookparms)
+        , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
         , ref0AttribArray(geoRef0, cookparms)
         , ref0GroupArray(geoRef0, cookparms)
     {
-        UT_ASSERT_MSG(geoRef0, "do not find geo");
+        //UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
 
     GFE_GeoFilterRef(
@@ -382,13 +382,13 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geoRef0(static_cast<const GFE_Detail*>(geoRef0))
-        , cookparms(cookparms)
-        , gop(gop)
+        , cookparmsRef0(cookparms)
+        , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
         , ref0AttribArray(geoRef0, cookparms)
         , ref0GroupArray(geoRef0, cookparms)
     {
-        UT_ASSERT_MSG(geoRef0, "do not find geo");
+        //UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
 
     GFE_GeoFilterRef(
@@ -397,13 +397,13 @@ public:
         const SOP_NodeVerb::CookParms& cookparms
     )
         : geoRef0(static_cast<const GFE_Detail*>(geoRef0))
-        , cookparms(&cookparms)
-        , gop(gop)
+        , cookparmsRef0(&cookparms)
+        , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
         , ref0AttribArray(geoRef0, cookparms)
         , ref0GroupArray(geoRef0, cookparms)
     {
-        UT_ASSERT_MSG(geoRef0, "do not find geo");
+        //UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
 
     GFE_GeoFilterRef(
@@ -412,8 +412,8 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geoRef0(static_cast<const GFE_Detail*>(&geoRef0))
-        , cookparms(cookparms)
-        , gop(gop)
+        , cookparmsRef0(cookparms)
+        , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
         , ref0AttribArray(geoRef0, cookparms)
         , ref0GroupArray(geoRef0, cookparms)
@@ -426,8 +426,8 @@ public:
         const SOP_NodeVerb::CookParms& cookparms
     )
         : geoRef0(static_cast<const GFE_Detail*>(&geoRef0))
-        , cookparms(&cookparms)
-        , gop(gop)
+        , cookparmsRef0(&cookparms)
+        , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
         , ref0AttribArray(geoRef0, cookparms)
         , ref0GroupArray(geoRef0, cookparms)
@@ -440,27 +440,30 @@ public:
 
     
 
-    void
-        resetGeoFilterRef(
-            const GFE_Detail* const geoRef0,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+    void resetGeoFilterRef0(
+        const GFE_Detail* const geoRef0,
+        GOP_Manager* const gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
     {
         this->geoRef0 = geoRef0;
-        this->cookparms = cookparms;
+        cookparmsRef0 = cookparms;
+        gopRef0 = gop;
+        UT_ASSERT_P(gopRef0);
         ref0AttribArray.reset(geoRef0, cookparms);
         ref0GroupArray.reset(geoRef0, cookparms);
     }
     
-    SYS_FORCE_INLINE void resetGeoFilterRef(
-            const GA_Detail* const geoRef0,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+    SYS_FORCE_INLINE void resetGeoFilterRef0(
+        const GA_Detail* const geoRef0,
+        GOP_Manager* const gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
     {
-        resetGeoFilterRef(static_cast<const GFE_Detail*>(geoRef0), cookparms);
+        resetGeoFilterRef0(static_cast<const GFE_Detail*>(geoRef0), gop, cookparmsRef0);
     }
 
-    GFE_GroupParser& getGroupParser()
+    SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
     {
         return groupParserRef0;
     }
@@ -489,16 +492,16 @@ public:
 
 
 private:
-    SYS_FORCE_INLINE virtual void setDetailBase(const GFE_Detail* const inGeo)
+    SYS_FORCE_INLINE virtual void setRef0DetailBase(const GFE_Detail* const inGeo)
     {
         geoRef0 = inGeo;
         ref0AttribArray.setDetail(inGeo);
         ref0GroupArray.setDetail(inGeo);
     }
 
-    SYS_FORCE_INLINE virtual void setDetailBase(const GA_Detail* const inGeo)
+    SYS_FORCE_INLINE virtual void setRef0DetailBase(const GA_Detail* const inGeo)
     {
-        setDetailBase(static_cast<const GFE_Detail*>(inGeo));
+        setRef0DetailBase(static_cast<const GFE_Detail*>(inGeo));
     }
 
 
@@ -510,8 +513,8 @@ protected:
     const GFE_Detail* geoRef0;
 
 private:
-    const SOP_NodeVerb::CookParms* cookparms;
-    GOP_Manager& gop;
+    const SOP_NodeVerb::CookParms* cookparmsRef0;
+    GOP_Manager* gopRef0;
 
     GFE_RefAttribArray ref0AttribArray;
     GFE_RefGroupArray ref0GroupArray;
@@ -633,20 +636,16 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void
-        findOrCreateOutGroup(
-            const bool detached,
-            const GA_GroupType groupType = GA_GROUP_POINT,
-            const UT_StringHolder& groupName = ""
-        )
+    SYS_FORCE_INLINE void findOrCreateOutGroup(
+        const bool detached,
+        const GA_GroupType groupType = GA_GROUP_POINT,
+        const UT_StringHolder& groupName = ""
+    )
     {
         getOutGroupArray().findOrCreate(detached, groupType, groupName);
     }
 
-    SYS_FORCE_INLINE void findOrCreateOutGroup(
-        const GA_GroupType groupType = GA_GROUP_POINT,
-        const UT_StringHolder& groupName = ""
-    )
+    SYS_FORCE_INLINE void findOrCreateOutGroup(const GA_GroupType groupType = GA_GROUP_POINT,const UT_StringHolder& groupName = "")
     {
         getOutGroupArray().findOrCreate(doDelOutGroup, groupType, groupName);
     }
@@ -682,7 +681,7 @@ public:
         }
     }
 
-    virtual void visualizeOutGroup()
+    virtual SYS_FORCE_INLINE void visualizeOutGroup()
     {
         if (doDelOutGroup || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
             return;
@@ -690,12 +689,13 @@ public:
         cookparms->select(*outGroupArray[0]);
     }
 
-    void delOrVisualizeOutGroup()
+    void SYS_FORCE_INLINE delOrVisualizeOutGroup()
     {
-        if (doDelOutGroup)
-            delOutGroup();
-        else
-            visualizeOutGroup();
+        doDelOutGroup ? delOutGroup() : visualizeOutGroup();
+        // if (doDelOutGroup)
+        //     delOutGroup();
+        // else
+        //     visualizeOutGroup();
     }
 
     

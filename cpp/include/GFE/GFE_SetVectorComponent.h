@@ -29,7 +29,6 @@ public:
     )
         : GFE_AttribFilter(geo, cookparms)
         , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
     {
     }
 
@@ -51,6 +50,11 @@ public:
     
     SYS_FORCE_INLINE void setRefAttrib(const GA_Attribute* const attribPtr)
     {
+        if(getOutAttribArray().isEmpty() || attribRefPtr->getOwner() != getOutAttribArray()[0]->getOwner())
+        {
+            if (cookparms)
+                cookparms->sopAddWarning(0, "must add out attrib before add ref attrib");
+        }
         attribRefPtr = attribPtr;
         UT_ASSERT(getOutAttribArray().isEmpty() ? 1 : attribRefPtr->getOwner() == getOutAttribArray()[0]->getOwner());
     }
@@ -111,6 +115,13 @@ private:
         {
             attribPtr = getOutAttribArray()[i];
             UT_ASSERT_P(attribPtr);
+
+            if (!attribRefPtr)
+            {
+                const GFE_Detail* const attribRefGeo = geoRef0 ? geoRef0 : geo;
+                const UT_StringHolder& attribRefName = refAttribNames.getIsValid() ? refAttribNames.getNext<UT_StringHolder>() : UT_StringHolder("");
+                attribRefPtr = attribRefGeo->findAttribute(attribPtr->getOwner(), attribRefName);
+            }
             
             const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
             if (!aifTuple)
@@ -275,7 +286,7 @@ protected:
 private:
 
     GA_Attribute* attribPtr;
-    const GA_Attribute* attribRefPtr;
+    const GA_Attribute* attribRefPtr = nullptr;
     //GA_Attribute* attribRestPtr;
     
     

@@ -64,6 +64,11 @@ namespace GFE_Type {
 
 #endif
 
+static bool isPublicAttribName(const UT_StringHolder& attribName)
+{
+    return attribName.isstring() && attribName.length() > 0 && strcmp(attribName.c_str(), "P") != 0;
+}
+
 static GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner)
 {
     switch (attribOwner)

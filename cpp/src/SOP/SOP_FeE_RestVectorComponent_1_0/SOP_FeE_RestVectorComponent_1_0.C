@@ -64,23 +64,23 @@ static const char* theDsFile = R"THEDSFILE(
         type    string
         default { "P" }
     }
-    parm {
-        name    "useRefAttrib"
-        cppname "UseRefAttrib"
-        label   "Use Ref Attrib"
-        type    toggle
-        default { 0 }
-        nolabel
-        joinnext
-    }
-    parm {
-        name    "refAttrib"
-        cppname "RefAttrib"
-        label   "Ref Attrib"
-        type    string
-        default { "P" }
-        disablewhen "{ useRefAttrib == 0 }"
-    }
+    // parm {
+    //     name    "useRefAttrib"
+    //     cppname "UseRefAttrib"
+    //     label   "Use Ref Attrib"
+    //     type    toggle
+    //     default { 0 }
+    //     nolabel
+    //     joinnext
+    // }
+    // parm {
+    //     name    "refAttrib"
+    //     cppname "RefAttrib"
+    //     label   "Ref Attrib"
+    //     type    string
+    //     default { "P" }
+    //     disablewhen "{ useRefAttrib == 0 }"
+    // }
     parm {
         name    "comp"
         cppname "Comp"
@@ -89,12 +89,23 @@ static const char* theDsFile = R"THEDSFILE(
         default { 1 }
         range   { 0! 4! }
     }
+
+    parm {
+        name    "renameAttrib"
+        cppname "RenameAttrib"
+        label   "Rename Attrib"
+        type    toggle
+        default { 0 }
+        nolabel
+        joinnext
+    }
     parm {
         name    "restAttribName"
         cppname "RestAttribName"
         label   "Rest Attribute Name"
         type    string
-        default { "restPy" }
+        default { "" }
+        disablewhen "{ renameAttrib == 0 }"
     }
 
     parm {
@@ -136,14 +147,14 @@ SOP_FeE_RestVectorComponent_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_RestVectorComponent_1_0::theSOPTypeName("FeE::restPy::1.0"_sh);
+const UT_StringHolder SOP_FeE_RestVectorComponent_1_0::theSOPTypeName("FeE::restVectorComponent::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_RestVectorComponent_1_0::theSOPTypeName,
-        "FeE Rest Py",
+        "FeE Rest Vector Component",
         SOP_FeE_RestVectorComponent_1_0::myConstructor,
         SOP_FeE_RestVectorComponent_1_0::buildTemplates(),
         1,
@@ -243,15 +254,21 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
-        return;
+        return;rr
 
     GFE_RestVectorComponent restVectorComponent(outGeo0, inGeo1, &cookparms);
-
 
     restVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
 
     restVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),sopparms.getDelOriginAttrib(),
                                       sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    if (sopparms.getRenameAttrib())
+    {
+        restVectorComponent.newAttribNames = sopparms.getRestAttribName();
+    }
+    restVectorComponent.setRestAttrib(geo0AttribClass, sopparms.getAttrib());
+    restVectorComponent.computeAndBumpDataId();
+    
     //
     //
     // const GA_Attribute* const outAttrib = restVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
