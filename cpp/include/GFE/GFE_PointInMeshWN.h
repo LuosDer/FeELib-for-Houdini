@@ -6,9 +6,8 @@
 
 //#include "GFE/GFE_PointInMeshWN.h"
 
-#include "GA/GA_Detail.h"
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
+// #include "GA/GA_PageHandle.h"
+// #include "GA/GA_PageIterator.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
@@ -34,7 +33,7 @@ public:
             const bool groupOnGeoPoint = true,
             const fpreal threshold = 1e-05,
             const bool reverseGroup = false,
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMerge_Replace
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace
         )
     {
         hasParm_outGroup = true;
@@ -93,7 +92,7 @@ protected:
 
                         switch (groupMergeType)
                         {
-                        case GFE_GroupMerge_Replace:
+                        case GFE_GroupMergeType::Replace:
                             break;
                         case GFE_GroupMerge_Union:
                             outval = outval || pointInMeshGroup->contains(elemoff);
@@ -386,7 +385,7 @@ public:
             const bool groupOnGeoPoint = true,
             const fpreal threshold = 1e-05,
             const bool reverseGroup = false,
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMerge_Replace
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace
         )
     {
         hasParm_outGroup = true;
@@ -445,7 +444,7 @@ protected:
 
                         switch (groupMergeType)
                         {
-                        case GFE_GroupMerge_Replace:
+                        case GFE_GroupMergeType::Replace:
                             break;
                         case GFE_GroupMerge_Union:
                             outval = outval || pointInMeshGroup->contains(elemoff);
@@ -692,7 +691,7 @@ namespace GFE_PointInMeshWN_Namespace {
             const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
 
 
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMerge_Replace,
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
             const bool groupInGeoPoint = true,
             const bool groupOnGeoPoint = true,
             const fpreal threshold = 1e-05
@@ -716,7 +715,7 @@ namespace GFE_PointInMeshWN_Namespace {
             const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
 
 
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMerge_Replace,
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
             const bool groupInGeoPoint = true,
             const bool groupOnGeoPoint = true,
             const fpreal threshold = 1e-05,
@@ -758,7 +757,7 @@ namespace GFE_PointInMeshWN_Namespace {
             const GA_Storage intStorage = GA_STORE_INVALID,
             const UT_StringHolder& intAttribName = "pointInMesh_wn",
 
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMerge_Replace,
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
             const bool groupInGeoPoint = true,
             const bool groupOnGeoPoint = true,
             const fpreal threshold = 1e-05,
@@ -803,7 +802,7 @@ namespace GFE_PointInMeshWN_Namespace {
         const GA_Storage intStorage = GA_STORE_INVALID,
         const UT_StringHolder& intAttribName = "pointInMesh_wn",
 
-        const GFE_GroupMergeType groupMergeType = GFE_GroupMerge_Replace,
+        const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
         const bool groupInGeoPoint = true,
         const bool groupOnGeoPoint = true,
         const fpreal threshold = 1e-05,

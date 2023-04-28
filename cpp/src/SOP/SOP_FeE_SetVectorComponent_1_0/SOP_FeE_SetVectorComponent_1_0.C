@@ -120,8 +120,17 @@ static const char* theDsFile = R"THEDSFILE(
         label   "Rest Attrib Name"
         type    string
         default { "" }
+        disablewhen "{ restAttrib == 0 }"
     }
 
+    parm {
+        name    "delRefAttrib"
+        cppname "DelRefAttrib"
+        label   "Del Ref Attrib"
+        type    toggle
+        default { 1 }
+        disablewhen "{ useRefAttrib == 0 }"
+    }
 
     parm {
         name    "subscribeRatio"
@@ -271,7 +280,7 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     setVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
 
     setVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),
-                                      sopparms.getConstValueF(),
+                                      sopparms.getConstValueF(), sopparms.getDelRefAttrib(),
                                       sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
 

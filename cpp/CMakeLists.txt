@@ -88,14 +88,18 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribCopy_4_0
     #SOP_FeE_AttribCopyFast_1_0
     SOP_FeE_AttribCopyFromSingleElem_1_0
+    SOP_FeE_AttribDel_2_0
     SOP_FeE_AttribDuplicate_1_0
     SOP_FeE_AttribInterpRay_2_0
+    SOP_FeE_AttribOut_1_0
     SOP_FeE_AttribPromote_1_0
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
     SOP_FeE_Carve_1_0
     SOP_FeE_Connectivity_1_0
     SOP_FeE_ConvertLine_1_0
+    SOP_FeE_ConvexPoint_1_0
+    SOP_FeE_CornerPoint_1_0
     SOP_FeE_CurveExpand2d_3_0
     SOP_FeE_CurveSetExpand2d_3_0
     SOP_FeE_CurveUV_1_0
@@ -110,6 +114,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_ExtremePrim_1_0
     SOP_FeE_ExtrudeBorder2D_1_0
     SOP_FeE_ExtractPoint_1_0
+    SOP_FeE_FlatEdge_2_0
     SOP_FeE_GroupAttribBoundary_1_0
     SOP_FeE_GroupByMeshWinding_1_0
     SOP_FeE_GroupByPolyWinding_1_0
@@ -123,6 +128,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
     SOP_FeE_HasGroup_1_0
+    SOP_FeE_InlinePoint_1_0
     SOP_FeE_JoinCurve_2_0
     SOP_FeE_KuhnMunkres_2_0
     SOP_FeE_LeaveElement_1_0
@@ -138,6 +144,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_PointInBBox_2_0
     SOP_FeE_PointInMesh_WN_2_0
     SOP_FeE_PolyCut_3_0
+    SOP_FeE_PolyExpand2DSimple_2_0
     SOP_FeE_PolyReduce2D_4_0
     SOP_FeE_PrimInlinePoint_Fast_2_0
     SOP_FeE_RestDir2D_1_0
@@ -147,6 +154,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_SkinIntersectCurve_2_0
     SOP_FeE_SkinPiece_4_0
     SOP_FeE_SmallPiece_1_0
+    SOP_FeE_Split_2_0
     SOP_FeE_SplitPoint_1_0
     SOP_FeE_Triangulate2D_2_0
     SOP_FeE_UVGridify_1_0

@@ -297,7 +297,8 @@ SOP_FeE_GroupByPolyWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     const GFE_GroupByPolyWindingMethod method = sopMethod(sopparms.getGroupByPolyWindingMethod());
 
-
+    GFE_GroupByPolyWinding groupByPolyWinding();
+    
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
     //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);

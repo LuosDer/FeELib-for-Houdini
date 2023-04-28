@@ -17,6 +17,18 @@ class GFE_GroupParser {
 public:
 
     GFE_GroupParser(
+        GFE_Detail* const geo,
+        GOP_Manager& gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(static_cast<const GEO_Detail*>(static_cast<const GA_Detail*>(geo)))
+        , geoNonconst(geo)
+        , cookparms(cookparms)
+        , gop(gop)
+    {
+    }
+    
+    GFE_GroupParser(
         GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms

@@ -423,8 +423,8 @@ blastpoints_fee
 blastprim_fee
 
 FeE::blastMultiPiece::1.0
-
-
+pitchedroof_fee
+chineseTile_fee
 
 FeE::closedCurveExpand2d::2.0
 

@@ -149,19 +149,9 @@ public:
     //     return !isInvalid();
     // }
     
-    void computeIsValid()
-    {
-        if (shouldComputeIsValid)
-        {
-            shouldComputeIsValid = false;
-            getNextCore();
-            reset();
-        }
-    }
-    
     SYS_FORCE_INLINE bool getIsValid()
     {
-        computeIsValid();
+        computeIsValidIfNeeded();
         return isValid;
     }
     SYS_FORCE_INLINE bool getIsInvalid()
@@ -195,12 +185,28 @@ public:
     
     
 private:
-    SYS_FORCE_INLINE void set(const char* s)
+    
+    void computeIsValid()
+    {
+        shouldComputeIsValid = false;
+        getNextCore();
+        reset();
+    }
+    
+    SYS_FORCE_INLINE void computeIsValidIfNeeded()
+    {
+        if (shouldComputeIsValid)
+            computeIsValid();
+    }
+
+    
+    void set(const char* s)
     {
         if (!s)
             return;
         reset();
         fullStr = s;
+        shouldComputeIsValid = true;
     }
     SYS_FORCE_INLINE void set(const ::std::string& s)
     {

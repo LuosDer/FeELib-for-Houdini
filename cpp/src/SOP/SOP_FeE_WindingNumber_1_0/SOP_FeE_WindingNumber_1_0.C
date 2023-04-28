@@ -254,7 +254,7 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         sopWNType(sopparms.getWNType()), sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(), sopparms.getWNAsSolidAngle(), sopparms.getWNNegate()
     );
 #else
-    GFE_WindingNumber wn(&geoPoint, &geoRefMesh, sopcache, &cookparms);
+    GFE_WindingNumber wn(geoPoint, geoRefMesh, sopcache, &cookparms);
 
     wn.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 

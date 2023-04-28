@@ -254,7 +254,7 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
-        return;rr
+        return;
 
     GFE_RestVectorComponent restVectorComponent(outGeo0, inGeo1, &cookparms);
 

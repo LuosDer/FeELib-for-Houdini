@@ -49,115 +49,139 @@ int lineIntersection2D(
 
 #else
 
-function
-vector2 setPy0(
-    vector vec;
-    ) {
-    return set(vec.x, vec.z);
-}
+    vector2 setPy0(vector vec)
+    {
+        return set(vec.x, vec.z);
+    }
 
-function
-int lineIntersection2D(
-    const vector A, B, C, D;
-    float THRESHOLD_INTERSECTION;
-    export vector result;
-    ) {
-    /*
-    vector dir0 = B - A;
-    vector dir1 = D - C;
-    if ( dot(dir0, dir1) < THRESHOLD_INTERSECTION ) return 0;
-    */
-
-    // Line AB represented as a1x + b1z = c1
-    float a1 = B.z - A.z;
-    float b1 = A.x - B.x;
-
-    // Line CD represented as a2x + b2z = c2
-    float a2 = D.z - C.z;
-    float b2 = C.x - D.x;
+    float getPy0(vector pos0; vector pos1; vector2 result2d;)
+    {
+        vector2 pos20 = setPy0(pos0);
+        vector2 pos21 = setPy0(pos1);
+        float dist  = distance2(pos20, pos21);
+        float dist0 = distance2(pos20, result2d);
+        float dist1 = distance2(pos21, result2d);
+        #if 1
+            float bias = sqrt(dist0 / dist);
+            if (dist1 > dist0 && dist1 > dist)
+            {
+                bias *= -1;
+            }
+        #else
+            float bias;
+            if (dist0 < dist && dist1 < dist)
+            {
+                bias = dist0 / dist;
+                bias = sqrt(bias);
+            }
+            else if (dist1 > dist0)
+            {
+                bias = -sqrt(dist0 / dist);
+            }
+            else
+            {
+                bias = 1 + sqrt(dist1 / dist);
+            }
+        #endif
+        return lerp(pos0.y, pos1.y, bias);
+    }
     
-    float determinant = a1 * b2 - a2 * b1;
-
-    if ( abs(determinant) < THRESHOLD_INTERSECTION ) return 0;
-
-    float c1 = a1 * A.x + b1 * A.z;
-    float c2 = a2 * C.x + b2 * C.z;
-
-    vector2 result2d;
-    result2d.x = (b2 * c1 - b1 * c2) / determinant;
-    result2d.y = (a1 * c2 - a2 * c1) / determinant;
-
-    // int segment = 2;
-    // if ( segment == 0 ) {
-    //     /*
-    //     vector A2 = (vector)(A.x, 0, A.z);
-    //     vector B2 = (vector)(B.x, 0, B.z);
-    //     vector C2 = (vector)(C.x, 0, C.z);
-    //     vector D2 = (vector)(D.x, 0, D.z);
-    //     */
-    // } else if ( segment == 1 ) {//segment
-    //     /*
-    //     #if 0
-    //         float THRESHOLD_INTERSECTION_f = THRESHOLD_INTERSECTION;
-    //         vector THRESHOLD_INTERSECTION_f3 = (vector)(THRESHOLD_INTERSECTION_f, THRESHOLD_INTERSECTION_f, THRESHOLD_INTERSECTION_f);
-    //         vector Min1 = componentMin(A, B) - THRESHOLD_INTERSECTION_f3;
-    //         vector Max1 = componentMax(A, B) + THRESHOLD_INTERSECTION_f3;
-    //         vector Min2 = componentMin(C, D) - THRESHOLD_INTERSECTION_f3;
-    //         vector Max2 = componentMax(C, D) + THRESHOLD_INTERSECTION_f3;
-    //     #else
-    //         vector Min1 = componentMin(A, B);
-    //         vector Max1 = componentMax(A, B);
-    //         vector Min2 = componentMin(C, D);
-    //         vector Max2 = componentMax(C, D);
-    //         Min1.x -= THRESHOLD_INTERSECTION;
-    //         Min1.y -= THRESHOLD_INTERSECTION;
-    //         Min1.z -= THRESHOLD_INTERSECTION;
-    //         Min2.x -= THRESHOLD_INTERSECTION;
-    //         Min2.y -= THRESHOLD_INTERSECTION;
-    //         Min2.z -= THRESHOLD_INTERSECTION;
-            
-    //         Max1.x += THRESHOLD_INTERSECTION;
-    //         Max1.y += THRESHOLD_INTERSECTION;
-    //         Max1.z += THRESHOLD_INTERSECTION;
-    //         Max2.x += THRESHOLD_INTERSECTION;
-    //         Max2.y += THRESHOLD_INTERSECTION;
-    //         Max2.z += THRESHOLD_INTERSECTION;
-    //     #endif
-    //     if ( !(  (x >= A.x) && (x <= Max1.x) && (z >= Min1.z) && (z <= Max1.z)   &&   (x >= Min2.x) && (x <= Max2.x) && (z >= Min2.z) && (z <= Max2.z)  ) ) return 0;
-    //     */
-    // } else {//ray0
-    // // } else if ( segment == 2 ) {//ray0
-    //     /*
-    //     int valid = 1;
-    //     if ( B.x > A.x ) {
-    //         valid = x > B.x;
-    //     } else {
-    //         valid = x <= B.x;
-    //     }
-    //     if ( valid ) {
-    //     */
-
-    //     if ( !(  B.x > A.x == result2d.x > B.x  &&  B.z > A.z == result2d.y > B.z  &&  D.x > C.x == result2d.x > D.x  &&  D.z > C.z == result2d.y > D.z  ) ) return 0;
-    // }
-
-    #if 1
-        vector2 A2 = setPy0(A);
-        vector2 B2 = setPy0(B);
-        vector2 C2 = setPy0(C);
-        vector2 D2 = setPy0(D);
-        float R1 = sqrt(distance2(A2, result2d) / distance2(A2, B2));
-        float R2 = sqrt(distance2(C2, result2d) / distance2(C2, D2));
-        float H1 = lerp(A.y, B.y, R1);
-        float H2 = lerp(C.y, D.y, R2);
-        result.y = (H1 + H2) * 0.5;
-    #endif
+    function
+    int lineIntersection2D(
+        const vector A, B, C, D;
+        float THRESHOLD_INTERSECTION;
+        export vector result;
+        ) {
+        /*
+        vector peadDir0 = B - A;
+        vector peadDir1 = D - C;
+        if ( dot(peadDir0, peadDir1) < THRESHOLD_INTERSECTION ) return 0;
+        */
     
-    result.x = result2d.x;
-    result.z = result2d.y;
-
-    return 1;
-}
-
+        // Line AB represented as a1x + b1z = c1
+        float a1 = B.z - A.z;
+        float b1 = A.x - B.x;
+    
+        // Line CD represented as a2x + b2z = c2
+        float a2 = D.z - C.z;
+        float b2 = C.x - D.x;
+        
+        float determinant = a1 * b2 - a2 * b1;
+    
+        if ( abs(determinant) < THRESHOLD_INTERSECTION ) return 0;
+    
+        float c1 = a1 * A.x + b1 * A.z;
+        float c2 = a2 * C.x + b2 * C.z;
+    
+        vector2 result2d;
+        result2d.x = (b2 * c1 - b1 * c2) / determinant;
+        result2d.y = (a1 * c2 - a2 * c1) / determinant;
+    
+        // int segment = 2;
+        // if ( segment == 0 ) {
+        //     /*
+        //     vector A2 = (vector)(A.x, 0, A.z);
+        //     vector B2 = (vector)(B.x, 0, B.z);
+        //     vector C2 = (vector)(C.x, 0, C.z);
+        //     vector D2 = (vector)(D.x, 0, D.z);
+        //     */
+        // } else if ( segment == 1 ) {//segment
+        //     /*
+        //     #if 0
+        //         float THRESHOLD_INTERSECTION_f = THRESHOLD_INTERSECTION;
+        //         vector THRESHOLD_INTERSECTION_f3 = (vector)(THRESHOLD_INTERSECTION_f, THRESHOLD_INTERSECTION_f, THRESHOLD_INTERSECTION_f);
+        //         vector Min1 = componentMin(A, B) - THRESHOLD_INTERSECTION_f3;
+        //         vector Max1 = componentMax(A, B) + THRESHOLD_INTERSECTION_f3;
+        //         vector Min2 = componentMin(C, D) - THRESHOLD_INTERSECTION_f3;
+        //         vector Max2 = componentMax(C, D) + THRESHOLD_INTERSECTION_f3;
+        //     #else
+        //         vector Min1 = componentMin(A, B);
+        //         vector Max1 = componentMax(A, B);
+        //         vector Min2 = componentMin(C, D);
+        //         vector Max2 = componentMax(C, D);
+        //         Min1.x -= THRESHOLD_INTERSECTION;
+        //         Min1.y -= THRESHOLD_INTERSECTION;
+        //         Min1.z -= THRESHOLD_INTERSECTION;
+        //         Min2.x -= THRESHOLD_INTERSECTION;
+        //         Min2.y -= THRESHOLD_INTERSECTION;
+        //         Min2.z -= THRESHOLD_INTERSECTION;
+                
+        //         Max1.x += THRESHOLD_INTERSECTION;
+        //         Max1.y += THRESHOLD_INTERSECTION;
+        //         Max1.z += THRESHOLD_INTERSECTION;
+        //         Max2.x += THRESHOLD_INTERSECTION;
+        //         Max2.y += THRESHOLD_INTERSECTION;
+        //         Max2.z += THRESHOLD_INTERSECTION;
+        //     #endif
+        //     if ( !(  (x >= A.x) && (x <= Max1.x) && (z >= Min1.z) && (z <= Max1.z)   &&   (x >= Min2.x) && (x <= Max2.x) && (z >= Min2.z) && (z <= Max2.z)  ) ) return 0;
+        //     */
+        // } else {//ray0
+        // // } else if ( segment == 2 ) {//ray0
+        //     /*
+        //     int valid = 1;
+        //     if ( B.x > A.x ) {
+        //         valid = x > B.x;
+        //     } else {
+        //         valid = x <= B.x;
+        //     }
+        //     if ( valid ) {
+        //     */
+    
+        //     if ( !(  B.x > A.x == result2d.x > B.x  &&  B.z > A.z == result2d.y > B.z  &&  D.x > C.x == result2d.x > D.x  &&  D.z > C.z == result2d.y > D.z  ) ) return 0;
+        // }
+        //addpoint(0, utov(A2));
+        #if 1
+            float H1 = getPy0(A, B, result2d);
+            float H2 = getPy0(C, D, result2d);
+            result.y = (H1 + H2) * 0.5;
+        #endif
+        
+        result.x = result2d.x;
+        result.z = result2d.y;
+    
+        return 1;
+    }
+    
 #endif
 
 

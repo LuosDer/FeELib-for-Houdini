@@ -50,6 +50,24 @@ public:
     }
     
 
+    SYS_FORCE_INLINE void setRestAttrib(GA_Attribute* const attribPtr)
+    {
+        if(&attribPtr->getDetail() == geo)
+        {
+            getRef0AttribArray().clear();
+            getInAttribArray().set(attribPtr);
+        }
+    }
+
+    SYS_FORCE_INLINE void setRestAttrib(const GA_Attribute* const attribPtr)
+    {
+        if(&attribPtr->getDetail() == geoRef0)
+        {
+            getInAttribArray().clear();
+            getRef0AttribArray().set(attribPtr);
+        }
+    }
+    
     SYS_FORCE_INLINE void setRestAttrib(const GA_AttributeOwner owner, const UT_StringHolder& name)
     {
         if(geoRef0)

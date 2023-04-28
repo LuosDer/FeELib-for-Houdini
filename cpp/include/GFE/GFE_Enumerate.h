@@ -191,7 +191,7 @@ private:
     exint minGrainSize = 64;
 
 
-};
+}; // End of class GFE_Enumerate
 
 
 
