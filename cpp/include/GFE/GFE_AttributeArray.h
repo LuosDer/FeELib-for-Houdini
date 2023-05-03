@@ -1049,24 +1049,14 @@ public:
         return groupArray[groupArray.size() - 1];
     }
 
-    SYS_FORCE_INLINE
-    void
-        reset(
-            GA_Detail* const inGeo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+    SYS_FORCE_INLINE void reset(GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
         geo = inGeo;
         this->cookparms = cookparms;
         clear();
     }
 
-    SYS_FORCE_INLINE
-    void
-        reset(
-            GA_Detail& inGeo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+    SYS_FORCE_INLINE void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
         geo = &inGeo;
         this->cookparms = cookparms;
@@ -1088,10 +1078,7 @@ public:
         groupArray.emplace_back(&groupPtr);
     }
 
-    void set(
-            const GA_GroupType groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    void set(const GA_GroupType groupClass, const UT_StringHolder& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
@@ -1141,26 +1128,16 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void set(
-            const GA_AttributeOwner groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    SYS_FORCE_INLINE void set(const GA_AttributeOwner groupClass, const UT_StringHolder& groupPattern)
     {
         set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    SYS_FORCE_INLINE void append(
-            const GA_AttributeOwner groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    SYS_FORCE_INLINE void append(const GA_AttributeOwner groupClass, const UT_StringHolder& groupPattern)
     {
         append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
-
-    SYS_FORCE_INLINE void appends(
-            const GA_AttributeOwner groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const UT_StringHolder& groupPattern)
     {
         appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }

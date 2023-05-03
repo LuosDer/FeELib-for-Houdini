@@ -75,7 +75,7 @@ public:
         if (storageClass == GA_STORECLASS_OTHER)
         {
             isGroup = true;
-            getOutGroupArray().findOrCreate(unsharedAttribClass, detached, name);
+            getOutGroupArray().findOrCreate(detached, unsharedAttribClass, name);
             //if (unsharedAttribClass != GA_GROUP_VERTEX)
             //{
             //    getOutGroupArray().findOrCreate(GA_GROUP_VERTEX, true);
@@ -84,8 +84,8 @@ public:
         else
         {
             isGroup = false;
-            getOutAttribArray().findOrCreateTuple(GFE_Type::attributeOwner_groupType(unsharedAttribClass),
-                storageClass, storage, detached, name);
+            getOutAttribArray().findOrCreateTuple(detached, GFE_Type::attributeOwner_groupType(unsharedAttribClass),
+                storageClass, storage, name);
 
             //getOutGroupArray().findOrCreate(GA_GROUP_VERTEX, true);
         }
@@ -109,10 +109,10 @@ private:
             return true;
 
         GU_DetailHandle geoOrigin_h;
-        GA_Detail* geoOriginTmp = nullptr;
+        GU_Detail* geoOriginTmp = nullptr;
         if (preFusePoint)
         {
-            geoOriginTmp = new GA_Detail();
+            geoOriginTmp = new GU_Detail();
             geoOrigin_h.allocateAndSet(geoOriginTmp);
             geoOriginTmp->replaceWith(*geo);
 
@@ -128,9 +128,8 @@ private:
         }
         else
         {
-            geoOriginTmp = static_cast<GA_Detail*>(geo);
+            geoOriginTmp = geo->asGU_Detail();
         }
-        const GA_Storage finalStorageI = GFE_Type::getPreferredStorageI(geo);
 
         GFE_Adjacency adjacency(geo, cookparms);
         adjacency.setComputeParm(true, subscribeRatio, minGrainSize);

@@ -25,6 +25,36 @@ class GFE_Detail : public GA_Detail
 
 public:
 
+    SYS_FORCE_INLINE GA_Detail* asGA_Detail()
+    {
+        return static_cast<GA_Detail*>(this);
+    }
+
+    SYS_FORCE_INLINE const GA_Detail* asGA_Detail() const
+    {
+        return static_cast<const GA_Detail*>(this);
+    }
+
+    SYS_FORCE_INLINE GEO_Detail* asGEO_Detail()
+    {
+        return static_cast<GEO_Detail*>(asGEO_Detail());
+    }
+
+    SYS_FORCE_INLINE const GEO_Detail* asGEO_Detail() const
+    {
+        return static_cast<const GEO_Detail*>(asGEO_Detail());
+    }
+
+    SYS_FORCE_INLINE GU_Detail* asGU_Detail()
+    {
+        return static_cast<GU_Detail*>(asGA_Detail());
+    }
+
+    SYS_FORCE_INLINE const GU_Detail* asGU_Detail() const
+    {
+        return static_cast<const GU_Detail*>(asGA_Detail());
+    }
+
     
 
 #if 1

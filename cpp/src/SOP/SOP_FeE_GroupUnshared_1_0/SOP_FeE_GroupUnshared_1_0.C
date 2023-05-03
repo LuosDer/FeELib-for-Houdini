@@ -287,7 +287,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
+    const exint minGrainSize   = sopparms.getMinGrainSize();
 
 
     //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
