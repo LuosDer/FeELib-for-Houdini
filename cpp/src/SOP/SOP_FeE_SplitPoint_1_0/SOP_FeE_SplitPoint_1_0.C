@@ -24,6 +24,7 @@ static const char *theDsFile = R"THEDSFILE(
     name	parameters
     parm {
         name    "group"
+        cppname "Group"
         label   "Group"
         type    string
         default { "" }
@@ -37,7 +38,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group Type"
         type    ordinal
         default { "0" }
-        menu    {
+        menu {
             "guess"     "Guess from Group"
             "prim"      "Primitive"
             "point"     "Point"
@@ -45,56 +46,58 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "useattrib"
-        cppname "UseAttrib"
-        label   "Limit by Attribute"
+        name    "splitByAttrib"
+        cppname "SplitByAttrib"
+        label   "Split by Attribute"
         type    toggle
         default { "0" }
         nolabel
         joinnext
     }
     parm {
-        name    "attribname"
-        cppname "AttribName"
-        label   "Attributes"
+        name    "splitByAttribName"
+        cppname "SplitByAttribName"
+        label   "Split by Attrib Name"
         type    string
         default { "N" }
-        disablewhen "{ useattrib == 0 }"
+        disablewhen "{ splitByAttrib == 0 }"
     }
     parm {
-        name    "tol"
-        label   "Tolerance"
+        name    "splitByAttribTol"
+        cppname "SplitByAttribTol"
+        label   "Split by Attrib Tolerance"
         type    log
         default { "0.001" }
         range   { 0! 1 }
-        disablewhen "{ useattrib == 0 }"
+        disablewhen "{ splitByAttrib == 0 }"
     }
     parm {
-        name    "promote"
-        label   "Promote to Point Attribute"
+        name    "promoteVertexAttribToPoint"
+        cppname "PromoteVertexAttribToPoint"
+        label   "Promote Vertex Attribute to Point"
         type    toggle
         default { "0" }
-        disablewhen "{ useattrib == 0 }"
+        disablewhen "{ splitByAttrib == 0 }"
     }
 
 
 
-    //parm {
-    //    name    "subscribeRatio"
-    //    cppname "SubscribeRatio"
-    //    label   "Subscribe Ratio"
-    //    type    integer
-    //    default { 64 }
-    //    range   { 0! 256 }
-    //}
-    //parm {
-    //    name    "minGrainSize"
-    //    cppname "MinGrainSize"
-    //    label   "Min Grain Size"
-    //    type    intlog
-    //    default { 64 }
-    //    range   { 0! 2048 }
-    //}
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 64 }
+        range   { 0! 2048 }
+    }
 }
 )THEDSFILE";
 
@@ -212,155 +215,31 @@ void
 SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_SplitPoint_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_SplitPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
+    GFE_SplitPoint splitPoint(outGeo0, &cookparms);
+
+    if (sopparms.getSplitByAttrib())
+    {
+        splitPoint.setSplitByAttrib(sopparms.getSplitByAttribName());
+        splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
+    }
     
-
-    GOP_Manager gop;
-
-    const GA_ElementGroup* group = nullptr;
-
-    const UT_StringHolder& groupname = sopparms.getGroup();
-    if (groupname.isstring())
-    {
-        GA_GroupType grouptype = sopSplitPointsGroupType(sopparms.getGroupType());
-
-        bool ok = true;
-        const GA_Group* anygroup = gop.parseGroupDetached(groupname, grouptype, gdp, true, false, ok);
-
-        if (!ok || (anygroup && !anygroup->isElementGroup()))
-        {
-            cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupname);
-        }
-        if (anygroup && anygroup->isElementGroup())
-        {
-            group = UTverify_cast<const GA_ElementGroup*>(anygroup);
-        }
-    }
-    notifyGroupParmListeners(cookparms.getNode(), 0, 1, gdp, group);
-
-    if (sopparms.getUseAttrib() && sopparms.getAttribName().isstring())
-    {
-        fpreal tolerance = sopparms.getTol();
-        const bool promote = sopparms.getPromote();
-
-        const char* pattern = sopparms.getAttribName().c_str();
-        if (UT_String::multiMatchCheck(pattern))
-        {
-            UT_StringArray attribsToPromote;
-            auto&& functor = [pattern, promote, gdp, group, tolerance, &attribsToPromote](GA_Attribute* attrib)
-            {
-                UT_String attribname_string(attrib->getName().c_str());
-                if (!attribname_string.multiMatch(pattern))
-                    return;
-
-                // NOTE: This will bump any data IDs as needed, if any points are split.
-                GEOsplitPointsByAttrib(gdp, group, attrib, tolerance);
-
-                if (promote)
-                {
-                    // Don't promote the attributes while iterating over them
-                    attribsToPromote.append(attrib->getName());
-                }
-            };
-
-            // NOTE: The iteration order must be alphabetical, instead of
-            //       the hash table order, for consistency.
-            for (auto it = gdp->vertexAttribs().obegin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it)
-                functor(it.item());
-            for (exint i = 0; i < attribsToPromote.size(); ++i)
-            {
-                GA_Attribute* attrib = gdp->findAttribute(GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, attribsToPromote[i]);
-                if (attrib)
-                    GU_Promote::promote(*gdp, attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-            }
-            attribsToPromote.clear();
-
-            for (auto it = gdp->primitiveAttribs().obegin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it)
-                functor(it.item());
-            for (exint i = 0; i < attribsToPromote.size(); ++i)
-            {
-                GA_Attribute* attrib = gdp->findAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, attribsToPromote[i]);
-                if (attrib)
-                    GU_Promote::promote(*gdp, attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-            }
-            attribsToPromote.clear();
-
-            for (auto it = gdp->vertexAttribs().obegin(GA_SCOPE_GROUP); !it.atEnd(); ++it)
-                functor(it.item());
-            for (exint i = 0; i < attribsToPromote.size(); ++i)
-            {
-                GA_ElementGroup* cur_group = gdp->findVertexGroup(attribsToPromote[i]);
-                if (cur_group && !cur_group->isInternal())
-                    GU_Promote::promote(*gdp, cur_group, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-            }
-            attribsToPromote.clear();
-
-            for (auto it = gdp->primitiveAttribs().obegin(GA_SCOPE_GROUP); !it.atEnd(); ++it)
-                functor(it.item());
-            for (exint i = 0; i < attribsToPromote.size(); ++i)
-            {
-                GA_ElementGroup* cur_group = gdp->findPrimitiveGroup(attribsToPromote[i]);
-                if (cur_group && !cur_group->isInternal())
-                    GU_Promote::promote(*gdp, cur_group, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-            }
-            attribsToPromote.clear();
-        }
-        else
-        {
-            GA_Attribute* attrib = gdp->vertexAttribs().find(GA_SCOPE_PUBLIC, sopparms.getAttribName());
-            if (!attrib)
-            {
-                attrib = gdp->primitiveAttribs().find(GA_SCOPE_PUBLIC, sopparms.getAttribName());
-                if (!attrib)
-                {
-                    // The attribute should be able to be a group, so that we
-                    // can easily split along group boundaries.
-                    attrib = gdp->vertexGroups().find(sopparms.getAttribName());
-                    if (!attrib)
-                    {
-                        attrib = gdp->primitiveGroups().find(sopparms.getAttribName());
-                        if (!attrib)
-                        {
-                            cookparms.sopAddWarning(SOP_MESSAGE, "Couldn't find specified vertex or primitive attribute");
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // NOTE: This will bump any data IDs as needed, if any points are split.
-            GEOsplitPointsByAttrib(gdp, group, attrib, tolerance);
-
-            if (promote)
-            {
-                GU_Promote::promote(*gdp, attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
-            }
-        }
-    }
-    else if (!sopparms.getUseAttrib())
-    {
-        // NOTE: This will bump any data IDs as needed, if any points are split.
-        GEOsplitPoints(gdp, group);
-    }
+    splitPoint.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
 
-    GFE_SplitPoint::splitPoint(cookparms, outGeo0, inGeo0,
-        sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
-        cutPoint, mergePrimEndsIfClosed, polyType,
-        inStorageI, srcPrimAttribName, srcPointAttribName);
+    splitPoint.setGroup(sopparms.getPrimGroup());
+    splitPoint.setSplitByAttrib(false, uvAttribClass, GA_STORE_INVALID, uvAttribName, 3);
 
-
-
-    outGeo0->bumpDataIdsForAddOrRemove(1, 0, 0);
+    splitPoint.computeAndBumpDataId();
 
 }
 
