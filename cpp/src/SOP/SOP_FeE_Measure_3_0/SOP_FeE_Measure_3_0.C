@@ -223,25 +223,18 @@ void
 SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_Measure_3_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Measure_3_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& measureAttribName = sopparms.getMeasureAttribName();
     if (!measureAttribName.isstring())
         return;
 
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
     const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasureType());
 
     UT_AutoInterrupt boss("Processing");
@@ -252,10 +245,10 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GFE_Measure measure(outGeo0, &cookparms);
     measure.groupParser.setGroup(groupType, sopparms.getGroup());
     measure.setPositionAttrib(sopparms.getPosAttribName());
-    measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, measureAttribName);
+    measure.getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_FLOAT, GA_STORE_INVALID, measureAttribName);
 
     measure.setComputeParm(measureType,
-        subscribeRatio, minGrainSize);
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     measure.computeAndBumpDataId();
 

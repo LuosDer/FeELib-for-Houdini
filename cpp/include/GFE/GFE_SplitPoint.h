@@ -8,11 +8,16 @@
 
 //#include "GFE/GFE_SplitPoint.h"
 
-#include "GFE/GFE_GEOFilter.h"
 //#include "GA/GA_Types.h"
+#include <GA/GA_AIFCompare.h>
 #include "GA/GA_ElementWrangler.h"
+#include "GU/GU_Promote.h"
 
-#include "GFE/GFE_Type.h"
+
+
+#include "GFE/GFE_GeoFilter.h"
+
+//#include "GFE/GFE_Type.h"
 
 
 
@@ -31,44 +36,69 @@ public:
 
 
     void
-        setGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
+    setComputeParm(
+        const fpreal splitAttribTol = 1e-05,
+        const bool promoteAttrib = false
+        // ,const exint subscribeRatio = 64,
+        // const exint minGrainSize = 64
+    )
     {
-        groupParser.setGroup(geoPrimGroup);
-    }
-
-    void
-        setGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser.setPrimitiveGroup(primGroupName);
+        setHasComputed();
+        this->splitAttribTol = splitAttribTol;
+        this->promoteAttrib = promoteAttrib;
+        // this->subscribeRatio = subscribeRatio;
+        // this->minGrainSize = minGrainSize;
     }
 
     
-    void
-        setComputeParm(
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
-        )
+    // SYS_FORCE_INLINE void setSplitByAttrib(const GA_Attribute* const attribPtr = nullptr)
+    // {
+    //     splitAttribPtr = attribPtr;
+    // }
+    //
+    // void setSplitByAttrib(const GA_AttributeOwner owner, const UT_StringRef& name)
+    // {
+    //     if (owner == GA_ATTRIB_VERTEX)
+    //     {
+    //         splitAttribPtr = geo->findAttribute(owner, name);
+    //         if (!splitAttribPtr)
+    //         {
+    //             splitAttribPtr = geo->vertexGroups().find(name);
+    //         }
+    //     }
+    //     else if (owner == GA_ATTRIB_PRIMITIVE)
+    //     {
+    //         splitAttribPtr = geo->findAttribute(owner, name);
+    //         if (!splitAttribPtr)
+    //         {
+    //             splitAttribPtr = geo->primitiveGroups().find(name);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         splitAttribPtr = geo->findAttribute(GA_ATTRIB_VERTEX, name);
+    //         if (!splitAttribPtr)
+    //         {
+    //             splitAttribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, name);
+    //             if (!splitAttribPtr)
+    //             {
+    //                 splitAttribPtr = geo->vertexGroups().find(name);
+    //                 if (!splitAttribPtr)
+    //                 {
+    //                     splitAttribPtr = geo->primitiveGroups().find(name);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     if (!splitAttribPtr && cookparms)
+    //     {
+    //         cookparms->sopAddWarning(SOP_MESSAGE, "Couldn't find specified vertex or primitive attribute");
+    //     }
+    // }
+
+    virtual void bumpDataId() const override
     {
-        setHasComputed();
-        this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
     }
-
-
-    SYS_FORCE_INLINE void setSplitByAttrib(const GA_Attribute* const attribPtr = nullptr)
-    {
-        splitAttribPtr = attribPtr;
-    }
-
-    SYS_FORCE_INLINE void setSplitByAttrib(const GA_AttributeOwner owner, const UT_StringRef& name)
-    {
-        splitAttribPtr = geo->findAttribute(owner, name);
-    }
-
 
 
 private:
@@ -80,19 +110,60 @@ private:
         if (groupParser.isEmpty())
             return true;
 
+        const GA_ElementGroup* const group = groupParser.getElementGroup();
+        if (getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
+        {
+            // NOTE: This will bump any data IDs as needed, if any points are split.
+            splitPoint();
+            return true;
+        }
+        
+        const auto attribSize = getOutAttribArray().size();
+        for (size_t i = 0; i < attribSize; ++i)
+        {
+            const GA_Attribute* const attrib = getOutAttribArray()[i];
+            splitPointByAttrib(attrib);
+        }
+        if (promoteAttrib)
+        {
+            for (size_t i = 0; i < attribSize; ++i)
+            {
+                GA_Attribute* const attrib = getOutAttribArray()[i];
+                GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+            }
+        }
+            
+        const auto groupSize = getOutGroupArray().size();
+        for (size_t i = 0; i < groupSize; ++i)
+        {
+            const GA_Group* const attrib = getOutGroupArray()[i];
+            splitPointByAttrib(attrib);
+        }
+        if (promoteAttrib)
+        {
+            for (size_t i = 0; i < groupSize; ++i)
+            {
+                GA_ElementGroup* const attrib = getOutGroupArray().getElementGroup(i);
+                GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+            }
+        }
 
         return true;
     }
 
 
-    GA_Size GEOsplitPoints(
-        GEO_Detail* geo,
-        const GA_ElementGroup* group
-    )
-    {
-        if (group && group->isEmpty())
-            return 0;
 
+
+    
+    GA_Size
+        splitPoint()
+    {
+        if (groupParser.isEmpty())
+            return 0;
+        
+        const GA_ElementGroup* const group = groupParser.getElementGroup();
+        
+        
         UT_AutoInterrupt boss("Making Unique Points");
         if (boss.wasInterrupted())
             return 0;
@@ -174,8 +245,12 @@ private:
                 //       and then vertex order within a primitive, so that results
                 //       are the same whether the input was loaded from a file or
                 //       computed.
+                
+#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+                vtxoffs.sort(std::less<GA_Offset>());
+#else
                 vtxoffs.stdsort(std::less<GA_Offset>());
-
+#endif
                 bool skip_first = !has_other;
                 GA_Offset newptoff = geo->appendPointBlock(points_to_add);
                 for (exint j = exint(skip_first); j < nvtx; ++j, ++newptoff)
@@ -212,44 +287,14 @@ private:
         return numpointsadded;
     }
 
-    GA_Size GEOsplitPointsByAttrib(
-            GEO_Detail* geo,
-            const GA_ElementGroup* group,
-            const GA_Attribute* attrib,
-            fpreal tolerance)
-    {
-        bool isptgroup = (group == nullptr || group->getOwner() == GA_ATTRIB_POINT);
-        return geoSplitPointsByAttrib(
-            geo,
-            geo->getPointRange(isptgroup ? UTverify_cast<const GA_PointGroup*>(group) : nullptr),
-            isptgroup ? nullptr : group,
-            attrib,
-            tolerance);
-    }
-
-    GA_Size GEOsplitPointsByAttrib(
-            GEO_Detail* geo,
-            const GA_Range& points,
-            const GA_Attribute* attrib,
-            fpreal tolerance)
-    {
-        return geoSplitPointsByAttrib(
-            geo,
-            points,
-            nullptr,
-            attrib,
-            tolerance);
-    }
-
-private:
-
     template<typename T>
     bool compareVertices(
-            GA_Offset v1,
-            GA_Offset v2,
-            const GA_ROHandleT<T>& attrib,
-            int tuplesize,
-            fpreal tol)
+        GA_Offset v1,
+        GA_Offset v2,
+        const GA_ROHandleT<T>& attrib,
+        int tuplesize,
+        fpreal tol
+    )
     {
         for (int i = 0; i < tuplesize; i++)
         {
@@ -259,28 +304,38 @@ private:
         return true;
     }
 
-    GA_Size geoSplitPointsByAttrib(
-            GEO_Detail* geo,
-            const GA_Range& points,
-            const GA_ElementGroup* group,
-            const GA_Attribute* attrib,
-            fpreal tolerance
-        )
+    SYS_FORCE_INLINE GA_Size splitPointByAttrib(const GA_ElementGroup* const attrib)
     {
-        // Point groups should be weeded out by the wrappers below.
-        UT_ASSERT(!group || group->classType() == GA_GROUP_PRIMITIVE || group->classType() == GA_GROUP_VERTEX);
-        bool is_primgroup = group && group->classType() == GA_GROUP_PRIMITIVE;
-
-        GA_Size numpointsadded = 0;
-
-        UT_ASSERT(attrib);
+        return splitPointByAttrib(UTverify_cast<const GA_Attribute*>(attrib));
+    }
+    
+    SYS_FORCE_INLINE GA_Size splitPointByAttrib(const GA_Group* const attrib)
+    {
+        if (!attrib->isElementGroup())
+            return 0;
+        return splitPointByAttrib(UTverify_cast<const GA_ElementGroup*>(attrib));
+    }
+    
+    // NOTE: This will bump any data IDs as needed, if any points are split.
+    GA_Size
+        splitPointByAttrib(const GA_Attribute* const attrib)
+    {
         if (!attrib)
-            return numpointsadded;
+            return 0;
 
-        GA_AttributeOwner owner = attrib->getOwner();
+        const GA_AttributeOwner owner = attrib->getOwner();
         if (owner == GA_ATTRIB_POINT || owner == GA_ATTRIB_DETAIL)
-            return numpointsadded;
+            return 0;
 
+        
+        const GA_ElementGroup* const group = groupParser.isPointGroup() ? nullptr : groupParser.getPointGroup();
+        // Point groups should be weeded out by the wrappers below.
+        // UT_ASSERT(!group || group->classType() == GA_GROUP_PRIMITIVE || group->classType() == GA_GROUP_VERTEX);
+        
+        const bool isPrimGroup = groupParser.isPrimitiveGroup();
+        
+        GA_Size numpointsadded = 0;
+        
         const GA_AIFCompare* compare = NULL;
         GA_ROHandleT<int64> attribi;
         GA_ROHandleR attribf;
@@ -320,110 +375,117 @@ private:
         UT_UniquePtr<GA_PointWrangler> ptwrangler(nullptr);
 
         UT_SmallArray<GA_Offset> vtxlist;
-        GA_Size initnumpts = geo->getNumPoints();
-        for (GA_Iterator it(points); !it.atEnd(); ++it)
+        
+        const GA_Size initnumpts = geo->getNumPoints();
+
+        const GA_Range range = groupParser.isPointGroup() ? groupParser.getPointRange() : geo->getPointRange();
+        
+        GA_Offset start, end;
+        for (GA_Iterator it(range); it.fullBlockAdvance(start, end);)
         {
-            GA_Offset ptoff = *it;
-            GA_Index ptidx = geo->pointIndex(ptoff);
-            if (ptidx >= initnumpts)
-                break; // New points are already split
-
-            bool splitfound;
-            do
+            for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
             {
-                GA_Offset vtxoff = geo->pointVertex(ptoff);
-                if (!GAisValid(vtxoff))
-                    break; // Point doesn't belong to anyone
+                const GA_Index ptidx = geo->pointIndex(ptoff);
+                if (ptidx >= initnumpts)
+                    break; // New points are already split
 
-                // To avoid the results being dependent on the order of the
-                // linked-list topology attribute, find the highest vertex offset
-                // in the primitive of highest offset to be the base vertex.
-                // Lowest would make more sense, but highest is more compatible with
-                // the previous code.
-                GA_Offset primoff = geo->vertexPrimitive(vtxoff);
-                GA_Offset basevtxoff = GA_INVALID_OFFSET;
-                GA_Offset baseprimoff = GA_INVALID_OFFSET;
-                if (!group || group->contains(is_primgroup ? primoff : vtxoff))
+                bool splitfound;
+                do
                 {
-                    basevtxoff = vtxoff;
-                    baseprimoff = primoff;
-                }
-                vtxoff = geo->vertexToNextVertex(vtxoff);
-                while (GAisValid(vtxoff))
-                {
-                    primoff = geo->vertexPrimitive(vtxoff);
+                    GA_Offset vtxoff = geo->pointVertex(ptoff);
+                    if (!GAisValid(vtxoff))
+                        break; // Point doesn't belong to anyone
 
-                    if (!group || group->contains(is_primgroup ? primoff : vtxoff))
+                    // To avoid the results being dependent on the order of the
+                    // linked-list topology attribute, find the highest vertex offset
+                    // in the primitive of highest offset to be the base vertex.
+                    // Lowest would make more sense, but highest is more compatible with
+                    // the previous code.
+                    GA_Offset primoff = geo->vertexPrimitive(vtxoff);
+                    GA_Offset basevtxoff = GA_INVALID_OFFSET;
+                    GA_Offset baseprimoff = GA_INVALID_OFFSET;
+                    if (!group || group->contains(isPrimGroup ? primoff : vtxoff))
                     {
-                        if (primoff > baseprimoff || (primoff == baseprimoff && vtxoff > basevtxoff))
-                        {
-                            basevtxoff = vtxoff;
-                            baseprimoff = primoff;
-                        }
+                        basevtxoff = vtxoff;
+                        baseprimoff = primoff;
                     }
                     vtxoff = geo->vertexToNextVertex(vtxoff);
-                }
-
-                if (!GAisValid(basevtxoff))
-                    break; // No vertices in group on current point
-
-                // We have a vertex on the point that's in the group.
-                // If any vertices mismatch, we make a new point.
-
-                GA_Offset baseoffset = (owner == GA_ATTRIB_VERTEX) ? basevtxoff : baseprimoff;
-                vtxlist.setSize(1);
-                vtxlist(0) = basevtxoff;
-                splitfound = false;
-                for (vtxoff = geo->pointVertex(ptoff); GAisValid(vtxoff); vtxoff = geo->vertexToNextVertex(vtxoff))
-                {
-                    if (vtxoff == basevtxoff)
-                        continue;
-                    GA_Offset offset = (owner == GA_ATTRIB_VERTEX) ? vtxoff : geo->vertexPrimitive(vtxoff);
-                    bool match;
-                    if (attribi.isValid())
-                        match = compareVertices<int64>(baseoffset, offset, attribi, tuplesize, tolerance);
-                    else if (attribf.isValid())
-                        match = compareVertices<fpreal>(baseoffset, offset, attribf, tuplesize, tolerance);
-                    else
+                    while (GAisValid(vtxoff))
                     {
-                        bool success = compare->isEqual(match, *attrib, baseoffset, *attrib, offset);
-                        if (!success)
-                            match = true;
-                    }
-                    if (match)
-                    {
-                        // Only append vertices in the group
-                        if (!group || group->contains(is_primgroup ? geo->vertexPrimitive(vtxoff) : vtxoff))
+                        primoff = geo->vertexPrimitive(vtxoff);
+
+                        if (!group || group->contains(isPrimGroup ? primoff : vtxoff))
                         {
-                            vtxlist.append(vtxoff);
+                            if (primoff > baseprimoff || (primoff == baseprimoff && vtxoff > basevtxoff))
+                            {
+                                basevtxoff = vtxoff;
+                                baseprimoff = primoff;
+                            }
+                        }
+                        vtxoff = geo->vertexToNextVertex(vtxoff);
+                    }
+
+                    if (!GAisValid(basevtxoff))
+                        break; // No vertices in group on current point
+
+                    // We have a vertex on the point that's in the group.
+                    // If any vertices mismatch, we make a new point.
+
+                    GA_Offset baseoffset = (owner == GA_ATTRIB_VERTEX) ? basevtxoff : baseprimoff;
+                    vtxlist.setSize(1);
+                    vtxlist(0) = basevtxoff;
+                    splitfound = false;
+                    for (vtxoff = geo->pointVertex(ptoff); GAisValid(vtxoff); vtxoff = geo->vertexToNextVertex(vtxoff))
+                    {
+                        if (vtxoff == basevtxoff)
+                            continue;
+                        GA_Offset offset = (owner == GA_ATTRIB_VERTEX) ? vtxoff : geo->vertexPrimitive(vtxoff);
+                        bool match;
+                        if (attribi.isValid())
+                            match = compareVertices<int64>(baseoffset, offset, attribi, tuplesize, splitAttribTol);
+                        else if (attribf.isValid())
+                            match = compareVertices<fpreal>(baseoffset, offset, attribf, tuplesize, splitAttribTol);
+                        else
+                        {
+                            bool success = compare->isEqual(match, *attrib, baseoffset, *attrib, offset);
+                            if (!success)
+                                match = true;
+                        }
+                        if (match)
+                        {
+                            // Only append vertices in the group
+                            if (!group || group->contains(isPrimGroup ? geo->vertexPrimitive(vtxoff) : vtxoff))
+                            {
+                                vtxlist.append(vtxoff);
+                            }
+                        }
+                        else
+                        {
+                            // Split regardless of whether the unmatched vertex is in the group.
+                            // This may or may not be the behaviour people expect,
+                            // but it's ambiguous as to what people would expect.
+                            // At least, if all vertices in the group have one value
+                            // and all vertices out of the group have a different value,
+                            // they probably want a new point, and that's accomplished
+                            // with this condition.
+                            splitfound = true;
                         }
                     }
-                    else
-                    {
-                        // Split regardless of whether the unmatched vertex is in the group.
-                        // This may or may not be the behaviour people expect,
-                        // but it's ambiguous as to what people would expect.
-                        // At least, if all vertices in the group have one value
-                        // and all vertices out of the group have a different value,
-                        // they probably want a new point, and that's accomplished
-                        // with this condition.
-                        splitfound = true;
-                    }
-                }
 
-                if (splitfound)
-                {
-                    // A split has been found! Create a new point
-                    // using all the entries of vtxlist.
-                    GA_Offset newptoff = geo->appendPointOffset();
-                    ++numpointsadded;
-                    if (!ptwrangler)
-                        ptwrangler.reset(new GA_PointWrangler(*geo, GA_AttributeFilter::selectPublic()));
-                    ptwrangler->copyAttributeValues(newptoff, ptoff);
-                    for (exint i = 0; i < vtxlist.size(); i++)
-                        geo->setVertexPoint(vtxlist(i), newptoff);
-                }
-            } while (splitfound);
+                    if (splitfound)
+                    {
+                        // A split has been found! Create a new point
+                        // using all the entries of vtxlist.
+                        GA_Offset newptoff = geo->appendPoint();
+                        ++numpointsadded;
+                        if (!ptwrangler)
+                            ptwrangler.reset(new GA_PointWrangler(*geo, GA_AttributeFilter::selectPublic()));
+                        ptwrangler->copyAttributeValues(newptoff, ptoff);
+                        for (exint i = 0; i < vtxlist.size(); i++)
+                            geo->setVertexPoint(vtxlist(i), newptoff);
+                    }
+                } while (splitfound);
+            }
         }
 
         if (numpointsadded > 0)
@@ -451,13 +513,14 @@ private:
     }
 
 public:
-    const GA_Attribute* splitAttribPtr = nullptr;
+    //const GA_Attribute* splitAttribPtr = nullptr;
     fpreal splitAttribTol = 1e-05;
+    bool promoteAttrib = false;
 
 private:
 
-    exint subscribeRatio = 64;
-    exint minGrainSize = 64;
+    //exint subscribeRatio = 64;
+    //exint minGrainSize = 64;
 
 }; // End of class GFE_SplitPoint
 

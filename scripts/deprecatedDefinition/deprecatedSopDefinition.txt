@@ -418,6 +418,7 @@ extendcurve_fee
 FeE::bound2d
 groupunsharededge_fee
 FeE::groupUnsharedPoints::1.0
+attribduplicate_fee
 
 blastpoints_fee
 blastprim_fee

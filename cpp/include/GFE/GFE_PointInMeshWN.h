@@ -10,9 +10,9 @@
 // #include "GA/GA_PageIterator.h"
 
 
-#include "GFE/GFE_GeoFilter.h"
+// #include "GFE/GFE_GeoFilter.h"
 #include "GFE/GFE_WindingNumber.h"
-#include "GFE/GFE_AttributeCopy.h"
+#include "GFE/GFE_AttributeCast.h"
 
 
 
@@ -194,7 +194,11 @@ public:
         {
             numericAttrib = geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, numericAttribName, numericStorage, 1, GA_Defaults(0));
         }
-
+        GFE_AttribCast attribCast(geo, cookparms);
+        attribCast.getInAttribArray().set(, );
+        attribCast.getInGroupArray() .set(, );
+        attribCast.newStorageClass = GA_STORECLASS_INT;
+        attribCast.compute();
         GFE_AttributeCopy::copyAttribute(numericAttrib, pointInMeshGroup);
 
         return numericAttrib;
@@ -213,7 +217,7 @@ public:
     void
         bumpDataId()
     {
-        gfeWN.bumpDataId();
+        bumpDataId();
 
         if (pointInMeshGroup && !outGroupDetached)
         {
@@ -259,6 +263,12 @@ private:
 
 
 }; // End of class GFE_PointInMeshWN
+
+
+
+
+
+
 
 
 #else

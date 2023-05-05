@@ -32,35 +32,8 @@ public:
     }
 
     GFE_Connectivity(
-        GA_Detail* const geo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, cookparms)
-        , groupParserSeam(geo, groupParser.getGOP(), cookparms)
-    {
-    }
-
-    GFE_Connectivity(
-        GA_Detail* const geo,
-        const SOP_NodeVerb::CookParms& cookparms
-    )
-        : GFE_AttribFilter(geo, cookparms)
-        , groupParserSeam(geo, groupParser.getGOP(), cookparms)
-    {
-    }
-
-    GFE_Connectivity(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, cookparms)
-        , groupParserSeam(geo, groupParser.getGOP(), cookparms)
-    {
-    }
-
-    GFE_Connectivity(
-        GA_Detail& geo,
-        const SOP_NodeVerb::CookParms& cookparms
     )
         : GFE_AttribFilter(geo, cookparms)
         , groupParserSeam(geo, groupParser.getGOP(), cookparms)
@@ -70,7 +43,7 @@ public:
     void
         setComputeParm(
             const bool connectivityConstraint = false,
-            const bool outTopoAttrib = false
+            const bool outTopoAttrib = true
         )
     {
         setHasComputed();

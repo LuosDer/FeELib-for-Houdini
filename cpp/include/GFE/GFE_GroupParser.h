@@ -6,7 +6,7 @@
 
 //#include "GFE/GFE_GroupParser.h"
 
-#include "GA/GA_Detail.h"
+#include "GFE/GFE_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
 #include "GFE/GFE_GroupUnion.h"
@@ -17,59 +17,56 @@ class GFE_GroupParser {
 public:
 
     GFE_GroupParser(
-        GFE_Detail* const geo,
+        GFE_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        //,const SOP_NodeVerb* const verb = nullptr
     )
-        : geo(static_cast<const GEO_Detail*>(static_cast<const GA_Detail*>(geo)))
-        , geoNonconst(geo)
+        : geo(inGeo->asGEO_Detail())
+        , geoNonconst(inGeo->asGEO_Detail())
         , cookparms(cookparms)
         , gop(gop)
+        //, verb(verb)
     {
     }
     
     GFE_GroupParser(
         GA_Detail* const geo,
         GOP_Manager& gop,
-        const SOP_NodeVerb::CookParms& cookparms
-    )
-        : geo(static_cast<const GEO_Detail*>(geo))
-        , geoNonconst(geo)
-        , cookparms(&cookparms)
-        , gop(gop)
-    {
-    }
-    GFE_GroupParser(
-        GA_Detail* const geo,
-        GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(static_cast<const GEO_Detail*>(geo))
         , geoNonconst(geo)
         , cookparms(cookparms)
         , gop(gop)
+        //, verb(verb)
     {
     }
     GFE_GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(static_cast<const GEO_Detail*>(geo))
         , geoNonconst(nullptr)
         , cookparms(&cookparms)
         , gop(gop)
+        //, verb(verb)
     {
     }
     GFE_GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(static_cast<const GEO_Detail*>(geo))
         , geoNonconst(nullptr)
         , cookparms(cookparms)
         , gop(gop)
+        //, verb(verb)
     {
     }
 
@@ -78,6 +75,7 @@ public:
         GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(&static_cast<const GEO_Detail&>(geo))
         , geoNonconst(&geo)
@@ -89,6 +87,7 @@ public:
         GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(&static_cast<const GEO_Detail&>(geo))
         , geoNonconst(&geo)
@@ -100,6 +99,7 @@ public:
         const GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(&static_cast<const GEO_Detail&>(geo))
         , geoNonconst(nullptr)
@@ -111,6 +111,7 @@ public:
         const GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
+        //,const SOP_NodeVerb* const verb = nullptr
     )
         : geo(&static_cast<const GEO_Detail&>(geo))
         , geoNonconst(nullptr)
@@ -253,8 +254,9 @@ public:
         }
 
         geoGroup = gop.parseGroupDetached(groupName, groupType, geo, true, false, hasGroup);
-        //if (cookparms) notifyGroupParmListeners(cookparms.getNode(), 0, 1, geoConst, group);
 
+        // if (cookparms && verb)
+        //     verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, geo, geoGroup);
         if (!hasGroup)
         {
             if (cookparms)
@@ -292,19 +294,26 @@ public:
 
 
 
-    inline bool getHasGroup() const
+    SYS_FORCE_INLINE bool getHasGroup() const
     {
         return hasGroup;
     }
 
-    inline const GA_Group* getGroup() const
+    const GA_Group* getGroup() const
     {
         if (!hasGroup)
             return nullptr;
         return geoGroup;
     }
 
-    inline const GA_Group* getGroup(const GA_GroupType groupType)
+    const GA_ElementGroup* getElementGroup() const
+    {
+        if (!hasGroup || !geoGroup || !geoGroup->isElementGroup())
+            return nullptr;
+        return static_cast<const GA_ElementGroup*>(geoGroup);
+    }
+
+    const GA_Group* getGroup(const GA_GroupType groupType)
     {
         if (!hasGroup)
             return nullptr;
@@ -335,15 +344,32 @@ public:
             return GA_GROUP_INVALID;
         if (!geoGroup)
             return GA_GROUP_N;
-        return getGroup()->classType();
+        return geoGroup->classType();
     }
 
-    inline GA_GroupType groupType() const
+    SYS_FORCE_INLINE GA_GroupType groupType() const
     {
-        return groupType();
+        return classType();
     }
 
-    inline const GA_PrimitiveGroup* getPrimitiveGroup()
+    SYS_FORCE_INLINE bool isPrimitiveGroup() const
+    {
+        return classType() == GA_GROUP_PRIMITIVE;
+    }
+    SYS_FORCE_INLINE bool isPointGroup() const
+    {
+        return classType() == GA_GROUP_POINT;
+    }
+    SYS_FORCE_INLINE bool isVertexGroup() const
+    {
+        return classType() == GA_GROUP_VERTEX;
+    }
+    SYS_FORCE_INLINE bool isEdgeGroup() const
+    {
+        return classType() == GA_GROUP_EDGE;
+    }
+
+    SYS_FORCE_INLINE const GA_PrimitiveGroup* getPrimitiveGroup()
     {
         if (!hasGroup)
             return nullptr;
@@ -352,7 +378,7 @@ public:
         return geoPrimitiveGroup;
     }
 
-    inline const GA_PointGroup* getPointGroup()
+    SYS_FORCE_INLINE const GA_PointGroup* getPointGroup()
     {
         if (!hasGroup)
             return nullptr;
@@ -361,7 +387,7 @@ public:
         return geoPointGroup;
     }
 
-    inline const GA_VertexGroup* getVertexGroup()
+    SYS_FORCE_INLINE const GA_VertexGroup* getVertexGroup()
     {
         if (!hasGroup)
             return nullptr;
@@ -370,7 +396,7 @@ public:
         return geoVertexGroup;
     }
 
-    inline const GA_EdgeGroup* getEdgeGroup()
+    SYS_FORCE_INLINE const GA_EdgeGroup* getEdgeGroup()
     {
         if (!hasGroup)
             return nullptr;
@@ -379,22 +405,22 @@ public:
         return geoEdgeGroup;
     }
 
-    inline GA_Range getPrimitiveRange()
+    SYS_FORCE_INLINE GA_Range getPrimitiveRange()
     {
         return GA_Range(geo->getPrimitiveMap(), getPrimitiveGroup());
     }
 
-    inline GA_Range getPointRange()
+    SYS_FORCE_INLINE GA_Range getPointRange()
     {
         return GA_Range(geo->getPointMap(), getPointGroup());
     }
 
-    inline GA_Range getVertexRange()
+    SYS_FORCE_INLINE GA_Range getVertexRange()
     {
         return GA_Range(geo->getVertexMap(), getVertexGroup());
     }
 
-    inline GA_Range getRange(const GA_AttributeOwner attribOwner)
+    SYS_FORCE_INLINE GA_Range getRange(const GA_AttributeOwner attribOwner)
     {
         switch (attribOwner)
         {
@@ -446,7 +472,7 @@ public:
         return GA_SplittableRange();
     }
 
-    inline GA_SplittableRange getSplittableRange(const GA_GroupType groupType)
+    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_GroupType groupType)
     {
         switch (groupType)
         {
@@ -579,11 +605,7 @@ private:
 
 
 
-    const GA_Group*
-        groupFindPromoteDetached(
-            const GA_Group* const group,
-            const GA_GroupType groupType
-        )
+    const GA_Group* groupFindPromoteDetached(const GA_Group* const group, const GA_GroupType groupType)
     {
         if (!group)
             return nullptr;
@@ -612,38 +634,22 @@ private:
         return newGroup;
     }
 
-    SYS_FORCE_INLINE
-        const GA_PrimitiveGroup*
-        groupFindPromotePrimitiveDetached(
-            const GA_Group* const group
-        )
+    SYS_FORCE_INLINE const GA_PrimitiveGroup* groupFindPromotePrimitiveDetached(const GA_Group* const group)
     {
         return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(group, GA_GROUP_PRIMITIVE));
     }
 
-    SYS_FORCE_INLINE
-        const GA_PointGroup*
-        groupFindPromotePointDetached(
-            const GA_Group* const group
-        )
+    SYS_FORCE_INLINE const GA_PointGroup* groupFindPromotePointDetached(const GA_Group* const group)
     {
         return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(group, GA_GROUP_POINT));
     }
 
-    SYS_FORCE_INLINE
-        const GA_VertexGroup*
-        groupFindPromoteVertexDetached(
-            const GA_Group* const group
-        )
+    SYS_FORCE_INLINE const GA_VertexGroup* groupFindPromoteVertexDetached(const GA_Group* const group)
     {
         return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(group, GA_GROUP_VERTEX));
     }
 
-    SYS_FORCE_INLINE
-        const GA_EdgeGroup*
-        groupFindPromoteEdgeDetached(
-            const GA_Group* const group
-        )
+    SYS_FORCE_INLINE const GA_EdgeGroup* groupFindPromoteEdgeDetached(const GA_Group* const group)
     {
         return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(group, GA_GROUP_EDGE));
     }
@@ -651,59 +657,35 @@ private:
 
 protected:
 
-    SYS_FORCE_INLINE
-    void
-        setDetail(
-            const GA_Detail* const geo
-        )
+    SYS_FORCE_INLINE void setDetail(const GA_Detail* const geo)
     {
         this->geo = static_cast<const GEO_Detail*>(geo);
     }
 
-    SYS_FORCE_INLINE
-    void
-        setDetail(
-            const GEO_Detail* const geo
-        )
+    SYS_FORCE_INLINE void setDetail(const GEO_Detail* const geo)
     {
         this->geo = geo;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setDetail(
-            const GU_Detail* const geo
-        )
+    SYS_FORCE_INLINE void setDetail(const GU_Detail* const geo)
     {
         //this->geo = static_cast<const GEO_Detail*>(geo);
         this->geo = geo;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setDetail(
-            GA_Detail* const geo
-        )
+    SYS_FORCE_INLINE void setDetail(GA_Detail* const geo)
     {
         this->geo = static_cast<const GEO_Detail*>(geo);
         geoNonconst = geo;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setDetail(
-            GEO_Detail* const geo
-        )
+    SYS_FORCE_INLINE void setDetail(GEO_Detail* const geo)
     {
         this->geo = geo;
         geoNonconst = geo;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setDetail(
-            GU_Detail* const geo
-        )
+    SYS_FORCE_INLINE void setDetail(GU_Detail* const geo)
     {
         //this->geo = static_cast<const GEO_Detail*>(geo);
         this->geo = geo;
@@ -715,6 +697,7 @@ private:
 
     //GEO_Detail* geo = nullptr;
     const SOP_NodeVerb::CookParms* cookparms;
+    //const SOP_NodeVerb* verb;
     const GEO_Detail* geo;
     GA_Detail* geoNonconst;
     
@@ -724,7 +707,6 @@ private:
 
     bool findGroup = true;
     bool delGroup = false;
-
 
     bool hasGroup = false;
     const GA_Group* geoGroup = nullptr;
@@ -749,6 +731,14 @@ private:
 
     friend class GFE_GeoFilter;
 }; // End of class GFE_GroupParser
+
+
+
+
+
+
+
+
 
 
 
@@ -830,8 +820,10 @@ findOrParseGroupDetached(
 
     bool success = true;
     GA_Group* const anyGroup = const_cast<GA_Group*>(gop.parseGroupDetached(groupName, groupType, static_cast<GEO_Detail*>(geo), true, false, success));
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, geo, group);
 
+    // if (cookparms && verb)
+    //     verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, geo, geoGroup);
+    
     //if (!success || (anyGroup && !anyGroup->isElementGroup()))
     if (!success)
     {
@@ -875,6 +867,9 @@ findOrParseGroupDetached(
     bool success = true;
     const GA_Group* const anyGroup = gop.parseGroupDetached(groupName, groupType, static_cast<const GEO_Detail*>(geo), true, false, success);
 
+    // if (cookparms && verb)
+    //     verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, geo, geoGroup);
+    
     //if (!success || (anyGroup && !anyGroup->isElementGroup()))
     if (!success)
     {

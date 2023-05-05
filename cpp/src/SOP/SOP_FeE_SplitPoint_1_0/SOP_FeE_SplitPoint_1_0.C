@@ -10,6 +10,8 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
+#include <PRM/PRM_Include.h>
+//#include <PRM/PRM_TemplateBuilder.h>
 
 
 
@@ -46,21 +48,32 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "splitByAttrib"
-        cppname "SplitByAttrib"
-        label   "Split by Attribute"
-        type    toggle
-        default { "0" }
-        nolabel
-        joinnext
+        name    "primSplitAttrib"
+        cppname "PrimSplitAttrib"
+        label   "Primitive Split Attrib"
+        type    string
+        default { "" }
     }
     parm {
-        name    "splitByAttribName"
-        cppname "SplitByAttribName"
-        label   "Split by Attrib Name"
+        name    "vertexSplitAttrib"
+        cppname "VertexSplitAttrib"
+        label   "Vertex Split Attrib"
         type    string
-        default { "N" }
-        disablewhen "{ splitByAttrib == 0 }"
+        default { "" }
+    }
+    parm {
+        name    "primSplitGroup"
+        cppname "PrimSplitGroup"
+        label   "Primitive Split Group"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "vertexSplitGroup"
+        cppname "VertexSplitGroup"
+        label   "Vertex Split Group"
+        type    string
+        default { "" }
     }
     parm {
         name    "splitByAttribTol"
@@ -69,39 +82,91 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0.001" }
         range   { 0! 1 }
-        disablewhen "{ splitByAttrib == 0 }"
     }
     parm {
-        name    "promoteVertexAttribToPoint"
-        cppname "PromoteVertexAttribToPoint"
-        label   "Promote Vertex Attribute to Point"
+        name    "promoteSplitAttrib"
+        cppname "promoteSplitAttrib"
+        label   "Promote Split Attribute"
         type    toggle
         default { "0" }
-        disablewhen "{ splitByAttrib == 0 }"
     }
 
 
 
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
+    // parm {
+    //     name    "subscribeRatio"
+    //     cppname "SubscribeRatio"
+    //     label   "Subscribe Ratio"
+    //     type    integer
+    //     default { 64 }
+    //     range   { 0! 256 }
+    // }
+    // parm {
+    //     name    "minGrainSize"
+    //     cppname "MinGrainSize"
+    //     label   "Min Grain Size"
+    //     type    intlog
+    //     default { 64 }
+    //     range   { 0! 2048 }
+    // }
 }
 )THEDSFILE";
 
 
+
+static GA_GroupType
+sopGroupType(SOP_FeE_SplitPoint_1_0Parms::GroupType parmgrouptype)
+{
+    using namespace SOP_FeE_SplitPoint_1_0Enums;
+    switch (parmgrouptype)
+    {
+    case GroupType::GUESS:      return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:       return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:      return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:     return GA_GROUP_VERTEX;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled group type!");
+    return GA_GROUP_INVALID;
+}
+
+// static GA_AttributeOwner
+// sopSplitAttribOwner(SOP_FeE_SplitPoint_1_0Parms::SplitAttribClass splitAttribClass)
+// {
+//     using namespace SOP_FeE_SplitPoint_1_0Enums;
+//     switch (splitAttribClass)
+//     {
+//     case SplitAttribClass::GUESS:      return GA_ATTRIB_INVALID;    break;
+//     case SplitAttribClass::PRIM:       return GA_ATTRIB_PRIMITIVE;  break;
+//     case SplitAttribClass::VERTEX:     return GA_ATTRIB_VERTEX;     break;
+//     }
+//     UT_ASSERT_MSG(0, "Unhandled Split Attrib Class!");
+//     return GA_ATTRIB_INVALID;
+// }
+
+
+
+OP_ERROR
+SOP_FeE_SplitPoint_1_0::cookInputGroups(OP_Context &context, int alone)
+{
+    UT_ASSERT(alone);
+
+    GA_GroupType groupType = sopGroupType(
+        (SOP_FeE_SplitPoint_1_0Enums::GroupType)evalInt("groupType"_sh, 0, context.getTime()));
+
+    const GA_Group *group;
+    cookInputAllGroups(
+        context,
+        group,
+        alone != 0,
+        true,   // do_selection
+        0,      // group parm index
+        1,      // group type parm index
+        groupType,
+        true,   // allow_reference
+        false   // is_default_prim
+        );
+    return error();
+}
 
 
 
@@ -118,7 +183,7 @@ SOP_FeE_SplitPoint_1_0::buildAttribMenu(
 
     sop->fillAttribNameMenu(entries, size, GA_ATTRIB_VERTEX, input);
 }
-static PRM_ChoiceList  sop_attribmenu(
+static PRM_ChoiceList splitPointAttribMenu(
     (PRM_ChoiceListType)(PRM_CHOICELIST_TOGGLE),
     SOP_FeE_SplitPoint_1_0::buildAttribMenu);
 
@@ -131,8 +196,13 @@ SOP_FeE_SplitPoint_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_SplitPoint_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group", &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("attribname", &sop_attribmenu);
+        templ.setChoiceListPtr("group", &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("primSplitAttrib", &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("vertexSplitAttrib", &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("primSplitGroup", &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("vertexSplitGroup", &SOP_Node::vertexNamedGroupMenu);
+        
+        //templ.setChoiceListPtr("vertexSplitAttrib", &splitPointAttribMenu);
     }
     return templ.templates();
 }
@@ -195,22 +265,6 @@ SOP_FeE_SplitPoint_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopSplitPointsGroupType(SOP_FeE_SplitPoint_1_0Parms::GroupType parmgrouptype)
-{
-    using namespace SOP_FeE_SplitPoint_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case GroupType::GUESS:      return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:       return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:      return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:     return GA_GROUP_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled group type!");
-    return GA_GROUP_INVALID;
-}
-
-
 void
 SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -219,25 +273,34 @@ SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //auto sopcache = (SOP_FeE_SplitPoint_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    outGeo0.replaceWith(inGeo0);
 
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    //const GA_AttributeOwner splitAttribOwner = sopSplitAttribOwner(sopparms.getSplitAttribClass());
 
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+
+
     
     GFE_SplitPoint splitPoint(outGeo0, &cookparms);
-
-    if (sopparms.getSplitByAttrib())
-    {
-        splitPoint.setSplitByAttrib(sopparms.getSplitByAttribName());
-        splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
-    }
+    splitPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    splitPoint.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-
-    splitPoint.setGroup(sopparms.getPrimGroup());
-    splitPoint.setSplitByAttrib(false, uvAttribClass, GA_STORE_INVALID, uvAttribName, 3);
+    //if (sopparms.getSplitByAttrib())
+    //{
+        splitPoint.getOutAttribArray().oappends(GA_ATTRIB_PRIMITIVE, sopparms.getPrimSplitAttrib());
+        splitPoint.getOutAttribArray().oappends(GA_ATTRIB_VERTEX, sopparms.getVertexSplitAttrib());
+        splitPoint.getOutGroupArray().oappends(GA_GROUP_PRIMITIVE, sopparms.getPrimSplitGroup());
+        splitPoint.getOutGroupArray().oappends(GA_GROUP_VERTEX, sopparms.getVertexSplitGroup());
+    
+        splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
+        splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();
+    //}
+    
+    //splitPoint.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     splitPoint.computeAndBumpDataId();
 

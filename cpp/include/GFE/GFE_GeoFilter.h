@@ -455,6 +455,15 @@ public:
     }
     
     SYS_FORCE_INLINE void resetGeoFilterRef0(
+        const GFE_Detail& geoRef0,
+        GOP_Manager* const gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+    {
+        resetGeoFilterRef0(&geoRef0, gop, cookparmsRef0);
+    }
+
+    SYS_FORCE_INLINE void resetGeoFilterRef0(
         const GA_Detail* const geoRef0,
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -463,6 +472,17 @@ public:
         resetGeoFilterRef0(static_cast<const GFE_Detail*>(geoRef0), gop, cookparmsRef0);
     }
 
+    SYS_FORCE_INLINE void resetGeoFilterRef0(
+        const GA_Detail& geoRef0,
+        GOP_Manager* const gop,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+    {
+        resetGeoFilterRef0(static_cast<const GFE_Detail&>(geoRef0), gop, cookparmsRef0);
+    }
+
+
+    
     SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
     {
         return groupParserRef0;
@@ -706,46 +726,30 @@ public:
 
 
     SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
-    {
-        return outAttribArray;
-    }
-
+    { return outAttribArray; }
+    
     SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
-    {
-        return outGroupArray;
-    }
-
+    { return outGroupArray; }
+    
     SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getOutAttribArrayRef()
-    {
-        return outAttribArray.ref();
-    }
-
+    { return outAttribArray.ref(); }
+    
     SYS_FORCE_INLINE ::std::vector<GA_Group*>& getOutGroupArrayRef()
-    {
-        return outGroupArray.ref();
-    }
+    { return outGroupArray.ref(); }
 
 
     
     SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
-    {
-        return outAttribArray;
-    }
-
+    { return outAttribArray; }
+    
     SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
-    {
-        return outGroupArray;
-    }
-
+    { return outGroupArray; }
+    
     SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getOutAttribArrayRef() const
-    {
-        return outAttribArray.ref();
-    }
-
+    { return outAttribArray.ref(); }
+    
     SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getOutGroupArrayRef() const
-    {
-        return outGroupArray.ref();
-    }
+    { return outGroupArray.ref(); }
 
 private:
 

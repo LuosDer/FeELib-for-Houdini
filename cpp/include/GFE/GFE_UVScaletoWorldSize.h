@@ -38,13 +38,13 @@ public:
             const bool doUVScalex = true,
             const bool doUVScaley = true,
             const bool doUVScalez = true,
-            const bool outTopoAttrib = false,
+            const bool outTopoAttrib = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        setOutTopoAttrib(outTopoAttrib);
+        this->outTopoAttrib = outTopoAttrib;
         this->computeUVAreaInPiece = computeUVAreaInPiece;
         this->uvScale = uvScale;
         this->doUVScalex = doUVScalex;
@@ -132,13 +132,26 @@ private:
 
         if (computeUVAreaInPiece)
         {
-            const GA_Attribute* const connectivityATIPtr = GFE_Connectivity_Namespace::addAttribConnectivity(geo);
-            //const GA_Attribute* const connectivityATIPtr = GFE_Connectivity::addAttribConnectivity(geo);
+            GFE_Connectivity connectivity(geo, cookparms);
+            connectivity.groupParser.setGroup(groupParser.getPrimitiveGroup());
+            //connectivity.setComputeParm(connectivityConstraint, true);
+            connectivity.findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, GA_STORE_INVALID);
+            connectivity.compute();
+            const GA_Attribute* const connectivityAttribPtr = connectivity.getConnectivityAttrib();
+#if 0
+            GFE_AttribPromote attribPromote(geo, cookparms);
 
-            //areaAttrib_h   = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr,   GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-            //areaUVAttrib_h = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-            areaATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
-            areaUVATIPtr = GU_Promote::promote(*static_cast<GU_Detail*>(geo), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityATIPtr);
+            attribPromote.setSourceAttribute(areaATIPtr);
+            attribPromote.setDestinationAttribute(areaATIPtr);
+            attribPromote.compute();
+            
+            attribPromote.setSourceAttribute(GA_ATTRIB_PRIMITIVE, sopparms.getSrcAttrib());
+            attribPromote.setDestinationAttribute(dstAttribClass);
+            attribPromote.compute();
+#else
+            areaATIPtr   = GU_Promote::promote(*geo->asGU_Detail(), areaATIPtr,   GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityAttribPtr);
+            areaUVATIPtr = GU_Promote::promote(*geo->asGU_Detail(), areaUVATIPtr, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityAttribPtr);
+#endif
         }
 
 

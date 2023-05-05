@@ -24,6 +24,12 @@ public:
     
     const SOP_NodeVerb *cookVerb() const override;
 
+    virtual OP_ERROR cookInputGroups(OP_Context &context, int alone);
+    
+    static void buildAttribMenu(
+        void *data, PRM_Name *entries, int size,
+        const PRM_SpareData *, const PRM_Parm *);
+
 protected:
     SOP_FeE_SplitPoint_1_0(OP_Network *net, const char *name, OP_Operator *op)
         : SOP_Node(net, name, op)

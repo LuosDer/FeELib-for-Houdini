@@ -135,7 +135,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "WNPrecision"
         label   "Precision"
         type    ordinal
-        default { "64" }
+        default { "auto" }
         menu {
             "auto"   "Auto"
             "_16"    "16"
@@ -234,39 +234,16 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
 
-    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(geoPoint);
-    
-#if 0
-    GFE_WindingNumber::GA_WindingNumber_Cache* sopcache = (GFE_WindingNumber::GA_WindingNumber_Cache*)cookparms.cache();
-
-    GA_Attribute* wnAttribPtr = GFE_WindingNumber::addAttribWindingNumber(
-        cookparms, geoPoint, geoRefMesh,
-        sopparms.getQueryPoints(), sopparms.getMeshPrims(), sopcache,
-        GA_STORE_INVALID, sopparms.getWNAttribName(),
-        sopWNType(sopparms.getWNType()), sopparms.getFullAccuracy(), sopparms.getAccuracyScale(), sopparms.getAsSolidAngle(), sopparms.getNegate()
-    );
-#else
-#if 0
-    GA_Attribute* wnAttribPtr = GFE_WindingNumber_Namespace::addAttribWindingNumber(
-        cookparms, geoPoint, geoRefMesh,
-        sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup(), sopcache,
-        wnStorage, sopparms.getWNAttribName(),
-        sopWNType(sopparms.getWNType()), sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(), sopparms.getWNAsSolidAngle(), sopparms.getWNNegate()
-    );
-#else
     GFE_WindingNumber wn(geoPoint, geoRefMesh, sopcache, &cookparms);
 
     wn.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    wn.findOrCreateOutAttrib(false, wnStorage, sopparms.getWNAttribName());
+    wn.findOrCreateTuple(false, wnStorage, sopparms.getWNAttribName());
 
     wn.setWNComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 
     wn.computeAndBumpDataId();
-#endif
-
-#endif
 
 }

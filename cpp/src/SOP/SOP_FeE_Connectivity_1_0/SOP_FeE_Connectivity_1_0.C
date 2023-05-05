@@ -487,8 +487,6 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     GFE_Connectivity connectivity(outGeo0, cookparms);
-    //GFE_Connectivity connectivity(outGeo0, &cookparms);
-
     //const bool useUVConnectivity = sopparms.getUseUVConnectivity();
 
 

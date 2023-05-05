@@ -300,12 +300,17 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-    GFE_AttribCast attribCast(outGeo0, cookparms);
+#if 0
+    GFE_AttribCast attribCast(geo, cookparms);
+    attribCast.getInAttribArray().set(, );
+    attribCast.getInGroupArray() .set(, );
+    attribCast.newStorageClass = GA_STORECLASS_INT;
+    attribCast.compute();
+#endif
+    
+    GFE_AttribCast attribCast(outGeo0, &cookparms);
     attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
-    attribCast.getInGroupArray().set(geo0AttribClass, sopparms.getGroupName());
+    attribCast.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 
     attribCast.newStorageClass = sopStorageClass(sopparms.getAttribType());
     attribCast.precision       = sopPrecision(sopparms.getPrecision());
@@ -313,20 +318,18 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (attribCast.newStorageClass == GA_STORECLASS_STRING)
     {
         attribCast.prefix = sopparms.getPrefix().c_str();
-        attribCast.sufix  = sopparms.getSufix().c_str();
+        attribCast.sufix  = sopparms.getSufix() .c_str();
     }
 
     if (sopparms.getRenameAttrib())
     {
         attribCast.newAttribNames = sopparms.getNewAttribName();
-        //attribCast.setRenameAttrib(sopparms.getNewAttribName());
     }
     if (sopparms.getRenameGroup())
     {
         attribCast.newGroupNames = sopparms.getNewGroupName();
-        //attribCast.setRenameGroup(sopparms.getNewGroupName());
     }
 
-    attribCast.setComputeParm(sopparms.getDelOriginAttrib(), subscribeRatio, minGrainSize);
+    attribCast.setComputeParm(sopparms.getDelOriginAttrib(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     attribCast.computeAndBumpDataId();
 }

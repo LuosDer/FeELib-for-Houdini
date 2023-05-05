@@ -544,7 +544,7 @@ static const GA_Attribute*
 findNormal3D(
     const GA_Detail& geo,
     const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
-    const UT_StringHolder& normal3DAttribName = "N"
+    const UT_StringRef& normal3DAttribName = "N"
 )
 {
     const GA_Attribute* normal3DAttrib = nullptr;
@@ -596,7 +596,7 @@ static GA_Attribute*
 findNormal3D(
     GA_Detail& geo,
     const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
-    const UT_StringHolder& normal3DAttribName = "N"
+    const UT_StringRef& normal3DAttribName = "N"
 )
 {
     GA_Attribute* normal3DAttrib = nullptr;

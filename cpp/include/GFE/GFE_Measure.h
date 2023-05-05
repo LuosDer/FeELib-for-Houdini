@@ -38,7 +38,7 @@ public:
         setComputeParm(
             const GFE_MeasureType measureType = GFE_MeasureType::Area,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+            const exint minGrainSize = 1024
         )
     {
         setHasComputed();
@@ -47,18 +47,12 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
-    void
-        setPositionAttrib(
-            const GA_Attribute* const inPosAttrib
-        )
+    SYS_FORCE_INLINE void setPositionAttrib(const GA_Attribute* const inPosAttrib)
     {
         posAttrib = inPosAttrib;
     }
 
-    void
-        setPositionAttrib(
-            const UT_StringHolder& posAttribName
-        )
+    SYS_FORCE_INLINE void setPositionAttrib(const UT_StringHolder& posAttribName)
     {
         posAttrib = geo->findPointAttribute(posAttribName);
     }
@@ -106,7 +100,7 @@ private:
         default:
             break;
         }
-        GA_ROHandleT<fpreal> measure_h(measureAttrib);
+        //GA_ROHandleT<fpreal> measure_h(measureAttrib);
 
 
 
@@ -216,12 +210,14 @@ primPerimeter##T(                                                               
         default:
             return 0.0;
         }
-
+        
 #if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
         UT_Vector3T<T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
 #else
+        //UT_Vector3T<T> pos0 = static_cast<const GFE_Detail*>(geo)->getPos3T<T>(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
         UT_Vector3T<T> pos0 = geo->getPos3(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
 #endif
+        
         for (GA_Size i(!closed); i < numvtx; ++i)
         {
 #if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )

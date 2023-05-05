@@ -125,21 +125,21 @@ static const char *theDsFile = R"THEDSFILE(
             default { "" }
         }
         parm {
-            name    "useNewCopyAttribName"
-            cppname "UseNewCopyAttribName"
-            label   "Use New Copy Attrib Name"
+            name    "renameAttrib"
+            cppname "RenameAttrib"
+            label   "Rename Attrib"
             type    toggle
             nolabel
             joinnext
             default { "0" }
         }
         parm {
-            name    "newCopyAttribName"
-            cppname "NewCopyAttribName"
-            label   "New Copy Attrib Name"
+            name    "newAttribName"
+            cppname "NewAttribName"
+            label   "New Attrib Name"
             type    string
             default { "" }
-            disablewhen "{ useNewCopyAttribName == 0 }"
+            disablewhen "{ renameAttrib == 0 }"
         }
         parm {
             name    "attribMergeType"
@@ -174,21 +174,21 @@ static const char *theDsFile = R"THEDSFILE(
             default { "" }
         }
         parm {
-            name    "useNewCopyGroupName"
-            cppname "UseNewCopyGroupName"
-            label   "Use New Copy Group Name"
+            name    "renameGroup"
+            cppname "RenameGroup"
+            label   "Rename Group"
             type    toggle
             nolabel
             joinnext
             default { "0" }
         }
         parm {
-            name    "newCopyGroupName"
-            cppname "NewCopyGroupName"
-            label   "New Copy Group Name"
+            name    "newGroupName"
+            cppname "NewGroupName"
+            label   "New Group Name"
             type    string
             default { "" }
-            disablewhen "{ useNewCopyGroupName == 0 }"
+            disablewhen "{ renameGroup == 0 }"
         }
         parm {
             name    "groupMergeType"
@@ -386,96 +386,44 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0.replaceWith(inGeo0);
 
     
-        
-
-    const UT_StringHolder& copyAttribName = sopparms.getCopyAttribName();
-    //const bool useNewCopyAttribName = sopparms.getUseNewCopyAttribName();
-    const UT_StringHolder& emptyString = "";
-    const UT_StringHolder& newCopyAttribName = sopparms.getUseNewCopyAttribName() ? sopparms.getNewCopyAttribName() : emptyString;
     const GA_AttributeOwner sourceClass = sopAttribOwner(sopparms.getSourceClass());
     const GA_AttributeOwner destinationClass = sopAttribOwner(sopparms.getDestinationClass());
 
-
-
-
-
-    const GA_GroupType sourceGroupType = GFE_Type::attributeOwner_groupType(sourceClass);
-    const GA_GroupType destinationGroupType = GFE_Type::attributeOwner_groupType(destinationClass);
-
-    const UT_StringHolder& copyGroupName = sopparms.getCopyGroupName();
-    const UT_StringHolder& newCopyGroupName = sopparms.getUseNewCopyGroupName() ? sopparms.getNewCopyGroupName() : emptyString;
-
-
-    //GOP_Manager gop;
-    //const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, destinationGroupType, sopparms.getGroup(), gop);
-    //if (geo0Group && geo0Group->isEmpty())
-    //    return;
-
-    //const GA_Group* geo1Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, inGeo1, destinationGroupType, sopparms.getSrcGroup(), gop);
-    //if (geo1Group && geo1Group->isEmpty())
-    //    return;
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-
-
-    //GA_AttributeSet& attribSet = outGeo0->getAttributes();
-
-
     const bool iDAttribInput = sopIDAttribInput(sopparms.getIDAttribInput());
-
-    const bool useIDAttrib = sopparms.getUseIDAttrib();
-    const bool iDAttribIsOffset = sopparms.getIDAttribIsOffset();
-    
-
     const GFE_AttribMergeType attribMergeType = sopAttribMergeType(sopparms.getAttribMergeType());
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
     
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-
-
-    GFE_AttribCopy attribCopy(outGeo0, inGeo1, cookparms);
+    
+    GFE_AttribCopy attribCopy(outGeo0, inGeo1, &cookparms);
 
     attribCopy.ownerDst = destinationClass;
     attribCopy.ownerSrc = sourceClass;
     attribCopy.setComputeParm(attribMergeType, iDAttribInput,
-        subscribeRatio, minGrainSize);
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
     if (sopparms.getUseIDAttrib())
     {
-        attribCopy.setOffsetAttrib(sopparms.getIDAttribName(), iDAttribIsOffset);
+        attribCopy.setOffsetAttrib(sopparms.getIDAttribName(), sopparms.getIDAttribIsOffset());
     }
-    attribCopy.appendGroups(copyGroupName);
-    attribCopy.appendAttribs(copyAttribName);
+    
+    if (sopparms.getRenameAttrib())
+    {
+        attribCopy.newAttribNames = sopparms.getNewAttribName();
+    }
+    if (sopparms.getRenameGroup())
+    {
+        attribCopy.newGroupNames = sopparms.getNewGroupName();
+    }
+    
+    attribCopy.appendGroups(sopparms.getCopyGroupName());
+    attribCopy.appendAttribs(sopparms.getCopyAttribName());
 
     attribCopy.compute();
     attribCopy.visualizeOutGroup();
-    //attribCopy.computeAndBumpDataId();
-
-
-
-
-    // if (sopparms.getUseIDAttrib())
-    // {
-    //     GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass,
-    //         copyAttribName, sopparms.getIDAttribName(), iDAttribInput);
-    //     //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType,
-    //     //  copyGroupName, sopparms.getIDAttribName(), iDAttribInput);
-    // }
-    // else
-    // {
-    //     GFE_AttributeCopy_Namespace::copyAttribute(outGeo0, destinationClass, inGeo1, sourceClass, copyAttribName);
-    //     //GFE_GroupCopy_Namespace::copyGroup(outGeo0, destinationGroupType, inGeo1, sourceGroupType, copyGroupName);
-    // }
-
-    //GFE_AttributeCopy::copyAttribute(attribSet, copyAttribName, copyPointAttribName, copyVertexAttribName, copyDetailAttribName);
-
-    //GFE_GroupCopy::copyGroup(outGeo0, copyPrimGroupName, copyPointGroupName, copyVertexGroupName, copyEdgeGroupName);
+    
 }
 
 

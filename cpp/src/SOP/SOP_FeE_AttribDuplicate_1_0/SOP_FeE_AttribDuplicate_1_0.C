@@ -23,38 +23,68 @@ static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "srcAttribClass"
-        cppname "SrcAttribClass"
-        label   "Source Attribute Class"
-        type    toggle
+        name    "attribClass"
+        cppname "AttribClass"
+        label   "Attrib Class"
+        type    ordinal
+        default { "points" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
+    }
+    parm {
+        name    "attribName"
+        cppname "AttribName"
+        label   "Attrib Name"
+        type    string
         default { "" }
     }
-
     parm {
-        name    "srcAttrib"
-        cppname "SrcAttrib"
-        label   "Source Attribute"
+        name    "renameAttrib"
+        cppname "RenameAttrib"
+        label   "Rename Attrib"
         type    toggle
-        default { "" }
-    }
-
-    parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Output as Offset"
-        type    toggle
-        default { "1" }
-    }
-
-
-
-    parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
-        type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
+    parm {
+        name    "newAttribName"
+        cppname "NewAttribName"
+        label   "New Attrib Name"
+        type    string
+        default { "" }
+        disablewhen "{ renameAttrib == 0 }"
+    }
+
+    parm {
+        name    "groupName"
+        cppname "GroupName"
+        label   "Group Name"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "renameGroup"
+        cppname "RenameGroup"
+        label   "Rename Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "newGroupName"
+        cppname "NewGroupName"
+        label   "New Group Name"
+        type    string
+        default { "" }
+        disablewhen "{ renameGroup == 0 }"
+    }
+
 
     parm {
        name    "subscribeRatio"
@@ -82,7 +112,8 @@ SOP_FeE_AttribDuplicate_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribDuplicate_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("srcAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("attribName"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("groupName"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -156,25 +187,24 @@ SOP_FeE_AttribDuplicate_1_0::cookVerb() const
 }
 
 
-static GA_GroupType
-sopGroupType(SOP_FeE_AttribDuplicate_1_0Parms::GroupType parmgrouptype)
+
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_AttribDuplicate_1_0Parms::AttribClass attribClass)
 {
     using namespace SOP_FeE_AttribDuplicate_1_0Enums;
-    switch (parmgrouptype)
+    switch (attribClass)
     {
-    case GroupType::GUESS: return GA_GROUP_INVALID;
+    case AttribClass::PRIM: return GA_ATTRIB_PRIMITIVE;
         break;
-    case GroupType::PRIM: return GA_GROUP_PRIMITIVE;
+    case AttribClass::POINT: return GA_ATTRIB_POINT;
         break;
-    case GroupType::POINT: return GA_GROUP_POINT;
+    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;
         break;
-    case GroupType::VERTEX: return GA_GROUP_VERTEX;
-        break;
-    case GroupType::EDGE: return GA_GROUP_EDGE;
+    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;
         break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
 }
 
 
@@ -189,6 +219,7 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
 
     outGeo0.replaceWith(inGeo0);
 
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -196,12 +227,21 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
 
     GFE_AttribDuplicate attribDuplicate(outGeo0, &cookparms);
 
-    attribDuplicate.setSourceAttribute(connectivityAttribPtr);
-    attribDuplicate.setDestinationAttribute(outAttribPtr);
-    attribDuplicate.compute();
+    attribDuplicate.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
+    attribDuplicate.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 
-    GA_Attribute* const finalAttribPtr = attribPromote.getDestinationAttribute();
+    
+    if (sopparms.getRenameAttrib())
+    {
+        attribDuplicate.newAttribNames = sopparms.getNewAttribName();
+    }
+    if (sopparms.getRenameGroup())
+    {
+        attribDuplicate.newGroupNames = sopparms.getNewGroupName();
+    }
+    
     attribDuplicate.computeAndBumpDataId();
+    attribDuplicate.visualizeOutGroup();
 }
 
 

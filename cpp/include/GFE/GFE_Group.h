@@ -11,15 +11,13 @@
 
 #include "GFE/GFE_Type.h"
 
+
+
 namespace GFE_Group {
 
 
 
-SYS_FORCE_INLINE
-    static void
-    groupBumpDataId(
-        GA_Group& group
-    )
+SYS_FORCE_INLINE static void groupBumpDataId(GA_Group& group)
 {
     if (group.classType() == GA_GROUP_EDGE)
         static_cast<GA_EdgeGroup&>(group).bumpDataId();
@@ -27,21 +25,13 @@ SYS_FORCE_INLINE
         static_cast<GA_ElementGroup&>(group).bumpDataId();
 }
 
-SYS_FORCE_INLINE
-    static void
-    groupBumpDataId(
-        GA_Group* group
-    )
+SYS_FORCE_INLINE static void groupBumpDataId(GA_Group* group)
 {
     groupBumpDataId(*group);
 }
 
 
-static void
-groupBumpDataId(
-    GA_GroupTable& groupTable,
-    const UT_StringHolder& groupPattern
-)
+static void groupBumpDataId(GA_GroupTable& groupTable,const UT_StringHolder& groupPattern)
 {
     if (groupPattern == "")
         return;
@@ -57,13 +47,9 @@ groupBumpDataId(
 }
 
 
-SYS_FORCE_INLINE
-static void
-groupBumpDataId(
-    GA_Detail& geo,
-    const GA_GroupType groupType,
-    const UT_StringHolder& groupPattern
-)
+SYS_FORCE_INLINE static void groupBumpDataId(
+    GA_Detail& geo, const GA_GroupType groupType, const UT_StringHolder& groupPattern
+    )
 {
     return groupBumpDataId(*geo.getGroupTable(groupType), groupPattern);
 }
@@ -205,12 +191,7 @@ groupDuplicate(
 
 
 
-SYS_FORCE_INLINE
-    static GA_Group&
-    groupDuplicateDetached(
-        const GA_Detail& geo,
-        const GA_Group& group
-    )
+SYS_FORCE_INLINE static GA_Group& groupDuplicateDetached(const GA_Detail& geo,const GA_Group& group)
 {
     return groupDuplicate(geo, group);
 }
@@ -237,67 +218,38 @@ SYS_FORCE_INLINE
     //group->makeAllEdgesValid();
 }
 
-SYS_FORCE_INLINE
-static void
-edgeGroupToggle(
-    GA_EdgeGroup& group
-)
+SYS_FORCE_INLINE static void edgeGroupToggle(GA_EdgeGroup& group)
 {
     edgeGroupToggle(group.getDetail(), group);
 }
 
-SYS_FORCE_INLINE
-static void
-groupToggle(
-    const GA_Detail& geo,
-    GA_EdgeGroup& group
-)
+SYS_FORCE_INLINE static void groupToggle(const GA_Detail& geo, GA_EdgeGroup& group)
 {
     edgeGroupToggle(geo, group);
 }
 
-SYS_FORCE_INLINE
-static void
-groupToggle(
-    GA_EdgeGroup& group
-)
+SYS_FORCE_INLINE static void groupToggle(GA_EdgeGroup& group)
 {
     edgeGroupToggle(group.getDetail(), group);
 }
 
-SYS_FORCE_INLINE
-static void
-    groupToggle(
-        GA_ElementGroup& group
-    )
+SYS_FORCE_INLINE static void groupToggle(GA_ElementGroup& group)
 {
     //group。makeUnordered();
     group.toggleAll(group.getIndexMap().indexSize());
 }
 
-SYS_FORCE_INLINE
-static void
-    elementGroupToggle(
-        GA_ElementGroup& group
-    )
+SYS_FORCE_INLINE static void elementGroupToggle(GA_ElementGroup& group)
 {
     groupToggle(group);
 }
 
-SYS_FORCE_INLINE
-static void
-elementGroupToggle(
-    GA_Group& group
-)
+SYS_FORCE_INLINE static void elementGroupToggle(GA_Group& group)
 {
     elementGroupToggle(static_cast<GA_ElementGroup&>(group));
 }
 
-SYS_FORCE_INLINE
-static void
-groupToggle(
-    GA_Group& group
-)
+SYS_FORCE_INLINE static void groupToggle(GA_Group& group)
 {
     if (group.isElementGroup())
     {
@@ -309,12 +261,7 @@ groupToggle(
     }
 }
 
-SYS_FORCE_INLINE
-    static void
-    groupToggle(
-        const GA_Detail& geo,
-        GA_Group& group
-    )
+SYS_FORCE_INLINE static void groupToggle(const GA_Detail& geo, GA_Group& group)
 {
     if (group.isElementGroup())
     {
@@ -387,9 +334,8 @@ groupToggle(
 
 
 
-SYS_FORCE_INLINE
-    static GA_Group*
-    newGroup(
+
+SYS_FORCE_INLINE static GA_Group* newGroup(
         GA_Detail& geo,
         const GA_Group& group,
         const UT_StringHolder& groupName

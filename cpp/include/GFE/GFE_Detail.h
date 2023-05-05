@@ -56,6 +56,54 @@ public:
     }
 
     
+    SYS_FORCE_INLINE const GA_AttributeDict	&getPrimitiveAttribDict() const
+    { return getAttributes().getDict(GA_ATTRIB_PRIMITIVE); }
+    SYS_FORCE_INLINE const GA_AttributeDict	&getPointAttribDict()     const
+    { return getAttributes().getDict(GA_ATTRIB_POINT); }
+    SYS_FORCE_INLINE const GA_AttributeDict	&getVertexAttribDict()    const
+    { return getAttributes().getDict(GA_ATTRIB_VERTEX); }
+    SYS_FORCE_INLINE const GA_AttributeDict	&getDetailAttribDict()    const
+    { return getAttributes().getDict(GA_ATTRIB_DETAIL); }
+
+    
+#if SYS_VERSION_MAJOR_INT <= 19 && !( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+    /// Given a vertex, set the corresponding point offset.
+    void setVertexPoint(GA_Offset vertex, GA_Offset ptoff)
+    {
+        UT_ASSERT_P(!getVertexMap().isOffsetVacant(vertex));
+        getTopology().wireVertexPoint(vertex, ptoff);
+    }
+#endif
+
+    
+#if SYS_VERSION_MAJOR_INT <= 19 && !( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+    /// The ptoff passed is the point offset. @see vertexPoint()
+    SYS_FORCE_INLINE UT_Vector3 getPos3(GA_Offset ptoff) const
+    {
+        //UT_Vector3 pos;
+        //return getP()->getAIFTuple()->get(getP(), ptoff, pos, 0);
+        const GA_PageArray<fpreal32,3>& myExactMatch = static_cast<const GA_ATINumeric*>(getP())->getData().castType<fpreal32>().template castTupleSize<3>();
+        return UT_Vector3(myExactMatch.template getVector<fpreal32,3>(ptoff));
+        //return myHandlePV3.get(ptoff);
+    }
+    
+    
+    SYS_FORCE_INLINE UT_Vector3D getPos3D(GA_Offset ptoff) const
+    {
+        const GA_PageArray<fpreal64,3>& myAlmostMatch = static_cast<const GA_ATINumeric*>(getP())->getData().castType<typename UT_StorageNum<fpreal32>::SecondGuess>().template castTupleSize<3>();
+        return myAlmostMatch.template getVector<fpreal64,3>(ptoff);
+        //return UTmakeVector3T(myHandlePV3.getAlt(ptoff));
+    }
+    template <typename T>
+    UT_Vector3T<T> getPos3T(GA_Offset ptoff) const
+    {
+        if constexpr(std::is_same<T, float>::value)
+            return getPos3(ptoff);
+        else
+            return getPos3D(ptoff);
+    }
+#endif
+    
 
 #if 1
     //This is Faster than use linear vertex offset

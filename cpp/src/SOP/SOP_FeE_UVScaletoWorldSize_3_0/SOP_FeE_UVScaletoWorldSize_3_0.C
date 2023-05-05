@@ -373,7 +373,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     
 
 #if 1
-    GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(cookparms, outGeo0);
+    GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(outGeo0, &cookparms);
 
     gfeUVScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
     gfeUVScaletoWorldSize.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);

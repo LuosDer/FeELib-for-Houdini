@@ -118,17 +118,17 @@ public:
         return attribArray.size();
     }
 
-    SYS_FORCE_INLINE void reset(
-            GA_Detail* const inGeo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+    void reset(
+        GA_Detail* const inGeo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
     {
         geo = inGeo;
         this->cookparms = cookparms;
         clear();
     }
 
-    SYS_FORCE_INLINE void reset(
+    void reset(
         GA_Detail& inGeo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -139,7 +139,7 @@ public:
     }
 
     
-    SYS_FORCE_INLINE void set(GA_Attribute* const attribPtr)
+    void set(GA_Attribute* const attribPtr)
     {
         if (!attribPtr)
             return;
@@ -153,7 +153,7 @@ public:
         attribArray.emplace_back(&attribPtr);
     }
 
-    GA_Attribute* set(const GA_AttributeOwner attribClass, const UT_StringHolder& attribPattern)
+    GA_Attribute* set(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
@@ -176,7 +176,7 @@ public:
         attribArray.emplace_back(&attribPtr);
     }
 
-    GA_Attribute* append(const GA_AttributeOwner attribClass,const UT_StringHolder& attribPattern)
+    GA_Attribute* append(const GA_AttributeOwner attribClass,const UT_StringRef& attribPattern)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
@@ -186,22 +186,13 @@ public:
         return attribPtr;
     }
 
-    GA_Attribute* appendUV(const UT_StringHolder& attribPattern, const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID)
+    GA_Attribute* appendUV(const UT_StringRef& attribPattern, const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
 
         GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
-        //GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(geo, attribClass, attribPattern);
-        //if (attribPtr)
-        //{
-        //    int tupleSize = attribPtr->getTupleSize();
-        //    if (tupleSize < 2 || tupleSize > 4)
-        //    {
-        //        //geo->getAttributes().destroyAttribute(uvAttribPtr);
-        //        attribPtr = nullptr;
-        //    }
-        //}
+
         append(attribPtr);
         return attribPtr;
     }
@@ -209,9 +200,9 @@ public:
 
 
 
-void appends(const GA_AttributeOwner attribClass,const UT_StringHolder& attribPattern)
+void appends(const GA_AttributeOwner attribClass, const char* attribPattern)
 {
-    if (!attribPattern.isstring() || attribPattern.length() == 0)
+    if (!attribPattern)
         return;
 
     for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
@@ -224,8 +215,36 @@ void appends(const GA_AttributeOwner attribClass,const UT_StringHolder& attribPa
         attribArray.emplace_back(attribPtr);
     }
 }
+    
+SYS_FORCE_INLINE void appends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
+{
+    if (!attribPattern.isstring() || attribPattern.length() == 0)
+        return;
+    appends(attribClass, attribPattern.c_str());
+}
 
-SYS_FORCE_INLINE void appendPointVertexs(const UT_StringHolder& attribPattern)
+void oappends(const GA_AttributeOwner attribClass, const char* attribPattern)
+{
+    if (!attribPattern)
+        return;
+
+    for (GA_AttributeDict::ordered_iterator it = geo->getAttributes().getDict(attribClass).obegin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it)
+    {
+        GA_Attribute* const attribPtr = *it;
+        if (!attribPtr->getName().multiMatch(attribPattern))
+            continue;
+        attribArray.emplace_back(attribPtr);
+    }
+}
+
+SYS_FORCE_INLINE void oappends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
+{
+    if (!attribPattern.isstring() || attribPattern.length() == 0)
+        return;
+    oappends(attribClass, attribPattern.c_str());
+}
+
+SYS_FORCE_INLINE void appendPointVertexs(const UT_StringRef& attribPattern)
 {
     appends(GA_ATTRIB_POINT, attribPattern);
     appends(GA_ATTRIB_VERTEX, attribPattern);
@@ -339,7 +358,7 @@ findOrCreateTuple(
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& attribName = "",
+    const UT_StringRef& attribName = "",
     const int tuple_size = 1,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
     const bool emplaceBack = true,
@@ -388,7 +407,7 @@ findOrCreateTuple(
 //     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
 //     const GA_Precision precision = GA_PRECISION_INVALID,
 //     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
-//     const UT_StringHolder& attribName = "",
+//     const UT_StringRef& attribName = "",
 //     const int tuple_size = 1,
 //     const GA_Defaults& defaults = GA_Defaults(0.0f),
 //     const bool emplaceBack = true,
@@ -407,7 +426,7 @@ findOrCreateTuple(
         const GA_AttributeOwner owner = GA_ATTRIB_POINT,
         const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
         const GA_Storage storage = GA_STORE_INVALID,
-        const UT_StringHolder& attribName = "",
+        const UT_StringRef& attribName = "",
         const int tuple_size = 1,
         const bool emplaceBack = true,
         const UT_Options* const create_args = nullptr,
@@ -480,7 +499,7 @@ findOrCreateTuple(
 //findOrCreate(
 //    const GA_AttributeOwner owner,
 //    const GA_Storage storage,
-//    const UT_StringHolder& attribName
+//    const UT_StringRef& attribName
 //)
 //{
 //    findOrCreate(owner, storage, attribName);
@@ -497,7 +516,7 @@ findOrCreateTuple(
         const GA_AttributeOwner owner = GA_ATTRIB_PRIMITIVE,
         const GA_StorageClass storageClass = GA_STORECLASS_INT,
         const GA_Storage storage = GA_STORE_INVALID,
-        const UT_StringHolder& attribName = "",
+        const UT_StringRef& attribName = "",
         const int tuple_size = 1,
         const GA_Defaults& defaults = GA_Defaults(0.0f),
         const bool emplaceBack = true,
@@ -560,7 +579,7 @@ findOrCreateTuple(
     GA_Attribute*
     findPieceAttrib(
         const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
-        const UT_StringHolder& pieceAttribName
+        const UT_StringRef& pieceAttribName
     )
     {
         GA_Attribute* attribPtr = nullptr;
@@ -605,7 +624,7 @@ findOrCreateUV(
     const bool detached = false,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& attribName = "",
+    const UT_StringRef& attribName = "",
     const int tuple_size = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
     const bool emplaceBack = true,
@@ -670,7 +689,7 @@ findOrCreateDir(
     const bool detached = false,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& attribName = "",
+    const UT_StringRef& attribName = "",
     const int tuple_size = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
     const bool emplaceBack = true,
@@ -735,7 +754,7 @@ findOrCreateNormal3D(
     const bool detached = false,
     const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& attribName = "",
+    const UT_StringRef& attribName = "",
     const int tuple_size = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
     const bool emplaceBack = true,
@@ -1018,6 +1037,12 @@ public:
 
 
     
+    
+    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i)
+    {
+        return static_cast<GA_ElementGroup*>(groupArray[i]);
+    }
+
     SYS_FORCE_INLINE GA_Group* &operator[](const size_t i)
     {
         return groupArray[i];
@@ -1078,7 +1103,7 @@ public:
         groupArray.emplace_back(&groupPtr);
     }
 
-    void set(const GA_GroupType groupClass, const UT_StringHolder& groupPattern)
+    void set(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
@@ -1099,10 +1124,7 @@ public:
         groupArray.emplace_back(&groupPtr);
     }
 
-    void append(
-            const GA_GroupType groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    void append(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
@@ -1110,13 +1132,10 @@ public:
         GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
         append(groupPtr);
     }
-
-    void appends(
-            const GA_GroupType groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    
+    void appends(const GA_GroupType groupClass, const char* groupPattern)
     {
-        if (!groupPattern.isstring() || groupPattern.length() == 0)
+        if (!groupPattern)
             return;
 
         for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupClass)->beginTraverse(); !it.atEnd(); ++it)
@@ -1127,19 +1146,50 @@ public:
             groupArray.emplace_back(groupPtr);
         }
     }
+    SYS_FORCE_INLINE void appends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
+    {
+        if (!groupPattern.isstring() || groupPattern.length() == 0)
+            return;
+        appends(groupClass, groupPattern.c_str());
+    }
 
-    SYS_FORCE_INLINE void set(const GA_AttributeOwner groupClass, const UT_StringHolder& groupPattern)
+    void oappends(const GA_GroupType groupClass, const char* groupPattern)
+    {
+        if (!groupPattern)
+            return;
+
+        for (GA_GroupTable::ordered_iterator it = geo->getGroupTable(groupClass)->obegin(); !it.atEnd(); ++it)
+        {
+            GA_Group* const groupPtr = *it;
+            if (!groupPtr->getName().multiMatch(groupPattern))
+                continue;
+            groupArray.emplace_back(groupPtr);
+        }
+    }
+    SYS_FORCE_INLINE void oappends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
+    {
+        if (!groupPattern.isstring() || groupPattern.length() == 0)
+            return;
+        appends(groupClass, groupPattern.c_str());
+    }
+    SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const char* groupPattern)
+    {
+        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+    SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
+    {
+        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+
+    
+    SYS_FORCE_INLINE void set(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
     {
         set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    SYS_FORCE_INLINE void append(const GA_AttributeOwner groupClass, const UT_StringHolder& groupPattern)
+    SYS_FORCE_INLINE void append(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
     {
         append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
-    SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const UT_StringHolder& groupPattern)
-    {
-        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
 
@@ -1147,7 +1197,7 @@ public:
         findOrCreate(
             const bool detached = false,
             const GA_GroupType groupType = GA_GROUP_POINT,
-            const UT_StringHolder& groupName = "",
+            const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )
     {
@@ -1204,7 +1254,7 @@ public:
         findOrCreate(
             const bool detached = false,
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
-            const UT_StringHolder& groupName = "",
+            const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )
     {
@@ -1375,7 +1425,7 @@ public:
     const GA_Attribute*
         set(
             const GA_AttributeOwner attribClass,
-            const UT_StringHolder& attribPattern
+            const UT_StringRef& attribPattern
         )
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
@@ -1401,7 +1451,7 @@ public:
     const GA_Attribute*
         append(
             const GA_AttributeOwner attribClass,
-            const UT_StringHolder& attribPattern
+            const UT_StringRef& attribPattern
         )
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
@@ -1414,7 +1464,7 @@ public:
 
     const GA_Attribute*
         appendUV(
-            const UT_StringHolder& attribPattern,
+            const UT_StringRef& attribPattern,
             const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID
         )
     {
@@ -1432,7 +1482,7 @@ public:
     void
         appends(
             const GA_AttributeOwner attribClass,
-            const UT_StringHolder& attribPattern
+            const UT_StringRef& attribPattern
         )
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
@@ -1449,7 +1499,7 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void appendPointVertexs(const UT_StringHolder& attribPattern)
+    SYS_FORCE_INLINE void appendPointVertexs(const UT_StringRef& attribPattern)
     {
         appends(GA_ATTRIB_POINT, attribPattern);
         appends(GA_ATTRIB_VERTEX, attribPattern);
@@ -1460,7 +1510,7 @@ public:
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
             const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& attribName = "",
+            const UT_StringRef& attribName = "",
             const int tuple_size = 1,
             const GA_Defaults& defaults = GA_Defaults(0.0f),
             const bool emplaceBack = true,
@@ -1504,7 +1554,7 @@ public:
     //findOrCreate(
     //    const GA_AttributeOwner owner,
     //    const GA_Storage storage,
-    //    const UT_StringHolder& attribName
+    //    const UT_StringRef& attribName
     //)
     //{
     //    findOrCreate(owner, storage, attribName);
@@ -1514,7 +1564,7 @@ public:
         findUV(
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& attribName = "",
+            const UT_StringRef& attribName = "",
             const int tuple_size = 3,
             const GA_Defaults& defaults = GA_Defaults(0.0f),
             const bool emplaceBack = true,
@@ -1559,7 +1609,7 @@ public:
         findDir(
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& attribName = "",
+            const UT_StringRef& attribName = "",
             const int tuple_size = 3,
             const GA_Defaults& defaults = GA_Defaults(0.0f),
             const bool emplaceBack = true,
@@ -1603,7 +1653,7 @@ public:
         findNormal3D(
             const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& attribName = "",
+            const UT_StringRef& attribName = "",
             const int tuple_size = 3,
             const GA_Defaults& defaults = GA_Defaults(0.0f),
             const bool emplaceBack = true,
@@ -1804,7 +1854,7 @@ public:
         groupArray.emplace_back(&groupPtr);
     }
 
-    void set(const GA_GroupType groupClass, const UT_StringHolder& groupPattern)
+    void set(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
@@ -1825,10 +1875,7 @@ public:
         groupArray.emplace_back(&groupPtr);
     }
 
-    void append(
-            const GA_GroupType groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    void append(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
@@ -1837,12 +1884,9 @@ public:
         append(groupPtr);
     }
 
-    void appends(
-            const GA_GroupType groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    void appends(const GA_GroupType groupClass, const char* groupPattern)
     {
-        if (!groupPattern.isstring() || groupPattern.length() == 0)
+        if (!groupPattern)
             return;
 
         for (GA_GroupTable::iterator<GA_Group> it = geo->getGroupTable(groupClass)->beginTraverse(); !it.atEnd(); ++it)
@@ -1853,36 +1897,34 @@ public:
             groupArray.emplace_back(groupPtr);
         }
     }
+    SYS_FORCE_INLINE void appends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
+    {
+        if (!groupPattern.isstring() || groupPattern.length() == 0)
+            return;
+        appends(groupClass, groupPattern.c_str());
+    }
+    SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const char* groupPattern)
+    {
+        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+    SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
+    {
+        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
+    }
+    
 
-    SYS_FORCE_INLINE void set(
-            const GA_AttributeOwner groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    SYS_FORCE_INLINE void set(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
     {
         set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
-
-    SYS_FORCE_INLINE void append(
-            const GA_AttributeOwner groupClass,
-            const UT_StringHolder& groupPattern
-        )
+    SYS_FORCE_INLINE void append(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
     {
         append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
     }
 
-    SYS_FORCE_INLINE void appends(
-            const GA_AttributeOwner groupClass,
-            const UT_StringHolder& groupPattern
-        )
-    {
-        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
 
 
-    GA_Group* find(
-            const GA_GroupType groupType = GA_GROUP_POINT,
-            const UT_StringHolder& groupName = ""
-        )
+    GA_Group* find(const GA_GroupType groupType = GA_GROUP_POINT, const UT_StringRef& groupName = "")
     {
         GA_Group* groupPtr = geo->getGroupTable(groupType)->find(groupName);
 
