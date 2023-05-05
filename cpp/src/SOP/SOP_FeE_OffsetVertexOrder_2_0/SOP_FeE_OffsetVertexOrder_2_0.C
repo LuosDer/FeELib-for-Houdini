@@ -249,7 +249,3 @@ SOP_FeE_OffsetVertexOrder_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
 }
 
 
-
-namespace SOP_FeE_OffsetVertexOrder_2_0_Namespace {
-
-} // End SOP_FeE_OffsetVertexOrder_2_0_Namespace namespace
