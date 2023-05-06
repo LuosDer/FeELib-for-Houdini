@@ -379,30 +379,29 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
 
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
+    const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
     const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
-    const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
     
         
 #if 1
     GFE_PointInMeshWN pointInMeshWN(outGeo0, inGeo1, sopcache, &cookparms);
 
-    pointInMeshWN.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    pointInMeshWN.gfeWN.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    pointInMeshWN.getGFEWN().setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
+    pointInMeshWN.gfeWN.setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
 
-    pointInMeshWN.getGFEWN().setComputeParm(sopWNType(sopparms.getWNType()),
+    pointInMeshWN.gfeWN.setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate(),
-        subscribeRatio, minGrainSize);
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
+    pointInMeshWN.getOutGroupArray().findOrCreate()
+    //groupMergeType
     pointInMeshWN.setOutGroup(
         !sopparms.getOutGroup(),
         sopparms.getGroupName(),
@@ -410,7 +409,7 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         sopparms.getOnGeo(),
         sopparms.getThreshold(),
         sopparms.getReverseGroup(),
-        groupMergeType
+        
     );
     pointInMeshWN.setNumericAttrib(
         !sopparms.getOutNumericAttrib(),

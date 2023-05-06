@@ -77,8 +77,12 @@ public:
         , myUniqueId(-1)
         , myMetaCacheCount(-1)
     {}
+    
     virtual ~GFE_WindingNumber_Cache() {}
 
+
+
+    
     void update3D(const GA_Detail& geoRefMesh, const GA_PrimitiveGroup* prim_group, const UT_StringHolder& group_string, const int approx_order)
     {
         const GA_DataId topology_data_id = geoRefMesh.getTopology().getDataId();
@@ -280,75 +284,27 @@ private:
     {
         const bool has_ptmap = !ptmap.isEmpty();
         const int primtype = geoRefMesh.getPrimitiveTypeId(primoff);
-        if (primtype == GA_PRIMPOLY)
+        switch (primtype)
         {
-            const GA_OffsetListRef vertices = geoRefMesh.getPrimitiveVertexList(primoff);
-            const GA_Size n = vertices.size();
-            const bool closed = vertices.getExtraFlag();
-            if (n < 3 || !closed)
-                return;
-
-            // A triangle fan suffices, even if the polygon is non-convex,
-            // because the contributions in the opposite direction will
-            // partly cancel out the ones in the other direction,
-            // in just the right amount.
-            const GA_Offset p0 = geoRefMesh.vertexPoint(vertices(0));
-            const int p0i = has_ptmap ? ptmap[p0] : int(geoRefMesh.pointIndex(p0));
-            GA_Offset prev = geoRefMesh.vertexPoint(vertices(1));
-            int previ = has_ptmap ? ptmap[prev] : int(geoRefMesh.pointIndex(prev));
-            for (GA_Size i = 2; i < n; ++i)
+        case GA_PRIMPOLY:
             {
-                const GA_Offset next = geoRefMesh.vertexPoint(vertices(i));
-                const int nexti = has_ptmap ? ptmap[next] : int(geoRefMesh.pointIndex(next));
-                triangle_points.append(p0i);
-                triangle_points.append(previ);
-                triangle_points.append(nexti);
-                previ = nexti;
-            }
-        }
-        else if (primtype == GA_PRIMTETRAHEDRON)
-        {
-            const GA_OffsetListRef vertices = geoRefMesh.getPrimitiveVertexList(primoff);
-            const GEO_PrimTetrahedron tet(SYSconst_cast(&geoRefMesh), primoff, vertices);
-
-            for (int i = 0; i < 4; ++i)
-            {
-                // Ignore shared tet faces.  They would contribute exactly opposite amounts.
-                if (tet.isFaceShared(i))
-                    continue;
-
-                const int* const face_indices = GEO_PrimTetrahedron::fastFaceIndices(i);
-                const GA_Offset a = geoRefMesh.vertexPoint(vertices(face_indices[0]));
-                const GA_Offset b = geoRefMesh.vertexPoint(vertices(face_indices[1]));
-                const GA_Offset c = geoRefMesh.vertexPoint(vertices(face_indices[2]));
-                const int ai = has_ptmap ? ptmap[a] : int(geoRefMesh.pointIndex(a));
-                const int bi = has_ptmap ? ptmap[b] : int(geoRefMesh.pointIndex(b));
-                const int ci = has_ptmap ? ptmap[c] : int(geoRefMesh.pointIndex(c));
-                triangle_points.append(ai);
-                triangle_points.append(bi);
-                triangle_points.append(ci);
-            }
-        }
-        else if (primtype == GA_PRIMPOLYSOUP)
-        {
-            const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRefMesh.getPrimitive(primoff));
-            for (GEO_PrimPolySoup::PolygonIterator poly(*soup); !poly.atEnd(); ++poly)
-            {
-                const GA_Size n = poly.nvertices();
-                if (n < 3)
-                    continue;
+                const GA_OffsetListRef vertices = geoRefMesh.getPrimitiveVertexList(primoff);
+                const GA_Size n = vertices.size();
+                const bool closed = vertices.getExtraFlag();
+                if (n < 3 || !closed)
+                    return;
 
                 // A triangle fan suffices, even if the polygon is non-convex,
                 // because the contributions in the opposite direction will
                 // partly cancel out the ones in the other direction,
                 // in just the right amount.
-                const GA_Offset p0 = poly.getPointOffset(0);
+                const GA_Offset p0 = geoRefMesh.vertexPoint(vertices(0));
                 const int p0i = has_ptmap ? ptmap[p0] : int(geoRefMesh.pointIndex(p0));
-                const GA_Offset prev = poly.getPointOffset(1);
+                GA_Offset prev = geoRefMesh.vertexPoint(vertices(1));
                 int previ = has_ptmap ? ptmap[prev] : int(geoRefMesh.pointIndex(prev));
                 for (GA_Size i = 2; i < n; ++i)
                 {
-                    const GA_Offset next = poly.getPointOffset(i);
+                    const GA_Offset next = geoRefMesh.vertexPoint(vertices(i));
                     const int nexti = has_ptmap ? ptmap[next] : int(geoRefMesh.pointIndex(next));
                     triangle_points.append(p0i);
                     triangle_points.append(previ);
@@ -356,34 +312,91 @@ private:
                     previ = nexti;
                 }
             }
-        }
-        else if (primtype == GEO_PRIMMESH || primtype == GEO_PRIMNURBSURF || primtype == GEO_PRIMBEZSURF)
-        {
-            // In this mode, we're only using points in the detail, so no grevilles.
-            const GEO_Hull* const mesh = UTverify_cast<const GEO_Hull*>(geoRefMesh.getPrimitive(primoff));
-            const int nquadrows = mesh->getNumRows() - !mesh->isWrappedV();
-            const int nquadcols = mesh->getNumCols() - !mesh->isWrappedU();
-            for (int row = 0; row < nquadrows; ++row)
+        break;
+        case GA_PRIMTETRAHEDRON:
             {
-                for (int col = 0; col < nquadcols; ++col)
+                const GA_OffsetListRef vertices = geoRefMesh.getPrimitiveVertexList(primoff);
+                const GEO_PrimTetrahedron tet(SYSconst_cast(&geoRefMesh), primoff, vertices);
+
+                for (int i = 0; i < 4; ++i)
                 {
-                    GEO_Hull::Poly poly(*mesh, row, col);
-                    const GA_Offset a = poly.getPointOffset(0);
-                    const GA_Offset b = poly.getPointOffset(1);
-                    const GA_Offset c = poly.getPointOffset(2);
-                    const GA_Offset d = poly.getPointOffset(3);
+                    // Ignore shared tet faces.  They would contribute exactly opposite amounts.
+                    if (tet.isFaceShared(i))
+                        continue;
+
+                    const int* const face_indices = GEO_PrimTetrahedron::fastFaceIndices(i);
+                    const GA_Offset a = geoRefMesh.vertexPoint(vertices(face_indices[0]));
+                    const GA_Offset b = geoRefMesh.vertexPoint(vertices(face_indices[1]));
+                    const GA_Offset c = geoRefMesh.vertexPoint(vertices(face_indices[2]));
                     const int ai = has_ptmap ? ptmap[a] : int(geoRefMesh.pointIndex(a));
                     const int bi = has_ptmap ? ptmap[b] : int(geoRefMesh.pointIndex(b));
                     const int ci = has_ptmap ? ptmap[c] : int(geoRefMesh.pointIndex(c));
-                    const int di = has_ptmap ? ptmap[d] : int(geoRefMesh.pointIndex(d));
                     triangle_points.append(ai);
                     triangle_points.append(bi);
                     triangle_points.append(ci);
-                    triangle_points.append(ai);
-                    triangle_points.append(ci);
-                    triangle_points.append(di);
                 }
             }
+        case GA_PRIMPOLYSOUP:
+            {
+                const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRefMesh.getPrimitive(primoff));
+                for (GEO_PrimPolySoup::PolygonIterator poly(*soup); !poly.atEnd(); ++poly)
+                {
+                    const GA_Size n = poly.nvertices();
+                    if (n < 3)
+                        continue;
+
+                    // A triangle fan suffices, even if the polygon is non-convex,
+                    // because the contributions in the opposite direction will
+                    // partly cancel out the ones in the other direction,
+                    // in just the right amount.
+                    const GA_Offset p0 = poly.getPointOffset(0);
+                    const int p0i = has_ptmap ? ptmap[p0] : int(geoRefMesh.pointIndex(p0));
+                    const GA_Offset prev = poly.getPointOffset(1);
+                    int previ = has_ptmap ? ptmap[prev] : int(geoRefMesh.pointIndex(prev));
+                    for (GA_Size i = 2; i < n; ++i)
+                    {
+                        const GA_Offset next = poly.getPointOffset(i);
+                        const int nexti = has_ptmap ? ptmap[next] : int(geoRefMesh.pointIndex(next));
+                        triangle_points.append(p0i);
+                        triangle_points.append(previ);
+                        triangle_points.append(nexti);
+                        previ = nexti;
+                    }
+                }
+            }
+        break;
+        case GEO_PRIMMESH:
+        case GEO_PRIMNURBSURF:
+        case GEO_PRIMBEZSURF:
+            {
+                // In this mode, we're only using points in the detail, so no grevilles.
+                const GEO_Hull* const mesh = UTverify_cast<const GEO_Hull*>(geoRefMesh.getPrimitive(primoff));
+                const int nquadrows = mesh->getNumRows() - !mesh->isWrappedV();
+                const int nquadcols = mesh->getNumCols() - !mesh->isWrappedU();
+                for (int row = 0; row < nquadrows; ++row)
+                {
+                    for (int col = 0; col < nquadcols; ++col)
+                    {
+                        GEO_Hull::Poly poly(*mesh, row, col);
+                        const GA_Offset a = poly.getPointOffset(0);
+                        const GA_Offset b = poly.getPointOffset(1);
+                        const GA_Offset c = poly.getPointOffset(2);
+                        const GA_Offset d = poly.getPointOffset(3);
+                        const int ai = has_ptmap ? ptmap[a] : int(geoRefMesh.pointIndex(a));
+                        const int bi = has_ptmap ? ptmap[b] : int(geoRefMesh.pointIndex(b));
+                        const int ci = has_ptmap ? ptmap[c] : int(geoRefMesh.pointIndex(c));
+                        const int di = has_ptmap ? ptmap[d] : int(geoRefMesh.pointIndex(d));
+                        triangle_points.append(ai);
+                        triangle_points.append(bi);
+                        triangle_points.append(ci);
+                        triangle_points.append(ai);
+                        triangle_points.append(ci);
+                        triangle_points.append(di);
+                    }
+                }
+            }
+        break;
+        default: break;
         }
     }
 
@@ -395,89 +408,101 @@ private:
     {
         const bool has_ptmap = !ptmap.isEmpty();
         const int primtype = geoRefMesh.getPrimitiveTypeId(primoff);
-        if (primtype == GA_PRIMPOLY || primtype == GA_PRIMBEZCURVE || primtype == GA_PRIMNURBCURVE)
+        switch (primtype)
         {
-            const GA_OffsetListRef vertices = geoRefMesh.getPrimitiveVertexList(primoff);
-            const GA_Size n = vertices.size();
-            const bool closed = vertices.getExtraFlag();
-            if (n < 2 + int(closed))
-                return;
+        case GA_PRIMPOLY:
+        case GA_PRIMBEZCURVE:
+        case GA_PRIMNURBCURVE:
+            {
+                const GA_OffsetListRef vertices = geoRefMesh.getPrimitiveVertexList(primoff);
+                const GA_Size n = vertices.size();
+                const bool closed = vertices.getExtraFlag();
+                if (n < 2 + int(closed))
+                    return;
 
-            GA_Offset prev = geoRefMesh.vertexPoint(vertices(0));
-            int previ = has_ptmap ? ptmap[prev] : int(geoRefMesh.pointIndex(prev));
-            const int pt0i = previ;
-            for (GA_Size i = 1; i < n; ++i)
-            {
-                const GA_Offset next = geoRefMesh.vertexPoint(vertices(i));
-                const int nexti = has_ptmap ? ptmap[next] : int(geoRefMesh.pointIndex(next));
-                segment_points.append(previ);
-                segment_points.append(nexti);
-                previ = nexti;
-            }
-            if (closed)
-            {
-                segment_points.append(previ);
-                segment_points.append(pt0i);
-            }
-        }
-        else if (primtype == GA_PRIMTETRAHEDRON)
-        {
-            // NOTE: Tetrahedra never contribute to the 2D winding number, since
-            //       every point is contained in 1 forward triangle and 1 backward triangle.
-        }
-        else if (primtype == GA_PRIMPOLYSOUP)
-        {
-            const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRefMesh.getPrimitive(primoff));
-            for (GEO_PrimPolySoup::PolygonIterator poly(*soup); !poly.atEnd(); ++poly)
-            {
-                GA_Size n = poly.nvertices();
-                if (n < 3)
-                    continue;
-
-                GA_Offset prev = poly.getPointOffset(0);
+                GA_Offset prev = geoRefMesh.vertexPoint(vertices(0));
                 int previ = has_ptmap ? ptmap[prev] : int(geoRefMesh.pointIndex(prev));
                 const int pt0i = previ;
                 for (GA_Size i = 1; i < n; ++i)
                 {
-                    const GA_Offset next = poly.getPointOffset(i);
+                    const GA_Offset next = geoRefMesh.vertexPoint(vertices(i));
                     const int nexti = has_ptmap ? ptmap[next] : int(geoRefMesh.pointIndex(next));
                     segment_points.append(previ);
                     segment_points.append(nexti);
                     previ = nexti;
                 }
-                segment_points.append(previ);
-                segment_points.append(pt0i);
-            }
-        }
-        else if (primtype == GEO_PRIMMESH || primtype == GEO_PRIMNURBSURF || primtype == GEO_PRIMBEZSURF)
-        {
-            // In this mode, we're only using points in the detail, so no grevilles.
-            const GEO_Hull* const mesh = UTverify_cast<const GEO_Hull*>(geoRefMesh.getPrimitive(primoff));
-            const int nquadrows = mesh->getNumRows() - !mesh->isWrappedV();
-            const int nquadcols = mesh->getNumCols() - !mesh->isWrappedU();
-            for (int row = 0; row < nquadrows; ++row)
-            {
-                for (int col = 0; col < nquadcols; ++col)
+                if (closed)
                 {
-                    GEO_Hull::Poly poly(*mesh, row, col);
-                    const GA_Offset a = poly.getPointOffset(0);
-                    const GA_Offset b = poly.getPointOffset(1);
-                    const GA_Offset c = poly.getPointOffset(2);
-                    const GA_Offset d = poly.getPointOffset(3);
-                    const int ai = has_ptmap ? ptmap[a] : int(geoRefMesh.pointIndex(a));
-                    const int bi = has_ptmap ? ptmap[b] : int(geoRefMesh.pointIndex(b));
-                    const int ci = has_ptmap ? ptmap[c] : int(geoRefMesh.pointIndex(c));
-                    const int di = has_ptmap ? ptmap[d] : int(geoRefMesh.pointIndex(d));
-                    segment_points.append(ai);
-                    segment_points.append(bi);
-                    segment_points.append(bi);
-                    segment_points.append(ci);
-                    segment_points.append(ci);
-                    segment_points.append(di);
-                    segment_points.append(di);
-                    segment_points.append(ai);
+                    segment_points.append(previ);
+                    segment_points.append(pt0i);
                 }
             }
+            break;
+        case GA_PRIMTETRAHEDRON:
+            {
+                // NOTE: Tetrahedra never contribute to the 2D winding number, since
+                //       every point is contained in 1 forward triangle and 1 backward triangle.
+            }
+            break;
+        case GA_PRIMPOLYSOUP:
+            {
+                const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRefMesh.getPrimitive(primoff));
+                for (GEO_PrimPolySoup::PolygonIterator poly(*soup); !poly.atEnd(); ++poly)
+                {
+                    GA_Size n = poly.nvertices();
+                    if (n < 3)
+                        continue;
+
+                    GA_Offset prev = poly.getPointOffset(0);
+                    int previ = has_ptmap ? ptmap[prev] : int(geoRefMesh.pointIndex(prev));
+                    const int pt0i = previ;
+                    for (GA_Size i = 1; i < n; ++i)
+                    {
+                        const GA_Offset next = poly.getPointOffset(i);
+                        const int nexti = has_ptmap ? ptmap[next] : int(geoRefMesh.pointIndex(next));
+                        segment_points.append(previ);
+                        segment_points.append(nexti);
+                        previ = nexti;
+                    }
+                    segment_points.append(previ);
+                    segment_points.append(pt0i);
+                }
+            }
+            break;
+        case GEO_PRIMMESH:
+        case GEO_PRIMNURBSURF:
+        case GEO_PRIMBEZSURF:
+            {
+                // In this mode, we're only using points in the detail, so no grevilles.
+                const GEO_Hull* const mesh = UTverify_cast<const GEO_Hull*>(geoRefMesh.getPrimitive(primoff));
+                const int nquadrows = mesh->getNumRows() - !mesh->isWrappedV();
+                const int nquadcols = mesh->getNumCols() - !mesh->isWrappedU();
+                for (int row = 0; row < nquadrows; ++row)
+                {
+                    for (int col = 0; col < nquadcols; ++col)
+                    {
+                        GEO_Hull::Poly poly(*mesh, row, col);
+                        const GA_Offset a = poly.getPointOffset(0);
+                        const GA_Offset b = poly.getPointOffset(1);
+                        const GA_Offset c = poly.getPointOffset(2);
+                        const GA_Offset d = poly.getPointOffset(3);
+                        const int ai = has_ptmap ? ptmap[a] : int(geoRefMesh.pointIndex(a));
+                        const int bi = has_ptmap ? ptmap[b] : int(geoRefMesh.pointIndex(b));
+                        const int ci = has_ptmap ? ptmap[c] : int(geoRefMesh.pointIndex(c));
+                        const int di = has_ptmap ? ptmap[d] : int(geoRefMesh.pointIndex(d));
+                        segment_points.append(ai);
+                        segment_points.append(bi);
+                        segment_points.append(bi);
+                        segment_points.append(ci);
+                        segment_points.append(ci);
+                        segment_points.append(di);
+                        segment_points.append(di);
+                        segment_points.append(ai);
+                    }
+                }
+            }
+            break;
+            default: break;
         }
     }
 
@@ -574,8 +599,20 @@ public:
         this->asSolidAngle = asSolidAngle;
         this->negate = negate;
     }
-
-
+    
+    void
+        setPointInMeshComputeParm(
+            const bool groupInGeoPoint = true,
+            const bool groupOnGeoPoint = true,
+            const fpreal pointInMeshThreshold = 1e-05
+        )
+    {
+        setHasComputed();
+        this->groupInGeoPoint = groupInGeoPoint;
+        this->groupOnGeoPoint = groupOnGeoPoint;
+        this->pointInMeshThreshold = pointInMeshThreshold;
+    }
+    
 
     SYS_FORCE_INLINE void setGroup(
         const GA_PointGroup* const geoPointGroup = nullptr,
@@ -606,7 +643,17 @@ public:
         getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, attribName);
     }
 
+    SYS_FORCE_INLINE void
+        findOrCreateGroup(
+            const bool detached = false,
+            const UT_StringRef& groupName = "pointInMesh_wn"
+        )
+    {
+        // UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "must compute wn attrib first");
+        getOutGroupArray().findOrCreate(detached, GA_GROUP_POINT, groupName);
+    }
 
+    
 
     
 
@@ -616,7 +663,7 @@ private:
     virtual bool
         computeCore() override
     {
-        if (!getOutAttribArray().size())
+        if (getOutAttribArray().isEmpty())
             findOrCreateTuple();
         
         if (groupParser.isEmpty())
@@ -624,12 +671,12 @@ private:
 
         for (int i = 0; i < getOutAttribArray().size(); i++)
         {
-            attribPtr = getOutAttribArray()[i];
-            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            wnAttribPtr = getOutAttribArray()[i];
+            const GA_AIFTuple* const aifTuple = wnAttribPtr->getAIFTuple();
             if(!aifTuple)
                 continue;
             
-            switch (aifTuple->getStorage(attribPtr))
+            switch (aifTuple->getStorage(wnAttribPtr))
             {
             case GA_STORE_REAL16: computeWindingNumber<fpreal32>(); break;
             case GA_STORE_REAL32: computeWindingNumber<fpreal32>(); break;
@@ -637,6 +684,9 @@ private:
             default: break;
             }
         }
+        
+
+        
         return true;
     }
 
@@ -644,9 +694,9 @@ private:
     template<typename FLOAT_T>
     void computeWindingNumber()
     {
-        UT_ASSERT_P(attribPtr);
+        UT_ASSERT_P(wnAttribPtr);
 
-        const GA_RWHandleT<FLOAT_T>& wn_h(attribPtr);
+        const GA_RWHandleT<FLOAT_T>& wn_h(wnAttribPtr);
         
         //const GA_SplittableRange geoPointRange(geo->getPointRange(groupParser.getPointGroup()));
         const GA_SplittableRange geoPointRange(groupParser.getPointRange());
@@ -728,7 +778,10 @@ private:
                     delete sopcache;
             }
         }
-
+        if(!getOutGroupArray().isEmpty())
+        {
+            computeOutGroup<FLOAT_T>();
+        }
     }
 
 
@@ -772,7 +825,9 @@ private:
             {
                 const GA_Offset primoff = primoffs(arrayi);
                 const int primtype = geoRef0->getPrimitiveTypeId(primoff);
-                if (primtype == GA_PRIMPOLY)
+                switch (primtype)
+                {
+                case GA_PRIMPOLY:
                 {
                     const GA_OffsetListRef vertices = geoRef0->getPrimitiveVertexList(primoff);
                     const GA_Size n = vertices.size();
@@ -829,7 +884,8 @@ private:
                     }
                     local_sum += poly_sum;
                 }
-                else if (primtype == GA_PRIMTETRAHEDRON)
+                    break;
+                case GA_PRIMTETRAHEDRON:
                 {
                     const GA_OffsetListRef vertices = geoRef0->getPrimitiveVertexList(primoff);
                     const GEO_PrimTetrahedron tet(SYSconst_cast(geoRef0), primoff, vertices);
@@ -853,7 +909,8 @@ private:
                     }
                     local_sum += tet_sum;
                 }
-                else if (primtype == GA_PRIMPOLYSOUP)
+                    break;
+                case GA_PRIMPOLYSOUP:
                 {
                     FLOAT_T soup_sum = 0;
                     const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRef0->getPrimitive(primoff));
@@ -871,18 +928,18 @@ private:
                             const UT_Vector3T<FLOAT_T>& p2 = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(2));
 #else
                             const UT_Vector3T<FLOAT_T>& p0 = poly.getPos3(0);
-                            const UT_Vector3T<FLOAT_T>& p1 = poly.getPos3(1);
-                            const UT_Vector3T<FLOAT_T>& p2 = poly.getPos3(2);
+                        const UT_Vector3T<FLOAT_T>& p1 = poly.getPos3(1);
+                        const UT_Vector3T<FLOAT_T>& p2 = poly.getPos3(2);
 #endif
-                            const FLOAT_T poly_sum = UTsignedSolidAngleTri(p0, p1, p2, query_point);
-                            local_sum += poly_sum;
-                            continue;
+                        const FLOAT_T poly_sum = UTsignedSolidAngleTri(p0, p1, p2, query_point);
+                        local_sum += poly_sum;
+                        continue;
                         }
                         if (n == 4)
                         {
                             // Special case for quads, to divide the correct diagonal
                             // in the case where the point is inside the convex hull.
-#if 1
+                            #if 1
                             const UT_Vector3T<FLOAT_T>& p0 = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(0));
                             const UT_Vector3T<FLOAT_T>& p1 = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(1));
                             const UT_Vector3T<FLOAT_T>& p2 = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(2));
@@ -922,14 +979,15 @@ private:
 #else
                             const UT_Vector3T<FLOAT_T>& next = poly.getPos3(i);
 #endif
-                            poly_sum += UTsignedSolidAngleTri(p0, prev, next, query_point);
-                            prev = next;
+                        poly_sum += UTsignedSolidAngleTri(p0, prev, next, query_point);
+                        prev = next;
                         }
                         soup_sum += poly_sum;
                     }
                     local_sum += soup_sum;
                 }
-                else if (primtype == GEO_PRIMMESH)
+                    break;
+                case GEO_PRIMMESH:
                 {
                     FLOAT_T mesh_sum = 0;
                     const GEO_PrimMesh* mesh = UTverify_cast<const GEO_PrimMesh*>(geoRef0->getPrimitive(primoff));
@@ -963,7 +1021,9 @@ private:
                     }
                     local_sum += mesh_sum;
                 }
-                else if (primtype == GEO_PRIMNURBSURF || primtype == GEO_PRIMBEZSURF)
+                    break;
+                case GEO_PRIMNURBSURF:
+                case GEO_PRIMBEZSURF:
                 {
                     const GEO_TPSurf* const surf = UTverify_cast<const GEO_TPSurf*>(geoRef0->getPrimitive(primoff));
                     const int nquadrows = surf->getNumRows() - !surf->isWrappedV();
@@ -1012,7 +1072,8 @@ private:
                     }
                     local_sum += surf_sum;
                 }
-                else if (primtype == GEO_PRIMSPHERE)
+                    break;
+                case GEO_PRIMSPHERE:
                 {
                     const GEO_PrimSphere* const sphere = UTverify_cast<const GEO_PrimSphere*>(geoRef0->getPrimitive(primoff));
                     UT_Vector3T<FLOAT_T> query_minus_centre = query_point - UT_Vector3T<FLOAT_T>(sphere->getPos3T<FLOAT_T>(0));
@@ -1047,6 +1108,7 @@ private:
 
                     local_sum += sphere_sum;
                 }
+                }
             }
             sum = local_sum;
         }
@@ -1080,80 +1142,49 @@ private:
             {
                 const GA_Offset primoff = primoffs(arrayi);
                 const int primtype = geoRef0->getPrimitiveTypeId(primoff);
-                if (primtype == GA_PRIMPOLY)
+                switch (primtype)
                 {
-                    const GA_OffsetListRef vertices = geoRef0->getPrimitiveVertexList(primoff);
-                    const GA_Size n = vertices.size();
-                    const bool closed = vertices.getExtraFlag();
-                    if (n < 2 + int(closed))
-                        continue;
-
-                    FLOAT_T poly_sum = 0;
-                    UT_Vector3T<FLOAT_T> pos = geoRef0->getPos3T<FLOAT_T>(geoRef0->vertexPoint(vertices(0)));
-                    UT_Vector2T<FLOAT_T> prev(pos[axis0], pos[axis1]);
-                    const UT_Vector2T<FLOAT_T>& p0 = prev;
-                    for (GA_Size i = 1; i < n; ++i)
+                case GA_PRIMPOLY:
                     {
-                        pos = geoRef0->getPos3T<FLOAT_T>(geoRef0->vertexPoint(vertices(i)));
-                        const UT_Vector2T<FLOAT_T> next(pos[axis0], pos[axis1]);
-                        poly_sum += UTsignedAngleSegment(prev, next, query_point);
-                        prev = next;
-                    }
-                    if (closed)
-                        poly_sum += UTsignedAngleSegment(prev, p0, query_point);
-
-                    local_sum += poly_sum;
-                }
-                else if (primtype == GA_PRIMTETRAHEDRON)
-                {
-                    // NOTE: Tetrahedra never contribute to the 2D winding number, since
-                    //       every point is contained in 1 forward triangle and 1 backward triangle.
-                }
-                else if (primtype == GA_PRIMPOLYSOUP)
-                {
-                    FLOAT_T soup_sum = 0;
-                    const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRef0->getPrimitive(primoff));
-                    for (GEO_PrimPolySoup::PolygonIterator poly(*soup); !poly.atEnd(); ++poly)
-                    {
-                        GA_Size n = poly.nvertices();
-                        if (n < 3)
+                        const GA_OffsetListRef vertices = geoRef0->getPrimitiveVertexList(primoff);
+                        const GA_Size n = vertices.size();
+                        const bool closed = vertices.getExtraFlag();
+                        if (n < 2 + int(closed))
                             continue;
 
                         FLOAT_T poly_sum = 0;
-#if 1
-                        UT_Vector3T<FLOAT_T> pos = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(0));
-#else
-                        UT_Vector3T<FLOAT_T> pos = poly.getPos3(0);
-#endif
+                        UT_Vector3T<FLOAT_T> pos = geoRef0->getPos3T<FLOAT_T>(geoRef0->vertexPoint(vertices(0)));
                         UT_Vector2T<FLOAT_T> prev(pos[axis0], pos[axis1]);
                         const UT_Vector2T<FLOAT_T>& p0 = prev;
                         for (GA_Size i = 1; i < n; ++i)
                         {
-#if 1
-                            pos = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(i));
-#else
-                            pos = poly.getPos3(i);
-#endif
+                            pos = geoRef0->getPos3T<FLOAT_T>(geoRef0->vertexPoint(vertices(i)));
                             const UT_Vector2T<FLOAT_T> next(pos[axis0], pos[axis1]);
                             poly_sum += UTsignedAngleSegment(prev, next, query_point);
                             prev = next;
                         }
-                        poly_sum += UTsignedAngleSegment(prev, p0, query_point);
-                        soup_sum += poly_sum;
+                        if (closed)
+                            poly_sum += UTsignedAngleSegment(prev, p0, query_point);
+
+                        local_sum += poly_sum;
                     }
-                    local_sum += soup_sum;
-                }
-                else if (primtype == GEO_PRIMMESH)
-                {
-                    FLOAT_T mesh_sum = 0;
-                    const GEO_PrimMesh* mesh = UTverify_cast<const GEO_PrimMesh*>(geoRef0->getPrimitive(primoff));
-                    const int nquadrows = mesh->getNumRows() - !mesh->isWrappedV();
-                    const int nquadcols = mesh->getNumCols() - !mesh->isWrappedU();
-                    for (int row = 0; row < nquadrows; ++row)
+                    break;
+                case GA_PRIMTETRAHEDRON:
                     {
-                        for (int col = 0; col < nquadcols; ++col)
+                        // NOTE: Tetrahedra never contribute to the 2D winding number, since
+                        //       every point is contained in 1 forward triangle and 1 backward triangle.
+                    }
+                    break;
+                case GA_PRIMPOLYSOUP:
+                    {
+                        FLOAT_T soup_sum = 0;
+                        const GEO_PrimPolySoup* const soup = UTverify_cast<const GEO_PrimPolySoup*>(geoRef0->getPrimitive(primoff));
+                        for (GEO_PrimPolySoup::PolygonIterator poly(*soup); !poly.atEnd(); ++poly)
                         {
-                            GEO_Hull::Poly poly(*mesh, row, col);
+                            GA_Size n = poly.nvertices();
+                            if (n < 3)
+                                continue;
+
                             FLOAT_T poly_sum = 0;
 #if 1
                             UT_Vector3T<FLOAT_T> pos = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(0));
@@ -1162,93 +1193,136 @@ private:
 #endif
                             UT_Vector2T<FLOAT_T> prev(pos[axis0], pos[axis1]);
                             const UT_Vector2T<FLOAT_T>& p0 = prev;
-                            for (GA_Size i = 1; i < 4; ++i)
+                            for (GA_Size i = 1; i < n; ++i)
                             {
 #if 1
                                 pos = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(i));
 #else
                                 pos = poly.getPos3(i);
 #endif
+                            const UT_Vector2T<FLOAT_T> next(pos[axis0], pos[axis1]);
+                            poly_sum += UTsignedAngleSegment(prev, next, query_point);
+                            prev = next;
+                            }
+                            poly_sum += UTsignedAngleSegment(prev, p0, query_point);
+                            soup_sum += poly_sum;
+                        }
+                        local_sum += soup_sum;
+                    }
+                    break;
+                case GEO_PRIMMESH:
+                    {
+                        FLOAT_T mesh_sum = 0;
+                        const GEO_PrimMesh* mesh = UTverify_cast<const GEO_PrimMesh*>(geoRef0->getPrimitive(primoff));
+                        const int nquadrows = mesh->getNumRows() - !mesh->isWrappedV();
+                        const int nquadcols = mesh->getNumCols() - !mesh->isWrappedU();
+                        for (int row = 0; row < nquadrows; ++row)
+                        {
+                            for (int col = 0; col < nquadcols; ++col)
+                            {
+                                GEO_Hull::Poly poly(*mesh, row, col);
+                                FLOAT_T poly_sum = 0;
+#if 1
+                                UT_Vector3T<FLOAT_T> pos = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(0));
+#else
+                                UT_Vector3T<FLOAT_T> pos = poly.getPos3(0);
+#endif
+                                UT_Vector2T<FLOAT_T> prev(pos[axis0], pos[axis1]);
+                                const UT_Vector2T<FLOAT_T>& p0 = prev;
+                                for (GA_Size i = 1; i < 4; ++i)
+                                {
+#if 1
+                                    pos = geoRef0->getPos3T<FLOAT_T>(poly.getPointOffset(i));
+#else
+                                    pos = poly.getPos3(i);
+#endif
                                 const UT_Vector2T<FLOAT_T> next(pos[axis0], pos[axis1]);
                                 poly_sum += UTsignedAngleSegment(prev, next, query_point);
                                 prev = next;
+                                }
+                                poly_sum += UTsignedAngleSegment(prev, p0, query_point);
+                                mesh_sum += poly_sum;
                             }
-                            poly_sum += UTsignedAngleSegment(prev, p0, query_point);
-                            mesh_sum += poly_sum;
                         }
+                        local_sum += mesh_sum;
                     }
-                    local_sum += mesh_sum;
-                }
-                else if (primtype == GEO_PRIMNURBSURF || primtype == GEO_PRIMBEZSURF)
-                {
-                    const GEO_TPSurf* const surf = UTverify_cast<const GEO_TPSurf*>(geoRef0->getPrimitive(primoff));
-                    const int nquadrows = surf->getNumRows() - !surf->isWrappedV();
-                    const int nquadcols = surf->getNumCols() - !surf->isWrappedU();
-                    if (nquadcols <= 0 || nquadrows <= 0)
-                        continue;
-
-                    // For slightly better accuracy, we use the greville points
-                    // instead of the hull points.
-                    FLOAT_T surf_sum = 0;
-                    UT_FloatArray ugrevilles;
-                    UT_FloatArray vgrevilles;
-                    surf->getUGrevilles(ugrevilles);
-                    if (surf->isWrappedU())
-                        ugrevilles.append(0);
-                    surf->getVGrevilles(vgrevilles);
-                    if (surf->isWrappedV())
-                        vgrevilles.append(0);
-                    UT_ASSERT(ugrevilles.size() >= nquadcols + 1);
-                    UT_ASSERT(vgrevilles.size() >= nquadrows + 1);
-                    for (int row = 0; row < nquadrows; ++row)
+                    break;
+                case GEO_PRIMNURBSURF:
+                case GEO_PRIMBEZSURF:
                     {
-                        for (int col = 0; col < nquadcols; ++col)
+                        const GEO_TPSurf* const surf = UTverify_cast<const GEO_TPSurf*>(geoRef0->getPrimitive(primoff));
+                        const int nquadrows = surf->getNumRows() - !surf->isWrappedV();
+                        const int nquadcols = surf->getNumCols() - !surf->isWrappedU();
+                        if (nquadcols <= 0 || nquadrows <= 0)
+                            continue;
+
+                        // For slightly better accuracy, we use the greville points
+                        // instead of the hull points.
+                        FLOAT_T surf_sum = 0;
+                        UT_FloatArray ugrevilles;
+                        UT_FloatArray vgrevilles;
+                        surf->getUGrevilles(ugrevilles);
+                        if (surf->isWrappedU())
+                            ugrevilles.append(0);
+                        surf->getVGrevilles(vgrevilles);
+                        if (surf->isWrappedV())
+                            vgrevilles.append(0);
+                        UT_ASSERT(ugrevilles.size() >= nquadcols + 1);
+                        UT_ASSERT(vgrevilles.size() >= nquadrows + 1);
+                        for (int row = 0; row < nquadrows; ++row)
                         {
-                            UT_Vector4 a4;
-                            UT_Vector4 b4;
-                            UT_Vector4 c4;
-                            UT_Vector4 d4;
-                            surf->evaluateInteriorPoint(a4, ugrevilles(col), vgrevilles(row));
-                            surf->evaluateInteriorPoint(b4, ugrevilles(col + 1), vgrevilles(row));
-                            surf->evaluateInteriorPoint(c4, ugrevilles(col + 1), vgrevilles(row + 1));
-                            surf->evaluateInteriorPoint(d4, ugrevilles(col), vgrevilles(row + 1));
-                            const UT_Vector2T<FLOAT_T> p0(a4[axis0], a4[axis1]);
-                            const UT_Vector2T<FLOAT_T> p1(b4[axis0], b4[axis1]);
-                            const UT_Vector2T<FLOAT_T> p2(c4[axis0], c4[axis1]);
-                            const UT_Vector2T<FLOAT_T> p3(d4[axis0], d4[axis1]);
-                            FLOAT_T poly_sum;
-                            poly_sum  = UTsignedAngleSegment(p0, p1, query_point);
-                            poly_sum += UTsignedAngleSegment(p1, p2, query_point);
-                            poly_sum += UTsignedAngleSegment(p2, p3, query_point);
-                            poly_sum += UTsignedAngleSegment(p3, p0, query_point);
-                            surf_sum += poly_sum;
+                            for (int col = 0; col < nquadcols; ++col)
+                            {
+                                UT_Vector4 a4;
+                                UT_Vector4 b4;
+                                UT_Vector4 c4;
+                                UT_Vector4 d4;
+                                surf->evaluateInteriorPoint(a4, ugrevilles(col), vgrevilles(row));
+                                surf->evaluateInteriorPoint(b4, ugrevilles(col + 1), vgrevilles(row));
+                                surf->evaluateInteriorPoint(c4, ugrevilles(col + 1), vgrevilles(row + 1));
+                                surf->evaluateInteriorPoint(d4, ugrevilles(col), vgrevilles(row + 1));
+                                const UT_Vector2T<FLOAT_T> p0(a4[axis0], a4[axis1]);
+                                const UT_Vector2T<FLOAT_T> p1(b4[axis0], b4[axis1]);
+                                const UT_Vector2T<FLOAT_T> p2(c4[axis0], c4[axis1]);
+                                const UT_Vector2T<FLOAT_T> p3(d4[axis0], d4[axis1]);
+                                FLOAT_T poly_sum;
+                                poly_sum  = UTsignedAngleSegment(p0, p1, query_point);
+                                poly_sum += UTsignedAngleSegment(p1, p2, query_point);
+                                poly_sum += UTsignedAngleSegment(p2, p3, query_point);
+                                poly_sum += UTsignedAngleSegment(p3, p0, query_point);
+                                surf_sum += poly_sum;
+                            }
                         }
+                        local_sum += surf_sum;
                     }
-                    local_sum += surf_sum;
-                }
-                else if (primtype == GEO_PRIMNURBCURVE || primtype == GEO_PRIMBEZCURVE)
-                {
-                    const GEO_Curve* curve = UTverify_cast<const GEO_Curve*>(geoRef0->getPrimitive(primoff));
-                    const int nedges = curve->getVertexCount() - !curve->isClosed();
-                    if (nedges <= 0)
-                        continue;
-
-                    // For slightly better accuracy, we use the greville points
-                    // instead of the hull points.
-                    FLOAT_T curve_sum = 0;
-                    UT_Array<GEO_Greville> grevilles;
-                    grevilles.setCapacity(nedges + 1);
-                    curve->buildGrevilles(grevilles);
-                    if (curve->isClosed())
-                        grevilles.append(grevilles[0]);
-                    UT_ASSERT(grevilles.size() >= nedges + 1);
-                    UT_Vector2T<FLOAT_T> prev(grevilles[0].getCVImage()[axis0], grevilles[0].getCVImage()[axis1]);
-                    for (int i = 0; i < nedges; ++i)
+                    break;
+                case GEO_PRIMNURBCURVE:
+                case GEO_PRIMBEZCURVE:
                     {
-                        const UT_Vector2T<FLOAT_T> next(grevilles[i].getCVImage()[axis0], grevilles[i].getCVImage()[axis1]);
-                        curve_sum += UTsignedAngleSegment(prev, next, query_point);
+                        const GEO_Curve* curve = UTverify_cast<const GEO_Curve*>(geoRef0->getPrimitive(primoff));
+                        const int nedges = curve->getVertexCount() - !curve->isClosed();
+                        if (nedges <= 0)
+                            continue;
+
+                        // For slightly better accuracy, we use the greville points
+                        // instead of the hull points.
+                        FLOAT_T curve_sum = 0;
+                        UT_Array<GEO_Greville> grevilles;
+                        grevilles.setCapacity(nedges + 1);
+                        curve->buildGrevilles(grevilles);
+                        if (curve->isClosed())
+                            grevilles.append(grevilles[0]);
+                        UT_ASSERT(grevilles.size() >= nedges + 1);
+                        UT_Vector2T<FLOAT_T> prev(grevilles[0].getCVImage()[axis0], grevilles[0].getCVImage()[axis1]);
+                        for (int i = 0; i < nedges; ++i)
+                        {
+                            const UT_Vector2T<FLOAT_T> next(grevilles[i].getCVImage()[axis0], grevilles[i].getCVImage()[axis1]);
+                            curve_sum += UTsignedAngleSegment(prev, next, query_point);
+                        }
+                        local_sum += curve_sum;
                     }
-                    local_sum += curve_sum;
+                    break;
+                default: break;
                 }
             }
             sum = local_sum;
@@ -1456,6 +1530,62 @@ private:
 
 
 #undef QUADS_AS_BILINEAR_PATCHES
+
+
+
+
+    template<typename FLOAT_T>
+    void
+        computeOutGroup()
+    {
+        UT_ASSERT(!getOutAttribArray().isEmpty());
+        UT_ASSERT(!getOutGroupArray().isEmpty());
+        
+        pointInMeshGroup = getOutGroupArray()[0];
+        UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(wnAttribPtr);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        FLOAT_T windingNumber = attrib_ph.value(elemoff);
+                        windingNumber = abs(windingNumber);
+
+                        if (asSolidAngle)
+                            windingNumber /= PI * 2.0;
+
+                        bool outval;
+                        if (groupInGeoPoint && groupOnGeoPoint)
+                        {
+                            outval = windingNumber > 0.5 - pointInMeshThreshold;
+                        }
+                        else
+                        {
+                            if (groupInGeoPoint)
+                            {
+                                outval = windingNumber > 0.5 + pointInMeshThreshold;
+                            }
+                            if (groupOnGeoPoint)
+                            {
+                                outval = windingNumber > (0.5 - pointInMeshThreshold) && windingNumber < (0.5 + pointInMeshThreshold);
+                            }
+                        }
+                        
+                        pointInMeshGroup.set(elemoff, outval);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+
+
     
 public:
     GFE_WNType wnType = GFE_WNType::XYZ;
@@ -1463,13 +1593,22 @@ public:
     fpreal64 accuracyScale = 2.0;
     bool asSolidAngle = false;
     bool negate = false;
+
+    GFE_SetGroup pointInMeshGroup;
     
+public:
+    bool groupInGeoPoint = true;
+    bool groupOnGeoPoint = true;
+    fpreal pointInMeshThreshold = 1e-05;
+
 private:
-    GA_Attribute* attribPtr;
+    GA_Attribute* wnAttribPtr;
     
     GFE_WindingNumber_Cache* sopcache;
-
     
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
+
 }; // End of class GFE_WindingNumber
 
 

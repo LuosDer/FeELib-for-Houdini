@@ -152,21 +152,21 @@ static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOr
     }
 }
 
-
-static void bumpDataId(
-    GA_Detail& geo,
-    const GA_AttributeOwner owner,
-    const UT_StringHolder& attribPattern
-)
-{
-    GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribPattern);
-    UT_Array<GA_Attribute*> attribList;
-    geo.getAttributes().matchAttributes(filter, owner, attribList);
-    for (GA_Size i = 0; i < attribList.size(); ++i)
-    {
-        attribList[i]->bumpDataId();
-    }
-}
+//
+// static void bumpDataId(
+//     GA_Detail& geo,
+//     const GA_AttributeOwner owner,
+//     const UT_StringHolder& attribPattern
+// )
+// {
+//     GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribPattern);
+//     UT_Array<GA_Attribute*> attribList;
+//     geo.getAttributes().matchAttributes(filter, owner, attribList);
+//     for (GA_Size i = 0; i < attribList.size(); ++i)
+//     {
+//         attribList[i]->bumpDataId();
+//     }
+// }
 
 
 static GA_Attribute* findPieceAttrib(

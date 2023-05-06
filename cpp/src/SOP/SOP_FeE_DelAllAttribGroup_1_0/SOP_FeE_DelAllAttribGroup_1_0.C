@@ -2,7 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_DelAllAttribGroup_1_0.h"
 
-
 #include "SOP_FeE_DelAllAttribGroup_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
@@ -11,8 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_Group.h"
-#include "GFE/GFE_Attribute.h"
+#include "GFE/GFE_Detail.h"
 
 using namespace SOP_FeE_DelAllAttribGroup_1_0_Namespace;
 
@@ -305,34 +303,35 @@ void
 SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_DelAllAttribGroup_1_0Parms>();
-    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelAllAttribGroup_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
     
-    GA_AttributeSet& attribSet = outGeo0.getAttributes();
-
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+
+    GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
 
     const UT_StringHolder& allPattern = "*";
     const UT_StringHolder& keepPrimAttribName   = sopparms.getDoKeepPrimAttrib()   ? sopparms.getKeepPrimAttribName()   : allPattern;
     const UT_StringHolder& keepPointAttribName  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttribName()  : allPattern;
     const UT_StringHolder& keepVertexAttribName = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttribName() : allPattern;
     const UT_StringHolder& keepDetailAttribName = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttribName() : allPattern;
-    GFE_Attribute::keepStdAttribute(attribSet, keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
+    outGFE0.keepStdAttribute(keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
+    //GA_AttributeSet& attribSet = outGeo0.getAttributes();
+    //GFE_Attribute::keepStdAttribute(attribSet, attribSet, keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
 
     const UT_StringHolder& keepPrimGroupName   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroupName()   : allPattern;
     const UT_StringHolder& keepPointGroupName  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroupName()  : allPattern;
     const UT_StringHolder& keepVertexGroupName = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroupName() : allPattern;
     const UT_StringHolder& keepEdgeGroupName   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroupName()   : allPattern;
-    GFE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
+    outGFE0.keepStdGroup(keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
+    //GFE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
 }
 
 

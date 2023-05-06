@@ -221,7 +221,7 @@ public:
     }
 
 
-    void setGroup(const GA_GroupType groupType, const UT_StringHolder& groupName)
+    void setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
     {
         if (!groupName.length())
         {
@@ -264,19 +264,19 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void setPrimitiveGroup(const UT_StringHolder& groupName)
+    SYS_FORCE_INLINE void setPrimitiveGroup(const UT_StringRef& groupName)
     {
         setGroup(GA_GROUP_PRIMITIVE, groupName);
     }
-    SYS_FORCE_INLINE void setPointGroup(const UT_StringHolder& groupName)
+    SYS_FORCE_INLINE void setPointGroup(const UT_StringRef& groupName)
     {
         setGroup(GA_GROUP_POINT, groupName);
     }
-    SYS_FORCE_INLINE void setVertexGroup(const UT_StringHolder& groupName)
+    SYS_FORCE_INLINE void setVertexGroup(const UT_StringRef& groupName)
     {
         setGroup(GA_GROUP_VERTEX, groupName);
     }
-    SYS_FORCE_INLINE void setEdgeGroup(const UT_StringHolder& groupName)
+    SYS_FORCE_INLINE void setEdgeGroup(const UT_StringRef& groupName)
     {
         setGroup(GA_GROUP_EDGE, groupName);
     }
@@ -796,7 +796,7 @@ findOrParseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     GA_Detail* const geo,
     const GA_GroupType groupType,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -842,7 +842,7 @@ findOrParseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
     const GA_GroupType groupType,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -891,7 +891,7 @@ static const GA_PrimitiveGroup*
 findOrParsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -903,7 +903,7 @@ static const GA_PointGroup*
 findOrParsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -915,7 +915,7 @@ static const GA_VertexGroup*
 findOrParseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -927,7 +927,7 @@ static const GA_EdgeGroup*
 findOrParseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -944,7 +944,7 @@ static GA_PrimitiveGroup*
 findOrParsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -956,7 +956,7 @@ static GA_PointGroup*
 findOrParsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -968,7 +968,7 @@ static GA_VertexGroup*
 findOrParseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -980,7 +980,7 @@ static GA_EdgeGroup*
 findOrParseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -998,7 +998,7 @@ parseGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
     const GA_GroupType groupType,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -1034,7 +1034,7 @@ static const GA_PrimitiveGroup*
 parsePrimitiveGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -1047,7 +1047,7 @@ static const GA_PointGroup*
 parsePointGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -1059,7 +1059,7 @@ static const GA_VertexGroup*
 parseVertexGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {
@@ -1071,7 +1071,7 @@ static const GA_EdgeGroup*
 parseEdgeGroupDetached(
     const SOP_NodeVerb::CookParms& cookparms,
     const GA_Detail* const geo,
-    const UT_StringHolder& groupName,
+    const UT_StringRef& groupName,
     GOP_Manager& gop
 )
 {

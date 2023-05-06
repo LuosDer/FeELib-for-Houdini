@@ -166,11 +166,11 @@ void
 SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupVis_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupVis_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    outGeo0->replaceWith(*inGeo0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -185,7 +185,6 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (!geo0Group)
         return;
 
-    cookparms.getNode()->setHighlight(true);
     cookparms.select(*geo0Group);
 
 }

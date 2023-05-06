@@ -154,40 +154,21 @@ public:
 
 
     SYS_FORCE_INLINE bool getHasComputed() const
-    {
-        return hasComputed;
-    }
-
+    { return hasComputed; }
     
-    // SYS_FORCE_INLINE
-    // void
-    //     setOutTopoAttrib(
-    //         const bool outTopoAttrib = true
-    //     )
-    // {
-    //     this->outTopoAttrib = outTopoAttrib;
-    // }
+    // SYS_FORCE_INLINE void setOutTopoAttrib(const bool outTopoAttrib = true)
+    // { this->outTopoAttrib = outTopoAttrib; }
     //
-    // SYS_FORCE_INLINE
-    // bool
-    //     getOutTopoAttrib() const
-    // {
-    //     return outTopoAttrib;
-    // }
+    // SYS_FORCE_INLINE bool getOutTopoAttrib() const
+    // { return outTopoAttrib; }
     
 
     GFE_GroupParser& getGroupParser()
-    {
-        return groupParser;
-    }
+    { return groupParser; }
     
-
     SYS_FORCE_INLINE void compute()
-    {
-        hasComputed = computeCore();
-    }
-
-
+    { hasComputed = computeCore(); }
+    
     SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove(
         const bool added_or_removed_points,
         const bool added_or_removed_vertices,
@@ -198,9 +179,7 @@ public:
     }
 
     virtual void bumpDataIdsForAddOrRemove() const
-    {
-        geo->bumpDataIdsForAddOrRemove(true, true, true);
-    }
+    { geo->bumpDataIdsForAddOrRemove(true, true, true); }
 
     SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove(
         const bool added_or_removed_points,
@@ -231,9 +210,7 @@ public:
     }
 
     SYS_FORCE_INLINE GFE_Detail* getDetail() const
-    {
-        return geo;
-    }
+    { return geo; }
 
     
 
@@ -292,25 +269,16 @@ private:
 protected:
 
     SYS_FORCE_INLINE void setDetail(GA_Detail* const inGeo)
-    {
-        setDetailBase(*inGeo);
-    }
+    { setDetailBase(*inGeo); }
     
     SYS_FORCE_INLINE void setDetail(GA_Detail& inGeo)
-    {
-        setDetail(&inGeo);
-    }
+    { setDetail(&inGeo); }
     
-
     SYS_FORCE_INLINE void setDetail(GA_Attribute& attrib)
-    {
-        setDetail(attrib.getDetail());
-    }
-
+    { setDetail(attrib.getDetail()); }
+    
     SYS_FORCE_INLINE void setDetail(GA_ElementGroup& group)
-    {
-        setDetail(static_cast<GA_ElementGroup&>(group).getDetail());
-    }
+    { setDetail(static_cast<GA_ElementGroup&>(group).getDetail()); }
 
     SYS_FORCE_INLINE void setDetail(GA_Group& group)
     {
@@ -325,14 +293,8 @@ protected:
 #endif
     }
     
-    SYS_FORCE_INLINE
-    void
-        setHasComputed(
-            const bool hasComputed = false
-        )
-    {
-        this->hasComputed = hasComputed;
-    }
+    SYS_FORCE_INLINE void setHasComputed(const bool hasComputed = false)
+    { this->hasComputed = hasComputed; }
 
 
 public:
@@ -483,32 +445,16 @@ public:
 
 
     
-    SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
-    {
-        return groupParserRef0;
-    }
-
-
-
+    // SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
+    // { return groupParserRef0; }
     SYS_FORCE_INLINE GFE_RefAttribArray& getRef0AttribArray()
-    {
-        return ref0AttribArray;
-    }
-
+    { return ref0AttribArray; }
     SYS_FORCE_INLINE GFE_RefGroupArray& getRef0GroupArray()
-    {
-        return ref0GroupArray;
-    }
-
+    { return ref0GroupArray; }
     SYS_FORCE_INLINE ::std::vector<const GA_Attribute*>& getRef0AttribArrayRef()
-    {
-        return ref0AttribArray.ref();
-    }
-
+    { return ref0AttribArray.ref(); }
     SYS_FORCE_INLINE ::std::vector<const GA_Group*>& getRef0GroupArrayRef()
-    {
-        return ref0GroupArray.ref();
-    }
+    { return ref0GroupArray.ref(); }
 
 
 private:
@@ -520,9 +466,7 @@ private:
     }
 
     SYS_FORCE_INLINE virtual void setRef0DetailBase(const GA_Detail* const inGeo)
-    {
-        setRef0DetailBase(static_cast<const GFE_Detail*>(inGeo));
-    }
+    { setRef0DetailBase(static_cast<const GFE_Detail*>(inGeo)); }
 
 
 
@@ -850,31 +794,22 @@ public:
     }
 
     SYS_FORCE_INLINE GFE_AttributeArray& getInAttribArray()
-    {
-        return inAttribArray;
-    }
+    { return inAttribArray; }
+    
     SYS_FORCE_INLINE GFE_GroupArray& getInGroupArray()
-    {
-        return inGroupArray;
-    }
+    { return inGroupArray; }
+    
     SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getInAttribArrayRef()
-    {
-        return inAttribArray.ref();
-    }
+    { return inAttribArray.ref(); }
+    
     SYS_FORCE_INLINE ::std::vector<GA_Group*>& getInGroupArrayRef()
-    {
-        return inGroupArray.ref();
-    }
+    { return inGroupArray.ref(); }
 
 
     SYS_FORCE_INLINE void setInAttribBumpDataId(bool val = true)
-    {
-        inAttribBumpDataId = val;
-    }
+    { inAttribBumpDataId = val; }
     SYS_FORCE_INLINE void setInGroupBumpDataId(bool val = true)
-    {
-        inGroupBumpDataId = val;
-    }
+    { inGroupBumpDataId = val; }
 
     virtual void bumpDataId() const override
     {

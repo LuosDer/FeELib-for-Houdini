@@ -22,21 +22,21 @@ static const char *theDsFile = R"THEDSFILE(
     name        parameters
     
     parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
+        name    "doReverseGroup"
+        cppname "DoReverseGroup"
+        label   "Do Reverse Group"
         type    toggle
         default { 1 }
     }
     groupsimple {
         name    "reverseGroup_folder"
         label   "Reverse Group"
-        disablewhentab "{ reverseGroup == 0 }"
+        disablewhentab "{ doReverseGroup == 0 }"
 
         parm {
-            name    "group"
-            cppname "Group"
-            label   "Group"
+            name    "reverseGroup"
+            cppname "ReverseGroup"
+            label   "Reverse Group"
             type    string
             default { "" }
             parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
@@ -44,9 +44,9 @@ static const char *theDsFile = R"THEDSFILE(
             parmtag { "script_action_icon" "BUTTONS_reselect" }
         }
         parm {
-            name    "groupType"
-            cppname "GroupType"
-            label   "Group Type"
+            name    "reverseGroupType"
+            cppname "ReverseGroupType"
+            label   "Reverse Group Type"
             type    ordinal
             default { "guess" }
             menu {
@@ -146,16 +146,16 @@ SOP_FeE_GroupReverse_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupReverse_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupReverse_1_0Parms::ReverseGroupType parmgrouptype)
 {
     using namespace SOP_FeE_GroupReverse_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case ReverseGroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case ReverseGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case ReverseGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case ReverseGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case ReverseGroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
@@ -167,32 +167,41 @@ void
 SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupReverse_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupReverse_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
     
-    if (!sopparms.getReverseGroup())
+    if (!sopparms.getDoReverseGroup())
         return;
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
+    const UT_StringHolder& groupName = sopparms.getReverseGroup();
+    const GA_GroupType groupType = sopGroupType(sopparms.getReverseGroupType());
+    //GFE_Group::groupToggle(outGeo0, groupType, sopparms.getGroup());
+    
+    bool doHighlight = true;
+    for (GA_GroupTable::iterator<GA_Group> it = outGeo0.getGroupTable(groupType)->beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group& group = *it.group();
+        if (group.isDetached() || group.isInternal())
+            continue;
+        if (!group.getName().multiMatch(groupName))
+            continue;
+        
+        GFE_Group::groupToggle(group);
+        GFE_Group::groupBumpDataId(group);
 
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
-    //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    GFE_Group::groupToggle(cookparms, outGeo0, groupType, sopparms.getGroup());
+        if (doHighlight)
+        {
+            cookparms.select(group);
+            doHighlight = false;
+        }
+    }
 }
 
-
-
-namespace SOP_FeE_GroupReverse_1_0_Namespace {
-
-} // End SOP_FeE_GroupReverse_1_0_Namespace namespace

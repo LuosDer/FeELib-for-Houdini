@@ -157,7 +157,6 @@ sopHasGroupType(SOP_FeE_HasGroup_1_0Parms::HasGroupType parmgrouptype)
 }
 
 
-
 void
 SOP_FeE_HasGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -168,24 +167,39 @@ SOP_FeE_HasGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
+    
+    const GA_GroupType groupType = sopHasGroupType(sopparms.getHasGroupType());
 
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
-    const GA_GroupType hasGroupType = sopHasGroupType(sopparms.getHasGroupType());
+
     
     GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
-    outGFE0.addAttrib_hasGroup(hasGroupType, sopparms.getHasGroupName(), sopparms.getHasGroupAttribName());
+
+
     
+    const GA_Group* const groupPtr = outGFE0.findGroup(groupType, sopparms.getHasGroupName());
+    const bool hasGroup = bool(groupPtr);
+    
+    const GA_Storage storage = GFE_Type::getPreferredStorageI(outGeo0);
+    GA_Attribute* attribPtr = outGFE0.findGlobalAttribute(sopparms.getHasGroupAttribName());
+    
+    if(!attribPtr->getAIFTuple())
+    {
+        outGFE0.destroyAttrib(attribPtr);
+        attribPtr = nullptr;
+    }
+    
+    if(!attribPtr)
+        attribPtr = outGFE0.createTupleAttribute(GA_ATTRIB_GLOBAL, sopparms.getHasGroupAttribName(), storage, 1, GA_Defaults(0));
 
-
+    UT_ASSERT_P(attribPtr->getAIFTuple());
+    
+    attribPtr->getAIFTuple()->set(attribPtr, 0, int(hasGroup));
+    if (hasGroup)
+        cookparms.select(*groupPtr);
 
 }
 
-
-
-namespace SOP_FeE_HasGroup_1_0_Namespace {
-
-} // End SOP_FeE_HasGroup_1_0_Namespace namespace

@@ -22,63 +22,27 @@ namespace GFE_AttributeDelete {
 
     
 
-
-
-
-    static void
-        delStdAttribute(
-            GA_AttributeSet& attribSet,
-            const UT_StringHolder& primAttribPattern,
-            const UT_StringHolder& pointAttribPattern,
-            const UT_StringHolder& vertexAttribPattern,
-            const UT_StringHolder& detailAttribPattern
-        )
-    {
-        GA_AttributeFilter attribFilter;
-        const GA_AttributeFilter attribFilterPublic = GA_AttributeFilter::selectPublic();
-        const GA_AttributeFilter attribFilterStd = GA_AttributeFilter::selectAnd(attribFilterPublic, GA_AttributeFilter::selectStandard());
-
-        attribFilter = GA_AttributeFilter::selectByPattern(primAttribPattern);
-        attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
-        attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, attribFilter);
-
-        attribFilter = GA_AttributeFilter::selectByPattern(pointAttribPattern);
-        attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
-        attribSet.destroyAttributes(GA_ATTRIB_POINT, attribFilter);
-
-        attribFilter = GA_AttributeFilter::selectByPattern(vertexAttribPattern);
-        attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
-        attribSet.destroyAttributes(GA_ATTRIB_VERTEX, attribFilter);
-
-        attribFilter = GA_AttributeFilter::selectByPattern(detailAttribPattern);
-        attribFilter = GA_AttributeFilter::selectAnd(attribFilter, attribFilterStd);
-        attribSet.destroyAttributes(GA_ATTRIB_DETAIL, attribFilter);
-    }
-
-
     SYS_FORCE_INLINE
-        static void
-        delStdAttribute(
-            GA_Detail* const geo,
-            const UT_StringHolder& primAttribPattern,
-            const UT_StringHolder& pointAttribPattern,
-            const UT_StringHolder& vertexAttribPattern,
-            const UT_StringHolder& detailAttribPattern
-        )
+    static void
+    delStdAttribute(
+        GA_Detail* const geo,
+        const UT_StringHolder& primAttribPattern,
+        const UT_StringHolder& pointAttribPattern,
+        const UT_StringHolder& vertexAttribPattern,
+        const UT_StringHolder& detailAttribPattern
+    )
     {
         return delStdAttribute(geo->getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern);
     }
 
 
-
-
     static void
         keepStdAttribute(
             GA_AttributeSet& attribSet,
-            const UT_StringHolder& primAttribPattern,
-            const UT_StringHolder& pointAttribPattern,
-            const UT_StringHolder& vertexAttribPattern,
-            const UT_StringHolder& detailAttribPattern
+            const char* primAttribPattern,
+            const char* pointAttribPattern,
+            const char* vertexAttribPattern,
+            const char* detailAttribPattern
         )
     {
         GA_AttributeFilter attribFilter;

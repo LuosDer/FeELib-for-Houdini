@@ -65,7 +65,99 @@ public:
     SYS_FORCE_INLINE const GA_AttributeDict	&getDetailAttribDict()    const
     { return getAttributes().getDict(GA_ATTRIB_DETAIL); }
 
-    
+
+GA_Group& groupDuplicate(const GA_Group& group, const UT_StringRef& groupName)
+{
+    GA_Group& newGroup = *getGroupTable(group.classType())->newGroup(groupName);
+    if (group.isElementGroup())
+        static_cast<GA_ElementGroup&>(newGroup).combine(&group);
+    else
+        static_cast<GA_EdgeGroup&>(newGroup).combine(&group);
+    return newGroup;
+}
+
+
+GA_Group& groupDuplicate(const GA_Group& group)
+{
+    GA_Group& newGroup = *getGroupTable(group.classType())->newDetachedGroup();
+    if (group.isElementGroup())
+        static_cast<GA_ElementGroup&>(newGroup).combine(&group);
+    else
+        static_cast<GA_EdgeGroup&>(newGroup).combine(&group);
+    return newGroup;
+}
+
+SYS_FORCE_INLINE GA_Group& groupDuplicateDetached(const GA_Group& group)
+{ return groupDuplicate(group); }
+
+
+void groupToggle(const GA_GroupType groupType, const UT_StringRef& groupName)
+{
+    for (GA_GroupTable::iterator<GA_Group> it = getGroupTable(groupType)->beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group& groupPtr = *it.group();
+        //if (groupPtr->isDetached())
+        //    continue;
+        if (!groupPtr.getName().multiMatch(groupName))
+            continue;
+        GFE_Group::groupToggle(groupPtr);
+        // GFE_Group::groupBumpDataId(groupPtr);
+    }
+}
+
+
+SYS_FORCE_INLINE void delStdGroup(const GA_GroupType groupType,const UT_StringRef& groupPattern)
+{ return GFE_Group::delStdGroup(*getGroupTable(groupType), groupPattern); }
+
+void delStdGroup(
+    const UT_StringRef& primGroupPattern,
+    const UT_StringRef& pointGroupPattern,
+    const UT_StringRef& vertexGroupPattern,
+    const UT_StringRef& edgeGroupPattern
+)
+{
+    delStdGroup(GA_GROUP_PRIMITIVE, primGroupPattern);
+    delStdGroup(GA_GROUP_POINT,     pointGroupPattern);
+    delStdGroup(GA_GROUP_VERTEX,    vertexGroupPattern);
+    delStdGroup(GA_GROUP_EDGE,      edgeGroupPattern);
+}
+
+void keepStdGroup(GA_GroupTable& groupTable, const UT_StringRef& keepGroupPattern)
+{
+    if (keepGroupPattern == "*")
+        return;
+    for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group* const group = it.group();
+        //if (group->isDetached())
+        //    continue;
+        if (group->getName().multiMatch(keepGroupPattern))
+            continue;
+        groupTable.destroy(group);
+    }
+}
+SYS_FORCE_INLINE void keepStdGroup(const GA_GroupType groupTable, const UT_StringRef& keepGroupPattern)
+{
+    return keepStdGroup(*getGroupTable(groupTable), keepGroupPattern);
+    //return GFE_Group::keepStdGroup(*getGroupTable(groupTable), keepGroupPattern);
+}
+
+
+void keepStdGroup(
+    const UT_StringRef& primGroupPattern,
+    const UT_StringRef& pointGroupPattern,
+    const UT_StringRef& vertexGroupPattern,
+    const UT_StringRef& edgeGroupPattern
+)
+{
+    keepStdGroup(GA_GROUP_PRIMITIVE, primGroupPattern);
+    keepStdGroup(GA_GROUP_POINT,     pointGroupPattern);
+    keepStdGroup(GA_GROUP_VERTEX,    vertexGroupPattern);
+    keepStdGroup(GA_GROUP_EDGE,      edgeGroupPattern);
+}
+
+
+
 #if SYS_VERSION_MAJOR_INT <= 19 && !( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
     /// Given a vertex, set the corresponding point offset.
     void setVertexPoint(GA_Offset vertex, GA_Offset ptoff)
@@ -159,7 +251,7 @@ public:
         }
         else
         {
-            return geo->vertexPoint(vertexVertexDst);
+            return vertexPoint(vertexVertexDst);
         }
     }
 #endif
@@ -297,28 +389,17 @@ SYS_FORCE_INLINE GA_OffsetList getOffsetList(
     const GA_ElementGroup* const group = nullptr,
     const bool reverse = false
 ) const
-{
-    return getOffsetList(getIndexMap(owner), group, reverse);
-}
+{ return getOffsetList(getIndexMap(owner), group, reverse); }
 
 SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PrimitiveGroup* const group,const bool reverse = false) const
-{
-    return getOffsetList(getPrimitiveMap(), group, reverse);
-}
+{ return getOffsetList(getPrimitiveMap(), group, reverse); }
 
 SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PointGroup* const group,const bool reverse = false) const
-{
-    return getOffsetList(getPointMap(), group, reverse);
-}
+{ return getOffsetList(getPointMap(), group, reverse); }
 
 //GA_OffsetList offList = GFE_Detail::getOffsetList(group);
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(
-    const GA_VertexGroup* const group,
-    const bool reverse = false
-) const
-{
-    return getOffsetList(getVertexMap(), group, reverse);
-}
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_VertexGroup* const group, const bool reverse = false) const
+{ return getOffsetList(getVertexMap(), group, reverse); }
 
 
 
@@ -381,59 +462,66 @@ SYS_FORCE_INLINE GA_Storage getPreferredStorage(const GA_Storage storage,const G
 
 
 
-
-    
-#if 1
-    
-SYS_FORCE_INLINE GA_Group* findGroup(const GA_GroupType groupType,const UT_StringHolder& groupName)
-{
-    UT_ASSERT_P(getGroupTable(groupType));
-    return getGroupTable(groupType)->find(groupName);
-}
-SYS_FORCE_INLINE const GA_Group* findGroup(const GA_GroupType groupType,const UT_StringHolder& groupName) const
-{
-    UT_ASSERT_P(getGroupTable(groupType));
-    return getGroupTable(groupType)->find(groupName);
-}
-    
-#else
-    
-GA_Group*
-    findGroup(
-        const GA_GroupType groupType,
-        const UT_StringHolder& groupName
-    )
-{
-    for (GA_GroupTable::iterator<GA_Group> it = getGroupTable(groupType).beginTraverse(); !it.atEnd(); ++it)
+    SYS_FORCE_INLINE bool groupRename(const GA_Group& group, const UT_StringRef& newName)
     {
-        const GA_Group* const group = it.group();
-        //if (group->isDetached())
-        //    continue;
-        if (group->getName() == groupName)
-            return group;
+        if (group.getName() == newName)
+            return false;
+        return getGroupTable(group.classType())->renameGroup(group.getName(), newName);
     }
-    return nullptr;
-}
-    
-#endif
 
-SYS_FORCE_INLINE GA_PrimitiveGroup* findPrimitiveGroup(const UT_StringHolder& groupName)
+
+
+
+
+
+
+GA_Group* findGroup(const GA_GroupType groupType, const UT_StringRef& groupName) const
+{
+    if (groupType == GA_GROUP_N)
+        return findGroupN(groupName);
+    else
+        return findGroupBase(groupType, groupName);
+}
+
+SYS_FORCE_INLINE GA_ElementGroup* findElementGroup(const GA_GroupType groupType, const UT_StringRef& groupName) const
+{
+    UT_ASSERT(groupType != GA_GROUP_EDGE);
+    return static_cast<GA_ElementGroup*>(findGroup(groupType, groupName));
+}
+// SYS_FORCE_INLINE const GA_ElementGroup* findElementGroup(const GA_GroupType groupType, const UT_StringRef& groupName) const
+// {
+//     UT_ASSERT(groupType != GA_GROUP_EDGE);
+//     return static_cast<const GA_ElementGroup*>(findGroup(groupType, groupName));
+// }
+
+SYS_FORCE_INLINE GA_ElementGroup* findElementGroup(const GA_AttributeOwner groupType, const UT_StringRef& groupName) const
+{
+    UT_ASSERT(groupType != GA_GROUP_EDGE);
+    return findElementGroup(attributeOwner_groupType(groupType), groupName);
+}
+// SYS_FORCE_INLINE const GA_ElementGroup* findElementGroup(const GA_AttributeOwner groupType, const UT_StringRef& groupName) const
+// {
+//     UT_ASSERT(groupType != GA_GROUP_EDGE);
+//     return findElementGroup(attributeOwner_groupType(groupType), groupName);
+// }
+
+    
+SYS_FORCE_INLINE GA_PrimitiveGroup* findPrimitiveGroup(const UT_StringRef& groupName) const
 {
     return static_cast<GA_PrimitiveGroup*>(findGroup(GA_GROUP_PRIMITIVE, groupName));
 }
-SYS_FORCE_INLINE const GA_PrimitiveGroup*findPrimitiveGroup(const UT_StringHolder& groupName) const
+SYS_FORCE_INLINE GA_PointGroup* findPointGroup(const UT_StringRef& groupName) const
 {
-    return static_cast<const GA_PrimitiveGroup*>(findGroup(GA_GROUP_PRIMITIVE, groupName));
+    return static_cast<GA_PointGroup*>(findGroup(GA_GROUP_POINT, groupName));
 }
-SYS_FORCE_INLINE GA_EdgeGroup* findEdgeGroup(const UT_StringHolder& groupName)
+SYS_FORCE_INLINE GA_VertexGroup* findVertexGroup(const UT_StringRef& groupName) const
+{
+    return static_cast<GA_VertexGroup*>(findGroup(GA_GROUP_VERTEX, groupName));
+}
+SYS_FORCE_INLINE GA_EdgeGroup* findEdgeGroup(const UT_StringRef& groupName) const
 {
     return static_cast<GA_EdgeGroup*>(findGroup(GA_GROUP_EDGE, groupName));
 }
-SYS_FORCE_INLINE const GA_EdgeGroup*findEdgeGroup(const UT_StringHolder& groupName) const
-{
-    return static_cast<const GA_EdgeGroup*>(findGroup(GA_GROUP_EDGE, groupName));
-}
-
 
 
 
@@ -460,26 +548,39 @@ SYS_FORCE_INLINE bool destroyNonDetachedAttrib(GA_Attribute* const attrib)
     return getAttributes().destroyAttribute(attrib);
 }
 
+
+void attribBumpDataId(const GA_AttributeOwner owner, const UT_StringHolder& attribPattern)
+{
+    for (GA_AttributeDict::iterator it = getAttributes().begin(owner); !it.atEnd(); ++it)
+    {
+        GA_Attribute& attribPtr = **it;
+        //if (groupPtr->isDetached())
+        //    continue;
+        if (!attribPtr.getName().multiMatch(attribPattern))
+            continue;
+        attribPtr.bumpDataId();
+    }
+}
+
+
+SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const UT_StringRef& groupPattern)
+{ return GFE_Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
+
     
-
-
-
-
-    
-SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib,const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib,const UT_StringRef& newName)
 {
     UT_ASSERT(!attrib.isDetached());
     return renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
 }
     
-SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib,const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib,const UT_StringRef& newName)
 {
     UT_ASSERT_P(attrib);
     return renameAttrib(*attrib, newName);
 }
     
 
-bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
+bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringRef& newName)
 {
     GA_Attribute* const existAttrib = findAttribute(attrib.getOwner(), newName);
     if (existAttrib)
@@ -487,7 +588,7 @@ bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
     return renameAttrib(attrib, newName);
 }
 
-SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib,const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib,const UT_StringRef& newName)
 {
     UT_ASSERT_P(attrib);
     return forceRenameAttribute(*attrib, newName);
@@ -496,12 +597,12 @@ SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib,const UT_S
 
 
     
-SYS_FORCE_INLINE GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner)
+SYS_FORCE_INLINE GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner) const
 {
     return GFE_Type::attributeOwner_groupType(attribOwner);
 }
 
-SYS_FORCE_INLINE GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType)
+SYS_FORCE_INLINE GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType) const
 {
     return GFE_Type::attributeOwner_groupType(groupType);
 }
@@ -661,7 +762,7 @@ public:
 //     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
 //     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
 //     const GA_Storage storage = GA_STORE_INVALID,
-//     const UT_StringHolder& attribName = "",
+//     const UT_StringRef& attribName = "",
 //     const int tuple_size = 1,
 //     const GA_Defaults& defaults = GA_Defaults(0.0f),
 //     const bool emplaceBack = true,
@@ -722,7 +823,7 @@ public:
 //         const GA_AttributeOwner owner = GA_ATTRIB_POINT,
 //         const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
 //         const GA_Storage storage = GA_STORE_INVALID,
-//         const UT_StringHolder& attribName = "",
+//         const UT_StringRef& attribName = "",
 //         const int tuple_size = 1,
 //         const bool emplaceBack = true,
 //         const UT_Options* create_args = nullptr,
@@ -807,7 +908,7 @@ public:
 //         const GA_AttributeOwner owner = GA_ATTRIB_PRIMITIVE,
 //         const GA_StorageClass storageClass = GA_STORECLASS_INT,
 //         const GA_Storage storage = GA_STORE_INVALID,
-//         const UT_StringHolder& attribName = "",
+//         const UT_StringRef& attribName = "",
 //         const int tuple_size = 1,
 //         const GA_Defaults& defaults = GA_Defaults(0.0f),
 //         const bool emplaceBack = true,
@@ -885,7 +986,7 @@ public:
 //     GA_Attribute*
 //     findPieceAttrib(
 //         const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
-//         const UT_StringHolder& pieceAttribName
+//         const UT_StringRef& pieceAttribName
 //     )
 //     {
 //         GA_Attribute* attribPtr = nullptr;
@@ -930,7 +1031,7 @@ public:
 //     const bool detached = false,
 //     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
 //     const GA_Storage storage = GA_STORE_INVALID,
-//     const UT_StringHolder& attribName = "",
+//     const UT_StringRef& attribName = "",
 //     const int tuple_size = 3,
 //     const GA_Defaults& defaults = GA_Defaults(0.0f),
 //     const bool emplaceBack = true,
@@ -1010,7 +1111,7 @@ public:
 //     const bool detached = false,
 //     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
 //     const GA_Storage storage = GA_STORE_INVALID,
-//     const UT_StringHolder& attribName = "",
+//     const UT_StringRef& attribName = "",
 //     const int tuple_size = 3,
 //     const GA_Defaults& defaults = GA_Defaults(0.0f),
 //     const bool emplaceBack = true,
@@ -1092,7 +1193,7 @@ public:
 //     const bool detached = false,
 //     const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
 //     const GA_Storage storage = GA_STORE_INVALID,
-//     const UT_StringHolder& attribName = "",
+//     const UT_StringRef& attribName = "",
 //     const int tuple_size = 3,
 //     const GA_Defaults& defaults = GA_Defaults(0.0f),
 //     const bool emplaceBack = true,
@@ -1169,65 +1270,81 @@ public:
 // }
 
 
-GA_Attribute*
-    addAttrib_hasGroup(
-        const GA_GroupType groupType,
-        const UT_StringHolder& groupName,
-        const bool detached = true,
-        const UT_StringHolder& attribName = "",
-        const GA_Storage storage = GA_STORE_INVALID,
-        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
-    )
-{
-    return NULL;
-}
 
-GA_Attribute*
-    addAttrib_hasGroup(
-        const GA_GroupType groupType,
-        const UT_StringHolder& groupName,
-        const UT_StringHolder& attribName = "",
-        const GA_Storage storage = GA_STORE_INVALID,
-        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
-    )
-{
-    const GA_Storage finalStorage = getPreferredStorage(storage, storageClass);
-    const bool hasGroup = bool(findGroup(groupType, groupName));
-    
-    GA_Attribute* attribPtr = findGlobalAttribute(attribName);
-    if(!attribPtr)
-        attribPtr = createTupleAttribute(GA_ATTRIB_GLOBAL, attribName, finalStorage, 1, GA_Defaults(0));
 
-    UT_ASSERT_P(attribPtr->getAIFTuple());
-    attribPtr->getAIFTuple()->set(attribPtr, 0, int(hasGroup));
-
-    return attribPtr;
-}
-
-GA_AttributeUPtr
-    addDetachedAttrib_hasGroup(
-        const GA_GroupType groupType,
-        const UT_StringHolder& groupName,
-        const GA_Storage storage = GA_STORE_INVALID,
-        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
-    )
-{
-    const GA_Storage finalStorage = getPreferredStorage(storage, storageClass);
-    const bool hasGroup = bool(findGroup(groupType, groupName));
-    
-    GA_AttributeUPtr attribUPtr = getAttributes().createDetachedTupleAttribute(GA_ATTRIB_GLOBAL, finalStorage, 1);
-    GA_Attribute* const attribPtr = attribUPtr.get();
-    
-    attribPtr->getAIFTuple()->set(attribPtr, 0, int(hasGroup));
-    
-    return attribUPtr;
-}
 
 
     
+
+private:
+
+    GA_Group* findGroupBase(const GA_GroupType groupType, const UT_StringRef& groupName) const
+    {
+        const GA_GroupTable* const groupTable = getGroupTable(groupType);
+        if (!groupTable)
+            return nullptr;
+        return groupTable->find(groupName);
+    }
+    
+    GA_Group* findGroupN(const UT_StringRef& groupName) const
+    {
+        GA_Group* outGroup = findGroupBase(GA_GROUP_PRIMITIVE, groupName);
+        if (outGroup)
+            return outGroup;
+        outGroup = findGroupBase(GA_GROUP_POINT, groupName);
+        if (outGroup)
+            return outGroup;
+        outGroup = findGroupBase(GA_GROUP_VERTEX, groupName);
+        if (outGroup)
+            return outGroup;
+        return findGroupBase(GA_GROUP_EDGE, groupName);
+    }
 
 
 }; // End of Class GFE_Detail
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -143,6 +143,89 @@ static const char* theDsFile = R"THEDSFILE(
             "_64"    "64"
         }
     }
+
+    parm {
+        name    "outPointInMeshGroup"
+        cppname "OutPointInMeshGroup"
+        label   "Output Point in Mesh Group"
+        type    toggle
+    //    nolabel
+    //    joinnext
+        default { "0" }
+    }
+    groupsimple {
+        name    "pointInMeshGroup_folder"
+        label   "Point in Mesh Group"
+        grouptag { "group_type" "simple" }
+        disablewhen "{ outPointInMeshGroup == 0 }"
+
+        parm {
+            name    "pointInMeshGroupName"
+            cppname "PointInMeshGroupName"
+            label   "Point in Mesh Group Name"
+            type    string
+            default { "inMesh" }
+        }
+        parm {
+            name    "groupMergeType"
+            cppname "GroupMergeType"
+            label   "Group Merge Type"
+            type    ordinal
+            default { "replace" }
+            menu {
+                "replace"   "Replace Existing"
+                "union"     "Union with Existing"
+                "intersect" "Intersect with Existing"
+                "subtract"  "Subtract from Existing"
+            }
+        }
+        parm {
+            name    "groupInGeoPoint"
+            cppname "GroupInGeoPoint"
+            label   "In Geo"
+            type    toggle
+            default { "on" }
+        }
+        parm {
+            name    "groupOnGeoPoint"
+            cppname "GroupOnGeoPoint"
+            label   "On Geo"
+            type    toggle
+            default { "on" }
+        }
+        parm {
+            name    "pointInMeshThreshold"
+            cppname "PointInMeshThreshold"
+            label   "Point in Mesh Threshold"
+            type    log
+            default { "1e-05" }
+            range   { 1e-05 1 }
+        }
+        parm {
+            name    "reverseGroup"
+            cppname "ReverseGroup"
+            label   "Reverse Group"
+            type    toggle
+            default { "0" }
+        }
+
+        parm {
+            name    "subscribeRatio"
+            cppname "SubscribeRatio"
+            label   "Subscribe Ratio"
+            type    integer
+            default { 64 }
+            range   { 0! 256 }
+        }
+        parm {
+            name    "minGrainSize"
+            cppname "MinGrainSize"
+            label   "Min Grain Size"
+            type    intlog
+            default { 64 }
+            range   { 0! 2048 }
+        }
+    }
 }
 )THEDSFILE";
 
@@ -221,6 +304,21 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 }
 
 
+static GFE_GroupMergeType
+sopGroupMergeType(SOP_FeE_WindingNumber_1_0Parms::GroupMergeType groupMergeType)
+{
+    using namespace SOP_FeE_WindingNumber_1_0Enums;
+    switch (groupMergeType)
+    {
+    case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
+    case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
+    case GroupMergeType::INTERSECT:   return GFE_GroupMergeType::Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GFE_GroupMergeType::Subtract;   break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
+    return GFE_GroupMergeType::Replace;
+}
+
 
 /// This is the function that does the actual work.
 void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
@@ -233,17 +331,32 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     
 
     const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
+    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
+
+    
     GFE_WindingNumber wn(geoPoint, geoRefMesh, sopcache, &cookparms);
 
     wn.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
     wn.findOrCreateTuple(false, wnStorage, sopparms.getWNAttribName());
 
+    if (sopparms.getOutPointInMeshGroup())
+    {
+        wn.pointInMeshGroup.setParm(sopparms.getReverseGroup(), groupMergeType);
+        wn.setPointInMeshComputeParm(
+            sopparms.getGroupInGeoPoint(),
+            sopparms.getGroupOnGeoPoint(),
+            sopparms.getPointInMeshThreshold());
+        
+        wn.findOrCreateGroup(false, sopparms.getPointInMeshGroupName());
+    }
+
     wn.setWNComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 
     wn.computeAndBumpDataId();
+    wn.visualizeOutGroup();
 
 }
