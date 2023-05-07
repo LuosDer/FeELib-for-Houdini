@@ -1,10 +1,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribDel_2_0.h"
 
-
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_AttribDel_2_0Parms, an easy way to access parameter values from
-// SOP_FeE_AttribDel_2_0Verb::cook with the correct type.
 #include "SOP_FeE_AttribDel_2_0.proto.h"
 
 #include "GA/GA_Detail.h"
@@ -13,7 +9,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_AttributeDelete.h"
+#include "GFE/GFE_Detail.h"
 
 
 using namespace SOP_FeE_AttribDel_2_0_Namespace;
@@ -22,56 +18,177 @@ using namespace SOP_FeE_AttribDel_2_0_Namespace;
 static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
+
     parm {
-        name    "srcAttribClass"
-        cppname "SrcAttribClass"
-        label   "Source Attribute Class"
+        name    "doDelPrimAttrib"
+        cppname "DoDelPrimAttrib"
+        label   "Do Del Prim Attrib"
         type    toggle
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delPrimAttrib"
+        cppname "DelPrimAttrib"
+        label   "Delete Prim Attrib"
+        type    string
+        default { "" }
+        disablewhen "{ doDelPrimAttrib == 0 }"
+    }
+
+
+
+    parm {
+        name    "doDelPointAttrib"
+        cppname "DoDelPointAttrib"
+        label   "Do Del Point Attrib"
+        type    toggle
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delPointAttrib"
+        cppname "DelPointAttrib"
+        label   "Delete Point Attrib"
+        type    string
+        default { "" }
+        disablewhen "{ doDelPointAttrib == 0 }"
+    }
+
+
+
+    parm {
+        name    "doDelVertexAttrib"
+        cppname "DoDelVertexAttrib"
+        label   "Do Del Vertex Attrib"
+        type    toggle
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delVertexAttrib"
+        cppname "DelVertexAttrib"
+        label   "Delete Vertex Attrib"
+        type    string
+        default { "" }
+        disablewhen "{ doDelVertexAttrib == 0 }"
+    }
+
+
+
+
+
+    parm {
+        name    "doDelDetailAttrib"
+        cppname "DoDelDetailAttrib"
+        label   "Do Del Detail Attrib"
+        type    toggle
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delDetailAttrib"
+        cppname "DelDetailAttrib"
+        label   "Delete Detail Attrib"
+        type    string
+        default { "" }
+        disablewhen "{ doDelDetailAttrib == 0 }"
+    }
+
+
+
+    parm {
+        name    "sepparm"
+        label   "Separator"
+        type    separator
         default { "" }
     }
 
+
+
     parm {
-        name    "srcAttrib"
-        cppname "SrcAttrib"
-        label   "Source Attribute"
+        name    "doDelPointGroup"
+        cppname "DoDelPointGroup"
+        label   "Do Del Point Group"
         type    toggle
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delPointGroup"
+        cppname "DelPointGroup"
+        label   "Delete Point Group"
+        type    string
         default { "" }
+        disablewhen "{ doDelPointGroup == 0 }"
     }
 
+
+
     parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Output as Offset"
+        name    "doDelVertexGroup"
+        cppname "DoDelVertexGroup"
+        label   "Do Del Vertex Group"
         type    toggle
-        default { "1" }
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delVertexGroup"
+        cppname "DelVertexGroup"
+        label   "Delete Vertex Group"
+        type    string
+        default { "" }
+        disablewhen "{ doDelVertexGroup == 0 }"
     }
 
 
 
     parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
+        name    "doDelPrimGroup"
+        cppname "DoDelPrimGroup"
+        label   "Do Del Prim Group"
         type    toggle
-        default { "0" }
+        default { 1 }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "delPrimGroup"
+        cppname "DelPrimGroup"
+        label   "Delete Prim Group"
+        type    string
+        default { "" }
+        disablewhen "{ doDelPrimGroup == 0 }"
     }
 
+
+
     parm {
-       name    "subscribeRatio"
-       cppname "SubscribeRatio"
-       label   "Subscribe Ratio"
-       type    integer
-       default { 64 }
-       range   { 0! 256 }
+        name    "doDelEdgeGroup"
+        cppname "DoDelEdgeGroup"
+        label   "Do Del Edge Group"
+        type    toggle
+        default { 1 }
+        nolabel
+        joinnext
     }
     parm {
-       name    "minGrainSize"
-       cppname "MinGrainSize"
-       label   "Min Grain Size"
-       type    intlog
-       default { 64 }
-       range   { 0! 2048 }
+        name    "delEdgeGroup"
+        cppname "DelEdgeGroup"
+        label   "Delete Edge Group"
+        type    string
+        default { "" }
+        disablewhen "{ doDelEdgeGroup == 0 }"
     }
+
+
 }
 )THEDSFILE";
 
@@ -82,7 +199,15 @@ SOP_FeE_AttribDel_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribDel_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("srcAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("delPrimAttribName"_sh,    &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("delPointAttribName"_sh,   &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("delVertexAttribName"_sh,  &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("delDetailAttribName"_sh,  &SOP_Node::detailAttribMenu);
+
+        templ.setChoiceListPtr("delPrimGroupName"_sh,     &SOP_Node::primNamedGroupMenu);
+        templ.setChoiceListPtr("delPointGroupName"_sh,    &SOP_Node::pointNamedGroupMenu);
+        templ.setChoiceListPtr("delVertexGroupName"_sh,   &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("delEdgeGroupName"_sh,     &SOP_Node::edgeNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -105,7 +230,7 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/Attribute");
 
-    newOp->setIconName("SOP_attribute");
+    newOp->setIconName("SOP_attribdelete");
     table->addOperator(newOp);
 }
 
@@ -156,26 +281,7 @@ SOP_FeE_AttribDel_2_0::cookVerb() const
 }
 
 
-static GA_GroupType
-sopGroupType(SOP_FeE_AttribDel_2_0Parms::GroupType parmgrouptype)
-{
-    using namespace SOP_FeE_AttribDel_2_0Enums;
-    switch (parmgrouptype)
-    {
-    case GroupType::GUESS: return GA_GROUP_INVALID;
-        break;
-    case GroupType::PRIM: return GA_GROUP_PRIMITIVE;
-        break;
-    case GroupType::POINT: return GA_GROUP_POINT;
-        break;
-    case GroupType::VERTEX: return GA_GROUP_VERTEX;
-        break;
-    case GroupType::EDGE: return GA_GROUP_EDGE;
-        break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
+
 
 
 void
@@ -194,14 +300,24 @@ SOP_FeE_AttribDel_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GFE_AttribDuplicate attribDuplicate(outGeo0, &cookparms);
 
-    attribDuplicate.setSourceAttribute(connectivityAttribPtr);
-    attribDuplicate.setDestinationAttribute(outAttribPtr);
-    attribDuplicate.compute();
+    GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
 
-    GA_Attribute* const finalAttribPtr = attribPromote.getDestinationAttribute();
-    attribDuplicate.computeAndBumpDataId();
+
+    const UT_StringHolder& allPattern = "*";
+    const UT_StringHolder& delPrimAttrib   = sopparms.getDoDelPrimAttrib()   ? sopparms.getDelPrimAttrib()   : allPattern;
+    const UT_StringHolder& delPointAttrib  = sopparms.getDoDelPointAttrib()  ? sopparms.getDelPointAttrib()  : allPattern;
+    const UT_StringHolder& delVertexAttrib = sopparms.getDoDelVertexAttrib() ? sopparms.getDelVertexAttrib() : allPattern;
+    const UT_StringHolder& delDetailAttrib = sopparms.getDoDelDetailAttrib() ? sopparms.getDelDetailAttrib() : allPattern;
+    outGFE0.delStdAttribute(delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+    //GA_AttributeSet& attribSet = outGeo0.getAttributes();
+    //GFE_Attribute::delStdAttribute(attribSet, attribSet, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+
+    const UT_StringHolder& delPrimGroup   = sopparms.getDoDelPrimGroup()   ? sopparms.getDelPrimGroup()   : allPattern;
+    const UT_StringHolder& delPointGroup  = sopparms.getDoDelPointGroup()  ? sopparms.getDelPointGroup()  : allPattern;
+    const UT_StringHolder& delVertexGroup = sopparms.getDoDelVertexGroup() ? sopparms.getDelVertexGroup() : allPattern;
+    const UT_StringHolder& delEdgeGroup   = sopparms.getDoDelEdgeGroup()   ? sopparms.getDelEdgeGroup()   : allPattern;
+    outGFE0.delStdGroup(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
 }
 
 

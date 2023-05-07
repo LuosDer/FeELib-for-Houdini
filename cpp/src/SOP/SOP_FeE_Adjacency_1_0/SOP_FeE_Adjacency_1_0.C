@@ -2,11 +2,8 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_Adjacency_1_0.h"
 
-
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_Adjacency_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_Adjacency_1_0Verb::cook with the correct type.
 #include "SOP_FeE_Adjacency_1_0.proto.h"
+
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -15,9 +12,6 @@
 
 
 #include "GFE/GFE_Adjacency.h"
-//#include "GFE/GFE_TopologyReference.h"
-//#include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_GroupUnion.h"
 
 
 

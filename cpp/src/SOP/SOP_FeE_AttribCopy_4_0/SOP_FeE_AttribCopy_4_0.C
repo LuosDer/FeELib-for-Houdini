@@ -84,8 +84,8 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "iDAttribName"
-        cppname "IDAttribName"
+        name    "iDAttrib"
+        cppname "IDAttrib"
         label   "ID Attribute"
         type    string
         joinnext
@@ -110,6 +110,16 @@ static const char *theDsFile = R"THEDSFILE(
         label   "ID Attrib is Offset"
         type    toggle
         default { "0" }
+        disablewhen "{ useIDAttrib == 0 }"
+    }
+    parm {
+        name    "copyFromSingleOff"
+        cppname "CopyFromSingleOff"
+        label   "Copy From Single Off"
+        type    integer
+        default { -1 }
+        range   { -1 10 }
+        disablewhen "{ useIDAttrib == 1 }"
     }
 
 
@@ -401,12 +411,12 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     attribCopy.ownerDst = destinationClass;
     attribCopy.ownerSrc = sourceClass;
-    attribCopy.setComputeParm(attribMergeType, iDAttribInput,
+    attribCopy.setComputeParm(attribMergeType, iDAttribInput, sopparms.getCopyFromSingleOff(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
     if (sopparms.getUseIDAttrib())
     {
-        attribCopy.setOffsetAttrib(sopparms.getIDAttribName(), sopparms.getIDAttribIsOffset());
+        attribCopy.setOffsetAttrib(sopparms.getIDAttrib(), sopparms.getIDAttribIsOffset());
     }
     
     if (sopparms.getRenameAttrib())

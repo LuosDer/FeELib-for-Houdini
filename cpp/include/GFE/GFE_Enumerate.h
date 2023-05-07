@@ -19,13 +19,9 @@
 class GFE_Enumerate : public GFE_AttribFilter {
 
 
-
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
 
-    ~GFE_Enumerate()
-    {
-    }
 
     void
         setComputeParm(
@@ -58,41 +54,22 @@ private:
         // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
         switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
         {
-        case GA_STORE_INT16:
-            enumerate<int16>(attribPtr);
-            break;
-        case GA_STORE_INT32:
-            enumerate<int32>(attribPtr);
-            break;
-        case GA_STORE_INT64:
-            enumerate<int64>(attribPtr);
-            break;
-        case GA_STORE_REAL16:
-            enumerate<fpreal16>(attribPtr);
-            break;
-        case GA_STORE_REAL32:
-            enumerate<fpreal32>(attribPtr);
-            break;
-        case GA_STORE_REAL64:
-            enumerate<fpreal64>(attribPtr);
-            break;
-        case GA_STORE_STRING:
-            enumerate<UT_StringHolder>(attribPtr);
-            break;
-        default:
-            break;
+        case GA_STORE_INT16:  enumerate<int16>(attribPtr);           break;
+        case GA_STORE_INT32:  enumerate<int32>(attribPtr);           break;
+        case GA_STORE_INT64:  enumerate<int64>(attribPtr);           break;
+        case GA_STORE_REAL16: enumerate<fpreal16>(attribPtr);        break;
+        case GA_STORE_REAL32: enumerate<fpreal32>(attribPtr);        break;
+        case GA_STORE_REAL64: enumerate<fpreal64>(attribPtr);        break;
+        case GA_STORE_STRING: enumerate<UT_StringHolder>(attribPtr); break;
+        default: break;
         }
-
 
         return true;
     }
 
 
     template<typename T>
-    void
-        enumerate(
-            GA_Attribute* const attribPtr
-        )
+    void enumerate(GA_Attribute* const attribPtr)
     {
         UT_ASSERT_P(attribPtr);
         const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
@@ -139,12 +116,10 @@ private:
 
 
     template<>
-    void
-        enumerate<UT_StringHolder>(
-            GA_Attribute* const attribPtr
-        )
+    void enumerate<UT_StringHolder>(GA_Attribute* const attribPtr)
     {
         UT_ASSERT_P(attribPtr);
+
         const GA_RWHandleS attrib_h(attribPtr);
         const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
         if(outAsOffset)

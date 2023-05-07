@@ -195,14 +195,12 @@ SYS_FORCE_INLINE static void groupBumpDataId(GA_Group& group)
 }
 
 SYS_FORCE_INLINE static void groupBumpDataId(GA_Group* group)
-{
-    groupBumpDataId(*group);
-}
+{ groupBumpDataId(*group); }
 
 
-static void groupBumpDataId(GA_GroupTable& groupTable,const UT_StringRef& groupPattern)
+static void groupBumpDataId(GA_GroupTable& groupTable, const char* groupPattern)
 {
-    if (groupPattern == "")
+    if (!groupPattern || groupPattern == "")
         return;
     for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
     {
@@ -215,6 +213,95 @@ static void groupBumpDataId(GA_GroupTable& groupTable,const UT_StringRef& groupP
     }
 }
 
+
+
+
+
+
+
+
+static void groupToggle(GA_EdgeGroup& group)
+{
+    group.toggle();
+    GA_Offset start, end;
+    for (GA_Iterator it(group.getDetail().getPointRange()); it.fullBlockAdvance(start, end); )
+    {
+        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+        {
+            group.remove(GA_Edge(elemoff, elemoff));
+        }
+    }
+}
+SYS_FORCE_INLINE static void groupToggle(GA_ElementGroup& group)
+{ group.toggleAll(group.getIndexMap().indexSize()); }
+
+SYS_FORCE_INLINE static void groupToggle(GA_Group& group)
+{
+    return group.isElementGroup() ?
+        groupToggle(static_cast<GA_ElementGroup&>(group)) :
+        groupToggle(static_cast<GA_EdgeGroup&>(group));
+}
+
+
+void groupToggle(const GA_GroupTable& groupTable, const char* groupName)
+{
+    for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group& groupPtr = *it.group();
+        if (!groupPtr.getName().multiMatch(groupName))
+            continue;
+        groupToggle(groupPtr);
+    }
+}
+
+
+
+
+
+
+void delStdGroup(GA_GroupTable& groupTable, const char* groupName)
+{
+    for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group& groupPtr = *it.group();
+        if (!groupPtr.getName().multiMatch(groupName))
+            continue;
+        groupTable.destroy(&groupPtr);
+    }
+}
+
+static void keepStdGroup(GA_GroupTable& groupTable, const char* pattern)
+{
+    if (!pattern || pattern == "*")
+        return;
+    for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
+    {
+        GA_Group* const group = it.group();
+        //if (group->isDetached())
+        //    continue;
+        if (group->getName().multiMatch(pattern))
+            continue;
+        groupTable.destroy(group);
+    }
+}
+
+
+
+
+SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
+{
+    return group.classType()==GA_GROUP_EDGE ?
+           static_cast<const GA_EdgeGroup&>(group).isEmpty() :
+           static_cast<const GA_ElementGroup&>(group).isEmpty();
+}
+
+
+
+
+
+
+
+
 //
 // SYS_FORCE_INLINE static void groupBumpDataId(
 //     GA_Detail& geo, const GA_GroupType groupType, const UT_StringRef& groupPattern
@@ -222,22 +309,6 @@ static void groupBumpDataId(GA_GroupTable& groupTable,const UT_StringRef& groupP
 // { return groupBumpDataId(*geo.getGroupTable(groupType), groupPattern); }
 
 
-
-static void
-delStdGroup(GA_GroupTable& groupTable, const UT_StringRef& groupPattern)
-{
-    if (groupPattern == "")
-        return;
-    for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
-    {
-        GA_Group* const group = it.group();
-        //if (group->isDetached())
-        //    continue;
-        if (!group->getName().multiMatch(groupPattern))
-            continue;
-        groupTable.destroy(group);
-    }
-}
 //
 // SYS_FORCE_INLINE
 // static void
@@ -356,32 +427,7 @@ delStdGroup(GA_GroupTable& groupTable, const UT_StringRef& groupPattern)
 //
 //
 //
-    
-static void groupToggle(GA_EdgeGroup& group)
-{
-    group.toggle();
-    GA_Offset start, end;
-    for (GA_Iterator it(group.getDetail().getPointRange()); it.fullBlockAdvance(start, end); )
-    {
-        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-        {
-            group.remove(GA_Edge(elemoff, elemoff));
-        }
-    }
-    //group->makeAllEdgesValid();
-}
 
-SYS_FORCE_INLINE static void groupToggle(GA_ElementGroup& group)
-{ group.toggleAll(group.getIndexMap().indexSize()); }
-    
-SYS_FORCE_INLINE static void groupToggle(GA_Group& group)
-{
-    if (group.isElementGroup())
-        return groupToggle(static_cast<GA_ElementGroup&>(group));
-    else
-        return groupToggle(static_cast<GA_EdgeGroup&>(group));
-}
-    
 //
 // SYS_FORCE_INLINE static void elementGroupToggle(GA_ElementGroup& group)
 // { groupToggle(group); }
@@ -565,15 +611,9 @@ SYS_FORCE_INLINE static void groupToggle(GA_Group& group)
 //     UT_ASSERT_P(groupType != GA_GROUP_EDGE);
 //     return geo.findElementGroup(GFE_Type::attributeOwner_groupType(groupType), groupName);
 // }
-
-SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
-{
-    if (group.classType() == GA_GROUP_EDGE)
-        return static_cast<const GA_EdgeGroup&>(group).isEmpty();
-    else
-        return static_cast<const GA_ElementGroup&>(group).isEmpty();
-}
-
+// 
+// 
+// 
 // SYS_FORCE_INLINE bool groupRename(GA_Detail& geo, const GA_Group& group, const UT_StringRef& newName)
 // {
 //     if (group.getName() == newName)

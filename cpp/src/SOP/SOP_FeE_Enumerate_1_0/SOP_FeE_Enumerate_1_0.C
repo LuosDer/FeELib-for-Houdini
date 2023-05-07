@@ -278,19 +278,11 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0.replaceWith(inGeo0);
 
 
-    //const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
 
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
     const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
-    const bool outAsOffset = sopparms.getOutAsOffset();
-    
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -300,15 +292,13 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     GFE_Enumerate enumerate(outGeo0, cookparms);
     enumerate.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    enumerate.setComputeParm(outAsOffset, subscribeRatio, minGrainSize);
+    enumerate.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
     enumerate.computeAndBumpDataId();
 
 
-    //GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
-    //    GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
-    //    subscribeRatio, minGrainSize);
+
 }
 
 

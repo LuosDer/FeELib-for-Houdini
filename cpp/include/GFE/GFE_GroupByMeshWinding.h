@@ -6,27 +6,80 @@
 
 //#include "GFE/GFE_GroupByMeshWinding.h"
 
-#include "GA/GA_Detail.h"
 
 
 
 #include "GEO/GEO_Hull.h"
 
 
+#include "GFE/GFE_GeoFilter.h"
 
-
-#include "GFE/GFE_GroupParse.h"
 #include "GFE/GFE_Measure.h"
 #include "GFE/GFE_MeshCap.h"
 
-enum GFE_GroupByMeshWindingMethod
+
+
+enum class GFE_GroupByMeshWindingMethod
 {
-	GFE_GroupByMeshWindingMethod_VOLUME,
-	GFE_GroupByMeshWindingMethod_WINDINGNUMBER,
+	VOLUME,
+	WINDINGNUMBER,
 };
 
 
-namespace GFE_GroupByMeshWinding {
+
+class GFE_GroupByMeshWinding : public GFE_AttribFilterWithRef {
+
+public:
+	using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+
+
+	void
+		setComputeParm(
+			const GFE_GroupByMeshWindingMethod method = GFE_GroupByMeshWindingMethod::VOLUME
+		)
+	{
+		setHasComputed();
+		this->method = method;
+	}
+
+	SYS_FORCE_INLINE GA_Attribute* getAttrib() const
+	{
+		//UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "no attrib found");
+		return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
+	}
+
+
+private:
+
+	virtual bool
+		computeCore() override
+	{
+		if (getOutAttribArray().isEmpty())
+			return false;
+
+		if (groupParser.isEmpty())
+			return true;
+
+		GU_RayIntersect rayIntersect(geo->asGU_Detail(), );
+		GA_Attribute* const normalAttrib = getOutAttribArray()[0];
+
+		GEOcomputeNormals(*geo->asGEO_Detail(), normalAttrib, groupParser.getGroup(normalAttrib),
+			cuspAngleDegrees, normalMethod, copyOrigIfZero);
+
+		return true;
+	}
+
+
+
+public:
+	GFE_GroupByMeshWindingMethod method = GFE_GroupByMeshWindingMethod::VOLUME;
+
+}; // End of class GFE_GroupByMeshWinding
+
+
+
+
+namespace GFE_GroupByMeshWinding_Namespace {
 
 
 

@@ -6,10 +6,11 @@
 
 //#include "GFE/GFE_Normal2D.h"
 
-#include "GA/GA_Detail.h"
 
 
 #include "GFE/GFE_Normal3D.h"
+
+#include "GFE/GFE_Adjacency.h"
 
 //#include "GFE/GFE_Attribute.h"
 //#include "GFE/GFE_TopologyReference.h"
@@ -23,20 +24,11 @@ class GFE_Normal2D : public GFE_AttribCreateFilter {
 
 public:
     GFE_Normal2D(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribCreateFilter(geo, cookparms)
         , normal3D(geo, cookparms)
-    {
-    }
-
-    GFE_Normal2D(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo
-    )
-        : GFE_AttribCreateFilter(cookparms, geo)
-        , normal3D(cookparms, geo)
     {
     }
 
@@ -48,7 +40,7 @@ public:
             const fpreal64 uniScale = 1.0,
 
             const bool useConstantNormal3D = false,
-            const UT_StringHolder& normal3DAttribName = "N",
+            const UT_StringRef& normal3DAttribName = "N",
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
             const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
@@ -82,28 +74,178 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
+    
 
+    SYS_FORCE_INLINE void setPosAttrib(const UT_StringRef& attribName)
+    { posAttrib = geo->findPointAttribute(attribName); }
+    
 private:
 
     virtual bool
         computeCore() override
     {
+        if (getOutAttribArray().isEmpty())
+            return false;
+
         if (groupParser.isEmpty())
             return true;
 
-        restDir2D();
+        if (!posAttrib)
+            posAttrib = geo->getP();
+
+        normal3D.compute();
+        normal3DAttrib = normal3D.getAttrib();
+
+
+        GA_Storage storage_max = posAttrib->getAIFTuple()->getStorage(posAttrib);
+        if (normal3DAttrib)
+        {
+            const GA_Storage storage_normal3D = normal3DAttrib->getAIFTuple()->getStorage(normal3DAttrib);
+            storage_max = storage_max >= storage_normal3D ? storage_max : storage_normal3D;
+        }
+
+        switch (storage_max)
+        {
+        case GA_STORE_REAL16: computeNormal2D<fpreal16>(); break;
+        case GA_STORE_REAL32: computeNormal2D<fpreal32>(); break;
+        case GA_STORE_REAL64: computeNormal2D<fpreal64>(); break;
+        default: UT_ASSERT_MSG(0, "unhandled storage_max"); break;
+        }
 
         return true;
     }
 
 
+
+
+    template<typename T>
+    void computeNormal2D()
+    {
+        const GA_PointGroup* const geoPointGroup = groupParser.getPointGroup();
+
+        GFE_Adjacency adjacency(geo, cookparms);
+        adjacency.setVertexNextEquivGroup(true);
+        adjacency.compute();
+
+        GA_VertexGroup* const unsharedVertexGroup = adjacency.getVertexNextEquivGroup();
+
+        //GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromote(geo, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
+#if 1
+        const GA_PointGroupUPtr unsharedPointGroupUPtr = GFE_GroupPromote::groupPromotePointDetached(geo, unsharedVertexGroup);
+        GA_PointGroup* const unsharedPointGroup = unsharedPointGroupUPtr.get();
+#else
+        GA_PointGroup* const unsharedPointGroup = GFE_GroupPromote::groupPromotePoint(geo, unsharedVertexGroup);
+#endif
+        if (geoPointGroup)
+        {
+            GA_PointGroupUPtr expandGroupUPtr = geo->createDetachedPointGroup();
+            GA_PointGroup* const expandGroup = expandGroupUPtr.get();
+
+            GFE_GroupExpand::groupExpand(geo, expandGroup, geoPointGroup, GA_GROUP_EDGE);
+
+            *unsharedPointGroup &= *expandGroup;
+
+            GFE_GroupBoolean::groupIntersect(geo, unsharedVertexGroup, expandGroup);
+        }
+
+        const GA_Attribute* const dstptAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo);
+        const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
+
+
+        const GA_AttributeOwner normal3DOwner = normal3D_h.getAttribute() ? normal3D_h.getAttribute()->getOwner() : GA_ATTRIB_INVALID;
+        if (normal3DOwner == GA_ATTRIB_GLOBAL)
+            defaultNormal3D = normal3D_h.get(0);
+
+
+
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makePrimitiveRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+
+
+        const GA_RWHandleT<UT_Vector3T<T>> normal2D_h(getOutAttribArray()[0]);
+        const GA_ROHandleT<UT_Vector3T<T>> pos_h(posAttrib);
+        const GA_ROHandleT<UT_Vector3T<T>> normal3D_h(normal3D.getAttrib());
+
+        const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
+        UTparallelFor(geoVertexSplittableRange, [this, &dstptAttrib_h, &normal2D_h, &pos_h, &normal3D_h,
+            vtxPointRef, vtxPrimRef, normal3DOwner](const GA_SplittableRange& r)
+        {
+            UT_Vector3T<T> dir;
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    const GA_Offset ptoff = vtxPointRef->getLink(elemoff);
+                    const GA_Offset dstpt = dstptAttrib_h.get(elemoff);
+
+                    dir = pos_h.get(ptoff) - pos_h.get(dstpt);
+                    switch (normal3DOwner)
+                    {
+                    case GA_ATTRIB_PRIMITIVE:
+                        dir.cross(normal3D_h.get(vtxPrimRef->getLink(elemoff)));
+                        break;
+                    case GA_ATTRIB_POINT:
+                        dir.cross(normal3D_h.get(ptoff));
+                        break;
+                    case GA_ATTRIB_VERTEX:
+                        dir.cross(normal3D_h.get(elemoff));
+                        break;
+                    default:
+                        dir.cross(defaultNormal3D);
+                        break;
+                    }
+                    dir.normalize();
+                    normal2D_h.add(ptoff, dir);
+                    normal2D_h.add(dstpt, dir);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+
+
+
+        const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
+
+        UTparallelFor(geoPointSplittableRange, [this](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            //GA_PageHandleV<UT_Vector3T<typename T>>::RWType normal2D_ph(normal2DAttrib);
+            GA_PageHandleT<UT_Vector3T<T>, typename UT_Vector3T<T>::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
+            //GA_PageHandleV<UT_Vector3T<fpreal>>::RWType normal2D_ph(normal2DAttrib);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    normal2D_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (scaleByTurns)
+                        {
+                            normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
+                        }
+                        else if (normalize)
+                        {
+                            normal2D_ph.value(elemoff).normalize();
+                            normal2D_ph.value(elemoff) *= uniScale;
+                        }
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+
 public:
     GFE_Normal3D normal3D;
-    //UT_StringHolder& posAttribName = "P";
-    //GA_GroupType groupType = GA_GROUP_INVALID;
-    //UT_StringHolder& groupName = "";
-    //GA_Storage storage = GA_STORE_INVALID;
-    //UT_StringHolder& normal2DAttribName = "N";
+
+    const GA_Attribute* posAttrib = nullptr;
+
 
     UT_Vector3T<fpreal64> defaultNormal3D = { 0, 1, 0 };
     bool scaleByTurns = true;
@@ -111,16 +253,12 @@ public:
     fpreal64 uniScale = 1.0;
 
     bool useConstantNormal3D = false;
-    //UT_StringHolder& normal3DAttribName = "N";
     bool findNormal3D = false;
     bool addNormal3DIfNoFind = true;
 
-    //GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID;
-    //float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
-    //GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED;
-    //bool copyOrigIfZero = false;
-
 private:
+    const GA_Attribute* normal3DAttrib = nullptr;
+
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 };
@@ -204,8 +342,8 @@ namespace GFE_Normal2D_Namespace {
         const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
 
 
-        const GA_AttributeOwner attribClassNormal3D = normal3D_h.getAttribute() ? normal3D_h.getAttribute()->getOwner() : GA_ATTRIB_INVALID;
-        if (attribClassNormal3D == GA_ATTRIB_GLOBAL)
+        const GA_AttributeOwner normal3DOwner = normal3D_h.getAttribute() ? normal3D_h.getAttribute()->getOwner() : GA_ATTRIB_INVALID;
+        if (normal3DOwner == GA_ATTRIB_GLOBAL)
             defaultNormal3D = normal3D_h.get(0);
 
         GA_Topology& topo = geo->getTopology();
@@ -218,7 +356,7 @@ namespace GFE_Normal2D_Namespace {
         const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
         UTparallelFor(geoVertexSplittableRange, [&pos_h, &dstptAttrib_h, &normal2D_h, &normal3D_h,
             vtxPointRef, vtxPrimRef,
-            attribClassNormal3D, &defaultNormal3D](const GA_SplittableRange& r)
+            normal3DOwner, &defaultNormal3D](const GA_SplittableRange& r)
         {
             UT_Vector3T<T> dir;
             GA_Offset start, end;
@@ -230,7 +368,7 @@ namespace GFE_Normal2D_Namespace {
                     GA_Offset dstpt = dstptAttrib_h.get(elemoff);
 
                     dir = pos_h.get(ptoff) - pos_h.get(dstpt);
-                    switch (attribClassNormal3D)
+                    switch (normal3DOwner)
                     {
                     case GA_ATTRIB_PRIMITIVE:
                         dir.cross(normal3D_h.get(vtxPrimRef->getLink(elemoff)));
@@ -357,7 +495,7 @@ namespace GFE_Normal2D_Namespace {
             const GA_Attribute* const normal3DAttrib = nullptr,
             const GA_PointGroup* const geoPointGroup = nullptr,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& normal2DAttribName = "N",
+            const UT_StringRef& normal2DAttribName = "N",
 
             const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 },
             const bool scaleByTurns = true,
@@ -392,7 +530,7 @@ namespace GFE_Normal2D_Namespace {
             const GA_Attribute* const normal3DAttrib = nullptr,
             const GA_PointGroup* const geoPointGroup = nullptr,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& normal2DAttribName = "N",
+            const UT_StringRef& normal2DAttribName = "N",
 
             const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 },
             const bool scaleByTurns = true,
@@ -427,7 +565,7 @@ namespace GFE_Normal2D_Namespace {
             const GA_Attribute* posAttrib = nullptr,
             const GA_PointGroup* const geoPointGroup = nullptr,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& normal2DAttribName = "N",
+            const UT_StringRef& normal2DAttribName = "N",
 
             const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 },
             const bool scaleByTurns = true,
@@ -435,7 +573,7 @@ namespace GFE_Normal2D_Namespace {
             const fpreal64 uniScale = 1.0,
 
             const bool useConstantNormal3D = false,
-            const UT_StringHolder& normal3DAttribName = "N",
+            const UT_StringRef& normal3DAttribName = "N",
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
             const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
@@ -472,11 +610,11 @@ namespace GFE_Normal2D_Namespace {
         addAttribNormal2D(
             const SOP_NodeVerb::CookParms& cookparms,
             GA_Detail* const geo,
-            const UT_StringHolder& posAttribName = "P",
+            const UT_StringRef& posAttribName = "P",
             const GA_GroupType groupType = GA_GROUP_INVALID,
-            const UT_StringHolder& groupName = "",
+            const UT_StringRef& groupName = "",
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& normal2DAttribName = "N",
+            const UT_StringRef& normal2DAttribName = "N",
 
             const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 },
             const bool scaleByTurns = true,
@@ -484,7 +622,7 @@ namespace GFE_Normal2D_Namespace {
             const fpreal64 uniScale = 1.0,
 
             const bool useConstantNormal3D = false,
-            const UT_StringHolder& normal3DAttribName = "N",
+            const UT_StringRef& normal3DAttribName = "N",
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
             const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,

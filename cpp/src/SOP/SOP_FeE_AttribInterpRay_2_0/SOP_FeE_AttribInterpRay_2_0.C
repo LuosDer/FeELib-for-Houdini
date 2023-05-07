@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_NormalizeAttribElement.h"
+#include "GFE/GFE_AttributeInterpRay.h"
 
 
 using namespace SOP_FeE_AttribInterpRay_2_0_Namespace;
@@ -132,8 +132,8 @@ newSopOperator(OP_OperatorTable* table)
         "FeE Attribute Interpolate Ray",
         SOP_FeE_AttribInterpRay_2_0::myConstructor,
         SOP_FeE_AttribInterpRay_2_0::buildTemplates(),
-        1,
-        1,
+        2,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -210,49 +210,32 @@ void
 SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_AttribInterpRay_2_0Parms>();
-    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
 
-    const fpreal64 uniScale = sopparms.getUniScale();
-    const bool doNormalize = sopparms.getNormalize();
 
-    if (!doNormalize && uniScale == 1.0)
-        return;
-
-
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-    const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
 
-    //const exint kernel = sopparms.getKernel();
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
-#if 0
-    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0,
-        UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,
-        doNormalize, uniScale,
-        subscribeRatio, minGrainSize);
+    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 
-#else
-    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0, cookparms);
-    
-    normalizeAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
-    normalizeAttribElement.getOutAttribArray().set(geo0AttribClass, geo0AttribName);
-    normalizeAttribElement.setComputeParm(doNormalize, uniScale, subscribeRatio, minGrainSize);
-    normalizeAttribElement.computeAndBumpDataId();
-#endif
+    GFE_AttributeInterpRay attributeInterpRay(outGeo0, &inGeo1, &cookparms);
+    attributeInterpRay.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    attributeInterpRay.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    //GFE_NormalizeAttribElement_Namespace::normalizeAttribElement(outGeo0, UTverify_cast<const GA_ElementGroup*>(geo0Group), geo0AttribClass, geo0AttribName,
-    //    doNormalize, uniScale,
-    //    subscribeRatio, minGrainSize);
+    attributeInterpRay.groupParser.setGroup(groupType, sopparms.getGroup());
+    attributeInterpRay.computeAndBumpDataId();
+
+
 
 
 

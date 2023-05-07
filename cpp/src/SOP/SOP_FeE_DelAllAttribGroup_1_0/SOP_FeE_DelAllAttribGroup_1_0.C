@@ -30,9 +30,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepPrimAttribName"
-        cppname "KeepPrimAttribName"
-        label   "Keep Prim Attrib Name"
+        name    "keepPrimAttrib"
+        cppname "KeepPrimAttrib"
+        label   "Keep Prim Attrib"
         type    string
         default { "" }
         disablewhen "{ doKeepPrimAttrib == 0 }"
@@ -50,9 +50,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepPointAttribName"
-        cppname "KeepPointAttribName"
-        label   "Keep Point Attrib Name"
+        name    "keepPointAttrib"
+        cppname "KeepPointAttrib"
+        label   "Keep Point Attrib"
         type    string
         default { "" }
         disablewhen "{ doKeepPointAttrib == 0 }"
@@ -70,9 +70,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepVertexAttribName"
-        cppname "KeepVertexAttribName"
-        label   "Keep Vertex Attrib Name"
+        name    "keepVertexAttrib"
+        cppname "KeepVertexAttrib"
+        label   "Keep Vertex Attrib"
         type    string
         default { "" }
         disablewhen "{ doKeepVertexAttrib == 0 }"
@@ -92,9 +92,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepDetailAttribName"
-        cppname "KeepDetailAttribName"
-        label   "Keep Detail Attrib Name"
+        name    "keepDetailAttrib"
+        cppname "KeepDetailAttrib"
+        label   "Keep Detail Attrib"
         type    string
         default { "" }
         disablewhen "{ doKeepDetailAttrib == 0 }"
@@ -121,9 +121,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepPointGroupName"
-        cppname "KeepPointGroupName"
-        label   "Keep Point Group Name"
+        name    "keepPointGroup"
+        cppname "KeepPointGroup"
+        label   "Keep Point Group"
         type    string
         default { "" }
         disablewhen "{ doKeepPointGroup == 0 }"
@@ -141,9 +141,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepVertexGroupName"
-        cppname "KeepVertexGroupName"
-        label   "Keep Vertex Group Name"
+        name    "keepVertexGroup"
+        cppname "KeepVertexGroup"
+        label   "Keep Vertex Group"
         type    string
         default { "" }
         disablewhen "{ doKeepVertexGroup == 0 }"
@@ -161,9 +161,9 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepPrimGroupName"
-        cppname "KeepPrimGroupName"
-        label   "Keep Prim Group Name"
+        name    "keepPrimGroup"
+        cppname "KeepPrimGroup"
+        label   "Keep Prim Group"
         type    string
         default { "" }
         disablewhen "{ doKeepPrimGroup == 0 }"
@@ -181,33 +181,14 @@ static const char *theDsFile = R"THEDSFILE(
         joinnext
     }
     parm {
-        name    "keepEdgeGroupName"
-        cppname "KeepEdgeGroupName"
-        label   "Keep Edge Group Name"
+        name    "keepEdgeGroup"
+        cppname "KeepEdgeGroup"
+        label   "Keep Edge Group"
         type    string
         default { "" }
         disablewhen "{ doKeepEdgeGroup == 0 }"
     }
 
-
-
-
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 16 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 1024 }
-        range   { 0! 2048 }
-    }
 
 }
 )THEDSFILE";
@@ -225,10 +206,10 @@ SOP_FeE_DelAllAttribGroup_1_0::buildTemplates()
         templ.setChoiceListPtr("keepVertexAttribName"_sh,  &SOP_Node::vertexAttribMenu);
         templ.setChoiceListPtr("keepDetailAttribName"_sh,  &SOP_Node::detailAttribMenu);
 
-        templ.setChoiceListPtr("keepPrimGroupName"_sh,     &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("keepPointGroupName"_sh,    &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("keepPrimGroupName"_sh,     &SOP_Node::primNamedGroupMenu);
+        templ.setChoiceListPtr("keepPointGroupName"_sh,    &SOP_Node::pointNamedGroupMenu);
         templ.setChoiceListPtr("keepVertexGroupName"_sh,   &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("keepEdgeGroupName"_sh,     &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroupName"_sh,     &SOP_Node::edgeNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -316,21 +297,22 @@ SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
         return;
 
     GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
+        
 
     const UT_StringHolder& allPattern = "*";
-    const UT_StringHolder& keepPrimAttribName   = sopparms.getDoKeepPrimAttrib()   ? sopparms.getKeepPrimAttribName()   : allPattern;
-    const UT_StringHolder& keepPointAttribName  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttribName()  : allPattern;
-    const UT_StringHolder& keepVertexAttribName = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttribName() : allPattern;
-    const UT_StringHolder& keepDetailAttribName = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttribName() : allPattern;
-    outGFE0.keepStdAttribute(keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
+    const UT_StringHolder& keepPrimAttrib   = sopparms.getDoKeepPrimAttrib()   ? sopparms.getKeepPrimAttrib()   : allPattern;
+    const UT_StringHolder& keepPointAttrib  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttrib()  : allPattern;
+    const UT_StringHolder& keepVertexAttrib = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttrib() : allPattern;
+    const UT_StringHolder& keepDetailAttrib = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttrib() : allPattern;
+    outGFE0.keepStdAttribute(keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
     //GA_AttributeSet& attribSet = outGeo0.getAttributes();
-    //GFE_Attribute::keepStdAttribute(attribSet, attribSet, keepPrimAttribName, keepPointAttribName, keepVertexAttribName, keepDetailAttribName);
+    //GFE_Attribute::keepStdAttribute(attribSet, attribSet, keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
 
-    const UT_StringHolder& keepPrimGroupName   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroupName()   : allPattern;
-    const UT_StringHolder& keepPointGroupName  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroupName()  : allPattern;
-    const UT_StringHolder& keepVertexGroupName = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroupName() : allPattern;
-    const UT_StringHolder& keepEdgeGroupName   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroupName()   : allPattern;
-    outGFE0.keepStdGroup(keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
+    const UT_StringHolder& keepPrimGroup   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroup()   : allPattern;
+    const UT_StringHolder& keepPointGroup  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroup()  : allPattern;
+    const UT_StringHolder& keepVertexGroup = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroup() : allPattern;
+    const UT_StringHolder& keepEdgeGroup   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroup()   : allPattern;
+    outGFE0.keepStdGroup(keepPrimGroup, keepPointGroup, keepVertexGroup, keepEdgeGroup);
     //GFE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
 }
 

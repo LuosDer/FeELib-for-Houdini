@@ -14,6 +14,8 @@
 
 #include "GFE/GFE_GroupByMeshWinding.h"
 
+
+
 using namespace SOP_FeE_GroupByMeshWinding_1_0_Namespace;
 
 
@@ -237,12 +239,12 @@ void
 SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_GroupByMeshWinding_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupByMeshWinding_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -264,10 +266,18 @@ SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const bool reversePrim = sopparms.getReversePrim();
     const bool polyCap = sopparms.getPolyCap();
     //const bool delAttrib = sopparms.getDelAttrib();
-    
-    GFE_GroupByMeshWinding::groupByMeshWinding(cookparms, outGeo0, primGroupName, method,
+
+    GFE_GroupByMeshWinding groupByMeshWinding(outGeo0, cookparms);
+    groupByMeshWinding.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    groupByMeshWinding.setComputeParm(primGroupName, method,
         runOverPieces, findInputPieceAttrib, pieceAttribName,
-        outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap);
+        outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap,
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    groupByMeshWinding.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupByMeshWinding.computeAndBumpDataId();
+
+
 
     //const exint subscribeRatio = sopparms.getSubscribeRatio();
     //const exint minGrainSize = sopparms.getMinGrainSize();

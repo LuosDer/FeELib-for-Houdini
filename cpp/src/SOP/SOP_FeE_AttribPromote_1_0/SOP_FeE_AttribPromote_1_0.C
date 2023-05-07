@@ -2,10 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribPromote_1_0.h"
 
-
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_AttribPromote_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_AttribPromote_1_0Verb::cook with the correct type.
 #include "SOP_FeE_AttribPromote_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
