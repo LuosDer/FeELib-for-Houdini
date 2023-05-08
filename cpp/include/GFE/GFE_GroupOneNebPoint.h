@@ -29,27 +29,23 @@ public:
     {
     }
 
-     
-    GA_Group*
-        findOrCreate(
-            const bool detached = false,
-            const UT_StringHolder& groupName = ""
-        )
-    {
-        return getOutGroupArray().findOrCreate(detached, GA_GROUP_POINT, groupName);
-    }
-
     
     void
         setComputeParm(
+            const bool preFusePoint = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
+        this->preFusePoint = preFusePoint;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
+
+     
+    SYS_FORCE_INLINE GA_Group* findOrCreateGroup(const bool detached = false, const UT_StringHolder& groupName = "")
+    { return getOutGroupArray().findOrCreate(detached, GA_GROUP_POINT, groupName); }
 
 
 private:
@@ -64,29 +60,21 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        outGroup = getOutGroupArray()[0];
+        outGroup = static_cast<GA_PointGroup*>(getOutGroupArray()[0]);
         
         if (groupParser.isFull())
         {
             groupOneNeb(const GA_PrimitiveGroup*());
             return true;
         }
+        
         switch (groupParser.classType())
         {
-        case GA_GROUP_PRIMITIVE:
-            return groupOneNeb(groupParser.getPrimitiveGroup());
-            break;
-        case GA_GROUP_POINT:
-            return groupOneNeb(groupParser.getPointGroup());
-            break;
-        case GA_GROUP_VERTEX:
-            return groupOneNeb(groupParser.getVertexGroup());
-            break;
-        case GA_GROUP_EDGE:
-            return groupOneNeb(groupParser.getEdgeGroup());
-            break;
-        default:
-            break;
+        case GA_GROUP_PRIMITIVE: return groupOneNeb(groupParser.getPrimitiveGroup()); break;
+        case GA_GROUP_POINT:     return groupOneNeb(groupParser.getPointGroup());     break;
+        case GA_GROUP_VERTEX:    return groupOneNeb(groupParser.getVertexGroup());    break;
+        case GA_GROUP_EDGE:      return groupOneNeb(groupParser.getEdgeGroup());      break;
+        default: break;
         }
 
         return true;
@@ -95,7 +83,7 @@ private:
 
     void groupOneNeb(const GA_PrimitiveGroup* const geoGroup)
     {
-        // UT_ASSERT_P(geoGroup);
+        //UT_ASSERT_P(geoGroup);
         
         const GA_Topology& topo = geo->getTopology();
         //topo.makeVertexRef();
@@ -114,7 +102,7 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                        ptoff = vtxPointRef->getLink(vtxoff);
+                        ptoff  = vtxPointRef->getLink(vtxoff);
                         vtxoff = pointVtxRef->getLink(ptoff);
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff))
@@ -122,7 +110,7 @@ private:
                             outGroup->setElement(ptoff, true);
 
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-                        ptoff = vtxPointRef->getLink(vtxoff);
+                        ptoff  = vtxPointRef->getLink(vtxoff);
                         vtxoff = pointVtxRef->getLink(ptoff);
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff))
@@ -135,10 +123,7 @@ private:
     }
 
 
-    void
-        groupOneNeb(
-            const GA_PointGroup* const geoGroup
-        )
+    void groupOneNeb(const GA_PointGroup* const geoGroup)
     {
         UT_ASSERT_P(geoGroup);
         
@@ -184,10 +169,7 @@ private:
     }
 
 
-    void
-        groupOneNeb(
-            const GA_VertexGroup* const geoGroup
-        )
+    void groupOneNeb(const GA_VertexGroup* const geoGroup)
     {
         UT_ASSERT_P(geoGroup);
         
@@ -234,7 +216,8 @@ private:
 
 
 
-
+public:
+    bool preFusePoint = false;
     
 private:
     GA_PointGroup* outGroup = nullptr;

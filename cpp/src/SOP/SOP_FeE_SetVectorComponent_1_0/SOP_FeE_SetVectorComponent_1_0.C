@@ -297,4 +297,7 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         setVectorComponent.setRestAttrib(sopparms.getRestAttribName());
     }
     setVectorComponent.computeAndBumpDataId();
+
+
+    
 }

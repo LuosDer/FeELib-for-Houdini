@@ -1,8 +1,8 @@
 
 #pragma once
 
-#ifndef __GFE_UVScaletoWorldSize_h__
-#define __GFE_UVScaletoWorldSize_h__
+#ifndef __GFE_UVGridify_h__
+#define __GFE_UVGridify_h__
 
 //#include "GFE/GFE_UVGridify.h"
 
@@ -21,6 +21,9 @@ enum class GFE_UVGridify_RowColMethod
     Rows,
     Columns,
 };
+
+
+
 
 class GFE_UVGridify : public GFE_AttribFilter {
 
@@ -125,9 +128,7 @@ private:
 
 
     template<typename VECTOR_T, typename POS_VECTOR_T>
-    SYS_FORCE_INLINE
-        void
-        uvGridify(
+    void uvGridify(
             const GA_RWHandleT<VECTOR_T>& uv_h,
             const GA_ROHandleT<POS_VECTOR_T>& pos_h,
             VECTOR_T& uv,
@@ -166,10 +167,7 @@ private:
     }
 
     template<typename VECTOR_T>
-    void
-        uvGridify(
-            const GA_RWHandleT<VECTOR_T>& uv_h
-        )
+    void uvGridify(const GA_RWHandleT<VECTOR_T>& uv_h)
     {
         const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
         const GA_ROHandleT<TEMP_POS_VECTOR_TYPE> pos_h(geo->getP());

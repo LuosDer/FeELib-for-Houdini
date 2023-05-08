@@ -17,11 +17,7 @@ class GFE_GroupUnion {
 
 public:
 
-    static void
-        groupUnion(
-            GA_EdgeGroup& group,
-            const GA_PrimitiveGroup* const groupRef
-        )
+    static void groupUnion(GA_EdgeGroup& group, const GA_PrimitiveGroup* const groupRef)
     {
         if (!groupRef)
         {
@@ -60,11 +56,7 @@ public:
     }
 
 
-    static void
-        groupUnion(
-            GA_EdgeGroup& group,
-            const GA_PointGroup* const groupRef
-        )
+    static void groupUnion(GA_EdgeGroup& group, const GA_PointGroup* const groupRef)
     {
         if (!groupRef)
         {
@@ -117,11 +109,7 @@ public:
         }
     }
 
-    static void
-        groupUnion(
-            GA_EdgeGroup& group,
-            const GA_VertexGroup* const groupRef
-        )
+    static void groupUnion(GA_EdgeGroup& group, const GA_VertexGroup* const groupRef)
     {
         if (!groupRef)
         {
@@ -175,20 +163,10 @@ public:
     }
 
 
-    static void
-        groupUnion(
-            GA_EdgeGroup& group,
-            const GA_EdgeGroup* const groupRef
-        )
-    {
-        group.combine(groupRef);
-    }
+    SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GA_EdgeGroup* const groupRef)
+    { group.combine(groupRef); }
 
-    static void
-        groupUnion(
-            GA_EdgeGroup& group,
-            const GA_Group* const groupRef
-        )
+    static void groupUnion(GA_EdgeGroup& group, const GA_Group* const groupRef)
     {
         if (!groupRef)
         {
@@ -197,31 +175,15 @@ public:
         }
         switch (groupRef->classType())
         {
-        case GA_GROUP_PRIMITIVE:
-            groupUnion(group, static_cast<const GA_PrimitiveGroup*>(groupRef));
-        break;
-        case GA_GROUP_POINT:
-            groupUnion(group, static_cast<const GA_PointGroup*>(groupRef));
-        break;
-        case GA_GROUP_VERTEX:
-            groupUnion(group, static_cast<const GA_VertexGroup*>(groupRef));
-        break;
-        case GA_GROUP_EDGE:
-            //group = *static_cast<const GA_EdgeGroup*>(groupRef);
-            //group += *static_cast<const GA_EdgeGroup*>(groupRef);
-            group.combine(groupRef);
-            break;
-        default:
-            break;
+        case GA_GROUP_PRIMITIVE: groupUnion(group, static_cast<const GA_PrimitiveGroup*>(groupRef)); break;
+        case GA_GROUP_POINT:     groupUnion(group, static_cast<const GA_PointGroup*>(groupRef));     break;
+        case GA_GROUP_VERTEX:    groupUnion(group, static_cast<const GA_VertexGroup*>(groupRef));    break;
+        case GA_GROUP_EDGE:      group.combine(groupRef);                                            break;
+        default: break;
         }
     }
 
-    SYS_FORCE_INLINE
-        static void
-        groupUnion(
-            GA_Group& group,
-            const GA_VertexGroup* const groupRef
-        )
+    SYS_FORCE_INLINE static void groupUnion(GA_Group& group, const GA_VertexGroup* const groupRef)
     {
         if (group.classType() == GA_GROUP_EDGE)
         {
@@ -264,22 +226,10 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE
-        static void
-        edgeGroupUnion(
-            GA_Group& group,
-            const GA_Group* const groupRef
-        )
-    {
-        groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef);
-    }
+    SYS_FORCE_INLINE static void edgeGroupUnion(GA_Group& group, const GA_Group* const groupRef)
+    { groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef); }
 
-    SYS_FORCE_INLINE
-        static void
-        groupUnion(
-            GA_Group& group,
-            const GA_Group* const groupRef
-        )
+    SYS_FORCE_INLINE static void groupUnion(GA_Group& group, const GA_Group* const groupRef)
     {
         if (group.classType() == GA_GROUP_EDGE)
         {
@@ -421,29 +371,17 @@ public:
 private:
 
     //Get Vertex Prim Index
-    SYS_FORCE_INLINE
-    static GA_Size
-        vertexPrimIndex(
-            const GA_Detail& geo,
-            const GA_Offset vtxoff
-        )
-    {
-        return geo.getPrimitiveVertexList(geo.vertexPrimitive(vtxoff)).find(vtxoff);
-    }
+    SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset vtxoff)
+    { return geo.getPrimitiveVertexList(geo.vertexPrimitive(vtxoff)).find(vtxoff); }
 
-    SYS_FORCE_INLINE
-    static GA_Size
-        vertexPrimIndex(
+    SYS_FORCE_INLINE static GA_Size vertexPrimIndex(
             const GA_Detail& geo,
             const GA_Offset primoff,
             const GA_Offset vtxoff
         )
-    {
-        return geo.getPrimitiveVertexList(primoff).find(vtxoff);
-    }
+    { return geo.getPrimitiveVertexList(primoff).find(vtxoff); }
 
-    static GA_Offset
-        vertexPointDst(
+    static GA_Offset vertexPointDst(
             const GA_Detail& geo,
             const GA_Offset primoff,
             const GA_Size vtxpnum
@@ -466,12 +404,7 @@ private:
         }
     }
 
-    SYS_FORCE_INLINE
-    static GA_Offset
-    vertexPointDst(
-        const GA_Detail& geo,
-        const GA_Offset vtxoff
-    )
+    SYS_FORCE_INLINE static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset vtxoff)
     {
         const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
         return vertexPointDst(geo, primoff, vertexPrimIndex(geo, primoff, vtxoff));

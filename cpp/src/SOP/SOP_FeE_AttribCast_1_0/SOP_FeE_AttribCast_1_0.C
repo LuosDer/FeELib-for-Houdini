@@ -291,8 +291,6 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     auto&& sopparms = cookparms.parms<SOP_FeE_AttribCast_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    //GFE_Detail& outGeoGFE0 = static_cast<GFE_Detail&>(outGeo0);
-
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
@@ -300,13 +298,7 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-#if 0
-    GFE_AttribCast attribCast(geo, cookparms);
-    attribCast.getInAttribArray().set(, );
-    attribCast.getInGroupArray() .set(, );
-    attribCast.newStorageClass = GA_STORECLASS_INT;
-    attribCast.compute();
-#endif
+
     
     GFE_AttribCast attribCast(outGeo0, &cookparms);
     attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
@@ -332,4 +324,6 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     attribCast.setComputeParm(sopparms.getDelOriginAttrib(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     attribCast.computeAndBumpDataId();
+
+    
 }

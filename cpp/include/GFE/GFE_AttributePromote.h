@@ -34,13 +34,11 @@ public:
 
     
     SYS_FORCE_INLINE void setSourceAttribute(const GA_AttributeOwner owner, const UT_StringRef &name)
-    {
-        this->srcAttribPtr = geo->findAttribute(owner, name);
-    }
+    { this->srcAttribPtr = geo->findAttribute(owner, name); }
+    
     SYS_FORCE_INLINE void setSourceAttribute(const GA_Attribute* const srcAttribPtr)
-    {
-        this->srcAttribPtr = srcAttribPtr;
-    }
+    { this->srcAttribPtr = srcAttribPtr; }
+    
     SYS_FORCE_INLINE void setSourceAttribute(GA_Attribute* const srcAttribPtr)
     {
         this->srcAttribPtr = srcAttribPtr;
@@ -144,9 +142,7 @@ public:
     }
 
     SYS_FORCE_INLINE GA_Attribute* getDestinationAttribute() const
-    {
-        return dstAttribPtr;
-    }
+    { return dstAttribPtr; }
 
 
 

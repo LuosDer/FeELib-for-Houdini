@@ -285,8 +285,7 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-#if 1
-    GFE_UVGridify uvGridify(cookparms, outGeo0);
+    GFE_UVGridify uvGridify(outGeo0, &cookparms);
     uvGridify.groupParser.setGroup(groupType, groupName);
     uvGridify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName);
     uvGridify.setComputeParm(
@@ -294,14 +293,8 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         reverseUVu, reverseUVv, uniScale,
         subscribeRatio, minGrainSize);
     uvGridify.computeAndBumpDataId();
-#else
-    GA_Attribute* posAttribPtr = GFE_UVGridify_Namespace::uvGridify(cookparms, outGeo0, groupType, groupName,
-        uvAttribClass, uvAttribName,
-        rowsOrColsNumMethod, rowsOrColsNum, 
-        reverseUVu, reverseUVv, uniScale,
-        subscribeRatio, minGrainSize
-    );
-#endif
+
+    
 }
 
 

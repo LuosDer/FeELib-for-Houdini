@@ -237,25 +237,6 @@ SOP_FeE_FlatEdge_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopCombineGroupType(SOP_FeE_FlatEdge_2_0Parms::CombineGroupType parmgrouptype)
-{
-    using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmgrouptype)
-    {
-    case CombineGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case CombineGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case CombineGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case CombineGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case CombineGroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
-
-
-
-static GA_GroupType
 sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmgrouptype)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
@@ -277,15 +258,16 @@ void
 SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_FlatEdge_2_0Parms>();
-    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_FlatEdge_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
 
 
     const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroupName();
+    
     if (!geo0AttribNames.isstring())
         return;
 
@@ -305,7 +287,7 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
                             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
     flatEdge.computeAndBumpDataId();
-    flatEdge.vi
+    flatEdge.visualizeOutGroup();
 
 
 }

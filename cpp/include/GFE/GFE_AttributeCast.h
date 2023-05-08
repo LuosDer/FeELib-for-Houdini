@@ -180,11 +180,7 @@ private:
 
     
     template<typename T>
-    void
-        attribDuplicate(
-            GA_ElementGroup& group,
-            const GA_Attribute& attribRef
-        )
+    void attribDuplicate(GA_ElementGroup& group, const GA_Attribute& attribRef)
     {
         UTparallelFor(groupParser.getSplittableRange(attribRef.getOwner()), [&group, &attribRef](const GA_SplittableRange& r)
         {
@@ -206,11 +202,7 @@ private:
     }
     
     template<>
-    void
-        attribDuplicate<UT_StringHolder>(
-            GA_ElementGroup& group,
-            const GA_Attribute& attribRef
-        )
+    void attribDuplicate<UT_StringHolder>(GA_ElementGroup& group, const GA_Attribute& attribRef)
     {
         const GA_ROHandleS attrib_h(&attribRef);
         UTparallelFor(groupParser.getSplittableRange(attribRef.getOwner()), [&group, &attrib_h](const GA_SplittableRange& r)
@@ -231,11 +223,7 @@ private:
         group.invalidateGroupEntries();
     }
     
-    void
-    attribDuplicate(
-        GA_ElementGroup& group,
-        const GA_Attribute& attribRef
-    )
+    void attribDuplicate(GA_ElementGroup& group, const GA_Attribute& attribRef)
     {
         switch (attribRef.getStorageClass())
         {
@@ -273,22 +261,13 @@ private:
         }
     }
     
-    SYS_FORCE_INLINE void attribDuplicate(
-        GA_Group& group,
-        const GA_Attribute& attribRef
-    )
-    {
-        return attribDuplicate(static_cast<GA_ElementGroup&>(group), attribRef);
-    }
+    SYS_FORCE_INLINE void attribDuplicate(GA_Group& group, const GA_Attribute& attribRef)
+    { return attribDuplicate(static_cast<GA_ElementGroup&>(group), attribRef); }
     
 
 
 
-    bool
-    attribDuplicate(
-        GA_Attribute& attrib,
-        const GA_ElementGroup& groupRef
-    )
+    bool attribDuplicate(GA_Attribute& attrib, const GA_ElementGroup& groupRef)
     {
         //const GA_SplittableRange geoSplittableRange = GFE_Group::getSplittableRangeByAnyGroup(*this, &group);
         const GA_SplittableRange geoSplittableRange = geo->getSplittableRangeByAnyGroup(groupRef);
@@ -345,9 +324,7 @@ private:
 
     
     SYS_FORCE_INLINE void attribCast(GA_Group& group,const UT_StringHolder& newName)
-    {
-        attribCast(static_cast<GA_ElementGroup&>(group), newName);
-    }
+    { attribCast(static_cast<GA_ElementGroup&>(group), newName); }
     
 
 
@@ -359,9 +336,7 @@ private:
     
     template<typename SCALAR_T, typename SCALAR_T_REF>
     SYS_FORCE_INLINE SCALAR_T scalarConvert(const SCALAR_T_REF inScalar)
-    {
-        return SCALAR_T(inScalar);
-    }
+    { return SCALAR_T(inScalar); }
 
 #if 0
     template<>
@@ -397,9 +372,7 @@ private:
 #else
     template<typename SCALAR_T>
     SYS_FORCE_INLINE SCALAR_T scalarConvertFromString(const char* const inScalar)
-    {
-        return atof(inScalar);
-    }
+    { return atof(inScalar); }
 
     template<typename SCALAR_T>
     SYS_FORCE_INLINE SCALAR_T scalarConvertFromString(const UT_StringHolder& inScalar)
@@ -483,11 +456,7 @@ private:
     }
     
     template<typename SCALAR_T, typename SCALAR_T_REF>
-    void
-    attribDuplicate(
-        GA_Attribute& attrib,
-        const GA_Attribute& attribRef
-    )
+    void attribDuplicate(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
             [this, &attrib, &attribRef](const GA_SplittableRange& r)
@@ -541,11 +510,7 @@ private:
     }
 #else
     template<typename SCALAR_T_REF>
-    void
-        attribDuplicateString(
-            GA_Attribute& attrib,
-            const GA_Attribute& attribRef
-        )
+    void attribDuplicateString(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_RWHandleS attrib_h(&attrib);
         UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
@@ -599,11 +564,7 @@ private:
     }
 #else
     template<typename SCALAR_T>
-    void
-        attribDuplicateFromString(
-            GA_Attribute& attrib,
-            const GA_Attribute& attribRef
-            )
+    void attribDuplicateFromString(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_ROHandleS attribRef_h(&attribRef);
         UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
@@ -630,9 +591,7 @@ private:
     template<>                                                           \
     SYS_FORCE_INLINE void attribDuplicate<SCALAR_T, UT_StringHolder>     \
         (GA_Attribute& attrib, const GA_Attribute& attribRef)            \
-    {                                                                    \
-        attribDuplicateFromString<SCALAR_T>(attrib, attribRef);          \
-    }                                                                    \
+    { attribDuplicateFromString<SCALAR_T>(attrib, attribRef); }          \
 
 
     GFE_ATTRIBDUPLICATE_SPECIALIZATION(int16)
@@ -646,17 +605,11 @@ private:
     
 
 
-#define GFE_ATTRIBDUPLICATE_SPECIALIZATION(SCALAR_T_REF)          \
-    template<>                                                    \
-    SYS_FORCE_INLINE                                              \
-    void                                                          \
-        attribDuplicate<UT_StringHolder, SCALAR_T_REF>(           \
-            GA_Attribute& attrib,                                 \
-            const GA_Attribute& attribRef                         \
-            )                                                     \
-    {                                                             \
-        attribDuplicateString<SCALAR_T_REF>(attrib, attribRef);   \
-    }                                                             \
+#define GFE_ATTRIBDUPLICATE_SPECIALIZATION(SCALAR_T_REF)                     \
+    template<>                                                               \
+    SYS_FORCE_INLINE void attribDuplicate<UT_StringHolder, SCALAR_T_REF>(    \
+            GA_Attribute& attrib, const GA_Attribute& attribRef)             \
+    { attribDuplicateString<SCALAR_T_REF>(attrib, attribRef); }              \
 
 
         GFE_ATTRIBDUPLICATE_SPECIALIZATION(int16)
@@ -691,11 +644,7 @@ private:
     //     }
     // }
     
-    void
-    attribDuplicate(
-        GA_Attribute& attrib,
-        const GA_Attribute& attribRef
-    )
+    void attribDuplicate(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         // GA_AttributeOwner owner = attrib.getOwner();
         // const GA_AIFStringTuple* a = attrib.getAIFStringTuple();

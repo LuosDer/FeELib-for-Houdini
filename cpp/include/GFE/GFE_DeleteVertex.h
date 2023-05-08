@@ -1,20 +1,15 @@
 
 #pragma once
 
-#ifndef __GFE_DelVertex_h__
-#define __GFE_DelVertex_h__
+#ifndef __GFE_DeleteVertex_h__
+#define __GFE_DeleteVertex_h__
 
-//#include "GFE/GFE_DelVertex.h"
+//#include "GFE/GFE_DeleteVertex.h"
 
-#include "GA/GA_Detail.h"
-
-//#include "GA/GA_PageHandle.h"
-//#include "GA/GA_PageIterator.h"
-
-#include "GFE/GFE_GroupParser.h"
+#include "GFE/GFE_GeoFilter.h"
 
 
-namespace GFE_DelVertex {
+namespace GFE_DeleteVertex {
 
 	
 	static void
@@ -343,6 +338,6 @@ delVertex(
 
 
 
-} // End of namespace GFE_DelVertex
+} // End of namespace GFE_DeleteVertex
 
 #endif

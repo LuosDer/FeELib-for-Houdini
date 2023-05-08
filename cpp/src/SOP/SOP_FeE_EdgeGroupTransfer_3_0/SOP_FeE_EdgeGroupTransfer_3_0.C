@@ -66,29 +66,61 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ useSnapDist == 0 }"
         range   { 0.001 10 }
     }
+
+
     parm {
-        name    "edgeGroup"
-        cppname "EdgeGroup"
-        label   "Edge Group"
+        name    "vertexEdgeGroup"
+        cppname "VertexEdgeGroup"
+        label   "Vertex Edge Group"
         type    string
         default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "useNewGroupName"
-        cppname "UseNewGroupName"
-        label   "Use New Group Name"
+        name    "renameVertexEdgeGroup"
+        cppname "RenameVertexEdgeGroup"
+        label   "Rename Vertex Edge Group"
         type    toggle
         nolabel
         joinnext
         default { "off" }
     }
     parm {
-        name    "newGroupName"
-        cppname "NewGroupName"
-        label   "New Group Name"
+        name    "newVertexEdgeGroupName"
+        cppname "NewVertexEdgeGroupName"
+        label   "New Vertex Edge Group Name"
         type    string
         default { "" }
-        disablewhen "{ useNewGroupName == 0 }"
+        disablewhen "{ renameVertexEdgeGroup == 0 }"
+    }
+    parm {
+        name    "edgeGroup"
+        cppname "EdgeGroup"
+        label   "Edge Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "renameEdgeGroup"
+        cppname "RenameEdgeGroup"
+        label   "Rename Edge Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "newEdgeGroupName"
+        cppname "NewEdgeGroupName"
+        label   "New Edge Group Name"
+        type    string
+        default { "" }
+        disablewhen "{ renameEdgeGroup == 0 }"
     }
     parm {
         name    "reverseGroup"
@@ -131,9 +163,9 @@ SOP_FeE_EdgeGroupTransfer_3_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_EdgeGroupTransfer_3_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("edgeGroup"_sh, &SOP_Node::edgeNamedGroupMenu);
-        
+        templ.setChoiceListPtr("group"_sh,           &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("edgeGroup"_sh,       &SOP_Node::edgeNamedGroupMenu);
+        templ.setChoiceListPtr("vertexEdgeGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -221,43 +253,43 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     //auto sopcache = (SOP_FeE_EdgeGroupTransfer_3_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
 
-
-    const bool useSnapDist = sopparms.getUseSnapDist();
-    const fpreal snapDist = sopparms.getSnapDist();
-    
-    const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
-
-    const bool useNewGroupName = sopparms.getUseNewGroupName();
-    const UT_StringHolder& newGroupName = sopparms.getNewGroupName();
-
-    const bool reverseGroup = sopparms.getReverseGroup();
-    const bool outAsVertexGroup = sopparms.getOutAsVertexGroup();
-    
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    GFE_EdgeGroupTransfer edgeGroupTransfer(outGeo0, cookparms);
-    edgeGroupTransfer.gro
-        outGeo0, inGeo0,
-        groupType, groupName, edgeGroupName,
-        useSnapDist, snapDist,
-        useNewGroupName, newGroupName,
-        reverseGroup, outAsVertexGroup,
-        subscribeRatio, minGrainSize);
+    GFE_EdgeGroupTransfer edgeGroupTransfer(outGeo0, inGeo1, cookparms);
+    
+    if (sopparms.getRenameEdgeGroup())
+    {
+        edgeGroupTransfer.newEdgeGroupNames = sopparms.getNewEdgeGroupName();
+    }
+    if (sopparms.getRenameVertexEdgeGroup())
+    {
+        edgeGroupTransfer.newVertexEdgeGroupNames = sopparms.getNewVertexEdgeGroupName();
+    }
+    
+    edgeGroupTransfer.setComputeParm(
+        sopparms.getUseSnapDist(), sopparms.getSnapDist(),
+        sopparms.getOutAsVertexGroup(), sopparms.getReverseGroup(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    edgeGroupTransfer.groupParser.setGroup(groupType, sopparms.getGroup());
+    edgeGroupTransfer.getRef0GroupArray().appends(GA_GROUP_EDGE, sopparms.getEdgeGroup());
+    edgeGroupTransfer.getRef0GroupArray().appends(GA_GROUP_VERTEX, sopparms.getVertexEdgeGroup());
+
+    
+    edgeGroupTransfer.computeAndBumpDataId();
+
+
+    
 }
 
 

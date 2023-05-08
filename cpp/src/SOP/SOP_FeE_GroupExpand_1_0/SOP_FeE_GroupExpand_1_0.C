@@ -413,7 +413,7 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     return outGeo0->getGroupTable(group->classType())->newGroup(groupName);
 
 #if 1
-    GFE_GroupExpand groupExpand(cookparms, outGeo0);
+    GFE_GroupExpand groupExpand(outGeo0, cookparms);
     groupExpand.groupParser.setGroup(groupType, sopparms.getGroup());
     groupExpand.getOutGroupArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName);
     groupExpand.setComputeParm(

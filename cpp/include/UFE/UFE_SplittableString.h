@@ -155,32 +155,22 @@ public:
         return isValid;
     }
     SYS_FORCE_INLINE bool getIsInvalid()
-    {
-        return !getIsValid();
-    }
+    { return !getIsValid(); }
 
     SYS_FORCE_INLINE bool forceGetIsValid()
-    {
-        return isValid;
-    }
+    { return isValid; }
 
     template<typename T>
     SYS_FORCE_INLINE T getNext()
-    {
-        return (T)getNextCore();
-    }
+    { return (T)getNextCore(); }
     
     template<>
     SYS_FORCE_INLINE UT_StringHolder getNext<UT_StringHolder>()
-    {
-        return UT_StringHolder(getNextCore().c_str());
-    }
+    { return UT_StringHolder(getNextCore().c_str()); }
 
     template<>
     SYS_FORCE_INLINE ::std::string getNext<::std::string>()
-    {
-        return getNextCore();
-    }
+    { return getNextCore(); }
 
     
     

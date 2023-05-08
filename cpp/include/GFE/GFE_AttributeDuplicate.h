@@ -110,14 +110,10 @@ private:
 
 
     SYS_FORCE_INLINE void groupDuplicate(GA_EdgeGroup& attribNew, const GA_EdgeGroup& attribRef)
-    {
-        attribNew = attribRef;
-    }
+    { attribNew = attribRef; }
 
     SYS_FORCE_INLINE void groupDuplicate(GA_ElementGroup& attribNew, const GA_ElementGroup& attribRef)
-    {
-        attribNew.copyMembership(attribRef);
-    }
+    { attribNew.copyMembership(attribRef); }
 
     SYS_FORCE_INLINE void groupDuplicate(GA_Group& attribNew, const GA_Group& attribRef)
     {

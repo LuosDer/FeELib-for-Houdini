@@ -41,24 +41,14 @@ public:
     }
 
 
-    void
-        setGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
-    {
-        groupParser.setGroup(geoPrimGroup);
-    }
+    SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    { groupParser.setGroup(geoPrimGroup); }
 
-    void
-        setGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser.setPrimitiveGroup(primGroupName);
-    }
+    SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
+    { groupParser.setPrimitiveGroup(primGroupName); }
 
 
-    GA_Attribute*
+    SYS_FORCE_INLINE GA_Attribute*
         findOrCreateUV(
             const bool detached = false,
             const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
@@ -66,9 +56,7 @@ public:
             const UT_StringHolder& name = "uv",
             const int tuple_size = 3
         )
-    {
-        return getOutAttribArray().findOrCreateUV(detached, uvAttribClass, storage, name, tuple_size);
-    }
+    { return getOutAttribArray().findOrCreateUV(detached, uvAttribClass, storage, name, tuple_size); }
 
     void
         setComputeParm(
@@ -155,10 +143,7 @@ private:
 
 
     template<typename VECTOR_T>
-    void
-        curveUV(
-            GA_Attribute* const uvAttribPtr
-        )
+    void curveUV(GA_Attribute* const uvAttribPtr)
     {
         using value_type = typename VECTOR_T::value_type;
 
@@ -302,7 +287,7 @@ private:
     exint minGrainSize = 64;
 
 
-};
+}; // End of Class GFE_CurveUV
 
 
 

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_DelVertex.h"
+#include "GFE/GFE_DeleteVertex.h"
 
 
 using namespace SOP_FeE_DelVertex_1_0_Namespace;

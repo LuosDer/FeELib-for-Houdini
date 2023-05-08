@@ -268,50 +268,8 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
     }
     restVectorComponent.setRestAttrib(geo0AttribClass, sopparms.getAttrib());
     restVectorComponent.computeAndBumpDataId();
+
     
-    //
-    //
-    // const GA_Attribute* const outAttrib = restVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
-    // if (!outAttrib)
-    //     return;
-    //
-    // restVectorComponent.setRestAttrib(sopparms.getRestAttribName());
-    // restVectorComponent.computeAndBumpDataId();
-    //
-    //
-    //
-    // const GA_AttributeOwner vecAttribClass = sopAttribOwner(sopparms.getVecAttribClass());
-    // const UT_StringHolder& vecAttribName = sopparms.getVecAttrib();
-    //
-    // const UT_StringHolder& restAttribName = sopparms.getRestAttribName();
-    //
-    //
-    // const exint vecComp = sopparms.getVecComp();
-    // const bool setConstant = sopparms.getSetConstant();
-    // const fpreal64 constValueF = sopparms.getConstValueF();
-    //
-    // const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    // const UT_StringHolder& groupName = sopparms.getGroup();
-    //
-    //
-    // const exint subscribeRatio = sopparms.getSubscribeRatio();
-    // const exint minGrainSize = sopparms.getMinGrainSize();
-    //
-    //
-    // //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-    //
-    // GFE_RestPy restPy(cookparms, outGeo0);
-    //
-    // restPy.groupParser.setGroup(groupType, groupName);
-    // restPy.findOrCreateOutAttrib(vecAttribClass, GA_STORE_INVALID, false, restAttribName);
-    // restPy.getInAttribArray().set(vecAttribClass, vecAttribName);
-    // restPy.setComputeParm(vecComp, setConstant, constValueF, subscribeRatio, minGrainSize);
-    // restPy.computeAndBumpDataId();
-
-
-    //GA_Attribute* posAttribPtr = GFE_RestPy::restPy<fpreal>(cookparms, outGeo0, groupType, groupName,
-    //    vecAttribClass, vecAttribName, GA_STORE_INVALID, restAttribName, vecComp, false, 0,
-    //    subscribeRatio, minGrainSize);
 }
 
 

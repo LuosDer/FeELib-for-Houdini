@@ -200,20 +200,14 @@ void
 SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_GroupOneNebPoint_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupOneNebPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
     
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
@@ -221,25 +215,17 @@ SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
 
 
 
+    GFE_GroupOneNebPoint groupOneNebPoint(outGeo0, cookparms);
 
-    GFE_GroupOneNebPoint groupOneNebPoint(cookparms, outGeo0);
+    groupOneNebPoint.setComputeParm(sopparms.getPreFusePoint(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    groupOneNebPoint.setComputeParm(sopparms.getPreFusePoint(), subscribeRatio, minGrainSize);
-    groupOneNebPoint.findOrCreate(false, groupName);
-
-    groupOneNebPoint.setGroup(sopparms.getPrimGroup());
-    groupOneNebPoint.findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName, 3);
+    groupOneNebPoint.groupParser.setGroup(sopparms.getGroup());
+    groupOneNebPoint.findOrCreateGroup(false, sopparms.getOneNebGroupName());
 
     groupOneNebPoint.computeAndBumpDataId();
 
 
-    // GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
-    //     GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
-    //     subscribeRatio, minGrainSize);
+
+    
 }
 
-
-
-namespace SOP_FeE_GroupOneNebPoint_1_0_Namespace {
-
-} // End SOP_FeE_GroupOneNebPoint_1_0_Namespace namespace

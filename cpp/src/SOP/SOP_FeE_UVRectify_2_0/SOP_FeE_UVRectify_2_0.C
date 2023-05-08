@@ -237,8 +237,6 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const GA_AttributeOwner geo0AttribClass = geo0Attrib->getOwner();
     const bool layoutit = sopparms.getLayout();
     const bool flattenMethod = sopFlattenMethod(sopparms.getFlattenMethod());
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
 
     GA_RWHandleT<UT_Vector3R> uv_h(geo0Attrib);
 

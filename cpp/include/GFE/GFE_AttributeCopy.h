@@ -265,6 +265,7 @@ private:
                 }, subscribeRatio, minGrainSize);
             }
         }
+        attribNew.invalidateGroupEntries();
     }
 
     SYS_FORCE_INLINE void copyGroup(
@@ -323,7 +324,6 @@ private:
                             if (!indexMap_target.isOffsetActive(id) || indexMap_target.isOffsetVacant(id))
                                 continue;
                             attribNew.copy(id, attribRef, elemoff);
-                            //attribNew.setElement(id, attribRef.contains(elemoff));
                         }
                     }
                 }, subscribeRatio, minGrainSize);

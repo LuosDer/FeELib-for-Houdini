@@ -13,7 +13,7 @@
 
 
 
-#include "GFE/GFE_MatchDirOrient.h"
+#include "GFE/GFE_MatchDirectionOrient.h"
 
 
 
@@ -384,140 +384,6 @@ SOP_FeE_MatchDirOrient_1_0::cookVerb() const
 
 
 
-static bool
-sopPrimPolyIsClosed(SOP_FeE_MatchDirOrient_1_0Parms::PrimType parmgrouptype)
-{
-    using namespace SOP_FeE_MatchDirOrient_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case PrimType::POLYLINE:   return 0;    break;
-    case PrimType::POLY:       return 1;    break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Prim type!");
-    return 0;
-}
-
-
-
-
-
-//// Calls functor on every active offset in this index map.
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachOffset(GA_IndexMap& idxmap, FUNCTOR&& functor)
-//{
-//    if (idxmap.isTrivialMap())
-//    {
-//        const GA_Offset end = GA_Offset(GA_Size(idxmap.indexSize()));
-//        for (GA_Offset off(0); off != end; ++off)
-//        {
-//            functor(off, off);
-//        }
-//    }
-//    else
-//    {
-//        const GA_Offset veryend(idxmap.myMaxOccupiedOffset + 1);
-//        GA_Size idx(0);
-//        GA_Offset off(0);
-//        while (true)
-//        {
-//            off = idxmap.findActiveOffset(off, veryend);
-//            GA_Offset end = idxmap.findInactiveOffset(off, veryend);
-//            if (off == end)
-//                break;
-//            do
-//            {
-//                functor(off, idx);
-//                ++off;
-//                ++idx;
-//            } while (off != end);
-//        }
-//    }
-//}
-
-
-
-
-/*
-template<typename FUNCTOR>
-static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const GA_ElementGroup* group = nullptr, bool complement = false)
-{
-    // Fall back to regular case if no group.
-    //if (!group)
-    //{
-    //    if (!complement)
-    //        index_map.forEachOffset(functor);
-    //    return;
-    //}
-
-    // Group order is only relevant if not complemented.
-    if (!complement)
-    {
-        const GA_ElementGroupOrder* order = group->getOrdered();
-        if (order)
-        {
-            GA_Size idx(0);
-            for (GA_ElementGroupOrderIndex i(0), n(order->entries()); i != n; ++i)
-            {
-                GA_Offset off = order->getElement(i);
-                functor(off, idx);
-                ++idx;
-            }
-            return;
-        }
-    }
-
-    // We have a group, treated as unordered.
-    const GA_Offset veryend = index_map.offsetSize();
-    GA_Size idx(0);
-    GA_Offset off(0);
-    while (true)
-    {
-        bool value;
-        GA_Size span_size;
-        group->getConstantSpan(off, veryend, span_size, value);
-        if (span_size == 0)
-            break;
-        if (value == complement)
-        {
-            off += span_size;
-            continue;
-        }
-        const GA_Offset span_end = off + span_size;
-        while (true)
-        {
-            off = index_map.findActiveOffset(off, span_end);
-            GA_Offset end = index_map.findInactiveOffset(off, span_end);
-            if (off == end)
-                break;
-            do
-            {
-                functor(off, idx);
-                ++off;
-                ++idx;
-            } while (off != end);
-        }
-    }
-}
-
-template<typename FUNCTOR>
-SYS_FORCE_INLINE
-void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool complement, FUNCTOR&& functor)
-{
-    forEachOffset(functor, geo->getPrimitiveMap(), group, complement);
-}
-
-*/
-
-
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachVertex(GA_Detail* geo, const GA_VertexGroup* group, bool complement, FUNCTOR&& functor)
-//{
-//    forEachOffset(functor, geo->getVertexMap(), group, complement);
-//}
-
-
 
 
 
@@ -526,76 +392,37 @@ void
 SOP_FeE_MatchDirOrient_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_MatchDirOrient_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_MatchDirOrient_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
-    outGeo0->replaceWith(*inGeo0);
-
-
-    GU_DetailHandle geoTmp_h;
-    GU_Detail* geoTmp = new GU_Detail();
-    geoTmp_h.allocateAndSet(geoTmp);
-    geoTmp->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
-    const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-    const UT_StringHolder& pointGroupName = sopparms.getPointGroup();
-    const UT_StringHolder& vertexGroupName = sopparms.getVertexGroup();
-    const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
-
-
-    const bool hasInputGroup = primGroupName.isstring() || pointGroupName.isstring() || vertexGroupName.isstring() || edgeGroupName.isstring();
-    GA_VertexGroup* geo0VtxGroup = nullptr;
-    GA_VertexGroupUPtr geo0vtxGroupUPtr;
-    if (hasInputGroup)
-    {
-        geo0vtxGroupUPtr = geoTmp->createDetachedVertexGroup();
-        geo0VtxGroup = geo0vtxGroupUPtr.get();
-        if (primGroupName.isstring())
-        {
-
-        }
-
-        if (pointGroupName.isstring())
-        {
-
-        }
-
-        if (vertexGroupName.isstring())
-        {
-
-        }
-
-        if (edgeGroupName.isstring())
-        {
-
-        }
-    }
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
-
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GFE_Skin::skin(outGeo0, true);
+    
+    GFE_MatchDirOrient matchDirOrient(outGeo0, inGeo1, cookparms);
+    
+    
+    matchDirOrient.setComputeParm(
+        sopparms.getUseSnapDist(), sopparms.getSnapDist(),
+        sopparms.getOutAsVertexGroup(), sopparms.getReverseGroup(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    outGeo0->bumpDataIdsForAddOrRemove(false, true, true);
+    matchDirOrient.groupParser.setGroup(groupType, sopparms.getGroup());
+    matchDirOrient.getRef0AttribArray().appends(GA_ATTRIB_POINT, sopparms.getEdgeGroup());
+
+    
+    matchDirOrient.computeAndBumpDataId();
 
 
-    GFE_TopologyReference::outTopoAttrib(outGeo0, sopparms.getOutTopoAttrib());
-
+    
 }
 
 

@@ -32,10 +32,10 @@ public:
     { return static_cast<const GA_Detail*>(this); }
 
     SYS_FORCE_INLINE GEO_Detail* asGEO_Detail()
-    { return static_cast<GEO_Detail*>(asGEO_Detail()); }
+    { return static_cast<GEO_Detail*>(asGA_Detail()); }
 
     SYS_FORCE_INLINE const GEO_Detail* asGEO_Detail() const
-    { return static_cast<const GEO_Detail*>(asGEO_Detail()); }
+    { return static_cast<const GEO_Detail*>(asGA_Detail()); }
 
     SYS_FORCE_INLINE GU_Detail* asGU_Detail()
     { return static_cast<GU_Detail*>(asGA_Detail()); }

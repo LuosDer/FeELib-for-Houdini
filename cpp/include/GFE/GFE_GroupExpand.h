@@ -69,7 +69,27 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
-};
+}; // End of class GFE_GroupExpand
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 namespace GFE_GroupExpand_Namespace {
 

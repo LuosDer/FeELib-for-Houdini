@@ -1257,11 +1257,43 @@ public:
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )
-    {
-        return findOrCreate(detached, GFE_Type::attributeOwner_groupType(owner), groupName, emplaceBack);
-    }
+    { return findOrCreate(detached, GFE_Type::attributeOwner_groupType(owner), groupName, emplaceBack); }
 
 
+    SYS_FORCE_INLINE GA_PrimitiveGroup*
+        findOrCreatePrimitive(
+            const bool detached = false,
+            const UT_StringRef& groupName = "",
+            const bool emplaceBack = true
+        )
+    { return static_cast<GA_PrimitiveGroup*>(findOrCreate(detached, GA_GROUP_PRIMITIVE, groupName, emplaceBack)); }
+
+    SYS_FORCE_INLINE GA_PointGroup*
+        findOrCreatePoint(
+            const bool detached = false,
+            const UT_StringRef& groupName = "",
+            const bool emplaceBack = true
+        )
+    { return static_cast<GA_PointGroup*>(findOrCreate(detached, GA_GROUP_POINT, groupName, emplaceBack)); }
+
+    SYS_FORCE_INLINE GA_VertexGroup*
+        findOrCreateVertex(
+            const bool detached = false,
+            const UT_StringRef& groupName = "",
+            const bool emplaceBack = true
+        )
+    { return static_cast<GA_VertexGroup*>(findOrCreate(detached, GA_GROUP_VERTEX, groupName, emplaceBack)); }
+
+    SYS_FORCE_INLINE GA_EdgeGroup*
+        findOrCreateEdge(
+            const bool detached = false,
+            const UT_StringRef& groupName = "",
+            const bool emplaceBack = true
+        )
+    { return static_cast<GA_EdgeGroup*>(findOrCreate(detached, GA_GROUP_EDGE, groupName, emplaceBack)); }
+
+    
+    
     void bumpDataId() const
     {
         const size_t len = groupArray.size();

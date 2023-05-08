@@ -16,30 +16,38 @@
 
 
 
-class GFE_Connectivity : public GFE_AttribFilter {
+class GFE_Connectivity : public GFE_AttribFilter
+{
 
 //#define GFE_TEMP_ConnectivityAttribName "__TEMP_GFE_ConnectivityAttrib"
 
 public:
 
-    GFE_Connectivity(
-        GFE_Detail* const geo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, cookparms)
-        , groupParserSeam(geo, groupParser.getGOP(), cookparms)
-    {
-    }
+GFE_Connectivity(
+    GFE_Detail* const geo,
+    const SOP_NodeVerb::CookParms* const cookparms = nullptr
+)
+    : GFE_AttribFilter(geo, cookparms)
+    , groupParserSeam(geo, groupParser.getGOP(), cookparms)
+{
+}
 
-    GFE_Connectivity(
-        GA_Detail& geo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, cookparms)
-        , groupParserSeam(geo, groupParser.getGOP(), cookparms)
-    {
-    }
+GFE_Connectivity(
+    GA_Detail& geo,
+    const SOP_NodeVerb::CookParms* const cookparms = nullptr
+)
+    : GFE_AttribFilter(geo, cookparms)
+    , groupParserSeam(geo, groupParser.getGOP(), cookparms)
+{
+}
+    
+~GFE_Connectivity()
+{
+}
 
+
+
+    
     void
         setComputeParm(
             const bool connectivityConstraint = false,
@@ -77,9 +85,7 @@ public:
     }
 
     SYS_FORCE_INLINE GA_Attribute* getConnectivityAttrib() const
-    {
-        return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
-    }
+    { return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0]; }
             
 
 
@@ -94,12 +100,12 @@ private:
     virtual bool
         computeCore() override
     {
+        if (getOutAttribArray().isEmpty())
+            return false;
+        
         if (groupParser.isEmpty())
             return true;
 
-        if (getOutAttribArray().isEmpty())
-            return true;
-        
         connectivity();
 
         if (getOutAttribArray().size() > 1)
@@ -324,15 +330,21 @@ public:
     // bool outAsOffset = true;
 
 private:
-    const GA_Size maxElemHeapSize = pow(2, 15);
     GA_Attribute* connectivityAttribPtr;
     GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h;
+
+
+    
+    const GA_Size maxElemHeapSize = pow(2, 15);
     const UT_StringHolder GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
+
 #if 0
     const GA_Offset UNREACHED_NUMBER = SYS_EXINT_MAX;
 #else
     const GA_Offset UNREACHED_NUMBER = -1;
 #endif
+
+    
 }; // End of class GFE_Connectivity
 
 

@@ -1,39 +1,84 @@
 
 #pragma once
 
-#ifndef __GFE_MatchDirOrient_h__
-#define __GFE_MatchDirOrient_h__
+#ifndef __GFE_MatchDirectionOrient_h__
+#define __GFE_MatchDirectionOrient_h__
 
-//#include "GFE/GFE_MatchDirOrient.h"
-
-#include "GA/GA_Detail.h"
+//#include "GFE/GFE_MatchDirectionOrient.h"
 
 
-//#include "GFE/GFE_Type.h
+
+#include "GFE/GFE_GeoFilter.h"
 
 
-namespace GFE_MatchDirOrient {
+class GFE_MatchDirOrient : public GFE_AttribFilterWithRef {
 
+public:
+    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+
+    ~GFE_EdgeGroupTransfer()
+    {
+    }
+
+    
+
+    void
+    setComputeParm(
+        const bool useSnapDist = true,
+        const fpreal snapDist = 0.001,
+        const bool reverseGroup = false,
+        const bool outAsVertexGroup = false,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 1024
+    )
+    {
+        setHasComputed();
+        this->useSnapDist      = useSnapDist;
+        this->snapDist         = snapDist;
+        this->reverseGroup     = reverseGroup;
+        this->outAsVertexGroup = outAsVertexGroup;
+        this->subscribeRatio   = subscribeRatio;
+        this->minGrainSize     = minGrainSize;
+    }
+
+    
+    
+
+private:
+
+// can not use in parallel unless for each GA_Detail
+virtual bool
+    computeCore() override
+{
+    if (getOutGroupArray().isEmpty())
+        return false;
+    
+    if (groupParser.isEmpty())
+        return true;
+
+
+    
+    return true;
+}
 
 
 
 
     template<typename T>
-    static UT_Matrix4T<T>
-        matchDirOrient(
-            GA_Detail* const geo,
-            const GA_Detail* const refGeo,
-            const GA_Detail* restGeo,
-            const UT_StringHolder& attribToXformPattern,
-            const GA_ROHandleT<UT_Vector3T<T>>& posRest_h,
-            const GA_ROHandleT<UT_Vector3T<T>>& posRef_h
-        ) {
+    UT_Matrix4T<T>
+    matchDirOrient(
+        const UT_StringHolder& attribToXformPattern,
+        const GA_ROHandleT<UT_Vector3T<T>>& posRest_h,
+        const GA_ROHandleT<UT_Vector3T<T>>& posRef_h
+    )
+    {
+    
     }
 
 
 
 
 
-} // End of namespace GFE_MatchDirOrient
+}; // End of class GFE_MatchDirOrient
 
 #endif

@@ -847,14 +847,14 @@ findOrParseGroupDetached(
 )
 {
     UT_ASSERT_P(geo);
-    if (!groupName.length())
-        return nullptr;
-
     if (!groupName.isstring())
     {
         cookparms.sopAddWarning(SOP_ERR_BADGROUP, groupName);
         return nullptr;
     }
+
+    if (!groupName.length())
+        return nullptr;
 
     const GA_GroupTable* const groupTable = geo->getGroupTable(groupType);
     if (groupTable)

@@ -525,7 +525,7 @@ public:
     )
     { getOutGroupArray().findOrCreate(detached, groupType, groupName); }
 
-    SYS_FORCE_INLINE void findOrCreateOutGroup(const GA_GroupType groupType = GA_GROUP_POINT,const UT_StringHolder& groupName = "")
+    SYS_FORCE_INLINE void findOrCreateOutGroup(const GA_GroupType groupType = GA_GROUP_POINT, const UT_StringHolder& groupName = "")
     { getOutGroupArray().findOrCreate(doDelOutGroup, groupType, groupName); }
     
     virtual void delOutGroup()
@@ -801,15 +801,6 @@ public:
     {
     }
 
-    GFE_AttribFilterWithRef(
-        GA_Detail& geo,
-        const GA_Detail* const geoRef,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
-    {
-    }
 
     GFE_AttribFilterWithRef(
         GA_Detail* const geo,
@@ -838,6 +829,16 @@ public:
     )
         : GFE_AttribFilter(geo, cookparms)
         , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
+    {
+    }
+
+    GFE_AttribFilterWithRef(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), &cookparms)
     {
     }
 

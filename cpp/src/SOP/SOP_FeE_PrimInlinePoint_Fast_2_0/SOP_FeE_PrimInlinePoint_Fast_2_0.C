@@ -197,31 +197,24 @@ void
 SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_PrimInlinePoint_Fast_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PrimInlinePoint_Fast_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
-
-    const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    GFE_PrimInlinePoint primInlinePoint(cookparms, outGeo0);
-    primInlinePoint.setComputeParm(1e-05, subscribeRatio, minGrainSize);
-    primInlinePoint.setThreshold_inlineCosRadians(threshold_inlineAngle);
+    GFE_PrimInlinePoint primInlinePoint(outGeo0, cookparms);
+    primInlinePoint.setComputeParm(1e-05, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
     primInlinePoint.reverseOutGroup = sopparms.getReverseGroup();
     primInlinePoint.doDelOutGroup = sopparms.getDelInlinePoint();
 
@@ -232,26 +225,6 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
     primInlinePoint.computeAndBumpDataId();
     primInlinePoint.visualizeOutGroup();
-
-    //if (sopparms.getDelInlinePoint())
-    //{
-    //    GFE_PrimInlinePoint::delPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(),
-    //        threshold_inlineAngleRadians, reverseGroup,
-    //        subscribeRatio, minGrainSize);
-    //    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    //}
-    //else
-    //{
-    //    GA_PointGroup* const inlinePtGroup = GFE_PrimInlinePoint::groupPrimInlinePoint_fast(cookparms, outGeo0, groupType, sopparms.getGroup(), sopparms.getPrimInlinePoint_groupName(),
-    //        threshold_inlineAngleRadians, reverseGroup,
-    //        subscribeRatio, minGrainSize);
-
-    //    cookparms.getNode()->setHighlight(true);
-    //    cookparms.select(*inlinePtGroup);
-
-    //    inlinePtGroup->bumpDataId();
-    //}
-
 
 
 }

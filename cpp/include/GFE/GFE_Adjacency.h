@@ -113,9 +113,7 @@ public:
         return ATTRIB_NAME_LOWNER##Attrib;                                                          \
     }                                                                                               \
     SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                     \
-    {                                                                                               \
-        ATTRIB_NAME_LOWNER##Attrib = attribPtr;                                                     \
-    }                                                                                               \
+    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; }                                                     \
     
     GFE_SETATTRIB_SPECIALIZATION(VertexPrimIndex,       vertexPrimIndex,       GA_ATTRIB_VERTEX)
     GFE_SETATTRIB_SPECIALIZATION(VertexPointDst,        vertexPointDst,        GA_ATTRIB_VERTEX)
@@ -141,9 +139,7 @@ public:
         return ATTRIB_NAME_LOWNER##Attrib;                                                       \
     }                                                                                            \
     SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                  \
-    {                                                                                            \
-        ATTRIB_NAME_LOWNER##Attrib = attribPtr;                                                  \
-    }                                                                                            \
+    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; }                                                  \
 
     GFE_SETATTRIB_ARRAY_SPECIALIZATION(PointPointEdge, pointPointEdge, GA_ATTRIB_POINT)
     GFE_SETATTRIB_ARRAY_SPECIALIZATION(PointPointPrim, pointPointPrim, GA_ATTRIB_POINT)
@@ -167,9 +163,7 @@ public:
         return ATTRIB_NAME_LOWNER##Group;                                                    \
     }                                                                                        \
     SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_VertexGroup* const groupPtr)             \
-    {                                                                                        \
-        ATTRIB_NAME_LOWNER##Group = groupPtr;                                                \
-    }                                                                                        \
+    { ATTRIB_NAME_LOWNER##Group = groupPtr; }                                                \
     
     GFE_SETGROUP_SPECIALIZATION(VertexNextEquiv,        vertexNextEquiv,        GA_GROUP_VERTEX)
     GFE_SETGROUP_SPECIALIZATION(VertexNextEquivNoLoop,  vertexNextEquivNoLoop,  GA_GROUP_VERTEX)
@@ -180,9 +174,7 @@ public:
 
 #define GFE_GETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER)   \
     SYS_FORCE_INLINE GA_Attribute* get##ATTRIB_NAME_UPPER() const             \
-    {                                                                         \
-        return ATTRIB_NAME_LOWNER##Attrib;                                    \
-    }                                                                         \
+    { return ATTRIB_NAME_LOWNER##Attrib; }                                    \
 
     GFE_GETATTRIB_SPECIALIZATION(VertexPrimIndex,       vertexPrimIndex)
     GFE_GETATTRIB_SPECIALIZATION(VertexPointDst,        vertexPointDst)
@@ -201,9 +193,7 @@ public:
 
 #define GFE_GETGROUP_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER)     \
 SYS_FORCE_INLINE GA_VertexGroup* get##ATTRIB_NAME_UPPER##Group() const         \
-{                                                                              \
-    return ATTRIB_NAME_LOWNER##Group;                                          \
-}                                                                              \
+{ return ATTRIB_NAME_LOWNER##Group; }                                          \
 
 GFE_GETGROUP_SPECIALIZATION(VertexNextEquiv,       vertexNextEquiv)
 GFE_GETGROUP_SPECIALIZATION(VertexNextEquivNoLoop, vertexNextEquivNoLoop)

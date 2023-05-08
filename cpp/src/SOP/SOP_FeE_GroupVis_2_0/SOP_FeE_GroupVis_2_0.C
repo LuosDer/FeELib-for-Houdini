@@ -174,13 +174,13 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
-
+    //const UT_StringHolder& groupName = sopparms.getGroup();
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const GA_Group* const geo0Group = GFE_Group::findGroup(outGeo0, groupType, groupName);
+    const GA_Group* const geo0Group = outGeo0.getGroupTable(groupType)->find(sopparms.getGroup());
 
     if (!geo0Group)
         return;

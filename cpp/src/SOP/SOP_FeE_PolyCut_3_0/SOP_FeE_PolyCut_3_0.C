@@ -296,29 +296,19 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     outGeo0.replaceWith(inGeo0);
 
 
-
-    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-
-
-    const bool mergePrimEndsIfClosed = sopparms.getMergePrimEndsIfClosed();
-    const bool cutPoint = sopparms.getCutPoint();
     const GFE_PolyCutType polyType = sopPolyType(sopparms.getPolyType());
 
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-
-    const UT_StringHolder& keepPrimAttribName  = sopparms.getKeepPrimAttribName();
-    const UT_StringHolder& keepPointAttribName = sopparms.getKeepPointAttribName();
-    const UT_StringHolder& keepPrimGroupName   = sopparms.getKeepPrimGroupName();
-    const UT_StringHolder& keepPointGroupName  = sopparms.getKeepPointGroupName();
-    const UT_StringHolder& keepEdgeGroupName   = sopparms.getKeepEdgeGroupName();
-
-    const bool delInputPointGroup = sopparms.getDelInputPointGroup();
+    
+    // const UT_StringHolder& keepPrimAttribName  = sopparms.getKeepPrimAttribName();
+    // const UT_StringHolder& keepPointAttribName = sopparms.getKeepPointAttribName();
+    // const UT_StringHolder& keepPrimGroupName   = sopparms.getKeepPrimGroupName();
+    // const UT_StringHolder& keepPointGroupName  = sopparms.getKeepPointGroupName();
+    // const UT_StringHolder& keepEdgeGroupName   = sopparms.getKeepEdgeGroupName();
 
 
     const UT_StringHolder& emptyStr = "";
@@ -326,7 +316,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const bool createSrcPrimAttrib = sopparms.getCreateSrcPrimAttrib();
     const UT_StringHolder& srcPrimAttribName = createSrcPrimAttrib ? sopparms.getSrcPrimAttribName() : emptyStr;
 
-    const bool createSrcPointAttrib = sopparms.getCreateSrcPointAttrib() && cutPoint;
+    const bool createSrcPointAttrib = sopparms.getCreateSrcPointAttrib() && sopparms.getCutPoint();
     const UT_StringHolder& srcPointAttribName = createSrcPointAttrib ? sopparms.getSrcPointAttribName() : emptyStr;
 
     
@@ -339,13 +329,9 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //    }
     //}
 
-#if 1
     GFE_PolyCut polyCut(outGeo0, &inGeo0, &cookparms);
-#else
-    outGeo0->replaceWith(*inGeo0);
-    GFE_PolyCut polyCut(outGeo0, nullptr, &cookparms);
-#endif
-    polyCut.setComputeParm(cutPoint, mergePrimEndsIfClosed, polyType);
+    
+    polyCut.setComputeParm(sopparms.getCutPoint(), sopparms.getMergePrimEndsIfClosed(), polyType);
 
     polyCut.setGroup(sopparms.getCutPointGroup(), sopparms.getPrimGroup());
 
@@ -355,19 +341,11 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (createSrcPointAttrib)
         polyCut.createSrcPointAttrib(srcPointAttribName);
 
-    polyCut.groupParser_cutPoint.setDelGroup(delInputPointGroup);
+    polyCut.groupParser_cutPoint.setDelGroup(sopparms.getDelInputPointGroup());
 
     polyCut.computeAndBumpDataIdsForAddOrRemove();
 
-
-
-    //GFE_PolyCut_Namespace::polyCut(cookparms, outGeo0, inGeo0,
-    //    sopparms.getCutPointGroup(), sopparms.getPrimGroup(),
-    //    cutPoint, mergePrimEndsIfClosed, polyType,
-    //    inStorageI, srcPrimAttribName, srcPointAttribName);
-
-
-    //outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    
 
 }
 

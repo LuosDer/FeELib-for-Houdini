@@ -28,13 +28,13 @@
  */
 
 // A .proto.h file is an automatically generated header file based on theDsFile,
-// below, to provide SOP_OrientAlongCurveParms, an easy way to access parameter
-// values from SOP_OrientAlongCurveVerb::cook with the correct type, and
-// SOP_OrientAlongCurveEnums, a namespace containing enum types for any ordinal
+// below, to provide SOP_FeE_OrientAlongCurve_1_0Parms, an easy way to access parameter
+// values from SOP_FeE_OrientAlongCurve_1_0Verb::cook with the correct type, and
+// SOP_FeE_OrientAlongCurve_1_0Enums, a namespace containing enum types for any ordinal
 // menu parameters.
-#include "SOP_OrientAlongCurve.proto.h"
+#include "SOP_FeE_OrientAlongCurve_1_0.proto.h"
 
-#include "GFE_CurveFrame.h"
+#include "GU/GU_CurveFrame.h"
 
 #include <SOP/SOP_Node.h>
 #include <SOP/SOP_NodeVerb.h>
@@ -58,17 +58,17 @@
 #include <SYS/SYS_Math.h>
 
 
-namespace HDK_Sample {
+namespace SOP_FeE_OrientAlongCurve_1_0_Namespace {
 
 //******************************************************************************
 //*                 Setup                                                      *
 //******************************************************************************
 
-class SOP_OrientAlongCurveVerb : public SOP_NodeVerb
+class SOP_FeE_OrientAlongCurve_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_NodeParms *allocParms() const override { return new SOP_OrientAlongCurveParms(); }
-    //SOP_NodeCache *allocCache() const override { return new SOP_OrientAlongCurveCache(); }
+    SOP_NodeParms *allocParms() const override { return new SOP_FeE_OrientAlongCurve_1_0Parms(); }
+    //SOP_NodeCache *allocCache() const override { return new SOP_FeE_OrientAlongCurve_1_0Cache(); }
     UT_StringHolder name() const override { return theSOPTypeName; }
 
     CookMode cookMode(const SOP_NodeParms *parms) const override { return COOK_GENERIC; }
@@ -81,7 +81,7 @@ public:
 
     /// This static data member automatically registers
     /// this verb class at library load time.
-    static const SOP_NodeVerb::Register<SOP_OrientAlongCurveVerb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_OrientAlongCurve_1_0Verb> theVerb;
 
     /// This is the parameter interface string, below.
     static const char *const theDsFile;
@@ -89,24 +89,28 @@ public:
 
 // The static member variable definitions have to be outside the class definition.
 // The declarations are inside the class.
-const UT_StringHolder SOP_OrientAlongCurveVerb::theSOPTypeName("hdk_orientalongcurve"_sh);
-const SOP_NodeVerb::Register<SOP_OrientAlongCurveVerb> SOP_OrientAlongCurveVerb::theVerb;
+const UT_StringHolder SOP_FeE_OrientAlongCurve_1_0Verb::theSOPTypeName("FeE::orientAlongCurve::1.0"_sh);
+const SOP_NodeVerb::Register<SOP_FeE_OrientAlongCurve_1_0Verb> SOP_FeE_OrientAlongCurve_1_0Verb::theVerb;
 
 /// This is the SOP class definition.
-class SOP_OrientAlongCurve : public SOP_Node
+class SOP_FeE_OrientAlongCurve_1_0 : public SOP_Node
 {
 public:
     static PRM_Template *buildTemplates();
 
     static OP_Node *myConstructor(OP_Network *net, const char *name, OP_Operator *op)
     {
-        return new SOP_OrientAlongCurve(net, name, op);
+        OP_Node* newOp = new SOP_FeE_OrientAlongCurve_1_0(net, name, op);
+        //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
+        newOp->setNodeShape("squared");
+        //newOp->setUserData("nodeshape", "tilted", false);
+        return newOp;
     }
 
 protected:
     const SOP_NodeVerb *cookVerb() const override;
 
-    SOP_OrientAlongCurve(OP_Network *net, const char *name, OP_Operator *op)
+    SOP_FeE_OrientAlongCurve_1_0(OP_Network *net, const char *name, OP_Operator *op)
         : SOP_Node(net, name, op)
     {
         // All verb SOPs must manage data IDs, to track what's changed
@@ -114,7 +118,7 @@ protected:
         mySopFlags.setManagesDataIDs(true);
     }
 
-    ~SOP_OrientAlongCurve() ovrride {}
+    ~SOP_FeE_OrientAlongCurve_1_0() override {}
 
     /// Since this SOP implements a verb, cookMySop just delegates to the verb.
     OP_ERROR cookMySop(OP_Context &context) override
@@ -143,9 +147,9 @@ protected:
     }
 };
 
-PRM_Template *SOP_OrientAlongCurve::buildTemplates()
+PRM_Template *SOP_FeE_OrientAlongCurve_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_OrientAlongCurve.C"_sh, SOP_OrientAlongCurveVerb::theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_OrientAlongCurve_1_0.C"_sh, SOP_FeE_OrientAlongCurve_1_0Verb::theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group", &SOP_Node::primGroupMenu);
@@ -153,37 +157,43 @@ PRM_Template *SOP_OrientAlongCurve::buildTemplates()
     return templ.templates();
 }
 
-const SOP_NodeVerb *SOP_OrientAlongCurve::cookVerb() const
+const SOP_NodeVerb *SOP_FeE_OrientAlongCurve_1_0::cookVerb() const
 {
-    return SOP_OrientAlongCurveVerb::theVerb.get();
+    return SOP_FeE_OrientAlongCurve_1_0Verb::theVerb.get();
 }
 
-} // End of HDK_Sample namespace
+} // End of SOP_FeE_OrientAlongCurve_1_0_Namespace namespace
 
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case, we add ourselves
 /// to the specified operator table.
 void newSopOperator(OP_OperatorTable *table)
 {
-    table->addOperator(new OP_Operator(
-        HDK_Sample::SOP_OrientAlongCurveVerb::theSOPTypeName,   // Internal name
-        "HDK Orientation Along Curve",                          // UI name
-        HDK_Sample::SOP_OrientAlongCurve::myConstructor,        // How to build the SOP
-        HDK_Sample::SOP_OrientAlongCurve::buildTemplates(),     // My parameters
-        1,      // Min # of sources
-        1,      // Max # of sources
-        nullptr,// Custom local variables (none)
-        0));    // No flags: not a generator, no merge input, not an output
+    OP_Operator* newOp = new OP_Operator(
+        SOP_FeE_OrientAlongCurve_1_0_Namespace::SOP_FeE_OrientAlongCurve_1_0Verb::theSOPTypeName,
+        "FeE Orientation Along Curve",
+        SOP_FeE_OrientAlongCurve_1_0_Namespace::SOP_FeE_OrientAlongCurve_1_0::myConstructor,
+        SOP_FeE_OrientAlongCurve_1_0_Namespace::SOP_FeE_OrientAlongCurve_1_0::buildTemplates(),
+        1,
+        1,
+        nullptr,
+        0,    // No flags: not a generator, no merge input, not an output
+        nullptr,
+        1,
+        "Five elements Elf/Data/Orient");
+
+    newOp->setIconName("SOP_orientalongcurve");
+    table->addOperator(newOp);
 }
 
-namespace HDK_Sample {
+namespace SOP_FeE_OrientAlongCurve_1_0_Namespace {
 
 //******************************************************************************
 //*                 Parameters                                                 *
 //******************************************************************************
 
 /// This is a multi-line raw string specifying the parameter interface for this SOP.
-const char *const SOP_OrientAlongCurveVerb::theDsFile = R"THEDSFILE(
+const char *const SOP_FeE_OrientAlongCurve_1_0Verb::theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
@@ -739,7 +749,7 @@ R"THEDSFILE(
 //*                 Cooking                                                    *
 //******************************************************************************
 
-using namespace SOP_OrientAlongCurveEnums;
+using namespace SOP_FeE_OrientAlongCurve_1_0Enums;
 using namespace GU_CurveFrame;
 
 template<typename T>
@@ -1201,7 +1211,7 @@ sopCreateAxisAttrib(
 }
 
 /// This is the function that does the actual work.
-void SOP_OrientAlongCurveVerb::cook(const CookParms &cookparms) const
+void SOP_FeE_OrientAlongCurve_1_0Verb::cook(const CookParms &cookparms) const
 {
     ///////////////////////////////////////////////////////////////////
     //                                                               //
@@ -1210,8 +1220,8 @@ void SOP_OrientAlongCurveVerb::cook(const CookParms &cookparms) const
     ///////////////////////////////////////////////////////////////////
 
     // This gives easy access to all of the current parameter values
-    auto &&sopparms = cookparms.parms<SOP_OrientAlongCurveParms>();
-    //auto sopcache = (SOP_OrientAlongCurveCache *)cookparms.cache();
+    auto &&sopparms = cookparms.parms<SOP_FeE_OrientAlongCurve_1_0Parms>();
+    //auto sopcache = (SOP_FeE_OrientAlongCurve_1_0Cache *)cookparms.cache();
 
     // The output detail
     GEO_Detail *output_geo = cookparms.gdh().gdpNC();
@@ -1249,8 +1259,8 @@ void SOP_OrientAlongCurveVerb::cook(const CookParms &cookparms) const
     // Compute transforms on the curves in a detached attribute,
     // since we won't be keeping it, and the index map won't be changing
     // while it's alive.
-    GA_ATINumeric *detached_transform_attrib = output_geo->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL64, 16);
-    GA_ATINumericUPtr transform_deleter(detached_transform_attrib);
+    GA_ATINumericUPtr transform_deleter = output_geo->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, GA_STORE_REAL64, 16);
+    GA_ATINumeric *detached_transform_attrib = transform_deleter.get();
     GA_RWHandleM4D transform_attrib(detached_transform_attrib);
 
     CurveFrameParms<double> parms;
@@ -1291,7 +1301,7 @@ void SOP_OrientAlongCurveVerb::cook(const CookParms &cookparms) const
     if (parms.myIncAngles[2] != 0.0 && parms.myIncAnglePer[2] == GU_CurveFrame::RotationPer::ATTRIB)
         parms.myRotAttribs[2].bind(output_geo->findAttribute(sopparms.getRollAttrib(), search_order, 4));
 
-    using UpVectorType = SOP_OrientAlongCurveEnums::UpVectorType;
+    using UpVectorType = SOP_FeE_OrientAlongCurve_1_0Enums::UpVectorType;
 
     switch (sopparms.getUpVectorType())
     {
@@ -1500,4 +1510,4 @@ void SOP_OrientAlongCurveVerb::cook(const CookParms &cookparms) const
     }
 }
 
-} // End of HDK_Sample namespace
+} // End of SOP_FeE_OrientAlongCurve_1_0_Namespace namespace
