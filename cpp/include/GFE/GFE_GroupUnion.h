@@ -195,8 +195,20 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE
-        static void
+    SYS_FORCE_INLINE static void groupUnion(GA_Group& group, const GA_EdgeGroup* const groupRef)
+    {
+        if (group.classType() == GA_GROUP_EDGE)
+        {
+            groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef);
+        }
+        else
+        {
+            static_cast<GA_ElementGroup&>(group).combine(groupRef);
+        }
+    }
+
+
+    static void
         groupUnion_topoAttrib(
             GA_Detail& geo,
             GA_Group& group,

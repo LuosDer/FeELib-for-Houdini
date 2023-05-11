@@ -87,15 +87,14 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribCast_1_0
     SOP_FeE_AttribCopy_4_0
     #SOP_FeE_AttribCopyFast_1_0
-    SOP_FeE_AttribCopyFromSingleElem_1_0
     SOP_FeE_AttribDel_2_0
     SOP_FeE_AttribDuplicate_1_0
     SOP_FeE_AttribInterpRay_2_0
-    SOP_FeE_AttribOut_1_0
     SOP_FeE_AttribPromote_1_0
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
     SOP_FeE_Carve_1_0
+    SOP_FeE_Clip_1_0
     SOP_FeE_Connectivity_1_0
     SOP_FeE_ConvertLine_1_0
     SOP_FeE_ConvexPoint_1_0

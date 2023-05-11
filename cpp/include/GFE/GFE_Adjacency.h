@@ -391,7 +391,7 @@ private:
         GFE_OffsetAttribToIndex offsetAttribToIndex(geo);
         //offsetAttribToIndex.offsetToIndex = true;
         
-        offsetAttribToIndex.getOutAttribArray().append(vertexPrimIndexAttrib);
+        // offsetAttribToIndex.getOutAttribArray().append(vertexPrimIndexAttrib);
         offsetAttribToIndex.getOutAttribArray().append(vertexVertexPrimPrevAttrib);
         offsetAttribToIndex.getOutAttribArray().append(vertexVertexPrimNextAttrib);
         offsetAttribToIndex.getOutAttribArray().append(vertexPointDstAttrib);

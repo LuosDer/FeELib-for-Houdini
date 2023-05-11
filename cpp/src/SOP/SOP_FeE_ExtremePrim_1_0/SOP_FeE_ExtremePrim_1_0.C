@@ -102,6 +102,31 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "usePieceAttrib"
+        cppname "UsePieceAttrib"
+        label   "Use Piece Attribute"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "pieceAttribClass"
+        cppname "PieceAttribClass"
+        label   "Piece Attrib Class"
+        type    string
+        default { "class" }
+        disablewhen "{ usePieceAttrib == 0 }"
+    }
+    parm {
+        name    "pieceAttrib"
+        cppname "PieceAttrib"
+        label   "Piece Attrib"
+        type    string
+        default { "class" }
+        disablewhen "{ usePieceAttrib == 0 }"
+    }
+    parm {
        name    "subscribeRatio"
        cppname "SubscribeRatio"
        label   "Subscribe Ratio"
@@ -128,7 +153,8 @@ SOP_FeE_ExtremePrim_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_ExtremePrim_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh,       &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -221,10 +247,10 @@ sopGroupType(SOP_FeE_ExtremePrim_1_0Parms::GroupType parmgrouptype)
 
 
 static GFE_StatisticalFunction
-sopStatisticalFunction(SOP_FeE_ExtremePrim_1_0Parms::StatisticalFunction parmgrouptype)
+sopStatisticalFunction(SOP_FeE_ExtremePrim_1_0Parms::StatisticalFunction parmStatisticalFunction)
 {
     using namespace SOP_FeE_ExtremePrim_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmStatisticalFunction)
     {
     case StatisticalFunction::MIN:     return GFE_StatisticalFunction::Min;    break;
     case StatisticalFunction::MAX:     return GFE_StatisticalFunction::Max;  break;
@@ -236,10 +262,10 @@ sopStatisticalFunction(SOP_FeE_ExtremePrim_1_0Parms::StatisticalFunction parmgro
 
 
 static GFE_MeasureType
-sopMeasureType(SOP_FeE_ExtremePrim_1_0Parms::Measure parmgrouptype)
+sopMeasureType(SOP_FeE_ExtremePrim_1_0Parms::Measure parmMeasureType)
 {
     using namespace SOP_FeE_ExtremePrim_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmMeasureType)
     {
     case Measure::PERIMETER:     return GFE_MeasureType::Perimeter;    break;
     case Measure::AREA:          return GFE_MeasureType::Area;         break;
@@ -265,9 +291,6 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GFE_StatisticalFunction statisticalFunction = sopStatisticalFunction(sopparms.getStatisticalFunction());
     const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
         
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
 
 
 
@@ -277,27 +300,29 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-
-    GFE_ExtremePrim extremePrim(cookparms, outGeo0);
+    
+    GFE_ExtremePrim extremePrim(outGeo0, &cookparms);
+    
     extremePrim.setComputeParm(
         statisticalFunction, measureType,
-        subscribeRatio, minGrainSize);
-    extremePrim.doDelOutGroup = sopparms.getDelOutGroupGeo();
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    if (sopparms.getUsePieceAttrib())
+    {
+        extremePrim.setPieceAttrib(GA_ATTRIB_PRIMITIVE, sopparms.getPieceAttrib());
+    }
+    extremePrim.doDelGroupElement = sopparms.getDelOutGroupGeo();
     extremePrim.reverseOutGroup = sopparms.getReverseGroup();
 
     extremePrim.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    extremePrim.findOrCreateOutGroup(GA_GROUP_PRIMITIVE, sopparms.getGroupName());
+    extremePrim.findOrCreateGroup(GA_GROUP_PRIMITIVE, sopparms.getGroupName());
 
     extremePrim.computeAndBumpDataId();
 
-    extremePrim.delOrVisualizeOutGroup();
+    extremePrim.delOrVisualizeGroup();
 
 
 }
 
 
-
-namespace SOP_FeE_ExtremePrim_1_0_Namespace {
-
-} // End SOP_FeE_ExtremePrim_1_0_Namespace namespace

@@ -199,15 +199,15 @@ SOP_FeE_AttribDel_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribDel_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("delPrimAttribName"_sh,    &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("delPointAttribName"_sh,   &SOP_Node::pointAttribMenu);
-        templ.setChoiceListPtr("delVertexAttribName"_sh,  &SOP_Node::vertexAttribMenu);
-        templ.setChoiceListPtr("delDetailAttribName"_sh,  &SOP_Node::detailAttribMenu);
+        templ.setChoiceListPtr("delPrimAttrib"_sh,    &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("delPointAttrib"_sh,   &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("delVertexAttrib"_sh,  &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("delDetailAttrib"_sh,  &SOP_Node::detailAttribMenu);
 
-        templ.setChoiceListPtr("delPrimGroupName"_sh,     &SOP_Node::primNamedGroupMenu);
-        templ.setChoiceListPtr("delPointGroupName"_sh,    &SOP_Node::pointNamedGroupMenu);
-        templ.setChoiceListPtr("delVertexGroupName"_sh,   &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("delEdgeGroupName"_sh,     &SOP_Node::edgeNamedGroupMenu);
+        templ.setChoiceListPtr("delPrimGroup"_sh,     &SOP_Node::primNamedGroupMenu);
+        templ.setChoiceListPtr("delPointGroup"_sh,    &SOP_Node::pointNamedGroupMenu);
+        templ.setChoiceListPtr("delVertexGroup"_sh,   &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("delEdgeGroup"_sh,     &SOP_Node::edgeNamedGroupMenu);
     }
     return templ.templates();
 }

@@ -292,8 +292,3 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     
 }
 
-
-
-namespace SOP_FeE_EdgeGroupTransfer_3_0_Namespace {
-
-} // End SOP_FeE_EdgeGroupTransfer_3_0_Namespace namespace

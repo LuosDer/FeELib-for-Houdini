@@ -227,14 +227,10 @@ sopAttribOwner(SOP_FeE_AttribCast_1_0Parms::AttribClass attribClass)
     using namespace SOP_FeE_AttribCast_1_0Enums;
     switch (attribClass)
     {
-    case AttribClass::PRIM: return GA_ATTRIB_PRIMITIVE;
-        break;
-    case AttribClass::POINT: return GA_ATTRIB_POINT;
-        break;
-    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;
-        break;
-    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;
-        break;
+    case AttribClass::PRIM:   return GA_ATTRIB_PRIMITIVE; break;
+    case AttribClass::POINT:  return GA_ATTRIB_POINT;     break;
+    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;    break;
+    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -247,14 +243,10 @@ sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType attribType)
     using namespace SOP_FeE_AttribCast_1_0Enums;
     switch (attribType)
     {
-    case AttribType::BOOL: return GA_STORECLASS_OTHER;
-        break;
-    case AttribType::INT: return GA_STORECLASS_INT;
-        break;
-    case AttribType::FLOAT: return GA_STORECLASS_FLOAT;
-        break;
-    case AttribType::STRING: return GA_STORECLASS_STRING;
-        break;
+    case AttribType::BOOL:   return GA_STORECLASS_OTHER;  break;
+    case AttribType::INT:    return GA_STORECLASS_INT;    break;
+    case AttribType::FLOAT:  return GA_STORECLASS_FLOAT;  break;
+    case AttribType::STRING: return GA_STORECLASS_STRING; break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Attrib Type!");
     return GA_STORECLASS_INVALID;

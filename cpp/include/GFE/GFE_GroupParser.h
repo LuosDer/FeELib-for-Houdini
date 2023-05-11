@@ -154,7 +154,7 @@ public:
         geoEdgeGroup = groupParser.geoEdgeGroup;
     }
 
-    inline virtual void reset(
+    virtual void reset(
         const GA_Detail* const inGeo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -163,7 +163,7 @@ public:
         this->cookparms = cookparms;
     }
 
-    inline virtual void reset(
+    virtual void reset(
         const GEO_Detail* const inGeo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -172,48 +172,51 @@ public:
         this->cookparms = cookparms;
     }
 
-    inline bool getFindGroup() const
-    {
-        return findGroup;
-    }
-    inline void setFindGroup(const bool findGroup)
-    {
-        this->findGroup = findGroup;
-    }
-    inline bool getDelGroup() const
-    {
-        return delGroup;
-    }
-    inline void setDelGroup(const bool delGroup)
-    {
-        this->delGroup = delGroup;
-    }
-    inline void setGroup(const GA_Group* const group)
+    SYS_FORCE_INLINE bool getFindGroup() const
+    { return findGroup; }
+    
+    SYS_FORCE_INLINE void setFindGroup(const bool findGroup)
+    { this->findGroup = findGroup; }
+    
+    SYS_FORCE_INLINE bool getDelGroup() const
+    { return delGroup; }
+    
+    SYS_FORCE_INLINE void setDelGroup(const bool delGroup)
+    { this->delGroup = delGroup; }
+    
+    void setGroup(const GA_Group* const group)
     {
         hasGroup = true;
         geoGroup = group;
         clearElementGroup();
     }
 
-    inline void setGroup(const GA_PrimitiveGroup* const group)
+    SYS_FORCE_INLINE void setGroup(const GFE_GroupParser& groupParser)
+    { setGroup(groupParser.getGroup()); }
+
+    
+    void setGroup(const GA_PrimitiveGroup* const group)
     {
         setGroup(static_cast<const GA_Group*>(group));
         hasPrimitiveGroup = true;
         geoPrimitiveGroup = group;
     }
-    inline void setGroup(const GA_PointGroup* const group)
+    
+    void setGroup(const GA_PointGroup* const group)
     {
         setGroup(static_cast<const GA_Group*>(group));
         hasPointGroup = true;
         geoPointGroup = group;
     }
-    inline void setGroup(const GA_VertexGroup* const group)
+    
+    void setGroup(const GA_VertexGroup* const group)
     {
         setGroup(static_cast<const GA_Group*>(group));
         hasVertexGroup = true;
         geoVertexGroup = group;
     }
-    inline void setGroup(const GA_EdgeGroup* const group)
+    
+    void setGroup(const GA_EdgeGroup* const group)
     {
         setGroup(static_cast<const GA_Group*>(group));
         hasEdgeGroup = true;
@@ -265,39 +268,26 @@ public:
     }
 
     SYS_FORCE_INLINE void setPrimitiveGroup(const UT_StringRef& groupName)
-    {
-        setGroup(GA_GROUP_PRIMITIVE, groupName);
-    }
+    { setGroup(GA_GROUP_PRIMITIVE, groupName); }
+    
     SYS_FORCE_INLINE void setPointGroup(const UT_StringRef& groupName)
-    {
-        setGroup(GA_GROUP_POINT, groupName);
-    }
+    { setGroup(GA_GROUP_POINT, groupName); }
+    
     SYS_FORCE_INLINE void setVertexGroup(const UT_StringRef& groupName)
-    {
-        setGroup(GA_GROUP_VERTEX, groupName);
-    }
+    { setGroup(GA_GROUP_VERTEX, groupName); }
+    
     SYS_FORCE_INLINE void setEdgeGroup(const UT_StringRef& groupName)
-    {
-        setGroup(GA_GROUP_EDGE, groupName);
-    }
+    { setGroup(GA_GROUP_EDGE, groupName); }
 
     
     SYS_FORCE_INLINE bool isEmpty() const
-    {
-        return hasGroup ? ( bool(geoGroup) && geoGroup->isEmpty() ) : false;
-    }
+    { return hasGroup ? ( bool(geoGroup) && geoGroup->isEmpty() ) : false; }
+    
     SYS_FORCE_INLINE bool isFull() const
-    {
-        return hasGroup ? ( !bool(geoGroup) || !geoGroup->isEmpty() ) : true;
-    }
-
-
-
-
+    { return hasGroup ? ( !bool(geoGroup) || !geoGroup->isEmpty() ) : true; }
+    
     SYS_FORCE_INLINE bool getHasGroup() const
-    {
-        return hasGroup;
-    }
+    { return hasGroup; }
 
     const GA_Group* getGroup() const
     {
@@ -329,14 +319,10 @@ public:
     }
 
     SYS_FORCE_INLINE const GA_Group* getGroup(const GA_AttributeOwner attribOwner)
-    {
-        return getGroup(GFE_Type::attributeOwner_groupType(attribOwner));
-    }
+    { return getGroup(GFE_Type::attributeOwner_groupType(attribOwner)); }
     
     SYS_FORCE_INLINE const GA_Group* getGroup(const GA_Attribute* attribPtr)
-    {
-        return getGroup(attribPtr->getOwner());
-    }
+    { return getGroup(attribPtr->getOwner()); }
 
     GA_GroupType classType() const
     {
@@ -348,26 +334,16 @@ public:
     }
 
     SYS_FORCE_INLINE GA_GroupType groupType() const
-    {
-        return classType();
-    }
+    { return classType(); }
 
     SYS_FORCE_INLINE bool isPrimitiveGroup() const
-    {
-        return classType() == GA_GROUP_PRIMITIVE;
-    }
+    { return classType() == GA_GROUP_PRIMITIVE; }
     SYS_FORCE_INLINE bool isPointGroup() const
-    {
-        return classType() == GA_GROUP_POINT;
-    }
+    { return classType() == GA_GROUP_POINT; }
     SYS_FORCE_INLINE bool isVertexGroup() const
-    {
-        return classType() == GA_GROUP_VERTEX;
-    }
+    { return classType() == GA_GROUP_VERTEX; }
     SYS_FORCE_INLINE bool isEdgeGroup() const
-    {
-        return classType() == GA_GROUP_EDGE;
-    }
+    { return classType() == GA_GROUP_EDGE; }
 
     SYS_FORCE_INLINE const GA_PrimitiveGroup* getPrimitiveGroup()
     {
@@ -406,19 +382,13 @@ public:
     }
 
     SYS_FORCE_INLINE GA_Range getPrimitiveRange()
-    {
-        return GA_Range(geo->getPrimitiveMap(), getPrimitiveGroup());
-    }
+    { return GA_Range(geo->getPrimitiveMap(), getPrimitiveGroup()); }
 
     SYS_FORCE_INLINE GA_Range getPointRange()
-    {
-        return GA_Range(geo->getPointMap(), getPointGroup());
-    }
+    { return GA_Range(geo->getPointMap(), getPointGroup()); }
 
     SYS_FORCE_INLINE GA_Range getVertexRange()
-    {
-        return GA_Range(geo->getVertexMap(), getVertexGroup());
-    }
+    { return GA_Range(geo->getVertexMap(), getVertexGroup()); }
 
     SYS_FORCE_INLINE GA_Range getRange(const GA_AttributeOwner attribOwner)
     {
@@ -441,17 +411,13 @@ public:
 
     
     SYS_FORCE_INLINE GA_SplittableRange getPrimitiveSplittableRange()
-    {
-        return GA_SplittableRange(getPrimitiveRange());
-    }
+    { return GA_SplittableRange(getPrimitiveRange()); }
+    
     SYS_FORCE_INLINE GA_SplittableRange getPointSplittableRange()
-    {
-        return GA_SplittableRange(getPointRange());
-    }
+    { return GA_SplittableRange(getPointRange()); }
+    
     SYS_FORCE_INLINE GA_SplittableRange getVertexSplittableRange()
-    {
-        return GA_SplittableRange(getVertexRange());
-    }
+    { return GA_SplittableRange(getVertexRange()); }
 
     SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_AttributeOwner attribOwner)
     {
@@ -504,21 +470,15 @@ public:
     }
     
     SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Attribute& attrib)
-    {
-        return getSplittableRange(attrib.getOwner());
-    }
+    { return getSplittableRange(attrib.getOwner()); }
     
     SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Group& group)
-    {
-        return getSplittableRange(group.classType());
-    }
+    { return getSplittableRange(group.classType()); }
     
 
 
     SYS_FORCE_INLINE GOP_Manager& getGOP() const
-    {
-        return gop;
-    }
+    { return gop; }
 
 
 
@@ -635,24 +595,16 @@ private:
     }
 
     SYS_FORCE_INLINE const GA_PrimitiveGroup* groupFindPromotePrimitiveDetached(const GA_Group* const group)
-    {
-        return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(group, GA_GROUP_PRIMITIVE));
-    }
+    { return static_cast<const GA_PrimitiveGroup*>(groupFindPromoteDetached(group, GA_GROUP_PRIMITIVE)); }
 
     SYS_FORCE_INLINE const GA_PointGroup* groupFindPromotePointDetached(const GA_Group* const group)
-    {
-        return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(group, GA_GROUP_POINT));
-    }
+    { return static_cast<const GA_PointGroup*>(groupFindPromoteDetached(group, GA_GROUP_POINT)); }
 
     SYS_FORCE_INLINE const GA_VertexGroup* groupFindPromoteVertexDetached(const GA_Group* const group)
-    {
-        return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(group, GA_GROUP_VERTEX));
-    }
+    { return static_cast<const GA_VertexGroup*>(groupFindPromoteDetached(group, GA_GROUP_VERTEX)); }
 
     SYS_FORCE_INLINE const GA_EdgeGroup* groupFindPromoteEdgeDetached(const GA_Group* const group)
-    {
-        return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(group, GA_GROUP_EDGE));
-    }
+    { return static_cast<const GA_EdgeGroup*>(groupFindPromoteDetached(group, GA_GROUP_EDGE)); }
 
 
 protected:

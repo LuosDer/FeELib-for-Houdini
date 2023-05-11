@@ -281,38 +281,25 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const bool groupUnsharedAfterFuse = sopparms.getGroupUnsharedAfterFuse();
 
     const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize   = sopparms.getMinGrainSize();
-
-
-    //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
 
     GFE_GroupUnshared groupUnshared(outGeo0, cookparms);
 
     groupUnshared.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    groupUnshared.findOrCreate(unsharedAttribClass, unsharedAttribStorageClass, GA_STORE_INVALID, false, geo0AttribNames);
-    groupUnshared.setComputeParm(groupUnsharedAfterFuse, sopparms.getFuseDist(), sopparms.getOutTopoAttrib(),
-        subscribeRatio, minGrainSize);
+    groupUnshared.setComputeParm(sopparms.getGroupUnsharedAfterFuse(), sopparms.getFuseDist(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    groupUnshared.outTopoAttrib = sopparms.getOutTopoAttrib();
+    
+    groupUnshared.findOrCreate(false, unsharedAttribClass, unsharedAttribStorageClass, GA_STORE_INVALID,  geo0AttribNames);
 
+    
     groupUnshared.computeAndBumpDataId();
-
     groupUnshared.visualizeOutGroup();
-    //GFE_GroupUnshared::groupUnshared(cookparms, outGeo0, groupType, sopparms.getGroup(),
-    //    geo0AttribNames,
-    //    unsharedAttribStorageClass, unsharedAttribClass,
-    //    groupUnsharedAfterFuse, sopparms.getOutTopoAttrib(),
-    //    subscribeRatio, minGrainSize);
+    
 }
 
-
-
-namespace SOP_FeE_GroupUnshared_1_0_Namespace {
-
-} // End SOP_FeE_GroupUnshared_1_0_Namespace namespace

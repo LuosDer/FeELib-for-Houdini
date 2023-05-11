@@ -69,7 +69,7 @@ SOP_FeE_GroupReverse_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_GroupReverse_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("reverseGroup"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }

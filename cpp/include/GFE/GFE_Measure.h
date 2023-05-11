@@ -47,17 +47,37 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
-    SYS_FORCE_INLINE void setPositionAttrib(const GA_Attribute* const inPosAttrib)
+    GA_Attribute*
+    findOrCreateTuple(
+        const bool detached = false,
+        const UT_StringRef& attribName = "",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
     {
-        posAttrib = inPosAttrib;
+        if(!detached && (!attribName.isstring() || attribName.length()==0) )
+        {
+            const char* measureName;
+            switch (measureType)
+            {
+            case GFE_MeasureType::Perimeter:     measureName = "perimeter";     break;
+            case GFE_MeasureType::Area:          measureName = "area";          break;
+            case GFE_MeasureType::Volume:        measureName = "volume";        break;
+            case GFE_MeasureType::MeshPerimeter: measureName = "meshPerimeter"; break;
+            case GFE_MeasureType::MeshArea:      measureName = "meshArea";      break;
+            case GFE_MeasureType::MeshVolume:    measureName = "meshVolume";    break;
+            default: break;
+            }
+            
+            char buffer[100];
+            sprintf(buffer, "%s%s", "__topo_", measureName);
+            
+            return getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_FLOAT, storage, buffer);
+        }
+        else
+        {
+            return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_FLOAT, storage, attribName);
+        }
     }
-
-    SYS_FORCE_INLINE void setPositionAttrib(const UT_StringHolder& posAttribName)
-    {
-        posAttrib = geo->findPointAttribute(posAttribName);
-    }
-
-    
 
 private:
 
@@ -992,7 +1012,8 @@ primArea##T(                                                                    
 
 
 
-    class ComputeVolume {
+    class ComputeVolume
+    {
     public:
         ComputeVolume(const GA_Detail* const a, const UT_Vector3T<fpreal32>& b)
             : myGeo(a)
@@ -1016,19 +1037,15 @@ primArea##T(                                                                    
                 }
             }
         }
-        void join(const ComputeVolume& other)
-        {
-            mySum += other.mySum;
-        }
-        fpreal getSum()
-        {
-            return mySum;
-        }
+        SYS_FORCE_INLINE void join(const ComputeVolume& other)
+        { mySum += other.mySum; }
+        SYS_FORCE_INLINE fpreal getSum() const
+        { return mySum; }
     private:
         fpreal mySum;
         const GA_Detail* const myGeo;
         const UT_Vector3T<fpreal32>& myBBoxCenter;
-    };
+    }; // End of Class ComputeVolume
 
 
 
@@ -1105,10 +1122,10 @@ public:
     
 
 private:
-    const GA_Attribute* posAttrib = nullptr;
     exint subscribeRatio = 64;
-    exint minGrainSize = 64;
-};
+    exint minGrainSize = 1024;
+    
+}; // End of Class GFE_Measure
 
 
 

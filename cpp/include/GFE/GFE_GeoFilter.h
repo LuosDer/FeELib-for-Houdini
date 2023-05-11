@@ -13,9 +13,7 @@
 
 #include "GFE/GFE_Detail.h"
 #include "GFE/GFE_AttributeArray.h"
-//#include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_GroupPromote.h"
 
 
 
@@ -130,6 +128,27 @@ public:
     
     SYS_FORCE_INLINE void compute()
     { hasComputed = computeCore(); }
+
+
+    
+    
+    SYS_FORCE_INLINE void setPieceAttrib(const GA_Attribute* const inAttrib)
+    { pieceAttrib = inAttrib; }
+
+    SYS_FORCE_INLINE void setPieceAttrib(const GA_AttributeOwner owner, const UT_StringRef& attribName)
+    { pieceAttrib = geo->findAttribute(owner, attribName); }
+
+
+    
+    SYS_FORCE_INLINE void setPositionAttrib(const GA_Attribute* const inPosAttrib)
+    { posAttrib = inPosAttrib; }
+
+    SYS_FORCE_INLINE void setPositionAttrib(const UT_StringRef& attribName)
+    { posAttrib = geo->findPointAttribute(attribName); }
+
+
+
+    
     
     SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove(
         const bool added_or_removed_points,
@@ -267,11 +286,15 @@ protected:
     GFE_Detail* geo;
     //const GFE_Detail* geoConst;
     const SOP_NodeVerb::CookParms* cookparms;
+    
+    const GA_Attribute* pieceAttrib = nullptr;
+    const GA_Attribute* posAttrib = nullptr;
 
 private:
     //bool outTopoAttrib = true;
     GOP_Manager gop;
     bool hasComputed = false;
+    
 
 }; // End of class GFE_GeoFilter
 
@@ -401,6 +424,8 @@ public:
     { return ref0GroupArray.ref(); }
 
 
+
+    
 private:
     SYS_FORCE_INLINE virtual void setRef0DetailBase(const GFE_Detail* const inGeo)
     {
@@ -423,6 +448,7 @@ protected:
 private:
     const SOP_NodeVerb::CookParms* cookparmsRef0;
     GOP_Manager* gopRef0;
+    
 
     GFE_RefAttribArray ref0AttribArray;
     GFE_RefGroupArray ref0GroupArray;
@@ -509,7 +535,7 @@ public:
     
     virtual void bumpDataId() const override
     {
-        if (doDelOutGroup)
+        if (doDelGroupElement)
             bumpDataIdsForAddOrRemove();
         else
         {
@@ -518,17 +544,19 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void findOrCreateOutGroup(
+    SYS_FORCE_INLINE virtual void findOrCreateGroup(
         const bool detached,
         const GA_GroupType groupType = GA_GROUP_POINT,
-        const UT_StringHolder& groupName = ""
+        const UT_StringRef& groupName = ""
     )
     { getOutGroupArray().findOrCreate(detached, groupType, groupName); }
 
-    SYS_FORCE_INLINE void findOrCreateOutGroup(const GA_GroupType groupType = GA_GROUP_POINT, const UT_StringHolder& groupName = "")
-    { getOutGroupArray().findOrCreate(doDelOutGroup, groupType, groupName); }
+    SYS_FORCE_INLINE virtual void findOrCreateGroup(const GA_GroupType groupType = GA_GROUP_POINT, const UT_StringRef& groupName = "")
+    { getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }
+
+
     
-    virtual void delOutGroup()
+    virtual void delGroupElement()
     {
         if (outGroupArray.isEmpty() || !outGroupArray[0])
             return;
@@ -541,9 +569,7 @@ public:
         }
         else
         {
-            const GA_ElementGroup* const outElementGroup = static_cast<const GA_ElementGroup*>(outGroup);
-            //GA_Range range(outElementGroup->getIndexMap());
-            GA_Range range(*outElementGroup);
+            GA_Range range(*static_cast<const GA_ElementGroup*>(outGroup));
             switch (outGroup->classType())
             {
             case GA_GROUP_PRIMITIVE:
@@ -561,20 +587,13 @@ public:
 
     virtual SYS_FORCE_INLINE void visualizeOutGroup()
     {
-        if (doDelOutGroup || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
+        if (doDelGroupElement || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
             return;
-        //cookparms->getNode()->setHighlight(true);
         cookparms->select(*outGroupArray[0]);
     }
 
-    void SYS_FORCE_INLINE delOrVisualizeOutGroup()
-    {
-        doDelOutGroup ? delOutGroup() : visualizeOutGroup();
-        // if (doDelOutGroup)
-        //     delOutGroup();
-        // else
-        //     visualizeOutGroup();
-    }
+    void SYS_FORCE_INLINE delOrVisualizeGroup()
+    { doDelGroupElement ? delGroupElement() : visualizeOutGroup(); }
 
     
 
@@ -622,7 +641,8 @@ private:
 
 public:
     bool reverseOutGroup = false;
-    bool doDelOutGroup = false;
+    bool doDelGroupElement = false;
+    
 private:
     //::std::vector<GA_AttributeUPtr> attribUPtrArray;
     //::std::vector<GA_Attribute*> attribArray;

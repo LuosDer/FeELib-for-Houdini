@@ -27,28 +27,9 @@ class GFE_GroupUnshared : public GFE_AttribCreateFilter {
 public:
     using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
 
-    //GFE_GroupUnshared(
-    //    GA_Detail* const geo,
-    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    //)
-    //    : GFE_AttribCreateFilter(geo, cookparms)
-    //    , groupParserSeam(geo, groupParser.getGOP(), cookparms)
-    //{
-    //}
-
-    //GFE_GroupUnshared(
-    //    const SOP_NodeVerb::CookParms& cookparms,
-    //    GA_Detail* const geo
-    //)
-    //    : GFE_AttribCreateFilter(cookparms, geo)
-    //    , groupParserSeam(cookparms, geo, groupParser.getGOP())
-    //{
-    //}
-
     void
         setComputeParm(
-            const bool preFusePoint = false,
-            const bool outTopoAttrib = false,
+            const bool preFusePoint = false
             const fpreal fuseDist = 1e-05,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
@@ -56,7 +37,6 @@ public:
     {
         setHasComputed();
 
-        this->outTopoAttrib = outTopoAttrib;
         this->preFusePoint = preFusePoint;
         this->fuseDist = fuseDist;
         this->subscribeRatio = subscribeRatio;
@@ -65,10 +45,10 @@ public:
 
     void
         findOrCreate(
+            const bool detached = false,
             const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
             const GA_StorageClass storageClass = GA_STORECLASS_INT,
             const GA_Storage storage = GA_STORE_INVALID,
-            const bool detached = false,
             const UT_StringHolder& name = "__topo_connectivity"
         )
     {
@@ -76,20 +56,13 @@ public:
         {
             isGroup = true;
             getOutGroupArray().findOrCreate(detached, unsharedAttribClass, name);
-            //if (unsharedAttribClass != GA_GROUP_VERTEX)
-            //{
-            //    getOutGroupArray().findOrCreate(GA_GROUP_VERTEX, true);
-            //}
         }
         else
         {
             isGroup = false;
             getOutAttribArray().findOrCreateTuple(detached, GFE_Type::attributeOwner_groupType(unsharedAttribClass),
                 storageClass, storage, name);
-
-            //getOutGroupArray().findOrCreate(GA_GROUP_VERTEX, true);
         }
-        //unsharedGroup = static_cast<GA_VertexGroup*>(getOutGroupArray().last());
     }
 
 

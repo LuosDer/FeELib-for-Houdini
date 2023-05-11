@@ -31,7 +31,7 @@ public:
             const GFE_StatisticalFunction statisticalFunction = GFE_StatisticalFunction::Min,
             const GFE_MeasureType measureType = GFE_MeasureType::Area,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+            const exint minGrainSize = 1024
         )
     {
         setHasComputed();
@@ -41,7 +41,18 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
+    SYS_FORCE_INLINE GA_Offset getExtremePrimoff() const
+    { return extremePrimoff; }
 
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(const bool detached = false, const UT_StringRef& attribName = "")
+    { return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL, GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached = false, const UT_StringRef& groupName = "")
+    { return getOutGroupArray().findOrCreate(detached, GA_GROUP_PRIMITIVE, groupName); }
+
+
+
+    
 private:
 
 
@@ -55,55 +66,47 @@ private:
             return true;
 
         GA_PrimitiveGroup* const outGroup = static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0]);
-
-
-        GA_Size numelems;
-        if ((int)measureType <= 1) {
-            numelems = geo->getNumPrimitives();
-            //numelems = nprimitives(0);
-        }
-
-        // if ( chi("../runOverPieces") ) {
-        //     chs("../pieceAttribName")
-        // }
         
-        GA_Attribute* measureAttrib = nullptr;
-        switch (measureType)
+        GA_Size numelems;
+        if ((int)measureType <= 1)
         {
-        case GFE_MeasureType::Perimeter:
-            measureAttrib = GFE_Measure::addAttribPrimPerimeter(geo, nullptr, GA_STORE_INVALID);
-            break;
-        case GFE_MeasureType::Area:
-            measureAttrib = GFE_Measure::addAttribPrimArea(geo, nullptr, GA_STORE_INVALID);
-            break;
-        default:
-            break;
+            numelems = geo->getNumPrimitives();
         }
-        GA_ROHandleT<fpreal> measure_h(measureAttrib);
 
+        GFE_Measure measure(geo, cookparms);
+        measure.groupParser.setGroup(groupParser);
+        measureAttrib = measure.findOrCreateTuple(false);
+        
+        measure.measureType = measureType;
+        measure.compute();
 
-
-        GA_Size extremeElemnum = 0;
-        fpreal extremeValue = statisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX;
-        fpreal measureValue;
-
-        measureValue = measure_h.get();
-        switch (statisticalFunction)
+        switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))
         {
-        case GFE_StatisticalFunction::Min:
-            if (measureValue >= extremeValue) continue;
-            break;
-        case GFE_StatisticalFunction::Max:
-            if (measureValue <= extremeValue) continue;
-            break;
-        default:
-            break;
+        case GA_STORE_INT16:  computeExtremePrimoff<int16>();    break;
+        case GA_STORE_INT32:  computeExtremePrimoff<int32>();    break;
+        case GA_STORE_INT64:  computeExtremePrimoff<int64>();    break;
+        case GA_STORE_REAL16: computeExtremePrimoff<fpreal16>(); break;
+        case GA_STORE_REAL32: computeExtremePrimoff<fpreal32>(); break;
+        case GA_STORE_REAL64: computeExtremePrimoff<fpreal64>(); break;
         }
-        extremeValue = measureValue;
-        extremeElemnum = elemnum;
 
-
-        outGroup->setElement(extremeElemnum, true);
+        if (!getOutAttribArray().isEmpty())
+        {
+            GA_Attribute* const outAttrib = getOutAttribArray()[0];
+            const GA_AIFTuple* aIFTuple = outAttrib->getAIFTuple();
+            if (aIFTuple)
+            {
+                aIFTuple->set(outAttrib, 0, extremePrimoff);
+            }
+        }
+        
+        if (!getOutGroupArray().isEmpty())
+        {
+            if (getOutGroupArray()[0]->classType() == GA_GROUP_PRIMITIVE)
+            {
+                static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0])->setElement(extremePrimoff, true);
+            }
+        }
 
         
         return true;
@@ -111,15 +114,93 @@ private:
 
 
 
+    
+    template<typename FLOAT_T>
+    void computeExtremePrimoff()
+    {
+        ComputeExtremePrimoff<FLOAT_T> body(geo, measureAttrib, statisticalFunction);
+        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(groupParser.getPrimitiveGroup()));
+        UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
+        extremePrimoff = body.getExtremePrimoff();
+    }
+    
+    
+    template<typename FLOAT_T>
+    class ComputeExtremePrimoff
+    {
+    public:
+        ComputeExtremePrimoff(const GFE_Detail* const a, const GA_ROHandleT<FLOAT_T>& b, const GFE_StatisticalFunction c)
+            : myGeo(a)
+            , myAttrib_h(b)
+            , myStatisticalFunction(c)
+            , myExtremePrimoff(GA_INVALID_OFFSET)
+            , mtExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
+        {}
+        ComputeExtremePrimoff(ComputeExtremePrimoff& src, UT_Split)
+            : myGeo(src.myGeo)
+            , myAttrib_h(src.myAttrib_h)
+            , myStatisticalFunction(src.myStatisticalFunction)
+            , myExtremePrimoff(GA_INVALID_OFFSET)
+            , mtExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
+        {}
+        void operator()(const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(myAttrib_h.getAttribute());
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        switch (myStatisticalFunction)
+                        {
+                        case GFE_StatisticalFunction::Min:
+                            if (attrib_ph.value(elemoff) < mtExtremeValue) 
+                                mtExtremeValue = attrib_ph.value(elemoff);
+                            break;
+                        case GFE_StatisticalFunction::Max:
+                            if (attrib_ph.value(elemoff) > mtExtremeValue)
+                                mtExtremeValue = attrib_ph.value(elemoff);
+                            break;
+                        default: break;
+                        }
+                    }
+                }
+            }
+        }
+        void join(const ComputeExtremePrimoff& other)
+        {
+            myExtremePrimoff = other.myExtremePrimoff;
+            mtExtremeValue = other.mtExtremeValue;
+        }
+        SYS_FORCE_INLINE GA_Offset getExtremePrimoff() const
+        { return myExtremePrimoff; }
+        
+    private:
+        const GFE_Detail* const myGeo;
+        const GA_ROHandleT<FLOAT_T> myAttrib_h;
+        GFE_StatisticalFunction myStatisticalFunction;
+        GA_Offset myExtremePrimoff;
+        fpreal mtExtremeValue;
+    }; // End of Class ComputeExtremePrimoff
+
+
 public:
+    
     GFE_StatisticalFunction statisticalFunction = GFE_StatisticalFunction::Min;
     GFE_MeasureType measureType = GFE_MeasureType::Area;
 
 
 private:
+    GA_Offset extremePrimoff;
+    const GA_Attribute* measureAttrib;
+    
     exint subscribeRatio = 64;
-    exint minGrainSize = 64;
-};
+    exint minGrainSize = 1024;
+    
+}; // End of Class GFE_ExtremePrim
 
 
 

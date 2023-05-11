@@ -37,6 +37,9 @@ public:
     }
 
 
+    SYS_FORCE_INLINE virtual void findOrCreateGroup(const UT_StringRef& groupName = "") override
+    { getOutGroupArray().findOrCreateEdge(doDelGroupElement, groupName); }
+    
 private:
 
     // can not use in parallel unless for each GA_Detail

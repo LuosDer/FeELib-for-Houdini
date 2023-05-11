@@ -174,9 +174,7 @@ private:
     }
     
     SYS_FORCE_INLINE void attribCast(GA_Group& group)
-    {
-        attribCast(static_cast<GA_ElementGroup&>(group));
-    }
+    { attribCast(static_cast<GA_ElementGroup&>(group)); }
 
     
     template<typename T>
@@ -230,31 +228,23 @@ private:
         case GA_STORECLASS_INT:
             switch (precision)
             {
-            case GA_PRECISION_8:
-                attribDuplicate<int8>(group, attribRef); break;
-            case GA_PRECISION_16:
-                attribDuplicate<int8>(group, attribRef); break;
-            case GA_PRECISION_32:
-                attribDuplicate<int16>(group, attribRef); break;
-            case GA_PRECISION_64:
-                attribDuplicate<int32>(group, attribRef); break;
+            case GA_PRECISION_8: attribDuplicate<int8>(group, attribRef); break;
+            case GA_PRECISION_16: attribDuplicate<int8>(group, attribRef); break;
+            case GA_PRECISION_32: attribDuplicate<int16>(group, attribRef); break;
+            case GA_PRECISION_64: attribDuplicate<int32>(group, attribRef); break;
             default:         break;
             }
             break;
         case GA_STORECLASS_REAL:
             switch (precision)
             {
-            case GA_PRECISION_16:
-                attribDuplicate<fpreal16>(group, attribRef); break;
-            case GA_PRECISION_32:
-                attribDuplicate<fpreal32>(group, attribRef); break;
-            case GA_PRECISION_64:
-                attribDuplicate<fpreal64>(group, attribRef); break;
+            case GA_PRECISION_16: attribDuplicate<fpreal16>(group, attribRef); break;
+            case GA_PRECISION_32: attribDuplicate<fpreal32>(group, attribRef); break;
+            case GA_PRECISION_64: attribDuplicate<fpreal64>(group, attribRef); break;
             default:         break;
             }
             break;
-        case GA_STORECLASS_STRING:
-            attribDuplicate<UT_StringHolder>(group, attribRef); break;
+        case GA_STORECLASS_STRING: attribDuplicate<UT_StringHolder>(group, attribRef); break;
         case GA_STORECLASS_DICT:  break;
         case GA_STORECLASS_OTHER: break;
         default:             break;
@@ -277,45 +267,26 @@ private:
         case GA_STORECLASS_INT:
             switch (precision)
             {
-            case GA_PRECISION_8:
-                setAttribValueTo1<int8> (attrib, geoSplittableRange);
-                return true; break;
-            case GA_PRECISION_16:
-                setAttribValueTo1<int16>(attrib, geoSplittableRange);
-                return true; break;
-            case GA_PRECISION_32:
-                setAttribValueTo1<int32>(attrib, geoSplittableRange);
-                return true; break;
-            case GA_PRECISION_64:
-                setAttribValueTo1<int64>(attrib, geoSplittableRange);
-                return true; break;
+            case GA_PRECISION_8:  setAttribValueTo1<int8> (attrib, geoSplittableRange); return true; break;
+            case GA_PRECISION_16: setAttribValueTo1<int16>(attrib, geoSplittableRange); return true; break;
+            case GA_PRECISION_32: setAttribValueTo1<int32>(attrib, geoSplittableRange); return true; break;
+            case GA_PRECISION_64: setAttribValueTo1<int64>(attrib, geoSplittableRange); return true; break;
             default:         break;
             }
             break;
         case GA_STORECLASS_REAL:
             switch (precision)
             {
-            case GA_PRECISION_16:
-                setAttribValueTo1<fpreal16>(attrib, geoSplittableRange);
-                return true; break;
-            case GA_PRECISION_32:
-                setAttribValueTo1<fpreal32>(attrib, geoSplittableRange);
-                return true; break;
-            case GA_PRECISION_64:
-                setAttribValueTo1<fpreal64>(attrib, geoSplittableRange);
-                return true; break;
+            case GA_PRECISION_16: setAttribValueTo1<fpreal16>(attrib, geoSplittableRange); return true; break;
+            case GA_PRECISION_32: setAttribValueTo1<fpreal32>(attrib, geoSplittableRange); return true; break;
+            case GA_PRECISION_64: setAttribValueTo1<fpreal64>(attrib, geoSplittableRange); return true; break;
             default:         break;
             }
             break;
-        case GA_STORECLASS_STRING:
-            setAttribValueTo1<UT_StringHolder>(attrib, geoSplittableRange);
-            return true;     break;
-        case GA_STORECLASS_DICT:
-            break;
-
-        case GA_STORECLASS_OTHER:
-            return false;    break;
-        default:             break;
+        case GA_STORECLASS_STRING: setAttribValueTo1<UT_StringHolder>(attrib, geoSplittableRange); return true; break;
+        case GA_STORECLASS_DICT:  break;
+        case GA_STORECLASS_OTHER: break;
+        default:                  break;
         }
         UT_ASSERT_MSG(0, "Unhandled Precision!");
         return false;
@@ -376,40 +347,31 @@ private:
 
     template<typename SCALAR_T>
     SYS_FORCE_INLINE SCALAR_T scalarConvertFromString(const UT_StringHolder& inScalar)
-    {
-        return scalarConvertFromString<SCALAR_T>(inScalar.c_str());
-    }
+    { return scalarConvertFromString<SCALAR_T>(inScalar.c_str()); }
 
     template<>
     SYS_FORCE_INLINE int16 scalarConvertFromString<int16>(const char* const inScalar)
-    {
-        return int16(atoi(inScalar));
-    }
+    { return int16(atoi(inScalar)); }
+        
     template<>
     SYS_FORCE_INLINE int32 scalarConvertFromString<int32>(const char* const inScalar)
-    {
-        return atoi(inScalar);
-    }
+    { return atoi(inScalar); }
+        
     template<>
     SYS_FORCE_INLINE int64 scalarConvertFromString<int64>(const char* const inScalar)
-    {
-        return atol(inScalar);
-    }
+    { return atol(inScalar); }
+        
     template<>
     SYS_FORCE_INLINE fpreal16 scalarConvertFromString<fpreal16>(const char* const inScalar)
-    {
-        return fpreal16(atof(inScalar));
-    }
+    { return fpreal16(atof(inScalar)); }
+        
     template<>
     SYS_FORCE_INLINE fpreal32 scalarConvertFromString<fpreal32>(const char* const inScalar)
-    {
-        return fpreal32(atof(inScalar));
-    }
+    { return fpreal32(atof(inScalar)); }
+        
     template<>
     SYS_FORCE_INLINE fpreal64 scalarConvertFromString<fpreal64>(const char* const inScalar)
-    {
-        return atof(inScalar);
-    }
+    { return atof(inScalar); }
 #endif
     
     template<>
@@ -419,6 +381,7 @@ private:
         sprintf(buffer, "%s%d%s", prefix, inScalar, sufix);
         return UT_StringHolder(buffer);
     }
+        
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, int32>(const int32 inScalar)
     {
@@ -426,6 +389,7 @@ private:
         sprintf(buffer, "%s%d%s", prefix, inScalar, sufix);
         return UT_StringHolder(buffer);
     }
+        
     template<>
     SYS_FORCE_INLINE UT_StringHolder scalarConvert<UT_StringHolder, int64>(const int64 inScalar)
     {

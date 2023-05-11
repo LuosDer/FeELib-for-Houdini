@@ -247,7 +247,7 @@ SOP_FeE_AttribCopy_4_0::buildTemplates()
     {
         templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("srcGroup"_sh,       &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("iDAttribName"_sh,   &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("iDAttrib"_sh,   &SOP_Node::allAttribMenu);
         templ.setChoiceListPtr("copyAttribName"_sh, &SOP_Node::allAttribMenu);
         templ.setChoiceListPtr("copyGroupName"_sh,  &SOP_Node::allGroupMenu);
     }
@@ -394,7 +394,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
-
+    
     
     const GA_AttributeOwner sourceClass = sopAttribOwner(sopparms.getSourceClass());
     const GA_AttributeOwner destinationClass = sopAttribOwner(sopparms.getDestinationClass());
@@ -407,7 +407,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     
-    GFE_AttribCopy attribCopy(outGeo0, inGeo1, &cookparms);
+    GFE_AttribCopy attribCopy(outGeo0, &inGeo1, &cookparms);
 
     attribCopy.ownerDst = destinationClass;
     attribCopy.ownerSrc = sourceClass;
@@ -436,8 +436,3 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 }
 
-
-
-namespace SOP_FeE_AttribCopy_4_0_Namespace {
-
-} // End SOP_FeE_AttribCopy_4_0_Namespace namespace

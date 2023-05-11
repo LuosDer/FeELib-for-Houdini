@@ -61,13 +61,6 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Out as Offset"
-        type    toggle
-        default { "off" }
-    }
-    parm {
         name    "usePieceAttrib"
         cppname "UsePieceAttrib"
         label   "Use Piece Attribute"
@@ -116,12 +109,45 @@ static const char *theDsFile = R"THEDSFILE(
             "string"    "String"
         }
     }
+
+    parm {
+        name    "firstIndex"
+        cppname "FirstIndex"
+        label   "First Index"
+        type    integer
+        default { 0 }
+        range   { -5 5 }
+    }
+
+    parm {
+        name    "negativeIndex"
+        cppname "NegativeIndex"
+        label   "Negative Index"
+        type    toggle
+        default { "off" }
+    }
+    parm {
+        name    "outAsOffset"
+        cppname "OutAsOffset"
+        label   "Out as Offset"
+        type    toggle
+        default { "off" }
+    }
     parm {
         name    "prefix"
         cppname "Prefix"
         label   "Prefix"
         type    string
         default { "piece" }
+        disablewhen "{ storageClass != string }"
+        hidewhen "{ storageClass != string }"
+    }
+    parm {
+        name    "sufix"
+        cppname "Sufix"
+        label   "Sufix"
+        type    string
+        default { "" }
         disablewhen "{ storageClass != string }"
         hidewhen "{ storageClass != string }"
     }
@@ -288,12 +314,13 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
     
-
+    
 
     GFE_Enumerate enumerate(outGeo0, cookparms);
     enumerate.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    enumerate.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    enumerate.prefix = sopparms.getPrefix();
+    enumerate.sufix = sopparms.getSufix();
     enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
     enumerate.computeAndBumpDataId();
 
@@ -302,7 +329,3 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 }
 
 
-
-namespace SOP_FeE_Enumerate_1_0_Namespace {
-
-} // End SOP_FeE_Enumerate_1_0_Namespace namespace

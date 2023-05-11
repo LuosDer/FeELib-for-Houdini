@@ -295,7 +295,12 @@ private:
 
 #else
 
-class GFE_PointInMeshWN : public GFE_AttribFilter, public GFE_GeoFilterRef {
+
+
+
+
+
+class GFE_PointInMeshWN : public GFE_AttribFilterWithRef {
 
 public:
 
@@ -305,9 +310,7 @@ public:
         GFE_WindingNumber_Cache* const sopcache = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr,
     )
-        : geo(geo)
-        , geoRef0(geoRef0)
-        , cookparms(cookparms)
+        : GFE_AttribFilterWithRef(geo, geoRef0, cookparms)
         , gfeWN(geo, geoRef0, sopcache, cookparms)
     {
     }

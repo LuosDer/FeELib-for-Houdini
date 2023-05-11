@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_NormalizeAttribElement.h"
+#include "GFE/GFE_ScaleAttributeElement.h"
 
 
 using namespace SOP_FeE_AttribScale_1_0_Namespace;
@@ -225,15 +225,14 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
-    GFE_NormalizeAttribElement normalizeAttribElement(outGeo0, cookparms);
+    GFE_ScaleAttribElement scaleAttribElement(outGeo0, &cookparms);
     
-    normalizeAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
-    normalizeAttribElement.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
-    normalizeAttribElement.setComputeParm(doNormalize, uniScale, subscribeRatio, minGrainSize);
-    normalizeAttribElement.computeAndBumpDataId();
+    scaleAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
+    scaleAttribElement.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
+    scaleAttribElement.setComputeParm(doNormalize, uniScale,
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    scaleAttribElement.computeAndBumpDataId();
 
 
 }

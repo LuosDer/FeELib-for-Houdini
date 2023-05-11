@@ -47,88 +47,53 @@ static const char *theDsFile = R"THEDSFILE(
     }
     
 
-
     parm {
-        name    "flatEdgeGroupName"
-        cppname "FlatEdgeGroupName"
-        label   "Flat Edge Group Name"
+        name    "cornerPointGroupName"
+        cppname "CornerPointGroupName"
+        label   "Corner Point Group Name"
         type    string
-        default { "flatEdge" }
+        default { "cornerPoint" }
     }
     parm {
-        name    "normalType"
-        cppname "NormalType"
-        label   "Normal Type"
-        type    ordinal
-        default { "prim" }
-        menu {
-            "prim"      "Primitives"
-            "vertex"    "Vertices"
-        }
-    }
-    parm {
-        name    "weightingMethod"
-        cppname "WeightingMethod"
-        label   "Weighting Method"
-        type    integer
+        name    "threshold"
+        cppname "Threshold"
+        label   "Threshold"
+        type    float
         default { "0" }
-        menu {
-            "uniform"   "Each Vertex Equally"
-            "angle"     "By Vertex Angle"
-            "area"      "By Face Area"
-        }
-        range   { 0! 2! }
-    }
-    parm {
-        name    "flatEdgeAngleThreshold"
-        cppname "FlatEdgeAngleThreshold"
-        label   "Flat Edge Angle Threshold"
-        type    angle
-        default { "180" }
-        range   { 0! 180! }
-    }
-    parm {
-        name    "absoluteDot"
-        cppname "AbsoluteDot"
-        label   "Absolute Dot"
-        type    toggle
-        default { "0" }
+        range   { -1! 1! }
     }
     parm {
         name    "reverseGroup"
-        cppname "ReverseGroup"
+        name    "ReverseGroup"
         label   "Reverse Group"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "includeUnsharedEdge"
-        cppname "IncludeUnsharedEdge"
-        label   "Include Unshared Edge"
+        name    "outDotValue"
+        name    "OutDotValue"
+        label   "Output Dot Value"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
-    }
-    parm {
-        name    "outVertexGroup"
-        cppname "OutVertexGroup"
-        label   "Output Vertex Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "manifoldEdge"
-        cppname "ManifoldEdge"
-        label   "Manifold Edge"
-        type    ordinal
-        default { "none" }
-        menu {
-            "none"  "None"
-            "All"   "all"
-            "min"   "Min"
-            "max"   "Max"
-        }
     }
 
+    parm {
+        name    "dotAttribName"
+        cppname "DotAttribName"
+        label   "Dot Attrib Name"
+        type    string
+        default { "dot" }
+        disablewhen "{ outDotValue == 0 }"
+    }
+    parm {
+        name    "delCornerPoint"
+        cppname "DelCornerPoint"
+        label   "Delete Corner Point"
+        type    toggle
+        default { "0" }
+    }
 
 
     parm {
@@ -237,25 +202,6 @@ SOP_FeE_CornerPoint_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopCombineGroupType(SOP_FeE_CornerPoint_1_0Parms::CombineGroupType parmgrouptype)
-{
-    using namespace SOP_FeE_CornerPoint_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case CombineGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case CombineGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case CombineGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case CombineGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case CombineGroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
-
-
-
-static GA_GroupType
 sopGroupType(SOP_FeE_CornerPoint_1_0Parms::GroupType parmgrouptype)
 {
     using namespace SOP_FeE_CornerPoint_1_0Enums;
@@ -277,17 +223,12 @@ void
 SOP_FeE_CornerPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_CornerPoint_1_0Parms>();
-    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_CornerPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
-
-
-    const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroupName();
-    if (!geo0AttribNames.isstring())
-        return;
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -297,15 +238,15 @@ SOP_FeE_CornerPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (boss.wasInterrupted())
         return;
 
-    GFE_FlatEdge flatEdge(outGeo0, &cookparms);
+    GFE_CornerPoint cornerPoint(outGeo0, &cookparms);
 
-    flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());
-
-    flatEdge.setComputeParm(combineGroup,
+    cornerPoint.groupParser.setGroup(groupType, sopparms.getGroup());
+    cornerPoint.findOrCreateGroup(false, sopparms.getCornerPointGroupName());
+    cornerPoint.setComputeParm(,sopparms.getThreshold(), sopparms.getDelCornerPoint(), 
                             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    flatEdge.computeAndBumpDataId();
-    flatEdge.vi
+    cornerPoint.computeAndBumpDataId();
+    cornerPoint.visualizeOutGroup();
 
 
 }

@@ -201,15 +201,15 @@ SOP_FeE_DelAllAttribGroup_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_DelAllAttribGroup_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("keepPrimAttribName"_sh,    &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("keepPointAttribName"_sh,   &SOP_Node::pointAttribMenu);
-        templ.setChoiceListPtr("keepVertexAttribName"_sh,  &SOP_Node::vertexAttribMenu);
-        templ.setChoiceListPtr("keepDetailAttribName"_sh,  &SOP_Node::detailAttribMenu);
+        templ.setChoiceListPtr("keepPrimAttrib"_sh,    &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("keepPointAttrib"_sh,   &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("keepVertexAttrib"_sh,  &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("keepDetailAttrib"_sh,  &SOP_Node::detailAttribMenu);
 
-        templ.setChoiceListPtr("keepPrimGroupName"_sh,     &SOP_Node::primNamedGroupMenu);
-        templ.setChoiceListPtr("keepPointGroupName"_sh,    &SOP_Node::pointNamedGroupMenu);
-        templ.setChoiceListPtr("keepVertexGroupName"_sh,   &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("keepEdgeGroupName"_sh,     &SOP_Node::edgeNamedGroupMenu);
+        templ.setChoiceListPtr("keepPrimGroup"_sh,     &SOP_Node::primNamedGroupMenu);
+        templ.setChoiceListPtr("keepPointGroup"_sh,    &SOP_Node::pointNamedGroupMenu);
+        templ.setChoiceListPtr("keepVertexGroup"_sh,   &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroup"_sh,     &SOP_Node::edgeNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -313,11 +313,6 @@ SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     const UT_StringHolder& keepVertexGroup = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroup() : allPattern;
     const UT_StringHolder& keepEdgeGroup   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroup()   : allPattern;
     outGFE0.keepStdGroup(keepPrimGroup, keepPointGroup, keepVertexGroup, keepEdgeGroup);
-    //GFE_Group::keepStdGroup(outGeo0, keepPrimGroupName, keepPointGroupName, keepVertexGroupName, keepEdgeGroupName);
+    //GFE_Group::keepStdGroup(outGeo0, keepPrimGroup, keepPointGroup, keepVertexGroup, keepEdgeGroup);
 }
 
-
-
-namespace SOP_FeE_DelAllAttribGroup_1_0_Namespace {
-
-} // End SOP_FeE_DelAllAttribGroup_1_0_Namespace namespace

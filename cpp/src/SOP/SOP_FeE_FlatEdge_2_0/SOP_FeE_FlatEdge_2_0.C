@@ -62,8 +62,8 @@ static const char *theDsFile = R"THEDSFILE(
         type    ordinal
         default { "prim" }
         menu {
-            "prim"      "Primitives"
-            "vertex"    "Vertices"
+            "prim"      "Primitive"
+            "vertex"    "Vertex"
         }
     }
     parm {
@@ -95,23 +95,9 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
         name    "includeUnsharedEdge"
         cppname "IncludeUnsharedEdge"
         label   "Include Unshared Edge"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "outVertexGroup"
-        cppname "OutVertexGroup"
-        label   "Output Vertex Group"
         type    toggle
         default { "0" }
     }
@@ -129,6 +115,28 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+    parm {
+        name    "outAsVertexGroup"
+        cppname "OutAsVertexGroup"
+        label   "Output as Vertex Group"
+        type    toggle
+        default { "0" }
+    }
+
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "delGroupElement"
+        cppname "DelGroupElement"
+        label   "Delete Group Element"
+        type    toggle
+        default { "0" }
+    }
 
 
     parm {
@@ -281,13 +289,24 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     GFE_FlatEdge flatEdge(outGeo0, &cookparms);
 
-    flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());
-
-    flatEdge.setComputeParm(combineGroup,
+    
+    flatEdge.setComputeParm(sopparms.getFlatEdgeAngleThreshold(), sopparms.getAbsoluteDot(),
+        sopparms.getIncludeUnsharedEdge(),sopparms.getManifoldEdge(),
+        sopparms.getOutAsVertexGroup(),
                             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    sopparms.getNormalType()
+    sopparms.getWeightingMethod()
+    
+    flatEdge.reverseOutGroup = sopparms.getReverseGroup();
+    flatEdge.doDelGroupElement = sopparms.getDelGroupElement();
+
+    
+    flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());
+    flatEdge.findOrCreateGroup(sopparms.getFlatEdgeGroupName());
+    
     
     flatEdge.computeAndBumpDataId();
-    flatEdge.visualizeOutGroup();
+    flatEdge.delOrVisualizeGroup();
 
 
 }
