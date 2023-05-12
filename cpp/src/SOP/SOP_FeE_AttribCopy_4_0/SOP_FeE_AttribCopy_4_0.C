@@ -128,9 +128,9 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Copy Attrib"
 
         parm {
-            name    "copyAttribName"
-            cppname "CopyAttribName"
-            label   "Copy Attrib Name"
+            name    "copyAttrib"
+            cppname "CopyAttrib"
+            label   "Copy Attrib"
             type    string
             default { "" }
         }
@@ -177,9 +177,9 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Copy Group"
 
         parm {
-            name    "copyGroupName"
-            cppname "CopyGroupName"
-            label   "Copy Group Name"
+            name    "copyGroup"
+            cppname "CopyGroup"
+            label   "Copy Group"
             type    string
             default { "" }
         }
@@ -248,8 +248,8 @@ SOP_FeE_AttribCopy_4_0::buildTemplates()
         templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("srcGroup"_sh,       &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("iDAttrib"_sh,   &SOP_Node::allAttribMenu);
-        templ.setChoiceListPtr("copyAttribName"_sh, &SOP_Node::allAttribMenu);
-        templ.setChoiceListPtr("copyGroupName"_sh,  &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("copyAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("copyGroup"_sh,  &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -428,8 +428,8 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         attribCopy.newGroupNames = sopparms.getNewGroupName();
     }
     
-    attribCopy.appendGroups(sopparms.getCopyGroupName());
-    attribCopy.appendAttribs(sopparms.getCopyAttribName());
+    attribCopy.appendGroups(sopparms.getCopyGroup());
+    attribCopy.appendAttribs(sopparms.getCopyAttrib());
 
     attribCopy.compute();
     attribCopy.visualizeOutGroup();

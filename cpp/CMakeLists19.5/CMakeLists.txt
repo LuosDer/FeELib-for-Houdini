@@ -90,6 +90,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribDel_2_0
     SOP_FeE_AttribDuplicate_1_0
     SOP_FeE_AttribInterpRay_2_0
+    SOP_FeE_AttribOut_1_0
     SOP_FeE_AttribPromote_1_0
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
