@@ -88,29 +88,16 @@ public:
 
 
 
-    virtual void
-        reset(
-            GA_Detail* const inGeo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
-    {
-        geo = static_cast<GFE_Detail*>(inGeo);
-        this->cookparms = cookparms;
-        groupParser.reset(geo, cookparms);
-        setHasComputed();
-    }
-
-    virtual void
-        reset(
-            GA_Detail& inGeo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+    virtual void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
         geo = static_cast<GFE_Detail*>(&inGeo);
         this->cookparms = cookparms;
         groupParser.reset(geo, cookparms);
         setHasComputed();
     }
+
+    SYS_FORCE_INLINE virtual void reset(GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
+    { reset(*inGeo, cookparms); }
 
 
     SYS_FORCE_INLINE bool getHasComputed() const
@@ -511,27 +498,17 @@ public:
     }
 
 
-    virtual void
-        reset(
-            GA_Detail* const geo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        ) override
+    virtual void reset(GA_Detail& geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
     {
         GFE_GeoFilter::reset(geo, cookparms);
         outAttribArray.reset(geo, cookparms);
         outGroupArray.reset(geo, cookparms);
     }
 
-    virtual void
-        reset(
-            GA_Detail& geo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        ) override
-    {
-        GFE_GeoFilter::reset(geo, cookparms);
-        outAttribArray.reset(geo, cookparms);
-        outGroupArray.reset(geo, cookparms);
-    }
+    SYS_FORCE_INLINE virtual void reset(GA_Detail* const geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
+    { reset(*geo, cookparms); }
+
+
     
     virtual void bumpDataId() const override
     {
@@ -546,12 +523,12 @@ public:
 
     SYS_FORCE_INLINE virtual void findOrCreateGroup(
         const bool detached,
-        const GA_GroupType groupType = GA_GROUP_POINT,
+        const GA_GroupType groupType,
         const UT_StringRef& groupName = ""
     )
     { getOutGroupArray().findOrCreate(detached, groupType, groupName); }
 
-    SYS_FORCE_INLINE virtual void findOrCreateGroup(const GA_GroupType groupType = GA_GROUP_POINT, const UT_StringRef& groupName = "")
+    SYS_FORCE_INLINE virtual void findOrCreateGroup(const GA_GroupType groupType, const UT_StringRef& groupName = "")
     { getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }
 
 
@@ -718,17 +695,19 @@ public:
 
 
 
-    virtual void
-        reset(
-            GA_Detail* const geo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        ) override
+
+    virtual void reset(GA_Detail& geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
     {
         GFE_AttribFilter::reset(geo, cookparms);
         inAttribArray.reset(geo, cookparms);
         inGroupArray.reset(geo, cookparms);
     }
 
+    SYS_FORCE_INLINE virtual void reset(GA_Detail* const geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
+    { reset(*geo, cookparms); }
+
+
+    
     SYS_FORCE_INLINE GFE_AttributeArray& getInAttribArray()
     { return inAttribArray; }
     

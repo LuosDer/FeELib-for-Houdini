@@ -56,30 +56,6 @@ static const char *theDsFile = R"THEDSFILE(
         default { "flatEdge" }
     }
     parm {
-        name    "normalType"
-        cppname "NormalType"
-        label   "Normal Type"
-        type    ordinal
-        default { "prim" }
-        menu {
-            "prim"      "Primitive"
-            "vertex"    "Vertex"
-        }
-    }
-    parm {
-        name    "weightingMethod"
-        cppname "WeightingMethod"
-        label   "Weighting Method"
-        type    integer
-        default { "0" }
-        menu {
-            "uniform"   "Each Vertex Equally"
-            "angle"     "By Vertex Angle"
-            "area"      "By Face Area"
-        }
-        range   { 0! 2! }
-    }
-    parm {
         name    "flatEdgeAngleThreshold"
         cppname "FlatEdgeAngleThreshold"
         label   "Flat Edge Angle Threshold"
@@ -109,10 +85,42 @@ static const char *theDsFile = R"THEDSFILE(
         default { "none" }
         menu {
             "none"  "None"
-            "All"   "all"
+            "all"   "all"
             "min"   "Min"
             "max"   "Max"
         }
+    }
+
+    parm {
+        name    "normalAttribClass"
+        cppname "NormalAttribClass"
+        label   "Normal Attrib Class"
+        type    ordinal
+        default { "prim" }
+        menu {
+            "prim"      "Primitive"
+            "vertex"    "Vertex"
+        }
+    }
+    parm {
+        name    "normalAttrib"
+        cppname "NormalAttrib"
+        label   "Normal Attrib"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "weightingMethod"
+        cppname "WeightingMethod"
+        label   "Weighting Method"
+        type    ordinal
+        default { "angle" }
+        menu {
+            "uniform"   "Each Vertex Equally"
+            "angle"     "By Vertex Angle"
+            "area"      "By Face Area"
+        }
+        range   { 0! 2! }
     }
 
     parm {
@@ -168,6 +176,7 @@ SOP_FeE_FlatEdge_2_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("normalAttrib"_sh, &SOP_Node::allAttribMenu);
     }
     return templ.templates();
 }
@@ -261,6 +270,48 @@ sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmgrouptype)
 }
 
 
+static GA_GroupType
+sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmgrouptype)
+{
+    using namespace SOP_FeE_FlatEdge_2_0Enums;
+    switch (parmgrouptype)
+    {
+    case ManifoldEdge::NONE:    return GA_GROUP_VERTEX;     break;
+    case ManifoldEdge::ALL:     return GA_GROUP_INVALID;    break;
+    case ManifoldEdge::MIN:     return GA_GROUP_POINT;      break;
+    case ManifoldEdge::MAX:     return GA_GROUP_PRIMITIVE;  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Manifold Edge!");
+    return GA_GROUP_INVALID;
+}
+
+
+static GA_AttributeOwner
+sopNormalAttribClass(SOP_FeE_FlatEdge_2_0Parms::NormalAttribClass parmgrouptype)
+{
+    using namespace SOP_FeE_FlatEdge_2_0Enums;
+    switch (parmgrouptype)
+    {
+    case NormalAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;    break;
+    case NormalAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE; break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Manifold Edge!");
+    return GA_ATTRIB_INVALID;
+}
+
+static GEO_NormalMethod
+sopWeightingMethod(SOP_FeE_FlatEdge_2_0Parms::WeightingMethod parmNormalMethod)
+{
+    using namespace SOP_FeE_FlatEdge_2_0Enums;
+    switch (parmNormalMethod)
+    {
+    case WeightingMethod::VERTEX:    return GEO_NormalMethod::UNIFORM_WEIGHTED;    break;
+    case WeightingMethod::PRIM:      return GEO_NormalMethod::ANGLE_WEIGHTED;      break;
+    case WeightingMethod::PRIM:      return GEO_NormalMethod::AREA_WEIGHTED;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Manifold Edge!");
+    return GEO_NormalMethod::ANGLE_WEIGHTED;
+}
 
 void
 SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -274,14 +325,16 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     outGeo0.replaceWith(inGeo0);
 
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroupName();
+    const UT_StringHolder& flatEdgeGroupName = sopparms.getFlatEdgeGroupName();
     
-    if (!geo0AttribNames.isstring())
+    if (!flatEdgeGroupName.isstring())
         return;
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    
+    const GA_GroupType manifoldEdge = sopManifoldEdge(sopparms.getManifoldEdge());
+    const GA_AttributeOwner normalAttribClass = sopNormalAttribClass(sopparms.getNormalAttribClass());
+        
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -291,18 +344,20 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     
     flatEdge.setComputeParm(sopparms.getFlatEdgeAngleThreshold(), sopparms.getAbsoluteDot(),
-        sopparms.getIncludeUnsharedEdge(),sopparms.getManifoldEdge(),
-        sopparms.getOutAsVertexGroup(),
-                            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    sopparms.getNormalType()
-    sopparms.getWeightingMethod()
+        sopparms.getIncludeUnsharedEdge(), manifoldEdge,
+        sopparms.getOutAsVertexGroup(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
     
+
+    flatEdge.normal3D.normalMethod = sopWeightingMethod(sopparms.getWeightingMethod());
+    flatEdge.normal3D.getOutAttribArray().findOrCreateNormal3D(normalAttribClass, sopparms.getNormalAttrib());
+
     flatEdge.reverseOutGroup = sopparms.getReverseGroup();
     flatEdge.doDelGroupElement = sopparms.getDelGroupElement();
 
     
     flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());
-    flatEdge.findOrCreateGroup(sopparms.getFlatEdgeGroupName());
+    flatEdge.findOrCreateGroup(flatEdgeGroupName);
     
     
     flatEdge.computeAndBumpDataId();
@@ -312,7 +367,3 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 }
 
 
-
-namespace SOP_FeE_FlatEdge_2_0_Namespace {
-
-} // End SOP_FeE_FlatEdge_2_0_Namespace namespace

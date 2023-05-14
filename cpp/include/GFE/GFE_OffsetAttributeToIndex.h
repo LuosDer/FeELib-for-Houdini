@@ -7,9 +7,6 @@
 //#include "GFE/GFE_OffsetAttributeToIndex.h"
 
 
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
-
 
 
 #include "GFE/GFE_GeoFilter.h"
@@ -24,11 +21,11 @@ public:
 
     
     void
-        setComputeParm(
-            const bool offsetToIndex = false,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
-        )
+    setComputeParm(
+        const bool offsetToIndex = false,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 1024
+    )
     {
         setHasComputed();
         this->offsetToIndex = offsetToIndex;
@@ -69,10 +66,7 @@ private:
     }
 
 
-    void
-        offsetTupleAttribToIndex(
-            GA_Attribute& attrib
-        )
+    void offsetTupleAttribToIndex(GA_Attribute& attrib)
     {
         
         const GA_IndexMap& indexMap = attrib.getIndexMap();
@@ -134,10 +128,7 @@ private:
 
 
 
-    void
-        offsetArrayAttribToIndex(
-            GA_Attribute& attrib
-        )
+    void offsetArrayAttribToIndex(GA_Attribute& attrib)
     {
         GA_RWHandleT<UT_ValArray<GA_Offset>> attrib_h(&attrib);
         

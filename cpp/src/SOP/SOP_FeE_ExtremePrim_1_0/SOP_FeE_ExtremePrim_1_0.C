@@ -74,13 +74,41 @@ static const char *theDsFile = R"THEDSFILE(
             "surfaceintegral"   "Surface Integral"
         }
     }
+
+
     parm {
-        name    "groupName"
-        cppname "GroupName"
-        label   "Group Name"
+        name    "outExtremePrimAttrib"
+        cppname "OutExtremePrimAttrib"
+        label   "Out Extreme Prim Attrib Name"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "extremePrimAttribName"
+        cppname "ExtremePrimAttribName"
+        label   "Extreme Prim Attrib Name"
         type    string
         default { "extremePrim" }
-        disablewhen "{ delOutGroupGeo == 1 }"
+        disablewhen "{ outExtremePrimAttrib == 0 }"
+        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Details kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+
+    parm {
+        name    "outExtremePrimGroup"
+        cppname "OutExtremePrimGroup"
+        label   "Out Extreme Prim Group Name"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "extremePrimGroupName"
+        cppname "ExtremePrimGroupName"
+        label   "Extreme Prim Group Name"
+        type    string
+        default { "extremePrim" }
+        disablewhen "{ delOutGroupGeo == 1 } { outExtremePrimGroup == 0 }"
         parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Primitives kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -316,7 +344,14 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     extremePrim.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    extremePrim.findOrCreateGroup(GA_GROUP_PRIMITIVE, sopparms.getGroupName());
+    if (sopparms.getOutExtremePrimAttrib())
+    {
+        extremePrim.findOrCreateTuple(false, sopparms.getExtremePrimAttribName());
+    }
+    if (sopparms.getOutExtremePrimGroup())
+    {
+        extremePrim.findOrCreateGroup(false, sopparms.getExtremePrimGroupName());
+    }
 
     extremePrim.computeAndBumpDataId();
 

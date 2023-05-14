@@ -1,21 +1,22 @@
 
-#ifndef __SOP_FeE_Adjacency_1_0_h__
-#define __SOP_FeE_Adjacency_1_0_h__
+#ifndef __SOP_FeE_MeshTopology_1_0_h__
+#define __SOP_FeE_MeshTopology_1_0_h__
 
 #include <SOP/SOP_Node.h>
 #include <UT/UT_StringHolder.h>
 
-namespace SOP_FeE_Adjacency_1_0_Namespace {
+namespace SOP_FeE_MeshTopology_1_0_Namespace {
 
-class SOP_FeE_Adjacency_1_0 : public SOP_Node
+class SOP_FeE_MeshTopology_1_0 : public SOP_Node
 {
 public:
     static PRM_Template *buildTemplates();
     static OP_Node *myConstructor(OP_Network *net, const char *name, OP_Operator *op)
     {
-        OP_Node* newOp = new SOP_FeE_Adjacency_1_0(net, name, op);
+        OP_Node* newOp = new SOP_FeE_MeshTopology_1_0(net, name, op);
         //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
         newOp->setNodeShape("squared");
+        newOp->setHighlight(true);
         //newOp->setUserData("nodeshape", "tilted", false);
         return newOp;
     }
@@ -25,13 +26,13 @@ public:
     const SOP_NodeVerb *cookVerb() const override;
 
 protected:
-    SOP_FeE_Adjacency_1_0(OP_Network *net, const char *name, OP_Operator *op)
+    SOP_FeE_MeshTopology_1_0(OP_Network *net, const char *name, OP_Operator *op)
         : SOP_Node(net, name, op)
     {
         mySopFlags.setManagesDataIDs(true);
     }
     
-    ~SOP_FeE_Adjacency_1_0() override {}
+    ~SOP_FeE_MeshTopology_1_0() override {}
 
     OP_ERROR cookMySop(OP_Context &context) override
     {
@@ -63,6 +64,6 @@ protected:
 
 
 };
-} // End SOP_FeE_Adjacency_1_0_Namespace namespace
+} // End SOP_FeE_MeshTopology_1_0_Namespace namespace
 
 #endif

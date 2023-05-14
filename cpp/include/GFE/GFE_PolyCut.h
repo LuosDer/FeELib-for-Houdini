@@ -59,41 +59,6 @@ public:
     }
 
 
-    void setGroup(
-        const GA_PointGroup* const geoPointGroup = nullptr,
-        const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-    )
-    {
-        groupParser_cutPoint.setGroup(geoPointGroup);
-        groupParser.setGroup(geoPrimGroup);
-    }
-
-    void setGroup(
-        const UT_StringHolder& cutPointGroupName = "",
-        const UT_StringHolder& primGroupName = ""
-    )
-    {
-        groupParser_cutPoint.setGroup(GA_GROUP_POINT, cutPointGroupName);
-        groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
-    }
-
-    SYS_FORCE_INLINE void createSrcPrimAttrib(
-        const UT_StringHolder& attribName = "srcPrim",
-        const GA_Storage storage = GA_STORE_INVALID
-    )
-    {
-        getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false);
-    }
-
-    SYS_FORCE_INLINE void createSrcPointAttrib(
-        const UT_StringHolder& attribName = "srcPoint",
-        const GA_Storage storage = GA_STORE_INVALID
-    )
-    {
-        getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));
-    }
-
-
     void setComputeParm(
         const bool cutPoint = false,
         const bool mergePrimEndsIfClosed = true,
@@ -105,6 +70,35 @@ public:
         this->mergePrimEndsIfClosed = mergePrimEndsIfClosed;
         this->polyType = polyType;
     }
+
+
+    
+    void setGroup(const GA_PointGroup* const geoPointGroup = nullptr, const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    {
+        groupParser_cutPoint.setGroup(geoPointGroup);
+        groupParser.setGroup(geoPrimGroup);
+    }
+
+    void setGroup(const UT_StringRef& cutPointGroupName = "", const UT_StringRef& primGroupName = "")
+    {
+        groupParser_cutPoint.setGroup(GA_GROUP_POINT, cutPointGroupName);
+        groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
+    }
+
+    SYS_FORCE_INLINE void createSrcPrimAttrib(
+        const bool detached = false,
+        const UT_StringRef& attribName = "srcPrim",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
+    { getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET), false); }
+
+    SYS_FORCE_INLINE void createSrcPointAttrib(
+        const bool detached = false,
+        const UT_StringRef& attribName = "srcPoint",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
+    { getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
+
 
 
 
@@ -134,10 +128,7 @@ private:
 #define TMP_CutPointGroup_GFE_PolyCut "__tmp_cutPointGroup_GFE_PolyCut"
 
 
-    SYS_FORCE_INLINE void appendPoint_polyCut(
-        GA_Offset& primpoint,
-        GA_PointGroup* const cutPointGroup
-    )
+    SYS_FORCE_INLINE void appendPoint_polyCut(GA_Offset& primpoint, GA_PointGroup* const cutPointGroup)
     {
         UT_ASSERT_MSG(!cutPointGroup->isDetached(), "cutPointGroup must be Not Detached");
         GA_Offset new_primpoint = geo->appendPoint();
@@ -148,11 +139,7 @@ private:
     }
 
 
-    SYS_FORCE_INLINE GEO_PrimPoly* appendPrimitive_polyCut(
-        const bool closeFlag,
-        const GA_Offset primpoint,
-        const GA_Offset elemoff
-    )
+    SYS_FORCE_INLINE GEO_PrimPoly* appendPrimitive_polyCut(const bool closeFlag, const GA_Offset primpoint, const GA_Offset elemoff)
     {
         GEO_PrimPoly* const newPrim = static_cast<GEO_PrimPoly*>(geo->appendPrimitive(GA_PrimitiveTypeId(1)));
         geo->copyAttributes(GA_ATTRIB_PRIMITIVE, newPrim->getMapOffset(), *geoOrigin, elemoff);
@@ -218,8 +205,10 @@ private:
                 }
                 const GA_OffsetListRef& vertices = geoOrigin->getPrimitiveVertexList(elemoff);
                 //const GA_Size numvtx = geoOrigin->getPrimitiveVertexCount(elemoff) - 1;
+                
+                if (vertices.size() == 0) continue;
+                
                 const GA_Size numvtx = vertices.size() - 1;
-                if (numvtx == -1) continue;
 
                 //const GEO_Primitive* const srcPrim = static_cast<const GEO_Primitive*>(geoOrigin->getPrimitive(elemoff));
 
@@ -388,7 +377,8 @@ private:
     GU_DetailHandle geoOrigin_h;
     const GA_Detail* geoOrigin;
     GU_Detail* geoOriginTmp;
-};
+    
+}; // End of Class GFE_PolyCut
 
 
 
@@ -774,9 +764,9 @@ private:
 //    GA_Detail* const geoPoint,
 //    const GA_Detail* const geoFull,
 //    //const bool createSrcPrimAttrib = false,
-//    const UT_StringHolder& srcPrimAttribName,
+//    const UT_StringRef& srcPrimAttribName,
 //    //const bool createSrcPointAttrib = false,
-//    const UT_StringHolder& srcPointAttribName,
+//    const UT_StringRef& srcPointAttribName,
 //    const GA_PointGroup* const cutPointGroup,
 //    const GA_Storage storage = GA_STORE_INVALID,
 //    const GA_PrimitiveGroup* const primGroup = nullptr,
@@ -789,12 +779,12 @@ private:
 //    const GA_Storage finalStorageI = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geoPoint) : storage;
 //    if (srcPrimAttribName.length() != 0 && srcPrimAttribName.isstring())
 //    {
-//        geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorageI, 1, GA_Defaults(-1));
+//        geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
 //    }
 //
 //    if (srcPointAttribName.length() != 0 && srcPointAttribName.isstring())
 //    {
-//        geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, srcPointAttribName, finalStorageI, 1, GA_Defaults(-1));
+//        geoPoint->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, srcPointAttribName, finalStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
 //    }
 //
 //    polyCut(geoPoint, geoFull, cutPointGroup, primGroup,
@@ -809,17 +799,17 @@ private:
 //    const SOP_NodeVerb::CookParms& cookparms,
 //    GA_Detail* const geoPoint,
 //    const GA_Detail* const geoFull,
-//    const UT_StringHolder& cutPointGroupName = "",
-//    const UT_StringHolder& primGroupName = "",
+//    const UT_StringRef& cutPointGroupName = "",
+//    const UT_StringRef& primGroupName = "",
 //    const bool cutPoint = false,
 //    const bool mergePrimEndsIfClosed = true,
 //    const GFE_PolyCutType polyType = GFE_PolyCutType::AUTO,
 //
 //    const GA_Storage storage = GA_STORE_INVALID,
 //    //const bool createSrcPrimAttrib = false,
-//    const UT_StringHolder& srcPrimAttribName = "",
+//    const UT_StringRef& srcPrimAttribName = "",
 //    //const bool createSrcPointAttrib = false,
-//    const UT_StringHolder& srcPointAttribName = "",
+//    const UT_StringRef& srcPointAttribName = "",
 //    const bool delInputPointGroup = false
 //)
 //{

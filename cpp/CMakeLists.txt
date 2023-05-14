@@ -83,7 +83,6 @@ endfunction ()
 # houdini_sop_add_library_std( FILES ${HDK_FEELIB_FILE_NAMES} )
 
 houdini_sop_add_library_std( FILES
-    SOP_FeE_Adjacency_1_0
     SOP_FeE_AttribCast_1_0
     SOP_FeE_AttribCopy_4_0
     #SOP_FeE_AttribCopyFast_1_0
@@ -136,11 +135,12 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_MatchBBox_2_0
     SOP_FeE_MatchDirOrient_1_0
     SOP_FeE_Measure_3_0
+    SOP_FeE_MeshTopology_1_0
+    SOP_FeE_Normal2D_1_0
+    SOP_FeE_OffsetAttribToIndex_1_0
     SOP_FeE_OffsetVertexOrder_2_0
     SOP_FeE_OnPoly_1_0
     SOP_FeE_OrientAlongCurve_1_0
-    SOP_FeE_Normal2D_1_0
-    SOP_FeE_OffsetAttribToIndex_1_0
     SOP_FeE_PointInBBox_2_0
     SOP_FeE_PointInMesh_WN_2_0
     SOP_FeE_PolyCut_3_0

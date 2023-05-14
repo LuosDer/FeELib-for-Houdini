@@ -69,16 +69,6 @@ static const char* theDsFile = R"THEDSFILE(
 
 
     parm {
-       name    "kernel"
-       cppname "Kernel"
-       label   "Kernel"
-       type    integer
-       default { 0 }
-       range   { 0! 1! }
-    }
-
-
-    parm {
        name    "subscribeRatio"
        cppname "SubscribeRatio"
        label   "Subscribe Ratio"
@@ -190,26 +180,35 @@ void
 SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_DelVertex_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelVertex_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-
-    const bool delDegeneratePrims = sopparms.getDelDegeneratePrims();
-    const bool delUnusedPoints = sopparms.getDelUnusedPoints();
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GFE_DelVertex::delVertex(cookparms, outGeo0, groupType, sopparms.getGroup(), delDegeneratePrims, delUnusedPoints);
+    GFE_DelVertex delVertex(outGeo0, &cookparms);
+
+    delVertex.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    delVertex.setComputeParm(
+        sopparms.getDelDegeneratePrims(), sopparms.getDelUnusedPoints()
+        //,sopparms.getSubscribeRatio(), sopparms.getMinGrainSize()
+    );
+
+    //delVertex.setDeleteParm(delPointMode, sopparms.getGuaranteeNoVertexReference());
+
+    delVertex.computeAndBumpDataIdsForAddOrRemove();
+
 
 }
 

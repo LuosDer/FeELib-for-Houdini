@@ -6,15 +6,8 @@
 
 //#include "GFE/GFE_GroupAttribBoundary.h"
 
+
 #include "GFE/GFE_GeoFilter.h"
-
-
-//#include "GEO/GEO_Curve.h"
-//#include "GFE/GFE_Type.h"
-//#include "GFE/GFE_Attribute.h"
-//#include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_Measure.h"
-
 
 
 
@@ -29,22 +22,6 @@ public:
     {
     }
 
-
-    void
-        setGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
-    {
-        groupParser.setGroup(geoPrimGroup);
-    }
-
-    void
-        setGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser.setPrimitiveGroup(primGroupName);
-    }
 
 
     GA_Attribute*
@@ -61,13 +38,11 @@ public:
 
     void
         setComputeParm(
-            const GFE_GroupAttribBoundaryMethod curveUVMethod = GFE_GroupAttribBoundaryMethod::WorldArcLength,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        this->curveUVMethod = curveUVMethod;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
@@ -83,59 +58,36 @@ private:
             return true;
 
 
-        GA_Attribute* const uvAttribPtr = getOutAttribArray()[0];
-        switch (uvAttribPtr->getAIFTuple()->getTupleSize(uvAttribPtr))
+        GA_Attribute* const attrib = getOutAttribArray()[0];
+        switch (attrib->getAIFTuple()->getTupleSize(attrib))
         {
         case 2:
-            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+            switch (attrib->getAIFTuple()->getStorage(attrib))
             {
-            case GA_STORE_REAL16:
-                curveUV<UT_Vector2T<fpreal16>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL32:
-                curveUV<UT_Vector2T<fpreal32>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL64:
-                curveUV<UT_Vector2T<fpreal64>>(uvAttribPtr);
-                break;
-            default:
-                break;
+                case GA_STORE_REAL16: groupAttribBoundary<UT_Vector2T<fpreal16>>(); break;
+                case GA_STORE_REAL32: groupAttribBoundary<UT_Vector2T<fpreal32>>(); break;
+                case GA_STORE_REAL64: groupAttribBoundary<UT_Vector2T<fpreal64>>(); break;
+                default: break;
             }
             break;
         case 3:
-            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+            switch (attrib->getAIFTuple()->getStorage(attrib))
             {
-            case GA_STORE_REAL16:
-                curveUV<UT_Vector3T<fpreal16>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL32:
-                curveUV<UT_Vector3T<fpreal32>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL64:
-                curveUV<UT_Vector3T<fpreal64>>(uvAttribPtr);
-                break;
-            default:
-                break;
+                case GA_STORE_REAL16: groupAttribBoundary<UT_Vector3T<fpreal16>>(); break;
+                case GA_STORE_REAL32: groupAttribBoundary<UT_Vector3T<fpreal32>>(); break;
+                case GA_STORE_REAL64: groupAttribBoundary<UT_Vector3T<fpreal64>>(); break;
+                default: break;
             }
             break;
-        //case 4:
-        //    switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
-        //    {
-        //    case GA_STORE_REAL16:
-        //        curveUV<UT_Vector4T<fpreal16>>(uvAttribPtr);
-        //        break;
-        //    case GA_STORE_REAL32:
-        //        curveUV<UT_Vector4T<fpreal32>>(uvAttribPtr);
-        //        break;
-        //    case GA_STORE_REAL64:
-        //        curveUV<UT_Vector4T<fpreal64>>(uvAttribPtr);
-        //        break;
-        //    default:
-        //        break;
-        //    }
-        //break;
-        default:
-            break;
+        case 4:
+            switch (attrib->getAIFTuple()->getStorage(attrib))
+            {
+                case GA_STORE_REAL16: groupAttribBoundary<UT_Vector4T<fpreal16>>(); break;
+                case GA_STORE_REAL32: groupAttribBoundary<UT_Vector4T<fpreal32>>(); break;
+                case GA_STORE_REAL64: groupAttribBoundary<UT_Vector4T<fpreal64>>(); break;
+                default: break;
+            }
+        default: break;
         }
 
 
@@ -144,10 +96,7 @@ private:
 
 
     template<typename VECTOR_T>
-    void
-        curveUV(
-            GA_Attribute* const uvAttribPtr
-        )
+    void groupAttribBoundary()
     {
         using value_type = typename VECTOR_T::value_type;
 
@@ -179,102 +128,6 @@ private:
                 {
                     const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
                     if (numvtx < 2) return;
-#if 1
-                    switch (curveUVMethod)
-                    {
-                    case GFE_GroupAttribBoundaryMethod::LocalAverage:
-                        dist = 1.0 / (numvtx - 1);
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
-                        {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-                            uv[0] += dist;
-                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
-                        }
-                        break;
-                    case GFE_GroupAttribBoundaryMethod::LocalArcLength:
-                    {
-                        uvs.setSize(numvtx);
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                        pos_prev = pos_h.get(ptoff);
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
-                        {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-                            ptoff = geo->vertexPoint(vtxoff);
-                            pos = pos_h.get(ptoff);
-                            dist += pos.distance(pos_prev);
-                            uvs[vtxpnum] = dist;
-                            pos_prev = pos;
-                        }
-                        GA_Size lastIndex = numvtx - 1;
-                        value_type p = uvs[lastIndex];
-                        for (GA_Size vtxpnum = 1; vtxpnum < lastIndex; vtxpnum++)
-                        {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-                            uv[0] = uvs[vtxpnum] / p;
-                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
-                        }
-                        vtxoff = geo->getPrimitiveVertexOffset(primoff, lastIndex);
-                        uv[0] = 1.0;
-                        uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
-                    }
-                    break;
-                    case GFE_GroupAttribBoundaryMethod::WorldAverage:
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                        pos_prev = pos_h.get(ptoff);
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
-                        {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-                            ptoff = geo->vertexPoint(vtxoff);
-                            pos = pos_h.get(ptoff);
-                            dist += pos.distance(pos_prev);
-                            pos_prev = pos;
-                        }
-                        dist /= (numvtx - 1);
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
-                        {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-                            uv[0] += dist;
-                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
-                        }
-                        break;
-                    case GFE_GroupAttribBoundaryMethod::WorldArcLength:
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                        pos_prev = pos_h.get(ptoff);
-                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
-                        {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-                            ptoff = geo->vertexPoint(vtxoff);
-                            pos = pos_h.get(ptoff);
-                            uv[0] += pos.distance(pos_prev);
-                            uv_h.set(isPointAttrib ? ptoff : vtxoff, 0, uv);
-                            pos_prev = pos;
-                        }
-                        break;
-                    default:
-                        UT_ASSERT_MSG(0, "unhandled curveUVMethod");
-                        break;
-                    }
-#else
-                    GEO_Curve* GEO_Curve0 = static_cast<GEO_Curve*>(geo->getPrimitive(primoff));
-
-                    bool success = false;
-                    switch (curveUVMethod)
-                    {
-                    case GFE_GroupAttribBoundaryMethod::LocalAverage:
-                        success = GEO_Curve0->uniformTexture(uv_h, isPointAttrib);
-                        break;
-                    case GFE_GroupAttribBoundaryMethod::LocalArcLength:
-                        success = GEO_Curve0->chordLenTexture(uv_h, isPointAttrib);
-                        break;
-                    case GFE_GroupAttribBoundaryMethod::WorldArcLength:
-                        success = GEO_Curve0->grevilleTexture(uv_h, isPointAttrib);
-                        break;
-                    default:
-                        UT_ASSERT_MSG(0, "unhandled curveUVMethod");
-                        break;
-                    }
-                    UT_ASSERT_P(success);
-#endif
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -287,6 +140,8 @@ public:
     GFE_GroupAttribBoundaryMethod curveUVMethod = GFE_GroupAttribBoundaryMethod::WorldArcLength;
 
 private:
+    GA_Attribute* const attrib;
+
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
 

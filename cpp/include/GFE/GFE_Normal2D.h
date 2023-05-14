@@ -10,15 +10,13 @@
 
 #include "GFE/GFE_Normal3D.h"
 
-#include "GFE/GFE_Adjacency.h"
+#include "GFE/GFE_MeshTopology.h"
 
-//#include "GFE/GFE_Attribute.h"
-//#include "GFE/GFE_TopologyReference.h"
-//#include "GFE/GFE_VertexNextEquiv.h"
+#include "GFE/GFE_GroupPromote.h"
+#include "GFE/GFE_GroupBoolean.h"
+#include "GFE/GFE_GroupExpand.h"
 
-//#include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_GroupBoolean.h"
-//#include "GFE/GFE_GroupExpand.h"
+
 
 class GFE_Normal2D : public GFE_AttribCreateFilter {
 
@@ -123,11 +121,13 @@ private:
     {
         const GA_PointGroup* const geoPointGroup = groupParser.getPointGroup();
 
-        GFE_Adjacency adjacency(geo, cookparms);
-        adjacency.setVertexNextEquivGroup(true);
-        adjacency.compute();
+        GFE_MeshTopology meshTopology(geo, cookparms);
+        meshTopology.setVertexNextEquivGroup(true);
+        meshTopology.setVertexPointDst(true);
+        meshTopology.compute();
 
-        GA_VertexGroup* const unsharedVertexGroup = adjacency.getVertexNextEquivGroup();
+        GA_VertexGroup* const unsharedVertexGroup = meshTopology.getVertexNextEquivGroup();
+        const GA_Attribute* const dstptAttrib = meshTopology.getVertexPointDst();
 
         //GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromote(geo, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
 #if 1
@@ -148,11 +148,19 @@ private:
             GFE_GroupBoolean::groupIntersect(geo, unsharedVertexGroup, expandGroup);
         }
 
-        const GA_Attribute* const dstptAttrib = GFE_TopologyReference::addAttribVertexPointDst(geo);
         const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
 
 
-        const GA_AttributeOwner normal3DOwner = normal3D_h.getAttribute() ? normal3D_h.getAttribute()->getOwner() : GA_ATTRIB_INVALID;
+        
+
+
+        
+        const GA_RWHandleT<UT_Vector3T<T>> normal2D_h(getOutAttribArray()[0]);
+        const GA_ROHandleT<UT_Vector3T<T>> pos_h(posAttrib);
+        const GA_ROHandleT<UT_Vector3T<T>> normal3D_h(normal3DAttrib);
+
+        
+        const GA_AttributeOwner normal3DOwner = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
         if (normal3DOwner == GA_ATTRIB_GLOBAL)
             defaultNormal3D = normal3D_h.get(0);
 
@@ -164,9 +172,6 @@ private:
         const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
 
 
-        const GA_RWHandleT<UT_Vector3T<T>> normal2D_h(getOutAttribArray()[0]);
-        const GA_ROHandleT<UT_Vector3T<T>> pos_h(posAttrib);
-        const GA_ROHandleT<UT_Vector3T<T>> normal3D_h(normal3D.getAttrib());
 
         const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
         UTparallelFor(geoVertexSplittableRange, [this, &dstptAttrib_h, &normal2D_h, &pos_h, &normal3D_h,

@@ -26,7 +26,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "SrcAttribClass"
         label   "Source Attribute Class"
         type    ordinal
-        default { "points" }
+        default { "point" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"
@@ -48,7 +48,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "DstAttribClass"
         label   "Destination Attribute Class"
         type    ordinal
-        default { "points" }
+        default { "point" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"

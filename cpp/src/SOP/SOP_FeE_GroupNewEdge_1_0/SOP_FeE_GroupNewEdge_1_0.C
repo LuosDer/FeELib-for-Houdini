@@ -221,94 +221,40 @@ void
 SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupNewEdge_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupNewEdge_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
-    outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
+    outGeo0.replaceWith(inGeo0);
 
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
-
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroupName();
     if (!geo0AttribNames.isstring())
         return;
 
 
-    GOP_Manager gop;
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* const geo0Group = GFE_Group::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    if (!geo0Group)
-        return;
-    
-    //if (!geo0Group || geo0Group->isEmpty())
-    if (!geo0Group || GFE_Group::groupIsEmpty(geo0Group))
-        return;
-
-
-    const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
-    GA_Group* const combineGroup = GFE_Group::findOrCreateGroup(outGeo0, combineGroupType, geo0AttribNames);
-    if (!combineGroup)
-        return;
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
     
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-    //const exint minGrainSize = pow(2, 8);
-    //const exint minGrainSize = pow(2, 4);
 
-
-    //const GA_Storage& inStorgeF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    //const GA_Storage inStorgeF = GA_STORE_REAL32;
-    const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
-
-
-    //const GA_AttributeOwner combineAttribType = GFE_Group::attributeOwner_groupType(combineGroupType);
-    //GA_ElementGroup* combineGroup = outGeo0->findElementGroup(combineAttribType, geo0AttribNames);
-    //combineGroup->combine(geo0Group);
-
-    //bool success = true;
-    //GOP_Manager gop;
-    //const GA_Group* geo0EdgeGroup = gop.parseEdgeDetached(sopparms.getGroup(), outGeo0, true, success);
-
-    //const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
-    GFE_GroupNewEdge::addGroupNewEdge(outGeo0, combineGroup, geo0Group);
-
-    //for (auto it = static_cast<const GA_EdgeGroup*>(geo0EdgeGroup)->begin(); !it.atEnd(); it.advance())
-    //{
-    //    const GA_Edge& edge = it.getEdge();
-    //    static_cast<GA_EdgeGroup*>(combineGroup)->add(edge.p0(), edge.p1());
-    //}
-
-
-    //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared_SOP_FeE_GroupNewEdge_1_0", geo0VtxGroup);
-    //GA_Group* unshared_promoGroup = GFE_Group::groupPromote(outGeo0, unsharedGroup, unsharedAttribClass, geo0AttribNames, false, true);
-
-    //combineGroup->bumpDataId();
-    GFE_Group::groupBumpDataId(combineGroup);
-
-    if (geo0Group)
-    {
-        cookparms.getNode()->setHighlight(true);
-        cookparms.select(*combineGroup);
-    }
-    //GA_EdgeGroup* combineEdgeGroup = static_cast<GA_EdgeGroup*>(combineGroup);
-    // 
-    //static_cast<GA_EdgeGroup*>(combineGroup)->makeAllEdgesValid();
+    GFE_GroupNewEdge groupNewEdge(outGeo0, inGeo1, cookparms);
     
+    groupNewEdge.setComputeParm(
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    groupNewEdge.findOrCreateEdgeGroup(false, sopparms.getGroupName());
+    groupNewEdge.findOrCreateVertexGroup(false, sopparms.getGroupName());
 
 
+    groupNewEdge.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupNewEdge.computeAndBumpDataId();
+    groupNewEdge.visualizeOutGroup();
 
 }
 
 
-
-namespace SOP_FeE_GroupNewEdge_1_0_Namespace {
-
-} // End SOP_FeE_GroupNewEdge_1_0_Namespace namespace

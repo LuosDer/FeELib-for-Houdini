@@ -117,79 +117,29 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE
-    void
-        setGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
-    {
-        groupParser.setGroup(geoPrimGroup);
-    }
+    SYS_FORCE_INLINE void setGroup( const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    { groupParser.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE
-    void
-        setGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
-    }
+    SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
+    { groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);}
 
-    SYS_FORCE_INLINE
-    void
-        setCarveStartGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
-    {
-        groupParser_carveStart.setGroup(geoPrimGroup);
-    }
+    SYS_FORCE_INLINE void setCarveStartGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    { groupParser_carveStart.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE
-    void
-        setCarveEndGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
-    {
-        groupParser_carveEnd.setGroup(geoPrimGroup);
-    }
+    SYS_FORCE_INLINE void setCarveEndGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    { groupParser_carveEnd.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE
-    void
-        setCarveStartGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser_carveStart.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
-    }
+    SYS_FORCE_INLINE void setCarveStartGroup(const UT_StringHolder& primGroupName = "")
+    { groupParser_carveStart.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
 
-    SYS_FORCE_INLINE
-    void
-        setCarveEndGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser_carveEnd.setGroup(GA_GROUP_PRIMITIVE, primGroupName);
-    }
+    SYS_FORCE_INLINE void setCarveEndGroup(const UT_StringHolder& primGroupName = "")
+    { groupParser_carveEnd.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
 
-    SYS_FORCE_INLINE
-        void
-        createSrcPrimAttrib(
-            const UT_StringHolder& attribName = "srcPrim",
-            const GA_Storage storage = GA_STORE_INVALID
-        )
-    {
-        getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false);
-    }
+    SYS_FORCE_INLINE void createSrcPrimAttrib(const UT_StringHolder& attribName = "srcPrim", const GA_Storage storage = GA_STORE_INVALID)
+    { getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false); }
 
-    SYS_FORCE_INLINE
-        void
-        createSrcPointAttrib(
-            const UT_StringHolder& attribName = "srcPoint",
-            const GA_Storage storage = GA_STORE_INVALID
-        )
-    {
-        getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false);
-    }
+    SYS_FORCE_INLINE void createSrcPointAttrib(const UT_StringHolder& attribName = "srcPoint", const GA_Storage storage = GA_STORE_INVALID)
+    { getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false); }
 
     void
         setComputeParm(
@@ -210,11 +160,7 @@ public:
     }
 
     template<bool IsEnd>
-    void
-        setCarveU(
-            const fpreal carveULocal,
-            const fpreal carveUWorld
-        )
+    void setCarveU(const fpreal carveULocal, const fpreal carveUWorld)
     {
         const bool IsLocal = carveSpace == GFE_CarveSpace::LocalAverage || carveSpace == GFE_CarveSpace::LocalArcLength;
         const fpreal carveU = IsLocal ? carveULocal : carveUWorld;
@@ -228,10 +174,7 @@ public:
         }
     }
     
-    void
-        setUVAttrib(
-            const UT_StringHolder& customCarveUVAttribName = "uv"
-        )
+    void setUVAttrib(const UT_StringHolder& customCarveUVAttribName = "uv")
     {
         setHasComputed();
         if (carveSpace == GFE_CarveSpace::CustomAttrib)
@@ -240,12 +183,8 @@ public:
             uvAttrib = nullptr;
     }
 
-    SYS_FORCE_INLINE
-    void
-        setStartCarveUAttrib(
-            const GA_Attribute* const carveUAttrib,
-            const bool delCarveUAttrib
-        )
+    
+    void setStartCarveUAttrib(const GA_Attribute* const carveUAttrib, const bool delCarveUAttrib)
     {
         startCarveUAttrib = carveUAttrib;
         delStartCarveUAttrib = delCarveUAttrib;
@@ -257,22 +196,13 @@ public:
         UT_ASSERT_MSG(startCarveUAttrib->getOwner() >= 3, "not correct attrib owner");
     }
 
-    SYS_FORCE_INLINE
-    void
-        setStartCarveUAttrib(
-            GA_Attribute* const carveUAttrib,
-            const bool delCarveUAttrib
-        )
+    SYS_FORCE_INLINE void setStartCarveUAttrib(GA_Attribute* const carveUAttrib, const bool delCarveUAttrib)
     {
         startCarveUAttrib_nonConst = carveUAttrib;
         setStartCarveUAttrib(static_cast<const GA_Attribute*>(carveUAttrib), delCarveUAttrib);
     }
 
-    void
-        setStartCarveUAttrib(
-            const UT_StringHolder& carveUAttribName = "startCarveU",
-            const bool delCarveUAttrib = false
-        )
+    void setStartCarveUAttrib(const UT_StringHolder& carveUAttribName = "startCarveU", const bool delCarveUAttrib = false)
     {
         startCarveUAttrib_nonConst = geo->findPrimitiveAttribute(carveUAttribName);
         if (!startCarveUAttrib_nonConst)
@@ -295,12 +225,8 @@ public:
 
 
 
-    SYS_FORCE_INLINE
-    void
-        setEndCarveUAttrib(
-            const GA_Attribute* const carveUAttrib,
-            const bool delCarveUAttrib
-        )
+    
+    void setEndCarveUAttrib(const GA_Attribute* const carveUAttrib, const bool delCarveUAttrib)
     {
         endCarveUAttrib = carveUAttrib;
         delEndCarveUAttrib = delCarveUAttrib;
@@ -312,23 +238,14 @@ public:
         UT_ASSERT_MSG(endCarveUAttrib->getOwner() >= 3, "not correct attrib owner");
     }
 
-    SYS_FORCE_INLINE
-    void
-        setEndCarveUAttrib(
-            GA_Attribute* const carveUAttrib,
-            const bool delCarveUAttrib
-        )
+    SYS_FORCE_INLINE void setEndCarveUAttrib(GA_Attribute* const carveUAttrib, const bool delCarveUAttrib)
     {
         endCarveUAttrib_nonConst = carveUAttrib;
         setEndCarveUAttrib(static_cast<const GA_Attribute*>(carveUAttrib), delCarveUAttrib);
     }
 
-    SYS_FORCE_INLINE
-    void
-        setEndCarveUAttrib(
-            const UT_StringHolder& carveUAttribName = "endCarveU",
-            const bool delCarveUAttrib = false
-        )
+    
+    void setEndCarveUAttrib(const UT_StringHolder& carveUAttribName = "endCarveU", const bool delCarveUAttrib = false)
     {
         endCarveUAttrib_nonConst = geo->findPrimitiveAttribute(carveUAttribName);
         if (!endCarveUAttrib_nonConst)
@@ -354,9 +271,7 @@ public:
 
 
 
-    SYS_FORCE_INLINE
-    virtual void
-        bumpDataIdsForAddOrRemove() override
+    SYS_FORCE_INLINE virtual void bumpDataIdsForAddOrRemove() const override
     {
         geo->bumpDataIdsForAddOrRemove(true, true, true);
     }

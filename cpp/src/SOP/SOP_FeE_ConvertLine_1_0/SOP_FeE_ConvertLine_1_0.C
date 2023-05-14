@@ -447,37 +447,22 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const UT_StringHolder& vertexGroupName = sopparms.getVertexGroup();
     const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
 
-
-
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
-    const bool keepSourcePrim = sopparms.getKeepSourcePrim();
-
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const bool outSrcPrim = sopparms.getOutSrcPrim();
-    const UT_StringHolder& srcPrimAttribName = sopparms.getSrcPrimAttribName();
 
-
-#if 1
     GFE_ConvertLine convertLine(outGeo0, &inGeo0, &cookparms);
-#else
-    outGeo0->replaceWith(*inGeo0);
-    GFE_ConvertLine convertLine(outGeo0, nullptr, &cookparms);
-#endif
 
     convertLine.setCopyPrimitiveAttrib(sopparms.getCopyPrimAttrib(), sopparms.getCopyPrimAttribName());
     convertLine.setCopyVertexAttrib(sopparms.getCopyVertexAttrib(), sopparms.getCopyVertexAttribName());
 
-    convertLine.setComputeParm(isClosed, keepSourcePrim);
-    if (outSrcPrim)
-        convertLine.createSrcPrimAttrib(false, GA_STORE_INVALID, srcPrimAttribName);
+    convertLine.setComputeParm(isClosed, sopparms.getKeepSourcePrim());
+    if (sopparms.getOutSrcPrim())
+        convertLine.createSrcPrimAttrib(false, GA_STORE_INVALID, sopparms.getSrcPrimAttribName());
 
     convertLine.setGroup(sopparms.getPrimGroup());
 
@@ -486,8 +471,3 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 }
 
-
-
-namespace SOP_FeE_ConvertLine_1_0_Namespace {
-
-} // End SOP_FeE_ConvertLine_1_0_Namespace namespace

@@ -8,7 +8,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_Adjacency.h"
+#include "GFE/GFE_MeshTopology.h"
 
 
 
@@ -49,19 +49,16 @@ public:
 
 
     SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
-    {
-        groupParser.setGroup(geoPrimGroup);
-    }
-    SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
-    {
-        groupParser.setPrimitiveGroup(primGroupName);
-    }
+    { groupParser.setGroup(geoPrimGroup); }
+    
+    SYS_FORCE_INLINE void setGroup(const UT_StringRef& primGroupName = "")
+    { groupParser.setPrimitiveGroup(primGroupName); }
 
     SYS_FORCE_INLINE void createSrcPrimAttrib(
-            const bool detached = false,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& srcPrimAttribName = "srcPrims"
-        )
+        const bool detached = false,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& srcPrimAttribName = "srcPrims"
+    )
     {
         srcPrimAttribDetached = detached;
         srcPrimAttribStorage = storage;
@@ -82,26 +79,23 @@ public:
         this->keepSourcePrim = keepSourcePrim;
     }
 
-    SYS_FORCE_INLINE void setCopyPrimitiveAttrib(const bool copyAttrib = false,const UT_StringHolder& copyAttribName = "*")
+    SYS_FORCE_INLINE void setCopyPrimitiveAttrib(const bool copyAttrib = false,const UT_StringRef& copyAttribName = "*")
     {
         copyPrimAttrib = copyAttrib;
         copyPrimAttribName = copyAttribName;
     }
 
-    SYS_FORCE_INLINE void setCopyVertexAttrib(const bool copyAttrib = false,const UT_StringHolder& copyAttribName = "*")
+    SYS_FORCE_INLINE void setCopyVertexAttrib(const bool copyAttrib = false,const UT_StringRef& copyAttribName = "*")
     {
         copyVertexAttrib = copyAttrib;
         copyVertexAttribName = copyAttribName;
     }
     
     virtual SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove() const override
-    {
-        geo->bumpDataIdsForAddOrRemove(false, true, true);
-    }
+    { geo->bumpDataIdsForAddOrRemove(false, true, true); }
+    
     SYS_FORCE_INLINE GA_Offset get_primoff_first() const
-    {
-        return primoff_first;
-    }
+    { return primoff_first; }
 
     
 
@@ -171,17 +165,17 @@ private:
         //const bool hasInputGroup = !groupParser.isEmpty();
 
         
-        GFE_Adjacency adjacency(geoOriginTmp);
-        //adjacency.outAsOffset = false;
-        adjacency.outIntermediateAttrib = false;
-        adjacency.groupParser.setGroup(groupParser.getVertexGroup());
+        GFE_MeshTopology meshTopology(geoOriginTmp);
+        //meshTopology.outAsOffset = false;
+        meshTopology.outIntermediateAttrib = false;
+        meshTopology.groupParser.setGroup(groupParser.getVertexGroup());
         
-        const GA_VertexGroup* const creatingGroup = adjacency.setVertexNextEquivNoLoopGroup(true);
-        const GA_RWHandleT<GA_Offset> dstpt_h(adjacency.setVertexPointDst(true));
+        const GA_VertexGroup* const creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
+        const GA_RWHandleT<GA_Offset> dstpt_h(meshTopology.setVertexPointDst(true));
         
-        adjacency.compute();
-        // const GA_VertexGroup* const creatingGroup = adjacency.getVertexNextEquivNoLoopGroup();
-        // const GA_RWHandleT<GA_Offset> dstpt_h(adjacency.getVertexPointDst());
+        meshTopology.compute();
+        // const GA_VertexGroup* const creatingGroup = meshTopology.getVertexNextEquivNoLoopGroup();
+        // const GA_RWHandleT<GA_Offset> dstpt_h(meshTopology.getVertexPointDst());
         
         //const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoOriginTmp, groupParser.getVertexGroup());
         //const GA_RWHandleT<GA_Offset> dstpt_h = GFE_TopologyReference::addAttribVertexPointDst(geoOriginTmp, groupParser.getVertexGroup());
@@ -203,7 +197,7 @@ private:
             srcPrimAttrib = getOutAttribArray().
             findOrCreateTuple(srcPrimAttribDetached || !outSrcPrimAttrib,
                 GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT,
-                srcPrimAttribStorage, srcPrimAttribName);
+                srcPrimAttribStorage, srcPrimAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
 
         if (copyVertexAttrib)
             srcVtxAttrib = getOutAttribArray().findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT);
@@ -312,8 +306,8 @@ public:
     bool copyPrimAttrib = false;
     bool copyVertexAttrib = false;
     bool keepSourcePrim = false;
-    UT_StringHolder copyPrimAttribName;
-    UT_StringHolder copyVertexAttribName;
+    UT_StringRef copyPrimAttribName;
+    UT_StringRef copyVertexAttribName;
     
 protected:
     bool hasInGeo;
@@ -322,7 +316,7 @@ private:
     
     bool outSrcPrimAttrib = false;
     bool srcPrimAttribDetached = false;
-    UT_StringHolder srcPrimAttribName;
+    UT_StringRef srcPrimAttribName;
     GA_Storage srcPrimAttribStorage = GA_STORE_INVALID;
 
     GA_Offset primoff_first = -1;

@@ -364,7 +364,3 @@ SOP_FeE_JoinCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 }
 
 
-
-namespace SOP_FeE_JoinCurve_2_0_Namespace {
-
-} // End SOP_FeE_JoinCurve_2_0_Namespace namespace

@@ -18,7 +18,7 @@ class GFE_JoinCurve : public GFE_AttribFilter {
 
     
 #ifndef GFE_JOINCURVE_MAXLOOPCOUNT
-#define GFE_JOINCURVE_MAXLOOPCOUNT 1000000000
+#define GFE_JOINCURVE_MAXLOOPCOUNT GFE_MAX_LOOP_COUNT
 #endif
 
 public:
@@ -58,31 +58,25 @@ public:
     GA_Attribute* setSrcPrim(
         const bool detached = false,
         const GA_Storage storage = GA_STORE_INVALID,
-        const UT_StringHolder& srcPrimAttribName = ""
+        const UT_StringRef& srcPrimAttribName = ""
     )
     {   
         if (srcPrimAttribName.isstring() && srcPrimAttribName.length() != 0)
             return nullptr;
         
-        const GA_Storage finalStorageI = storage == GA_STORE_INVALID ? geo->getPreferredStorageI() : storage;
-    
-        srcPrimsAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_PRIMITIVE,
-            GA_STORECLASS_INT, finalStorageI,
-            srcPrimAttribName, 1, GA_Defaults(-1));
+        srcPrimAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_PRIMITIVE,
+            GA_STORECLASS_INT, storage,
+            srcPrimAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         
-        return srcPrimsAttrib;
+        return srcPrimAttrib;
     }
 
     SYS_FORCE_INLINE GA_Attribute* getSrcPrim() const
-    {
-        return srcPrimsAttrib;
-    }
+    { return srcPrimAttrib; }
 
     
-    virtual void bumpDataIdsForAddOrRemove() const override
-    {
-        geo->bumpDataIdsForAddOrRemove(false, true, true);
-    }
+    SYS_FORCE_INLINE virtual void bumpDataIdsForAddOrRemove() const override
+    { geo->bumpDataIdsForAddOrRemove(false, true, true); }
 
 
     
@@ -108,7 +102,7 @@ void checkInputError()
             vtxoff = geo->getPrimitiveVertexOffset(primoff, 0);
             ptoff = vtxPointRef->getLink(vtxoff);
 
-            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
             {
                 primoff_neb = vtxPrimRef->getLink(vtxoff_next);
                 const GA_Size vtxpnum = geo->vertexPrimIndex(primoff_neb, vtxoff_next);
@@ -126,7 +120,7 @@ void checkInputError()
             vtxoff = geo->getPrimitiveVertexOffset(primoff, geo->getPrimitiveVertexCount(primoff) - 1);
             ptoff = vtxPointRef->getLink(vtxoff);
 
-            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
             {
                 primoff_neb = vtxPrimRef->getLink(vtxoff_next);
                 const GA_Size vtxpnum = geo->vertexPrimIndex(primoff_neb, vtxoff_next);
@@ -164,10 +158,10 @@ void joinCurve()
 {
     UT_ValArray<GA_Offset> srcPrims;
     GA_RWHandleT<UT_ValArray<GA_Offset>> srcPrims_h;
-    if (srcPrimsAttrib)
+    if (srcPrimAttrib)
     {
         srcPrims.setCapacity(1024);
-        srcPrims_h.bind(srcPrimsAttrib);
+        srcPrims_h.bind(srcPrimAttrib);
     }
         
     const GA_PointGroup* const stopPointGroup = groupParser.getPointGroup();
@@ -229,19 +223,19 @@ void joinCurve()
             {
                 vtxoff_next0 = pointVtxRef->getLink(ptoff0);
                 vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-                if (vtxoff_next0 == GA_INVALID_OFFSET)
+                if (vtxoff_next0 == GFE_INVALID_OFFSET)
                 {
                     isTwoNeb0 = false;
                 }
                 else
                 {
                     vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-                    isTwoNeb0 = vtxoff_next0 == GA_INVALID_OFFSET;
+                    isTwoNeb0 = vtxoff_next0 == GFE_INVALID_OFFSET;
                 }
             }
             //if (!topo.isPointShared(ptoff0))
 
-            //if (vtxoff_next == GA_INVALID_OFFSET)
+            //if (vtxoff_next == GFE_INVALID_OFFSET)
                 //outGroup->setElement(ptoff, true);
 
             vtxoff1 = geo->getPrimitiveVertexOffset(primoff, geo->getPrimitiveVertexCount(primoff)-1);
@@ -254,14 +248,14 @@ void joinCurve()
             {
                 vtxoff_next1 = pointVtxRef->getLink(ptoff1);
                 vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-                if (vtxoff_next1 == GA_INVALID_OFFSET)
+                if (vtxoff_next1 == GFE_INVALID_OFFSET)
                 {
                     isTwoNeb1 = false;
                 }
                 else
                 {
                     vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-                    isTwoNeb1 = vtxoff_next1 == GA_INVALID_OFFSET;
+                    isTwoNeb1 = vtxoff_next1 == GFE_INVALID_OFFSET;
                 }
             }
 
@@ -293,7 +287,7 @@ void joinCurve()
             vtxoff_prev = isTwoNeb0 ? vtxoff0 : vtxoff1;
             ptoff_next = isTwoNeb0 ? ptoff0 : ptoff1;
 
-            if (srcPrimsAttrib)
+            if (srcPrimAttrib)
             {
                 srcPrims.emplace_back(primoff);
             }
@@ -311,13 +305,13 @@ void joinCurve()
                 {
                     vtxoff_next = pointVtxRef->getLink(ptoff_next);
                     vtxoff_next = vtxNextRef->getLink(vtxoff_next);
-                    if (vtxoff_next == GA_INVALID_OFFSET)
+                    if (vtxoff_next == GFE_INVALID_OFFSET)
                     {
                         break;
                     }
                     else
                     {
-                        if (vtxNextRef->getLink(vtxoff_next) != GA_INVALID_OFFSET)
+                        if (vtxNextRef->getLink(vtxoff_next) != GFE_INVALID_OFFSET)
                         {
                             break;
                         }
@@ -326,7 +320,7 @@ void joinCurve()
                 }
                 for (vtxoff_next = pointVtxRef->getLink(ptoff_next); vtxoff_next == vtxoff_prev; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                 {
-                    UT_ASSERT_MSG(vtxoff_next != GA_INVALID_OFFSET, "cant be possible");
+                    UT_ASSERT_MSG(vtxoff_next != GFE_INVALID_OFFSET, "cant be possible");
                 }
                 primoff_neb = vtxPrimRef->getLink(vtxoff_next);
 
@@ -373,14 +367,14 @@ void joinCurve()
                     //topo.delVertex(vertices[numvtx]);
                     //geo->destroyVertexOffset(vertices[numvtx]);
                 }
-                if (srcPrimsAttrib)
+                if (srcPrimAttrib)
                 {
                     srcPrims.emplace_back(primoff_neb);
                 }
 
             }
 
-            if (srcPrimsAttrib)
+            if (srcPrimAttrib)
             {
                 srcPrims_h.set(primoff, srcPrims);
                 srcPrims.clear();
@@ -407,14 +401,14 @@ void joinCurve()
                 //{
                 //    vtxoff_next0 = pointVtxRef->getLink(ptoff0);
                 //    vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-                //    if (vtxoff_next0 == GA_INVALID_OFFSET)
+                //    if (vtxoff_next0 == GFE_INVALID_OFFSET)
                 //    {
                 //        isTwoNeb0 = false;
                 //    }
                 //    else
                 //    {
                 //        vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-                //        isTwoNeb0 = vtxoff_next0 == GA_INVALID_OFFSET;
+                //        isTwoNeb0 = vtxoff_next0 == GFE_INVALID_OFFSET;
                 //    }
                 //}
 
@@ -428,14 +422,14 @@ void joinCurve()
                 //{
                 //    vtxoff_next1 = pointVtxRef->getLink(ptoff1);
                 //    vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-                //    if (vtxoff_next1 == GA_INVALID_OFFSET)
+                //    if (vtxoff_next1 == GFE_INVALID_OFFSET)
                 //    {
                 //        isTwoNeb1 = false;
                 //    }
                 //    else
                 //    {
                 //        vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-                //        isTwoNeb1 = vtxoff_next1 == GA_INVALID_OFFSET;
+                //        isTwoNeb1 = vtxoff_next1 == GFE_INVALID_OFFSET;
                 //    }
                 //}
 
@@ -459,7 +453,7 @@ void joinCurve()
                 vtxoff_prev = vtxoff1;
                 //ptoff_next = isTwoNeb0 ? ptoff0 : ptoff1;
                 ptoff_next = ptoff1;
-                if (srcPrimsAttrib)
+                if (srcPrimAttrib)
                 {
                     srcPrims.emplace_back(primoff_neb);
                 }
@@ -477,13 +471,13 @@ void joinCurve()
                     //{
                     //    vtxoff_next = pointVtxRef->getLink(ptoff_next);
                     //    vtxoff_next = vtxNextRef->getLink(vtxoff_next);
-                    //    if (vtxoff_next == GA_INVALID_OFFSET)
+                    //    if (vtxoff_next == GFE_INVALID_OFFSET)
                     //    {
                     //        break;
                     //    }
                     //    else
                     //    {
-                    //        if (vtxNextRef->getLink(vtxoff_next) != GA_INVALID_OFFSET)
+                    //        if (vtxNextRef->getLink(vtxoff_next) != GFE_INVALID_OFFSET)
                     //        {
                     //            break;
                     //        }
@@ -491,7 +485,7 @@ void joinCurve()
                     //}
                     for (vtxoff_next = pointVtxRef->getLink(ptoff_next); vtxoff_next == vtxoff_prev; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
-                        UT_ASSERT_MSG(vtxoff_next != GA_INVALID_OFFSET, "cant be possible");
+                        UT_ASSERT_MSG(vtxoff_next != GFE_INVALID_OFFSET, "cant be possible");
                     }
                     primoff_neb = vtxPrimRef->getLink(vtxoff_next);
                     if (primoff_neb == primoff)
@@ -523,7 +517,7 @@ void joinCurve()
                         }
                         //geo->destroyVertexOffset(vertices[numvtx]);
                     }
-                    if (srcPrimsAttrib)
+                    if (srcPrimAttrib)
                     {
                         srcPrims.emplace_back(primoff_neb);
                     }
@@ -535,7 +529,7 @@ void joinCurve()
                     geo->setPrimitiveClosedFlag(primoff, true);
                 }
 
-                if (srcPrimsAttrib)
+                if (srcPrimAttrib)
                 {
                     srcPrims_h.set(primoff, srcPrims);
                     srcPrims.clear();
@@ -559,7 +553,7 @@ public:
     bool closeLoop = false;
 
 private:
-    GA_Attribute* srcPrimsAttrib = nullptr;
+    GA_Attribute* srcPrimAttrib = nullptr;
 
 }; // End of class GFE_JoinCurve
 
@@ -620,17 +614,17 @@ private:
 //         const bool keepLoop = true,
 //         const bool closeLoop = false,
 //         const GA_PointGroup* const stopPointGroup = nullptr,
-//         GA_Attribute* const srcPrimsAttrib = nullptr
+//         GA_Attribute* const srcPrimAttrib = nullptr
 //     )
 // {
 //     UT_ASSERT_P(geo);
 //
 //     UT_ValArray<GA_Offset> srcPrims;
 //     GA_RWHandleT<UT_ValArray<GA_Offset>> srcPrims_h;
-//     if (srcPrimsAttrib)
+//     if (srcPrimAttrib)
 //     {
 //         srcPrims.setCapacity(1024);
-//         srcPrims_h = srcPrimsAttrib;
+//         srcPrims_h = srcPrimAttrib;
 //     }
 //
 //     //GA_Offset vtxoff_new = geo->appendVertex();
@@ -690,19 +684,19 @@ private:
 //             {
 //                 vtxoff_next0 = pointVtxRef->getLink(ptoff0);
 //                 vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-//                 if (vtxoff_next0 == GA_INVALID_OFFSET)
+//                 if (vtxoff_next0 == GFE_INVALID_OFFSET)
 //                 {
 //                     isTwoNeb0 = false;
 //                 }
 //                 else
 //                 {
 //                     vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-//                     isTwoNeb0 = vtxoff_next0 == GA_INVALID_OFFSET;
+//                     isTwoNeb0 = vtxoff_next0 == GFE_INVALID_OFFSET;
 //                 }
 //             }
 //             //if (!topo.isPointShared(ptoff0))
 //
-//             //if (vtxoff_next == GA_INVALID_OFFSET)
+//             //if (vtxoff_next == GFE_INVALID_OFFSET)
 //                 //outGroup->setElement(ptoff, true);
 //
 //             vtxoff1 = geo->getPrimitiveVertexOffset(primoff, geo->getPrimitiveVertexCount(primoff)-1);
@@ -715,14 +709,14 @@ private:
 //             {
 //                 vtxoff_next1 = pointVtxRef->getLink(ptoff1);
 //                 vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-//                 if (vtxoff_next1 == GA_INVALID_OFFSET)
+//                 if (vtxoff_next1 == GFE_INVALID_OFFSET)
 //                 {
 //                     isTwoNeb1 = false;
 //                 }
 //                 else
 //                 {
 //                     vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-//                     isTwoNeb1 = vtxoff_next1 == GA_INVALID_OFFSET;
+//                     isTwoNeb1 = vtxoff_next1 == GFE_INVALID_OFFSET;
 //                 }
 //             }
 //
@@ -754,7 +748,7 @@ private:
 //             vtxoff_prev = isTwoNeb0 ? vtxoff0 : vtxoff1;
 //             ptoff_next = isTwoNeb0 ? ptoff0 : ptoff1;
 //
-//             if (srcPrimsAttrib)
+//             if (srcPrimAttrib)
 //             {
 //                 srcPrims.emplace_back(primoff);
 //             }
@@ -772,13 +766,13 @@ private:
 //                 {
 //                     vtxoff_next = pointVtxRef->getLink(ptoff_next);
 //                     vtxoff_next = vtxNextRef->getLink(vtxoff_next);
-//                     if (vtxoff_next == GA_INVALID_OFFSET)
+//                     if (vtxoff_next == GFE_INVALID_OFFSET)
 //                     {
 //                         break;
 //                     }
 //                     else
 //                     {
-//                         if (vtxNextRef->getLink(vtxoff_next) != GA_INVALID_OFFSET)
+//                         if (vtxNextRef->getLink(vtxoff_next) != GFE_INVALID_OFFSET)
 //                         {
 //                             break;
 //                         }
@@ -787,7 +781,7 @@ private:
 //                 }
 //                 for (vtxoff_next = pointVtxRef->getLink(ptoff_next); vtxoff_next == vtxoff_prev; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
 //                 {
-//                     UT_ASSERT_MSG(vtxoff_next != GA_INVALID_OFFSET, "cant be possible");
+//                     UT_ASSERT_MSG(vtxoff_next != GFE_INVALID_OFFSET, "cant be possible");
 //                 }
 //                 primoff_neb = vtxPrimRef->getLink(vtxoff_next);
 //
@@ -834,14 +828,14 @@ private:
 //                     //topo.delVertex(vertices[numvtx]);
 //                     //geo->destroyVertexOffset(vertices[numvtx]);
 //                 }
-//                 if (srcPrimsAttrib)
+//                 if (srcPrimAttrib)
 //                 {
 //                     srcPrims.emplace_back(primoff_neb);
 //                 }
 //
 //             }
 //
-//             if (srcPrimsAttrib)
+//             if (srcPrimAttrib)
 //             {
 //                 srcPrims_h.set(primoff, srcPrims);
 //                 srcPrims.clear();
@@ -868,14 +862,14 @@ private:
 //                 //{
 //                 //    vtxoff_next0 = pointVtxRef->getLink(ptoff0);
 //                 //    vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-//                 //    if (vtxoff_next0 == GA_INVALID_OFFSET)
+//                 //    if (vtxoff_next0 == GFE_INVALID_OFFSET)
 //                 //    {
 //                 //        isTwoNeb0 = false;
 //                 //    }
 //                 //    else
 //                 //    {
 //                 //        vtxoff_next0 = vtxNextRef->getLink(vtxoff_next0);
-//                 //        isTwoNeb0 = vtxoff_next0 == GA_INVALID_OFFSET;
+//                 //        isTwoNeb0 = vtxoff_next0 == GFE_INVALID_OFFSET;
 //                 //    }
 //                 //}
 //
@@ -889,14 +883,14 @@ private:
 //                 //{
 //                 //    vtxoff_next1 = pointVtxRef->getLink(ptoff1);
 //                 //    vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-//                 //    if (vtxoff_next1 == GA_INVALID_OFFSET)
+//                 //    if (vtxoff_next1 == GFE_INVALID_OFFSET)
 //                 //    {
 //                 //        isTwoNeb1 = false;
 //                 //    }
 //                 //    else
 //                 //    {
 //                 //        vtxoff_next1 = vtxNextRef->getLink(vtxoff_next1);
-//                 //        isTwoNeb1 = vtxoff_next1 == GA_INVALID_OFFSET;
+//                 //        isTwoNeb1 = vtxoff_next1 == GFE_INVALID_OFFSET;
 //                 //    }
 //                 //}
 //
@@ -920,7 +914,7 @@ private:
 //                 vtxoff_prev = vtxoff1;
 //                 //ptoff_next = isTwoNeb0 ? ptoff0 : ptoff1;
 //                 ptoff_next = ptoff1;
-//                 if (srcPrimsAttrib)
+//                 if (srcPrimAttrib)
 //                 {
 //                     srcPrims.emplace_back(primoff_neb);
 //                 }
@@ -938,13 +932,13 @@ private:
 //                     //{
 //                     //    vtxoff_next = pointVtxRef->getLink(ptoff_next);
 //                     //    vtxoff_next = vtxNextRef->getLink(vtxoff_next);
-//                     //    if (vtxoff_next == GA_INVALID_OFFSET)
+//                     //    if (vtxoff_next == GFE_INVALID_OFFSET)
 //                     //    {
 //                     //        break;
 //                     //    }
 //                     //    else
 //                     //    {
-//                     //        if (vtxNextRef->getLink(vtxoff_next) != GA_INVALID_OFFSET)
+//                     //        if (vtxNextRef->getLink(vtxoff_next) != GFE_INVALID_OFFSET)
 //                     //        {
 //                     //            break;
 //                     //        }
@@ -952,7 +946,7 @@ private:
 //                     //}
 //                     for (vtxoff_next = pointVtxRef->getLink(ptoff_next); vtxoff_next == vtxoff_prev; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
 //                     {
-//                         UT_ASSERT_MSG(vtxoff_next != GA_INVALID_OFFSET, "cant be possible");
+//                         UT_ASSERT_MSG(vtxoff_next != GFE_INVALID_OFFSET, "cant be possible");
 //                     }
 //                     primoff_neb = vtxPrimRef->getLink(vtxoff_next);
 //                     if (primoff_neb == primoff)
@@ -984,7 +978,7 @@ private:
 //                         }
 //                         //geo->destroyVertexOffset(vertices[numvtx]);
 //                     }
-//                     if (srcPrimsAttrib)
+//                     if (srcPrimAttrib)
 //                     {
 //                         srcPrims.emplace_back(primoff_neb);
 //                     }
@@ -996,7 +990,7 @@ private:
 //                     geo->setPrimitiveClosedFlag(primoff, true);
 //                 }
 //
-//                 if (srcPrimsAttrib)
+//                 if (srcPrimAttrib)
 //                 {
 //                     srcPrims_h.set(primoff, srcPrims);
 //                     srcPrims.clear();
@@ -1014,20 +1008,20 @@ private:
 //     GA_Detail* const geo,
 //     const bool outSrcPrims,
 //     const GA_Storage storage = GA_STORE_INVALID,
-//     const UT_StringHolder& srcPrimsAttribName = "",
+//     const UT_StringHolder& srcPrimAttribName = "",
 //     const bool keepOrder = false,
 //     const bool keepLoop = true,
 //     const bool closeLoop = false,
 //     const GA_PointGroup* const stopPointGroup = nullptr
 // )
 // {   
-//     GA_Attribute* srcPrimsAttrib = nullptr;
-//     if (outSrcPrims && srcPrimsAttribName.isstring() && srcPrimsAttribName.length() != 0)
+//     GA_Attribute* srcPrimAttrib = nullptr;
+//     if (outSrcPrims && srcPrimAttribName.isstring() && srcPrimAttribName.length() != 0)
 //     {
 //         const GA_Storage finalStorageI = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
-//         srcPrimsAttrib = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimsAttribName, finalStorageI, 1, GA_Defaults(-1));
+//         srcPrimAttrib = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, srcPrimAttribName, finalStorageI, 1, GA_Defaults(-1));
 //     }
-//     joinCurve(geo, keepOrder, keepLoop, closeLoop, stopPointGroup, srcPrimsAttrib);
+//     joinCurve(geo, keepOrder, keepLoop, closeLoop, stopPointGroup, srcPrimAttrib);
 // }
 //
 //
@@ -1041,13 +1035,13 @@ private:
 //     const bool closeLoop = false,
 //     const bool outSrcPrims = false,
 //     const GA_Storage storage = GA_STORE_INVALID,
-//     const UT_StringHolder& srcPrimsAttribName = ""
+//     const UT_StringHolder& srcPrimAttribName = ""
 // )
 // {
 //     GOP_Manager gop;
 //     const GA_PointGroup* const stopPointGroup = GFE_GroupParser_Namespace::findOrParsePointGroupDetached(cookparms, geo, stopPointGroupName, gop);
 //
-//     joinCurve(geo, outSrcPrims, storage, srcPrimsAttribName, keepOrder, keepLoop, closeLoop, stopPointGroup);
+//     joinCurve(geo, outSrcPrims, storage, srcPrimAttribName, keepOrder, keepLoop, closeLoop, stopPointGroup);
 // }
 //
 //
@@ -1078,7 +1072,7 @@ private:
 //             vtxoff = geo->getPrimitiveVertexOffset(primoff, 0);
 //             ptoff = vtxPointRef->getLink(vtxoff);
 //
-//             for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+//             for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
 //             {
 //                 primoff_neb = vtxPrimRef->getLink(vtxoff_next);
 //                 GA_Size vtxpnum = GFE_TopologyReference_Namespace::vertexPrimIndex(geo, primoff_neb, vtxoff_next);
@@ -1096,7 +1090,7 @@ private:
 //             vtxoff = geo->getPrimitiveVertexOffset(primoff, geo->getPrimitiveVertexCount(primoff) - 1);
 //             ptoff = vtxPointRef->getLink(vtxoff);
 //
-//             for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+//             for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
 //             {
 //                 primoff_neb = vtxPrimRef->getLink(vtxoff_next);
 //                 GA_Size vtxpnum = GFE_TopologyReference_Namespace::vertexPrimIndex(geo, primoff_neb, vtxoff_next);

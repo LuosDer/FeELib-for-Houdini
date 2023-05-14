@@ -64,7 +64,7 @@ private:
 
 
 public:
-    float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+    fpreal cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
     GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED;
     bool copyOrigIfZero = false;
 

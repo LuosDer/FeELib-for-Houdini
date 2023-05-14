@@ -45,7 +45,8 @@ public:
     { return extremePrimoff; }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(const bool detached = false, const UT_StringRef& attribName = "")
-    { return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL, GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    { return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL,
+        GA_STORECLASS_INT, GA_STORE_INVALID, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
 
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached = false, const UT_StringRef& groupName = "")
     { return getOutGroupArray().findOrCreate(detached, GA_GROUP_PRIMITIVE, groupName); }
@@ -67,11 +68,11 @@ private:
 
         GA_PrimitiveGroup* const outGroup = static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0]);
         
-        GA_Size numelems;
-        if ((int)measureType <= 1)
-        {
-            numelems = geo->getNumPrimitives();
-        }
+        // GA_Size numElems;
+        // if (measureType <= 1)
+        // {
+        //     numElems = geo->getNumPrimitives();
+        // }
 
         GFE_Measure measure(geo, cookparms);
         measure.groupParser.setGroup(groupParser);

@@ -65,8 +65,6 @@ static const char *theDsFile = R"THEDSFILE(
             type    toggle
             default { 0 }
         }
-    
-
 
         parm {
             name    "delInputGroup"
@@ -144,7 +142,7 @@ static const char *theDsFile = R"THEDSFILE(
                 "delDegenerate"              "Delete Degenerate"
                 "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
             }
-            invisible
+        //    invisible
         }
         parm {
             name    "guaranteeNoVertexReference"
@@ -152,7 +150,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Guarantee No Vertex Reference"
             type    toggle
             default { 0 }
-            invisible
+        //    invisible
         }
     }
 
@@ -161,8 +159,8 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "Kernel"
         label   "Kernel"
         type    integer
-        default { 1 }
-        range   { 0! 2! }
+        default { 0 }
+        range   { 0! 3! }
     }
     parm {
         name    "subscribeRatio"
@@ -310,63 +308,75 @@ sopGroupType(SOP_FeE_ExtractPoint_1_0Parms::GroupType parmgrouptype)
 }
 
 
+static GA_Detail::GA_DestroyPointMode
+sopDelPointMode(SOP_FeE_ExtractPoint_1_0Parms::DelPointMode parmDelPointMode)
+{
+    using namespace SOP_FeE_ExtractPoint_1_0Enums;
+    switch (parmDelPointMode)
+    {
+    case DelPointMode::LEAVEPRIMITIVE:                return GA_Detail::GA_LEAVE_PRIMITIVES;                  break;
+    case DelPointMode::DELDEGENERATE:                 return GA_Detail::GA_DESTROY_DEGENERATE;                break;
+    case DelPointMode::DELDEGENERATEINCOMPATIBLE:     return GA_Detail::GA_DESTROY_DEGENERATE_INCOMPATIBLE;   break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_Detail::GA_DESTROY_DEGENERATE;
+}
+
 
 void
 SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ExtractPoint_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ExtractPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+
 
     if (!sopparms.getExtractPoint())
     {
-        outGeo0->replaceWith(*inGeo0);
+        outGeo0.replaceWith(inGeo0);
         return;
     }
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const UT_StringHolder& groupName = sopparms.getGroup();
+    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
 
-    const UT_StringHolder& delPrimAttrib = sopparms.getDelPrimAttrib();
-    const UT_StringHolder& delPointAttrib = sopparms.getDelPointAttrib();
+    const UT_StringHolder& delPrimAttrib   = sopparms.getDelPrimAttrib();
+    const UT_StringHolder& delPointAttrib  = sopparms.getDelPointAttrib();
     const UT_StringHolder& delVertexAttrib = sopparms.getDelVertexAttrib();
     const UT_StringHolder& delDetailAttrib = sopparms.getDelDetailAttrib();
 
-    const UT_StringHolder& delPrimGroup = sopparms.getDelPrimGroup();
-    const UT_StringHolder& delPointGroup = sopparms.getDelPointGroup();
-    const UT_StringHolder& delVertexGroup = sopparms.getDelVertexGroup();
-    const UT_StringHolder& delEdgeGroup = sopparms.getDelEdgeGroup();
-    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const UT_StringHolder& delPrimGroup    = sopparms.getDelPrimGroup();
+    const UT_StringHolder& delPointGroup   = sopparms.getDelPointGroup();
+    const UT_StringHolder& delVertexGroup  = sopparms.getDelVertexGroup();
+    const UT_StringHolder& delEdgeGroup    = sopparms.getDelEdgeGroup();
+
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-#if 1
-    outGeo0->replaceWith(*inGeo0);
-    GFE_ExtractPoint_Namespace::extractPoint(cookparms, outGeo0, groupName,
-        delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
-        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
-        sopparms.getReverseGroup(), sopparms.getDelInputGroup());
-#else
-    GFE_ExtractPoint::extractPoint(cookparms, outGeo0, inGeo0, groupName,
-        delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
-        delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
-        sopparms.getReverseGroup(), sopparms.getDelInputGroup());
-#endif
+
+    GFE_ExtractPoint extractPoint(outGeo0, inGeo0, &cookparms);
+
+    extractPoint.setGroup(groupType, sopparms.getGroup());
+
+    //delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
+    //    delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
+        
+    extractPoint.setComputeParm(
+        sopparms.getReverseGroup(), sopparms.getDelInputGroup()
+        //,sopparms.getSubscribeRatio(), sopparms.getMinGrainSize()
+    );
+    extractPoint.setKernel(sopparms.getKernel());
+
+    extractPoint.setDeleteParm(delPointMode, sopparms.getGuaranteeNoVertexReference());
+
+    extractPoint.computeAndBumpDataIdsForAddOrRemove();
 
 
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
 }
 
 
-
-namespace SOP_FeE_ExtractPoint_1_0_Namespace {
-
-} // End SOP_FeE_ExtractPoint_1_0_Namespace namespace

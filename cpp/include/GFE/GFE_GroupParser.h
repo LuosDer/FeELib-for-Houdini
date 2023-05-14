@@ -154,35 +154,68 @@ public:
         geoEdgeGroup = groupParser.geoEdgeGroup;
     }
 
-    virtual void reset(
-        const GA_Detail* const inGeo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
+
+    
+    void clear()
     {
-        geo = static_cast<const GEO_Detail*>(inGeo);
-        this->cookparms = cookparms;
+        hasGroup = false;
+        geoGroup = nullptr;
+        
+        hasPrimitiveGroup = false;
+        geoPrimitiveGroup = nullptr;
+
+        hasPointGroup = false;
+        geoPointGroup = nullptr;
+
+        hasVertexGroup = false;
+        geoVertexGroup = nullptr;
+
+        hasEdgeGroup = false;
+        geoEdgeGroup = nullptr;
     }
 
-    virtual void reset(
-        const GEO_Detail* const inGeo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
+    
+    virtual void reset(GEO_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
         geo = inGeo;
+        geoNonconst = static_cast<GA_Detail*>(inGeo);
         this->cookparms = cookparms;
+        clear();
     }
+    
+    virtual void reset(const GEO_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
+    {
+        geo = inGeo;
+        geoNonconst = nullptr;
+        this->cookparms = cookparms;
+        clear();
+    }
+    
+    SYS_FORCE_INLINE virtual void reset(GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
+    { reset(static_cast<GEO_Detail*>(inGeo), cookparms); }
 
-    SYS_FORCE_INLINE bool getFindGroup() const
-    { return findGroup; }
+    SYS_FORCE_INLINE virtual void reset(const GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
+    { reset(static_cast<const GEO_Detail*>(inGeo), cookparms); }
+
+    SYS_FORCE_INLINE virtual void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
+    { reset(&inGeo, cookparms); }
+
+    SYS_FORCE_INLINE virtual void reset(const GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
+    { reset(&inGeo, cookparms); }
+
+
     
-    SYS_FORCE_INLINE void setFindGroup(const bool findGroup)
-    { this->findGroup = findGroup; }
-    
-    SYS_FORCE_INLINE bool getDelGroup() const
-    { return delGroup; }
-    
-    SYS_FORCE_INLINE void setDelGroup(const bool delGroup)
-    { this->delGroup = delGroup; }
+    // SYS_FORCE_INLINE bool getFindGroup() const
+    // { return findGroup; }
+    //
+    // SYS_FORCE_INLINE void setFindGroup(const bool findGroup)
+    // { this->findGroup = findGroup; }
+    //
+    // SYS_FORCE_INLINE bool getDelGroup() const
+    // { return delGroup; }
+    //
+    // SYS_FORCE_INLINE void setDelGroup(const bool delGroup)
+    // { this->delGroup = delGroup; }
     
     void setGroup(const GA_Group* const group)
     {
@@ -224,12 +257,12 @@ public:
     }
 
 
-    void setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
+    const GA_Group* setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
     {
         if (!groupName.length())
         {
             setAllGroupFull();
-            return;
+            return nullptr;
         }
 
         if (!groupName.isstring())
@@ -237,7 +270,7 @@ public:
             if (cookparms)
                 cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
             hasGroup = false;
-            return;
+            return nullptr;
         }
 
         clearElementGroup();
@@ -251,7 +284,7 @@ public:
                 if (geoGroup)
                 {
                     hasGroup = true;
-                    return;
+                    return geoGroup;
                 }
             }
         }
@@ -265,6 +298,7 @@ public:
             if (cookparms)
                 cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
         }
+        return geoGroup;
     }
 
     SYS_FORCE_INLINE void setPrimitiveGroup(const UT_StringRef& groupName)
@@ -338,10 +372,13 @@ public:
 
     SYS_FORCE_INLINE bool isPrimitiveGroup() const
     { return classType() == GA_GROUP_PRIMITIVE; }
+
     SYS_FORCE_INLINE bool isPointGroup() const
     { return classType() == GA_GROUP_POINT; }
+
     SYS_FORCE_INLINE bool isVertexGroup() const
     { return classType() == GA_GROUP_VERTEX; }
+
     SYS_FORCE_INLINE bool isEdgeGroup() const
     { return classType() == GA_GROUP_EDGE; }
 
@@ -645,6 +682,11 @@ protected:
     }
 
 
+public:
+    bool findGroup = true;
+    bool delGroup = false;
+
+    
 private:
 
     //GEO_Detail* geo = nullptr;
@@ -654,11 +696,7 @@ private:
     GA_Detail* geoNonconst;
     
     GOP_Manager& gop;
-    //GA_GroupType groupType;
-    //UT_StringHolder groupName;
 
-    bool findGroup = true;
-    bool delGroup = false;
 
     bool hasGroup = false;
     const GA_Group* geoGroup = nullptr;
@@ -682,6 +720,7 @@ private:
 
 
     friend class GFE_GeoFilter;
+    
 }; // End of class GFE_GroupParser
 
 

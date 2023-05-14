@@ -341,7 +341,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (createSrcPointAttrib)
         polyCut.createSrcPointAttrib(srcPointAttribName);
 
-    polyCut.groupParser_cutPoint.setDelGroup(sopparms.getDelInputPointGroup());
+    polyCut.groupParser_cutPoint.delGroup = sopparms.getDelInputPointGroup();
 
     polyCut.computeAndBumpDataIdsForAddOrRemove();
 
@@ -349,8 +349,3 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 }
 
-
-
-namespace SOP_FeE_PolyCut_3_0_Namespace {
-
-} // End SOP_FeE_PolyCut_3_0_Namespace namespace

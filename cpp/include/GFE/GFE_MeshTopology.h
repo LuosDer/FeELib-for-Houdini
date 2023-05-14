@@ -1,14 +1,10 @@
 
 #pragma once
 
-#ifndef __GFE_Adjacency_h__
-#define __GFE_Adjacency_h__
+#ifndef __GFE_MeshTopology_h__
+#define __GFE_MeshTopology_h__
 
-//#include "GFE/GFE_Adjacency.h"
-
-
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
+//#include "GFE/GFE_MeshTopology.h"
 
 
 
@@ -17,7 +13,7 @@
 
 
 
-enum class GFE_AdjacencyType {
+enum class GFE_MeshTopologyType {
     VertexPrimIndex,
     VertexVertexPrim,
     VertexVertexPrimPrev,
@@ -33,12 +29,23 @@ enum class GFE_AdjacencyType {
 
 
 
-class GFE_Adjacency : public GFE_AttribFilter {
+class GFE_MeshTopology : public GFE_AttribFilter {
 
 public:
     //using GFE_AttribFilter::GFE_AttribFilter;
 
-    GFE_Adjacency(
+    GFE_MeshTopology(
+        GFE_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , pointSeamGroup(geo, groupParser.getGOP(), cookparms)
+        , vertexEdgeSeamGroup(geo, groupParser.getGOP(), cookparms)
+        , edgeSeamGroup(geo, groupParser.getGOP(), cookparms)
+    {
+    }
+
+    GFE_MeshTopology(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -49,7 +56,7 @@ public:
     {
     }
 
-    GFE_Adjacency(
+    GFE_MeshTopology(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -60,12 +67,42 @@ public:
     {
     }
 
+    void clear()
+    {
+        vertexPrimIndexAttrib       = nullptr;
+        vertexVertexPrimPrevAttrib  = nullptr;
+        vertexVertexPrimNextAttrib  = nullptr;
+        vertexPointDstAttrib        = nullptr;
+        vertexNextEquivAttrib       = nullptr;
+        vertexNextEquivNoLoopAttrib = nullptr;
+        pointPointEdgeAttrib        = nullptr;
+        pointPointPrimAttrib        = nullptr;
+        primPrimEdgeAttrib          = nullptr;
+        primPrimPointAttrib         = nullptr;
+        vertexNextEquivGroup        = nullptr;
+        vertexNextEquivNoLoopGroup  = nullptr;
+        unsharedEdgeGroup           = nullptr;
+    }
+    
+    virtual void reset(GA_Detail& geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
+    {
+        GFE_AttribFilter::reset(geo, cookparms);
+        pointSeamGroup.reset(geo, cookparms);
+        vertexEdgeSeamGroup.reset(geo, cookparms);
+        edgeSeamGroup.reset(geo, cookparms);
+        clear();
+    }
+
+    SYS_FORCE_INLINE virtual void reset(GA_Detail* const geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
+    { reset(*geo, cookparms); }
+
+
     
     void setComputeParm(
-            const bool outAsOffset = true,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
-        )
+        const bool outAsOffset = true,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 1024
+    )
     {
         setHasComputed();
         this->outAsOffset = outAsOffset;
@@ -74,26 +111,37 @@ public:
     }
 
     SYS_FORCE_INLINE void setKernel(const int kernel)
+    { this->kernel = kernel; }
+
+
+
+    SYS_FORCE_INLINE GA_EdgeGroup* setUnsharedEdgeGroup(const bool detached = false, const UT_StringRef& groupName = "__topo_unshared")
     {
-        setHasComputed();
-        this->kernel = kernel;
+        unsharedEdgeGroup = getOutGroupArray().findOrCreateEdge(detached, groupName);
+        return unsharedEdgeGroup;
     }
+    SYS_FORCE_INLINE void setUnsharedEdgeGroup(GA_EdgeGroup* const groupPtr)
+    { unsharedEdgeGroup = groupPtr; }
+    
+    SYS_FORCE_INLINE GA_EdgeGroup* getUnsharedEdgeGroup() const
+    { return unsharedEdgeGroup; }
+    
 
 
-
+    
     SYS_FORCE_INLINE void setVertexVertexPrim(
-            const bool detached = false,
-            const UT_StringHolder& attribName0 = "__topo_vertexVertexPrimPrev",
-            const UT_StringHolder& attribName1 = "__topo_vertexVertexPrimNext",
-            const GA_Storage storage = GA_STORE_INVALID
-        )
+        const bool detached = false,
+        const UT_StringRef& attribName0 = "__topo_vertexVertexPrimPrev",
+        const UT_StringRef& attribName1 = "__topo_vertexVertexPrimNext",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
     {
         vertexVertexPrimPrevAttrib = getOutAttribArray().findOrCreateTuple(detached,
-            GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName0, 1, GA_Defaults(-1));
+            GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName0, 1, GA_Defaults(GFE_INVALID_OFFSET));
         vertexVertexPrimNextAttrib = getOutAttribArray().findOrCreateTuple(detached,
-            GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName1, 1, GA_Defaults(-1));
+            GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName1, 1, GA_Defaults(GFE_INVALID_OFFSET));
     }
-    SYS_FORCE_INLINE void setVertexVertexPrim(GA_Attribute* const attribPtr0,GA_Attribute* const attribPtr1)
+    SYS_FORCE_INLINE void setVertexVertexPrim(GA_Attribute* const attribPtr0, GA_Attribute* const attribPtr1)
     {
         vertexVertexPrimPrevAttrib = attribPtr0;
         vertexVertexPrimNextAttrib = attribPtr1;
@@ -101,19 +149,19 @@ public:
 
 
 
-#define GFE_SETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)           \
-    SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                          \
-            const bool detached = false,                                                            \
-            const UT_StringHolder& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                       \
-            const GA_Storage storage = GA_STORE_INVALID                                             \
-        )                                                                                           \
-    {                                                                                               \
-        ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateTuple(detached,                \
-            ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1));              \
-        return ATTRIB_NAME_LOWNER##Attrib;                                                          \
-    }                                                                                               \
-    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                     \
-    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; }                                                     \
+#define GFE_SETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)              \
+    SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                             \
+        const bool detached = false,                                                                   \
+        const UT_StringRef& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                              \
+        const GA_Storage storage = GA_STORE_INVALID                                                    \
+    )                                                                                                  \
+    {                                                                                                  \
+        ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateTuple(detached,                   \
+            ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); \
+        return ATTRIB_NAME_LOWNER##Attrib;                                                             \
+    }                                                                                                  \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                        \
+    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; }                                                        \
     
     GFE_SETATTRIB_SPECIALIZATION(VertexPrimIndex,       vertexPrimIndex,       GA_ATTRIB_VERTEX)
     GFE_SETATTRIB_SPECIALIZATION(VertexPointDst,        vertexPointDst,        GA_ATTRIB_VERTEX)
@@ -129,10 +177,10 @@ public:
 
 #define GFE_SETATTRIB_ARRAY_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)  \
     SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                       \
-            const bool detached = false,                                                         \
-            const UT_StringHolder& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                    \
-            const GA_Storage storage = GA_STORE_INVALID                                          \
-        )                                                                                        \
+        const bool detached = false,                                                             \
+        const UT_StringRef& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                        \
+        const GA_Storage storage = GA_STORE_INVALID                                              \
+    )                                                                                            \
     {                                                                                            \
         ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateArray(detached,             \
             ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName);                               \
@@ -154,9 +202,9 @@ public:
 
 #define GFE_SETGROUP_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)     \
     SYS_FORCE_INLINE GA_VertexGroup* set##ATTRIB_NAME_UPPER##Group(                          \
-            const bool detached = false,                                                     \
-            const UT_StringHolder& groupName = "__topo_"#ATTRIB_NAME_LOWNER                  \
-        )                                                                                    \
+        const bool detached = false,                                                         \
+        const UT_StringRef& groupName = "__topo_"#ATTRIB_NAME_LOWNER                      \
+    )                                                                                        \
     {                                                                                        \
         ATTRIB_NAME_LOWNER##Group = static_cast<GA_VertexGroup*>(                            \
             getOutGroupArray().findOrCreate(detached, ATTRIB_OWNER, groupName));             \
@@ -273,80 +321,46 @@ private:
         if (calVertexPrimIndex)
         {
             vertexPrimIndex();
-            //vertexPrimIndex(vertexPrimIndexAttrib);
         }
         if (calVertexPointDst)
         {
             switch ((calVertexNextEquiv || calVertexNextEquivNoLoop) ? 0 : kernel)
             {
-            case 0:
-                vertexPointDstByVtxpnum();
-                //vertexPointDstByVtxpnum(vertexPointDstAttrib, vertexPrimIndexAttrib);
-                break;
-            case 1:
-                vertexPointDst();
-                //vertexPointDst(vertexPointDstAttrib, vertexPrimIndexAttrib);
-                break;
             default:
-                vertexPointDstByVtxpnum();
-                //vertexPointDstByVtxpnum(vertexPointDstAttrib, vertexPrimIndexAttrib);
-                break;
+            case 0: vertexPointDstByVtxpnum(); break;
+            case 1: vertexPointDst(); break;
             }
         }
         if (calVertexVertexPrim)
         {
             switch (pointPointEdgeAttrib ? 0 : kernel)
             {
-            case 0:
-                vertexVertexPrim();
-                //vertexVertexPrim(vertexVertexPrimPrevAttrib, vertexVertexPrimNextAttrib);
-                break;
-            case 1:
-                vertexVertexPrim1();
-                //vertexVertexPrim1(vertexVertexPrimPrevAttrib, vertexVertexPrimNextAttrib);
-                break;
             default:
-                vertexVertexPrim();
-                //vertexVertexPrim(vertexVertexPrimPrevAttrib, vertexVertexPrimNextAttrib);
-                break;
+            case 0: vertexVertexPrim();  break;
+            case 1: vertexVertexPrim1(); break;
             }
         }
         if (calVertexNextEquiv)
         {
             vertexNextEquiv();
-            //vertexNextEquiv(vertexNextEquivAttrib, vertexPointDstAttrib);
         }
         if (calVertexNextEquivNoLoop)
         {
-            //vertexNextEquivNoLoop(vertexNextEquivNoLoopAttrib, vertexPointDstAttrib);
             vertexNextEquivNoLoop();
-            //vertexNextEquivNoLoop(vertexNextEquivNoLoopAttrib, vertexNextEquivNoLoopGroup, vertexPointDstAttrib);
         }
         if (pointPointEdgeAttrib)
         {
             switch (kernel)
             {
-            case 0:
-                pointPointEdge();
-                //pointPointEdge(pointPointEdgeAttrib, vertexPrimIndexAttrib);
-                break;
-            case 1:
-                pointPointEdge1();
-                //pointPointEdge(pointPointEdgeAttrib, vertexVertexPrimPrevAttrib, vertexVertexPrimNextAttrib);
-                break;
-            case 2:
-                pointPointEdge2();
-                //pointPointEdge(pointPointEdgeAttrib);
-                break;
             default:
-                pointPointEdge();
-                //pointPointEdge(pointPointEdgeAttrib, vertexPrimIndexAttrib);
-                break;
+            case 0:  pointPointEdge();  break;
+            case 1:  pointPointEdge1(); break;
+            case 2:  pointPointEdge2(); break;
             }
         }
         if (pointPointPrimAttrib)
         {
-            //GFE_Adjacency_Namespace::pointPointPrim(geo, attribHandle,
+            //GFE_MeshTopology_Namespace::pointPointPrim(geo, attribHandle,
             //    groupParser.getPointGroup(), nullptr,
             //    subscribeRatio, minGrainSize);
         }
@@ -354,28 +368,12 @@ private:
         {
             switch (kernel)
             {
-            case 0:
-                primPrimEdge();
-                //primPrimEdge(primPrimEdgeAttrib, vertexNextEquivAttrib);
-                break;
-            case 1:
-                primPrimEdge1();
-                //primPrimEdge1(primPrimEdgeAttrib, vertexPointDstAttrib);
-                break;
-            case 2:
-                primPrimEdge2();
-                //primPrimEdge2(primPrimEdgeAttrib, vertexPointDstAttrib);
-                break;
-            case 3:
-                primPrimEdge3();
-                //primPrimEdge3(primPrimEdgeAttrib, vertexPointDstAttrib);
-                break;
-            case 4:
-                primPrimEdge4();
-                //primPrimEdge4(primPrimEdgeAttrib);
-                break;
             default:
-                break;
+            case 0: primPrimEdge();  break;
+            case 1: primPrimEdge1(); break;
+            case 2: primPrimEdge2(); break;
+            case 3: primPrimEdge3(); break;
+            case 4: primPrimEdge4(); break;
             }
         }
         if (primPrimPointAttrib)
@@ -494,47 +492,10 @@ private:
         }, subscribeRatio, minGrainSize);
     }
 
-    void vertexPointDst()
-    {
-        if(!vertexPointDstAttrib)
-            setVertexPointDst(!outIntermediateAttrib);
-        
-        //const GA_Detail* const geo = this->geo;
-        const GA_Topology& topo = geo->getTopology();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-
-        //const GA_VertexGroup* const geoGroup = groupParser.getVertexGroup();
-        //const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
-        UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef](const GA_SplittableRange& r)
-        {
-            GA_PageHandleScalar<GA_Offset>::RWType dstpt_ph(vertexPointDstAttrib);
-            GA_PageHandleScalar<GA_Offset>::ROType vtxPrimNext_ph(vertexVertexPrimNextAttrib);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    dstpt_ph.setPage(start);
-                    vtxPrimNext_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        if (vtxPrimNext_ph.value(elemoff) < 0)
-                        {
-                            dstpt_ph.value(elemoff) = GA_INVALID_OFFSET;
-                        }
-                        else
-                        {
-                            dstpt_ph.value(elemoff) = vtxPointRef->getLink(vtxPrimNext_ph.value(elemoff));
-                        }
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
 
 
-    void
-        vertexVertexPrim()
+
+    void vertexVertexPrim()
     {
         if(!vertexVertexPrimPrevAttrib && !vertexVertexPrimNextAttrib)
             setVertexVertexPrim(!outIntermediateAttrib);
@@ -565,9 +526,9 @@ private:
                         else
                         {
                             if (vertexVertexPrimPrevAttrib)
-                                int_wh.set(vertices[0], -1);
+                                int_wh.set(vertices[0], GFE_INVALID_OFFSET);
                             if (vertexVertexPrimNextAttrib)
-                                int1_wh.set(vertices[lastIndex], -1);
+                                int1_wh.set(vertices[lastIndex], GFE_INVALID_OFFSET);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
@@ -606,9 +567,9 @@ private:
                         else
                         {
                             if (vertexVertexPrimPrevAttrib)
-                                int_wh.set(vertices[0], -1);
+                                int_wh.set(vertices[0], GFE_INVALID_OFFSET);
                             if (vertexVertexPrimNextAttrib)
-                                int1_wh.set(vertices[lastIndex], -1);
+                                int1_wh.set(vertices[lastIndex], GFE_INVALID_OFFSET);
                         }
                         GA_Offset vtxoff_prev = vertices[0];
                         GA_Offset vtxoff_next;
@@ -660,6 +621,49 @@ private:
 
 
     
+    void vertexPointDst()
+    {
+        if(!vertexPointDstAttrib)
+            setVertexPointDst(!outIntermediateAttrib);
+        
+        //const GA_Detail* const geo = this->geo;
+        const GA_Topology& topo = geo->getTopology();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+
+        //const GA_VertexGroup* const geoGroup = groupParser.getVertexGroup();
+        //const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
+        UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef](const GA_SplittableRange& r)
+        {
+            GA_PageHandleScalar<GA_Offset>::RWType dstpt_ph(vertexPointDstAttrib);
+            GA_PageHandleScalar<GA_Offset>::ROType vtxPrimNext_ph(vertexVertexPrimNextAttrib);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    dstpt_ph.setPage(start);
+                    vtxPrimNext_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (vtxPrimNext_ph.value(elemoff) == GFE_INVALID_OFFSET)
+                        {
+                            dstpt_ph.value(elemoff) = GFE_INVALID_OFFSET;
+                        }
+                        else
+                        {
+                            dstpt_ph.value(elemoff) = vtxPointRef->getLink(vtxPrimNext_ph.value(elemoff));
+                        }
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+
+
+    
+    
 
     //Get all vertices NextEquiv Vertex
     void
@@ -687,42 +691,42 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     dstpt = int_oh.get(elemoff);
-                    if (dstpt < 0)
+                    if (dstpt == GFE_INVALID_OFFSET)
                     {
                         if (vertexNextEquivAttrib)
-                            int_wh.set(elemoff, GA_INVALID_OFFSET);
+                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
                         continue;
                     }
 
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != dstpt)
                             continue;
-                        dstpt = GA_INVALID_OFFSET;
+                        dstpt = GFE_INVALID_OFFSET;
                         if (vertexNextEquivAttrib)
                             int_wh.set(elemoff, vtxoff_next);
                         break;
                     }
 
-                    if (dstpt < 0)
+                    if (dstpt == GFE_INVALID_OFFSET)
                         continue;
 
                     ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != ptnum)
                             continue;
-                        dstpt = GA_INVALID_OFFSET;
+                        dstpt = GFE_INVALID_OFFSET;
                         if (vertexNextEquivAttrib)
                             int_wh.set(elemoff, vtxoff_next);
                         break;
                     }
-                    if (dstpt >= 0)
+                    if (dstpt != GFE_INVALID_OFFSET)
                     {
                         if (vertexNextEquivGroup)
                             vertexNextEquivGroup->setElement(elemoff, true);
                         if (vertexNextEquivAttrib)
-                            int_wh.set(elemoff, GA_INVALID_OFFSET);
+                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
                     }
                 }
             }
@@ -759,45 +763,45 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     dstpt = int_oh.get(elemoff);
-                    if (dstpt < 0)
+                    if (dstpt == GFE_INVALID_OFFSET)
                     {
                         if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, GA_INVALID_OFFSET);
+                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
                         continue;
                     }
 
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != dstpt)
                             continue;
-                        dstpt = GA_INVALID_OFFSET;
+                        dstpt = GFE_INVALID_OFFSET;
                         if (vertexNextEquivNoLoopAttrib)
                             int_wh.set(elemoff, vtxoff_next);
                         break;
                     }
 
-                    if (dstpt < 0)
+                    if (dstpt == GFE_INVALID_OFFSET)
                         continue;
 
                     ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != ptnum)
                             continue;
                         if (dstpt > ptnum)
                         {
-                            dstpt = GA_INVALID_OFFSET;
+                            dstpt = GFE_INVALID_OFFSET;
                             if (vertexNextEquivNoLoopAttrib)
                                 int_wh.set(elemoff, vtxoff_next);
                         }
                         break;
                     }
-                    if (dstpt >= 0)
+                    if (dstpt != GFE_INVALID_OFFSET)
                     {
                         if (vertexNextEquivNoLoopGroup)
                             vertexNextEquivNoLoopGroup->setElement(elemoff, true);
                         if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, GA_INVALID_OFFSET);
+                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
                     }
                 }
             }
@@ -809,6 +813,84 @@ private:
 
 
 
+
+    
+    void unsharedEdge()
+    {
+        if(!unsharedEdgeGroup)
+            setUnsharedEdgeGroup(!outIntermediateAttrib);
+        
+        int_wh.bind(vertexNextEquivNoLoopAttrib);
+        int_oh.bind(vertexPointDstAttrib);
+        
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
+        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
+
+        UTparallelFor(groupParser.getVertexSplittableRange(),
+            [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+        {
+            GA_Offset vtxoff_next, dstpt, ptnum;
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    dstpt = int_oh.get(elemoff);
+                    if (dstpt == GFE_INVALID_OFFSET)
+                    {
+                        if (vertexNextEquivNoLoopAttrib)
+                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                        continue;
+                    }
+
+                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    {
+                        if (int_oh.get(vtxoff_next) != dstpt)
+                            continue;
+                        dstpt = GFE_INVALID_OFFSET;
+                        if (vertexNextEquivNoLoopAttrib)
+                            int_wh.set(elemoff, vtxoff_next);
+                        break;
+                    }
+
+                    if (dstpt == GFE_INVALID_OFFSET)
+                        continue;
+
+                    ptnum = vtxPointRef->getLink(elemoff);
+                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    {
+                        if (int_oh.get(vtxoff_next) != ptnum)
+                            continue;
+                        if (dstpt > ptnum)
+                        {
+                            dstpt = GFE_INVALID_OFFSET;
+                            if (vertexNextEquivNoLoopAttrib)
+                                int_wh.set(elemoff, vtxoff_next);
+                        }
+                        break;
+                    }
+                    if (dstpt != GFE_INVALID_OFFSET)
+                    {
+                        if (vertexNextEquivNoLoopGroup)
+                            vertexNextEquivNoLoopGroup->setElement(elemoff, true);
+                        if (vertexNextEquivNoLoopAttrib)
+                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+        
+        if (vertexNextEquivNoLoopGroup)
+            vertexNextEquivNoLoopGroup->invalidateGroupEntries();
+    }
+
+    
+
+
+    
 
     //Get all prims neighbours prims with adjacent by edge
     void pointPointEdge()
@@ -835,7 +917,7 @@ private:
                     ptoffArray.clear();
 
                     GA_Offset pt_next;
-                    for (GA_Offset vtxoff_next = geo->pointVertex(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                    for (GA_Offset vtxoff_next = geo->pointVertex(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                     {
                         const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
                         const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
@@ -846,14 +928,14 @@ private:
                             if (geo->getPrimitiveClosedFlag(primoff))
                             {
                                 pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, numvtx - 1));
-                                if (ptoffArray.find(pt_next) == -1)
+                                if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                                     ptoffArray.emplace_back(pt_next);
                             }
                         }
                         else
                         {
                             pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum - 1));
-                            if (ptoffArray.find(pt_next) == -1)
+                            if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                                 ptoffArray.emplace_back(pt_next);
                         }
 
@@ -862,14 +944,14 @@ private:
                             if (geo->getPrimitiveClosedFlag(primoff))
                             {
                                 pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                                if (ptoffArray.find(pt_next) == -1)
+                                if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                                     ptoffArray.emplace_back(pt_next);
                             }
                         }
                         else
                         {
                             pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum_next));
-                            if (ptoffArray.find(pt_next) == -1)
+                            if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                                 ptoffArray.emplace_back(pt_next);
                         }
                     }
@@ -878,6 +960,8 @@ private:
             }
         }, subscribeRatio, minGrainSize);
     }
+
+
 
     
     //Get Vertex Destination Point
@@ -910,25 +994,25 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     ptoffArray.clear();
-                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         const GA_Offset vtxPrev = int_oh.get(vtxoff_next);
-                        if (vtxPrev != GA_INVALID_OFFSET)
+                        if (vtxPrev != GFE_INVALID_OFFSET)
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxPrev);
                             //ptoffArray.uniqueSortedInsert(pt_next);
-                            if (ptoffArray.uniqueSortedFindAscending(pt_next) == -1)
+                            if (ptoffArray.uniqueSortedFindAscending(pt_next) == GFE_FIND_INVALID_INDEX)
                             {
                                 ptoffArray.emplace_back(pt_next);
                                 ptoffArray.sort();
                             }
                         }
                         const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
-                        if (vtxNext != GA_INVALID_OFFSET)
+                        if (vtxNext != GFE_INVALID_OFFSET)
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxNext);
                             //ptoffArray.uniqueSortedInsert(pt_next);
-                            if (ptoffArray.uniqueSortedFindAscending(pt_next) == -1)
+                            if (ptoffArray.uniqueSortedFindAscending(pt_next) == GFE_FIND_INVALID_INDEX)
                             {
                                 ptoffArray.emplace_back(pt_next);
                                 ptoffArray.sort();
@@ -953,7 +1037,7 @@ private:
         ptoffArray.clear();
 
         GA_Offset pt_next;
-        for (GA_Offset vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+        for (GA_Offset vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
         {
             const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
             const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
@@ -964,14 +1048,14 @@ private:
                 if (geo->getPrimitiveClosedFlag(primoff))
                 {
                     pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, numvtx-1));
-                    if (ptoffArray.find(pt_next) == -1)
+                    if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                         ptoffArray.emplace_back(pt_next);
                 }
             }
             else
             {
                 pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum-1));
-                if (ptoffArray.find(pt_next) == -1)
+                if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                     ptoffArray.emplace_back(pt_next);
             }
 
@@ -980,14 +1064,14 @@ private:
                 if (geo->getPrimitiveClosedFlag(primoff))
                 {
                     pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-                    if (ptoffArray.find(pt_next) == -1)
+                    if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                         ptoffArray.emplace_back(pt_next);
                 }
             }
             else
             {
                 pt_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum_next));
-                if (ptoffArray.find(pt_next) == -1)
+                if (ptoffArray.find(pt_next) == GFE_FIND_INVALID_INDEX)
                     ptoffArray.emplace_back(pt_next);
             }
         }
@@ -1055,11 +1139,11 @@ private:
                             if (!seamGroup->contains(vtxoff_start))
                                 continue;
                             GA_Offset vtxoff_next = int_oh.get(vtxoff_start);
-                            if (vtxoff_next < 0)
+                            if (vtxoff_next == GFE_INVALID_OFFSET)
                                 continue;
                             for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
                             {
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
+                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
@@ -1082,11 +1166,11 @@ private:
                         {
                             const GA_Offset vtxoff_start = vertices[i];
                             GA_Offset vtxoff_next = int_oh.get(vtxoff_start);
-                            if (vtxoff_next < 0)
+                            if (vtxoff_next == GFE_INVALID_OFFSET)
                                 continue;
                             for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
                             {
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
+                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
@@ -1130,25 +1214,25 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1169,25 +1253,25 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1229,25 +1313,25 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1268,25 +1352,25 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1330,25 +1414,25 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != -1)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1369,25 +1453,25 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1487,11 +1571,11 @@ private:
                             const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
                             if (seamGroup->contains(ptoff))
                                 continue;
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
+                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
@@ -1512,11 +1596,11 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
+                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
@@ -1549,7 +1633,8 @@ private:
     GA_Attribute*   primPrimPointAttrib         = nullptr;
     GA_VertexGroup* vertexNextEquivGroup        = nullptr;
     GA_VertexGroup* vertexNextEquivNoLoopGroup  = nullptr;
-
+    GA_EdgeGroup*   unsharedEdgeGroup           = nullptr;
+    
         
     GA_RWHandleT<GA_Size> int_wh;
     GA_RWHandleT<GA_Size> int1_wh;
@@ -1566,7 +1651,7 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
 
-}; // End of class GFE_Adjacency
+}; // End of class GFE_MeshTopology
 
 
 
@@ -1685,7 +1770,7 @@ private:
 
 /*
 
-namespace GFE_Adjacency_Namespace {
+namespace GFE_MeshTopology_Namespace {
 
 
 
@@ -1701,7 +1786,7 @@ namespace GFE_Adjacency_Namespace {
         ptoffArray.clear();
 
         GA_Offset pt_next;
-        for (GA_Offset vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+        for (GA_Offset vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
         {
             const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
             const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
@@ -1768,7 +1853,7 @@ namespace GFE_Adjacency_Namespace {
                     ptoffArray.clear();
 
                     GA_Offset pt_next;
-                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                     {
                         const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
                         const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
@@ -1874,10 +1959,10 @@ namespace GFE_Adjacency_Namespace {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     ptoffArray.clear();
-                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         const GA_Offset vtxPrev = vtxPrev_h.get(vtxoff_next);
-                        if (vtxPrev != GA_INVALID_OFFSET)
+                        if (vtxPrev != GFE_INVALID_OFFSET)
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxPrev);
                             //ptoffArray.uniqueSortedInsert(pt_next);
@@ -1888,7 +1973,7 @@ namespace GFE_Adjacency_Namespace {
                             }
                         }
                         const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
-                        if (vtxNext != GA_INVALID_OFFSET)
+                        if (vtxNext != GFE_INVALID_OFFSET)
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxNext);
                             //ptoffArray.uniqueSortedInsert(pt_next);
@@ -1946,7 +2031,7 @@ namespace GFE_Adjacency_Namespace {
                             if (!seamGroup->contains(vtxoff_start))
                                 continue;
                             GA_Offset vtxoff_next = nextEquivAttrib_h.get(vtxoff_start);
-                            if (vtxoff_next < 0)
+                            if (vtxoff_next == GFE_INVALID_OFFSET)
                                 continue;
                             for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttrib_h.get(vtxoff_next))
                             {
@@ -1973,7 +2058,7 @@ namespace GFE_Adjacency_Namespace {
                         {
                             const GA_Offset vtxoff_start = vertices[i];
                             GA_Offset vtxoff_next = nextEquivAttrib_h.get(vtxoff_start);
-                            if (vtxoff_next < 0)
+                            if (vtxoff_next == GFE_INVALID_OFFSET)
                                 continue;
                             for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttrib_h.get(vtxoff_next))
                             {
@@ -2021,10 +2106,10 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -2035,7 +2120,7 @@ namespace GFE_Adjacency_Namespace {
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
@@ -2060,25 +2145,25 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
@@ -2122,10 +2207,10 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -2136,7 +2221,7 @@ namespace GFE_Adjacency_Namespace {
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
@@ -2161,25 +2246,25 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
@@ -2224,10 +2309,10 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -2238,7 +2323,7 @@ namespace GFE_Adjacency_Namespace {
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
@@ -2263,25 +2348,25 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt < 0)
+                            if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (dstptAttrib_h.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                             {
                                 if (dstptAttrib_h.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) >= 0)
+                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
                                     continue;
                                 adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
                             }
@@ -2388,7 +2473,7 @@ namespace GFE_Adjacency_Namespace {
                             const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
                             if (seamGroup->contains(ptoff))
                                 continue;
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -2413,7 +2498,7 @@ namespace GFE_Adjacency_Namespace {
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -2445,14 +2530,14 @@ namespace GFE_Adjacency_Namespace {
 
 
 
-    //GFE_Adjacency_Namespace::addAttribPointPointEdge(geo, name, geoGroup, seamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
+    //GFE_MeshTopology_Namespace::addAttribPointPointEdge(geo, name, geoGroup, seamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
     static GA_Attribute*
         addAttribPointPointEdge(
             GA_Detail& geo,
             const GA_PointGroup* const geoGroup = nullptr,
             const GA_PointGroup* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& name = "__topo_nebs",
+            const UT_StringRef& name = "__topo_nebs",
             const UT_Options* const creation_args = nullptr,
             const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -2496,7 +2581,7 @@ namespace GFE_Adjacency_Namespace {
             const GA_PrimitiveGroup* const geoGroup = nullptr,
             const GA_VertexGroup* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& name = "__topo_nebs",
+            const UT_StringRef& name = "__topo_nebs",
             const UT_Options* creation_args = nullptr,
             const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -2527,7 +2612,7 @@ namespace GFE_Adjacency_Namespace {
 
 
 
-    //GFE_Adjacency_Namespace::addAttribAdjacency(geo, groupType, connectivityGroupType);
+    //GFE_MeshTopology_Namespace::addAttribAdjacency(geo, groupType, connectivityGroupType);
 
     static GA_Attribute*
         addAttribAdjacency(
@@ -2537,7 +2622,7 @@ namespace GFE_Adjacency_Namespace {
             const GA_Group* const geoGroup = nullptr,
             const GA_Group* const seamGroup = nullptr,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& name = "__topo_nebs",
+            const UT_StringRef& name = "__topo_nebs",
             const UT_Options* const creation_args = nullptr,
             const GA_AttributeOptions* const attribute_options = nullptr,
             const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
@@ -2551,19 +2636,19 @@ namespace GFE_Adjacency_Namespace {
             switch (connectivityGroupType)
             {
             case GA_GROUP_PRIMITIVE:
-                //return GFE_Adjacency_Namespace::addAttribPrimPrimPrim(geo,
+                //return GFE_MeshTopology_Namespace::addAttribPrimPrimPrim(geo,
                 //    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PrimitiveGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_POINT:
-                //return GFE_Adjacency_Namespace::addAttribPrimPrimPoint(geo,
+                //return GFE_MeshTopology_Namespace::addAttribPrimPrimPoint(geo,
                 //    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PointGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_VERTEX:
-                //return GFE_Adjacency_Namespace::addAttribPrimPrimVertex(geo,
+                //return GFE_MeshTopology_Namespace::addAttribPrimPrimVertex(geo,
                 //    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
                 //    UTverify_cast<const GA_VertexGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
@@ -2581,25 +2666,25 @@ namespace GFE_Adjacency_Namespace {
             switch (connectivityGroupType)
             {
             case GA_GROUP_PRIMITIVE:
-                //return GFE_Adjacency_Namespace::addAttribPointPointPrim(geo,
+                //return GFE_MeshTopology_Namespace::addAttribPointPointPrim(geo,
                 //    UTverify_cast<const GA_PointGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PrimitiveGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_POINT:
-                //return GFE_Adjacency_Namespace::addAttribPointPointPoint(geo,
+                //return GFE_MeshTopology_Namespace::addAttribPointPointPoint(geo,
                 //    UTverify_cast<const GA_PointGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PointGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_VERTEX:
-                //return GFE_Adjacency_Namespace::addAttribPointPointVertex(geo,
+                //return GFE_MeshTopology_Namespace::addAttribPointPointVertex(geo,
                 //    UTverify_cast<const GA_PointGroup*>(geoGroup),
                 //    UTverify_cast<const GA_VertexGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_EDGE:
-                return GFE_Adjacency_Namespace::addAttribPointPointEdge(geo,
+                return GFE_MeshTopology_Namespace::addAttribPointPointEdge(geo,
                     UTverify_cast<const GA_PointGroup*>(geoGroup),
                     UTverify_cast<const GA_PointGroup*>(seamGroup),
                     storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
@@ -2611,25 +2696,25 @@ namespace GFE_Adjacency_Namespace {
             switch (connectivityGroupType)
             {
             case GA_GROUP_PRIMITIVE:
-                //return GFE_Adjacency_Namespace::addAttribVertexVertexPrim(geo,
+                //return GFE_MeshTopology_Namespace::addAttribVertexVertexPrim(geo,
                 //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PrimitiveGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_POINT:
-                //return GFE_Adjacency_Namespace::addAttribVertexVertexPoint(geo,
+                //return GFE_MeshTopology_Namespace::addAttribVertexVertexPoint(geo,
                 //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PointGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_VERTEX:
-                //return GFE_Adjacency_Namespace::addAttribVertexVertexVertex(geo,
+                //return GFE_MeshTopology_Namespace::addAttribVertexVertexVertex(geo,
                 //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
                 //    UTverify_cast<const GA_VertexGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
                 break;
             case GA_GROUP_EDGE:
-                //return GFE_Adjacency_Namespace::addAttribVertexVertexEdge(geo,
+                //return GFE_MeshTopology_Namespace::addAttribVertexVertexEdge(geo,
                 //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
                 //    UTverify_cast<const GA_PointGroup*>(seamGroup),
                 //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
@@ -2645,7 +2730,7 @@ namespace GFE_Adjacency_Namespace {
 
 
 
-} // End of namespace GFE_Adjacency
+} // End of namespace GFE_MeshTopology
 
 
 

@@ -314,11 +314,13 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
     
-    
 
     GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+
+    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
     enumerate.prefix = sopparms.getPrefix();
     enumerate.sufix = sopparms.getSufix();
     enumerate.groupParser.setGroup(groupType, sopparms.getGroup());

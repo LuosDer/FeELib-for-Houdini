@@ -125,30 +125,14 @@ static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOr
 {
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::PRIMITIVE:
-        return GA_ATTRIB_PRIMITIVE;
-        break;
-    case GFE_NormalSearchOrder::POINT:
-        return GA_ATTRIB_POINT;
-        break;
-    case GFE_NormalSearchOrder::VERTEX:
-        return GA_ATTRIB_VERTEX;
-        break;
-    case GFE_NormalSearchOrder::DETAIL:
-        return GA_ATTRIB_DETAIL;
-        break;
-    case GFE_NormalSearchOrder::POINTVERTEX:
-        return GA_ATTRIB_VERTEX;
-        break;
-    case GFE_NormalSearchOrder::ALL:
-        return GA_ATTRIB_VERTEX;
-        break;
-    case GFE_NormalSearchOrder::INVALID:
-        return GA_ATTRIB_VERTEX;
-        break;
-    default:
-        return GA_ATTRIB_VERTEX;
-        break;
+    case GFE_NormalSearchOrder::PRIMITIVE:   return GA_ATTRIB_PRIMITIVE;  break;
+    case GFE_NormalSearchOrder::POINT:       return GA_ATTRIB_POINT;      break;
+    case GFE_NormalSearchOrder::VERTEX:      return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::DETAIL:      return GA_ATTRIB_DETAIL;     break;
+    case GFE_NormalSearchOrder::POINTVERTEX: return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::ALL:         return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::INVALID:     return GA_ATTRIB_VERTEX;     break;
+    default:                                 return GA_ATTRIB_VERTEX;     break;
     }
 }
 
@@ -261,6 +245,9 @@ findAttributePointVertex(
     GA_AttributeOwner& attribOwnerFinal
 )
 {
+    if (!attribName.isstring() || attribName.length() == 0)
+        return nullptr;
+
     const GA_Attribute* attribPtr = nullptr;
     const GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
@@ -300,6 +287,9 @@ findAttributePointVertex(
     const UT_StringRef& attribName
 )
 {
+    if (!attribName.isstring() || attribName.length() == 0)
+        return nullptr;
+
     const GA_Attribute* attribPtr = nullptr;
     const GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
@@ -338,6 +328,9 @@ findAttributePointVertex(
     GA_AttributeOwner& attribOwnerFinal
 )
 {
+    if (!attribName.isstring() || attribName.length() == 0)
+        return nullptr;
+
     GA_Attribute* attribPtr = nullptr;
     GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
@@ -379,6 +372,9 @@ findAttributePointVertex(
     const UT_StringRef& attribName
 )
 {
+    if (!attribName.isstring() || attribName.length() == 0)
+        return nullptr;
+
     GA_Attribute* attribPtr = nullptr;
     GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
@@ -420,9 +416,7 @@ findAttributePointVertex(
     const UT_StringRef& attribName,
     GA_AttributeOwner& attribOwnerFianl
 )
-{
-    return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
-}
+{ return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl); }
 
 SYS_FORCE_INLINE
 static const GA_Attribute*
@@ -431,9 +425,7 @@ findAttributePointVertex(
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName
 )
-{
-    return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName);
-}
+{ return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName); }
 
 
 
@@ -445,9 +437,7 @@ findAttributePointVertex(
     const UT_StringRef& attribName,
     GA_AttributeOwner& attribOwnerFianl
 )
-{
-    return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl);
-}
+{ return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName, attribOwnerFianl); }
 
 SYS_FORCE_INLINE
 static GA_Attribute*
@@ -456,9 +446,7 @@ findAttributePointVertex(
     const GA_AttributeOwner attribOwner,
     const UT_StringRef& attribName
 )
-{
-    return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName);
-}
+{ return findAttributePointVertex(geo, attribOwner, GA_SCOPE_PUBLIC, attribName); }
 
 
 
@@ -470,6 +458,9 @@ findUVAttributePointVertex(
     const UT_StringRef& uvAttribName = "uv"
 )
 {
+    if (!uvAttribName.isstring() || uvAttribName.length() == 0)
+        return nullptr;
+
     GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
     if (uvAttribPtr)
     {
@@ -490,6 +481,9 @@ findUVAttributePointVertex(
     const UT_StringRef& uvAttribName = "uv"
 )
 {
+    if (!uvAttribName.isstring() || uvAttribName.length() == 0)
+        return nullptr;
+
     const GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
     if (uvAttribPtr)
     {
@@ -513,6 +507,9 @@ findOrCreateUVAttributePointVertex(
     const GA_Storage storage = GA_STORE_INVALID
 )
 {
+    if (!uvAttribName.isstring() || uvAttribName.length() == 0)
+        return nullptr;
+
     GA_Attribute* uvAttribPtr = findAttributePointVertex(geo, uvAttribClass, uvAttribName);
     if (uvAttribPtr)
     {
@@ -547,6 +544,9 @@ findNormal3D(
     const UT_StringRef& normal3DAttribName = "N"
 )
 {
+    if (!normal3DAttribName.isstring() || normal3DAttribName.length() == 0)
+        return nullptr;
+
     const GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {
@@ -599,6 +599,9 @@ findNormal3D(
     const UT_StringRef& normal3DAttribName = "N"
 )
 {
+    if (!normal3DAttribName.isstring() || normal3DAttribName.length() == 0)
+        return nullptr;
+
     GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {

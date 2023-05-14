@@ -9,10 +9,8 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-//#include "GFE/GFE_Type.h"
-//#include "GFE/GFE_GroupParse.h"
-#include "GFE/GFE_Attribute.h"
-#include "GFE/GFE_GroupPromote.h"
+//#include "GFE/GFE_Attribute.h"
+//#include "GFE/GFE_GroupPromote.h"
 
 
 enum class GFE_UVGridify_RowColMethod
@@ -67,59 +65,37 @@ private:
         const size_t len = getOutAttribArray().size();
         for (size_t i = 0; i < len; i++)
         {
-            GA_Attribute* const uvAttribPtr = getOutAttribArray()[i];
+            uvAttribPtr = getOutAttribArray()[i];
             switch (uvAttribPtr->getTupleSize())
             {
             case 2:
                 switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
                 {
-                case GA_STORE_REAL16:
-                    uvGridify<UT_Vector2T<fpreal16>>(uvAttribPtr);
-                    break;
-                case GA_STORE_REAL32:
-                    uvGridify<UT_Vector2T<fpreal32>>(uvAttribPtr);
-                    break;
-                case GA_STORE_REAL64:
-                    uvGridify<UT_Vector2T<fpreal64>>(uvAttribPtr);
-                    break;
-                default:
-                    break;
+                case GA_STORE_REAL16: uvGridify<UT_Vector2T<fpreal16>>(); break;
+                case GA_STORE_REAL32: uvGridify<UT_Vector2T<fpreal32>>(); break;
+                case GA_STORE_REAL64: uvGridify<UT_Vector2T<fpreal64>>(); break;
+                default: break;
                 }
                 break;
             case 3:
                 switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
                 {
-                case GA_STORE_REAL16:
-                    uvGridify<UT_Vector3T<fpreal16>>(uvAttribPtr);
-                    break;
-                case GA_STORE_REAL32:
-                    uvGridify<UT_Vector3T<fpreal32>>(uvAttribPtr);
-                    break;
-                case GA_STORE_REAL64:
-                    uvGridify<UT_Vector3T<fpreal64>>(uvAttribPtr);
-                    break;
-                default:
-                    break;
+                case GA_STORE_REAL16: uvGridify<UT_Vector3T<fpreal16>>(); break;
+                case GA_STORE_REAL32: uvGridify<UT_Vector3T<fpreal32>>(); break;
+                case GA_STORE_REAL64: uvGridify<UT_Vector3T<fpreal64>>(); break;
+                default: break;
                 }
                 break;
             case 4:
-                //switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
-                //{
-                //case GA_STORE_REAL16:
-                //    uvGridify<UT_Vector4T<fpreal16>>(uvAttribPtr);
-                //    break;
-                //case GA_STORE_REAL32:
-                //    uvGridify<UT_Vector4T<fpreal32>>(uvAttribPtr);
-                //    break;
-                //case GA_STORE_REAL64:
-                //    uvGridify<UT_Vector4T<fpreal64>>(uvAttribPtr);
-                //    break;
-                //default:
-                //    break;
-                //}
+                // switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+                // {
+                // case GA_STORE_REAL16: uvGridify<UT_Vector4T<fpreal16>>(); break;
+                // case GA_STORE_REAL32: uvGridify<UT_Vector4T<fpreal32>>(); break;
+                // case GA_STORE_REAL64: uvGridify<UT_Vector4T<fpreal64>>(); break;
+                // default: break;
+                // }
                 break;
-            default:
-                break;
+            default: break;
             }
         }
         return true;
@@ -129,17 +105,17 @@ private:
 
     template<typename VECTOR_T, typename POS_VECTOR_T>
     void uvGridify(
-            const GA_RWHandleT<VECTOR_T>& uv_h,
-            const GA_ROHandleT<POS_VECTOR_T>& pos_h,
-            VECTOR_T& uv,
-            const GA_Offset primoff,
-            const GA_Size vtxpnum,
-            const exint rows,
-            const exint cols,
-            const typename POS_VECTOR_T::value_type scale,
-            const bool scaleIdx,
-            const bool isPointAttrib
-        )
+        const GA_RWHandleT<VECTOR_T>& uv_h,
+        const GA_ROHandleT<POS_VECTOR_T>& pos_h,
+        VECTOR_T& uv,
+        const GA_Offset primoff,
+        const GA_Size vtxpnum,
+        const exint rows,
+        const exint cols,
+        const typename POS_VECTOR_T::value_type scale,
+        const bool scaleIdx,
+        const bool isPointAttrib
+    )
     {
         if (reverseUVu)
         {
@@ -167,11 +143,13 @@ private:
     }
 
     template<typename VECTOR_T>
-    void uvGridify(const GA_RWHandleT<VECTOR_T>& uv_h)
+    void uvGridify()
     {
+        const GA_RWHandleT<VECTOR_T> uv_h(uvAttribPtr);
+        
         const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
         const GA_ROHandleT<TEMP_POS_VECTOR_TYPE> pos_h(geo->getP());
-        const bool isPointAttrib = uv_h.getAttribute()->getOwner() == GA_ATTRIB_POINT;
+        const bool isPointAttrib = uvAttribPtr->getOwner() == GA_ATTRIB_POINT;
 
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
         UTparallelFor(geoSplittableRange, [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
@@ -297,9 +275,12 @@ public:
     bool uniScale = false;
 
 private:
+    GA_Attribute* uvAttribPtr = nullptr;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
-};
+    
+}; // End of Class GFE_UVGridify
 
 
 

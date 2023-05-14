@@ -286,7 +286,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
 
 
-    GFE_GroupUnshared groupUnshared(outGeo0, cookparms);
+    GFE_GroupUnshared groupUnshared(outGeo0, &cookparms);
 
     groupUnshared.groupParser.setGroup(groupType, sopparms.getGroup());
 
@@ -295,7 +295,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     
     groupUnshared.outTopoAttrib = sopparms.getOutTopoAttrib();
     
-    groupUnshared.findOrCreate(false, unsharedAttribClass, unsharedAttribStorageClass, GA_STORE_INVALID,  geo0AttribNames);
+    groupUnshared.findOrCreateGroup(false, unsharedAttribClass, unsharedAttribStorageClass, GA_STORE_INVALID, geo0AttribNames);
 
     
     groupUnshared.computeAndBumpDataId();

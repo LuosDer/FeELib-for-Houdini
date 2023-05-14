@@ -2,6 +2,8 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_HasGroup_1_0.h"
 
+#include <GFE/GFE_AttributeArray.h>
+
 
 #include "SOP_FeE_HasGroup_1_0.proto.h"
 
@@ -182,21 +184,10 @@ SOP_FeE_HasGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     const GA_Group* const groupPtr = outGFE0.findGroup(groupType, sopparms.getHasGroupName());
     const bool hasGroup = bool(groupPtr);
-    
-    const GA_Storage storage = GFE_Type::getPreferredStorageI(outGeo0);
-    GA_Attribute* attribPtr = outGFE0.findGlobalAttribute(sopparms.getHasGroupAttribName());
-    
-    if(!attribPtr->getAIFTuple())
-    {
-        outGFE0.destroyAttrib(attribPtr);
-        attribPtr = nullptr;
-    }
-    
-    if(!attribPtr)
-        attribPtr = outGFE0.createTupleAttribute(GA_ATTRIB_GLOBAL, sopparms.getHasGroupAttribName(), storage, 1, GA_Defaults(0));
 
-    UT_ASSERT_P(attribPtr->getAIFTuple());
-    
+    GFE_AttributeArray attributeArray(outGeo0, cookparms);
+    GA_Attribute* attribPtr = attributeArray.findOrCreateTuple(false, GA_ATTRIB_GLOBAL, GA_STORECLASS_INT, GA_STORE_INVALID, sopparms.getHasGroupAttribName());
+
     attribPtr->getAIFTuple()->set(attribPtr, 0, int(hasGroup));
     if (hasGroup)
         cookparms.select(*groupPtr);

@@ -223,10 +223,13 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
         return;
     GA_Group& combineGroup = *combineGroupPtr;
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
     GOP_Manager gop;
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, &outGeo0, groupType, sopparms.getGroup(), gop);
+    GFE_GroupParser groupParser(outGeo0, gop, &cookparms);
+    //const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, &outGeo0, groupType, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = groupParser.setGroup(groupType, sopparms.getGroup());
+    
     if (!geo0Group)
         return;
 
@@ -241,14 +244,8 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     GFE_Group::groupBumpDataId(combineGroup);
 
     if (geo0Group)
-    {
         cookparms.select(combineGroup);
-    }
-    //GA_EdgeGroup* combineEdgeGroup = static_cast<GA_EdgeGroup*>(combineGroup);
-    // 
-    //static_cast<GA_EdgeGroup*>(combineGroup)->makeAllEdgesValid();
     
-
 
 
 }

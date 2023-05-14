@@ -6,14 +6,14 @@
 
 //#include "GFE/GFE_EdgeGroupTransfer.h"
 
-#include "GU/GU_Snap.h"
-
 #include "GFE/GFE_GeoFilter.h"
 #include "UFE/UFE_SplittableString.h"
 
 
-#include "GFE/GFE_Adjacency.h"
+#include "GFE/GFE_MeshTopology.h"
 
+
+#include "GU/GU_Snap.h"
 
 
 
@@ -68,7 +68,9 @@ virtual bool
 
 
     
-    const GA_ATINumericUPtr snapPtoffAttribUPtr = geoRef0->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_POINT, GA_STORE_INT64, 1, GA_Defaults(-1));
+    const GA_ATINumericUPtr snapPtoffAttribUPtr = geoRef0->getAttributes().
+        createDetachedTupleAttribute(GA_ATTRIB_POINT, GA_STORE_INT64, 1, GA_Defaults(GFE_INVALID_OFFSET));
+    
     snapPtoffAttrib = snapPtoffAttribUPtr.get();
     //const GA_RWHandleID snapPtoff_h(snapPtoffAttribPtr);
 
@@ -83,14 +85,14 @@ virtual bool
 
 
     
-    GFE_Adjacency adjacency(geo, cookparms);
-    vertexPointDstAttrib = adjacency.setVertexPointDst(true);
-    adjacency.compute();
+    GFE_MeshTopology meshTopology(geo, cookparms);
+    vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
+    meshTopology.compute();
     dstpt_h = vertexPointDstAttrib;
     
-    GFE_Adjacency adjacencyRef0(geoRef0Tmp);
-    vertexPointDstRef0Attrib = adjacencyRef0.setVertexPointDst(true);
-    adjacencyRef0.compute();
+    GFE_MeshTopology meshTopologyRef0(geoRef0Tmp);
+    vertexPointDstRef0Attrib = meshTopologyRef0.setVertexPointDst(true);
+    meshTopologyRef0.compute();
 
     
     
@@ -139,11 +141,11 @@ void edgeGroupTransfer()
             const GA_Edge& edge = *it;
             
             const GA_Offset snapDstPtoff0 = snapPtoff_h.get(edge.p0());
-            if (snapDstPtoff0 < 0)
+            if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
                 continue;
                     
             const GA_Offset snapDstPtoff1 = snapPtoff_h.get(edge.p1());
-            if (snapDstPtoff1 < 0)
+            if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
                 continue;
                     
             newEdgeGroup->add(snapDstPtoff0, snapDstPtoff1);
@@ -178,11 +180,11 @@ void vertexEdgeGroupTransfer()
                     const GA_Offset ptoff = geoRef0->vertexPoint(elemoff);
                     
                     const GA_Offset snapDstPtoff0 = snapPtoff_h.get(ptoff);
-                    if (snapDstPtoff0 < 0)
+                    if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
                         continue;
                     
                     const GA_Offset snapDstPtoff1 = snapPtoff_h.get(dstptRef0_ph.value(elemoff));
-                    if (snapDstPtoff1 < 0)
+                    if (GFE_Type::OffsetIsInvalid(snapDstPtoff1)
                         continue;
                     
                     for (GA_Offset vtxoff = geo->pointVertex(snapDstPtoff0); vtxoff != GA_INVALID_OFFSET; vtxoff = geo->vertexToNextVertex(vtxoff))

@@ -6,18 +6,13 @@
 
 //#include "GFE/GFE_GroupUnshared.h"
 
-#include "GA/GA_Detail.h"
-#include "GU/GU_Snap.h"
-
-
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_AttributeCombine.h"
-//#include "GFE/GFE_VertexNextEquiv.h"
-//#include "GFE/GFE_GroupPromote.h"
+#include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_GroupUnion.h"
 
-#include "GFE/GFE_Adjacency.h"
+
+#include "GU/GU_Snap.h"
 
 
 
@@ -25,11 +20,29 @@
 class GFE_GroupUnshared : public GFE_AttribCreateFilter {
 
 public:
-    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
+    // using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
+    
+    GFE_GroupUnshared(
+        GFE_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , meshTopology(geo, cookparms)
+    {
+    }
+
+    GFE_GroupUnshared(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , meshTopology(geo, cookparms)
+    {
+    }
 
     void
         setComputeParm(
-            const bool preFusePoint = false
+            const bool preFusePoint = false,
             const fpreal fuseDist = 1e-05,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
@@ -39,31 +52,68 @@ public:
 
         this->preFusePoint = preFusePoint;
         this->fuseDist = fuseDist;
-        this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        //this->subscribeRatio = subscribeRatio;
+        //this->minGrainSize = minGrainSize;
+        
+        meshTopology.setComputeParm(true, subscribeRatio, minGrainSize);
     }
 
-    void
-        findOrCreate(
-            const bool detached = false,
-            const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
-            const GA_StorageClass storageClass = GA_STORECLASS_INT,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& name = "__topo_connectivity"
-        )
+
+    void findOrCreateGroup(
+        const bool detached = false,
+        const GA_GroupType groupType = GA_GROUP_VERTEX,
+        const UT_StringRef& name = "__topo_unshared"
+    )
     {
-        if (storageClass == GA_STORECLASS_OTHER)
+        switch (groupType)
         {
-            isGroup = true;
-            getOutGroupArray().findOrCreate(detached, unsharedAttribClass, name);
+        case GA_GROUP_PRIMITIVE:
+            break;
+        case GA_GROUP_POINT:
+            break;
+        case GA_GROUP_VERTEX:
+            findOrCreateVertexGroup(detached, name);
+            break;
+        case GA_GROUP_EDGE:
+            findOrCreateEdgeGroup(detached, name);
+            break;
+        }
+    }
+
+    void findOrCreateGroup(
+        const bool detached = false,
+        const bool outVertexGroup = true,
+        const UT_StringRef& name = "__topo_unshared"
+    )
+    {
+        if(outVertexGroup)
+        {
+            findOrCreateVertexGroup(detached, name);
         }
         else
         {
-            isGroup = false;
-            getOutAttribArray().findOrCreateTuple(detached, GFE_Type::attributeOwner_groupType(unsharedAttribClass),
-                storageClass, storage, name);
+            findOrCreateEdgeGroup(detached, name);
         }
     }
+
+    SYS_FORCE_INLINE GA_VertexGroup* findOrCreateVertexGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared")
+    {
+        unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(detached, name);
+        return unsharedVertexGroup;
+    }
+
+    SYS_FORCE_INLINE GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared")
+    {
+        unsharedEdgeGroup = meshTopology.setUnsharedEdgeGroup(detached, name);
+        return unsharedEdgeGroup;
+    }
+
+    SYS_FORCE_INLINE GA_VertexGroup* getVertexGroup() const
+    { return meshTopology.getVertexNextEquivGroup(); }
+
+    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup() const
+    { return meshTopology.getUnsharedEdgeGroup(); }
+
 
 
 
@@ -98,30 +148,27 @@ private:
             fuseParms.myTPosH = geoOriginTmp->getP();
             GU_Snap::snapPoints(*geoOriginTmp, nullptr, fuseParms);
             //GU_Snap::snapPoints(*geoOriginTmp, static_cast<const GU_Detail*>(geo), fuseParms);
+            
+            meshTopology.reset(geoOriginTmp, cookparms);
         }
         else
         {
             geoOriginTmp = geo->asGU_Detail();
+            
+            meshTopology.reset(geo, cookparms);
         }
-
-        GFE_Adjacency adjacency(geo, cookparms);
-        adjacency.setComputeParm(true, subscribeRatio, minGrainSize);
-        adjacency.setVertexNextEquivGroup();
         
-        adjacency.groupParser.setGroup(groupParser.getVertexGroup());
+        getOutGroupArray()
+        meshTopology.groupParser.setGroup(groupParser.getVertexGroup());
+        
+        meshTopology.compute();
         
         //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv_Namespace::addGroupVertexNextEquiv(geoOriginTmp, groupParser.getVertexGroup(), GA_STORE_INVALID);
 
-        if (isGroup)
-        {
-            //GFE_GroupPromote::groupPromote(geoOriginTmp, unsharedGroup, unsharedAttribClass, unsharedAttribName, true);
-            GFE_GroupUnion::groupUnion(getOutGroupArray()[0], unsharedGroup);
-            GFE_GroupUnion::groupUnion_topoAttrib(geo, getOutGroupArray()[0], unsharedGroup);
-        }
-        else
-        {
-            GFE_AttribCombine::attribCombine(getOutAttribArray()[0], unsharedGroup);
-        }
+        //GFE_GroupPromote::groupPromote(geoOriginTmp, unsharedGroup, unsharedAttribClass, unsharedAttribName, true);
+        GFE_GroupUnion::groupUnion(getOutGroupArray()[0], unsharedGroup);
+        GFE_GroupUnion::groupUnion_topoAttrib(geo, getOutGroupArray()[0], unsharedGroup);
+    
 
         return true;
     }
@@ -134,11 +181,14 @@ public:
     fpreal fuseDist = 1e-05;
 
 private:
-    bool isGroup = false;
-    GA_VertexGroup* unsharedGroup = nullptr;
+    GFE_MeshTopology meshTopology;
+    
+    
+    GA_VertexGroup* unsharedVertexGroup = nullptr;
+    GA_EdgeGroup*   unsharedEdgeGroup   = nullptr;
 
-    exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    //exint subscribeRatio = 64;
+    //exint minGrainSize = 1024;
     
 };// End of class GFE_GroupUnshared
 
@@ -166,7 +216,7 @@ private:
 //        groupUnshared(
 //            GA_Detail* const geo,
 //            const GA_VertexGroup* const geoVtxGroup,
-//            const UT_StringHolder& unsharedAttribName = "unshared",
+//            const UT_StringRef& unsharedAttribName = "unshared",
 //            const GA_StorageClass unsharedAttribStorageClass = GA_STORECLASS_REAL,
 //            const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
 //            const bool preFusePoint = false,
@@ -193,7 +243,7 @@ private:
 //        groupUnshared(
 //            const GA_Detail* const geo,
 //            const GA_Group* const geoGroup,
-//            const UT_StringHolder& unsharedAttribName = "unshared",
+//            const UT_StringRef& unsharedAttribName = "unshared",
 //            const GA_StorageClass unsharedAttribStorageClass = GA_STORECLASS_REAL,
 //            const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
 //            const bool preFusePoint = false,
@@ -238,8 +288,8 @@ private:
 //    const SOP_NodeVerb::CookParms& cookparms,
 //    const GA_Detail* const geo,
 //    const GA_GroupType groupType,
-//    const UT_StringHolder& groupName,
-//    const UT_StringHolder& unsharedAttribName = "unshared",
+//    const UT_StringRef& groupName,
+//    const UT_StringRef& unsharedAttribName = "unshared",
 //    const GA_StorageClass unsharedAttribStorageClass = GA_STORECLASS_REAL,
 //    const GA_GroupType unsharedAttribClass = GA_GROUP_VERTEX,
 //    const bool preFusePoint = false,

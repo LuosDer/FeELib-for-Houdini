@@ -19,117 +19,81 @@ namespace GFE_Math {
 
 
 template<typename T>
-SYS_FORCE_INLINE
-    static T
-    radians(
-        const T degrees
-    )
-{
-    return degrees * PI / 180;
-}
+SYS_FORCE_INLINE static T radians(const T degrees)
+{ return degrees * PI / 180; }
 
 template<typename T>
-SYS_FORCE_INLINE
-    static T
-    degrees(
-        const T radians
-    )
-{
-    return radians * 180 / PI;
-}
+SYS_FORCE_INLINE static T degrees(const T radians)
+{ return radians * 180 / PI; }
 
 
 
 template<typename VECTOR_T, typename T_value_type>
-inline VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
-{
-    return lerp(a, b, t);
-}
+SYS_FORCE_INLINE VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
+{ return lerp(a, b, t); }
 
 template<>
-inline int16 vlerp<int16, fpreal16>(const int16 a, const int16 b, const fpreal16 t)
-{
-    return a + (b - a) * t;
-}
+SYS_FORCE_INLINE int16 vlerp<int16, fpreal16>(const int16 a, const int16 b, const fpreal16 t)
+{ return a + (b - a) * t; }
 
 template<>
-inline int vlerp<int, fpreal32>(const int a, const int b, const fpreal32 t)
-{
-    return a + (b - a) * t;
-}
+SYS_FORCE_INLINE int vlerp<int, fpreal32>(const int a, const int b, const fpreal32 t)
+{ return a + (b - a) * t; }
 
 template<>
-inline int64 vlerp<int64, fpreal64>(const int64 a, const int64 b, const fpreal64 t)
-{
-    return a + (b - a) * t;
-}
+SYS_FORCE_INLINE int64 vlerp<int64, fpreal64>(const int64 a, const int64 b, const fpreal64 t)
+{ return a + (b - a) * t; }
 
 template<>
-inline fpreal16 vlerp<fpreal16, fpreal16>(const fpreal16 a, const fpreal16 b, const fpreal16 t)
-{
-    return a + (b - a) * t;
-}
+SYS_FORCE_INLINE fpreal16 vlerp<fpreal16, fpreal16>(const fpreal16 a, const fpreal16 b, const fpreal16 t)
+{ return a + (b - a) * t; }
 
 template<>
-inline fpreal32 vlerp<fpreal32, fpreal32>(const fpreal32 a, const fpreal32 b, const fpreal32 t)
-{
-    return SYSlerp(a, b, t);
-}
+SYS_FORCE_INLINE fpreal32 vlerp<fpreal32, fpreal32>(const fpreal32 a, const fpreal32 b, const fpreal32 t)
+{ return SYSlerp(a, b, t); }
 
 template<>
-inline fpreal vlerp<fpreal, fpreal>(const fpreal a, const fpreal b, const fpreal t)
-{
-    return SYSlerp(a, b, t);
-}
+SYS_FORCE_INLINE fpreal vlerp<fpreal, fpreal>(const fpreal a, const fpreal b, const fpreal t)
+{ return SYSlerp(a, b, t); }
 
 
 
-#define ReverseROC 1
+#define GFE_MATH_ReverseROC 1
 
 
 template<typename T>
-SYS_FORCE_INLINE
-static T
-    distToLine(
+SYS_FORCE_INLINE static T distToLine(
         const UT_Vector3T<T>& pos,
         const UT_Vector3T<T>& pos0,
-        const UT_Vector3T<T>& pos1
-    ) {
-    return sqrt(length2(cross(pos0 - pos, pos1 - pos)) / distance2(pos0, pos1));
-}
+        const UT_Vector3T<T>& pos1)
+{ return sqrt(length2(cross(pos0 - pos, pos1 - pos)) / distance2(pos0, pos1)); }
 
-//SYS_FORCE_INLINE
-//static fpreal
-//    distToLine(
-//        const UT_Vector3T<fpreal>& pos,
-//        const UT_Vector3T<fpreal>& pos0,
-//        const UT_Vector3T<fpreal>& pos1
-//    ) {
-//    return sqrt(length2(cross(pos0 - pos, pos1 - pos)) / distance2(pos0, pos1));
-//}
+
+
+//SYS_FORCE_INLINE static fpreal distToLine(
+//     const UT_Vector3T<fpreal>& pos,
+//     const UT_Vector3T<fpreal>& pos0,
+//     const UT_Vector3T<fpreal>& pos1)
+// { return sqrt(length2(cross(pos0 - pos, pos1 - pos)) / distance2(pos0, pos1)); }
 
 
 
 template<typename T>
-SYS_FORCE_INLINE
-static T
-distToLine(
+SYS_FORCE_INLINE static T distToLine(
     const UT_Vector3T<T>& dir0,
     const UT_Vector3T<T>& dir1,
     const UT_Vector3T<T>& pos0,
-    const UT_Vector3T<T>& pos1
-) {
-    return sqrt(length2(cross(dir0, dir1)) / distance2(pos0, pos1));
-}
+    const UT_Vector3T<T>& pos1)
+{ return sqrt(length2(cross(dir0, dir1)) / distance2(pos0, pos1)); }
 
 
 template<typename T>
-static T
-circleRadius3Point(
+static T circleRadius3Point(
     const UT_Vector3T<T>& pos0,
     const UT_Vector3T<T>& pos1,
     const UT_Vector3T<T>& pos2
-) {
+)
+{
     const T x1 = pos0[0],
         x2 = pos1[0],
         x3 = pos2[0],
@@ -167,12 +131,12 @@ circleRadius3Point(
 
     // return distance(circleCenter, pos0);
 
-    // #if ReverseROC
+    // #if GFE_MATH_ReverseROC
     //     return 1.0 / distance(circleCenter, pos0);
     // #else
     //     return distance(circleCenter, pos0);
     // #endif
-#if ReverseROC
+#if GFE_MATH_ReverseROC
     return sqrt(distance2(pos0, pos2) / distance2(circleCenter, pos0));
 #else
     return sqrt(distance2(circleCenter, pos0) / distance2(pos0, pos2));
@@ -180,11 +144,14 @@ circleRadius3Point(
 }
 
 
+#undef GFE_MATH_ReverseROC
 
 
 
 
 
 } // End of namespace GFE_Math
+
+
 
 #endif

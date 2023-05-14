@@ -6,12 +6,10 @@
 
 //#include "GFE/GFE_InlinePoint.h"
 
-#include "GA/GA_Detail.h"
-#include "GA/GA_SplittableRange.h"
-
-
 
 #include "GFE/GFE_GeoFilter.h"
+
+
 #include "GFE/GFE_Math.h"
 
 
@@ -74,15 +72,13 @@ private:
                 UT_ASSERT_MSG(0, "not correct group type");
                 continue;
             }
-            GA_PointGroup* const ptr = UTverify_cast<GA_PointGroup*>(getOutGroupArray()[i]);
+            
+            inlinePtGroup = static_cast<GA_PointGroup*>(getOutGroupArray()[i]);
             switch (geo->getPreferredPrecision())
             {
-            case GA_PRECISION_64:
-                groupPrimInlinePoint_fast<fpreal64>(ptr);
-                break;
             default:
-                groupPrimInlinePoint_fast<fpreal32>(ptr);
-                break;
+            case GA_PRECISION_32: groupPrimInlinePoint_fast<fpreal32>(); break;
+            case GA_PRECISION_64: groupPrimInlinePoint_fast<fpreal64>(); break;
             }
         }
         return true;
@@ -90,16 +86,11 @@ private:
 
 
     template<typename FLOAT_T>
-    void
-        groupPrimInlinePoint_fast(
-            GA_PointGroup* const inlinePtGroup
-        )
+    void groupPrimInlinePoint_fast()
     {
         UT_ASSERT_P(inlinePtGroup);
-        const GA_PrimitiveGroup* const inGroup = groupParser.getPrimitiveGroup();
-
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(inGroup));
-        UTparallelFor(geoSplittableRange0, [this, inlinePtGroup](const GA_SplittableRange& r)
+        
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -192,6 +183,8 @@ public:
     //GA_PointGroup* inlinePtGroup = nullptr;
 
 private:
+    GA_PointGroup* inlinePtGroup;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 16;
 };

@@ -82,24 +82,18 @@ public:
 
 
     
+    
     SYS_FORCE_INLINE GA_Attribute* &operator[](const size_t i)
-    {
-        return attribArray[i];
-    }
+    { return attribArray[i]; }
+
     SYS_FORCE_INLINE GA_Attribute* operator[](const size_t i) const
-    {
-        return attribArray[i];
-    }
+    { return attribArray[i]; }
 
     SYS_FORCE_INLINE bool isEmpty() const
-    {
-        return attribArray.size() == 0;
-    }
+    { return attribArray.size() == 0; }
     
     SYS_FORCE_INLINE void erase(const size_t i)
-    {
-        attribArray.erase(attribArray.begin()+i);
-    }
+    { attribArray.erase(attribArray.begin()+i); }
 
     SYS_FORCE_INLINE void destroy(const size_t i)
     {
@@ -114,24 +108,16 @@ public:
     }
 
     SYS_FORCE_INLINE ::std::vector<GA_Attribute*>::size_type size() const
-    {
-        return attribArray.size();
-    }
+    { return attribArray.size(); }
 
-    void reset(
-        GA_Detail* const inGeo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
+    void reset(GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
         geo = inGeo;
         this->cookparms = cookparms;
         clear();
     }
 
-    void reset(
-        GA_Detail& inGeo,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
+    void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
         geo = &inGeo;
         this->cookparms = cookparms;
@@ -820,14 +806,10 @@ findOrCreateNormal3D(
 
 
 SYS_FORCE_INLINE void pop_back()
-{
-    attribArray.pop_back();
-}
+{ attribArray.pop_back(); }
 
 SYS_FORCE_INLINE GA_Attribute* last() const
-{
-    return attribArray[attribArray.size()-1];
-}
+{ return attribArray[attribArray.size()-1]; }
 
 
 void bumpDataId() const
@@ -843,14 +825,10 @@ void bumpDataId() const
 }
 
 SYS_FORCE_INLINE std::vector<GA_Attribute*>& ref()
-{
-    return attribArray;
-}
+{ return attribArray; }
 
 SYS_FORCE_INLINE const std::vector<GA_Attribute*>& ref() const
-{
-    return attribArray;
-}
+{ return attribArray; }
 
 
 
@@ -862,23 +840,19 @@ SYS_FORCE_INLINE const std::vector<GA_Attribute*>& ref() const
     
 protected:
     SYS_FORCE_INLINE void setDetail(GA_Detail* const inGeo)
-    {
-        geo = inGeo;
-    }
+    { geo = inGeo; }
 
     SYS_FORCE_INLINE void setDetail(GA_Detail& inGeo)
-    {
-        geo = &inGeo;
-    }
+    { geo = &inGeo; }
 
 
 void checkTupleAttrib(
-        GA_Attribute* &attribPtr,
-        const GA_Storage finalStorage = GA_STORE_INVALID,
-        const int tuple_size = 3,
-        const GA_Defaults& defaults = GA_Defaults(0.0f),
-        const bool emplaceBack = true
-    )
+    GA_Attribute* &attribPtr,
+    const GA_Storage finalStorage = GA_STORE_INVALID,
+    const int tuple_size = 3,
+    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const bool emplaceBack = true
+)
 {
     if (!attribPtr)
         return;
@@ -916,11 +890,11 @@ void checkTupleAttrib(
 }
 
 void checkArrayAttrib(
-        GA_Attribute*& attribPtr,
-        const GA_Storage finalStorage = GA_STORE_INVALID,
-        const int tuple_size = 3,
-        const bool emplaceBack = true
-    )
+    GA_Attribute*& attribPtr,
+    const GA_Storage finalStorage = GA_STORE_INVALID,
+    const int tuple_size = 3,
+    const bool emplaceBack = true
+)
 {
     if (!attribPtr)
         return;
@@ -1038,25 +1012,45 @@ public:
 
     
     
-    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i)
+    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i) const
     {
+        UT_ASSERT(groupArray[i]->isElementGroup());
         return static_cast<GA_ElementGroup*>(groupArray[i]);
     }
 
-    SYS_FORCE_INLINE GA_Group* &operator[](const size_t i)
+    SYS_FORCE_INLINE GA_PrimitiveGroup* getPrimitiveGroup(const size_t i) const
     {
-        return groupArray[i];
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_PRIMITIVE);
+        return static_cast<GA_PrimitiveGroup*>(groupArray[i]);
     }
+
+    SYS_FORCE_INLINE GA_PointGroup* getPointGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_POINT);
+        return static_cast<GA_PointGroup*>(groupArray[i]);
+    }
+
+    SYS_FORCE_INLINE GA_VertexGroup* getVertexGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_VERTEX);
+        return static_cast<GA_VertexGroup*>(groupArray[i]);
+    }
+
+    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_EDGE);
+        return static_cast<GA_EdgeGroup*>(groupArray[i]);
+    }
+
+
+    SYS_FORCE_INLINE GA_Group* &operator[](const size_t i)
+    { return groupArray[i]; }
 
     SYS_FORCE_INLINE bool isEmpty() const
-    {
-        return groupArray.size() == 0;
-    }
+    { return groupArray.size() == 0; }
 
     SYS_FORCE_INLINE void erase(const size_t i)
-    {
-        groupArray.erase(groupArray.begin()+i);
-    }
+    { groupArray.erase(groupArray.begin()+i); }
     
     SYS_FORCE_INLINE void clear()
     {
@@ -1065,14 +1059,10 @@ public:
     }
 
     SYS_FORCE_INLINE ::std::vector<GA_Group*>::size_type size() const
-    {
-        return groupArray.size();
-    }
+    { return groupArray.size(); }
 
     SYS_FORCE_INLINE GA_Group* last() const
-    {
-        return groupArray[groupArray.size() - 1];
-    }
+    { return groupArray[groupArray.size() - 1]; }
 
     SYS_FORCE_INLINE void reset(GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
@@ -1120,9 +1110,7 @@ public:
     }
 
     SYS_FORCE_INLINE void append(GA_Group& groupPtr)
-    {
-        groupArray.emplace_back(&groupPtr);
-    }
+    { groupArray.emplace_back(&groupPtr); }
 
     void append(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
@@ -1172,57 +1160,41 @@ public:
             return;
         appends(groupClass, groupPattern.c_str());
     }
+
     SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const char* groupPattern)
-    {
-        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
+
     SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
-    {
-        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { (GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
 
     
     SYS_FORCE_INLINE void set(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
-    {
-        set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
 
     SYS_FORCE_INLINE void append(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
+    { append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
+
+
+    GA_Group* findOrCreate(
+        const bool detached = false,
+        const GA_GroupType groupType = GA_GROUP_POINT,
+        const UT_StringRef& groupName = "",
+        const bool emplaceBack = true
+    )
     {
-        append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
-
-
-    GA_Group*
-        findOrCreate(
-            const bool detached = false,
-            const GA_GroupType groupType = GA_GROUP_POINT,
-            const UT_StringRef& groupName = "",
-            const bool emplaceBack = true
-        )
-    {
-        GA_Group* groupPtr = nullptr;
-
+        GA_Group* groupPtr;
         if (detached)
         {
             switch (groupType)
             {
-            case GA_GROUP_PRIMITIVE:
-                groupUPtrArray.emplace_back(geo->createDetachedPrimitiveGroup());
-                break;
-            case GA_GROUP_POINT:
-                groupUPtrArray.emplace_back(geo->createDetachedPointGroup());
-                break;
-            case GA_GROUP_VERTEX:
-                groupUPtrArray.emplace_back(geo->createDetachedVertexGroup());
-                break;
-            case GA_GROUP_EDGE:
-                groupUPtrArray.emplace_back(geo->createDetachedEdgeGroup());
-                break;
+            case GA_GROUP_PRIMITIVE: groupUPtrArray.emplace_back(geo->createDetachedPrimitiveGroup()); break;
+            case GA_GROUP_POINT:     groupUPtrArray.emplace_back(geo->createDetachedPointGroup());     break;
+            case GA_GROUP_VERTEX:    groupUPtrArray.emplace_back(geo->createDetachedVertexGroup());    break;
+            case GA_GROUP_EDGE:      groupUPtrArray.emplace_back(geo->createDetachedEdgeGroup());      break;
             default:
                 if (cookparms)
                     cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
-                UT_ASSERT_MSG(groupPtr, "No Group");
+                UT_ASSERT_MSG(0, "No Group");
                 return nullptr;
                 break;
             }
@@ -1310,26 +1282,18 @@ public:
     }
 
     SYS_FORCE_INLINE std::vector<GA_Group*>& ref()
-    {
-        return groupArray;
-    }
+    { return groupArray; }
 
     SYS_FORCE_INLINE const std::vector<GA_Group*>& ref() const
-    {
-        return groupArray;
-    }
+    { return groupArray; }
 
 
 protected:
     SYS_FORCE_INLINE void setDetail(GA_Detail* const inGeo)
-    {
-        geo = inGeo;
-    }
+    { geo = inGeo; }
 
     SYS_FORCE_INLINE void setDetail(GA_Detail& inGeo)
-    {
-        geo = &inGeo;
-    }
+    { geo = &inGeo; }
 
 
 
@@ -1405,19 +1369,13 @@ public:
     }
 
     SYS_FORCE_INLINE const GA_Attribute* &operator[](const size_t i)
-    {
-        return attribArray[i];
-    }
+    { return attribArray[i]; }
 
     SYS_FORCE_INLINE bool isEmpty() const
-    {
-        return attribArray.size() == 0;
-    }
+    { return attribArray.size() == 0; }
 
     SYS_FORCE_INLINE void erase(const size_t i)
-    {
-        attribArray.erase(attribArray.begin()+i);
-    }
+    { attribArray.erase(attribArray.begin()+i); }
 
     SYS_FORCE_INLINE void clear()
     {
@@ -1431,9 +1389,9 @@ public:
     }
 
     SYS_FORCE_INLINE void reset(
-            const GA_Detail* const geo,
-            const SOP_NodeVerb::CookParms* const cookparms = nullptr
-        )
+        const GA_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
     {
         this->geo = geo;
         this->cookparms = cookparms;
@@ -1731,20 +1689,14 @@ public:
 
 
     SYS_FORCE_INLINE void pop_back()
-    {
-        attribArray.pop_back();
-    }
+    { attribArray.pop_back(); }
 
     SYS_FORCE_INLINE const GA_Attribute* last() const
-    {
-        return attribArray[attribArray.size() - 1];
-    }
+    { return attribArray[attribArray.size() - 1]; }
 
 
     SYS_FORCE_INLINE std::vector<const GA_Attribute*>& ref()
-    {
-        return attribArray;
-    }
+    { return attribArray; }
 
 
 protected:
@@ -1831,20 +1783,47 @@ public:
     {
     }
     
-    SYS_FORCE_INLINE const GA_Group* &operator[](const size_t i)
+
+    
+    
+    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i) const
     {
-        return groupArray[i];
+        UT_ASSERT(groupArray[i]->isElementGroup());
+        return static_cast<GA_ElementGroup*>(groupArray[i]);
     }
+
+    SYS_FORCE_INLINE GA_PrimitiveGroup* getPrimitiveGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_PRIMITIVE);
+        return static_cast<GA_PrimitiveGroup*>(groupArray[i]);
+    }
+
+    SYS_FORCE_INLINE GA_PointGroup* getPointGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_POINT);
+        return static_cast<GA_PointGroup*>(groupArray[i]);
+    }
+
+    SYS_FORCE_INLINE GA_VertexGroup* getVertexGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_VERTEX);
+        return static_cast<GA_VertexGroup*>(groupArray[i]);
+    }
+
+    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup(const size_t i) const
+    {
+        UT_ASSERT(groupArray[i]->classType() == GA_GROUP_EDGE);
+        return static_cast<GA_EdgeGroup*>(groupArray[i]);
+    }
+
+    SYS_FORCE_INLINE const GA_Group* &operator[](const size_t i)
+    { return groupArray[i]; }
 
     SYS_FORCE_INLINE bool isEmpty() const
-    {
-        return groupArray.size() == 0;
-    }
+    { return groupArray.size() == 0; }
 
     SYS_FORCE_INLINE void erase(const size_t i)
-    {
-        groupArray.erase(groupArray.begin()+i);
-    }
+    { groupArray.erase(groupArray.begin()+i); }
     
     SYS_FORCE_INLINE void clear()
     {
@@ -1853,14 +1832,10 @@ public:
     }
 
     SYS_FORCE_INLINE ::std::vector<GA_Group*>::size_type size() const
-    {
-        return groupArray.size();
-    }
+    { return groupArray.size(); }
 
     SYS_FORCE_INLINE const GA_Group* last()
-    {
-        return groupArray[groupArray.size() - 1];
-    }
+    { return groupArray[groupArray.size() - 1]; }
 
     SYS_FORCE_INLINE void reset(
         const GA_Detail* const geo,
@@ -1929,30 +1904,26 @@ public:
             groupArray.emplace_back(groupPtr);
         }
     }
+
     SYS_FORCE_INLINE void appends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
             return;
         appends(groupClass, groupPattern.c_str());
     }
+
     SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const char* groupPattern)
-    {
-        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
+
     SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
-    {
-        appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
     
 
     SYS_FORCE_INLINE void set(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
-    {
-        set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { set(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
+
     SYS_FORCE_INLINE void append(const GA_AttributeOwner groupClass, const UT_StringRef& groupPattern)
-    {
-        append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern);
-    }
+    { append(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
 
 
 
@@ -1974,16 +1945,12 @@ public:
 
 
     SYS_FORCE_INLINE ::std::vector<const GA_Group*>& ref()
-    {
-        return groupArray;
-    }
+    { return groupArray; }
 
 
 protected:
     SYS_FORCE_INLINE void setDetail(const GA_Detail* const inGeo)
-    {
-        geo = inGeo;
-    }
+    { geo = inGeo; }
 
 
 protected:

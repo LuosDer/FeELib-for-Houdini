@@ -9,8 +9,8 @@
 #include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
 
-#include "GFE/GFE_Type.h"
 
+#include "GFE/GFE_Type.h"
 
 
 class GFE_SetGroup
@@ -37,26 +37,31 @@ public:
             edgeGroupPtr    = static_cast<GA_EdgeGroup*>(inGroupPtr);
         return *this;
     }
+
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_ElementGroup* const inGroupPtr)
     {
         elementGroupPtr = inGroupPtr;
         return *this;
     }
+
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_PrimitiveGroup* const inGroupPtr)
     {
         elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
         return *this;
     }
+
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_PointGroup* const inGroupPtr)
     {
         elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
         return *this;
     }
+
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_VertexGroup* const inGroupPtr)
     {
         elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
         return *this;
     }
+
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_EdgeGroup* const inGroupPtr)
     {
         edgeGroupPtr = inGroupPtr;

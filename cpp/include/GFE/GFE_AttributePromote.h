@@ -11,7 +11,6 @@
 
 
 
-//#include "GFE/GFE_Type.h"
 
 
 class GFE_AttribPromote : public GFE_AttribFilter {

@@ -19,32 +19,97 @@ static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
 
-    parm {
-        name    "outAttrib#"
-        cppname "OutAttrib#"
-        label   "Out Attrib"
-        type    toggle
-        default { 1 }
-        nolabel
-        joinnext
-    }
-    parm {
-        name    "primAttrib"
-        cppname "PrimAttrib"
-        label   "Prim Attrib"
-        type    string
-        default { "" }
-        disablewhen "{ outPrimAttrib == 0 }"
-    }
-    parm {
-        name    "newPrimAttribName"
-        cppname "NewPrimAttribName"
-        label   "New Prim Attrib Name"
-        type    string
-        default { "" }
-        disablewhen "{ outPrimAttrib == 1 }"
+    multiparm {
+        name    "numAttribOut"
+        cppname "NumAttribOut"
+        label   "Number of Attrib Out"
+        default 0
+
+        parm {
+            name    "outAttrib#"
+            cppname "OutAttrib#"
+            label   "Out Attrib"
+            type    toggle
+            default { 1 }
+            nolabel
+            joinnext
+        }
+        parm {
+            name    "attribClass#"
+            cppname "AttribClass#"
+            label   "AttribClass#"
+            type    ordinal
+            default { "point" }
+            menu {
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+                "detail"    "Detail"
+            }
+        }
+        parm {
+            name    "attrib#"
+            cppname "Attrib#"
+            label   "Attrib#"
+            type    string
+            default { "" }
+            disablewhen "{ outAttrib# == 0 }"
+        }
+        parm {
+            name    "newAttribName#"
+            cppname "NewAttribName#"
+            label   "New Attrib Name#"
+            type    string
+            default { "" }
+            disablewhen "{ outAttrib# == 1 }"
+        }
     }
 
+    multiparm {
+        name    "numGroupOut"
+        cppname "NumGroupOut"
+        label   "Number of Group Out"
+        default 0
+
+        parm {
+            name    "outGroup#"
+            cppname "OutGroup#"
+            label   "Out Group"
+            type    toggle
+            default { 1 }
+            nolabel
+            joinnext
+        }
+        parm {
+            name    "groupClass#"
+            cppname "GroupClass#"
+            label   "GroupClass#"
+            type    ordinal
+            default { "point" }
+            menu {
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+                "edge"      "Edge"
+            }
+        }
+        parm {
+            name    "group#"
+            cppname "Group#"
+            label   "Group#"
+            type    string
+            default { "" }
+            disablewhen "{ outGroup# == 0 }"
+        }
+        parm {
+            name    "newGroupName#"
+            cppname "NewGroupName#"
+            label   "New Group Name#"
+            type    string
+            default { "" }
+            disablewhen "{ outGroup# == 1 }"
+        }
+    }
 
 
 
@@ -58,15 +123,8 @@ SOP_FeE_AttribOut_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribOut_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("delPrimAttrib"_sh,    &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("delPointAttrib"_sh,   &SOP_Node::pointAttribMenu);
-        templ.setChoiceListPtr("delVertexAttrib"_sh,  &SOP_Node::vertexAttribMenu);
-        templ.setChoiceListPtr("delDetailAttrib"_sh,  &SOP_Node::detailAttribMenu);
-
-        templ.setChoiceListPtr("delPrimGroup"_sh,     &SOP_Node::primNamedGroupMenu);
-        templ.setChoiceListPtr("delPointGroup"_sh,    &SOP_Node::pointNamedGroupMenu);
-        templ.setChoiceListPtr("delVertexGroup"_sh,   &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("delEdgeGroup"_sh,     &SOP_Node::edgeNamedGroupMenu);
+        templ.setChoiceListPtr("attrib"_sh,    &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("group"_sh,     &SOP_Node::primNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -141,6 +199,38 @@ SOP_FeE_AttribOut_1_0::cookVerb() const
 
 
 
+//
+//static GA_AttributeOwner
+//sopAttribOwner(SOP_FeE_AttribOut_1_0Parms::AttribClass attribClass)
+//{
+//    using namespace SOP_FeE_AttribOut_1_0Enums;
+//    switch (attribClass)
+//    {
+//    case SrcAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+//    case SrcAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+//    case SrcAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+//    case SrcAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+//    }
+//    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+//    return GA_ATTRIB_INVALID;
+//}
+//
+//static GA_GroupType
+//sopGroupType(SOP_FeE_AttribOut_1_0Parms::GroupType parmgrouptype)
+//{
+//    using namespace SOP_FeE_AttribOut_1_0Enums;
+//    switch (parmgrouptype)
+//    {
+//    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+//    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+//    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+//    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+//    }
+//    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+//    return GA_GROUP_INVALID;
+//}
+//
+
 
 
 void
@@ -162,26 +252,20 @@ SOP_FeE_AttribOut_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
 
-    for ()
-    outGFE0.outAttrib(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
+    const exint numAttribOut = sopparms.getNumAttribOut();
+    for (size_t i = 0; i < numAttribOut; i++)
+    {
 
-    const UT_StringHolder& allPattern = "*";
-    const UT_StringHolder& delPrimAttrib   = sopparms.getDoDelPrimAttrib()   ? sopparms.getDelPrimAttrib()   : allPattern;
-    const UT_StringHolder& delPointAttrib  = sopparms.getDoDelPointAttrib()  ? sopparms.getDelPointAttrib()  : allPattern;
-    const UT_StringHolder& delVertexAttrib = sopparms.getDoDelVertexAttrib() ? sopparms.getDelVertexAttrib() : allPattern;
-    const UT_StringHolder& delDetailAttrib = sopparms.getDoDelDetailAttrib() ? sopparms.getDelDetailAttrib() : allPattern;
-    outGFE0.delStdAttribute(delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
-    //GA_AttributeSet& attribSet = outGeo0.getAttributes();
-    //GFE_Attribute::delStdAttribute(attribSet, attribSet, delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+        const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getSrcAttribClass());
+        if (sopparms.getOutAttrib(i))
+        {
 
-    const UT_StringHolder& delPrimGroup   = sopparms.getDoDelPrimGroup()   ? sopparms.getDelPrimGroup()   : allPattern;
-    const UT_StringHolder& delPointGroup  = sopparms.getDoDelPointGroup()  ? sopparms.getDelPointGroup()  : allPattern;
-    const UT_StringHolder& delVertexGroup = sopparms.getDoDelVertexGroup() ? sopparms.getDelVertexGroup() : allPattern;
-    const UT_StringHolder& delEdgeGroup   = sopparms.getDoDelEdgeGroup()   ? sopparms.getDelEdgeGroup()   : allPattern;
-    outGFE0.delStdGroup(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
+            const UT_StringHolder& allPattern = sopparms.getAttrib(i);
+        }
+        else
+        {
+            newAttribName
+        }
+    }
+
 }
-
-
-namespace SOP_FeE_AttribOut_1_0_Namespace
-{
-} // End SOP_FeE_AttribOut_1_0_Namespace namespace

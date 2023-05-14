@@ -9,7 +9,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_Adjacency.h"
+#include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_AttributePromote.h"
 #include "GFE/GFE_AttributeCast.h"
 
@@ -49,10 +49,10 @@ GFE_Connectivity(
 
     
     void
-        setComputeParm(
-            const bool connectivityConstraint = false,
-            const bool outTopoAttrib = true
-        )
+    setComputeParm(
+        const bool connectivityConstraint = false,
+        const bool outTopoAttrib = true
+    )
     {
         setHasComputed();
 
@@ -75,8 +75,10 @@ GFE_Connectivity(
         const bool isDetached = connectivityOwner != attribOwner || storageClass != GA_STORECLASS_INT;
 #if 1
         if (isDetached)
-            getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name);
-        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(isDetached, connectivityOwner, GA_STORECLASS_INT, GA_STORE_INVALID, isDetached ? UT_StringHolder("") : name);
+            getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name, 1, GA_Defaults(GFE_INVALID_OFFSET));
+    
+        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(isDetached, connectivityOwner, GA_STORECLASS_INT, GA_STORE_INVALID,
+            isDetached ? UT_StringRef("") : name, 1, GA_Defaults(GFE_INVALID_OFFSET));
 #else
         connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(true, connectivityOwner, GA_STORECLASS_INT, storage, isDetached ? GFE_TEMP_ConnectivityAttribName : name);
         if (isDetached)
@@ -158,23 +160,23 @@ private:
         connectivity()
     {
 #if 1
-        GFE_Adjacency adjacency(geo);
-        adjacency.outAsOffset = false;
-        adjacency.outIntermediateAttrib = true;
+        GFE_MeshTopology meshTopology(geo, cookparms);
+        meshTopology.outAsOffset = false;
+        meshTopology.outIntermediateAttrib = true;
         
         if (connectivityConstraint)
         {
-            adjacency.groupParser.setGroup(groupParser.getPrimitiveGroup());
-            adjacency.setPrimPrimEdge(true);
-            adjacency.compute();
-            adjElemsAttrib_h.bind(adjacency.getPrimPrimEdge());
+            meshTopology.groupParser.setGroup(groupParser.getPrimitiveGroup());
+            meshTopology.setPrimPrimEdge(true);
+            meshTopology.compute();
+            adjElemsAttrib_h.bind(meshTopology.getPrimPrimEdge());
         }
         else
         {
-            adjacency.groupParser.setGroup(groupParser.getPointGroup());
-            adjacency.setPointPointEdge(true);
-            adjacency.compute();
-            adjElemsAttrib_h.bind(adjacency.getPointPointEdge());
+            meshTopology.groupParser.setGroup(groupParser.getPointGroup());
+            meshTopology.setPointPointEdge(true);
+            meshTopology.compute();
+            adjElemsAttrib_h.bind(meshTopology.getPointPointEdge());
         }
 #else
         GA_Attribute* adjElemsAttrib = nullptr;
@@ -209,7 +211,7 @@ private:
     //elemHeap.reserve(__min(maxElemHeapSize, nelems));
     elemHeap.reserve(SYSmin(maxElemHeapSize, nelems));
 
-    ::std::vector<GA_Offset> classnumArray(nelems, UNREACHED_NUMBER);
+    ::std::vector<GA_Offset> classnumArray(nelems, GFE_INVALID_OFFSET);
 
     UT_PackedArrayOfArrays<GA_Offset> packedArray;
     adjElemsAttrib_h->getAIFNumericArray()->getPackedArrayFromIndices(adjElemsAttrib_h.getAttribute(), 0, nelems, packedArray);
@@ -266,7 +268,7 @@ private:
     GA_Index classnum = startClassnum;
     for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
     {
-        if (classnumArray[elemoff] != UNREACHED_NUMBER)
+        if (classnumArray[elemoff] != GFE_INVALID_OFFSET)
             continue;
         classnumArray[elemoff] = classnum;
         elemHeap.emplace_back(elemoff);
@@ -278,7 +280,7 @@ private:
             for (GA_Size i = rawOffsets[lastElem]; i < rawOffsetEnd; ++i)
             {
                 const GA_Offset rawDataVal = rawData[i];
-                if (classnumArray[rawDataVal] != UNREACHED_NUMBER)
+                if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
                     continue;
                 classnumArray[rawDataVal] = classnum;
                 elemHeap.emplace_back(rawDataVal);
@@ -337,12 +339,6 @@ private:
     
     const GA_Size maxElemHeapSize = pow(2, 15);
     const UT_StringHolder GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
-
-#if 0
-    const GA_Offset UNREACHED_NUMBER = SYS_EXINT_MAX;
-#else
-    const GA_Offset UNREACHED_NUMBER = -1;
-#endif
 
     
 }; // End of class GFE_Connectivity
