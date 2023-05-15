@@ -199,39 +199,81 @@ SOP_FeE_AttribOut_1_0::cookVerb() const
 
 
 
-//
-//static GA_AttributeOwner
-//sopAttribOwner(SOP_FeE_AttribOut_1_0Parms::AttribClass attribClass)
-//{
-//    using namespace SOP_FeE_AttribOut_1_0Enums;
-//    switch (attribClass)
-//    {
-//    case SrcAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-//    case SrcAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-//    case SrcAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-//    case SrcAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
-//    }
-//    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-//    return GA_ATTRIB_INVALID;
-//}
-//
-//static GA_GroupType
-//sopGroupType(SOP_FeE_AttribOut_1_0Parms::GroupType parmgrouptype)
-//{
-//    using namespace SOP_FeE_AttribOut_1_0Enums;
-//    switch (parmgrouptype)
-//    {
-//    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-//    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-//    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-//    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
-//    }
-//    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-//    return GA_GROUP_INVALID;
-//}
-//
+#if 1
 
 
+static GA_AttributeOwner
+sopAttribOwner(const int64 attribClass)
+{
+    using namespace SOP_FeE_AttribOut_1_0Enums;
+    switch (attribClass)
+    {
+    default:
+    case 0:      return GA_ATTRIB_PRIMITIVE;  break;
+    case 1:      return GA_ATTRIB_POINT;      break;
+    case 2:      return GA_ATTRIB_VERTEX;     break;
+    case 3:      return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+static GA_GroupType
+sopGroupType(const int64 parmGroupClass)
+{
+    using namespace SOP_FeE_AttribOut_1_0Enums;
+    switch (parmGroupClass)
+    {
+    default:
+    case 0:      return GA_GROUP_PRIMITIVE;  break;
+    case 1:      return GA_GROUP_POINT;      break;
+    case 2:      return GA_GROUP_VERTEX;     break;
+    case 3:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+#else
+
+
+
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_AttribOut_1_0Parms::AttribClass attribClass)
+{
+    using namespace SOP_FeE_AttribOut_1_0Enums;
+    switch (attribClass)
+    {
+    default:
+    case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case AttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case AttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+static GA_GroupType
+sopGroupType(SOP_FeE_AttribOut_1_0Parms::GroupClass parmGroupClass)
+{
+    using namespace SOP_FeE_AttribOut_1_0Enums;
+    switch (parmGroupClass)
+    {
+    default:
+    case GroupClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupClass::POINT:     return GA_GROUP_POINT;      break;
+    case GroupClass::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupClass::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+#endif
+
+    
 
 void
 SOP_FeE_AttribOut_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
@@ -250,21 +292,39 @@ SOP_FeE_AttribOut_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         return;
 
 
-    GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
+    //GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
 
-    const exint numAttribOut = sopparms.getNumAttribOut();
-    for (size_t i = 0; i < numAttribOut; i++)
+    const UT_Array<SOP_FeE_AttribOut_1_0Parms::NumAttribOut>& numAttribOut = sopparms.getNumAttribOut();
+    const size_t size = numAttribOut.size();
+    for (size_t i = 0; i < size; i++)
     {
+        const SOP_FeE_AttribOut_1_0Parms::NumAttribOut& attribOut = numAttribOut[i];
 
-        const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getSrcAttribClass());
-        if (sopparms.getOutAttrib(i))
+        const GA_AttributeOwner attribClass = sopAttribOwner(attribOut.attribClass);
+        if (attribOut.outAttrib)
         {
-
-            const UT_StringHolder& allPattern = sopparms.getAttrib(i);
+            outGeo0.renameAttribute(attribClass, GA_SCOPE_PUBLIC, attribOut.attrib, attribOut.newAttribName);
         }
         else
         {
-            newAttribName
+            outGeo0.destroyAttribute(attribClass, attribOut.attrib);
+        }
+    }
+
+    const UT_Array<SOP_FeE_AttribOut_1_0Parms::NumGroupOut>& numGroupOut = sopparms.getNumGroupOut();
+    const size_t groupSize = numGroupOut.size();
+    for (size_t i = 0; i < groupSize; i++)
+    {
+        const SOP_FeE_AttribOut_1_0Parms::NumGroupOut& groupOut = numGroupOut[i];
+
+        const GA_GroupType groupClass = sopGroupType(groupOut.groupClass);
+        if (groupOut.outGroup)
+        {
+            outGeo0.getGroupTable(groupClass)->renameGroup(groupOut.group, groupOut.newGroupName);
+        }
+        else
+        {
+            outGeo0.getGroupTable(groupClass)->destroy(groupOut.group);
         }
     }
 

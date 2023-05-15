@@ -217,7 +217,7 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
     primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
     primInlinePoint.reverseOutGroup = sopparms.getReverseGroup();
     primInlinePoint.doDelOutGroup = sopparms.getDelInlinePoint();
-
+    
 
     primInlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
 

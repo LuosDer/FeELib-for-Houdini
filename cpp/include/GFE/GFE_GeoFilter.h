@@ -532,87 +532,90 @@ public:
     { getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }
 
 
-    
-    virtual void delGroupElement()
+
+virtual void delGroupElement()
+{
+    if (outGroupArray.isEmpty() || !outGroupArray[0])
+        return;
+
+    const GA_Group* const outGroup = outGroupArray[0];
+
+    if (outGroup->classType() == GA_GROUP_EDGE)
     {
-        if (outGroupArray.isEmpty() || !outGroupArray[0])
-            return;
-
-        const GA_Group* const outGroup = outGroupArray[0];
-
-        if (outGroup->classType() == GA_GROUP_EDGE)
+        geo->asGU_Detail()->dissolveEdges(static_cast<const GA_EdgeGroup&>(*outGroup),
+            false, 0, true, GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
+    }
+    else
+    {
+        GA_Range range(*static_cast<const GA_ElementGroup*>(outGroup));
+        switch (outGroup->classType())
         {
-
-        }
-        else
-        {
-            GA_Range range(*static_cast<const GA_ElementGroup*>(outGroup));
-            switch (outGroup->classType())
-            {
-            case GA_GROUP_PRIMITIVE:
-                geo->destroyPrimitiveOffsets(range, true);
-                break;
-            case GA_GROUP_POINT:
-                geo->destroyPointOffsets(range, GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
-                break;
-            case GA_GROUP_VERTEX:
-                geo->destroyVertexOffsets(range);
-                break;
-            }
+        case GA_GROUP_PRIMITIVE:
+            geo->destroyPrimitiveOffsets(range, true);
+            break;
+        case GA_GROUP_POINT:
+            geo->destroyPointOffsets(range, GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
+            break;
+        case GA_GROUP_VERTEX:
+            geo->destroyVertexOffsets(range);
+            break;
         }
     }
+}
 
-    virtual SYS_FORCE_INLINE void visualizeOutGroup()
-    {
-        if (doDelGroupElement || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
-            return;
-        cookparms->select(*outGroupArray[0]);
-    }
+virtual SYS_FORCE_INLINE void visualizeOutGroup()
+{
+    if (doDelGroupElement || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
+        return;
+    cookparms->select(*outGroupArray[0]);
+}
 
-    void SYS_FORCE_INLINE delOrVisualizeGroup()
-    { doDelGroupElement ? delGroupElement() : visualizeOutGroup(); }
+void SYS_FORCE_INLINE delOrVisualizeGroup()
+{ doDelGroupElement ? delGroupElement() : visualizeOutGroup(); }
+
+
+
+
+
+
+
+
+SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
+{ return outAttribArray; }
+
+SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
+{ return outGroupArray; }
+
+SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getOutAttribArrayRef()
+{ return outAttribArray.ref(); }
+
+SYS_FORCE_INLINE ::std::vector<GA_Group*>& getOutGroupArrayRef()
+{ return outGroupArray.ref(); }
+
+
+
+SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
+{ return outAttribArray; }
+
+SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
+{ return outGroupArray; }
+
+SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getOutAttribArrayRef() const
+{ return outAttribArray.ref(); }
+
+SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getOutGroupArrayRef() const
+{ return outGroupArray.ref(); }
+
 
     
-
-
-
-
-
-
-    SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
-    { return outAttribArray; }
-    
-    SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
-    { return outGroupArray; }
-    
-    SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getOutAttribArrayRef()
-    { return outAttribArray.ref(); }
-    
-    SYS_FORCE_INLINE ::std::vector<GA_Group*>& getOutGroupArrayRef()
-    { return outGroupArray.ref(); }
-
-
-    
-    SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
-    { return outAttribArray; }
-    
-    SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
-    { return outGroupArray; }
-    
-    SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getOutAttribArrayRef() const
-    { return outAttribArray.ref(); }
-    
-    SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getOutGroupArrayRef() const
-    { return outGroupArray.ref(); }
-
 private:
 
-    SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo) override
-    {
-        setDetail(inGeo);
-        outAttribArray.setDetail(inGeo);
-        outGroupArray.setDetail(inGeo);
-    }
+SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo) override
+{
+    setDetail(inGeo);
+    outAttribArray.setDetail(inGeo);
+    outGroupArray.setDetail(inGeo);
+}
 
 
 

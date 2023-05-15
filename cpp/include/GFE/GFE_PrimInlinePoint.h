@@ -30,13 +30,8 @@ public:
     {
     }
 
-    void
-        setThreshold_inlineCosRadians(
-            fpreal threshold_inlineAngle
-        )
-    {
-        threshold_inlineCosRadians = cos(GFE_Math::radians(threshold_inlineAngle));
-    }
+    SYS_FORCE_INLINE void setThreshold_inlineCosRadians(fpreal threshold_inlineAngle)
+    { threshold_inlineCosRadians = cos(GFE_Math::radians(threshold_inlineAngle)); }
 
     void
         setComputeParm(
@@ -74,15 +69,13 @@ private:
                 UT_ASSERT_MSG(0, "not correct group type");
                 continue;
             }
-            GA_PointGroup* const ptr = UTverify_cast<GA_PointGroup*>(getOutGroupArray()[i]);
+            
+            inlinePtGroup = getOutGroupArray().getPointGroup(i);
             switch (geo->getPreferredPrecision())
             {
-            case GA_PRECISION_64:
-                groupPrimInlinePoint_fast<fpreal64>(ptr);
-                break;
             default:
-                groupPrimInlinePoint_fast<fpreal32>(ptr);
-                break;
+            case GA_PRECISION_32: groupPrimInlinePoint_fast<fpreal32>(); break;
+            case GA_PRECISION_64: groupPrimInlinePoint_fast<fpreal64>(); break;
             }
         }
         return true;
@@ -90,16 +83,9 @@ private:
 
 
     template<typename FLOAT_T>
-    void
-        groupPrimInlinePoint_fast(
-            GA_PointGroup* const inlinePtGroup
-        )
+    void groupPrimInlinePoint_fast()
     {
-        UT_ASSERT_P(inlinePtGroup);
-        const GA_PrimitiveGroup* const inGroup = groupParser.getPrimitiveGroup();
-
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(inGroup));
-        UTparallelFor(geoSplittableRange0, [this, inlinePtGroup](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPrimitiveGroup(), [this](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -174,7 +160,7 @@ private:
             *inlinePtGroup &= *groupParser.getPointGroup();
         }
 
-        if (doDelOutGroup)
+        if (delGroupElement())
         {
             //delOutGroup();
             geo->destroyPointOffsets(geo->getPointRange(inlinePtGroup), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
@@ -192,8 +178,12 @@ public:
     //GA_PointGroup* inlinePtGroup = nullptr;
 
 private:
+    GA_PointGroup* const inlinePtGroup = nullptr;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 16;
+
+    
 };
 
 

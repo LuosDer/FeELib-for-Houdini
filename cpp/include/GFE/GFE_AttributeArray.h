@@ -1786,34 +1786,34 @@ public:
 
     
     
-    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i) const
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const size_t i) const
     {
         UT_ASSERT(groupArray[i]->isElementGroup());
-        return static_cast<GA_ElementGroup*>(groupArray[i]);
+        return static_cast<const GA_ElementGroup*>(groupArray[i]);
     }
 
-    SYS_FORCE_INLINE GA_PrimitiveGroup* getPrimitiveGroup(const size_t i) const
+    SYS_FORCE_INLINE const GA_PrimitiveGroup* getPrimitiveGroup(const size_t i) const
     {
         UT_ASSERT(groupArray[i]->classType() == GA_GROUP_PRIMITIVE);
-        return static_cast<GA_PrimitiveGroup*>(groupArray[i]);
+        return static_cast<const GA_PrimitiveGroup*>(groupArray[i]);
     }
 
-    SYS_FORCE_INLINE GA_PointGroup* getPointGroup(const size_t i) const
+    SYS_FORCE_INLINE const GA_PointGroup* getPointGroup(const size_t i) const
     {
         UT_ASSERT(groupArray[i]->classType() == GA_GROUP_POINT);
-        return static_cast<GA_PointGroup*>(groupArray[i]);
+        return static_cast<const GA_PointGroup*>(groupArray[i]);
     }
 
-    SYS_FORCE_INLINE GA_VertexGroup* getVertexGroup(const size_t i) const
+    SYS_FORCE_INLINE const GA_VertexGroup* getVertexGroup(const size_t i) const
     {
         UT_ASSERT(groupArray[i]->classType() == GA_GROUP_VERTEX);
-        return static_cast<GA_VertexGroup*>(groupArray[i]);
+        return static_cast<const GA_VertexGroup*>(groupArray[i]);
     }
 
-    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup(const size_t i) const
+    SYS_FORCE_INLINE const GA_EdgeGroup* getEdgeGroup(const size_t i) const
     {
         UT_ASSERT(groupArray[i]->classType() == GA_GROUP_EDGE);
-        return static_cast<GA_EdgeGroup*>(groupArray[i]);
+        return static_cast<const GA_EdgeGroup*>(groupArray[i]);
     }
 
     SYS_FORCE_INLINE const GA_Group* &operator[](const size_t i)
