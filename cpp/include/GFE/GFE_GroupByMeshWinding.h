@@ -60,6 +60,17 @@ private:
 		if (groupParser.isEmpty())
 			return true;
 
+		GFE_Measure measure(geo, cookparms);
+		measure.measureType = GFE_MeasureType::MeshVolume;
+		//measure.groupParser.setGroup(groupType, sopparms.getGroup());
+		//measure.setPositionAttrib(sopparms.getPosAttribName());
+		measure.findOrCreateTuple(false, measureAttribName);
+    
+		measure.compute();
+
+		const fpreal32 volume = GFE_Measure::computeMeshVolume(geo, geoPrimGroup);
+
+		
 		GU_RayIntersect rayIntersect(geo->asGU_Detail(), );
 		GA_Attribute* const normalAttrib = getOutAttribArray()[0];
 

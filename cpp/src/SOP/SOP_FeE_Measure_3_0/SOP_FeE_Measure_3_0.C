@@ -252,35 +252,5 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     measure.computeAndBumpDataId();
 
 
-    //switch ()
-    //{
-    //case SOP_FeE_Measure_3_0Enums::MeasureType::AREA:
-    //    GFE_Measure_Namespace::addAttribPrimArea(     outGeo0, geo0PosAttribName,
-    //        static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-    //        GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    //    break;
-    //case SOP_FeE_Measure_3_0Enums::MeasureType::PERIMETER:
-    //    GFE_Measure_Namespace::addAttribPrimPerimeter(outGeo0, geo0PosAttribName,
-    //        static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-    //        GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    //    break;
-    //case SOP_FeE_Measure_3_0Enums::MeasureType::MESHVOLUME:
-    //    GFE_Measure_Namespace::addAttribMeshVolume(outGeo0, geo0PosAttribName,
-    //        static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-    //        GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    //    break;
-    //default:
-    //    cookparms.sopAddError(SOP_ERR_INVALID_SRC, "unsupport parm");
-    //    return;
-    //}
-
-
-    
-
 }
 
-
-
-namespace SOP_FeE_Measure_3_0_Namespace {
-
-} // End SOP_FeE_Measure_3_0_Namespace namespace
