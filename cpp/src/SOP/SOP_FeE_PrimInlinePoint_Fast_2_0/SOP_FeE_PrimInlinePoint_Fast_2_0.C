@@ -229,8 +229,3 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
 
 }
 
-
-
-namespace SOP_FeE_PrimInlinePoint_Fast_2_0_Namespace {
-
-} // End SOP_FeE_PrimInlinePoint_Fast_2_0_Namespace namespace

@@ -57,19 +57,13 @@ public:
 
     ~GFE_PolyReduce2D()
     {
-
     }
 
 
 
 
-    void
-    setThreshold_maxCosRadians(
-        fpreal threshold_maxAngle
-    )
-    {
-        threshold_maxCosRadians = threshold_maxAngle > 0 ? cos(GFE_Math::radians(threshold_maxAngle)) : 1.0;
-    }
+    SYS_FORCE_INLINE void setThreshold_maxCosRadians(fpreal threshold_maxAngle)
+    { threshold_maxCosRadians = threshold_maxAngle > 0 ? cos(GFE_Math::radians(threshold_maxAngle)) : 1.0; }
 
     void
     setComputeParm(
@@ -116,8 +110,7 @@ public:
 
 
 
-    virtual void
-    bumpDataId() override
+    virtual void bumpDataId() override
     {
         if (delInLinePoint || coverSourcePoly || delPoint)
             GFE_AttribFilter::bumpDataIdsForAddOrRemove(true, true, true);

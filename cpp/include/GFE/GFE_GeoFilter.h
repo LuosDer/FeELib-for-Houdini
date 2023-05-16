@@ -142,9 +142,7 @@ public:
         const bool added_or_removed_vertices,
         const bool added_or_removed_primitives
     ) const
-    {
-        geo->bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives);
-    }
+    { geo->bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives); }
 
     virtual void bumpDataIdsForAddOrRemove() const
     { geo->bumpDataIdsForAddOrRemove(true, true, true); }
@@ -154,16 +152,10 @@ public:
         const bool added_or_removed_vertices,
         const bool added_or_removed_primitives
     )
-    {
-        compute();
-        bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives);
-    }
+    { compute(); bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives); }
 
     SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove()
-    {
-        compute();
-        bumpDataIdsForAddOrRemove();
-    }
+    { compute(); bumpDataIdsForAddOrRemove(); }
 
 
 
@@ -172,10 +164,7 @@ public:
     }
 
     SYS_FORCE_INLINE void computeAndBumpDataId()
-    {
-        compute();
-        bumpDataId();
-    }
+    { compute(); bumpDataId(); }
 
     SYS_FORCE_INLINE GFE_Detail* getDetail() const
     { return geo; }

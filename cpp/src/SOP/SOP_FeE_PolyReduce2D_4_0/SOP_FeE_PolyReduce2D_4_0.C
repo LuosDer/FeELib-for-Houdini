@@ -273,36 +273,12 @@ void
 SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_PolyReduce2D_4_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PolyReduce2D_4_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-
-
-    //GU_DetailHandle tmpGeoH0;
-    //GU_Detail* tmpGeo0 = new GU_Detail();
-    //tmpGeoH0.allocateAndSet(tmpGeo0);
-    //tmpGeo0->replaceWith(*inGeo0);
-
-
-    //outGeo0->replaceWith(*inGeo0);
-
-    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-    
-
-    
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-
-    UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
-        return;
-    
+    outGeo0.replaceWith(inGeo0);
 
 
     const fpreal minPoint = sopparms.getMinPoint();
@@ -316,16 +292,16 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const fpreal threshold_inlineAngle = sopparms.getThreshold_inlineAngle();
     //const fpreal threshold_inlineAngleRadians = GFE_Math::radians(threshold_inlineAngle);
 
-    const bool reverseGroup = sopparms.getReverseGroup();
-    const bool limitByGeoProperty = sopparms.getLimitByGeoProperty();
-    const bool limitMinPoint = sopparms.getLimitMinPoint();
-
-    const bool coverSourcePoly = sopparms.getCoverSourcePoly();
-
 
     const GFE_PolyReduce2D_GeoPropertyType geoPropertyType = sopGeoPropertyType(sopparms.getGeoPropertyType());
 
-    const bool delPoint = sopparms.getDeletePoint();
+
+    
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
+    
+
 
     GFE_PolyReduce2D polyReduce2D(outGeo0, &cookparms);
     polyReduce2D.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
@@ -335,14 +311,19 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         sopparms.getDelInLinePoint(), 1e-05,
         limitByGeoProperty, geoPropertyType, 1e-05, threshold_maxDist,
         limitMinPoint, minPoint,
-        coverSourcePoly, reverseGroup, delPoint,
-        subscribeRatio, minGrainSize);
+        sopparms.getCoverSourcePoly(), sopparms.getReverseGroup(), sopparms.getDeletePoint(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    polyReduce2D.setLimitByGeoProperty();
+    polyReduce2D.setLimitMinPoint();
+    const bool limitByGeoProperty = sopparms.getLimitByGeoProperty();
+    const bool limitMinPoint = sopparms.getLimitMinPoint();
 
     polyReduce2D.primInlinePoint.setThreshold_inlineCosRadians(threshold_inlineAngle);
     polyReduce2D.setThreshold_maxCosRadians(threshold_maxAngle);
 
     polyReduce2D.computeAndBumpDataId();
-    polyReduce2D.visualizeOutGroup();
+    polyReduce2D.delOrVisualizeGroup();
 
     //GA_PointGroup* const polyReduce2DPtGroup = GFE_PolyReduce2D::polyReduce2D(cookparms, outGeo0,
     //    sopparms.getGroup(), sopparms.getPolyReduce2D_GroupName(),
