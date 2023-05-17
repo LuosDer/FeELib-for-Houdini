@@ -6,636 +6,1166 @@
 
 //#include "GFE/GFE_XformByAttrib.h"
 
-#include "GA/GA_Detail.h"
-
-
 
 #include "GA/GA_AttributeTransformer.h"
 
 
-
-#include "GFE/GFE_GroupParser.h"
-#include "GFE/GFE_Range.h"
-#include "GFE/GFE_Attribute.h"
+#include "GFE/GFE_GeoFilter.h"
 
 
-namespace GFE_XformByAttrib {
+class GFE_XformByAttrib : public GFE_AttribFilterWithRef
+{
+public:
+    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+    
+    void
+        setComputeParm(
+            const bool preserveLength  = false,
+            const bool invertXform     = false,
+            const bool delXformAttrib  = true,
+            const exint subscribeRatio = 64,
+            const exint minGrainSize   = 1024
+        )
+    {
+        setHasComputed();
+        this->preserveLength = preserveLength;
+        this->invertXform    = invertXform;
+        this->delXformAttrib = delXformAttrib;
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize   = minGrainSize;
+    }
+
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE void setXform4(const UT_Matrix4T<FLOAT_T>& xform)
+    { xform4 = xform; xformByXform4 = true; }
+    
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE void setXform4(UT_Matrix4T<FLOAT_T>&& xform)
+    { xform4 = xform; xformByXform4 = true; }
+
 
     
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE void setXform3(const UT_Matrix4T<FLOAT_T>& xform)
+    { xform3 = xform; xformByXform4 = false; }
+    
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE void setXform3(const UT_Matrix3T<FLOAT_T>& xform)
+    { xform3 = xform; xformByXform4 = false; }
+    
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE void setXform3(UT_Matrix3T<FLOAT_T>&& xform)
+    { xform3 = xform; xformByXform4 = false; }
 
-template <typename T, typename MATRIX_T>
-static void
-xformByAttrib(
-    const GA_SplittableRange& geoSplittableRange,
-    const MATRIX_T& xform,
-    GA_Attribute* const attribPtr,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    UT_ASSERT_P(attribPtr);
 
-    UTparallelFor(geoSplittableRange, [attribPtr, &xform](const GA_SplittableRange& r)
+    
+    void setXformAttrib(GA_Attribute* const attrib)
     {
-        GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-            {
-                attrib_ph.setPage(start);
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    attrib_ph.value(elemoff) *= xform;
-                }
-            }
-        }
-    }, subscribeRatio, minGrainSize);
-}
-
-
-template <typename FLOAT_T>
-SYS_FORCE_INLINE
-static bool
-xformByAttrib(
-    const GA_SplittableRange& geoSplittableRange,
-    const UT_Matrix3T<FLOAT_T>& xform,
-    GA_Attribute* const attribPtr,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    UT_ASSERT_P(attribPtr);
-
-    if (attribPtr->getStorageClass() != GA_STORECLASS_REAL)
-        return false;
-
-    switch (attribPtr->getTupleSize())
-    {
-    case 1:
-        return false;
-        break;
-    case 2:
-        return false;
-        //switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        //{
-        //case GA_STORE_REAL16:
-        //    return false;
-        //    //xformByAttrib<UT_Vector2T<fpreal16>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //case GA_STORE_REAL32:
-        //    xformByAttrib<UT_Vector2T<fpreal32>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //case GA_STORE_REAL64:
-        //    xformByAttrib<UT_Vector2T<fpreal64>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //default:
-        //    return false;
-        //    break;
-        //}
-        break;
-    case 3:
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        {
-        case GA_STORE_REAL16:
-            return false;
-            //xformByAttrib<UT_Vector3T<fpreal16>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            xformByAttrib<UT_Vector3T<fpreal32>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            xformByAttrib<UT_Vector3T<fpreal64>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    case 4:
-        return false;
-        //if (attribPtr->getTypeInfo() == GA_TYPE_TRANSFORM)
-        //{
-        //    switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        //    {
-        //    case GA_STORE_REAL16:
-        //        return false;
-        //        //xformByAttrib<UT_Matrix2T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //        break;
-        //    case GA_STORE_REAL32:
-        //        xformByAttrib<UT_Matrix2T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //        break;
-        //    case GA_STORE_REAL64:
-        //        xformByAttrib<UT_Matrix2T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //        break;
-        //    default:
-        //        return false;
-        //        break;
-        //    }
-        //}
-        //else
-        //{
-        //    switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        //    {
-        //    case GA_STORE_REAL16:
-        //        return false;
-        //        //xformByAttrib<UT_Vector4T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //        break;
-        //    case GA_STORE_REAL32:
-        //        xformByAttrib<UT_Vector4T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //        break;
-        //    case GA_STORE_REAL64:
-        //        xformByAttrib<UT_Vector4T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //        break;
-        //    default:
-        //        return false;
-        //        break;
-        //    }
-        //}
-        break;
-    case 9:
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        {
-        case GA_STORE_REAL16:
-            return false;
-            //xformByAttrib<UT_Matrix3T<fpreal16>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            xformByAttrib<UT_Matrix3T<fpreal32>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            xformByAttrib<UT_Matrix3T<fpreal64>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    case 16:
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        {
-        case GA_STORE_REAL16:
-            return false;
-            //xformByAttrib<UT_Matrix4T<fpreal16>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            xformByAttrib<UT_Matrix4T<fpreal32>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            xformByAttrib<UT_Matrix4T<fpreal64>, UT_Matrix3T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    default:
-        return false;
-        break;
+        xformAttrib = attrib;
+        xformAttribNonConst = attrib;
+        checkXformAttrib();
     }
-    return true;
-}
 
-
-template <typename FLOAT_T>
-SYS_FORCE_INLINE
-static bool
-xformByAttrib(
-    const GA_SplittableRange& geoSplittableRange,
-    const UT_Matrix4T<FLOAT_T>& xform,
-    GA_Attribute* const attribPtr,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    UT_ASSERT_P(attribPtr);
-
-    if (attribPtr->getStorageClass() != GA_STORECLASS_REAL)
-        return false;
-
-    switch (attribPtr->getTypeInfo())
+    void setXformAttrib(const GA_Attribute* const attrib = nullptr)
     {
-    case GA_TYPE_POINT:
-        break;
-    case GA_TYPE_HPOINT:
-        break;
-    case GA_TYPE_TRANSFORM:
-        break;
-    case GA_TYPE_VECTOR:
-        xformByAttrib(geoSplittableRange, UT_Matrix3T<FLOAT_T>(xform), attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        return true;
-        break;
-    case GA_TYPE_NORMAL:
-        xformByAttrib(geoSplittableRange, UT_Matrix3T<FLOAT_T>(xform), attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        return true;
-        break;
-    case GA_TYPE_QUATERNION:
-        xformByAttrib(geoSplittableRange, UT_Matrix3T<FLOAT_T>(xform), attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        return true;
-        break;
-    default:
-        return false;
-        break;
+        xformAttrib = attrib;
+        xformAttribNonConst = nullptr;
+        checkXformAttrib();
     }
-    switch (attribPtr->getTupleSize())
+
+    void setXformAttrib(const GA_AttributeOwner owner, const UT_StringRef& name)
     {
-    case 1:
-        return false;
-        break;
-    case 2:
-        return false;
-        //switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        //{
-        //case GA_STORE_REAL16:
-        //    return false;
-        //    //xformByAttrib<UT_Vector2T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //case GA_STORE_REAL32:
-        //    xformByAttrib<UT_Vector2T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //case GA_STORE_REAL64:
-        //    xformByAttrib<UT_Vector2T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //default:
-        //    return false;
-        //    break;
-        //}
-        break;
-    case 3:
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+        if(geoRef0)
         {
-        case GA_STORE_REAL16:
-            return false;
-            //xformByAttrib<UT_Vector3T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            xformByAttrib<UT_Vector3T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            xformByAttrib<UT_Vector3T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        default:
-            return false;
-            break;
-        }
-        break;
-    case 4:
-        if (attribPtr->getTypeInfo() == GA_TYPE_TRANSFORM)
-        {
-            return false;
-            //switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-            //{
-            //case GA_STORE_REAL16:
-            //    return false;
-            //    //xformByAttrib<UT_Matrix2T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            //    break;
-            //case GA_STORE_REAL32:
-            //    xformByAttrib<UT_Matrix2T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            //    break;
-            //case GA_STORE_REAL64:
-            //    xformByAttrib<UT_Matrix2T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            //    break;
-            //default:
-            //    return false;
-            //    break;
-            //}
+            xformAttribNonConst = nullptr;
+            xformAttrib = geoRef0->findAttribute(owner, name);
         }
         else
         {
-            switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+            xformAttribNonConst = geo->findAttribute(owner, name);
+            xformAttrib = xformAttribNonConst;
+        }
+        checkXformAttrib();
+    }
+
+    
+private:
+
+    // can not use in parallel unless for each GA_Detail
+    virtual bool
+        computeCore() override
+    {
+        if (getOutAttribArray().isEmpty())
+            return false;
+
+        if (groupParser.isEmpty())
+            return true;
+
+        const size_t size = getOutAttribArray().size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            attribPtr = getOutAttribArray()[i];
+            
+            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+
+            if(!aifTuple)
+                continue;
+            
+            // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
+            switch (aifTuple->getTupleSize(attribPtr))
             {
-            case GA_STORE_REAL16:
-                return false;
-                //xformByAttrib<UT_Vector4T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
+            // case 2:
+            //     switch (aifTuple->getStorage(attribPtr))
+            //     {
+            //     case GA_STORE_INT16:  xform<UT_Vector2T<int16>>();           break;
+            //     case GA_STORE_INT32:  xform<UT_Vector2T<int32>>();           break;
+            //     case GA_STORE_INT64:  xform<UT_Vector2T<int64>>();           break;
+            //     case GA_STORE_REAL16: xform<UT_Vector2T<fpreal16>>();        break;
+            //     case GA_STORE_REAL32: xform<UT_Vector2T<fpreal32>>();        break;
+            //     case GA_STORE_REAL64: xform<UT_Vector2T<fpreal64>>();        break;
+            //     default: break;
+            //     }
+            //     break;
+            case 3:
+                switch (aifTuple->getStorage(attribPtr))
+                {
+                //case GA_STORE_INT16:  xform<UT_Vector3T<int16>>();           break;
+                //case GA_STORE_INT32:  xform<UT_Vector3T<int32>>();           break;
+                //case GA_STORE_INT64:  xform<UT_Vector3T<int64>>();           break;
+                //case GA_STORE_REAL16: xform<UT_Vector3T<fpreal16>>();        break;
+                case GA_STORE_REAL32: xform<UT_Vector3T<fpreal32>>();        break;
+                case GA_STORE_REAL64: xform<UT_Vector3T<fpreal64>>();        break;
+                default: break;
+                }
                 break;
-            case GA_STORE_REAL32:
-                xformByAttrib<UT_Vector4T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
+            // case 4:
+            //     switch (aifTuple->getStorage(attribPtr))
+            //     {
+            //     case GA_STORE_INT16:  xform<UT_Vector4T<int16>>();           break;
+            //     case GA_STORE_INT32:  xform<UT_Vector4T<int32>>();           break;
+            //     case GA_STORE_INT64:  xform<UT_Vector4T<int64>>();           break;
+            //     case GA_STORE_REAL16: xform<UT_Vector4T<fpreal16>>();        break;
+            //     case GA_STORE_REAL32: xform<UT_Vector4T<fpreal32>>();        break;
+            //     case GA_STORE_REAL64: xform<UT_Vector4T<fpreal64>>();        break;
+            //     default: break;
+            //     }
+            //     break;
+            case 9:
+                switch (aifTuple->getStorage(attribPtr))
+                {
+                //case GA_STORE_INT16:  xform<UT_Matrix3T<int16>>();           break;
+                //case GA_STORE_INT32:  xform<UT_Matrix3T<int32>>();           break;
+                //case GA_STORE_INT64:  xform<UT_Matrix3T<int64>>();           break;
+                //case GA_STORE_REAL16: xform<UT_Matrix3T<fpreal16>>();        break;
+                case GA_STORE_REAL32: xform<UT_Matrix3T<fpreal32>>();        break;
+                case GA_STORE_REAL64: xform<UT_Matrix3T<fpreal64>>();        break;
+                default: break;
+                }
                 break;
-            case GA_STORE_REAL64:
-                xformByAttrib<UT_Vector4T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
+            case 16:
+                switch (aifTuple->getStorage(attribPtr))
+                {
+                //case GA_STORE_INT16:  xform<UT_Matrix4T<int16>>();           break;
+                //case GA_STORE_INT32:  xform<UT_Matrix4T<int32>>();           break;
+                //case GA_STORE_INT64:  xform<UT_Matrix4T<int64>>();           break;
+                //case GA_STORE_REAL16: xform<UT_Matrix4T<fpreal16>>();        break;
+                case GA_STORE_REAL32: xform<UT_Matrix4T<fpreal32>>();        break;
+                case GA_STORE_REAL64: xform<UT_Matrix4T<fpreal64>>();        break;
+                default: break;
+                }
                 break;
-            default:
-                return false;
-                break;
+            default: break;
+            }
+
+        }
+        
+        if (delXformAttrib && xformAttribNonConst)
+        {
+            geo->destroyAttrib(xformAttribNonConst);
+        }
+
+        return true;
+    }
+
+
+
+
+
+
+    template <GA_AttributeOwner FROM, GA_AttributeOwner TO, typename T, typename MATRIX_T>
+    void xformMatrix3ByAttrib()
+    {
+        const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
+        if (&xformAttrib->getDetail() == geo)
+        {
+            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const GA_Offset elemoff_ref = geo->offsetPromote<FROM, TO>(elemoff);
+                            if (invertXform)
+                            {
+                                //UT_Matrix4D xform = xform_h.get(elemoff_ref);
+                                //xform *=
+                                UT_Matrix3T<typename T::value_type> xform(xform_h.get(elemoff_ref));
+                                xform.invert();
+                                attrib_ph.value(elemoff) *= xform;
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) *= UT_Matrix3T<typename T::value_type>(xform_h.get(elemoff_ref));
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            const GA_IndexMap& indexMap = xformAttrib->getIndexMap();
+            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const GA_Offset elemoff_ref = geo->offsetPromote<FROM, TO>(elemoff);
+                            
+                            if (!indexMap.isOffsetInRange(elemoff_ref))
+                                continue;
+                            
+                            if (invertXform)
+                            {
+                                UT_Matrix3T<typename T::value_type> xform(xform_h.get(elemoff_ref));
+                                xform.invert();
+                                attrib_ph.value(elemoff) *= xform;
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) *= UT_Matrix3T<typename T::value_type>(xform_h.get(elemoff_ref));
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+
+    
+    template <GA_AttributeOwner FROM, GA_AttributeOwner TO, typename T, typename MATRIX_T>
+    void xformMatrixByAttrib()
+    {
+        const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
+        if (&xformAttrib->getDetail() == geo)
+        {
+            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const GA_Offset elemoff_ref = geo->offsetPromote<FROM, TO>(elemoff);
+                            if (invertXform)
+                            {
+                                //UT_Matrix4D xform = xform_h.get(elemoff_ref);
+                                //xform *=
+                                MATRIX_T xform = xform_h.get(elemoff_ref);
+                                xform.invert();
+                                attrib_ph.value(elemoff) *= xform;
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) *= xform_h.get(elemoff_ref);
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            const GA_IndexMap& indexMap = xformAttrib->getIndexMap();
+            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const GA_Offset elemoff_ref = geo->offsetPromote<FROM, TO>(elemoff);
+                            
+                            if (!indexMap.isOffsetInRange(elemoff_ref))
+                                continue;
+                            
+                            if (invertXform)
+                            {
+                                MATRIX_T xform = xform_h.get(elemoff_ref);
+                                xform.invert();
+                                attrib_ph.value(elemoff) *= xform;
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) *= xform_h.get(elemoff_ref);
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+
+
+    template <GA_AttributeOwner FROM, GA_AttributeOwner TO, typename T, typename MATRIX_T>
+    void xformVectorByAttrib()
+    {
+        const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
+        if (&xformAttrib->getDetail() == geo)
+        {
+            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const GA_Offset elemoff_ref = geo->offsetPromote<FROM, TO>(elemoff);
+                            if (invertXform)
+                            {
+                                //UT_Matrix4D xform = xform_h.get(elemoff_ref);
+                                //xform *=
+                                MATRIX_T xform = xform_h.get(elemoff_ref);
+                                xform.invert();
+                                if (preserveLength)
+                                {
+                                    const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                    attrib_ph.value(elemoff) *= xform;
+                                    attrib_ph.value(elemoff).normalize();
+                                    attrib_ph.value(elemoff) *= length;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= xform;
+                                }
+                            }
+                            else
+                            {
+                                if (preserveLength)
+                                {
+                                    const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                    attrib_ph.value(elemoff) *= xform_h.get(elemoff_ref);
+                                    attrib_ph.value(elemoff).normalize();
+                                    attrib_ph.value(elemoff) *= length;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= xform_h.get(elemoff_ref);
+                                }
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            const GA_IndexMap& indexMap = xformAttrib->getIndexMap();
+            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            const GA_Offset elemoff_ref = geo->offsetPromote<FROM, TO>(elemoff);
+                            
+                            if (!indexMap.isOffsetInRange(elemoff_ref))
+                                continue;
+                            
+                            if (invertXform)
+                            {
+                                MATRIX_T xform = xform_h.get(elemoff_ref);
+                                xform.invert();
+                                if (preserveLength)
+                                {
+                                    const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                    attrib_ph.value(elemoff) *= xform;
+                                    attrib_ph.value(elemoff).normalize();
+                                    attrib_ph.value(elemoff) *= length;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= xform;
+                                }
+                            }
+                            else
+                            {
+                                if (preserveLength)
+                                {
+                                    const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                    attrib_ph.value(elemoff) *= xform_h.get(elemoff_ref);
+                                    attrib_ph.value(elemoff).normalize();
+                                    attrib_ph.value(elemoff) *= length;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= xform_h.get(elemoff_ref);
+                                }
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+
+    
+    template <typename T, typename MATRIX_T>
+    void xformVectorByAttrib()
+    {
+        if(attribPtr->getOwner() == xformAttrib->getOwner())
+        {
+            if(&xformAttrib->getDetail() == geo)
+            {
+                UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
+                {
+                    GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        GA_Offset start, end;
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            attrib_ph.setPage(start);
+                            xform_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                if (invertXform)
+                                {
+                                    MATRIX_T xform = xform_ph.value(elemoff);
+                                    xform.invert();
+                                    if (preserveLength)
+                                    {
+                                        const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                        attrib_ph.value(elemoff) *= xform;
+                                        attrib_ph.value(elemoff).normalize();
+                                        attrib_ph.value(elemoff) *= length;
+                                    }
+                                    else
+                                    {
+                                        attrib_ph.value(elemoff) *= xform;
+                                    }
+                                }
+                                else
+                                {
+                                    if (preserveLength)
+                                    {
+                                        const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                        attrib_ph.value(elemoff) *= xform_ph.value(elemoff);
+                                        attrib_ph.value(elemoff).normalize();
+                                        attrib_ph.value(elemoff) *= length;
+                                    }
+                                    else
+                                    {
+                                        attrib_ph.value(elemoff) *= xform_ph.value(elemoff);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+            else
+            {
+                const GA_IndexMap& indexMap = xformAttrib->getIndexMap();
+                const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
+                UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
+                {
+                    GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        GA_Offset start, end;
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            attrib_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                if (!indexMap.isOffsetInRange(elemoff))
+                                    continue;
+                                if (invertXform)
+                                {
+                                    MATRIX_T xform = xform_h.get(elemoff);
+                                    xform.invert();
+                                    if (preserveLength)
+                                    {
+                                        const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                        attrib_ph.value(elemoff) *= xform;
+                                        attrib_ph.value(elemoff).normalize();
+                                        attrib_ph.value(elemoff) *= length;
+                                    }
+                                    else
+                                    {
+                                        attrib_ph.value(elemoff) *= xform;
+                                    }
+                                }
+                                else
+                                {
+                                    if (preserveLength)
+                                    {
+                                        const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                        attrib_ph.value(elemoff) *= xform_h.get(elemoff);
+                                        attrib_ph.value(elemoff).normalize();
+                                        attrib_ph.value(elemoff) *= length;
+                                    }
+                                    else
+                                    {
+                                        attrib_ph.value(elemoff) *= xform_h.get(elemoff);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
             }
         }
-        break;
-    case 9:
-        return false;
-        //switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
-        //{
-        //case GA_STORE_REAL16:
-        //    return false;
-        //    //xformByAttrib<UT_Matrix3T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //case GA_STORE_REAL32:
-        //    xformByAttrib<UT_Matrix3T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //case GA_STORE_REAL64:
-        //    xformByAttrib<UT_Matrix3T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-        //    break;
-        //default:
-        //    return false;
-        //    break;
-        //}
-        break;
-    case 16:
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+        else
         {
-        case GA_STORE_REAL16:
-            return false;
-            //xformByAttrib<UT_Matrix4T<fpreal16>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            xformByAttrib<UT_Matrix4T<fpreal32>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            xformByAttrib<UT_Matrix4T<fpreal64>, UT_Matrix4T<FLOAT_T>>(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-            break;
-        default:
-            return false;
-            break;
+            switch (attribPtr->getOwner())
+            {
+            case GA_ATTRIB_PRIMITIVE:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformVectorByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformVectorByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformVectorByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+            case GA_ATTRIB_POINT:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformVectorByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformVectorByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformVectorByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+            case GA_ATTRIB_VERTEX:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformVectorByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformVectorByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformVectorByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+                
+            default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+            }
         }
-        break;
-    default:
-        return false;
-        break;
     }
-    return true;
-}
 
 
 
-
-template <typename MATRIX_T>
-SYS_FORCE_INLINE
-static void
-xformByAttrib(
-    GA_Detail* const geo,
-    const GA_Group* const geoGroup,
-    const MATRIX_T& xform,
-    GA_Attribute* const attribPtr,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    UT_ASSERT_P(attribPtr);
-    const GA_SplittableRange geoSplittableRange(GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, attribPtr->getOwner()));
-    xformByAttrib(geoSplittableRange, xform, attribPtr, preserveLength, subscribeRatio, minGrainSize);
-}
-
-template <typename MATRIX_T>
-SYS_FORCE_INLINE
-static void
-xformByAttrib(
-    GA_Detail* const geo,
-    const GA_Group* const geoGroup,
-    const MATRIX_T& xform,
-    const GA_AttributeOwner owner,
-    const UT_StringHolder& attribToXformName,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    const GA_SplittableRange geoSplittableRange(GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, owner));
-
-    //GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribToXformName.c_str());
-    GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribToXformName);
-
-#if 1
-    UT_Array<GA_Attribute*> attribList;
-    geo->getAttributes().matchAttributes(filter, owner, attribList);
-    for (exint i = 0; i < attribList.size(); ++i)
+    template <typename T, typename MATRIX_T>
+    void xformMatrix3ByAttrib()
     {
-        //const UT_StringHolder& name = attribList[i]->getName();
-        xformByAttrib(geoSplittableRange, xform, attribList[i], preserveLength, subscribeRatio, minGrainSize);
-    }
-#else
-    //const GA_Range geoRange(geo->getIndexMap(owner), geoGroup);
-    const GA_Range geoRange = GFE_Range::getRangeByAnyGroup(geo, geoGroup, owner);
-
-    GA_AttributeTransformer::Transform<FLOAT_T> transform(xform);
-    GA_AttributeTransformer attribXformer(*geo, owner);
-
-    attribXformer.addAttributes(filter, preserveLength);
-
-    attribXformer.transform(geoRange, transform);
-    //const GA_SplittableRange geoSplittableRange(geo->getIndexMap(owner), geoGroup);
-#endif
-}
-
-
-
-
-//template <typename FLOAT_T>
-//SYS_FORCE_INLINE
-//static void
-//xformByAttrib(
-//    GA_Detail* const geo,
-//    const GA_Group* const geoGroup,
-//    const UT_Matrix2T<FLOAT_T>& xform,
-//    const GA_AttributeOwner owner,
-//    const UT_StringHolder& attribToXformName,
-//    const bool preserveLength = false,
-//    const exint subscribeRatio = 64,
-//    const exint minGrainSize = 4096
-//)
-//{
-//    UT_Matrix4T<FLOAT_T> xform4(xform);
-//    xformByAttrib<FLOAT_T>(geo, geoGroup, xform4, owner, attribToXformName, preserveLength, subscribeRatio, minGrainSize);
-//}
-
-
-
-
-
-template <typename MATRIX_T>
-static void
-xformByAttrib(
-    GA_Detail* const geo,
-    const GA_Group* const geoGroup,
-    const GA_Attribute* const xformAttrib,
-    const GA_AttributeOwner owner,
-    const UT_StringHolder& attribToXformName,
-    const bool invertXform = false,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    UT_ASSERT_P(geo);
-    UT_ASSERT_P(xformAttrib);
-
-    GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
-    MATRIX_T xform = xform_h.get(0);
-    if (invertXform)
-    {
-        xform.invert();
-        //xform4.invert();
-    }
-    //UT_Matrix4T<fpreal32> xform4 = xform_h.get(0);
-    xformByAttrib(geo, geoGroup, xform, owner, attribToXformName, preserveLength, subscribeRatio, minGrainSize);
-}
-
-
-SYS_FORCE_INLINE
-static void
-xformByAttrib(
-    GA_Detail* const geo,
-    const GA_Group* const geoGroup,
-    const GA_Attribute* const xformAttrib,
-    const GA_AttributeOwner owner,
-    const UT_StringHolder& attribToXformName,
-    const bool invertXform = false,
-    const bool preserveLength = false,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    UT_ASSERT_P(geo);
-    UT_ASSERT_P(xformAttrib);
-
-    switch (xformAttrib->getStorageClass())
-    {
-    case GA_STORECLASS_REAL:
-        switch (xformAttrib->getTupleSize())
+        if(attribPtr->getOwner() == xformAttrib->getOwner())
         {
-        case 1:
-            return;
-            break;
-        case 2:
-            return;
-            break;
-        case 3:
-            return;
-            break;
-        case 4:
-            return;
-            break;
-        case 9:
+            if(&xformAttrib->getDetail() == geo)
+            {
+                UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
+                {
+                    GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        GA_Offset start, end;
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            attrib_ph.setPage(start);
+                            xform_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                if (invertXform)
+                                {
+                                    UT_Matrix3T<typename T::value_type> xform(xform_ph.value(elemoff));
+                                    xform.invert();
+                                    attrib_ph.value(elemoff) *= xform;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= UT_Matrix3T<typename T::value_type>(xform_ph.value(elemoff));
+                                }
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+            else
+            {
+                const GA_IndexMap& indexMap = xformAttrib->getIndexMap();
+                const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
+                UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
+                {
+                    GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        GA_Offset start, end;
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            attrib_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                if (!indexMap.isOffsetInRange(elemoff))
+                                    continue;
+                                if (invertXform)
+                                {
+                                    UT_Matrix3T<typename T::value_type> xform(xform_h.get(elemoff));
+                                    xform.invert();
+                                    attrib_ph.value(elemoff) *= xform;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= UT_Matrix3T<typename T::value_type>(xform_h.get(elemoff));
+                                }
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+        }
+        else
+        {
+            switch (attribPtr->getOwner())
+            {
+            case GA_ATTRIB_PRIMITIVE:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformMatrix3ByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformMatrix3ByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformMatrix3ByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+            case GA_ATTRIB_POINT:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformMatrix3ByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformMatrix3ByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformMatrix3ByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+            case GA_ATTRIB_VERTEX:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformMatrix3ByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformMatrix3ByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformMatrix3ByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+                
+            default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+            }
+        }
+    }
+
+
+
+    
+    template <typename T, typename MATRIX_T>
+    void xformMatrixByAttrib()
+    {
+        if(attribPtr->getOwner() == xformAttrib->getOwner())
+        {
+            if(&xformAttrib->getDetail() == geo)
+            {
+                UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
+                {
+                    GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        GA_Offset start, end;
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            attrib_ph.setPage(start);
+                            xform_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                if (invertXform)
+                                {
+                                    MATRIX_T xform = xform_ph.value(elemoff);
+                                    xform.invert();
+                                    attrib_ph.value(elemoff) *= xform;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= xform_ph.value(elemoff);
+                                }
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+            else
+            {
+                const GA_IndexMap& indexMap = xformAttrib->getIndexMap();
+                const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
+                UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
+                {
+                    GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        GA_Offset start, end;
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            attrib_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                if (!indexMap.isOffsetInRange(elemoff))
+                                    continue;
+                                if (invertXform)
+                                {
+                                    MATRIX_T xform = xform_h.get(elemoff);
+                                    xform.invert();
+                                    attrib_ph.value(elemoff) *= xform;
+                                }
+                                else
+                                {
+                                    attrib_ph.value(elemoff) *= xform_h.get(elemoff);
+                                }
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+        }
+        else
+        {
+            switch (attribPtr->getOwner())
+            {
+            case GA_ATTRIB_PRIMITIVE:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformMatrixByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformMatrixByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformMatrixByAttrib<GA_ATTRIB_PRIMITIVE, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+            case GA_ATTRIB_POINT:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformMatrixByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformMatrixByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformMatrixByAttrib<GA_ATTRIB_POINT, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+            case GA_ATTRIB_VERTEX:
+                switch (xformAttrib->getOwner())
+                {
+                    case GA_ATTRIB_PRIMITIVE: xformMatrixByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_PRIMITIVE, T, MATRIX_T>(); break;
+                    case GA_ATTRIB_POINT:     xformMatrixByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_POINT,     T, MATRIX_T>(); break;
+                    case GA_ATTRIB_VERTEX:    xformMatrixByAttrib<GA_ATTRIB_VERTEX, GA_ATTRIB_VERTEX,    T, MATRIX_T>(); break;
+                    default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+                }
+                break;
+                
+            default: UT_ASSERT_MSG(0, "unsupport owner"); break;
+            }
+        }
+    }
+
+
+
+
+
+
+
+    
+    template <typename T, typename MATRIX_T>
+    void xformVectorByMatrix(const MATRIX_T& xform)
+    {
+        UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (invertXform)
+                        {
+                            MATRIX_T xform_inv(xform);
+                            xform_inv.invert();
+                            if (preserveLength)
+                            {
+                                const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                attrib_ph.value(elemoff) *= xform_inv;
+                                attrib_ph.value(elemoff).normalize();
+                                attrib_ph.value(elemoff) *= length;
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) *= xform_inv;
+                            }
+                        }
+                        else
+                        {
+                            if (preserveLength)
+                            {
+                                const typename T::value_type length = attrib_ph.value(elemoff).length();
+                                attrib_ph.value(elemoff) *= xform;
+                                attrib_ph.value(elemoff).normalize();
+                                attrib_ph.value(elemoff) *= length;
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) *= xform;
+                            }
+                        }
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+    
+    template <typename T, typename MATRIX_T>
+    void xformMatrixByMatrix(const MATRIX_T& xform)
+    {
+        UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (invertXform)
+                        {
+                            MATRIX_T xform_inv(xform);
+                            xform_inv.invert();
+                            attrib_ph.value(elemoff) *= xform_inv;
+                        }
+                        else
+                        {
+                            attrib_ph.value(elemoff) *= xform;
+                        }
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+    
+
+    template <typename T>
+    void xformMatrixByMatrix()
+    {
+        if(xformByXform4)
+            xformMatrixByMatrix<T, UT_Matrix4T<typename T::value_type>>(xform4);
+        else
+            xformMatrixByMatrix<T, UT_Matrix3T<typename T::value_type>>(xform3);
+    }
+
+
+    
+    template <typename T>
+    void xformVectorByAttrib()
+    {
+        if (xformAttrib->getAIFTuple()->getTupleSize(xformAttrib) == 16)
             switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
             {
-            case GA_STORE_REAL16:
-                return;
-                //xformByAttrib<UT_Matrix3T<fpreal16>>(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-                break;
-            case GA_STORE_REAL32:
-                xformByAttrib<UT_Matrix3T<fpreal32>>(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-                break;
-            case GA_STORE_REAL64:
-                xformByAttrib<UT_Matrix3T<fpreal64>>(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-                break;
-            default:
-                return;
-                break;
+            //case GA_STORE_INT16:  xformVectorByAttrib<T, UT_Matrix4T<int16>>();           break;
+            //case GA_STORE_INT32:  xformVectorByAttrib<T, UT_Matrix4T<int32>>();           break;
+            //case GA_STORE_INT64:  xformVectorByAttrib<T, UT_Matrix4T<int64>>();           break;
+            //case GA_STORE_REAL16: xformVectorByAttrib<T, UT_Matrix4T<fpreal16>>();        break;
+            case GA_STORE_REAL32: xformVectorByAttrib<T, UT_Matrix4T<fpreal32>>();        break;
+            case GA_STORE_REAL64: xformVectorByAttrib<T, UT_Matrix4T<fpreal64>>();        break;
+            default: break;
             }
-            break;
-        case 16:
+        else
             switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
             {
-            case GA_STORE_REAL16:
-                return;
-                //xformByAttrib<UT_Matrix4T<fpreal16>>(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-                break;
-            case GA_STORE_REAL32:
-                xformByAttrib<UT_Matrix4T<fpreal32>>(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-                break;
-            case GA_STORE_REAL64:
-                xformByAttrib<UT_Matrix4T<fpreal64>>(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-                break;
-            default:
-                return;
-                break;
+            //case GA_STORE_INT16:  xformVectorByAttrib<T, UT_Matrix3T<int16>>();           break;
+            //case GA_STORE_INT32:  xformVectorByAttrib<T, UT_Matrix3T<int32>>();           break;
+            //case GA_STORE_INT64:  xformVectorByAttrib<T, UT_Matrix3T<int64>>();           break;
+            //case GA_STORE_REAL16: xformVectorByAttrib<T, UT_Matrix3T<fpreal16>>();        break;
+            case GA_STORE_REAL32: xformVectorByAttrib<T, UT_Matrix3T<fpreal32>>();        break;
+            case GA_STORE_REAL64: xformVectorByAttrib<T, UT_Matrix3T<fpreal64>>();        break;
+            default: break;
             }
-            break;
-        default:
-            return;
-            break;
-        }
-        break;
-    default:
-        return;
-        break;
     }
-}
+
+    template <typename T>
+    void xformMatrixByAttrib()
+    {
+        if (xformAttrib->getAIFTuple()->getTupleSize(xformAttrib) == 16)
+        {
+            
+            if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
+                         std::is_same<T, UT_Matrix3T<int32>>::value    ||
+                         std::is_same<T, UT_Matrix3T<int64>>::value    ||
+                         std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
+                         std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
+                         std::is_same<T, UT_Matrix3T<fpreal64>>::value )
+            {
+                switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
+                {
+                    //case GA_STORE_INT16:  xformMatrixByAttrib<T, UT_Matrix4T<int16>>();           break;
+                    //case GA_STORE_INT32:  xformMatrixByAttrib<T, UT_Matrix4T<int32>>();           break;
+                    //case GA_STORE_INT64:  xformMatrixByAttrib<T, UT_Matrix4T<int64>>();           break;
+                    //case GA_STORE_REAL16: xformMatrixByAttrib<T, UT_Matrix4T<fpreal16>>();        break;
+                    case GA_STORE_REAL32: xformMatrix3ByAttrib<T, UT_Matrix4T<fpreal32>>();        break;
+                    case GA_STORE_REAL64: xformMatrix3ByAttrib<T, UT_Matrix4T<fpreal64>>();        break;
+                default: break;
+                }
+            }
+            else
+            {
+                switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
+                {
+                    //case GA_STORE_INT16:  xformMatrixByAttrib<T, UT_Matrix4T<int16>>();           break;
+                    //case GA_STORE_INT32:  xformMatrixByAttrib<T, UT_Matrix4T<int32>>();           break;
+                    //case GA_STORE_INT64:  xformMatrixByAttrib<T, UT_Matrix4T<int64>>();           break;
+                    //case GA_STORE_REAL16: xformMatrixByAttrib<T, UT_Matrix4T<fpreal16>>();        break;
+                    case GA_STORE_REAL32: xformMatrixByAttrib<T, UT_Matrix4T<fpreal32>>();        break;
+                    case GA_STORE_REAL64: xformMatrixByAttrib<T, UT_Matrix4T<fpreal64>>();        break;
+                default: break;
+                }
+            }
+                         
+        }
+        else
+            switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
+            {
+            //case GA_STORE_INT16:  xformMatrixByAttrib<T, UT_Matrix3T<int16>>();           break;
+            //case GA_STORE_INT32:  xformMatrixByAttrib<T, UT_Matrix3T<int32>>();           break;
+            //case GA_STORE_INT64:  xformMatrixByAttrib<T, UT_Matrix3T<int64>>();           break;
+            //case GA_STORE_REAL16: xformMatrixByAttrib<T, UT_Matrix3T<fpreal16>>();        break;
+            case GA_STORE_REAL32: xformMatrixByAttrib<T, UT_Matrix3T<fpreal32>>();        break;
+            case GA_STORE_REAL64: xformMatrixByAttrib<T, UT_Matrix3T<fpreal64>>();        break;
+            default: break;
+            }
+                
+    }
+    
+
+    
+    template <typename T>
+    void xform()
+    {
+        if (xformAttrib && attribPtr->getOwner() != GA_ATTRIB_DETAIL && xformAttrib->getOwner() != GA_ATTRIB_DETAIL)
+        {
+            if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
+                         std::is_same<T, UT_Matrix3T<int32>>::value    ||
+                         std::is_same<T, UT_Matrix3T<int64>>::value    ||
+                         std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
+                         std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
+                         std::is_same<T, UT_Matrix3T<fpreal64>>::value ||
+                         std::is_same<T, UT_Matrix4T<int16>>::value    ||
+                         std::is_same<T, UT_Matrix4T<int32>>::value    ||
+                         std::is_same<T, UT_Matrix4T<int64>>::value    ||
+                         std::is_same<T, UT_Matrix4T<fpreal16>>::value ||
+                         std::is_same<T, UT_Matrix4T<fpreal32>>::value ||
+                         std::is_same<T, UT_Matrix4T<fpreal64>>::value )
+            {
+                xformMatrixByAttrib<T>();
+            }
+            else
+            {
+                xformVectorByAttrib<T>();
+            }
+            return;
+        }
+        
+        if (xformAttrib)
+        {
+            UT_ASSERT_P(xformAttrib->getAIFTuple());
+            
+            xformByXform4 = xformAttrib->getAIFTuple()->getTupleSize(xformAttrib) == 16;
+            if (xformByXform4)
+            {
+                UT_ASSERT_MSG(attribPtr->getAIFTuple()->getTupleSize(xformAttrib) == 16, "can not be possible");
+                
+                const GA_ROHandleM4D xform_h(xformAttrib);
+                xform4 = xform_h.get(0);
+            }
+            else
+            {
+                UT_ASSERT_MSG(attribPtr->getAIFTuple()->getTupleSize(xformAttrib) == 9, "can not be possible");
+                
+                const GA_ROHandleM3D xform_h(xformAttrib);
+                xform3 = xform_h.get(0);
+            }
+        }
+
+        if (attribPtr->getOwner() == GA_ATTRIB_DETAIL)
+        {
+            const GA_RWHandleT<T> attrib_h(attribPtr);
+            
+            T value = attrib_h.get(0);
+            
+            if (xformByXform4)
+            {
+                // if      constexpr(std::is_same_v<T, UT_Vector2T<int8>>    );
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<int8>>    );
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<int16>>   );
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<int32>>   );
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<int64>>   );
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<fpreal16>>);
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<fpreal32>>);
+                // else if constexpr(std::is_same_v<T, UT_Vector2T<fpreal64> );
+                
+                if      constexpr(std::is_same<T, UT_Matrix3T<fpreal16>>::value);
+                else if constexpr(std::is_same<T, UT_Matrix3T<fpreal32>>::value);
+                else if constexpr(std::is_same<T, UT_Matrix3T<fpreal64>>::value);
+                else
+                    value *= UT_Matrix4T<typename T::value_type>(xform4);
+            }
+            else
+                value *= UT_Matrix3T<typename T::value_type>(xform3);
+            
+            attrib_h.set(0, value);
+        }
+        else
+        {
+            if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
+                         std::is_same<T, UT_Matrix3T<int32>>::value    ||
+                         std::is_same<T, UT_Matrix3T<int64>>::value    ||
+                         std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
+                         std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
+                         std::is_same<T, UT_Matrix3T<fpreal64>>::value ||
+                         std::is_same<T, UT_Matrix4T<int16>>::value    ||
+                         std::is_same<T, UT_Matrix4T<int32>>::value    ||
+                         std::is_same<T, UT_Matrix4T<int64>>::value    ||
+                         std::is_same<T, UT_Matrix4T<fpreal16>>::value ||
+                         std::is_same<T, UT_Matrix4T<fpreal32>>::value ||
+                         std::is_same<T, UT_Matrix4T<fpreal64>>::value )
+            {
+                if(xformByXform4)
+                {
+                    
+                    if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
+                                 std::is_same<T, UT_Matrix3T<int32>>::value    ||
+                                 std::is_same<T, UT_Matrix3T<int64>>::value    ||
+                                 std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
+                                 std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
+                                 std::is_same<T, UT_Matrix3T<fpreal64>>::value )
+                    {
+                        xformMatrixByMatrix<T, UT_Matrix3T<typename T::value_type>>(UT_Matrix3T<typename T::value_type>(xform4));
+                    }
+                    else
+                    {
+                        xformMatrixByMatrix<T, UT_Matrix4T<typename T::value_type>>(UT_Matrix4T<typename T::value_type>(xform4));
+                    }
+                }
+                else
+                    xformMatrixByMatrix<T, UT_Matrix3T<typename T::value_type>>(UT_Matrix3T<typename T::value_type>(xform3));
+            }
+            else
+            {
+                if(xformByXform4)
+                    xformVectorByMatrix<T, UT_Matrix4T<typename T::value_type>>(UT_Matrix4T<typename T::value_type>(xform4));
+                else
+                    xformVectorByMatrix<T, UT_Matrix3T<typename T::value_type>>(UT_Matrix3T<typename T::value_type>(xform3));
+            }
+        }
+    }
 
 
 
+    
+    void checkXformAttrib()
+    {
+        if (xformAttrib)
+        {
+            const GA_AIFTuple* const aifTuple = xformAttrib->getAIFTuple();
 
-SYS_FORCE_INLINE
-static void
-xformByAttrib(
-    GA_Detail* const geo,
-    const GA_Detail* const refGeo,
-    const GA_Group* const geoGroup,
-    const UT_StringHolder& xformAttribName,
-    const GA_AttributeOwner owner,
-    const UT_StringHolder& attribToXformName,
-    const bool invertXform = false,
-    const bool preserveLength = false,
-    const bool delXformAttrib = true,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    if (geoGroup && geoGroup->isEmpty())
-        return;
+            if (!aifTuple)
+            {
+                xformAttrib = nullptr;
+                xformAttribNonConst = nullptr;
+                return;
+            }
+            
+            const int tupleSize = aifTuple->getTupleSize(xformAttrib);
+            if (tupleSize != 9 && tupleSize != 16)
+            {
+                xformAttrib = nullptr;
+                xformAttribNonConst = nullptr;
+                return;
+            }
+        }
+    }
+
+
+
+public:
+
+    
+    UT_Matrix3T<fpreal64> xform3;
+    UT_Matrix4T<fpreal64> xform4;
+
+    
+    bool preserveLength = false;
+    bool invertXform    = false;
+    bool delXformAttrib = true;
+    
+
+private:
+    
     const GA_Attribute* xformAttrib = nullptr;
-    if (refGeo)
-    {
-        xformAttrib = refGeo->findGlobalAttribute(xformAttribName);
-    }
-    else
-    {
-        xformAttrib = geo->findGlobalAttribute(xformAttribName);
-    }
-    if (!xformAttrib)
-        return;
-
-    xformByAttrib(geo, geoGroup, xformAttrib, owner, attribToXformName, invertXform, preserveLength, subscribeRatio, minGrainSize);
-
-    if (delXformAttrib && !refGeo)
-    {
-        geo->getAttributes().destroyAttribute(geo->findGlobalAttribute(xformAttribName));
-    }
-}
+    GA_Attribute* xformAttribNonConst = nullptr;
+    
+    GA_Attribute* attribPtr;
+    bool xformByXform4 = false;
+    
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
 
 
+}; // End of class GFE_XformByAttrib
 
 
-SYS_FORCE_INLINE
-static void
-xformByAttrib(
-    const SOP_NodeVerb::CookParms& cookparms,
-    GA_Detail* const geo,
-    const GA_Detail* const refGeo,
-    const GA_GroupType groupType,
-    const UT_StringHolder& geoGroupName,
-    const UT_StringHolder& xformAttribName,
-    const GA_AttributeOwner owner,
-    const UT_StringHolder& attribToXformName,
-    const bool invertXform = false,
-    const bool preserveLength = false,
-    const bool delXformAttrib = true,
-    const exint subscribeRatio = 64,
-    const exint minGrainSize = 4096
-)
-{
-    GOP_Manager gop;
-    const GA_Group* const geoGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, geoGroupName, gop);
-    xformByAttrib(geo, refGeo, geoGroup, xformAttribName, owner, attribToXformName, invertXform, preserveLength, delXformAttrib, subscribeRatio, minGrainSize);
-
-    GFE_Attribute::bumpDataId(geo, owner, attribToXformName);
-}
-
-
-
-
-} // End of namespace GFE_XformByAttrib
 
 #endif

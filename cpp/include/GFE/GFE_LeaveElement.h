@@ -81,53 +81,6 @@ static void
 
 
 
-static void
-leaveElement(
-    const SOP_NodeVerb::CookParms& cookparms,
-    GA_Detail* const geo,
-    const GA_Detail* const srcGeo,
-    const GA_GroupType groupType,
-    const UT_StringHolder& groupName,
-    const bool reverse = false,
-    const bool delGroup = true
-)
-{
-    GOP_Manager gop;
-    GA_Group* geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
-
-    leaveElement(geo, srcGeo, geoGroup, reverse, delGroup && !geoGroup->isDetached());
-}
-
-
-
-
-static void
-leaveElement(
-    const bool doLeaveElement,
-    const SOP_NodeVerb::CookParms& cookparms,
-    GA_Detail* const geo,
-    const GA_Detail* const srcGeo,
-    const GA_GroupType groupType,
-    const UT_StringHolder& groupName,
-    const bool reverse = false,
-    const bool delGroup = true
-)
-{
-    GOP_Manager gop;
-    GA_Group* geoGroup = GFE_Group::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
-
-    if (!doLeaveElement)
-    {
-        if (geoGroup)
-        {
-            cookparms.getNode()->setHighlight(true);
-            cookparms.select(*geoGroup);
-        }
-        return;
-    }
-
-    leaveElement(geo, srcGeo, geoGroup, reverse, delGroup && !geoGroup->isDetached());
-}
 
 
 

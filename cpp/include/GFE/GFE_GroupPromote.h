@@ -79,7 +79,8 @@ namespace GFE_GroupPromote {
 
         if (group->classType() == newType)
         {
-            GFE_Group::groupRename(geo, *group, newName);
+            //GFE_Group::groupRename(geo, *group, newName);
+            geo.getGroupTable(group->classType())->renameGroup(group->getName(), newName);
             return group;
         }
 
@@ -106,7 +107,8 @@ namespace GFE_GroupPromote {
 
         if (group->classType() == newType)
         {
-            GFE_Group::groupRename(geo, *group, newName);
+            //GFE_Group::groupRename(geo, *group, newName);
+            geo.getGroupTable(group->classType())->renameGroup(group->getName(), newName);
             return group;
         }
 

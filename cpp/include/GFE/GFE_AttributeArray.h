@@ -7,6 +7,7 @@
 //#include "GFE/GFE_AttributeArray.h"
 
 #include "GA/GA_Detail.h"
+#include "GA/GA_Detail.h"
 
 
 #include "GFE/GFE_Type.h"
@@ -208,6 +209,20 @@ SYS_FORCE_INLINE void appends(const GA_AttributeOwner attribClass, const UT_Stri
         return;
     appends(attribClass, attribPattern.c_str());
 }
+
+SYS_FORCE_INLINE void appendPrimitives(const char* attribPattern)
+{ appends(GA_ATTRIB_PRIMITIVE, attribPattern); }
+
+SYS_FORCE_INLINE void appendPoints(const char* attribPattern)
+{ appends(GA_ATTRIB_POINT, attribPattern); }
+
+SYS_FORCE_INLINE void appendVertices(const char* attribPattern)
+{ appends(GA_ATTRIB_VERTEX, attribPattern); }
+
+SYS_FORCE_INLINE void appendDetails(const char* attribPattern)
+{ appends(GA_ATTRIB_DETAIL, attribPattern); }
+
+
 
 void oappends(const GA_AttributeOwner attribClass, const char* attribPattern)
 {

@@ -216,12 +216,12 @@ SOP_FeE_PrimInlinePoint_Fast_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookpa
     primInlinePoint.setComputeParm(1e-05, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
     primInlinePoint.reverseOutGroup = sopparms.getReverseGroup();
-    primInlinePoint.doDelOutGroup = sopparms.getDelInlinePoint();
+    primInlinePoint.doDelGroupElement = sopparms.getDelInlinePoint();
     
 
     primInlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    primInlinePoint.findOrCreateOutGroup(GA_GROUP_POINT, sopparms.getPrimInlinePoint_groupName());
+    primInlinePoint.findOrCreateGroup(GA_GROUP_POINT, sopparms.getPrimInlinePoint_groupName());
 
     primInlinePoint.computeAndBumpDataId();
     primInlinePoint.visualizeOutGroup();

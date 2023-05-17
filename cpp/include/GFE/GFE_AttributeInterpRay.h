@@ -53,6 +53,7 @@ private:
 
         GA_AttributeRefMap attribRefmap;
         GA_AttributeFilter filter = GA_AttributeFilter::selectFloatTuple();
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectAnd(filter,  ););
         attribRefmap.bind(*geoRef0, *geoRef0);
         // Add all floating point vertex attributes
         attribRefmap.append(filter, GA_ATTRIB_VERTEX);

@@ -244,10 +244,11 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GFE_Measure measure(outGeo0, &cookparms);
     measure.groupParser.setGroup(groupType, sopparms.getGroup());
     measure.setPositionAttrib(sopparms.getPosAttribName());
-    measure.findOrCreateTuple(false, measureAttribName);
-    
     measure.setComputeParm(measureType,
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    measure.findOrCreateTuple(false, measureAttribName);
+    
 
     measure.computeAndBumpDataId();
 

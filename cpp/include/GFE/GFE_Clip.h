@@ -23,7 +23,7 @@ public:
 
     void
         setComputeParm(
-            GFE_ClipMethod clipMethod = GFE_ClipMethod::Both,
+            const GFE_ClipMethod clipMethod = GFE_ClipMethod::Both,
             const UT_Vector3T<fpreal64>& dir = UT_Vector3T<fpreal64>(0,1,0),
             const fpreal64 dist = 0,
             const UT_Vector3T<fpreal64>& origin = UT_Vector3T<fpreal64>(0,0,0),
@@ -59,26 +59,29 @@ private:
         if (!posAttrib)
             posAttrib = geo->getP();
 
-
-        switch (GFE_ClipMethod)
+        UT_Vector3 dir32(dir);
+        switch (clipMethod)
         {
         case GFE_ClipMethod::Abode:
-            geo->asGU_Detail()->clip(dir, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
+            geo->asGU_Detail()->clip(dir32, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
             break;
         case GFE_ClipMethod::Below:
-            geo->asGU_Detail()->clip(-dir, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
+            dir32 *= -1;
+            geo->asGU_Detail()->clip(dir32, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
             break;
         case GFE_ClipMethod::Both:
             {
                 GU_Detail* geoOriginTmp = new GU_Detail();
-                geoOriginTmp->replaceWith(geo);
+                geoOriginTmp->replaceWith(*geo);
+            
+                geo->asGU_Detail()->clip(dir32, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
                 
                 GU_DetailHandle geoOrigin_h;
                 geoOrigin_h.allocateAndSet(geoOriginTmp);
-                
-                geoOriginTmp->clip(-dir, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
-                
-                geo->asGU_Detail()->clip(dir, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
+            
+                dir32 *= -1;
+                geoOriginTmp->clip(dir32, dist, normlize, groupParser.getPrimitiveGroup(), clipPoint);
+            
                 geo->baseMerge(*geoOriginTmp);
             }
             break;

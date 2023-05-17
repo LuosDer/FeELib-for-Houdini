@@ -49,6 +49,21 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
+        name    "xformAttribClass"
+        cppname "XformAttribClass"
+        label   "Transform Attribute Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"        "Primitive"
+            "point"       "Point"
+            "vertex"      "Vertex"
+            "detail"      "Detail"
+        //    "pointVertex" "PointVertex"
+        //    "all"         "All"
+        }
+    }
+    parm {
         name    "xformAttrib"
         cppname "XformAttrib"
         label   "Transform Attribute"
@@ -56,31 +71,41 @@ static const char *theDsFile = R"THEDSFILE(
         default { "xform" }
     }
     parm {
+        name    "primAttribToXform"
+        cppname "PrimAttribToXform"
+        label   "Prim Attrib to Transform"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "pointAttribToXform"
+        cppname "PointAttribToXform"
+        label   "Point Attrib to Transform"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "vertexAttribToXform"
+        cppname "VertexAttribToXform"
+        label   "Vertex Attrib to Transform"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "detailAttribToXform"
+        cppname "DetailAttribToXform"
+        label   "Detail Attrib to Transform"
+        type    string
+        default { "" }
+    }
+
+
+    parm {
         name    "invertXform"
         cppname "InvertXform"
-        label   "Invert Transformation"
+        label   "Invert Transform"
         type    toggle
         default { "off" }
-    }
-    parm {
-        name    "attribToXformClass"
-        cppname "AttribToXformClass"
-        label   "Attribute Class"
-        type    ordinal
-        default { "point" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "detail"    "Detail"
-        }
-    }
-    parm {
-        name    "attribToXform"
-        cppname "AttribToXform"
-        label   "Attributes to Transform"
-        type    string
-        default { "*" }
     }
     parm {
         name    "preserveLength"
@@ -122,7 +147,13 @@ SOP_FeE_XformByAttrib_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_XformByAttrib_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("group"_sh,               &SOP_Node::allGroupMenu);
+        
+        templ.setChoiceListPtr("xformAttrib"_sh,         &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("primAttribToXform"_sh,   &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("pointAttribToXform"_sh,  &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("vertexAttribToXform"_sh, &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("detailAttribToXform"_sh, &SOP_Node::detailAttribMenu);
     }
     return templ.templates();
 }
@@ -189,15 +220,15 @@ SOP_FeE_XformByAttrib_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_XformByAttrib_1_0Parms::AttribToXformClass attribClass)
+sopAttribOwner(SOP_FeE_XformByAttrib_1_0Parms::XformAttribClass attribClass)
 {
     using namespace SOP_FeE_XformByAttrib_1_0Enums;
     switch (attribClass)
     {
-    case AttribToXformClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case AttribToXformClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case AttribToXformClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case AttribToXformClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    case XformAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case XformAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case XformAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case XformAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -227,46 +258,43 @@ void
 SOP_FeE_XformByAttrib_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_XformByAttrib_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_XformByAttrib_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
-
+    
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
+    const GA_AttributeOwner owner = sopAttribOwner(sopparms.getXformAttribClass());
 
-    const UT_StringHolder& xformAttribName = sopparms.getXformAttrib();
-
-    const UT_StringHolder& attribToXformName = sopparms.getAttribToXform();
     
-    const bool invertXform = sopparms.getInvertXform();
-    const bool preserveLength = sopparms.getPreserveLength();
-    const bool delXformAttrib = sopparms.getDelXformAttrib();
-    
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-    
-
-    const GA_AttributeOwner owner = sopAttribOwner(sopparms.getAttribToXformClass());
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
+    GFE_XformByAttrib xformByAttrib(outGeo0, inGeo1, cookparms);
+    
+    xformByAttrib.getOutAttribArray().appendPrimitives(sopparms.getPrimAttribToXform());
+    xformByAttrib.getOutAttribArray().appendPoints    (sopparms.getPointAttribToXform());
+    xformByAttrib.getOutAttribArray().appendVertices  (sopparms.getVertexAttribToXform());
+    xformByAttrib.getOutAttribArray().appendDetails   (sopparms.getDetailAttribToXform());
 
-    GFE_XformByAttrib::xformByAttrib(cookparms, outGeo0, inGeo1, groupType, sopparms.getGroup(),
-        xformAttribName, owner, attribToXformName,
-        invertXform, preserveLength, delXformAttrib,
-        subscribeRatio, minGrainSize);
+    xformByAttrib.setXformAttrib(owner, sopparms.getXformAttrib());
+
+    xformByAttrib.setComputeParm(sopparms.getInvertXform(), sopparms.getPreserveLength(), sopparms.getDelXformAttrib(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    xformByAttrib.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    xformByAttrib.computeAndBumpDataId();
+
+
+    
 
 }
 
-
-
-namespace SOP_FeE_XformByAttrib_1_0_Namespace {
-
-} // End SOP_FeE_XformByAttrib_1_0_Namespace namespace

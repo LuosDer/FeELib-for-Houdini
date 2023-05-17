@@ -308,7 +308,7 @@ public:
         GA_Detail& geo,
         const GA_Detail& geoRef0,
         GFE_WindingNumber_Cache* const sopcache = nullptr,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilterWithRef(geo, geoRef0, cookparms)
         , gfeWN(geo, geoRef0, sopcache, cookparms)

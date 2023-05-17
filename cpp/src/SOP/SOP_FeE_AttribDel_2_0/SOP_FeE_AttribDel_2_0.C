@@ -318,9 +318,7 @@ SOP_FeE_AttribDel_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& delVertexGroup = sopparms.getDoDelVertexGroup() ? sopparms.getDelVertexGroup() : allPattern;
     const UT_StringHolder& delEdgeGroup   = sopparms.getDoDelEdgeGroup()   ? sopparms.getDelEdgeGroup()   : allPattern;
     outGFE0.delStdGroup(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
+
+
 }
 
-
-namespace SOP_FeE_AttribDel_2_0_Namespace
-{
-} // End SOP_FeE_AttribDel_2_0_Namespace namespace

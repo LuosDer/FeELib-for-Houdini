@@ -178,7 +178,7 @@ public:
     //GA_PointGroup* inlinePtGroup = nullptr;
 
 private:
-    GA_PointGroup* const inlinePtGroup = nullptr;
+    GA_PointGroup* inlinePtGroup = nullptr;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 16;

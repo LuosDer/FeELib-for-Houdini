@@ -55,6 +55,39 @@ public:
 
 
     
+    template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
+    SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff)
+    {
+        if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
+        {
+            if constexpr(TO == GA_ATTRIB_PRIMITIVE)
+                return elemoff;
+            if constexpr(TO == GA_ATTRIB_POINT)
+                return getPrimitivePointOffset(elemoff, 0);
+            if constexpr(TO == GA_ATTRIB_VERTEX)
+                return getPrimitiveVertexOffset(elemoff, 0);
+        }
+        if constexpr(FROM == GA_ATTRIB_POINT)
+        {
+            if constexpr(TO == GA_ATTRIB_PRIMITIVE)
+                return pointPrim(elemoff);
+            if constexpr(TO == GA_ATTRIB_POINT)
+                return elemoff;
+            if constexpr(TO == GA_ATTRIB_VERTEX)
+                return pointVertex(elemoff);
+        }
+        if constexpr(FROM == GA_ATTRIB_VERTEX)
+        {
+            if constexpr(TO == GA_ATTRIB_PRIMITIVE)
+                return vertexPrimitive(elemoff);
+            if constexpr(TO == GA_ATTRIB_POINT)
+                return vertexPoint(elemoff);
+            if constexpr(TO == GA_ATTRIB_VERTEX)
+                return elemoff;
+        }
+    }
+
+
     bool isPrimitiveLooped(const GA_Offset primoff)
     {
         if (getPrimitiveClosedFlag(primoff))
@@ -66,7 +99,83 @@ public:
         return primpoint0 == primpoint1;
     }
 
+    SYS_FORCE_INLINE GA_Range getPrimitiveRange(const GA_PrimitiveGroup* group = nullptr, const bool reverse = false) const
+    { return GA_Range(getPrimitiveMap(), group, reverse); }
 
+    SYS_FORCE_INLINE GA_Range getPointRange(const GA_PointGroup* group = nullptr, const bool reverse = false) const
+    { return GA_Range(getPointMap(), group, reverse); }
+    
+    SYS_FORCE_INLINE GA_Range getVertexRange(const GA_VertexGroup* group = nullptr, const bool reverse = false) const
+    { return GA_Range(getVertexMap(), group, reverse); }
+    
+    
+    void
+        delElement(
+            const GA_Group* group,
+            const bool reverse = false,
+            const bool delWithPoint = true,
+            const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE,
+            const bool guaranteeNoVertexReference = false
+        )
+    {
+        if (!group)
+        {
+            if (reverse)
+            {
+                destroyPointOffsets(GA_Range(getPointMap(), nullptr), delPointMode, guaranteeNoVertexReference);
+                //clearTopologyAttributes();
+                //createTopologyAttributes();
+            }
+            return;
+        }
+        switch (group->classType())
+        {
+        case GA_GROUP_PRIMITIVE:
+            {
+            const GA_Range range(getPrimitiveMap(), static_cast<const GA_PrimitiveGroup*>(group), reverse);
+            destroyPrimitives(range, delWithPoint);
+            }
+            break;
+        case GA_GROUP_POINT:
+            destroyPointOffsets(GA_Range(getPointMap(), static_cast<const GA_PointGroup*>(group), reverse), delPointMode, guaranteeNoVertexReference);
+            break;
+        case GA_GROUP_VERTEX:
+            destroyVertexOffsets(GA_Range(getVertexMap(), static_cast<const GA_VertexGroup*>(group), reverse));
+            break;
+        case GA_GROUP_EDGE:
+            UT_ASSERT_MSG(0, "not possible");
+            break;
+        default:
+            UT_ASSERT_MSG(0, "not possible");
+            break;
+        }
+    }
+
+
+    
+    void
+        delElement(
+            GA_Group*& group,
+            const bool delGroup,
+            const bool reverse = false,
+            const bool delWithPoint = true,
+            const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE,
+            const bool guaranteeNoVertexReference = false
+        )
+    {
+        delElement(group, reverse, delWithPoint, delPointMode, guaranteeNoVertexReference);
+        if (delGroup)
+        {
+            destroyGroup(group);
+            group = nullptr;
+        }
+    }
+
+
+
+
+
+    
 
 GA_Group& groupDuplicate(const GA_Group& group, const UT_StringHolder& groupName)
 {
@@ -354,18 +463,14 @@ void clearElement()
 }
 
     
-GA_OffsetList getOffsetList(
-    const GA_IndexMap& indexMap,
-    const GA_ElementGroup* const group = nullptr,
-    const bool reverse = false
-) const
+GA_OffsetList getOffsetList(const GA_IndexMap& indexMap, const GA_ElementGroup* const group = nullptr, const bool reverse = false) const
 {
-    GA_OffsetList offs;
+    GA_OffsetList offList;
     if (!group && indexMap.isTrivialMap())
     {
         if (!reverse)
         {
-            offs.setTrivial(GA_Offset(0), indexMap.indexSize());
+            offList.setTrivial(GA_Offset(0), indexMap.indexSize());
         }
     }
     else
@@ -373,10 +478,10 @@ GA_OffsetList getOffsetList(
         GA_Offset start, end;
         for (GA_Iterator it(GA_Range(indexMap, group, reverse)); it.fullBlockAdvance(start, end); )
         {
-            offs.setTrivialRange(offs.size(), start, end - start);
+            offList.setTrivialRange(offList.size(), start, end - start);
         }
     }
-    return offs;
+    return offList;
 }
     
 SYS_FORCE_INLINE GA_OffsetList getOffsetList(
@@ -556,7 +661,7 @@ SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib,const UT_Str
 }
     
 
-bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringRef& newName)
+bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
 {
     GA_Attribute* const existAttrib = findAttribute(attrib.getOwner(), newName);
     if (existAttrib)
@@ -564,7 +669,7 @@ bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringRef& newName)
     return renameAttrib(attrib, newName);
 }
 
-SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib, const UT_StringRef& newName)
+SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib, const UT_StringHolder& newName)
 {
     UT_ASSERT_P(attrib);
     return forceRenameAttribute(*attrib, newName);

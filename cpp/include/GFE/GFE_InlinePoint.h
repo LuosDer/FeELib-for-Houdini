@@ -28,13 +28,8 @@ public:
     {
     }
 
-    void
-        setThreshold_inlineCosRadians(
-            fpreal threshold_inlineAngle
-        )
-    {
-        threshold_inlineCosRadians = cos(GFE_Math::radians(threshold_inlineAngle));
-    }
+    SYS_FORCE_INLINE void setThreshold_inlineCosRadians(fpreal threshold_inlineAngle)
+    { threshold_inlineCosRadians = cos(GFE_Math::radians(threshold_inlineAngle)); }
 
     void
         setComputeParm(
@@ -165,7 +160,7 @@ private:
             *inlinePtGroup &= *groupParser.getPointGroup();
         }
 
-        if (doDelOutGroup)
+        if (doDelGroupElement)
         {
             //delOutGroup();
             geo->destroyPointOffsets(geo->getPointRange(inlinePtGroup), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);

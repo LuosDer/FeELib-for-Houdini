@@ -9,14 +9,11 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_Group.h"
-#include "GFE/GFE_GroupParser.h"
 #include "GFE/GFE_GroupUnion.h"
-#include "GFE/GFE_Adjacency.h"
 
 #include "GFE/GFE_Measure.h"
 #include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_TopologyReference.h"
+#include "GFE/GFE_MeshTopology.h"
 
 
 

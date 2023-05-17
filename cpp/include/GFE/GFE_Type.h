@@ -8,10 +8,10 @@
 
 #include "GA/GA_Detail.h"
 
-#include "limits"
+//#include "limits"
 
 
-#define GFE_MAX_LOOP_COUNT 1 000 000 000
+#define GFE_MAX_LOOP_COUNT 1e10
 #define GFE_FIND_INVALID_INDEX -1
 
 #if 0

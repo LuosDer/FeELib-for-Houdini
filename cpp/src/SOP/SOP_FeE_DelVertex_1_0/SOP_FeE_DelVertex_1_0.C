@@ -65,25 +65,39 @@ static const char* theDsFile = R"THEDSFILE(
        default { 1 }
     }
 
-
-
+    parm {
+       name    "reverseGroup"
+       cppname "ReverseGroup"
+       label   "Reverse Group"
+       type    toggle
+       default { 0 }
+    }
 
     parm {
-       name    "subscribeRatio"
-       cppname "SubscribeRatio"
-       label   "Subscribe Ratio"
-       type    integer
-       default { 64 }
-       range   { 0! 256 }
+       name    "delGroup"
+       cppname "DelGroup"
+       label   "Delete Group"
+       type    toggle
+       default { 1 }
     }
-    parm {
-       name    "minGrainSize"
-       cppname "MinGrainSize"
-       label   "Min Grain Size"
-       type    intlog
-       default { 64 }
-       range   { 0! 2048 }
-    }
+
+
+    // parm {
+    //    name    "subscribeRatio"
+    //    cppname "SubscribeRatio"
+    //    label   "Subscribe Ratio"
+    //    type    integer
+    //    default { 64 }
+    //    range   { 0! 256 }
+    // }
+    // parm {
+    //    name    "minGrainSize"
+    //    cppname "MinGrainSize"
+    //    label   "Min Grain Size"
+    //    type    intlog
+    //    default { 64 }
+    //    range   { 0! 2048 }
+    // }
 }
 )THEDSFILE";
 
@@ -196,14 +210,13 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GFE_DelVertex delVertex(outGeo0, &cookparms);
+    GFE_DelVertex delVertex(outGeo0, cookparms);
 
     delVertex.groupParser.setGroup(groupType, sopparms.getGroup());
 
     delVertex.setComputeParm(
-        sopparms.getDelDegeneratePrims(), sopparms.getDelUnusedPoints()
-        //,sopparms.getSubscribeRatio(), sopparms.getMinGrainSize()
-    );
+        sopparms.getDelDegeneratePrims(), sopparms.getDelUnusedPoints(), 
+        sopparms.getReverseGroup(), sopparms.getDelGroup());
 
     //delVertex.setDeleteParm(delPointMode, sopparms.getGuaranteeNoVertexReference());
 
@@ -211,9 +224,3 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 }
-
-
-
-namespace SOP_FeE_DelVertex_1_0_Namespace {
-
-} // End SOP_FeE_DelVertex_1_0_Namespace namespace

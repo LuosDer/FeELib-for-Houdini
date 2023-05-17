@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_DelElement.h"
+#include "GFE/GFE_Detail.h"
 
 
 

@@ -54,28 +54,26 @@ public:
         const GA_Storage storage = GA_STORE_INVALID
     )
     {
+        const GA_AttributeOwner owner = measureType < GFE_MeasureType::MeshPerimeter ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_DETAIL;
         if(!detached && (!attribName.isstring() || attribName.length()==0) )
         {
             const char* measureName;
             switch (measureType)
             {
-            case GFE_MeasureType::Perimeter:     measureName = "perimeter";     break;
-            case GFE_MeasureType::Area:          measureName = "area";          break;
-            case GFE_MeasureType::Volume:        measureName = "volume";        break;
-            case GFE_MeasureType::MeshPerimeter: measureName = "meshPerimeter"; break;
-            case GFE_MeasureType::MeshArea:      measureName = "meshArea";      break;
-            case GFE_MeasureType::MeshVolume:    measureName = "meshVolume";    break;
+            case GFE_MeasureType::Perimeter:     measureName = "__topo_perimeter";     break;
+            case GFE_MeasureType::Area:          measureName = "__topo_area";          break;
+            case GFE_MeasureType::Volume:        measureName = "__topo_volume";        break;
+            case GFE_MeasureType::MeshPerimeter: measureName = "__topo_meshPerimeter"; break;
+            case GFE_MeasureType::MeshArea:      measureName = "__topo_meshArea";      break;
+            case GFE_MeasureType::MeshVolume:    measureName = "__topo_meshVolume";    break;
             default: break;
             }
             
-            char buffer[100];
-            sprintf(buffer, "%s%s", "__topo_", measureName);
-            
-            return getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_FLOAT, storage, buffer);
+            return getOutAttribArray().findOrCreateTuple(false, owner,    GA_STORECLASS_FLOAT, storage, measureName);
         }
         else
         {
-            return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_FLOAT, storage, attribName);
+            return getOutAttribArray().findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, storage, attribName);
         }
     }
 
@@ -94,16 +92,25 @@ private:
         if (!posAttrib)
             posAttrib = geo->getP();
 
-        const GA_PrimitiveGroup* const primGroup = groupParser.getPrimitiveGroup();
-
-        GA_Attribute* measureAttrib = getOutAttribArray()[0];
+        measureAttrib = getOutAttribArray()[0];
+#if 1
+        switch (measureType)
+        {
+        case GFE_MeasureType::Perimeter:     computePerimeter();     break;
+        case GFE_MeasureType::Area:          computeArea();          break;
+        case GFE_MeasureType::Volume:        computeMeshVolume(); break;
+        case GFE_MeasureType::MeshPerimeter: computeMeshVolume(); break;
+        case GFE_MeasureType::MeshArea:      computeMeshVolume(); break;
+        case GFE_MeasureType::MeshVolume:    computeMeshVolume(); break;
+        }
+#else
         switch (measureType)
         {
         case GFE_MeasureType::Perimeter:
-            primPerimeter(geo, measureAttrib, posAttrib, primGroup, subscribeRatio, minGrainSize);
+            computePerimeter(geo, measureAttrib, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
         case GFE_MeasureType::Area:
-            primArea(geo, measureAttrib, posAttrib, primGroup, subscribeRatio, minGrainSize);
+            computeArea(geo, measureAttrib, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
         case GFE_MeasureType::Volume:
             computeMeshVolume(geo, posAttrib, primGroup, subscribeRatio, minGrainSize);
@@ -120,6 +127,7 @@ private:
         default:
             break;
         }
+#endif
         //GA_ROHandleT<fpreal> measure_h(measureAttrib);
 
 
@@ -145,54 +153,10 @@ private:
 
 
 
-    template<typename T>
-    T primPerimeter()
-    {
-        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-        const GA_Size numvtx = vertices.size();
-        if (numvtx < 2)
-            return 0.0;
-
-        const bool closed = vertices.getExtraFlag();
-        T pSum = 0.0;
-
-        switch (geo->getPrimitiveTypeId(primoff))
-        {
-        case GA_PRIMPOLY:
-            {
-            }
-            break;
-        default:
-            return 0.0;
-        }
-        
-#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-        UT_Vector3T<T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
-#else
-        //UT_Vector3T<T> pos0 = static_cast<const GFE_Detail*>(geo)->getPos3T<T>(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
-        UT_Vector3T<T> pos0 = geo->getPos3(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
-#endif
-        
-            for (GA_Size i(!closed); i < numvtx; ++i)
-            {
-#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-                UT_Vector3T<T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));
-#else
-                UT_Vector3T<T> pos1 = geo->getPos3(geo->vertexPoint(vertices[i]));
-#endif
-            pSum += (pos1 - pos0).length();
-            pos0 = pos1;
-            }
-
-            return pSum;
-    }
-
-
-
     //GU_Detail::compute3DArea(const GA_Offset primoff)
 
     template<typename T>
-    T primPerimeter(const GA_ROHandleT<UT_Vector3T<T>>& pos_h)
+    T computePerimeter(const GA_ROHandleT<UT_Vector3T<T>>& pos_h, const GA_Offset primoff)
     {
         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
         const GA_Size numvtx = vertices.size();
@@ -247,235 +211,10 @@ private:
         return pSum;
     }
 
-
-
-
-    template<typename T>
-    void
-        primPerimeter(
-            const GA_Detail* const geo,
-            const GA_RWHandleT<T>& p_h,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &p_h](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    //T attribValue = GFE_Measure::primPerimeter(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
-                    p_h.set(elemoff, primPerimeter<T>(geo, elemoff));
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-    SYS_FORCE_INLINE
-        static void
-        primPerimeter(
-            const GA_Detail* const geo,
-            GA_Attribute* const pAttrib,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        switch (pAttrib->getAIFTuple()->getStorage(pAttrib))
-        {
-            //case GA_STORE_REAL16:
-            //    primPerimeter<fpreal16>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            //    break;
-        case GA_STORE_REAL32:
-            primPerimeter<fpreal32>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            primPerimeter<fpreal64>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
-        }
-    }
-
-
-
-    template<typename T, typename T1>
-    static void
-        primPerimeter(
-            const GA_Detail* const geo,
-            const GA_RWHandleT<T>& p_h,
-            const GA_ROHandleT<UT_Vector3T<T1>>& pos_h,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &p_h, &pos_h](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    const T attribValue = primPerimeter(geo, elemoff, pos_h);
-                    p_h.set(elemoff, attribValue);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
     
-    SYS_FORCE_INLINE
-    void
-        primPerimeter(
-            GA_Attribute* const pAttrib,
-            const GA_Attribute* const posAttrib,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        switch (pAttrib->getAIFTuple()->getStorage(pAttrib))
-        {
-        case GA_STORE_REAL16:
-            primPerimeter<fpreal16, fpreal16>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            primPerimeter<fpreal32, fpreal32>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            primPerimeter<fpreal64, fpreal64>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
-        }
-    }
-
-
-
-
 
     template<typename T>
-    static T
-        primArea(
-            const GA_Detail* const geo,
-            const GA_Offset primoff
-        )
-    {
-        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-
-        const bool closed = vertices.getExtraFlag();
-        if (!closed)
-            return 0.0;
-
-        const GA_Size numvtx = vertices.size();
-        if (numvtx < 3)
-            return 0.0;
-
-
-        switch (geo->getPrimitiveTypeId(primoff))
-        {
-        case GA_PRIMPOLY:
-        {
-        }
-        break;
-        default:
-            return 0.0;
-        }
-
-
-#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-        UT_Vector3T<T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));
-        UT_Vector3T<T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));
-        const UT_Vector3T<T>& pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));
-#else
-        UT_Vector3T<T> pos0 = geo->getPos3(geo->vertexPoint(vertices[0]));
-        UT_Vector3T<T> pos1 = geo->getPos3(geo->vertexPoint(vertices[1]));
-        const UT_Vector3T<T>& pos2 = geo->getPos3(geo->vertexPoint(vertices[2]));
-#endif
-
-
-
-        /*GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));*/
-
-        switch (numvtx)
-        {
-        case 3:
-        {
-            return heronsFormula(pos0, pos1, pos2);
-        }
-        break;
-        case 4:
-        {
-#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-            const UT_Vector3T<T>& pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));
-#else
-            const UT_Vector3T<T>& pos3 = geo->getPos3(geo->vertexPoint(vertices[3]));
-#endif
-            return bretschneidersFormula0(pos0, pos1, pos2, pos3);
-        }
-        break;
-        default:
-            //UT_ASSERT_MSG(0, "unsupport numvtx");
-            break;
-        }
-
-
-
-        const UT_Vector3T<T>& dir0 = pos1 - pos0;
-        const UT_Vector3T<T>& dir1 = pos2 - pos1;
-        const UT_Vector3T<T>& crossdir0B = cross(dir0, dir1);
-        T lengthdir0B = crossdir0B.length();
-        lengthdir0B = 1.0 / lengthdir0B;
-        const T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
-        const T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
-        const T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
-
-        T areaSum = 0.0;
-#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-        pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));
-#else
-        pos0 = geo->getPos3(geo->vertexPoint(vertices[numvtx - 1]));
-#endif
-        for (GA_Size i(0); i < numvtx; ++i)
-        {
-#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-            pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));
-#else
-            pos1 = geo->getPos3(geo->vertexPoint(vertices[i]));
-#endif
-            areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
-                + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
-                + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
-            pos0 = pos1;
-        }
-        return abs(0.5 * areaSum);
-    }
-
-#endif
-
-
-
-    //////////////////////////// Area ////////////////////////////////
-
-    template<typename T>
-    static T
-        //GU_Detail::compute3DArea(const GA_Offset primoff)
-        //primArea(const GU_Detail* geo, const GA_Offset primoff, GA_ROHandleT<UT_Vector3T<T>&> pos_h, GA_AttributeOwner attribOwner)
-        primArea(
-            const GA_Detail* const geo,
-            const GA_Offset primoff,
-            const GA_ROHandleT<UT_Vector3T<T>>& pos_h
-        )
+    T computeArea(const GA_ROHandleT<UT_Vector3T<T>>& pos_h, const GA_Offset primoff)
     {
         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
 
@@ -614,194 +353,136 @@ private:
 
 
 
+    
 
-    template<typename T, typename T1>
-    static void
-        primArea(
-            const GA_Detail* const geo,
-            const GA_RWHandleT<T>& area_h,
-            const GA_ROHandleT<UT_Vector3T<T1>>& pos_h,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
+#define GFE_MEASUREPRIM_FUNC_SPECIALIZATION(FUNC_NAME);                                                                              \
+        template<typename FLOAT_T, typename POS_FLOAT_T>                                                                             \
+        void FUNC_NAME()                                                                                                             \
+        {                                                                                                                            \
+            const GA_ROHandleT<UT_Vector3T<POS_FLOAT_T>> pos_h(posAttrib);                                                           \
+            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)                     \
+            {                                                                                                                        \
+                GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);      \
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)                                                      \
+                {                                                                                                                    \
+                    GA_Offset start, end;                                                                                            \
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )                                                 \
+                    {                                                                                                                \
+                        measure_ph.setPage(start);                                                                                   \
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)                                                    \
+                        {                                                                                                            \
+                            measure_ph.set(elemoff, FUNC_NAME<POS_FLOAT_T>(pos_h, elemoff));                                         \
+                        }                                                                                                            \
+                    }                                                                                                                \
+                }                                                                                                                    \
+            }, subscribeRatio, minGrainSize);                                                                                        \
+        }                                                                                                                            \
+
+    
+GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computePerimeter)
+GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
+    
+#undef GFE_MEASUREPRIM_FUNC_SPECIALIZATION
+
+
+    
+
+#define GFE_MEASUREPRIM_FUNC_SPECIALIZATION(FUNC_NAME);                                                                    \
+        void FUNC_NAME()                                                                                                   \
+        {                                                                                                                  \
+            const GA_Storage posStorage = posAttrib->getAIFTuple()->getStorage(posAttrib);                                 \
+            switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                                               \
+            {                                                                                                              \
+            case GA_STORE_REAL32:                                                                                          \
+                switch (posStorage)                                                                                        \
+                {                                                                                                          \
+                case GA_STORE_REAL32: FUNC_NAME<fpreal32, fpreal32>(); break;                                              \
+                case GA_STORE_REAL64: FUNC_NAME<fpreal32, fpreal64>(); break;                                              \
+                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
+                }                                                                                                          \
+                break;                                                                                                     \
+            case GA_STORE_REAL64:                                                                                          \
+                switch (posStorage)                                                                                        \
+                {                                                                                                          \
+                case GA_STORE_REAL32: FUNC_NAME<fpreal64, fpreal32>(); break;                                              \
+                case GA_STORE_REAL64: FUNC_NAME<fpreal64, fpreal64>(); break;                                              \
+                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
+                }                                                                                                          \
+                break;                                                                                                     \
+            default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                    \
+            }                                                                                                              \
+        }                                                                                                                  \
+    
+GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computePerimeter)
+GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
+    
+#undef GFE_MEASUREPRIM_FUNC_SPECIALIZATION
+
+
+
+
+
+
+    
+    
+#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                                                      \
+        template<typename FLOAT_T, typename POS_FLOAT_T>                                                     \
+        void FUNC_NAME()                                                                                     \
+        {                                                                                                    \
+            const GA_RWHandleT<FLOAT_T> measure_h(measureAttrib);                                            \
+            measure_h.set(0, FUNC_NAME<POS_FLOAT_T>());                                                      \
+        }                                                                                                    \
+
+    
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
+    
+#undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
+
+
+#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                                                                    \
+        void FUNC_NAME()                                                                                                   \
+        {                                                                                                                  \
+            const GA_Storage posStorage = posAttrib->getAIFTuple()->getStorage(posAttrib);                                 \
+            switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                                               \
+            {                                                                                                              \
+            case GA_STORE_REAL32:                                                                                          \
+                switch (posStorage)                                                                                        \
+                {                                                                                                          \
+                case GA_STORE_REAL32: FUNC_NAME<fpreal32, fpreal32>(); break;                                              \
+                case GA_STORE_REAL64: FUNC_NAME<fpreal32, fpreal64>(); break;                                              \
+                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
+                }                                                                                                          \
+                break;                                                                                                     \
+            case GA_STORE_REAL64:                                                                                          \
+                switch (posStorage)                                                                                        \
+                {                                                                                                          \
+                case GA_STORE_REAL32: FUNC_NAME<fpreal64, fpreal32>(); break;                                              \
+                case GA_STORE_REAL64: FUNC_NAME<fpreal64, fpreal64>(); break;                                              \
+                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
+                }                                                                                                          \
+                break;                                                                                                     \
+            default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                    \
+            }                                                                                                              \
+        }                                                                                                                  \
+    
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
+    
+#undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
+
+
+
+    template<typename FLOAT_T>
+    FLOAT_T computeMeshVolume()
     {
-        //GU_Measure::computeArea(*geo, area_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &area_h, &pos_h](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    const T area = primArea(geo, elemoff, pos_h);
-                    area_h.set(elemoff, area);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
+        UT_BoundingBoxT<float> geoBounds;
+        geo->enlargeBoundingBox(geoBounds, geo->getPointRange(), posAttrib);
+        const UT_Vector3T<FLOAT_T>& bboxCenter = geoBounds.center();
 
-
-
-    template<typename T>
-    static void
-        primArea(
-            const GA_Detail* const geo,
-            const GA_RWHandleT<T>& area_h,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        //GU_Measure::computeArea(*geo, area_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &area_h](const GA_SplittableRange& r)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    const T area = primArea<T>(geo, elemoff);
-                    area_h.set(elemoff, area);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-    SYS_FORCE_INLINE
-        static void
-        primArea(
-            const GA_Detail* const geo,
-            GA_Attribute* const areaAttribPtr,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
-        {
-        case GA_STORE_REAL16:
-            primArea<fpreal16>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            primArea<fpreal32>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            primArea<fpreal64>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
-        }
-    }
-
-    SYS_FORCE_INLINE
-        static void
-        primArea(
-            const GA_Detail* const geo,
-            GA_Attribute* const areaAttribPtr,
-            const GA_Attribute* const posAttribPtr,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
-        {
-        case GA_STORE_REAL16:
-            primArea<fpreal16, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            primArea<fpreal32, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            primArea<fpreal64, fpreal64>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-    //////////////////////////// volume ////////////////////////////////
-
-
-
-
-    static fpreal32
-        computeMeshVolume(
-            const GA_Detail* const geo,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        UT_BoundingBoxT<fpreal32> geoBounds;
-        geo->computeQuickBounds(geoBounds);
-
-        const UT_Vector3T<fpreal32>& bboxCenter = geoBounds.center();
-
-        ComputeVolume body(geo, bboxCenter);
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
+        ComputeVolume<FLOAT_T> body(geo, bboxCenter);
+        UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
         return body.getSum();
     }
 
-    template<typename T>
-    static fpreal32
-        computeMeshVolume(
-            const GA_Detail* const geo,
-            //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-            const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        UT_BoundingBoxT<fpreal32> geoBounds;
-        const GA_Attribute* const posAttribPtr = pos_h.getAttribute();
-        geo->enlargeBoundingBox(geoBounds, geo->getPointRange(), pos_h.getAttribute());
-        const UT_Vector3T<fpreal32>& bboxCenter = geoBounds.center();
-
-        ComputeVolume body(geo, bboxCenter);
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
-        return body.getSum();
-    }
-
-
-    static fpreal32
-        computeMeshVolume(
-            const GA_Detail* const geo,
-            //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-            const GA_Attribute* const posAttribPtr,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        UT_BoundingBoxT<fpreal32> geoBounds;
-        geo->enlargeBoundingBox(geoBounds, geo->getPointRange(), posAttribPtr);
-        const UT_Vector3T<fpreal32>& bboxCenter = geoBounds.center();
-
-        ComputeVolume body(geo, bboxCenter);
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
-        return body.getSum();
-    }
 
 
 
@@ -823,9 +504,9 @@ public:
 #if 0
 
 
-#define primPerimeterMacro(T)                                                                                        \
+#define computePerimeterMacro(T)                                                                                        \
 static fpreal##T                                                                                                     \
-primPerimeter##T(                                                                                                    \
+computePerimeter##T(                                                                                                    \
     const GA_Detail* const geo,                                                                                      \
     const GA_Offset primoff                                                                                          \
 )                                                                                                                    \
@@ -859,29 +540,29 @@ primPerimeter##T(                                                               
     return pSum;                                                                                                     \
 }
 
-    primPerimeterMacro(32);
-    primPerimeterMacro(64);
+    computePerimeterMacro(32);
+    computePerimeterMacro(64);
 
 
 
     template<typename T>
     static T
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             const GA_Offset primoff
         )
     {
         if constexpr (std::is_same<T, float>::value)
-            return primPerimeter32(geo, primoff);
+            return computePerimeter32(geo, primoff);
         else
-            return primPerimeter64(geo, primoff);
+            return computePerimeter64(geo, primoff);
     }
 
 #else
 
     template<typename T>
     static T
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             const GA_Offset primoff
         )
@@ -933,7 +614,7 @@ primPerimeter##T(                                                               
 
     template<typename T>
     static T
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             const GA_Offset primoff,
             const GA_ROHandleT<UT_Vector3T<T>>& pos_h
@@ -996,7 +677,7 @@ primPerimeter##T(                                                               
 
     template<typename T>
     static void
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             const GA_RWHandleT<T>& p_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
@@ -1013,8 +694,8 @@ primPerimeter##T(                                                               
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    //T attribValue = GFE_Measure::primPerimeter(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
-                    p_h.set(elemoff, primPerimeter<T>(geo, elemoff));
+                    //T attribValue = GFE_Measure::computePerimeter(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
+                    p_h.set(elemoff, computePerimeter<T>(geo, elemoff));
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -1022,7 +703,7 @@ primPerimeter##T(                                                               
 
     SYS_FORCE_INLINE
         static void
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             GA_Attribute* const pAttrib,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
@@ -1033,13 +714,13 @@ primPerimeter##T(                                                               
         switch (pAttrib->getAIFTuple()->getStorage(pAttrib))
         {
             //case GA_STORE_REAL16:
-            //    primPerimeter<fpreal16>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
+            //    computePerimeter<fpreal16>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
             //    break;
         case GA_STORE_REAL32:
-            primPerimeter<fpreal32>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
+            computePerimeter<fpreal32>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL64:
-            primPerimeter<fpreal64>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
+            computePerimeter<fpreal64>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         default:
             UT_ASSERT_MSG(0, "unhandled storage type");
@@ -1051,7 +732,7 @@ primPerimeter##T(                                                               
 
     template<typename T, typename T1>
     static void
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             const GA_RWHandleT<T>& p_h,
             const GA_ROHandleT<UT_Vector3T<T1>>& pos_h,
@@ -1069,7 +750,7 @@ primPerimeter##T(                                                               
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const T attribValue = primPerimeter(geo, elemoff, pos_h);
+                    const T attribValue = computePerimeter(geo, elemoff, pos_h);
                     p_h.set(elemoff, attribValue);
                 }
             }
@@ -1079,7 +760,7 @@ primPerimeter##T(                                                               
     
     SYS_FORCE_INLINE
         static void
-        primPerimeter(
+        computePerimeter(
             const GA_Detail* const geo,
             GA_Attribute* const pAttrib,
             const GA_Attribute* const posAttrib,
@@ -1091,13 +772,13 @@ primPerimeter##T(                                                               
         switch (pAttrib->getAIFTuple()->getStorage(pAttrib))
         {
         case GA_STORE_REAL16:
-            primPerimeter<fpreal16, fpreal16>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
+            computePerimeter<fpreal16, fpreal16>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL32:
-            primPerimeter<fpreal32, fpreal32>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
+            computePerimeter<fpreal32, fpreal32>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL64:
-            primPerimeter<fpreal64, fpreal64>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
+            computePerimeter<fpreal64, fpreal64>(geo, pAttrib, posAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         default:
             UT_ASSERT_MSG(0, "unhandled storage type");
@@ -1118,9 +799,9 @@ primPerimeter##T(                                                               
 
 #if 0
 
-#define primAreaMacro(T)                                                                                                                                \
+#define computeAreaMacro(T)                                                                                                                                \
 static fpreal##T                                                                                                                                        \
-primArea##T(                                                                                                                                            \
+computeArea##T(                                                                                                                                            \
     const GA_Detail* const geo,                                                                                                                         \
     const GA_Offset primoff                                                                                                                             \
 )                                                                                                                                                       \
@@ -1197,22 +878,22 @@ primArea##T(                                                                    
     return abs(0.5 * areaSum);                                                                                                                          \
 }
 
-    primAreaMacro(32);
-    primAreaMacro(64);
+    computeAreaMacro(32);
+    computeAreaMacro(64);
 
 
 
     template<typename T>
     static T
-        primArea(
+        computeArea(
             const GA_Detail* const geo,
             const GA_Offset primoff
         )
     {
         if constexpr (std::is_same<T, float>::value)
-            return primArea32(geo, primoff);
+            return computeArea32(geo, primoff);
         else
-            return primArea64(geo, primoff);
+            return computeArea64(geo, primoff);
     }
 #else
 
@@ -1220,7 +901,7 @@ primArea##T(                                                                    
 
     template<typename T>
     static T
-        primArea(
+        computeArea(
             const GA_Detail* const geo,
             const GA_Offset primoff
         )
@@ -1324,8 +1005,8 @@ primArea##T(                                                                    
     template<typename T>
     static T
         //GU_Detail::compute3DArea(const GA_Offset primoff)
-        //primArea(const GU_Detail* geo, const GA_Offset primoff, GA_ROHandleT<UT_Vector3T<T>&> pos_h, GA_AttributeOwner attribOwner)
-        primArea(
+        //computeArea(const GU_Detail* geo, const GA_Offset primoff, GA_ROHandleT<UT_Vector3T<T>&> pos_h, GA_AttributeOwner attribOwner)
+        computeArea(
             const GA_Detail* const geo,
             const GA_Offset primoff,
             const GA_ROHandleT<UT_Vector3T<T>>& pos_h
@@ -1471,7 +1152,7 @@ primArea##T(                                                                    
 
     template<typename T, typename T1>
     static void
-        primArea(
+        computeArea(
             const GA_Detail* const geo,
             const GA_RWHandleT<T>& area_h,
             const GA_ROHandleT<UT_Vector3T<T1>>& pos_h,
@@ -1489,7 +1170,7 @@ primArea##T(                                                                    
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const T area = primArea(geo, elemoff, pos_h);
+                    const T area = computeArea(geo, elemoff, pos_h);
                     area_h.set(elemoff, area);
                 }
             }
@@ -1500,7 +1181,7 @@ primArea##T(                                                                    
 
     template<typename T>
     static void
-        primArea(
+        computeArea(
             const GA_Detail* const geo,
             const GA_RWHandleT<T>& area_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
@@ -1517,7 +1198,7 @@ primArea##T(                                                                    
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const T area = primArea<T>(geo, elemoff);
+                    const T area = computeArea<T>(geo, elemoff);
                     area_h.set(elemoff, area);
                 }
             }
@@ -1526,7 +1207,7 @@ primArea##T(                                                                    
 
     SYS_FORCE_INLINE
         static void
-        primArea(
+        computeArea(
             const GA_Detail* const geo,
             GA_Attribute* const areaAttribPtr,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
@@ -1537,13 +1218,13 @@ primArea##T(                                                                    
         switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
         {
         case GA_STORE_REAL16:
-            primArea<fpreal16>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
+            computeArea<fpreal16>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL32:
-            primArea<fpreal32>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
+            computeArea<fpreal32>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL64:
-            primArea<fpreal64>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
+            computeArea<fpreal64>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         default:
             UT_ASSERT_MSG(0, "unhandled storage type");
@@ -1553,7 +1234,7 @@ primArea##T(                                                                    
 
     SYS_FORCE_INLINE
         static void
-        primArea(
+        computeArea(
             const GA_Detail* const geo,
             GA_Attribute* const areaAttribPtr,
             const GA_Attribute* const posAttribPtr,
@@ -1565,13 +1246,13 @@ primArea##T(                                                                    
         switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
         {
         case GA_STORE_REAL16:
-            primArea<fpreal16, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
+            computeArea<fpreal16, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL32:
-            primArea<fpreal32, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
+            computeArea<fpreal32, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         case GA_STORE_REAL64:
-            primArea<fpreal64, fpreal64>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
+            computeArea<fpreal64, fpreal64>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
             break;
         default:
             UT_ASSERT_MSG(0, "unhandled storage type");
@@ -1760,11 +1441,11 @@ public:
     
 private:
     
-
+    template<typename FLOAT_T>
     class ComputeVolume
     {
     public:
-        ComputeVolume(const GA_Detail* const a, const UT_Vector3T<fpreal32>& b)
+        ComputeVolume(const GA_Detail* const a, const UT_Vector3T<FLOAT_T>& b)
             : myGeo(a)
             , myBBoxCenter(b)
             , mySum(0)
@@ -1788,12 +1469,12 @@ private:
         }
         SYS_FORCE_INLINE void join(const ComputeVolume& other)
         { mySum += other.mySum; }
-        SYS_FORCE_INLINE fpreal getSum() const
+        SYS_FORCE_INLINE FLOAT_T getSum() const
         { return mySum; }
     private:
-        fpreal mySum;
+        FLOAT_T mySum;
         const GA_Detail* const myGeo;
-        const UT_Vector3T<fpreal32>& myBBoxCenter;
+        const UT_Vector3T<FLOAT_T>& myBBoxCenter;
     }; // End of Class ComputeVolume
 
 
@@ -1805,7 +1486,7 @@ public:
     GFE_MeasureType measureType = GFE_MeasureType::Area;
 
 private:
-    const GA_ROHandleT<UT_Vector3T<T>>& pos_h;
+    GA_Attribute* measureAttrib;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
@@ -1823,816 +1504,6 @@ private:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//
-//
-//
-//
-//namespace GFE_Measure_Namespace {
-//
-//
-//
-//
-//
-////GU_Detail::compute3DArea(const GA_Offset primoff)
-//
-//
-////static fpreal32
-////primArea32(
-////    const GA_Detail* const geo,
-////    const GA_Offset primoff
-////)
-////{
-////    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-////
-////    const bool closed = vertices.getExtraFlag();
-////    if (!closed)
-////        return 0.0;
-////
-////    const GA_Size numvtx = vertices.size();
-////    if (numvtx < 3)
-////        return 0.0;
-////
-////
-////
-////    switch (geo->getPrimitiveTypeId(primoff))
-////    {
-////    case GA_PRIMPOLY:
-////    {
-////    }
-////    break;
-////    default:
-////        return 0.0;
-////    }
-////
-////
-////
-////    UT_Vector3T<fpreal32> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));
-////    UT_Vector3T<fpreal32> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));
-////    const UT_Vector3T<fpreal32> pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));
-////
-////    //GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
-////
-////    switch (numvtx)
-////    {
-////    case 3:
-////    {
-////        return heronsFormula(pos0, pos1, pos2);
-////    }
-////    break;
-////    case 4:
-////    {
-////        const UT_Vector3T<fpreal32> pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));
-////        return bretschneidersFormula0(pos0, pos1, pos2, pos3);
-////    }
-////    break;
-////    //default:
-////    }
-////
-////
-////
-////    const UT_Vector3T<fpreal32>& dir0 = pos1 - pos0;
-////    const UT_Vector3T<fpreal32>& dir1 = pos2 - pos1;
-////    const UT_Vector3T<fpreal32>& crossdir0B = cross(dir0, dir1);
-////    fpreal32 lengthdir0B = crossdir0B.length();
-////    lengthdir0B = 1.0 / lengthdir0B;
-////    const fpreal32 cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
-////    const fpreal32 cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
-////    const fpreal32 cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
-////
-////    fpreal32 areaSum = 0.0;
-////    pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));
-////    for (GA_Size i(0); i < numvtx; ++i)
-////    {
-////        pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));
-////        areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
-////            + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
-////            + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
-////        pos0 = pos1;
-////    }
-////    return abs(0.5 * areaSum);
-////}
-//
-//
-//
-////GU_Detail::compute3DArea(const GA_Offset primoff)
-//
-//
-//
-//
-//
-//
-//
-////#define DEF_FUNC_AddAttrib(DEF_FUNC_Parm_FuncName, DEF_FUNC_Parm_ParmPack, DEF_FUNC_Parm_AttribName, DEF_FUNC_Parm_Defaults, DEF_FUNC_Parm_Storage, DEF_FUNC_Parm_SubscribeRatio, DEF_FUNC_Parm_MinGrainSize)     \
-////        SYS_FORCE_INLINE                                                                                                                                                                                          \
-////        static GA_Attribute*                                                                                                                                                                                      \
-////        DEF_FUNC_Parm_FuncName(                                                                                                                                                                                   \
-////            GA_Detail* const geo,                                                                                                                                                                                      \
-////            DEF_FUNC_Parm_ParmPack                                                                                                                                                                                \
-////            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
-////            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,                                                                                                                                                      \
-////            const GA_Defaults& defaults = GA_Defaults(DEF_FUNC_Parm_Defaults),                                                                                                                                    \
-////            const GA_Storage storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
-////            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),                                                                                                                                                   \
-////            const exint subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
-////            const exint minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
-////        )                                                                                                                                                                                                         \
-////        {                                                                                                                                                                                                         \
-////            return DEF_FUNC_Parm_FuncName(geo, name, geoPrimGroup, defaults, 0, 0, storage, reuse, subscribeRatio, minGrainSize);                                                                                 \
-////        }                                                                                                                                                                                                         \
-////        SYS_FORCE_INLINE                                                                                                                                                                                          \
-////        static GA_Attribute*                                                                                                                                                                                      \
-////        DEF_FUNC_Parm_FuncName(                                                                                                                                                                                   \
-////            GA_Detail* const geo,                                                                                                                                                                                      \
-////            DEF_FUNC_Parm_ParmPack                                                                                                                                                                                \
-////            const UT_StringHolder& name = #DEF_FUNC_Parm_AttribName,                                                                                                                                              \
-////            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,                                                                                                                                                      \
-////            const GA_Defaults& defaults = GA_Defaults(DEF_FUNC_Parm_Defaults),                                                                                                                                    \
-////            const GA_Storage storage = DEF_FUNC_Parm_Storage,                                                                                                                                                    \
-////            const exint subscribeRatio = DEF_FUNC_Parm_SubscribeRatio,                                                                                                                                           \
-////            const exint minGrainSize = DEF_FUNC_Parm_MinGrainSize                                                                                                                                                \
-////        )                                                                                                                                                                                                         \
-////        {                                                                                                                                                                                                         \
-////            return DEF_FUNC_Parm_FuncName(geo, name, geoPrimGroup, defaults, 0, 0, storage, GA_ReuseStrategy(), subscribeRatio, minGrainSize);                                                                    \
-////        }                                                                                                                                                                                                         \
-////
-////
-////
-////
-////DEF_FUNC_AddAttrib(addAttribPrimArea,          , area, -1.0, GA_STORE_INVALID, 16, 1024)
-//
-//
-////using parmPack1 = const GA_ROHandleT<UT_Vector3T<T>>& pos_h;
-////DEF_FUNC_AddAttrib(addAttribPrimArea, parmPack1, area, -1.0, GA_STORE_INVALID, 16, 1024)
-//
-////DEF_FUNC_AddAttrib(addAttribPrimPerimeter, , perimeter, -1.0, GA_STORE_INVALID, 16, 1024)
-//
-////GFE_Measure::addAttribPrimArea(geo, name, geoPrimGroup, defaults, storage, reuse, subscribeRatio, minGrainSize);
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribPrimArea(geo, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//static GA_Attribute*
-//addAttribPrimArea(
-//    GA_Detail* const geo,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "area",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//
-//    switch (finalStorage)
-//    {
-//    case GA_STORE_REAL16:
-//        primArea<fpreal16>(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL32:
-//        primArea<fpreal32>(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL64:
-//        primArea<fpreal64>(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "unhandled numvtx");
-//        break;
-//    }
-//    return attribPtr;
-//}
-//
-//
-//static GA_AttributeUPtr
-//addDetachedAttribPrimArea(
-//    const GA_Detail* const geo,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-//    GA_AttributeUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, defaults, attribute_options);
-//    GA_Attribute* const attribPtr = attribUPtr.get();
-//    switch (finalStorage)
-//    {
-//    case GA_STORE_REAL16:
-//        primArea<fpreal16>(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL32:
-//        primArea<fpreal32>(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL64:
-//        primArea<fpreal64>(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "unhandled numvtx");
-//        break;
-//    }
-//    return attribUPtr;
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribPrimArea(geo, pos_h, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//template<typename T>
-//static GA_Attribute*
-//addAttribPrimArea(
-//    GA_Detail* const geo,
-//    const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "area",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? pos_h->getAIFTuple()->getStorage(pos_h.getAttribute()) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//
-//    //GA_RWHandleT<T> attribHandle(attribPtr);
-//    primArea<T>(geo, attribPtr, pos_h, geoPrimGroup, subscribeRatio, minGrainSize);
-//    return attribPtr;
-//}
-//
-//
-//template<typename T>
-//static GA_AttributeUPtr
-//addDetachedAttribPrimArea(
-//    const GA_Detail* const geo,
-//    const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? pos_h->getAIFTuple()->getStorage(pos_h.getAttribute()) : storage;
-//    GA_AttributeUPtr attribUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, finalStorage, 1, defaults, attribute_options);
-//    primArea<T>(geo, attribUPtr.get(), pos_h, geoPrimGroup, subscribeRatio, minGrainSize);
-//    return attribUPtr;
-//}
-//
-//
-//
-//
-//
-//static GA_Attribute*
-//addAttribPrimArea(
-//    GA_Detail* const geo,
-//    const GA_Attribute* const posAttrib,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "area",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//    switch (finalStorage)
-//    {
-//    case GA_STORE_REAL16:
-//        return addAttribPrimArea<fpreal16>(geo, posAttrib, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL32:
-//        return addAttribPrimArea<fpreal32>(geo, posAttrib, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL64:
-//        return addAttribPrimArea<fpreal64>(geo, posAttrib, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "unhandled storage type");
-//        break;
-//    }
-//    return nullptr;
-//}
-//
-//
-//static GA_AttributeUPtr
-//addDetachedAttribPrimArea(
-//    const GA_Detail* const geo,
-//    const GA_Attribute* const posAttrib,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//    switch (finalStorage)
-//    {
-//    //case GA_STORE_REAL16:
-//    //    return addDetachedAttribPrimArea<fpreal16>(geo, posAttrib, geoPrimGroup, storage, defaults, attribute_options, subscribeRatio, minGrainSize);
-//    //    break;
-//    case GA_STORE_REAL32:
-//        return addDetachedAttribPrimArea<fpreal32>(geo, posAttrib, geoPrimGroup, storage, defaults, attribute_options, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL64:
-//        return addDetachedAttribPrimArea<fpreal64>(geo, posAttrib, geoPrimGroup, storage, defaults, attribute_options, subscribeRatio, minGrainSize);
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "unhandled storage type");
-//        break;
-//    }
-//    return GA_AttributeUPtr();
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribPrimArea(geo, posAttribOwner, posAttribName, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//static GA_Attribute*
-//addAttribPrimArea(
-//    GA_Detail* const geo,
-//    //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-//    const UT_StringHolder& posAttribName = "P",
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "area",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    if (posAttribName == "P")
-//    {
-//        return addAttribPrimArea(geo, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//    }
-//    else
-//    {
-//        const GA_AttributeOwner search_order[] = { GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
-//        const GA_Attribute* const attribPtr = geo->findAttribute(posAttribName, search_order, 2);
-//        //GA_AttributeOwner geo0AttribClassFinal;
-//
-//        if (!attribPtr)
-//            return nullptr;
-//        return addAttribPrimArea(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//    }
-//}
-//
-//
-//
-//
-////
-////
-////static fpreal32
-////primPerimeter32(
-////    const GA_Detail* const geo,
-////    const GA_Offset primoff
-////)
-////{
-////    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-////    const GA_Size numvtx = vertices.size();
-////    if (numvtx < 2)
-////        return 0.0;
-////
-////    const bool closed = vertices.getExtraFlag();
-////    fpreal32 pSum = 0.0;
-////
-////    switch (geo->getPrimitiveTypeId(primoff))
-////    {
-////    case GA_PRIMPOLY:
-////    {
-////    }
-////    break;
-////    default:
-////        return 0.0;
-////    }
-////
-////    UT_Vector3T<fpreal32> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
-////    for (GA_Size i(!closed); i < numvtx; ++i)
-////    {
-////        UT_Vector3T<fpreal32> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));
-////        pSum += (pos1 - pos0).length();
-////        pos0 = pos1;
-////    }
-////
-////    return pSum;
-////}
-////
-////static fpreal64
-////primPerimeter64(
-////    const GA_Detail* const geo,
-////    const GA_Offset primoff
-////)
-////{
-////    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-////    const GA_Size numvtx = vertices.size();
-////    if (numvtx < 2)
-////        return 0.0;
-////
-////    const bool closed = vertices.getExtraFlag();
-////    fpreal64 pSum = 0.0;
-////
-////    switch (geo->getPrimitiveTypeId(primoff))
-////    {
-////    case GA_PRIMPOLY:
-////    {
-////    }
-////    break;
-////    default:
-////        return 0.0;
-////    }
-////
-////    UT_Vector3T<fpreal64> pos0 = geo->getPos3D(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
-////    for (GA_Size i(!closed); i < numvtx; ++i)
-////    {
-////        UT_Vector3T<fpreal64> pos1 = geo->getPos3D(geo->vertexPoint(vertices[i]));
-////        pSum += (pos1 - pos0).length();
-////        pos0 = pos1;
-////    }
-////
-////    return pSum;
-////}
-//
-//
-////GU_Detail::compute3DArea(const GA_Offset primoff)
-//
-//
-//
-//
-////GFE_Measure::addAttribPrimArea(geo, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//static GA_Attribute*
-//addAttribPrimPerimeter(
-//    GA_Detail* const geo,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "perimeter",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//
-//    primPerimeter(geo, attribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-//    return attribPtr;
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribPrimArea(geo, pos_h, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//template<typename T>
-//static GA_Attribute*
-//addAttribPrimPerimeter(
-//    GA_Detail* const geo,
-//    const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "perimeter",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? pos_h->getAIFTuple()->getStorage(pos_h.getAttribute()) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//
-//    primPerimeter(geo, attribPtr, pos_h, geoPrimGroup, subscribeRatio, minGrainSize);
-//    return attribPtr;
-//}
-//
-//
-//static GA_Attribute*
-//addAttribPrimPerimeter(
-//    GA_Detail* const geo,
-//    const GA_Attribute* const posAttrib,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "perimeter",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//
-//    switch (finalStorage)
-//    {
-//    case GA_STORE_REAL16:
-//        return addAttribPrimPerimeter<fpreal16>(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL32:
-//        return addAttribPrimPerimeter<fpreal32>(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL64:
-//        return addAttribPrimPerimeter<fpreal64>(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "unhandled storage type");
-//        break;
-//    }
-//    return nullptr;
-//}
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribPrimPerimeter(geo, posAttribOwner, posAttribName, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//static GA_Attribute*
-//addAttribPrimPerimeter(
-//    GA_Detail* const geo,
-//    //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-//    const UT_StringHolder& posAttribName = "P",
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "perimeter",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    if (posAttribName == "P")
-//    {
-//        return addAttribPrimPerimeter(geo, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//    }
-//    else
-//    {
-//        const GA_AttributeOwner search_order[] = { GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
-//        const GA_Attribute* const attribPtr = geo->findAttribute(posAttribName, search_order, 2);
-//        //GA_AttributeOwner geo0AttribClassFinal;
-//
-//        if (!attribPtr)
-//            return nullptr;
-//        return addAttribPrimPerimeter(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//    }
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribMeshVolume(geo, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//static GA_Attribute*
-//addAttribMeshVolume(
-//    GA_Detail* const geo,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "volume",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? geo->getP()->getAIFTuple()->getStorage(geo->getP()) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_DETAIL, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//
-//    fpreal32 volume = computeMeshVolume(geo, geoPrimGroup, subscribeRatio, minGrainSize);
-//    attribPtr->getAIFTuple()->set(attribPtr, volume, 0);
-//    return attribPtr;
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-////GFE_Measure::addAttribMeshVolume(geo, pos_h, name, geoPrimGroup, defaults, creation_args, attribute_options, storage, reuse, subscribeRatio, minGrainSize);
-//
-//template<typename T>
-//static GA_Attribute*
-//addAttribMeshVolume(
-//    GA_Detail* const geo,
-//    const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "perimeter",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? pos_h->getAIFTuple()->getStorage(pos_h.getAttribute()) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_DETAIL, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//    fpreal32 volume = computeMeshVolume(geo, pos_h, geoPrimGroup, subscribeRatio, minGrainSize);
-//    attribPtr->getAIFTuple()->set(attribPtr, volume, 0);
-//    return attribPtr;
-//}
-//
-//
-//static GA_Attribute*
-//addAttribMeshVolume(
-//    GA_Detail* const geo,
-//    const GA_Attribute* const posAttrib,
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "volume",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//    GA_Attribute* const attribPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_DETAIL, GFE_TOPO_SCOPE, name, finalStorage, 1, defaults, creation_args, attribute_options, reuse);
-//    switch (finalStorage)
-//    {
-//    case GA_STORE_REAL16:
-//        return addAttribMeshVolume<fpreal16>(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL32:
-//        return addAttribMeshVolume<fpreal32>(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    case GA_STORE_REAL64:
-//        return addAttribMeshVolume<fpreal64>(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//        break;
-//    default:
-//        UT_ASSERT_MSG(0, "unhandled storage type");
-//        break;
-//    }
-//    return nullptr;
-//}
-//
-////GFE_Measure::addAttribMeshVolume(outGeo0, geo0PosAttribName,
-////    static_cast<const GA_PrimitiveGroup*>(geo0Group), inStorageF, measureAttribName,
-////    GA_Defaults(-1.0), nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-//
-//static GA_Attribute*
-//addAttribMeshVolume(
-//    GA_Detail* const geo,
-//    //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-//    const UT_StringHolder& posAttribName = "P",
-//    const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-//    const GA_Storage storage = GA_STORE_INVALID,
-//    const UT_StringHolder& name = "volume",
-//    const GA_Defaults& defaults = GA_Defaults(-1.0),
-//    const UT_Options* const creation_args = nullptr,
-//    const GA_AttributeOptions* const attribute_options = nullptr,
-//    const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-//    const exint subscribeRatio = 16,
-//    const exint minGrainSize = 1024
-//)
-//{
-//    if (posAttribName == "P")
-//    {
-//        return addAttribMeshVolume(geo, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//    }
-//    else
-//    {
-//        const GA_AttributeOwner search_order[] = { GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
-//        const GA_Attribute* const attribPtr = geo->findAttribute(posAttribName, search_order, 2);
-//        //GA_AttributeOwner geo0AttribClassFinal;
-//
-//        if (!attribPtr)
-//            return nullptr;
-//        return addAttribMeshVolume(geo, attribPtr, geoPrimGroup, storage, name, defaults, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-//    }
-//}
-//
-
-
-
-
-//} // End of namespace GFE_Measure
 
 
 

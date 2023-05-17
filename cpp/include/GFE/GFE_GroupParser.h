@@ -684,7 +684,7 @@ protected:
 
 public:
     bool findGroup = true;
-    bool delGroup = false;
+    //bool delGroup = false;
 
     
 private:

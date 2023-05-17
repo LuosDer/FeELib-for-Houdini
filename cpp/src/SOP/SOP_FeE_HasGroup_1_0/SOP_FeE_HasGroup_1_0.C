@@ -2,8 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_HasGroup_1_0.h"
 
-#include <GFE/GFE_AttributeArray.h>
-
 
 #include "SOP_FeE_HasGroup_1_0.proto.h"
 
@@ -13,7 +11,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_Detail.h"
+
+#include "GFE/GFE_AttributeArray.h"
+
+
 
 using namespace SOP_FeE_HasGroup_1_0_Namespace;
 
@@ -178,17 +179,13 @@ SOP_FeE_HasGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     
-    GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
-
-
-    
-    const GA_Group* const groupPtr = outGFE0.findGroup(groupType, sopparms.getHasGroupName());
-    const bool hasGroup = bool(groupPtr);
+    const GA_Group* const groupPtr = outGeo0.getGroupTable(groupType)->find(sopparms.getHasGroupName());
+    const bool hasGroup = static_cast<bool>(groupPtr);
 
     GFE_AttributeArray attributeArray(outGeo0, cookparms);
     GA_Attribute* attribPtr = attributeArray.findOrCreateTuple(false, GA_ATTRIB_GLOBAL, GA_STORECLASS_INT, GA_STORE_INVALID, sopparms.getHasGroupAttribName());
 
-    attribPtr->getAIFTuple()->set(attribPtr, 0, int(hasGroup));
+    attribPtr->getAIFTuple()->set(attribPtr, 0, static_cast<int>(hasGroup));
     if (hasGroup)
         cookparms.select(*groupPtr);
 

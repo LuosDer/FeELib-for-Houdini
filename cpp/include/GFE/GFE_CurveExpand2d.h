@@ -45,35 +45,6 @@ public:
 
 
     void
-        setGroup(
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-        )
-    {
-        groupParser.setGroup(geoPrimGroup);
-    }
-
-    void
-        setGroup(
-            const UT_StringHolder& primGroupName = ""
-        )
-    {
-        groupParser.setPrimitiveGroup(primGroupName);
-    }
-
-
-    void
-        findOrCreateUV(
-            const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const bool detached = false,
-            const UT_StringHolder& name = "uv",
-            const int tuple_size = 3
-        )
-    {
-        getOutAttribArray().findOrCreateUV(uvAttribClass, storage, detached, name, tuple_size);
-    }
-
-    void
         setComputeParm(
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64

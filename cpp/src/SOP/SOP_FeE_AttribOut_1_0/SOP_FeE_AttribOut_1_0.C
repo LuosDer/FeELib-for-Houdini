@@ -37,7 +37,7 @@ static const char* theDsFile = R"THEDSFILE(
         parm {
             name    "attribClass#"
             cppname "AttribClass#"
-            label   "AttribClass#"
+            label   "Attrib Class"
             type    ordinal
             default { "point" }
             menu {
@@ -50,7 +50,7 @@ static const char* theDsFile = R"THEDSFILE(
         parm {
             name    "attrib#"
             cppname "Attrib#"
-            label   "Attrib#"
+            label   "Attrib"
             type    string
             default { "" }
             disablewhen "{ outAttrib# == 0 }"
@@ -58,7 +58,7 @@ static const char* theDsFile = R"THEDSFILE(
         parm {
             name    "newAttribName#"
             cppname "NewAttribName#"
-            label   "New Attrib Name#"
+            label   "New Attrib Name"
             type    string
             default { "" }
             disablewhen "{ outAttrib# == 1 }"
@@ -83,7 +83,7 @@ static const char* theDsFile = R"THEDSFILE(
         parm {
             name    "groupClass#"
             cppname "GroupClass#"
-            label   "GroupClass#"
+            label   "Group Class"
             type    ordinal
             default { "point" }
             menu {
@@ -104,7 +104,7 @@ static const char* theDsFile = R"THEDSFILE(
         parm {
             name    "newGroupName#"
             cppname "NewGroupName#"
-            label   "New Group Name#"
+            label   "New Group Name"
             type    string
             default { "" }
             disablewhen "{ outGroup# == 1 }"
@@ -123,8 +123,8 @@ SOP_FeE_AttribOut_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribOut_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("attrib"_sh,    &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("group"_sh,     &SOP_Node::primNamedGroupMenu);
+        templ.setChoiceListPtr("attrib#"_sh,    &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("group#"_sh,     &SOP_Node::groupNameMenu);
     }
     return templ.templates();
 }
@@ -311,6 +311,7 @@ SOP_FeE_AttribOut_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         }
     }
 
+    bool doVisualize = true;
     const UT_Array<SOP_FeE_AttribOut_1_0Parms::NumGroupOut>& numGroupOut = sopparms.getNumGroupOut();
     const size_t groupSize = numGroupOut.size();
     for (size_t i = 0; i < groupSize; i++)
@@ -321,6 +322,12 @@ SOP_FeE_AttribOut_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         if (groupOut.outGroup)
         {
             outGeo0.getGroupTable(groupClass)->renameGroup(groupOut.group, groupOut.newGroupName);
+            if (doVisualize)
+            {
+                const GA_Group* const outGroup = outGeo0.getGroupTable(groupClass)->find(groupOut.newGroupName);
+                cookparms.select(*outGroup);
+                doVisualize = false;
+            }
         }
         else
         {

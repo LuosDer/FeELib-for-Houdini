@@ -43,11 +43,9 @@ public:
         const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = ""
-    ) const
-    {
-        return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
-    }
+    )
+    { return getOutAttribArray().findOrCreateTuple(detached, owner,
+            storageClass, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
 
 private:
 
