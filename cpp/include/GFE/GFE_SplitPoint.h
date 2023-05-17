@@ -8,8 +8,10 @@
 
 //#include "GFE/GFE_SplitPoint.h"
 
-//#include "GA/GA_Types.h"
-#include <GA/GA_AIFCompare.h>
+
+
+
+#include "GA/GA_AIFCompare.h"
 #include "GA/GA_ElementWrangler.h"
 #include "GU/GU_Promote.h"
 
@@ -17,7 +19,6 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-//#include "GFE/GFE_Type.h"
 
 
 
@@ -95,10 +96,6 @@ public:
     //         cookparms->sopAddWarning(SOP_MESSAGE, "Couldn't find specified vertex or primitive attribute");
     //     }
     // }
-
-    virtual void bumpDataId() const override
-    {
-    }
 
 
 private:

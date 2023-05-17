@@ -303,7 +303,7 @@ SOP_FeE_PolyReduce2D_4_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     
 
 
-    GFE_PolyReduce2D polyReduce2D(outGeo0, &cookparms);
+    GFE_PolyReduce2D polyReduce2D(outGeo0, cookparms);
     polyReduce2D.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
     polyReduce2D.getOutGroupArray().findOrCreate(delPoint, GA_GROUP_POINT, sopparms.getPolyReduce2D_GroupName());
 

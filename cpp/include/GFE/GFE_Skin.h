@@ -8,36 +8,62 @@
 
 //#include "GFE/GFE_Skin.h"
 
-#include "GA/GA_Detail.h"
 #include "GEO/GEO_PrimPoly.h"
 
-//#include "GA/GA_Types.h"
-
-#include "GFE/GFE_AttributeValueCount.h"
-#include "GFE/GFE_AttributePromote.h"
+//#include "GFE/GFE_AttributeValueCount.h"
+//#include "GFE/GFE_AttributePromote.h"
 #include "GFE/GFE_ConvertLine.h"
 #include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_VertexNextEquiv.h"
-
-
-
-namespace GFE_Skin {
 
 
 
 
+#include "GFE/GFE_GeoFilter.h"
 
-static void
-skin(
-    GA_Detail* const geo,
-    const bool closed = false,
-    const bool excludeSharedEdge = false,
-    const GA_PrimitiveGroup* const endGroup = nullptr,
 
-    const GA_Storage storage = GA_STORE_INVALID,
-    const exint subscribeRatio = 32,
-    const exint minGrainSize = 1024
-)
+
+class GFE_Skin : public GFE_AttribFilter {
+
+
+public:
+    using GFE_AttribFilter::GFE_AttribFilter;
+
+
+    void
+        setComputeParm(
+            const bool closed = false,
+            const bool excludeSharedEdge = false,
+            const exint subscribeRatio = 32,
+            const exint minGrainSize = 1024
+        )
+    {
+        setHasComputed();
+        this->closed = closed;
+        this->excludeSharedEdge = excludeSharedEdge;
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
+
+    
+private:
+
+    virtual bool
+        computeCore() override
+    {
+        if (getOutAttribArray().isEmpty())
+            return false;
+
+        // if (groupParser.isEmpty())
+        //     return true;
+        
+        skin();
+
+        return true;
+    }
+
+
+    
+void skin()
 {
     const GA_Attribute* const connectivityPointAttrib = GFE_Connectivity_Namespace::addAttribConnectivityPoint(geo, nullptr, nullptr, storage);
     const GA_Attribute* const connectivityPrimAttrib = GFE_AttributePromote::attribPromote(geo, connectivityPointAttrib, GA_ATTRIB_PRIMITIVE);
@@ -54,6 +80,19 @@ skin(
     //GA_Offset val12 = connectivityPrim_h1.get(geo->primitiveOffset(2));
 
     const GA_Offset primoff_first = GFE_ConvertLine_Namespace::convertLine(geo, true, true, false, "", true, "", "", "", "", storage);
+        
+    GFE_ConvertLine convertLine(outGeo0, inGeo0, cookparms);
+
+    //convertLine.setCopyPrimitiveAttrib(sopparms.getCopyPrimAttrib(), sopparms.getCopyPrimAttribName());
+    //convertLine.setCopyVertexAttrib(sopparms.getCopyVertexAttrib(), sopparms.getCopyVertexAttribName());
+
+    convertLine.setComputeParm(isClosed, sopparms.getKeepSourcePrim());
+    //if (sopparms.getOutSrcPrim())
+    //    convertLine.createSrcPrimAttrib(false, GA_STORE_INVALID, sopparms.getSrcPrimAttribName());
+
+    convertLine.groupParser.setGroup(groupParser);
+
+    convertLine.compute();
     //GFE_ConvertLine::convertLine(geo, inGeo0, true);
 
     //const GA_ROHandleT<GA_Offset> connectivityPrim_h(connectivityPrimAttrib);
@@ -134,7 +173,26 @@ skin(
 }
 
 
+    
 
-} // End of namespace GFE_Skin
+
+public:
+    bool closed = false;
+    bool excludeSharedEdge = false;
+    
+    const GA_PrimitiveGroup* endGroup = nullptr;
+    
+
+private:
+    
+    
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
+
+
+}; // End of class GFE_Skin
+
+
+
 
 #endif

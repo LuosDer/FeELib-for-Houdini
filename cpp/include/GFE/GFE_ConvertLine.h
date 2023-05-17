@@ -47,13 +47,7 @@ public:
     {
     }
 
-
-    SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
-    { groupParser.setGroup(geoPrimGroup); }
     
-    SYS_FORCE_INLINE void setGroup(const UT_StringRef& primGroupName = "")
-    { groupParser.setPrimitiveGroup(primGroupName); }
-
     SYS_FORCE_INLINE void createSrcPrimAttrib(
         const bool detached = false,
         const GA_Storage storage = GA_STORE_INVALID,

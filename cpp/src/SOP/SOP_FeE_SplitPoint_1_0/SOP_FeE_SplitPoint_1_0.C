@@ -286,21 +286,21 @@ SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     
-    GFE_SplitPoint splitPoint(outGeo0, &cookparms);
+    GFE_SplitPoint splitPoint(outGeo0, cookparms);
     splitPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     
     //if (sopparms.getSplitByAttrib())
     //{
-        splitPoint.getOutAttribArray().oappends(GA_ATTRIB_PRIMITIVE, sopparms.getPrimSplitAttrib());
-        splitPoint.getOutAttribArray().oappends(GA_ATTRIB_VERTEX, sopparms.getVertexSplitAttrib());
-        splitPoint.getOutGroupArray().oappends(GA_GROUP_PRIMITIVE, sopparms.getPrimSplitGroup());
-        splitPoint.getOutGroupArray().oappends(GA_GROUP_VERTEX, sopparms.getVertexSplitGroup());
+        splitPoint.getOutAttribArray().oappendPrims(sopparms.getPrimSplitAttrib());
+        splitPoint.getOutAttribArray().oappendVertices(sopparms.getVertexSplitAttrib());
+        splitPoint.getOutGroupArray().oappendPrims(sopparms.getPrimSplitGroup());
+        splitPoint.getOutGroupArray().oappendVertices(sopparms.getVertexSplitGroup());
     
         splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
         splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();
     //}
     
-    //splitPoint.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    //splitPoint.setComputeParm(sopparms.getSplitByAttribTol(), sopparms.getPromoteSplitAttrib(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     splitPoint.computeAndBumpDataId();
 

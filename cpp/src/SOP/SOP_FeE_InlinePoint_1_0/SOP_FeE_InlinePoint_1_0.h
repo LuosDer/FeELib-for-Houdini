@@ -16,6 +16,7 @@ public:
         OP_Node* newOp = new SOP_FeE_InlinePoint_1_0(net, name, op);
         //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
         newOp->setNodeShape("trapezoid_down");
+        newOp->setHighlight(true);
         //newOp->setUserData("nodeshape", "tilted", false);
         return newOp;
     }

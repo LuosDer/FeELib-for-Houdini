@@ -124,10 +124,10 @@ public:
 
     ~GFE_GroupParser()
     {
-        if (delGroup && geoNonconst && geoGroup && !geoGroup->isDetached())
-        {
-            geoNonconst->destroyGroup(geoNonconst->getGroupTable(geoGroup->classType())->find(geoGroup->getName()));
-        }
+        // if (delGroup && geoNonconst && geoGroup && !geoGroup->isDetached())
+        // {
+        //     geoNonconst->destroyGroup(geoNonconst->getGroupTable(geoGroup->classType())->find(geoGroup->getName()));
+        // }
     }
 
     void copy(const GFE_GroupParser& groupParser)

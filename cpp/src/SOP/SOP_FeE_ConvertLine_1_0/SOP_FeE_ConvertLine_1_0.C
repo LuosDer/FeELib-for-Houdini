@@ -464,7 +464,7 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (sopparms.getOutSrcPrim())
         convertLine.createSrcPrimAttrib(false, GA_STORE_INVALID, sopparms.getSrcPrimAttribName());
 
-    convertLine.setGroup(sopparms.getPrimGroup());
+    convertLine.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
 
     convertLine.computeAndBumpDataIdsForAddOrRemove();
 

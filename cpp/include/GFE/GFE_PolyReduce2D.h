@@ -12,6 +12,7 @@
 
 #define GFE_PolyReduce2D_CoverSourcePoly 0
 
+
 enum class GFE_PolyReduce2D_GeoPropertyType
 {
     ANGLE,
@@ -23,17 +24,14 @@ enum class GFE_PolyReduce2D_GeoPropertyType
 
 //#include "GFE/GFE_PolyReduce2D.h"
 
-//#include "GA/GA_Detail.h"
-#include "GA/GA_Detail.h"
 
-
-#include "GEO/GEO_SplitPoints.h"
-#include "GFE/GFE_PrimInlinePoint.h"
+//#include "GEO/GEO_SplitPoints.h"
+#include "GFE/GFE_InlinePoint.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
-#include "GFE/GFE_Array.h"
-#include "GFE/GFE_Adjacency.h"
+//#include "GFE/GFE_Array.h"
+#include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_Math.h"
 
 
@@ -45,14 +43,14 @@ public:
 
 
     GFE_PolyReduce2D(
-        GA_Detail* const geo,
+        GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , primInlinePoint(geo, cookparms)
+        , inlinePoint(geo, cookparms)
     {
-        primInlinePoint.getOutGroupArray().findOrCreate(GA_GROUP_POINT, true);
-        primInlinePoint.setComputeParm(1e-05, false, true);
+        inlinePoint.getOutGroupArray().findOrCreate(GA_GROUP_POINT, true);
+        inlinePoint.setComputeParm(1e-05, false, true);
     }
 
     ~GFE_PolyReduce2D()
@@ -88,7 +86,7 @@ public:
     {
         setHasComputed();
         this->delInLinePoint = delInLinePoint;
-        primInlinePoint.threshold_inlineCosRadians = threshold_inlineCosRadians;
+        inlinePoint.threshold_inlineCosRadians = threshold_inlineCosRadians;
 
         this->limitByGeoProperty = limitByGeoProperty;
         this->geoPropertyType = geoPropertyType;
@@ -137,14 +135,17 @@ private:
     virtual bool
         computeCore() override
     {
+        if (getOutGroupArray().isEmpty())
+            return false;
+
         if (groupParser.isEmpty())
             return true;
 
         if (delInLinePoint)
         {
-            primInlinePoint.groupParser.copy(groupParser);
-            primInlinePoint.getOutGroupArray().findOrCreate(GA_GROUP_POINT, true);
-            primInlinePoint.compute();
+            inlinePoint.groupParser.setGroup(groupParser);
+            inlinePoint.getOutGroupArray().findOrCreate(true, GA_GROUP_POINT);
+            inlinePoint.compute();
         }
 
         const size_t len = getOutGroupArray().size();
@@ -155,15 +156,12 @@ private:
                 UT_ASSERT_MSG(0, "not correct group type");
                 continue;
             }
-            GA_PointGroup* const ptr = UTverify_cast<GA_PointGroup*>(getOutGroupArray()[i]);
+            polyReduce2DPtGroup = getOutGroupArray().getPointGroup(i);
             switch (geo->getPreferredPrecision())
             {
-            case GA_PRECISION_64:
-                polyReduce2D<fpreal64>(ptr);
-                break;
             default:
-                polyReduce2D<fpreal32>(ptr);
-                break;
+            case GA_PRECISION_64: polyReduce2D<fpreal64>(); break;
+            case GA_PRECISION_32: polyReduce2D<fpreal32>(); break;
             }
         }
         return true;
@@ -174,10 +172,7 @@ private:
 
     //polyReduce2D(geo, groupName, reverseGroup, delGroup);
     template<typename FLOAT_T>
-    void
-        polyReduce2D(
-            GA_PointGroup* const polyReduce2DPtGroup
-        )
+    void polyReduce2D()
     {
         UT_ASSERT_P(polyReduce2DPtGroup);
 
@@ -192,9 +187,9 @@ private:
 
 #if GFE_PolyReduce2D_UseDetachedAttrib_ForRelease
         const GA_AttributeUPtr weightUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_POINT, inStorageF, 1);
-        const GA_AttributeUPtr ndirUPtr = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_POINT, inStorageF, 3);
+        const GA_AttributeUPtr ndirUPtr   = geo->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_POINT, inStorageF, 3);
         GA_Attribute* const weightPtr = weightUPtr.get();
-        GA_Attribute* const ndirPtr = ndirUPtr.get();
+        GA_Attribute* const ndirPtr   = ndirUPtr.get();
 #else
         GA_Attribute* const weightPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, "weight", inStorageF, 1, GA_Defaults(0));
         GA_Attribute* const ndirPtr = geo->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, "ndir", inStorageF, 3, GA_Defaults(0));
@@ -203,16 +198,18 @@ private:
         const GA_RWHandleT<FLOAT_T> weight_h(weightPtr);
         const GA_RWHandleT<UT_Vector3T<FLOAT_T>> ndir_h(ndirPtr);
 
-
-        const GA_Attribute* const nebsAttribPtr = GFE_Adjacency::addAttribPointPointEdge(geo);
+        
+        GFE_MeshTopology meshTopology(geo, cookparms);
+        meshTopology.groupParser.setGroup(groupParser);
+        const GA_Attribute* const nebsAttribPtr = meshTopology.setPointPointEdge(false);
+        meshTopology.compute();
+        
         const GA_ROHandleT<UT_ValArray<GA_Offset>> nebsAttrib_h(nebsAttribPtr);
-
 
         const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(geo->getP());
 
-        const GA_SplittableRange geoPointSplittableRange(groupParser.getPointRange());
 
-        UTparallelFor(geoPointSplittableRange, [this,
+        UTparallelFor(groupParser.getPointSplittableRange(), [this,
             &pos_h, &ndir_h, &weight_h, &nebsAttrib_h](const GA_SplittableRange& r)
         {
             FLOAT_T weight;
@@ -227,7 +224,7 @@ private:
                     pos = pos_h.get(elemoff);
                     nebsAttrib_h.get(elemoff, nebsArr);
 
-                    UT_ASSERT_MSG(nebsArr.size() <= 2, "not support neighbour count > 2");
+                    // UT_ASSERT_MSG(nebsArr.size() <= 2, "not support neighbour count > 2");
 
                     switch (nebsArr.size())
                     {
@@ -310,12 +307,12 @@ private:
 
 
         const GA_Topology& topo = geo->getTopology();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology& vtxPointRef = *topo.getPointRef();
 
 
 
         const GA_SplittableRange geoPrimSplittableRange(groupParser.getPrimitiveRange());
-        UTparallelFor(geoPrimSplittableRange, [this, vtxPointRef, polyReduce2DPtGroup, fullReducePrimGroup,
+        UTparallelFor(geoPrimSplittableRange, [this, &vtxPointRef, fullReducePrimGroup,
             &pos_h, &ndir_h, &weight_h](const GA_SplittableRange& r)
         {
             GA_OffsetListRef vertices;
@@ -356,78 +353,77 @@ private:
 
                     bool isClosed;
                     {
-                        GA_Offset primpoint0 = vtxPointRef->getLink(vertices[0]);
-                        GA_Offset primpoint1 = vtxPointRef->getLink(vertices[lastIndex]);
+                        const GA_Offset primpoint0 = vtxPointRef.getLink(vertices[0]);
+                        const GA_Offset primpoint1 = vtxPointRef.getLink(vertices[lastIndex]);
                         // isClosed = geo->getPrimitiveClosedFlag(elemoff) || primpoint0 == primpoint1;
-                        if (primpoint0 == primpoint1) {
+                        if (primpoint0 == primpoint1)
+                        {
                             --lastIndex;
-                            isClosed = 1;
+                            isClosed = true;
                         }
-                        else if (geo->getPrimitiveClosedFlag(elemoff)) {
-                            isClosed = 1;
-                        }
-                        else {
-                            isClosed = 0;
-                        }
+                        else if (geo->getPrimitiveClosedFlag(elemoff))
+                            isClosed = true;
+                        else
+                            isClosed = false;
                     }
 
-                    GA_Size primpointscount = lastIndex + 1;
-                    GA_Size lastIndex_prev = lastIndex - 1;
+                    GA_Size primPointsCount = lastIndex + 1;
+                    const GA_Size lastIndex_prev = lastIndex - 1;
 
 
 
                     //////////////////// initial ////////////////////////
 
 #if GFE_PolyReduce2D_UseStd
-                    //if (idx_prev.capacity() < primpointscount)
+                    //if (idx_prev.capacity() < primPointsCount)
                     //{
-                    //    idx_prev.setCapacity(primpointscount);
-                    //    idx_next.setCapacity(primpointscount);
-                    //    scaleIdx_prev.setCapacity(primpointscount);
-                    //    scaleIdx_next.setCapacity(primpointscount);
-                    //    poses.setCapacity(primpointscount);
-                    //    dirs.setCapacity(primpointscount);
-                    //    weights.setCapacity(primpointscount);
-                    //    argsort.setCapacity(primpointscount);
+                    //    idx_prev.setCapacity(primPointsCount);
+                    //    idx_next.setCapacity(primPointsCount);
+                    //    scaleIdx_prev.setCapacity(primPointsCount);
+                    //    scaleIdx_next.setCapacity(primPointsCount);
+                    //    poses.setCapacity(primPointsCount);
+                    //    dirs.setCapacity(primPointsCount);
+                    //    weights.setCapacity(primPointsCount);
+                    //    argsort.setCapacity(primPointsCount);
                     //}
-                    if (idx_prev.size() < primpointscount)
+                    if (idx_prev.size() < primPointsCount)
                     {
-                        idx_prev.resize(primpointscount);
-                        idx_next.resize(primpointscount);
-                        scaleIdx_prev.resize(primpointscount);
-                        scaleIdx_next.resize(primpointscount);
-                        poses.setSize(primpointscount);
-                        dirs.setSize(primpointscount);
-                        weights.resize(primpointscount);
-                        argsort.resize(primpointscount);
+                        idx_prev.resize(primPointsCount);
+                        idx_next.resize(primPointsCount);
+                        scaleIdx_prev.resize(primPointsCount);
+                        scaleIdx_next.resize(primPointsCount);
+                        poses.setSize(primPointsCount);
+                        dirs.setSize(primPointsCount);
+                        weights.resize(primPointsCount);
+                        argsort.resize(primPointsCount);
                     }
 #else
-                    //if (idx_prev.capacity() < primpointscount)
+                    //if (idx_prev.capacity() < primPointsCount)
                     //{
-                    //    idx_prev.setCapacity(primpointscount);
-                    //    idx_next.setCapacity(primpointscount);
-                    //    scaleIdx_prev.setCapacity(primpointscount);
-                    //    scaleIdx_next.setCapacity(primpointscount);
-                    //    poses.setCapacity(primpointscount);
-                    //    dirs.setCapacity(primpointscount);
-                    //    weights.setCapacity(primpointscount);
-                    //    argsort.setCapacity(primpointscount);
+                    //    idx_prev.setCapacity(primPointsCount);
+                    //    idx_next.setCapacity(primPointsCount);
+                    //    scaleIdx_prev.setCapacity(primPointsCount);
+                    //    scaleIdx_next.setCapacity(primPointsCount);
+                    //    poses.setCapacity(primPointsCount);
+                    //    dirs.setCapacity(primPointsCount);
+                    //    weights.setCapacity(primPointsCount);
+                    //    argsort.setCapacity(primPointsCount);
                     //}
-                    if (idx_prev.size() < primpointscount)
+                    if (idx_prev.size() < primPointsCount)
                     {
-                        idx_prev.setSize(primpointscount);
-                        idx_next.setSize(primpointscount);
-                        scaleIdx_prev.setSize(primpointscount);
-                        scaleIdx_next.setSize(primpointscount);
-                        poses.setSize(primpointscount);
-                        dirs.setSize(primpointscount);
-                        weights.setSize(primpointscount);
-                        argsort.setSize(primpointscount);
+                        idx_prev.setSize(primPointsCount);
+                        idx_next.setSize(primPointsCount);
+                        scaleIdx_prev.setSize(primPointsCount);
+                        scaleIdx_next.setSize(primPointsCount);
+                        poses.setSize(primPointsCount);
+                        dirs.setSize(primPointsCount);
+                        weights.setSize(primPointsCount);
+                        argsort.setSize(primPointsCount);
                     }
 #endif
 
 
-                    for (GA_Size vtxpnum = 0; vtxpnum < primpointscount; ++vtxpnum) {
+                    for (GA_Size vtxpnum = 0; vtxpnum < primPointsCount; ++vtxpnum) {
                         GA_Offset primpoint = vtxPointRef->getLink(vertices[vtxpnum]);
 
                         poses[vtxpnum] = pos_h.get(primpoint);
@@ -435,24 +431,23 @@ private:
                         weights[vtxpnum] = weight_h.get(primpoint);
                     }
 
-                    if (geo->getPrimitiveClosedFlag(elemoff)) {
+                    if (geo->getPrimitiveClosedFlag(elemoff))
+                    {
                         dirs[lastIndex] = poses[lastIndex_prev] - poses[lastIndex];
-                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE) {
+                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE)
                             dirs[lastIndex].normalize();
-                        }
                     }
-                    else if (isClosed) {
+                    else if (isClosed)
+                    {
                         dirs[0] = poses[lastIndex] - poses[0];
-                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE) {
+                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE)
                             dirs[0].normalize();
-                        }
                     }
-                    else {
+                    else
                         dirs[0] *= -1;
-                    }
 
 
-                    const GA_Size NONFoundINT = primpointscount + 1;// the name can be replace by lastIndex (not value)
+                    const GA_Size NONFoundINT = primPointsCount + 1;// the name can be replace by lastIndex (not value)
 
 
                     // cout(isClosed);
@@ -487,7 +482,8 @@ private:
                         scaleIdx_prev[minidx] = NONFoundINT;
                         scaleIdx_next[minidx] = argsort[1];
 
-                        for (GA_Size i = 1, i0 = 0, i1 = 2; i < lastIndex; ++i, ++i0, ++i1) {
+                        for (GA_Size i = 1, i0 = 0, i1 = 2; i < lastIndex; ++i, ++i0, ++i1)
+                        {
                             idx_prev[i] = i0;
                             idx_next[i] = i1;
 
@@ -497,13 +493,15 @@ private:
                     }
 
 
-                    //if (chi("../blastGroup") && primpointscount < 2) {
+                    //if (chi("../blastGroup") && primPointsCount < 2)
+                    //{
                     //    removeprim(0, @primnum, 1);
                     //    continue;
                     //}
 
 
-                    if (primpointscount < 2) {
+                    if (primPointsCount < 2)
+                    {
                         fullReducePrimGroup->setElement(elemoff, true);
                         continue;
                     }
@@ -511,8 +509,9 @@ private:
 
 
                     // GA_Size loopCount = 0;
-                    // for (GA_Size i = 0; i < @Frame-1 && primpointscount > 0; ++i) {
-                    while (primpointscount > 2) {
+                    // for (GA_Size i = 0; i < @Frame-1 && primPointsCount > 0; ++i) {
+                    while (primPointsCount > 2)
+                    {
                         // ++loopCount;
 
                         if (limitByGeoProperty)
@@ -522,25 +521,29 @@ private:
                             switch (geoPropertyType)
                             {
                             case GFE_PolyReduce2D_GeoPropertyType::ANGLE:
-                                if (weights[minidx] >= threshold_maxCosRadians) {
+                                if (weights[minidx] >= threshold_maxCosRadians)
+                                    {
                                     flag = true;
                                     break;
                                 }
                                 break;
                             case GFE_PolyReduce2D_GeoPropertyType::DIST:
-                                if (weights[minidx] >= threshold_maxDist) {
+                                if (weights[minidx] >= threshold_maxDist)
+                                {
                                     flag = true;
                                     break;
                                 }
                                 break;
                             case GFE_PolyReduce2D_GeoPropertyType::ROC:
 #if GFE_PolyReduce2D_ReverseROC
-                                if (weights[minidx] >= threshold_maxDist) {
+                                if (weights[minidx] >= threshold_maxDist)
+                                {
                                     flag = true;
                                     break;
                                 }
 #else
-                                if (weights[minidx] <= threshold_maxDist) {
+                                if (weights[minidx] <= threshold_maxDist)
+                                {
                                     flag = true;
                                     break;
                                 }
@@ -550,12 +553,13 @@ private:
                                 break;
                         }
 
-                        if (limitMinPoint && primpointscount <= minPoint) {
+                        if (limitMinPoint && primPointsCount <= minPoint)
+                        {
                             break;
                         }
 
-                        GA_Size previdx = idx_prev[minidx];
-                        GA_Size nextidx = idx_next[minidx];
+                        const GA_Size previdx = idx_prev[minidx];
+                        const GA_Size nextidx = idx_next[minidx];
                         if (nextidx != NONFoundINT) {
                             // if ( i == @Frame-1 ) {
                             //     printf("\n %d %d", previdx, nextidx);
@@ -578,16 +582,17 @@ private:
                                 break;
                             }
 
-                            GA_Size next_nextidx = idx_next[nextidx];
-                            if (next_nextidx != NONFoundINT) {
+                            const GA_Size next_nextidx = idx_next[nextidx];
+                            if (next_nextidx != NONFoundINT)
+                            {
 
                                 FLOAT_T scale_min;
                                 switch (geoPropertyType)
                                 {
-                                case GFE_PolyReduce2D_GeoPropertyType::ANGLE: scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                         break;
+                                case GFE_PolyReduce2D_GeoPropertyType::ANGLE: scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                      break;
                                 case GFE_PolyReduce2D_GeoPropertyType::DIST:  scale_min = GFE_Math::distToLine(dirs[nextidx], dirs[next_nextidx], poses[previdx], poses[next_nextidx]); break;
                                 case GFE_PolyReduce2D_GeoPropertyType::ROC:   scale_min = GFE_Math::circleRadius3Point(poses[previdx], poses[nextidx], poses[next_nextidx]);            break;
-                                default:                 scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                         break;
+                                default:                                      scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                      break;
                                 }
 
                                 weights[nextidx] = scale_min;
@@ -599,7 +604,8 @@ private:
 
                                 // GA_Size j = 0;
                                 prev = minidx;
-                                for (next = scaleIdx_next[prev]; weights[next] < scale_min; next = scaleIdx_next[prev]) {
+                                for (next = scaleIdx_next[prev]; weights[next] < scale_min; next = scaleIdx_next[prev])
+                                {
                                     if (next == NONFoundINT) break;
                                     prev = next;
                                     // if ( j < prev ) ++j;
@@ -611,9 +617,11 @@ private:
                             }
                         }
 
-                        if (previdx != NONFoundINT) {
-                            GA_Size next_nextidx = idx_prev[previdx];
-                            if (next_nextidx != NONFoundINT) {
+                        if (previdx != NONFoundINT)
+                        {
+                            const GA_Size next_nextidx = idx_prev[previdx];
+                            if (next_nextidx != NONFoundINT)
+                            {
                                 FLOAT_T scale_min;
 
                                 switch (geoPropertyType)
@@ -633,7 +641,8 @@ private:
 
                                 // GA_Size j = 0;
                                 prev = minidx;
-                                for (next = scaleIdx_next[prev]; weights[next] < scale_min; next = scaleIdx_next[prev]) {
+                                for (next = scaleIdx_next[prev]; weights[next] < scale_min; next = scaleIdx_next[prev])
+                                {
                                     if (next == NONFoundINT) break;
                                     prev = next;
                                     // if ( j < prev ) ++j;
@@ -647,25 +656,24 @@ private:
                         idx_prev[nextidx] = previdx;
                         idx_next[previdx] = nextidx;
 
-                        --primpointscount;
+                        --primPointsCount;
 
                         minidx = scaleIdx_next[minidx];
                     }
 
 
-                    if (primpointscount < 2) {
+                    if (primPointsCount < 2)
                         fullReducePrimGroup->setElement(elemoff, true);
-                    }
 
                     if (coverSourcePoly)
                     {
                         // GA_Size primvertices[];
-                        // resize(primvertices, primpointscount);
-                        // resize(i[]@primpoints_out, primpointscount);
+                        // resize(primvertices, primPointsCount);
+                        // resize(i[]@primpoints_out, primPointsCount);
 
-                        GA_Size i = 0;
-                        for (GA_Size k = minidx; k != NONFoundINT; k = scaleIdx_next[k]) {
-                            GA_Offset primpoint = vtxPointRef->getLink(vertices[k]);
+                        for (GA_Size k = minidx; k != NONFoundINT; k = scaleIdx_next[k])
+                        {
+                            const GA_Offset primpoint = vtxPointRef->getLink(vertices[k]);
                             polyReduce2DPtGroup->setElement(primpoint, true);
 
 
@@ -695,8 +703,9 @@ private:
                     }
                     else
                     {
-                        for (GA_Size k = minidx; k != NONFoundINT; k = scaleIdx_next[k]) {
-                            GA_Offset primpoint = vtxPointRef->getLink(vertices[k]);
+                        for (GA_Size k = minidx; k != NONFoundINT; k = scaleIdx_next[k])
+                        {
+                            const GA_Offset primpoint = vtxPointRef->getLink(vertices[k]);
                             polyReduce2DPtGroup->setElement(primpoint, true);
                             //ndir_h.set(primpoint, dirs[k]);
                             //weight_h.set(primpoint, weights[k]);
@@ -730,13 +739,13 @@ private:
                 polyReduce2DPtGroup->toggleAll(geo->getNumPoints());
             }
 #else
-            if (reverseGroup ^ delPoint)
-            {
+            //if (reverseGroup ^ delPoint)
+            if (reverseGroup && !delPoint)
                 polyReduce2DPtGroup->toggleAll(geo->getNumPoints());
-            }
+        
             if (delPoint)
             {
-                geo->destroyPointOffsets(GA_Range(geo->getPointMap(), polyReduce2DPtGroup),
+                geo->destroyPointOffsets(GA_Range(geo->getPointMap(), polyReduce2DPtGroup, reverseGroup),
                     GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
             }
 #endif
@@ -774,10 +783,10 @@ private:
                     dist_next.clear();
 
                     up = static_cast<GEO_Primitive*>(geo->getPrimitive(primoff))->computeNormal();
-                    //idx_prev.resize(primpointscount);
-                    //idx_next.resize(primpointscount);
-                    //dist_prev.resize(primpointscount);
-                    //dist_next.resize(primpointscount);
+                    //idx_prev.resize(primPointsCount);
+                    //idx_next.resize(primPointsCount);
+                    //dist_prev.resize(primPointsCount);
+                    //dist_next.resize(primPointsCount);
 
                     vertices = geo->getPrimitiveVertexList(primoff);
                     const GA_Size numvtx = vertices.size();
@@ -880,7 +889,7 @@ private:
 
 
 public:
-    GFE_PrimInlinePoint primInlinePoint;
+    GFE_InlinePoint inlinePoint;
 
     bool delInLinePoint = true;
 
@@ -897,213 +906,26 @@ public:
     bool delPoint = false;
 
 private:
+
+    GA_PointGroup* polyReduce2DPtGroup;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 16;
 
 
+
+#undef GFE_PolyReduce2D_ReverseROC
+#undef GFE_PolyReduce2D_UseStd
+#undef GFE_PolyReduce2D_UseDetachedAttrib_ForRelease
+
+#undef GFE_PolyReduce2D_CoverSourcePoly
+
+
+    
 }; // End of class GFE_PolyReduce2D
 
 
 
-
-//
-//
-//namespace GFE_PolyReduce2D_Namespace {
-//
-//
-//    //polyReduce2D(geo, groupName, reverseGroup, delGroup);
-//    static void
-//        polyReduce2D(
-//            GA_Detail* const geo,
-//            const GA_PrimitiveGroup* const geoGroup,
-//            GA_PointGroup* const polyReduce2DPtGroup,
-//
-//            const bool delInLinePoint = true,
-//            const fpreal threshold_inlineAngleRadians = 1e-05,
-//
-//            const bool limitByGeoProperty = true,
-//            const PolyReduce2D_GeoPropertyType geoPropertyType = GFE_PolyReduce2D_GeoPropertyType::ANGLE,
-//            fpreal threshold_maxAngle = GFE_Math::radians(150),
-//            const fpreal threshold_maxDist = 1e-04,
-//
-//            const bool limitMinPoint = false,
-//            const exint minPoint = 10,
-//
-//            const bool coverSourcePoly = false,
-//            const bool reverseGroup = false,
-//            const bool delPoint = false,
-//            const exint subscribeRatio = 64,
-//            const exint minGrainSize = 16
-//        )
-//    {
-//        polyReduce2D(geo, geoGroup, polyReduce2DPtGroup,
-//            delInLinePoint, threshold_inlineAngleRadians,
-//            limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
-//            limitMinPoint, minPoint,
-//            coverSourcePoly, reverseGroup,
-//            subscribeRatio, minGrainSize);
-//
-//        if (delPoint)
-//        {
-//            geo->destroyPointOffsets(GA_Range(geo->getPointMap(), polyReduce2DPtGroup, true), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
-//        }
-//    }
-//
-//
-//    //polyReduce2D(geo, groupName, reverseGroup, delGroup);
-//    static GA_PointGroup*
-//        polyReduce2D(
-//            GA_Detail* const geo,
-//            const GA_PrimitiveGroup* const geoGroup,
-//            const UT_StringHolder& outGroupName,
-//
-//            const bool delInLinePoint = true,
-//            const fpreal threshold_inlineAngleRadians = 1e-05,
-//
-//            const bool limitByGeoProperty = true,
-//            const PolyReduce2D_GeoPropertyType geoPropertyType = GFE_PolyReduce2D_GeoPropertyType::ANGLE,
-//            fpreal threshold_maxAngle = GFE_Math::radians(150),
-//            const fpreal threshold_maxDist = 1e-04,
-//
-//            const bool limitMinPoint = false,
-//            const exint minPoint = 10,
-//
-//            const bool coverSourcePoly = false,
-//            const bool reverseGroup = false,
-//            const bool delPoint = false,
-//            const exint subscribeRatio = 64,
-//            const exint minGrainSize = 16
-//        )
-//    {
-//        GEOsplitPoints(static_cast<GEO_Detail*>(geo), geoGroup);
-//
-//#if 1
-//        if (delInLinePoint)
-//        {
-//            GFE_PrimInlinePoint::delPrimInlinePoint_fast(geo, geoGroup,
-//                threshold_inlineAngleRadians, reverseGroup);
-//        }
-//#else
-//        GA_PointGroupUPtr inlinePtGroupUPtr;
-//        GA_PointGroup* inlinePtGroup = nullptr;
-//        if (delInLinePoint)
-//        {
-//            if (delPoint)
-//            {
-//                GFE_PrimInlinePoint::delPrimInlinePoint_fast(geo, geoGroup,
-//                    threshold_inlineAngleRadians, reverseGroup);
-//            }
-//            else
-//            {
-//                inlinePtGroupUPtr = GFE_PrimInlinePoint::groupDetachedPrimInlinePoint_fast(geo, geoGroup,
-//                    threshold_inlineAngleRadians, reverseGroup);
-//                inlinePtGroup = inlinePtGroupUPtr.get();
-//            }
-//        }
-//#endif
-//
-//        GA_PointGroupUPtr polyReduce2DPtGroupUPtr;
-//        GA_PointGroup* polyReduce2DPtGroup = nullptr;
-//        if (delPoint)
-//        {
-//            polyReduce2DPtGroupUPtr = geo->createDetachedPointGroup();
-//            polyReduce2DPtGroup = polyReduce2DPtGroupUPtr.get();
-//        }
-//        else
-//        {
-//            if (outGroupName.length() == 0 || !outGroupName.isstring())
-//                return nullptr;
-//            polyReduce2DPtGroup = static_cast<GA_PointGroup*>(geo->pointGroups().newGroup(outGroupName));
-//        }
-//
-//        polyReduce2D(geo, geoGroup, polyReduce2DPtGroup,
-//            delInLinePoint, threshold_inlineAngleRadians,
-//            limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
-//            limitMinPoint, minPoint,
-//            coverSourcePoly, reverseGroup, delPoint,
-//            subscribeRatio, minGrainSize);
-//
-//        if (delPoint)
-//        {
-//            return nullptr;
-//        }
-//
-//        return polyReduce2DPtGroup;
-//    }
-//
-//
-//
-//    //polyReduce2D(geo, groupName, reverseGroup, delGroup);
-//    //static GA_PointGroup*
-//    //polyReduce2D(
-//    //    GA_Detail* const geo,
-//    //    const GA_PrimitiveGroup* const geoGroup,
-//    //    const UT_StringHolder& outGroupName,
-//    //
-//    //    const PolyReduce2D_GeoPropertyType geoPropertyType = GFE_PolyReduce2D_GeoPropertyType::ANGLE,
-//    //    const bool delInLinePoint = true,
-//    //
-//    //    const fpreal threshold_inlineAngleRadians = 1e-05,
-//    //    const bool reverseGroup = false,
-//    //    const bool delPoint = false,
-//    //    const bool coverSourcePoly = false,
-//    //    const exint subscribeRatio = 64,
-//    //    const exint minGrainSize = 16
-//    //)
-//    //{
-//    //    polyReduce2D(geo, geoGroup, outGroupName,
-//    //        geoPropertyType, delInLinePoint, threshold_inlineAngleRadians,
-//    //        reverseGroup, delPoint, coverSourcePoly,
-//    //        subscribeRatio, minGrainSize);
-//    //}
-//
-//
-//    //polyReduce2D(geo, groupName, reverseGroup, delGroup);
-//    static GA_PointGroup*
-//        polyReduce2D(
-//            const SOP_NodeVerb::CookParms& cookparms,
-//            GA_Detail* const geo,
-//            const UT_StringHolder& inGroupName,
-//            const UT_StringHolder& outGroupName,
-//
-//            const bool delInLinePoint = true,
-//            const fpreal threshold_inlineAngleRadians = 1e-05,
-//
-//            const bool limitByGeoProperty = true,
-//            const PolyReduce2D_GeoPropertyType geoPropertyType = GFE_PolyReduce2D_GeoPropertyType::ANGLE,
-//            fpreal threshold_maxAngle = GFE_Math::radians(150),
-//            const fpreal threshold_maxDist = 1e-04,
-//
-//            const bool limitMinPoint = false,
-//            const exint minPoint = 10,
-//
-//            const bool coverSourcePoly = false,
-//            const bool reverseGroup = false,
-//            const bool delPoint = false,
-//            const exint subscribeRatio = 64,
-//            const exint minGrainSize = 16
-//        )
-//    {
-//        GOP_Manager gop;
-//        const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, inGroupName, gop);
-//        if (geoPrimGroup && geoPrimGroup->isEmpty())
-//            return nullptr;
-//
-//        GA_PointGroup* const polyReduce2DPtGroup = polyReduce2D(geo, geoPrimGroup, outGroupName,
-//            delInLinePoint, threshold_inlineAngleRadians,
-//            limitByGeoProperty, geoPropertyType, threshold_maxAngle, threshold_maxDist,
-//            limitMinPoint, minPoint,
-//            coverSourcePoly, reverseGroup, delPoint,
-//            subscribeRatio, minGrainSize);
-//
-//        return polyReduce2DPtGroup;
-//    }
-//
-//
-//
-//} // End of namespace GFE_PolyReduce2D
-//
-//
 
 
 

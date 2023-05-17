@@ -205,34 +205,27 @@ SOP_FeE_InlinePoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
     outGeo0.replaceWith(inGeo0);
 
 
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    GFE_InlinePoint inlinePoint(outGeo0, cookparms);
-    inlinePoint.setComputeParm(1e-05, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    inlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
-    inlinePoint.reverseOutGroup = sopparms.getReverseGroup();
-    inlinePoint.doDelOutGroup = sopparms.getDelInlinePoint();
+    GFE_InlinePoint primInlinePoint(outGeo0, cookparms);
+    primInlinePoint.setComputeParm(1e-05, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
+    primInlinePoint.reverseOutGroup = sopparms.getReverseGroup();
+    primInlinePoint.doDelGroupElement = sopparms.getDelInlinePoint();
+    
 
+    primInlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    inlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
+    primInlinePoint.findOrCreateGroup(GA_GROUP_POINT, sopparms.getPrimInlinePoint_groupName());
 
-    inlinePoint.findOrCreateOutGroup(GA_GROUP_POINT, sopparms.getPrimInlinePoint_groupName());
-
-    inlinePoint.computeAndBumpDataId();
-    inlinePoint.visualizeOutGroup();
+    primInlinePoint.computeAndBumpDataId();
+    primInlinePoint.visualizeOutGroup();
 
 
 }
 
-
-
-namespace SOP_FeE_InlinePoint_1_0_Namespace {
-
-} // End SOP_FeE_InlinePoint_1_0_Namespace namespace

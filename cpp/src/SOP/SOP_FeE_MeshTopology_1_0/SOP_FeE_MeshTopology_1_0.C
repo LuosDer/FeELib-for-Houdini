@@ -517,6 +517,13 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
 
 #if 1
+    /*
+    GFE_MeshTopology meshTopology(geo, cookparms);
+    meshTopology.groupParser.setGroup(groupParser);
+    meshTopology.setVertexPrimIndex(false, vertexPrimIndexAttribName);
+    meshTopology.compute();
+    */
+    
     GFE_MeshTopology meshTopology(outGeo0, &cookparms);
     meshTopology.setKernel(sopparms.getKernel());
 
