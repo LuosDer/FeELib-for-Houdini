@@ -169,6 +169,14 @@ public:
     { return UT_StringHolder(getNextCore().c_str()); }
 
     template<>
+    SYS_FORCE_INLINE const char* getNext<const char*>()
+    { return getNextCore().c_str(); }
+
+    template<>
+    SYS_FORCE_INLINE UT_StringRef getNext<UT_StringRef>()
+    { return UT_StringRef(getNextCore().c_str()); }
+
+    template<>
     SYS_FORCE_INLINE ::std::string getNext<::std::string>()
     { return getNextCore(); }
 

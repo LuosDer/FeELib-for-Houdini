@@ -12,7 +12,11 @@
 #include "GFE/GFE_Math.h"
 
 
-
+enum class GFE_InlinePoint_Method
+{
+    Prim,
+    ,
+};
 
 class GFE_InlinePoint : public GFE_AttribFilter {
 
@@ -67,8 +71,19 @@ private:
             switch (geo->getPreferredPrecision())
             {
             default:
-            case GA_PRECISION_32: groupPrimInlinePoint_fast<fpreal32>(); break;
-            case GA_PRECISION_64: groupPrimInlinePoint_fast<fpreal64>(); break;
+            case GA_PRECISION_64: groupPrimInlinePoint<fpreal64>(); break;
+            case GA_PRECISION_32: groupPrimInlinePoint<fpreal32>(); break;
+            }
+            
+            if (!groupParser.groupType() == GA_GROUP_PRIMITIVE)
+            {
+                *inlinePointtGroup &= *groupParser.getPointGroup();
+            }
+
+            if (doDelGroupElement)
+            {
+                //delOutGroup();
+                geo->destroyPointOffsets(geo->getPointRange(inlinePointtGroup), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
             }
         }
         return true;
@@ -76,7 +91,7 @@ private:
 
 
     template<typename FLOAT_T>
-    void groupPrimInlinePoint_fast()
+    void groupPrimInlinePoint()
     {
         UTparallelFor(groupParser.getPrimitiveGroup(), [this](const GA_SplittableRange& r)
         {
@@ -147,17 +162,6 @@ private:
             }
         }, subscribeRatio, minGrainSize);
         inlinePointtGroup->invalidateGroupEntries();
-
-        if (!groupParser.groupType() == GA_GROUP_PRIMITIVE)
-        {
-            *inlinePointtGroup &= *groupParser.getPointGroup();
-        }
-
-        if (delGroupElement())
-        {
-            //delOutGroup();
-            geo->destroyPointOffsets(geo->getPointRange(inlinePointtGroup), GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
-        }
     }
 
 
@@ -178,7 +182,7 @@ private:
     exint minGrainSize = 16;
 
     
-};
+}; // End of Class GFE_InlinePoint
 
 
 

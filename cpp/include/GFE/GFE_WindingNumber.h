@@ -559,7 +559,7 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef0, groupParser.getGOP(), cookparms)
+        , GFE_GeoFilterRef(geoRef0, groupParser.getGOPRef(), cookparms)
         , sopcache(sopcache)
     {
     }
@@ -576,7 +576,7 @@ public:
             const SOP_NodeVerb::CookParms* const cookparms = nullptr
         )
     {
-        resetGeoFilterRef0(geoRef0, &getGroupParser().getGOP(), cookparms);
+        resetGeoFilterRef0(geoRef0, &getGroupParser().getGOPRef(), cookparms);
         GFE_AttribFilter::reset(geo, cookparms);
         this->sopcache = sopcache;
     }

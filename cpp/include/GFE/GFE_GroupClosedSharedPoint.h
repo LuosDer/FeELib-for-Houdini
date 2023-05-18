@@ -4,16 +4,14 @@
 #ifndef __GFE_GroupUnshared_h__
 #define __GFE_GroupUnshared_h__
 
-//#include "GFE/GFE_GroupUnshared.h"
+#include "GFE/GFE_GroupUnshared.h"
 
-#include "GA/GA_Detail.h"
 #include "GU/GU_Snap.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_AttribCombine.h"
-#include "GFE/GFE_VertexNextEquiv.h"
+#include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_GroupPromote.h"
 #include "GFE/GFE_GroupUnion.h"
 

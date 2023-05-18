@@ -107,72 +107,84 @@ public:
     
     SYS_FORCE_INLINE GA_Range getVertexRange(const GA_VertexGroup* group = nullptr, const bool reverse = false) const
     { return GA_Range(getVertexMap(), group, reverse); }
+
     
-    
-    void
-        delElement(
-            const GA_Group* group,
-            const bool reverse = false,
-            const bool delWithPoint = true,
-            const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE,
-            const bool guaranteeNoVertexReference = false
-        )
+private:
+    GA_Offset vertexFromEdge_sub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
     {
-        if (!group)
+        for (GA_Offset vtxoff = pointVertex(ptoff0); GFE_Type::OffsetIsValid(vtxoff); vtxoff = vertexToNextVertex(vtxoff))
         {
-            if (reverse)
+            const GA_Offset primoff = vertexPrimitive(vtxoff);
+            const GA_Size numvtx = getPrimitiveVertexCount(primoff);
+            for (GA_Size vtxpnum = 0; vtxpnum <= numvtx; ++vtxpnum)
             {
-                destroyPointOffsets(GA_Range(getPointMap(), nullptr), delPointMode, guaranteeNoVertexReference);
-                //clearTopologyAttributes();
-                //createTopologyAttributes();
+                const GA_Offset primPoint = getPrimitivePointOffset(primoff, vtxpnum);
+                if (primPoint != ptoff0)
+                    continue;
+                
+                GA_Size vtxpnum_next = vtxpnum+1;
+                if (vtxpnum_next == numvtx)
+                {
+                    if (getPrimitiveClosedFlag(primoff))
+                        vtxpnum_next = 0;
+                    else
+                        break;
+                }
+                const GA_Offset primPoint_next = getPrimitivePointOffset(primoff, vtxpnum_next);
+                
+                if (primPoint_next == ptoff1)
+                    return getPrimitiveVertexOffset(primoff, vtxpnum_next);
             }
-            return;
         }
-        switch (group->classType())
+
+        return GFE_INVALID_OFFSET;
+    }
+    
+public:
+    
+    GA_Offset vertexFromEdge(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    {
+        GA_Offset result = vertexFromEdge_sub(ptoff0, ptoff1);
+        if (GFE_Type::OffsetIsInvalid(result))
+            result = vertexFromEdge_sub(ptoff1, ptoff0);
+
+        return result;
+    }
+    
+    
+    SYS_FORCE_INLINE GA_Offset vertexFromEdge(const GA_Edge& edge) const
+    { return vertexFromEdge(edge.p0(), edge.p1()); }
+    
+    
+
+    void delTopoAttrib()
+    {
+        GA_AttributeSet& attribSet = getAttributes();
+        GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern("__topo_*");
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectPublic());
+        filter = GA_AttributeFilter::selectAnd(filter, GA_AttributeFilter::selectNot(GA_AttributeFilter::selectGroup()));
+        attribSet.destroyAttributes(GA_ATTRIB_PRIMITIVE, filter);
+        attribSet.destroyAttributes(GA_ATTRIB_POINT,     filter);
+        attribSet.destroyAttributes(GA_ATTRIB_VERTEX,    filter);
+        attribSet.destroyAttributes(GA_ATTRIB_DETAIL,    filter);
+
+        GA_GroupTable* groupTable = nullptr;
+        GA_Group* groupPtr = nullptr;
+        for (GA_GroupType groupType : {GA_GROUP_PRIMITIVE, GA_GROUP_POINT, GA_GROUP_VERTEX, GA_GROUP_EDGE})
         {
-        case GA_GROUP_PRIMITIVE:
+            groupTable = getGroupTable(groupType);
+            //for (GA_GroupTable::iterator it = groupTable->beginTraverse(); !it.atEnd(); it.operator++())
+            for (GA_GroupTable::iterator<GA_Group> it = groupTable->beginTraverse(); !it.atEnd(); ++it)
             {
-            const GA_Range range(getPrimitiveMap(), static_cast<const GA_PrimitiveGroup*>(group), reverse);
-            destroyPrimitives(range, delWithPoint);
+                groupPtr = it.group();
+                //if (groupPtr->isDetached())
+                //    continue;
+                if (!groupPtr->getName().startsWith("__topo_"))
+                    continue;
+                groupTable->destroy(groupPtr);
             }
-            break;
-        case GA_GROUP_POINT:
-            destroyPointOffsets(GA_Range(getPointMap(), static_cast<const GA_PointGroup*>(group), reverse), delPointMode, guaranteeNoVertexReference);
-            break;
-        case GA_GROUP_VERTEX:
-            destroyVertexOffsets(GA_Range(getVertexMap(), static_cast<const GA_VertexGroup*>(group), reverse));
-            break;
-        case GA_GROUP_EDGE:
-            UT_ASSERT_MSG(0, "not possible");
-            break;
-        default:
-            UT_ASSERT_MSG(0, "not possible");
-            break;
         }
     }
-
-
-    
-    void
-        delElement(
-            GA_Group*& group,
-            const bool delGroup,
-            const bool reverse = false,
-            const bool delWithPoint = true,
-            const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE,
-            const bool guaranteeNoVertexReference = false
-        )
-    {
-        delElement(group, reverse, delWithPoint, delPointMode, guaranteeNoVertexReference);
-        if (delGroup)
-        {
-            destroyGroup(group);
-            group = nullptr;
-        }
-    }
-
-
-
 
 
     
@@ -502,8 +514,216 @@ SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_VertexGroup* const group, 
 { return getOffsetList(getVertexMap(), group, reverse); }
 
 
+SYS_FORCE_INLINE GA_Offset offsetFromIndex(const GA_AttributeOwner owner, const GA_Size elemoff) const
+{ return getIndexMap(owner).offsetFromIndex(elemoff); }
+
+SYS_FORCE_INLINE GA_Size indexFromOffset(const GA_AttributeOwner owner, const GA_Offset elemoff) const
+{ return getIndexMap(owner).indexFromOffset(elemoff); }
+
+SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
+{ return getPrimitiveMap().indexFromOffset(elemoff); }
 
 
+    
+    
+/////////////////////////////////// deleteElements ////////////////////////////////////////
+
+
+    
+    SYS_FORCE_INLINE void deletePrimitiveOffsets(
+        const GA_PrimitiveGroup* group,
+        const bool reverseGroup = false,
+        const bool withPoint = false
+    )
+    { destroyPrimitiveOffsets(GA_Range(getPrimitiveMap(), group, reverseGroup), withPoint); }
+
+    
+    SYS_FORCE_INLINE void deletePointOffsets(
+        const GA_PointGroup* group,
+        const bool reverseGroup = false,
+        const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
+        const bool guaranteeNoVertexReferences = false
+    )
+    { destroyPointOffsets(GA_Range(getPointMap(), group, reverseGroup), mode, guaranteeNoVertexReferences); }
+
+    
+    SYS_FORCE_INLINE void deleteVertexOffsets(
+        const GA_VertexGroup* group,
+        const bool reverseGroup = false
+    )
+    { destroyVertexOffsets(GA_Range(getVertexMap(), group, reverseGroup)); }
+
+
+
+    
+    SYS_FORCE_INLINE void deletePrimitiveOffsets(const GA_Group* group, const bool reverseGroup = false,
+        const bool withPoint = false
+    )
+    { deletePrimitiveOffsets(static_cast<const GA_PrimitiveGroup*>(group), reverseGroup, withPoint); }
+    
+    SYS_FORCE_INLINE void deletePointOffsets(const GA_Group* group, const bool reverseGroup = false,
+        const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
+        const bool guaranteeNoVertexReferences = false
+    )
+    { deletePointOffsets(static_cast<const GA_PointGroup*>(group), reverseGroup, mode, guaranteeNoVertexReferences); }
+
+    SYS_FORCE_INLINE void deleteVertexOffsets(const GA_Group* group, const bool reverseGroup = false)
+    { deleteVertexOffsets(static_cast<const GA_VertexGroup*>(group), reverseGroup); }
+
+    
+    void deleteElements(
+        const GA_Group* group,
+        const bool reverseGroup = false,
+        const bool withPoint = false,
+        const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
+        const bool guaranteeNoVertexReferences = false
+    )
+    {
+        switch (group->classType())
+        {
+        case GA_GROUP_PRIMITIVE: deletePrimitiveOffsets(group, reverseGroup, withPoint);                     break;
+        case GA_GROUP_POINT:     deletePointOffsets(group, reverseGroup, mode, guaranteeNoVertexReferences); break;
+        case GA_GROUP_VERTEX:    deleteVertexOffsets(group, reverseGroup);                                   break;
+        }
+    }
+
+
+
+    
+    
+    /////////////////////////////////// deleteOneElement ////////////////////////////////////////
+
+
+    void deleteOnePrimitive(
+        const GA_Offset elemoff,
+        const bool reverseGroup = false,
+        const bool withPoint = false
+    )
+    {
+        if (reverseGroup)
+        {
+            const GA_IndexMap& indexMap = getPrimitiveMap();
+            destroyPrimitiveOffsets(GA_Range(indexMap, 0, elemoff), true);
+            destroyPrimitiveOffsets(GA_Range(indexMap, elemoff+1, indexMap.offsetSize()), true);
+        }
+        else
+        {
+            destroyPrimitiveOffset(elemoff, withPoint);
+        }
+    }
+
+
+    void deleteOnePoint(
+        const GA_Offset elemoff,
+        const bool reverseGroup = false,
+        const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
+        const bool guaranteeNoVertexReferences = false
+    )
+    {
+        if (reverseGroup)
+        {
+            const GA_IndexMap& indexMap = getPointMap();
+            destroyPointOffsets(GA_Range(indexMap, 0, elemoff), mode, guaranteeNoVertexReferences);
+            destroyPointOffsets(GA_Range(indexMap, elemoff+1, indexMap.offsetSize()), mode, guaranteeNoVertexReferences);
+        }
+        else
+        {
+            destroyPointOffset(elemoff, mode, guaranteeNoVertexReferences);
+        }
+    }
+    
+    void deleteOneVertex(
+        const GA_Offset elemoff,
+        const bool reverseGroup = false
+    )
+    {
+        if (reverseGroup)
+        {
+            const GA_IndexMap& indexMap = getVertexMap();
+            destroyVertexOffsets(GA_Range(indexMap, 0, elemoff));
+            destroyVertexOffsets(GA_Range(indexMap, elemoff+1, indexMap.offsetSize()));
+        }
+        else
+        {
+            destroyVertexOffset(elemoff);
+        }
+    }
+    //
+    // void deleteOneEdge(
+    //     const GA_Offset elemoff0,
+    //     const GA_Offset elemoff1,
+    //     const bool reverseGroup = false
+    // )
+    // {
+    // }
+    
+    
+    void deleteOneElement(
+        const GA_AttributeOwner owner,
+        const GA_Offset elemoff,
+        const bool reverseGroup = false
+    )
+    {
+        switch (owner)
+        {
+        case GA_ATTRIB_PRIMITIVE: deleteOnePrimitive(elemoff, reverseGroup); break;
+        case GA_ATTRIB_POINT:     deleteOnePoint(elemoff, reverseGroup);     break;
+        case GA_ATTRIB_VERTEX:    deleteOneVertex(elemoff, reverseGroup);    break;
+        }
+    }
+
+    void deleteOneElement(
+        const GA_GroupType owner,
+        const GA_Offset elemoff,
+        const bool reverseGroup = false
+    )
+    {
+        switch (owner)
+        {
+        case GA_GROUP_PRIMITIVE: deleteOnePrimitive(elemoff, reverseGroup); break;
+        case GA_GROUP_POINT:     deleteOnePoint(elemoff, reverseGroup);     break;
+        case GA_GROUP_VERTEX:    deleteOneVertex(elemoff, reverseGroup);    break;
+        //case GA_GROUP_EDGE:      deleteOneEdge(elemoff0, elemoff1, reverseGroup);    break;
+        }
+    }
+
+
+
+
+    /////////////////////////////////// delete Elment Skip N Elem ////////////////////////////////////////
+
+    void deletePrimitiveSkipNElem(
+        const GA_Offset elemoff,
+        const GA_Size skipSize,
+        const bool reverseGroup = false,
+        const bool withPoint = false
+    )
+    {
+        if (skipSize <= 0)
+        {
+            if (!reverseGroup)
+                destroyPrimitiveOffsets(getPrimitiveRange(), withPoint);
+            return;
+        }
+        
+        GA_Size delSize = primitiveIndexFromOffset(elemoff);
+        delSize %= skipSize;
+        
+        GA_Offset start, end;
+        for (GA_Iterator it(getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                if (delSize!=0 ^ reverseGroup)
+                    destroyPrimitiveOffset(elemoff, withPoint);
+                
+                if (delSize == skipSize)
+                    delSize = 0;
+                else
+                    ++delSize;
+            }
+        }
+    }
 
 
 

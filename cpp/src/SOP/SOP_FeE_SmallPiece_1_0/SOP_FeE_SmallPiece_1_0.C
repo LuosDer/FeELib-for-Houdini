@@ -166,21 +166,23 @@ void
 SOP_FeE_SmallPiece_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_SmallPiece_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_SmallPiece_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    outGeo0->replaceWith(*inGeo0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const GA_Group* const geo0Group = GA_FeE_SmallPiece::smallPiece(outGeo0, groupType, groupName);
+    GFE_SmallPiece smallPiece
+
+    
+    const GA_Group* const geo0Group = GA_FeE_SmallPiece::(outGeo0, groupType, groupName);
 
     if (!geo0Group)
         return;

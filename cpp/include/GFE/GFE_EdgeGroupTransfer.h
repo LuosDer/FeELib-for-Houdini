@@ -82,13 +82,14 @@ virtual bool
     snapPtoff_h = snapPtoffAttrib;
 
     GU_Snap::snapPoints(*geoRef0Tmp, geo->asGU_Detail(), pointSnapParms);
+    //GU_Snap::snapPoints(*geo->asGU_Detail(), geoRef0, pointSnapParms);
 
 
     
-    GFE_MeshTopology meshTopology(geo, cookparms);
-    vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
-    meshTopology.compute();
-    dstpt_h = vertexPointDstAttrib;
+    //GFE_MeshTopology meshTopology(geo, cookparms);
+    //vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
+    //meshTopology.compute();
+    //dstpt_h = vertexPointDstAttrib;
     
     GFE_MeshTopology meshTopologyRef0(geoRef0Tmp);
     vertexPointDstRef0Attrib = meshTopologyRef0.setVertexPointDst(true);
@@ -102,11 +103,11 @@ virtual bool
         switch (getRef0GroupArray()[i]->classType())
         {
         case GA_GROUP_EDGE:
-            edgeGroup = static_cast<const GA_EdgeGroup*>(getRef0GroupArray()[i]);
+            edgeGroup = getRef0GroupArray().getEdgeGroup(i);
             edgeGroupTransfer();
             break;
         case GA_GROUP_VERTEX:
-            vertexEdgeGroup = static_cast<const GA_VertexGroup*>(getRef0GroupArray()[i]);
+            vertexEdgeGroup = getRef0GroupArray().getVertexGroup(i);
             vertexEdgeGroupTransfer();
             break;
         default: break;
@@ -121,20 +122,40 @@ virtual bool
 
 void edgeGroupTransfer()
 {
+    const UT_StringHolder& newName = newEdgeGroupNames.getIsValid() ?
+                                     newEdgeGroupNames.getNext<UT_StringHolder>() :
+                                     edgeGroup->getName();
+    
+    const bool detached = !GFE_Type::isPublicAttribName(newName);
+
+    GA_RWHandleT<GA_Offset> dstptRef0_h(vertexPointDstRef0Attrib);
+    
     if ( outAsVertexGroup )
     {
+        newVertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, newName);
+        newVertexEdgeGroup->clear();
+        
+        for (GA_EdgeGroup::const_iterator it = edgeGroup->begin(); it.atEnd(); ++it)
+        {
+            const GA_Edge& edge = *it;
+            
+            const GA_Offset snapDstPtoff0 = snapPtoff_h.get(edge.p0());
+            if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
+                continue;
+                    
+            const GA_Offset snapDstPtoff1 = snapPtoff_h.get(edge.p1());
+            if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
+                continue;
+
+            const GA_Offset vertexFromEdge = geo->vertexFromEdge(snapDstPtoff0, snapDstPtoff1);
+            UT_ASSERT_MSG(GFE_Type::OffsetIsValid(vertexFromEdge), "not valid");
+            newVertexEdgeGroup->setElement(vertexFromEdge, true);
+        }
     }
     else
     {
-        const UT_StringHolder& newName = newEdgeGroupNames.getIsValid() ?
-                                         newEdgeGroupNames.getNext<UT_StringHolder>() :
-                                         edgeGroup->getName();
-        const bool detached = !GFE_Type::isPublicAttribName(newName);
-
         newEdgeGroup = getOutGroupArray().findOrCreateEdge(detached, newName);
         newEdgeGroup->clear();
-    
-        GA_RWHandleT<GA_Offset> dstptRef0_h(vertexPointDstRef0Attrib);
         
         for (GA_EdgeGroup::const_iterator it = edgeGroup->begin(); it.atEnd(); ++it)
         {
@@ -160,16 +181,65 @@ void vertexEdgeGroupTransfer()
                                      vertexEdgeGroup->getName();
     const bool detached = !GFE_Type::isPublicAttribName(newName);
 
-    
-    newVertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, newName);
-    newVertexEdgeGroup->makeConstant(false);
-        
     GA_SplittableRange geoRefSplittableRange(geoRef0->getVertexRange(vertexEdgeGroup));
-    UTparallelFor(geoRefSplittableRange, [this](const GA_SplittableRange& r)
+    
+    if ( outAsVertexGroup )
     {
+        newVertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, newName);
+        newVertexEdgeGroup->clear();
+        UTparallelFor(geoRefSplittableRange, [this](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstptRef0_ph(vertexPointDstRef0Attrib);
+
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    dstptRef0_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_Offset ptoff = geoRef0->vertexPoint(elemoff);
+                        
+                        const GA_Offset snapDstPtoff0 = snapPtoff_h.get(ptoff);
+                        if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
+                            continue;
+                        
+                        const GA_Offset snapDstPtoff1 = snapPtoff_h.get(dstptRef0_ph.value(elemoff));
+                        if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
+                            continue;
+                        
+                        if (1)
+                        {
+                            const GA_Offset vertexFromEdge = geo->vertexFromEdge(snapDstPtoff0, snapDstPtoff1);
+                            UT_ASSERT_MSG(GFE_Type::OffsetIsValid(vertexFromEdge), "not valid");
+                            newVertexEdgeGroup->setElement(vertexFromEdge, true);
+                        }
+                        else
+                        {
+                            for (GA_Offset vtxoff = geo->pointVertex(snapDstPtoff0); vtxoff != GA_INVALID_OFFSET; vtxoff = geo->vertexToNextVertex(vtxoff))
+                            {
+                                if (dstpt_h.get(vtxoff) == snapDstPtoff1)
+                                {
+                                    newVertexEdgeGroup->setElement(vtxoff, true);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+        newVertexEdgeGroup->invalidateGroupEntries();
+    }
+    else
+    {
+        newEdgeGroup = getOutGroupArray().findOrCreateEdge(detached, newName);
+        newEdgeGroup->clear();
+        
         GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstptRef0_ph(vertexPointDstRef0Attrib);
 
-        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        for (GA_PageIterator pit = geoRefSplittableRange.beginPages(); !pit.atEnd(); ++pit)
         {
             GA_Offset start, end;
             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
@@ -184,22 +254,14 @@ void vertexEdgeGroupTransfer()
                         continue;
                     
                     const GA_Offset snapDstPtoff1 = snapPtoff_h.get(dstptRef0_ph.value(elemoff));
-                    if (GFE_Type::OffsetIsInvalid(snapDstPtoff1)
+                    if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
                         continue;
-                    
-                    for (GA_Offset vtxoff = geo->pointVertex(snapDstPtoff0); vtxoff != GA_INVALID_OFFSET; vtxoff = geo->vertexToNextVertex(vtxoff))
-                    {
-                        if (dstpt_h.get(vtxoff) == snapDstPtoff1)
-                        {
-                            newVertexEdgeGroup->setElement(vtxoff, true);
-                            break;
-                        }
-                    }
+
+                    newEdgeGroup->add(snapDstPtoff0, snapDstPtoff1);
                 }
             }
         }
-    }, subscribeRatio, minGrainSize);
-    newVertexEdgeGroup.invalidateGroupEntries();
+    }
 }
 
 public:

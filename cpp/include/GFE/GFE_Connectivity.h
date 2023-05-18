@@ -19,7 +19,7 @@
 class GFE_Connectivity : public GFE_AttribFilter
 {
 
-//#define GFE_TEMP_ConnectivityAttribName "__TEMP_GFE_ConnectivityAttrib"
+//#define GFE_TEMP_ConnectivityAttribName "__topo_GFE_ConnectivityAttrib"
 
 public:
 
@@ -28,7 +28,7 @@ GFE_Connectivity(
     const SOP_NodeVerb::CookParms* const cookparms = nullptr
 )
     : GFE_AttribFilter(geo, cookparms)
-    , groupParserSeam(geo, groupParser.getGOP(), cookparms)
+    , groupParserSeam(geo, groupParser.getGOPRef(), cookparms)
 {
 }
 
@@ -37,7 +37,7 @@ GFE_Connectivity(
     const SOP_NodeVerb::CookParms* const cookparms = nullptr
 )
     : GFE_AttribFilter(geo, cookparms)
-    , groupParserSeam(geo, groupParser.getGOP(), cookparms)
+    , groupParserSeam(geo, groupParser.getGOPRef(), cookparms)
 {
 }
     

@@ -42,7 +42,7 @@ private:
     virtual bool
         computeCore() override
     {
-        if (!groupParser.isEmpty() || reverseGroup)
+        if (!reverseGroup && groupParser.isEmpty())
             return true;
 
 		switch (groupParser.classType())
@@ -54,9 +54,8 @@ private:
 		default:                 delVertex();                                break;
 		}
 
-
-    	if (groupParser.isEmpty())
-    		return true;
+    	if(delGroup)
+    		groupParser.delGroup();
     	
         return true;
     }

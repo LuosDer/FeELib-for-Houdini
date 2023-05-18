@@ -29,7 +29,7 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOP(), cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 

@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_Detail.h"
+#include "GFE/GFE_DeleteElement.h"
 
 
 
@@ -60,6 +60,13 @@ static const char *theDsFile = R"THEDSFILE(
             }
         }
         parm {
+            name    "leaveElement"
+            cppname "LeaveElement"
+            label   "Leave Group"
+            type    toggle
+            default { "off" }
+        }
+        parm {
             name    "delElementReverseGroup"
             cppname "DelElementReverseGroup"
             label   "Delete Non Selected"
@@ -69,15 +76,16 @@ static const char *theDsFile = R"THEDSFILE(
         parm {
             name    "delElementInputGroup"
             cppname "DelElementInputGroup"
-            label   "Delete Element Input Group"
+            label   "Delete Group"
             type    toggle
             default { "on" }
         }
 
+
         parm {
-            name    "delElementWithPoint"
-            cppname "DelElementWithPoint"
-            label   "Delete With Point"
+            name    "delElementUnusedPoint"
+            cppname "DelElementUnusedPoint"
+            label   "Delete Unused Point"
             type    toggle
             default { 1 }
         }
@@ -210,38 +218,42 @@ void
 SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_DelElement_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DelElement_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    outGeo0->replaceWith(*inGeo0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+
+    if (!sopparms.getDelElement())
+    {
+        outGeo0.replaceWith(inGeo0);
+        return;
+    }
 
 
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
+    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
 
+    GFE_DelElement delElement(outGeo0, inGeo0, cookparms);
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
-    const UT_StringHolder& groupName = sopparms.getDelElementGroup();
+    delElement.groupParser.setGroup(groupType, sopparms.getDelElementGroup());
 
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
-    GFE_DelElement::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
-        sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
-        delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
-    );
+    delElement.setComputeParm(
+        sopparms.getLeaveElement(),
+        sopparms.getDelElementReverseGroup(),
+        sopparms.getDelElementInputGroup(),
+        delPointMode,
+        sopparms.getDelElementUnusedPoint(),
+        sopparms.getDelElementGuaranteeNoVertexReference());
 
-    if (sopparms.getDelElement())
-    {
-        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    }
+    delElement.computeAndBumpDataIdsForAddOrRemove();
+
 }
 
 
-
-namespace SOP_FeE_DelElement_1_0_Namespace {
-
-} // End SOP_FeE_DelElement_1_0_Namespace namespace

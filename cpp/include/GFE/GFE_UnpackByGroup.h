@@ -1,8 +1,8 @@
 
 #pragma once
 
-#ifndef __GFE_DelAndUnpack_h__
-#define __GFE_DelAndUnpack_h__
+#ifndef __GFE_UnpackByGroup_h__
+#define __GFE_UnpackByGroup_h__
 
 #include "GFE/GFE_DeleteAndUnpack.h"
 
@@ -13,7 +13,7 @@
 #include "GU/GU_PrimPacked.h"
 
 
-enum class GFE_DelAndUnpack_Type
+enum class GFE_UnpackByGroup_Type
 {
 	Custom,
 	OneElem,
@@ -21,12 +21,12 @@ enum class GFE_DelAndUnpack_Type
 };
 
 	
-class GFE_DelAndUnpack : public GFE_GeoFilter {
+class GFE_UnpackByGroup : public GFE_GeoFilter {
 
 public:
 	using GFE_GeoFilter::GFE_GeoFilter;
 	//
-	// GFE_DelAndUnpack(
+	// GFE_UnpackByGroup(
 	// 	GFE_Detail* const geo,
 	// 	const GA_Detail* const inGeo0 = nullptr,
 	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -36,7 +36,7 @@ public:
 	// {
 	// }
 	//
-	// GFE_DelAndUnpack(
+	// GFE_UnpackByGroup(
 	// 	GA_Detail& geo,
 	// 	const GA_Detail* const inGeo = nullptr,
 	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -46,7 +46,7 @@ public:
 	// {
 	// }
 	//
-	// GFE_DelAndUnpack(
+	// GFE_UnpackByGroup(
 	// 	GA_Detail& geo,
 	// 	const GA_Detail* const inGeo,
 	// 	const SOP_NodeVerb::CookParms& cookparms
@@ -59,7 +59,7 @@ public:
 	
     void
         setComputeParm(
-			const GFE_DelAndUnpack_Type type = GFE_DelAndUnpack_Type::OneElem,
+			const GFE_UnpackByGroup_Type type = GFE_UnpackByGroup_Type::OneElem,
             const bool reverseGroup = true,
 			const bool delGroup = true
         )
@@ -93,10 +93,31 @@ private:
     virtual bool
         computeCore() override
     {
+    	if (geoSrc)
+    	{
+    		
+    	}
+    	else
+    	{
+    		
+    		if (geoSrc)
+    		{
+    			geo.replaceWith(*geoSrc);
+    			//this->geoSrc = geoSrc;
+    		}
+    		else
+    		{
+    			// geoSrcTmp = new GU_Detail();
+    			// geoSrcTmp_h.allocateAndSet(geoSrcTmp);
+    			// geoSrcTmp->replaceWith(geo);
+    			//this->geoSrc = geoSrc;
+    		}
+    	}
+
     	switch (type) {
-    	case GFE_DelAndUnpack_Type::Custom:    delAndUnpack_Custom();      break;
-    	case GFE_DelAndUnpack_Type::OneElem:   delAndUnpack_OneElem();     break;
-    	case GFE_DelAndUnpack_Type::SkipNElem: delAndUnpack_SkipNElem();   break;
+    	case GFE_UnpackByGroup_Type::Custom:    delAndUnpack_Custom();      break;
+    	case GFE_UnpackByGroup_Type::OneElem:   delAndUnpack_OneElem();     break;
+    	case GFE_UnpackByGroup_Type::SkipNElem: delAndUnpack_SkipNElem();   break;
     	default: break;
     	}
     
@@ -132,7 +153,7 @@ private:
 
 
 public:
-    GFE_DelAndUnpack_Type type = GFE_DelAndUnpack_Type::OneElem;
+    GFE_UnpackByGroup_Type type = GFE_UnpackByGroup_Type::OneElem;
 	
     bool reverseGroup = false;
     bool delGroup = true;
@@ -147,7 +168,7 @@ private:
     //exint minGrainSize = 1024;
 
 
-}; // End of class GFE_DelAndUnpack
+}; // End of class GFE_UnpackByGroup
 
 
 

@@ -4,7 +4,7 @@
 #ifndef __GFE_MeshTopology_h__
 #define __GFE_MeshTopology_h__
 
-//#include "GFE/GFE_MeshTopology.h"
+#include "GFE/GFE_MeshTopology.h"
 
 
 
@@ -39,9 +39,9 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , pointSeamGroup(geo, groupParser.getGOP(), cookparms)
-        , vertexEdgeSeamGroup(geo, groupParser.getGOP(), cookparms)
-        , edgeSeamGroup(geo, groupParser.getGOP(), cookparms)
+        , pointSeamGroup(geo, groupParser.getGOPRef(), cookparms)
+        , vertexEdgeSeamGroup(geo, groupParser.getGOPRef(), cookparms)
+        , edgeSeamGroup(geo, groupParser.getGOPRef(), cookparms)
     {
     }
 
@@ -50,9 +50,9 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , pointSeamGroup(geo, groupParser.getGOP(), cookparms)
-        , vertexEdgeSeamGroup(geo, groupParser.getGOP(), cookparms)
-        , edgeSeamGroup(geo, groupParser.getGOP(), cookparms)
+        , pointSeamGroup(geo, groupParser.getGOPRef(), cookparms)
+        , vertexEdgeSeamGroup(geo, groupParser.getGOPRef(), cookparms)
+        , edgeSeamGroup(geo, groupParser.getGOPRef(), cookparms)
     {
     }
 
@@ -61,9 +61,9 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , pointSeamGroup(geo, groupParser.getGOP(), cookparms)
-        , vertexEdgeSeamGroup(geo, groupParser.getGOP(), cookparms)
-        , edgeSeamGroup(geo, groupParser.getGOP(), cookparms)
+        , pointSeamGroup(geo, groupParser.getGOPRef(), cookparms)
+        , vertexEdgeSeamGroup(geo, groupParser.getGOPRef(), cookparms)
+        , edgeSeamGroup(geo, groupParser.getGOPRef(), cookparms)
     {
     }
 

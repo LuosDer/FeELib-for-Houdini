@@ -5,9 +5,9 @@
 #define __GFE_ExtractPoint_h__
 
 
-//#include "GFE/GFE_ExtractPoint.h"
+#include "GFE/GFE_ExtractPoint.h"
 
-#include "GA/GA_Detail.h"
+
 
 #include "GFE/GFE_GeoFilter.h"
 
@@ -18,25 +18,27 @@ class GFE_ExtractPoint : public GFE_GeoFilter {
 
 public:
 
-    GFE_ExtractPoint(
-        GA_Detail& geo,
-        const GA_Detail* const geoSrc = nullptr,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_GeoFilter(geo, cookparms)
-        , geoSrc(geoSrc)
-    {
-    }
-
-    GFE_ExtractPoint(
-        GA_Detail& geo,
-        const GA_Detail& geoSrc,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_GeoFilter(geo, cookparms)
-        , geoSrc(&geoSrc)
-    {
-    }
+    using GFE_GeoFilter::GFE_GeoFilter;
+    //
+    // GFE_ExtractPoint(
+    //     GA_Detail& geo,
+    //     const GA_Detail* const geoSrc = nullptr,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : GFE_GeoFilter(geo, cookparms)
+    //     , geoSrc(geoSrc)
+    // {
+    // }
+    //
+    // GFE_ExtractPoint(
+    //     GA_Detail& geo,
+    //     const GA_Detail& geoSrc,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : GFE_GeoFilter(geo, cookparms)
+    //     , geoSrc(&geoSrc)
+    // {
+    // }
 
 
     void
@@ -365,7 +367,6 @@ public:
     bool guaranteeNoVertexReference = false;
 
 private:
-    const GA_Detail* geoSrc;
 
     const GA_PointGroup* pointGroup = nullptr;
     GA_PointGroup* pointGroupNonConst = nullptr;

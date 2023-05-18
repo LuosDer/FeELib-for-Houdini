@@ -21,85 +21,72 @@ using namespace SOP_FeE_Split_2_0_Namespace;
 static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
+
     parm {
-        name    "delElement"
-        cppname "DelElement"
-        label   "Delete Element"
+        name    "splitGroup"
+        cppname "SplitGroup"
+        label   "Split Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('splitGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "splitGroupType"
+        cppname "SplitGroupType"
+        label   "Split Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "off" }
+    }
+    parm {
+        name    "delInputGroup"
+        cppname "DelInputGroup"
+        label   "Delete Input Group"
         type    toggle
         default { "on" }
     }
-    groupsimple {
-        name    "delElement_folder"
-        label   "Delete Element"
-        disablewhen "{ delElement == 0 }"
-        grouptag { "group_type" "simple" }
 
-        parm {
-            name    "delElementGroup"
-            cppname "DelElementGroup"
-            label   "Group Name"
-            type    string
-            default { "" }
-            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('delElementGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-            parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-            parmtag { "script_action_icon" "BUTTONS_reselect" }
-            parmtag { "sop_input" "0" }
+    parm {
+        name    "delUnusedPoint"
+        cppname "DelUnusedPoint"
+        label   "Delete Unused Point"
+        type    toggle
+        default { 1 }
+    }
+    parm {
+        name    "delPointMode"
+        cppname "DelPointMode"
+        label   "Delete Point Mode"
+        type    ordinal
+        default { "delDegenerateIncompatible" }
+        menu {
+            "leavePrimitive"             "Leave Primitive"
+            "delDegenerate"              "Delete Degenerate"
+            "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
         }
-        parm {
-            name    "delElementGroupType"
-            cppname "DelElementGroupType"
-            label   "Group Type"
-            type    ordinal
-            default { "guess" }
-            menu {
-                "guess"     "Guess from Group"
-                "prim"      "Primitive"
-                "point"     "Point"
-                "vertex"    "Vertex"
-                "edge"      "Edge"
-            }
-        }
-        parm {
-            name    "delElementReverseGroup"
-            cppname "DelElementReverseGroup"
-            label   "Delete Non Selected"
-            type    toggle
-            default { "off" }
-        }
-        parm {
-            name    "delElementInputGroup"
-            cppname "DelElementInputGroup"
-            label   "Delete Element Input Group"
-            type    toggle
-            default { "on" }
-        }
-
-        parm {
-            name    "delElementWithPoint"
-            cppname "DelElementWithPoint"
-            label   "Delete With Point"
-            type    toggle
-            default { 1 }
-        }
-        parm {
-            name    "delElementPointMode"
-            cppname "DelElementPointMode"
-            label   "Delete Point Mode"
-            type    ordinal
-            default { "delDegenerateIncompatible" }
-            menu {
-                "leavePrimitive"             "Leave Primitive"
-                "delDegenerate"              "Delete Degenerate"
-                "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
-            }
-        }
-        parm {
-            name    "delElementGuaranteeNoVertexReference"
-            cppname "DelElementGuaranteeNoVertexReference"
-            label   "Guarantee No Vertex Reference"
-            type    toggle
-            default { 0 }
-        }
+    }
+    parm {
+        name    "guaranteeNoVertexReference"
+        cppname "GuaranteeNoVertexReference"
+        label   "Guarantee No Vertex Reference"
+        type    toggle
+        default { 0 }
     }
 }
 )THEDSFILE";
@@ -110,7 +97,7 @@ SOP_FeE_Split_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_Split_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("delElementGroup"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("splitGroup"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -134,7 +121,7 @@ newSopOperator(OP_OperatorTable* table)
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
-        1,
+        2,
         "Five elements Elf/Operation/Delete");
 
     newOp->setIconName("SOP_delete");
@@ -177,30 +164,30 @@ SOP_FeE_Split_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Split_2_0Parms::DelElementGroupType parmgrouptype)
+sopGroupType(SOP_FeE_Split_2_0Parms::SplitGroupType parmgrouptype)
 {
     using namespace SOP_FeE_Split_2_0Enums;
     switch (parmgrouptype)
     {
-    case DelElementGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case DelElementGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case DelElementGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case DelElementGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case DelElementGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case SplitGroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case SplitGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case SplitGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case SplitGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case SplitGroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
 }
 
 static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_Split_2_0Parms::DelElementPointMode delPointMode)
+sopDelPointMode(SOP_FeE_Split_2_0Parms::DelPointMode delPointMode)
 {
     using namespace SOP_FeE_Split_2_0Enums;
     switch (delPointMode)
     {
-    case DelElementPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
-    case DelElementPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
-    case DelElementPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
+    case DelPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
+    case DelPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
+    case DelPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
     }
     UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
     return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
@@ -210,11 +197,11 @@ void
 SOP_FeE_Split_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Split_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Split_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    outGeo0->replaceWith(*inGeo0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    outGeo0.replaceWith(inGeo0);
 
 
 
@@ -224,24 +211,5 @@ SOP_FeE_Split_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
-    const UT_StringHolder& groupName = sopparms.getDelElementGroup();
-
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
-    GFE_DelElement::delElement(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
-        sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
-        delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
-    );
-
-    if (sopparms.getDelElement())
-    {
-        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    }
 }
 
-
-
-namespace SOP_FeE_Split_2_0_Namespace {
-
-} // End SOP_FeE_Split_2_0_Namespace namespace

@@ -184,19 +184,17 @@ void
 SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_UVRectify_2_0Parms>();
-    GU_Detail* outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GEO_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
 
     const UT_StringHolder& geo0AttribNames = sopparms.getUVAttrib();
     if (!geo0AttribNames.isstring() || geo0AttribNames.length()==0)
         return;
-
-    const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(outGeo0);
 
     //GA_Attribute* uvAttribPtr = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
     GA_Attribute* geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);

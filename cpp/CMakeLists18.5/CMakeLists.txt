@@ -104,7 +104,6 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_CurveUV_1_0
     SOP_FeE_DelAllAttribGroup_1_0
     SOP_FeE_DelAndUnpack_1_0
-    SOP_FeE_DelByGroup_1_0
     SOP_FeE_DelElement_1_0
     SOP_FeE_DelVertex_1_0
     SOP_FeE_EdgeGroupTransfer_3_0
@@ -130,7 +129,6 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_InlinePoint_1_0
     SOP_FeE_JoinCurve_2_0
     SOP_FeE_KuhnMunkres_2_0
-    SOP_FeE_LeaveElement_1_0
     SOP_FeE_MatchAxis_1_0
     SOP_FeE_MatchBBox_2_0
     SOP_FeE_MatchDirOrient_1_0
@@ -153,9 +151,10 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_SkinIntersectCurve_2_0
     SOP_FeE_SkinPiece_4_0
     SOP_FeE_SmallPiece_1_0
-    SOP_FeE_Split_2_0
+    # SOP_FeE_Split_2_0
     SOP_FeE_SplitPoint_1_0
     SOP_FeE_Triangulate2D_2_0
+    SOP_FeE_UnpackByGroup_1_0
     SOP_FeE_UVGridify_1_0
     SOP_FeE_UVRectify_2_0
     SOP_FeE_UVScaletoWorldSize_0_5

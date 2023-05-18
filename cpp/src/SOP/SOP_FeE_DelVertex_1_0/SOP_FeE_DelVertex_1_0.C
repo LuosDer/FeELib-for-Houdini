@@ -220,6 +220,7 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     //delVertex.setDeleteParm(delPointMode, sopparms.getGuaranteeNoVertexReference());
 
+
     delVertex.computeAndBumpDataIdsForAddOrRemove();
 
 

@@ -119,6 +119,9 @@ SYS_FORCE_INLINE static bool OffsetIsInvalid(const GA_Offset v)
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)
 { return attribName.isstring() && attribName.length() > 0 && strcmp(attribName.c_str(), "P") != 0; }
 
+SYS_FORCE_INLINE static bool isPublicAttribName(const char* attribName)
+{ return attribName && strcmp(attribName, "P") != 0; }
+
 
     
 static GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner)
