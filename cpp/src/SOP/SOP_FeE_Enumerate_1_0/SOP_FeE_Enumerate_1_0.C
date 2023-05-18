@@ -326,7 +326,7 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
     enumerate.computeAndBumpDataId();
 
-
+    
 
 }
 
