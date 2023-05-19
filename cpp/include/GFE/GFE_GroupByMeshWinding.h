@@ -43,10 +43,7 @@ public:
 	}
 
 	SYS_FORCE_INLINE GA_Attribute* getAttrib() const
-	{
-		//UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "no attrib found");
-		return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
-	}
+	{ return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0]; }
 
 
 private:

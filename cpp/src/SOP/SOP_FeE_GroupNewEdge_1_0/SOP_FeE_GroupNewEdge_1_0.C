@@ -12,7 +12,6 @@
 
 
 #include "GFE/GFE_GroupNewEdge.h"
-//#include "GFE/GFE_VertexNextEquiv.h"
 
 
 using namespace SOP_FeE_GroupNewEdge_1_0_Namespace;
@@ -49,30 +48,25 @@ static const char *theDsFile = R"THEDSFILE(
     
     
     parm {
-        name    "combineGroupName"
-        cppname "CombineGroupName"
-        label   "Combine Group Name"
+        name    "newVertexEdgeGroupName"
+        cppname "NewVertexEdgeGroupName"
+        label   "New Vertex Edge Group Name"
         type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('combineGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        default { "newEdge" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "combineGroupType"
-        cppname "CombineGroupType"
-        label   "Combine Group Type"
-        type    ordinal
-        default { "guess" }
-        menu {
-            "guess"     "Guess from Group"
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
-        }
+        name    "newEdgeGroupName"
+        cppname "NewEdgeGroupName"
+        label   "New Edge Group Name"
+        type    string
+        default { "newEdge" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
-
 
     parm {
        name    "subscribeRatio"
@@ -103,7 +97,8 @@ SOP_FeE_GroupNewEdge_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("combineGroupName"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("newEdgeGroupName"_sh, &SOP_Node::edgeNamedGroupMenu);
+        templ.setChoiceListPtr("newVertexEdgeGroupName"_sh, &SOP_Node::vertexNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -229,11 +224,18 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
 
     outGeo0.replaceWith(inGeo0);
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroupName();
-    if (!geo0AttribNames.isstring())
+    const UT_StringHolder& newVertexEdgeGroupName = sopparms.getNewVertexEdgeGroupName();
+    const UT_StringHolder& newEdgeGroupName = sopparms.getNewEdgeGroupName();
+    
+    if (!newVertexEdgeGroupName.isstring() &&
+        newVertexEdgeGroupName.length() == 0 &&
+        !newEdgeGroupName.isstring() &&
+        newEdgeGroupName.length() == 0)
+    {
         return;
+    }
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -247,8 +249,8 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     groupNewEdge.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    groupNewEdge.findOrCreateEdgeGroup(false, sopparms.getGroupName());
-    groupNewEdge.findOrCreateVertexGroup(false, sopparms.getGroupName());
+    groupNewEdge.getOutGroupArray().findOrCreateVertex(false, sopparms.newVertexEdgeGroupName());
+    groupNewEdge.getOutGroupArray().findOrCreateEdge(false, sopparms.newEdgeGroupName());
 
 
     groupNewEdge.groupParser.setGroup(groupType, sopparms.getGroup());

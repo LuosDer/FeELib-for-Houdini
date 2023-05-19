@@ -17,7 +17,6 @@
 
 
 
-
 class GFE_GeoFilter {
 
 public:
@@ -544,7 +543,7 @@ virtual void delGroupElement()
     }
     else
     {
-        GA_Range range(*static_cast<const GA_ElementGroup*>(outGroup));
+        const GA_Range range(*static_cast<const GA_ElementGroup*>(outGroup));
         switch (outGroup->classType())
         {
         case GA_GROUP_PRIMITIVE:

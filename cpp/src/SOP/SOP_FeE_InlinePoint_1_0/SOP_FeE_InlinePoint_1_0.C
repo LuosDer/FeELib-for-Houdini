@@ -57,14 +57,25 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "primInlinePoint_groupName"
-        cppname "PrimInlinePoint_groupName"
-        label   "Prim Inline Point Group Name"
-        type    string
-        default { "primInlinePoint_fast" }
-        disablewhen " { delInlinePoint == 1 }"
+        name    "inlineGroupType"
+        cppname "InlineGroupType"
+        label   "Inline Group Type"
+        type    ordinal
+        default { "point" }
+        menu {
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
-
+    parm {
+        name    "inlineGroupName"
+        cppname "InlineGroupName"
+        label   "Inline Group Name"
+        type    string
+        default { "inline" }
+        disablewhen " { delElement == 1 }"
+    }
 
     parm {
         name    "reverseGroup"
@@ -74,9 +85,9 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "delInlinePoint"
-        cppname "DelInlinePoint"
-        label   "Delete Inline Point"
+        name    "delElement"
+        cppname "DelElement"
+        label   "Delete Element"
         type    toggle
         default { "0" }
     }
@@ -175,16 +186,31 @@ SOP_FeE_InlinePoint_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_InlinePoint_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_InlinePoint_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_InlinePoint_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
     case GroupType::POINT:     return GA_GROUP_POINT;      break;
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+static GA_GroupType
+sopInlineGroupType(SOP_FeE_InlinePoint_1_0Parms::InlineGroupType parmGroupType)
+{
+    using namespace SOP_FeE_InlinePoint_1_0Enums;
+    switch (parmGroupType)
+    {
+    case InlineGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case InlineGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case InlineGroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
@@ -206,6 +232,7 @@ SOP_FeE_InlinePoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType inlineGroupType = sopInlineGroupType(sopparms.getInlineGroupType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -213,15 +240,16 @@ SOP_FeE_InlinePoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
 
     GFE_InlinePoint primInlinePoint(outGeo0, cookparms);
-    primInlinePoint.setComputeParm(1e-05, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
-    primInlinePoint.reverseOutGroup = sopparms.getReverseGroup();
-    primInlinePoint.doDelGroupElement = sopparms.getDelInlinePoint();
     
+    primInlinePoint.setComputeParm(1e-05,
+        sopparms.getReverseGroup(), sopparms.getDelElement(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
+    
+    primInlinePoint.findOrCreateGroup(inlineGroupType, sopparms.getInlineGroupName());
 
     primInlinePoint.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    primInlinePoint.findOrCreateGroup(GA_GROUP_POINT, sopparms.getPrimInlinePoint_groupName());
 
     primInlinePoint.computeAndBumpDataId();
     primInlinePoint.visualizeOutGroup();

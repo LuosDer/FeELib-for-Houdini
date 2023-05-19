@@ -36,7 +36,7 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , groupParser_cutPoint(geo, groupParser.getGOP(), cookparms)
+        , groupParser_cutPoint(geo, groupParser.getGOPRef(), cookparms)
     {
         if (geoSrc)
         {

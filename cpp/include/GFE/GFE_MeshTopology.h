@@ -250,10 +250,39 @@ GFE_GETGROUP_SPECIALIZATION(VertexNextEquivNoLoop, vertexNextEquivNoLoop)
 
 
 
+    
 
-
+    GA_Attribute* setAdjacency(
+        const bool detached = false,
+        const GA_AttributeOwner attribOwner = GA_ATTRIB_POINT,
+        const bool largeConnectivity = true,
+        const UT_StringRef& attribName = "__topo_adjacency",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
+    {
+        switch (attribOwner)
+        {
+        case GA_ATTRIB_PRIMITIVE:
+            return largeConnectivity ? setPrimPrimPoint (detached, attribName, storage) : setPrimPrimEdge  (detached, attribName, storage);
+            break;
+        case GA_ATTRIB_POINT:
+            return largeConnectivity ? setPointPointPrim(detached, attribName, storage) : setPointPointEdge(detached, attribName, storage);
+            break;
+        case GA_ATTRIB_VERTEX:
+            break;
+        }
+        return nullptr;
+    }
    
     
+    SYS_FORCE_INLINE GA_Attribute* setAdjacency(
+        const bool detached = false,
+        const GA_GroupType groupType = GA_GROUP_POINT,
+        const bool largeConnectivity = true,
+        const UT_StringRef& attribName = "__topo_adjacency",
+        const GA_Storage storage = GA_STORE_INVALID
+    )
+    { return setAdjacency(detached, GFE_Type::attributeOwner_groupType(groupType), largeConnectivity, attribName, storage); }
    
 
 
@@ -900,13 +929,9 @@ private:
         
         intArray_wh.bind(pointPointEdgeAttrib);
         int_oh.bind(vertexPrimIndexAttrib);
-
-        const GFE_Detail* const geo = this->geo;
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& intArray_wh = this->intArray_wh;
-        const GA_ROHandleT<GA_Size>& int_oh = this->int_oh;
         
         const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
-        UTparallelFor(groupParser.getPointSplittableRange(), [seamGroup, &intArray_wh, &int_oh, geo](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPointSplittableRange(), [seamGroup, this](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> ptoffArray;
             GA_Offset start, end;
@@ -965,8 +990,7 @@ private:
 
     
     //Get Vertex Destination Point
-    void
-        pointPointEdge1()
+    void pointPointEdge1()
     {
         if(!pointPointEdgeAttrib)
             setPointPointEdge(!outIntermediateAttrib);
@@ -1631,7 +1655,7 @@ private:
     GA_Attribute*   pointPointPrimAttrib        = nullptr;
     GA_Attribute*   primPrimEdgeAttrib          = nullptr;
     GA_Attribute*   primPrimPointAttrib         = nullptr;
-    GA_VertexGroup* vertexNextEquivGroup        = nullptr;
+    GA_VertexGroup* vertexNextEquivGroup        = nullptr; // unshared vertex
     GA_VertexGroup* vertexNextEquivNoLoopGroup  = nullptr;
     GA_EdgeGroup*   unsharedEdgeGroup           = nullptr;
     

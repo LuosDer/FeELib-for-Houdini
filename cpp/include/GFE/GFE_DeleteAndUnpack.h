@@ -13,59 +13,22 @@
 #include "GU/GU_PrimPacked.h"
 
 
-enum class GFE_DelAndUnpack_Type
-{
-	Custom,
-	OneElem,
-	SkipNElem,
-};
 
 	
 class GFE_DelAndUnpack : public GFE_GeoFilter {
 
 public:
 	using GFE_GeoFilter::GFE_GeoFilter;
-	//
-	// GFE_DelAndUnpack(
-	// 	GFE_Detail* const geo,
-	// 	const GA_Detail* const inGeo0 = nullptr,
-	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, inGeo(inGeo0)
-	// {
-	// }
-	//
-	// GFE_DelAndUnpack(
-	// 	GA_Detail& geo,
-	// 	const GA_Detail* const inGeo = nullptr,
-	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, inGeo(inGeo)
-	// {
-	// }
-	//
-	// GFE_DelAndUnpack(
-	// 	GA_Detail& geo,
-	// 	const GA_Detail* const inGeo,
-	// 	const SOP_NodeVerb::CookParms& cookparms
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, inGeo(inGeo)
-	// {
-	// }
-
 	
     void
         setComputeParm(
-			const GFE_DelAndUnpack_Type type = GFE_DelAndUnpack_Type::OneElem,
+			const GFE_ElemTraversingMethod elemTraversingMethod = GFE_ElemTraversingMethod::OneElem,
             const bool reverseGroup = true,
 			const bool delGroup = true
         )
     {
         setHasComputed();
-        this->type = type;
+        this->elemTraversingMethod = elemTraversingMethod;
         this->reverseGroup = reverseGroup;
         this->delGroup = delGroup;
     }
@@ -93,10 +56,10 @@ private:
     virtual bool
         computeCore() override
     {
-    	switch (type) {
-    	case GFE_DelAndUnpack_Type::Custom:    delAndUnpack_Custom();      break;
-    	case GFE_DelAndUnpack_Type::OneElem:   delAndUnpack_OneElem();     break;
-    	case GFE_DelAndUnpack_Type::SkipNElem: delAndUnpack_SkipNElem();   break;
+    	switch (elemTraversingMethod) {
+    	case GFE_ElemTraversingMethod::Custom:    delAndUnpack_Custom();      break;
+    	case GFE_ElemTraversingMethod::OneElem:   delAndUnpack_OneElem();     break;
+    	case GFE_ElemTraversingMethod::SkipNElem: delAndUnpack_SkipNElem();   break;
     	default: break;
     	}
     
@@ -108,8 +71,8 @@ private:
     	{
 	        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
 	        {
-	        	int typeId = geo->getPrimitiveTypeId(elemoff);
-	        	if (typeId != 25 && typeId != 27 )
+	        	int elemTraversingMethodId = geo->getPrimitiveTypeId(elemoff);
+	        	if (elemTraversingMethodId != 25 && elemTraversingMethodId != 27 )
 	        		continue;
 	        	GA_Primitive* const prim = geo->getPrimitive(elemoff);
 	            GU_PrimPacked* const primPacked = static_cast<GU_PrimPacked*>(prim);
@@ -132,7 +95,7 @@ private:
 
 
 public:
-    GFE_DelAndUnpack_Type type = GFE_DelAndUnpack_Type::OneElem;
+    GFE_ElemTraversingMethod elemTraversingMethod = GFE_ElemTraversingMethod::OneElem;
 	
     bool reverseGroup = false;
     bool delGroup = true;

@@ -1122,24 +1122,21 @@ public:
         groupArray.emplace_back(&groupPtr);
     }
 
-    void set(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
+    GA_Group* set(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
         if (!groupPattern.isstring() || groupPattern.length() == 0)
-            return;
+            return nullptr;
 
         GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
         set(groupPtr);
+        return groupPtr;
     }
     
-    SYS_FORCE_INLINE void append(GA_Group* const groupPtr)
-    {
-        if (!groupPtr)
-            return;
-        groupArray.emplace_back(groupPtr);
-    }
+    SYS_FORCE_INLINE void append(GA_Group& group)
+    { groupArray.emplace_back(&group); }
 
-    SYS_FORCE_INLINE void append(GA_Group& groupPtr)
-    { groupArray.emplace_back(&groupPtr); }
+    SYS_FORCE_INLINE void append(GA_Group* const group)
+    { if (group) groupArray.emplace_back(group); }
 
     void append(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {

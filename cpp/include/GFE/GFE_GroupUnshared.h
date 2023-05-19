@@ -87,26 +87,16 @@ public:
     )
     {
         if(outVertexGroup)
-        {
             findOrCreateVertexGroup(detached, name);
-        }
         else
-        {
             findOrCreateEdgeGroup(detached, name);
-        }
     }
 
     SYS_FORCE_INLINE GA_VertexGroup* findOrCreateVertexGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared")
-    {
-        unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(detached, name);
-        return unsharedVertexGroup;
-    }
+    { return unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(detached, name); }
 
     SYS_FORCE_INLINE GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared")
-    {
-        unsharedEdgeGroup = meshTopology.setUnsharedEdgeGroup(detached, name);
-        return unsharedEdgeGroup;
-    }
+    { return unsharedEdgeGroup = meshTopology.setUnsharedEdgeGroup(detached, name); }
 
     SYS_FORCE_INLINE GA_VertexGroup* getVertexGroup() const
     { return meshTopology.getVertexNextEquivGroup(); }
@@ -158,16 +148,13 @@ private:
             meshTopology.reset(geo, cookparms);
         }
         
-        getOutGroupArray()
-        meshTopology.groupParser.setGroup(groupParser.getVertexGroup());
-        
+        //meshTopology.groupParser.setGroup(groupParser.getVertexGroup());
         meshTopology.compute();
         
-        //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv_Namespace::addGroupVertexNextEquiv(geoOriginTmp, groupParser.getVertexGroup(), GA_STORE_INVALID);
 
         //GFE_GroupPromote::groupPromote(geoOriginTmp, unsharedGroup, unsharedAttribClass, unsharedAttribName, true);
-        GFE_GroupUnion::groupUnion(getOutGroupArray()[0], unsharedGroup);
-        GFE_GroupUnion::groupUnion_topoAttrib(geo, getOutGroupArray()[0], unsharedGroup);
+        GFE_GroupUnion::groupUnion(*getOutGroupArray()[0], unsharedVertexGroup);
+        //GFE_GroupUnion::groupUnion_topoAttrib(geo, *getOutGroupArray()[0], unsharedVertexGroup);
     
 
         return true;
