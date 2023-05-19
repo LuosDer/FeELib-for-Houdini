@@ -254,10 +254,10 @@ SOP_FeE_FlatEdge_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;

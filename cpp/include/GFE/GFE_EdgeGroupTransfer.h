@@ -17,6 +17,7 @@
 
 
 
+// Ref GFE_GroupNewEdge
 class GFE_EdgeGroupTransfer : public GFE_AttribFilterWithRef {
 
 public:
@@ -32,7 +33,7 @@ public:
     setComputeParm(
         const bool useSnapDist = true,
         const fpreal snapDist = 0.001,
-        const bool reverseGroup = false,
+        const bool reverseOutGroup = false,
         const bool outAsVertexGroup = false,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 1024
@@ -41,7 +42,7 @@ public:
         setHasComputed();
         this->useSnapDist      = useSnapDist;
         this->snapDist         = snapDist;
-        this->reverseGroup     = reverseGroup;
+        this->reverseOutGroup  = reverseOutGroup;
         this->outAsVertexGroup = outAsVertexGroup;
         this->subscribeRatio   = subscribeRatio;
         this->minGrainSize     = minGrainSize;
@@ -217,14 +218,14 @@ void vertexEdgeGroupTransfer()
                         }
                         else
                         {
-                            for (GA_Offset vtxoff = geo->pointVertex(snapDstPtoff0); vtxoff != GA_INVALID_OFFSET; vtxoff = geo->vertexToNextVertex(vtxoff))
-                            {
-                                if (dstpt_h.get(vtxoff) == snapDstPtoff1)
-                                {
-                                    newVertexEdgeGroup->setElement(vtxoff, true);
-                                    break;
-                                }
-                            }
+                            // for (GA_Offset vtxoff = geo->pointVertex(snapDstPtoff0); vtxoff != GA_INVALID_OFFSET; vtxoff = geo->vertexToNextVertex(vtxoff))
+                            // {
+                            //     if (dstpt_h.get(vtxoff) == snapDstPtoff1)
+                            //     {
+                            //         newVertexEdgeGroup->setElement(vtxoff, true);
+                            //         break;
+                            //     }
+                            // }
                         }
                     }
                 }
@@ -269,7 +270,6 @@ public:
     bool useSnapDist = true;
     fpreal snapDist = 0.001;
 
-    bool reverseGroup = false;
     bool outAsVertexGroup = false;
     
     UFE_SplittableString newEdgeGroupNames;
@@ -291,8 +291,8 @@ private:
     
     GA_Attribute* vertexPointDstRef0Attrib;
     
-    GA_Attribute* vertexPointDstAttrib;
-    GA_RWHandleT<GA_Offset> dstpt_h;
+    //GA_Attribute* vertexPointDstAttrib;
+    //GA_RWHandleT<GA_Offset> dstpt_h;
         
     
     exint subscribeRatio = 64;

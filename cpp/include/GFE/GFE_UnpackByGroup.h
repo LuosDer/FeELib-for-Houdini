@@ -4,7 +4,8 @@
 #ifndef __GFE_UnpackByGroup_h__
 #define __GFE_UnpackByGroup_h__
 
-#include "GFE/GFE_DeleteAndUnpack.h"
+#include "GFE/GFE_UnpackByGroup.h"
+
 
 
 #include "GFE/GFE_GeoFilter.h"
@@ -12,75 +13,33 @@
 
 #include "GU/GU_PrimPacked.h"
 
-
-enum class GFE_UnpackByGroup_Type
-{
-	Custom,
-	OneElem,
-	SkipNElem,
-};
-
 	
 class GFE_UnpackByGroup : public GFE_GeoFilter {
 
 public:
 	using GFE_GeoFilter::GFE_GeoFilter;
-	//
-	// GFE_UnpackByGroup(
-	// 	GFE_Detail* const geo,
-	// 	const GA_Detail* const inGeo0 = nullptr,
-	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, inGeo(inGeo0)
-	// {
-	// }
-	//
-	// GFE_UnpackByGroup(
-	// 	GA_Detail& geo,
-	// 	const GA_Detail* const inGeo = nullptr,
-	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, inGeo(inGeo)
-	// {
-	// }
-	//
-	// GFE_UnpackByGroup(
-	// 	GA_Detail& geo,
-	// 	const GA_Detail* const inGeo,
-	// 	const SOP_NodeVerb::CookParms& cookparms
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, inGeo(inGeo)
-	// {
-	// }
-
+	
 	
     void
         setComputeParm(
-			const GFE_UnpackByGroup_Type type = GFE_UnpackByGroup_Type::OneElem,
+			const GFE_ElemTraversingMethod elemTraversingMethod = GFE_ElemTraversingMethod::OneElem,
             const bool reverseGroup = true,
 			const bool delGroup = true
         )
     {
         setHasComputed();
-        this->type = type;
+        this->elemTraversingMethod = elemTraversingMethod;
         this->reverseGroup = reverseGroup;
         this->delGroup = delGroup;
     }
 
 
-	SYS_FORCE_INLINE void setPrimoff(const GA_Offset primoff = 0, const bool inputAsOffset = true)
-    {
-    	this->primoff = primoff;
-    	this->inputAsOffset = inputAsOffset;
-    }
+	SYS_FORCE_INLINE void setPrimoff(const GA_Offset primoff = 0)
+    { this->primoff = primoff; }
 
-	SYS_FORCE_INLINE void setSkipNPrim(const GA_Offset primoff = 0, const bool inputAsOffset = true, const GA_Size skipNPrim = 1)
+	SYS_FORCE_INLINE void setSkipNPrim(const GA_Offset primoff = 0, const GA_Size skipNPrim = 1)
     {
     	this->primoff = primoff;
-    	this->inputAsOffset = inputAsOffset;
     	this->skipNPrim = skipNPrim;
     }
 
@@ -93,77 +52,134 @@ private:
     virtual bool
         computeCore() override
     {
-    	if (geoSrc)
+    	if(geoSrc)
     	{
-    		
+        	geoSrcTmp = geoSrc;
     	}
-    	else
-    	{
-    		
-    		if (geoSrc)
-    		{
-    			geo.replaceWith(*geoSrc);
-    			//this->geoSrc = geoSrc;
-    		}
-    		else
-    		{
-    			// geoSrcTmp = new GU_Detail();
-    			// geoSrcTmp_h.allocateAndSet(geoSrcTmp);
-    			// geoSrcTmp->replaceWith(geo);
-    			//this->geoSrc = geoSrc;
-    		}
-    	}
+        else
+        {
+        	geoSrcTmpGU = new GU_Detail();
+        	geoSrcTmp_h.allocateAndSet(geoSrcTmpGU);
+        	geoSrcTmpGU->replaceWith(*geo->asGA_Detail());
+        	geoSrcTmp = geoSrcTmpGU;
+        }
 
-    	switch (type) {
-    	case GFE_UnpackByGroup_Type::Custom:    delAndUnpack_Custom();      break;
-    	case GFE_UnpackByGroup_Type::OneElem:   delAndUnpack_OneElem();     break;
-    	case GFE_UnpackByGroup_Type::SkipNElem: delAndUnpack_SkipNElem();   break;
+    	GFE_GroupParser groupParserSrc(geoSrcTmp, groupParser.getGOPRef(), cookparms);
+    	groupParserSrc.setGroup(groupParser);
+    	
+    	geo->clear();
+		
+    	switch (elemTraversingMethod) {
+    	case GFE_ElemTraversingMethod::Custom:    unpackByGroup_Custom(groupParserSrc);      break;
+    	case GFE_ElemTraversingMethod::OneElem:   unpackByGroup_OneElem();     break;
+    	case GFE_ElemTraversingMethod::SkipNElem: unpackByGroup_SkipNElem();   break;
     	default: break;
     	}
     
     	if (delGroup)
     		groupParser.delGroup();
 
-    	GA_Offset start, end;
-    	for (GA_Iterator it(geo->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
-    	{
-	        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-	        {
-	        	int typeId = geo->getPrimitiveTypeId(elemoff);
-	        	if (typeId != 25 && typeId != 27 )
-	        		continue;
-	        	GA_Primitive* const prim = geo->getPrimitive(elemoff);
-	            GU_PrimPacked* const primPacked = static_cast<GU_PrimPacked*>(prim);
-	        	primPacked->unpack(*geo->asGU_Detail());
-	        }
-    	}
-    	
         return true;
     }
 
 
-	SYS_FORCE_INLINE void delAndUnpack_Custom()
-    { geo->deleteElements(groupParser.getGroup(), reverseGroup, true, GA_Detail::GA_LEAVE_PRIMITIVES); }
+	void unpackPrim(GU_Detail& geoGU, const GA_Offset primoff)
+	{
+    	if (GFE_Type::isPacked(geoSrcTmp->getPrimitiveTypeId(primoff)))
+			static_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
+		//GA_Primitive* const prim = geoSrcTmp->getPrimitive(primoff);
+		//GU_PrimPacked* const primPacked = static_cast<GU_PrimPacked*>(prim);
+	}
 	
-	SYS_FORCE_INLINE void delAndUnpack_OneElem()
-    { geo->deleteOnePrimitive(inputAsOffset ? primoff : geo->primitiveOffset(primoff), reverseGroup, true); }
+	void unpackByGroup_Custom(GFE_GroupParser &groupParser)
+    {
+    	GU_Detail& geoGU = *geo->asGU_Detail();
+    	GA_Offset start, end;
+    	for (GA_Iterator it(groupParser.getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    	{
+    		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    		{
+    			unpackPrim(geoGU, elemoff);
+    		}
+    	}
+	}
 	
-	SYS_FORCE_INLINE void delAndUnpack_SkipNElem()
-    { geo->deletePrimitiveSkipNElem(inputAsOffset ? primoff : geo->primitiveOffset(primoff), skipNPrim, reverseGroup, true); }
+	void unpackByGroup_OneElem()
+    {
+    	GU_Detail& geoGU = *geo->asGU_Detail();
+    	if (reverseGroup)
+    	{
+    		GA_Offset start, end;
+    		for (GA_Iterator it(geoSrcTmp->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    		{
+    			for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    			{
+    				if (elemoff == primoff)
+    					continue;
+    				unpackPrim(geoGU, elemoff);
+				}
+    		}
+    	}
+    	else
+    	{
+    		unpackPrim(geoGU, primoff);
+    	}
+    }
+	
+	void unpackByGroup_SkipNElem()
+    {
+    	GU_Detail& geoGU = *geo->asGU_Detail();
+    	GA_Offset start, end;
+    	if (skipNPrim <= 0)
+    	{
+    		if (!reverseGroup)
+    		{
+    			for (GA_Iterator it(geoSrcTmp->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    			{
+    				for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    				{
+    					unpackPrim(geoGU, elemoff);
+    				}
+    			}
+    		}
+    		return;
+    	}
+        
+    	GA_Size delSize = geo->getPrimitiveMap().indexFromOffset(primoff);
+    	delSize %= skipNPrim;
+        
+    	for (GA_Iterator it(geoSrcTmp->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    	{
+    		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+    		{
+    			if (delSize!=0 ^ reverseGroup)
+    				unpackPrim(geoGU, elemoff);
+                
+    			if (delSize == skipNPrim)
+    				delSize = 0;
+    			else
+    				++delSize;
+    		}
+    	}
+    }
 
 
 public:
-    GFE_UnpackByGroup_Type type = GFE_UnpackByGroup_Type::OneElem;
+    GFE_ElemTraversingMethod elemTraversingMethod = GFE_ElemTraversingMethod::OneElem;
 	
     bool reverseGroup = false;
     bool delGroup = true;
 	
 	GA_Offset primoff = 0;
-	bool inputAsOffset = true;
 	GA_Size skipNPrim = 1;
 	
 private:
-
+	
+	const GA_Detail* geoSrcTmp;
+	GU_Detail* geoSrcTmpGU;
+	
+	GU_DetailHandle geoSrcTmp_h;
+	
     //exint subscribeRatio = 64;
     //exint minGrainSize = 1024;
 

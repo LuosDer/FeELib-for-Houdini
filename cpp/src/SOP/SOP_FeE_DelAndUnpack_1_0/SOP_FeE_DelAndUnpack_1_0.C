@@ -22,9 +22,9 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "delType"
-        cppname "DelType"
-        label   "Delete Type"
+        name    "elemTraversingMethod"
+        cppname "ElemTraversingMethod"
+        label   "Elem Traversing Method"
         type    ordinal
         default { "oneElem" }
         menu {
@@ -39,7 +39,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        hidewhen "{ delType != custom }"
+        hidewhen "{ elemTraversingMethod != custom }"
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -64,7 +64,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Primoff"
         type    integer
         default { "0" }
-        hidewhen "{ delType == custom }"
+        hidewhen "{ elemTraversingMethod == custom }"
         range   { 0! 10 }
     }
     parm {
@@ -73,7 +73,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Input as Offset"
         type    toggle
         default { "0" }
-        hidewhen "{ delType == custom }"
+        hidewhen "{ elemTraversingMethod == custom }"
     }
     parm {
         name    "skipNPrim"
@@ -81,7 +81,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Skip N Prim"
         type    integer
         default { "1" }
-        hidewhen "{ delType != skipNElem }"
+        hidewhen "{ elemTraversingMethod != skipNElem }"
         range   { 0! 10 }
     }
     parm {
@@ -108,7 +108,7 @@ SOP_FeE_DelAndUnpack_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_DelAndUnpack_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("delElementGroup"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -190,18 +190,18 @@ sopGroupType(SOP_FeE_DelAndUnpack_1_0Parms::GroupType parmgrouptype)
     return GA_GROUP_INVALID;
 }
 
-static GFE_DelAndUnpack_Type
-sopDelType(SOP_FeE_DelAndUnpack_1_0Parms::DelType parmDelType)
+static GFE_ElemTraversingMethod
+sopElemTraversingMethod(SOP_FeE_DelAndUnpack_1_0Parms::ElemTraversingMethod parmElemTraversingMethod)
 {
     using namespace SOP_FeE_DelAndUnpack_1_0Enums;
-    switch (parmDelType)
+    switch (parmElemTraversingMethod)
     {
-    case DelType::CUSTOM:           return GFE_DelAndUnpack_Type::Custom;     break;
-    case DelType::ONEELEM:          return GFE_DelAndUnpack_Type::OneElem;    break;
-    case DelType::SKIPNELEM:        return GFE_DelAndUnpack_Type::SkipNElem;  break;
+    case ElemTraversingMethod::CUSTOM:           return GFE_ElemTraversingMethod::Custom;     break;
+    case ElemTraversingMethod::ONEELEM:          return GFE_ElemTraversingMethod::OneElem;    break;
+    case ElemTraversingMethod::SKIPNELEM:        return GFE_ElemTraversingMethod::SkipNElem;  break;
     }
     UT_ASSERT_MSG(0, "Unhandled Delete Type!");
-    return GFE_DelAndUnpack_Type::OneElem;
+    return GFE_ElemTraversingMethod::OneElem;
 }
 
 void
@@ -216,7 +216,7 @@ SOP_FeE_DelAndUnpack_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GFE_DelAndUnpack_Type delType = sopDelType(sopparms.getDelType());
+    const GFE_ElemTraversingMethod elemTraversingMethod = sopElemTraversingMethod(sopparms.getElemTraversingMethod());
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -226,12 +226,17 @@ SOP_FeE_DelAndUnpack_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     GFE_DelAndUnpack delAndUnpack(outGeo0, inGeo0, cookparms);
     
-    delAndUnpack.setComputeParm(delType, sopparms.getReverseGroup(), sopparms.getDelGroup());
+    delAndUnpack.setComputeParm(elemTraversingMethod, sopparms.getReverseGroup(), sopparms.getDelGroup());
     
-    switch (delType) {
-    case GFE_DelAndUnpack_Type::Custom:    delAndUnpack.groupParser.setGroup(groupType, sopparms.getGroup());                               break;
-    case GFE_DelAndUnpack_Type::OneElem:   delAndUnpack.setPrimoff(sopparms.getPrimoff(), sopparms.getInputAsOffset());                              break;
-    case GFE_DelAndUnpack_Type::SkipNElem: delAndUnpack.setSkipNPrim(sopparms.getPrimoff(), sopparms.getInputAsOffset(), sopparms.getSkipNPrim());   break;
+    GA_Offset primoff = sopparms.getPrimoff();
+    if(sopparms.getInputAsOffset())
+        primoff = outGeo0.primitiveOffset(primoff);
+
+    
+    switch (elemTraversingMethod) {
+    case GFE_ElemTraversingMethod::Custom:    delAndUnpack.groupParser.setGroup(groupType, sopparms.getGroup());   break;
+    case GFE_ElemTraversingMethod::OneElem:   delAndUnpack.setPrimoff(primoff);                                             break;
+    case GFE_ElemTraversingMethod::SkipNElem: delAndUnpack.setSkipNPrim(primoff, sopparms.getSkipNPrim());                  break;
     default: break;
     }
     

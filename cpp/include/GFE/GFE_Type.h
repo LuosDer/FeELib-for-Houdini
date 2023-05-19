@@ -92,6 +92,13 @@ enum class GFE_StatisticalFunction
 };
 
 
+enum class GFE_ElemTraversingMethod
+{
+    Custom,
+    OneElem,
+    SkipNElem,
+};
+
 
 
 namespace GFE_Type {
@@ -108,6 +115,9 @@ namespace GFE_Type {
 
 #endif
 
+    
+SYS_FORCE_INLINE static bool isPacked(const int i)
+{ return i >= 25 && i <= 27; }
 
 SYS_FORCE_INLINE static bool OffsetIsValid(const GA_Offset v)
 { return v >= 0 && v != GFE_INVALID_OFFSET; }

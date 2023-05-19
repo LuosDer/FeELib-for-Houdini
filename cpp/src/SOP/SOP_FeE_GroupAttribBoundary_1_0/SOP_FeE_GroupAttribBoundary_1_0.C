@@ -25,54 +25,77 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "curveUVMethod"
-        cppname "CurveUVMethod"
-        label   "Curve UV Method"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
         type    ordinal
-        default { "arcLength" }
+        default { "guess" }
         menu {
-            "worldArcLength"  "World Arc Length"
-            "worldAverage"    "World Average"
-            "localArcLength"  "Local Arc Length"
-            "localAverage"    "Local Average"
-        }
-    }
-    parm {
-        name    "uvAttrib"
-        cppname "UVAttrib"
-        label   "UV Attribute"
-        type    string
-        default { "uv" }
-    }
-    parm {
-        name    "uvClass"
-        cppname "UVClass"
-        label   "UV Class"
-        type    ordinal
-        default { "auto" }
-        menu {
-            "auto"      "Auto"
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
             "point"     "Point"
             "vertex"    "Vertex"
+            "edge"      "Edge"
         }
     }
 
     parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
+        name    "attribClass"
+        cppname "AttribClass"
+        label   "Attrib Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "vertex"    "Vertex"
+        }
+    }
+    parm {
+        name    "attrib"
+        cppname "Attrib"
+        label   "Attrib"
+        type    string
+        default { "" }
+    }
+
+    parm {
+        name    "vertexEdgeGroupName"
+        cppname "VertexEdgeGroupName"
+        label   "Vertex Edge Group Name"
+        type    string
+        default { "attribBoundary" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "edgeGroupName"
+        cppname "EdgeGroupName"
+        label   "Edge Group Name"
+        type    string
+        default { "attribBoundary" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+
+
+    parm {
+        name    "includeUnsharedEdge"
+        cppname "IncludeUnsharedEdge"
+        label   "Include Unshared Edge"
         type    toggle
-        default { "0" }
+        default { "1" }
     }
 
 
@@ -101,9 +124,10 @@ SOP_FeE_GroupAttribBoundary_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_GroupAttribBoundary_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allTextureCoordMenu);
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        
+        templ.setChoiceListPtr("group"_sh,               &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("attrib"_sh,              &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("edgeGroupName"_sh,       &SOP_Node::edgeNamedGroupMenu);
+        templ.setChoiceListPtr("vertexEdgeGroupName"_sh, &SOP_Node::vertexNamedGroupMenu);
     }
     return templ.templates();
 }
@@ -167,35 +191,35 @@ SOP_FeE_GroupAttribBoundary_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_GroupAttribBoundary_1_0Parms::UVClass attribClass)
+sopAttribOwner(SOP_FeE_GroupAttribBoundary_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_GroupAttribBoundary_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
-    case UVClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
-    case UVClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case UVClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case AttribClass::PRIM:   return GA_ATTRIB_PRIMITIVE; break;
+    //case AttribClass::POINT:  return GA_ATTRIB_POINT;     break;
+    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;    break;
+    //case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
 }
 
-
-static GFE_CurveUVMethod
-sopCurveUVMethod(SOP_FeE_GroupAttribBoundary_1_0Parms::CurveUVMethod curveUVMethod)
+static GA_GroupType
+sopGroupType(SOP_FeE_GroupAttribBoundary_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupAttribBoundary_1_0Enums;
-    switch (curveUVMethod)
+    switch (parmGroupType)
     {
-    case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod::WorldArcLength;    break;
-    case CurveUVMethod::WORLDAVERAGE:       return GFE_CurveUVMethod::WorldAverage;      break;
-    case CurveUVMethod::LOCALARCLENGTH:     return GFE_CurveUVMethod::LocalArcLength;    break;
-    case CurveUVMethod::LOCALAVERAGE:       return GFE_CurveUVMethod::LocalAverage;      break;
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled CurveUVMethod!");
-    return GFE_CurveUVMethod::WorldArcLength;
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
-
 
 
 void
@@ -209,22 +233,35 @@ SOP_FeE_GroupAttribBoundary_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookpar
 
     outGeo0.replaceWith(inGeo0);
 
+
+    const UT_StringHolder& newVertexEdgeGroupName = sopparms.getNewVertexEdgeGroupName();
+    const UT_StringHolder& newEdgeGroupName = sopparms.getNewEdgeGroupName();
+
+    if (!newVertexEdgeGroupName.isstring() &&
+        newVertexEdgeGroupName.length() == 0 &&
+        !newEdgeGroupName.isstring() &&
+        newEdgeGroupName.length() == 0)
+    {
+        return;
+    }
+    
+    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
 
-
-
-    
     
     GFE_GroupAttribBoundary groupAttribBoundary(outGeo0, cookparms);
     
     groupAttribBoundary.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    groupAttribBoundary.findOrCreateEdgeGroup(false, sopparms.getGroupName());
-    groupAttribBoundary.findOrCreateVertexGroup(false, sopparms.getGroupName());
+    groupAttribBoundary.getOutAttribArray().set(attribClass, sopparms.getAttrib());
+    groupAttribBoundary.getOutGroupArray().findOrCreateEdge(false, sopparms.edgeGroupName());
+    groupAttribBoundary.getOutGroupArray().findOrCreateVertex(false, sopparms.vertexEdgeGroupName());
 
 
     groupAttribBoundary.groupParser.setGroup(groupType, sopparms.getGroup());

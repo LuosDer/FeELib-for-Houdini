@@ -27,7 +27,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "AttribClass"
         label   "Attrib Class"
         type    ordinal
-        default { "points" }
+        default { "point" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"
@@ -36,9 +36,9 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
+        name    "duplicateAttrib"
+        cppname "DuplicateAttrib"
+        label   "Duplicate Attrib"
         type    string
         default { "" }
     }
@@ -112,8 +112,8 @@ SOP_FeE_AttribDuplicate_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribDuplicate_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("attribName"_sh, &SOP_Node::allAttribMenu);
-        templ.setChoiceListPtr("groupName"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("duplicateAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("groupName"_sh,       &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -189,19 +189,15 @@ SOP_FeE_AttribDuplicate_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribDuplicate_1_0Parms::AttribClass attribClass)
+sopAttribOwner(SOP_FeE_AttribDuplicate_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribDuplicate_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
-    case AttribClass::PRIM: return GA_ATTRIB_PRIMITIVE;
-        break;
-    case AttribClass::POINT: return GA_ATTRIB_POINT;
-        break;
-    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;
-        break;
-    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;
-        break;
+    case AttribClass::PRIM:   return GA_ATTRIB_PRIMITIVE; break;
+    case AttribClass::POINT:  return GA_ATTRIB_POINT;     break;
+    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;    break;
+    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -219,15 +215,17 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
 
     outGeo0.replaceWith(inGeo0);
 
+    
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
 
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
     GFE_AttribDuplicate attribDuplicate(outGeo0, &cookparms);
 
-    attribDuplicate.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
+    attribDuplicate.getInAttribArray().set(geo0AttribClass, sopparms.getDuplicateAttrib());
     attribDuplicate.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 
     

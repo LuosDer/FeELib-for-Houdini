@@ -25,9 +25,12 @@ class GFE_Detail : public GA_Detail
 
 public:
 
+    SYS_FORCE_INLINE bool isPacked(const GA_Offset primoff)
+    { return GFE_Type::isPacked(getPrimitiveTypeId(primoff)); }
+
     SYS_FORCE_INLINE GA_Detail* asGA_Detail()
     { return static_cast<GA_Detail*>(this); }
-
+    
     SYS_FORCE_INLINE const GA_Detail* asGA_Detail() const
     { return static_cast<const GA_Detail*>(this); }
 
@@ -54,6 +57,12 @@ public:
     { return getAttributes().getDict(GA_ATTRIB_DETAIL); }
 
 
+    
+    //const GA_Storage posStorage = geo->getPStorage();
+    SYS_FORCE_INLINE GA_Storage getPStorage() const
+    { return getP()->getAIFTuple()->getStorage(getP()); }
+    
+    
     
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
     SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff)

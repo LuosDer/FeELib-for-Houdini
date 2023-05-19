@@ -10,7 +10,14 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "GFE/GFE_MeshTopology.h"
 
+
+#include "GU/GU_Snap.h"
+
+
+
+// Ref GFE_EdgeGroupTransfer
 class GFE_GroupNewEdge : public GFE_AttribFilterWithRef {
 
 
@@ -20,19 +27,19 @@ public:
 
     void
         setComputeParm(
-            const GA_Size firstIndex = 0,
-            const bool outAsOffset = true,
-            const bool negativeIndex = false,
+            const bool useSnapDist = true,
+            const fpreal snapDist = 0.001,
+            const bool reverseGroup = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        this->firstIndex = firstIndex;
-        this->outAsOffset = outAsOffset;
-        this->negativeIndex = negativeIndex;
-        this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->useSnapDist      = useSnapDist;
+        this->snapDist         = snapDist;
+        this->reverseOutGroup  = reverseGroup;
+        this->subscribeRatio   = subscribeRatio;
+        this->minGrainSize     = minGrainSize;
     }
 
     
@@ -40,7 +47,7 @@ public:
         const bool detached = false,
         const bool outVertexEdgeGroup = false,
         const UT_StringRef& name = ""
-    ) const
+    )
     {
         if(outVertexEdgeGroup)
             findOrCreateVertexGroup(detached, name);
@@ -51,20 +58,14 @@ public:
     SYS_FORCE_INLINE GA_VertexGroup* findOrCreateVertexGroup(
         const bool detached = false,
         const UT_StringRef& name = ""
-    ) const
-    {
-        edgeGroup = getOutGroupArray().findOrCreateVertex(detached, name);
-        return edgeGroup;
-    }
+    )
+    { return vertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, name); }
 
     SYS_FORCE_INLINE GA_EdgeGroup* findOrCreateEdgeGroup(
         const bool detached = false,
         const UT_StringRef& name = ""
-    ) const
-    {
-        edgeGroup = getOutGroupArray().findOrCreateEdge(detached, name);
-        return edgeGroup;
-    }
+    )
+    { return edgeGroup = getOutGroupArray().findOrCreateEdge(detached, name); }
 
 private:
 
@@ -77,16 +78,52 @@ private:
         if (groupParser.isEmpty())
             return true;
 
+        
+
+        geoRef0Tmp = new GU_Detail();
+        geoRef0_h.allocateAndSet(geoRef0Tmp);
+        geoRef0Tmp->replaceWith(*geoRef0->asGA_Detail());
+
+
+    
+        const GA_ATINumericUPtr snapPtoffAttribUPtr = geoRef0->getAttributes().
+            createDetachedTupleAttribute(GA_ATTRIB_POINT, GA_STORE_INT64, 1, GA_Defaults(GFE_INVALID_OFFSET));
+    
+        snapPtoffAttrib = snapPtoffAttribUPtr.get();
+        //const GA_RWHandleID snapPtoff_h(snapPtoffAttribPtr);
+
+
+        GU_Snap::PointSnapParms pointSnapParms;
+        pointSnapParms.myAlgorithm = GU_Snap::PointSnapParms::ALGORITHM_CLOSEST_POINT;
+        pointSnapParms.myDistance = useSnapDist ? snapDist : SYS_FP64_MAX;
+        pointSnapParms.myOutputAttribH = snapPtoffAttrib;
+        snapPtoff_h = snapPtoffAttrib;
+
+        GU_Snap::snapPoints(*geoRef0Tmp, geo->asGU_Detail(), pointSnapParms);
+        //GU_Snap::snapPoints(*geo->asGU_Detail(), geoRef0, pointSnapParms);
+
+
+    
+        //GFE_MeshTopology meshTopology(geo, cookparms);
+        //vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
+        //meshTopology.compute();
+        //dstpt_h = vertexPointDstAttrib;
+    
+        GFE_MeshTopology meshTopologyRef0(geoRef0Tmp);
+        vertexPointDstRef0Attrib = meshTopologyRef0.setVertexPointDst(true);
+        meshTopologyRef0.compute();
+
+    
         const size_t size = getOutGroupArray().size();
         for (size_t i = 0; i < size; ++i)
         {
             
             switch (getOutGroupArray()[i]->classType())
             {
-            //case GA_GROUP_PRIMITIVE:  groupNewEdge(getOutGroupArray().getPrimitiveGroup(0));  break;
-            //case GA_GROUP_POINT:      groupNewEdge(getOutGroupArray().getPointGroup((0));     break;
-            case GA_GROUP_VERTEX:     groupNewEdge(getOutGroupArray().getVertexGroup(0));     break;
-            case GA_GROUP_EDGE:       groupNewEdge(getOutGroupArray().getEdgeGroup(0));       break;
+            //case GA_GROUP_PRIMITIVE:  groupNewEdge(getOutGroupArray().getPrimitiveGroup(i));  break;
+            //case GA_GROUP_POINT:      groupNewEdge(getOutGroupArray().getPointGroup((i));     break;
+            case GA_GROUP_VERTEX:     groupNewEdge(getOutGroupArray().getVertexGroup(i));     break;
+            case GA_GROUP_EDGE:       groupNewEdge(getOutGroupArray().getEdgeGroup(i));       break;
             default: break;
             }
         }
@@ -100,7 +137,7 @@ private:
     void groupNewEdge(GA_VertexGroup* const group)
     {
         const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
-        UTparallelFor(geoSplittableRange0, [this, group](const GA_SplittableRange& r)
+        UTparallelFor(groupParser., [this, group](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
@@ -144,18 +181,29 @@ private:
 
 
 public:
-    GA_Size firstIndex = 0;
-    bool outAsOffset = true;
-    bool negativeIndex = false;
+    bool useSnapDist = true;
+    fpreal snapDist = 0.001;
     
     const char* prefix = "";
     const char* sufix = "";
     
 
 private:
-    
-    GA_EdgeGroup* const edgeGroup = nullptr;
+    GU_DetailHandle geoRef0_h;
+    GU_Detail* geoRef0Tmp;
 
+    
+    GA_EdgeGroup* edgeGroup = nullptr;
+    GA_VertexGroup* vertexEdgeGroup = nullptr;
+
+    
+    GA_Attribute* snapPtoffAttrib;
+    GA_RWHandleT<GA_Offset> snapPtoff_h;
+
+    GA_Attribute* vertexPointDstRef0Attrib;
+    
+    //GA_Attribute* vertexPointDstAttrib;
+    //GA_RWHandleT<GA_Offset> dstpt_h;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

@@ -295,7 +295,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     
     groupUnshared.outTopoAttrib = sopparms.getOutTopoAttrib();
     
-    groupUnshared.findOrCreateGroup(false, unsharedAttribClass, unsharedAttribStorageClass, GA_STORE_INVALID, geo0AttribNames);
+    groupUnshared.findOrCreateGroup(false, unsharedAttribClass, geo0AttribNames);
 
     
     groupUnshared.computeAndBumpDataId();

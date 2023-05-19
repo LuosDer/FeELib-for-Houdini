@@ -9,12 +9,13 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_GroupUnion.h"
-
-#include "GFE/GFE_Measure.h"
-#include "GFE/GFE_Connectivity.h"
 #include "GFE/GFE_MeshTopology.h"
+//#include "GFE/GFE_GroupUnion.h"
+//#include "GFE/GFE_Range.h"
 
+
+//#include "GFE/GFE_Measure.h"
+//#include "GFE/GFE_Connectivity.h"
 
 
 
@@ -26,43 +27,179 @@ public:
 
     void
         setComputeParm(
-            const GA_GroupType baseGroupType,
-            const UT_StringHolder& baseGroupName,
-            const GA_GroupType connectivityGroupType,
-            const exint numiter,
-            const bool outTopoAttrib,
+            const bool largeConnectivity = false,
+            const size_t numiter = 1,
+            const bool outTopoAttrib = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        setOutTopoAttrib(outTopoAttrib);
+        this->largeConnectivity = largeConnectivity;
+        this->numiter = numiter;
+        this->outTopoAttrib = outTopoAttrib;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
 
+    SYS_FORCE_INLINE GA_Group* setBaseGroup(const GA_GroupType groupClass, const UT_StringRef& groupName = "")
+    { return baseGroup = getOutGroupArray().set(groupClass, groupName); }
+    
+    SYS_FORCE_INLINE GA_Group* setExpandGroup(const bool detached = false, const UT_StringRef& groupName = "")
+    { UT_ASSERT_P(baseGroup); return expandGroup = getOutGroupArray().findOrCreate(detached, baseGroup->classType(), groupName); }
 
+    SYS_FORCE_INLINE GA_Group* setBorderGroup(const bool detached = false, const UT_StringRef& groupName = "")
+    { UT_ASSERT_P(baseGroup); return borderGroup = getOutGroupArray().findOrCreate(detached, baseGroup->classType(), groupName); }
+
+    SYS_FORCE_INLINE GA_Group* setPrevBorderGroup(const bool detached = false, const UT_StringRef& groupName = "")
+    { UT_ASSERT_P(baseGroup); return prevBorderGroup = getOutGroupArray().findOrCreate(detached, baseGroup->classType(), groupName); }
+
+    
 private:
-
-    using TEMP_POS_VECTOR_TYPE = UT_Vector3T<fpreal64>;
 
 
     virtual bool
         computeCore() override
     {
+        if (!baseGroup || !expandGroup || !borderGroup || !prevBorderGroup)
+            return false;
+            
+        if (numiter == 0)
+            return true;
+        
         if (groupParser.isEmpty())
             return true;
-
+        
+        elementGroupExpand();
+        
         return true;
     }
 
+
+    
+    void edgeGroupExpandEdge()
+    {
+        GA_EdgeGroup* const expandElemGroup     = static_cast<GA_EdgeGroup*>(expandGroup);
+        GA_EdgeGroup* const borderElemGroup     = static_cast<GA_EdgeGroup*>(borderGroup);
+        GA_EdgeGroup* const prevBorderElemGroup = static_cast<GA_EdgeGroup*>(prevBorderGroup);
+        expandElemGroup->combine(baseGroup);
+        borderElemGroup->combine(baseGroup);
+    }
+    
+    void elementGroupExpand()
+    {
+        const GA_GroupType groupType = baseGroup->classType();
+
+
+        if (groupType == GA_GROUP_EDGE)
+        {
+            edgeGroupExpandEdge();
+        }
+        else
+        {
+            GA_ElementGroup* const expandElemGroup = static_cast<GA_ElementGroup*>(expandGroup);
+            expandElemGroup->combine(baseGroup);
+
+            GFE_MeshTopology meshTopology(geo, cookparms);
+            meshTopology.groupParser.setGroup(groupParser);
+            const GA_Attribute* const nebsAttrib = meshTopology.setAdjacency(true, groupType, largeConnectivity);
+            meshTopology.compute();
+
+            UT_ASSERT_P(nebsAttrib);
+            
+            const GA_ROHandleT<UT_ValArray<GA_Offset>> nebs_h(nebsAttrib);
+
+            if (numiter == 1)
+            {
+                //const GA_SplittableRange geoSplittableRange(GFE_Range::getRangeByAnyGroup(baseGroup));
+                const GA_SplittableRange geoSplittableRange(geo->getRangeByAnyGroup(baseGroup));
+                UTparallelFor(geoSplittableRange, [expandElemGroup, &nebs_h](const GA_SplittableRange& r)
+                {
+                    // GA_PageHandleT<GA_Offset>::RWType nebs_ph(&attrib);
+                    // for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    // {
+                    //     GA_Offset start, end;
+                    //     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    //     {
+                    //         nebs_ph.setPage(start);
+                    //         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    //         {
+                    //             nebs_ph.value(elemoff);
+                    //         }
+                    //     }
+                    // }
+                
+                    UT_ValArray<GA_Offset> adjElems(32);
+                    size_t size;
+                    GA_Offset start, end;
+                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                    {
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            nebs_h.get(elemoff, adjElems);
+                            size = adjElems.size();
+                            for (size_t i = 0; i < size; ++i)
+                            {
+                                expandElemGroup->setElement(adjElems[i], true);
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+            else
+            {
+                GA_ElementGroup* borderElemGroup     = static_cast<GA_ElementGroup*>(borderGroup);
+                GA_ElementGroup* prevBorderElemGroup = static_cast<GA_ElementGroup*>(prevBorderGroup);
+                borderElemGroup->combine(baseGroup);
+
+                for (size_t iternum = 0; iternum < numiter; iternum++)
+                {
+                    prevBorderGroup->combine(borderGroup);
+                    //const GA_SplittableRange geoSplittableRange(GFE_Range::getRangeByAnyGroup(geo, prevBorderElemGroup));
+                    const GA_SplittableRange geoSplittableRange(geo->getRangeByAnyGroup(prevBorderElemGroup));
+                    UTparallelFor(geoSplittableRange, [expandElemGroup, borderElemGroup, prevBorderElemGroup, &nebs_h](const GA_SplittableRange& r)
+                    {
+                        UT_ValArray<GA_Offset> adjElems(32);
+                        GA_Offset start, end;
+                        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                        {
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                borderElemGroup    ->setElement(elemoff, false);
+                                prevBorderElemGroup->setElement(elemoff, false);
+
+                                nebs_h.get(elemoff, adjElems);
+                                for (int i = 0; i < adjElems.size(); ++i)
+                                {
+                                    if (expandElemGroup->contains(adjElems[i]))
+                                        continue;
+                                    borderElemGroup->setElement(adjElems[i], true);
+                                }
+                            }
+                        }
+                    }, subscribeRatio, minGrainSize);
+                    expandElemGroup->combine(borderElemGroup);
+                }
+
+            }
+
+            
+        }
+    }
+
+
 public:
-    GA_GroupType baseGroupType;
-    UT_StringHolder baseGroupName;
-    GA_GroupType connectivityGroupType;
-    exint numiter;
+    bool largeConnectivity = false;
+    size_t numiter = 1;
+    
+    GA_Group* expandGroup     = nullptr;
+    GA_Group* borderGroup     = nullptr;
+    GA_Group* prevBorderGroup = nullptr;
 
 private:
+    //GA_GroupType baseGroupType;
+    GA_Group* baseGroup       = nullptr;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
@@ -86,7 +223,7 @@ private:
 
 
 
-
+/*
 
 namespace GFE_GroupExpand_Namespace {
 
@@ -106,7 +243,7 @@ namespace GFE_GroupExpand_Namespace {
             return;
 
         //GA_SplittableRange geoSplittableRange(GFE_Group::getRangeByAnyGroup(geo, group));
-        //UTparallelFor(geoSplittableRange, [geo, group, &nebsAttrib_h](const GA_SplittableRange& r)
+        //UTparallelFor(geoSplittableRange, [geo, group, &nebs_h](const GA_SplittableRange& r)
         //{
         //    UT_ValArray<GA_Offset> adjElems;
         //    GA_Offset start, end;
@@ -114,7 +251,7 @@ namespace GFE_GroupExpand_Namespace {
         //    {
         //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
         //        {
-        //            nebsAttrib_h.get(elemoff, adjElems);
+        //            nebs_h.get(elemoff, adjElems);
         //            for (GA_Size i = 0; i < adjElems.size(); ++i)
         //            {
         //                group->setElement(adjElems[i], true);
@@ -174,10 +311,10 @@ namespace GFE_GroupExpand_Namespace {
             const GA_Attribute* const nebsAttrib = GFE_Adjacency::addAttribAdjacency(geo, groupType, connectivityGroupType);
             if (!nebsAttrib)
                 return;
-            GA_ROHandleT<UT_ValArray<GA_Offset>> nebsAttrib_h(nebsAttrib);
+            GA_ROHandleT<UT_ValArray<GA_Offset>> nebs_h(nebsAttrib);
 
             GA_SplittableRange geoSplittableRange(GFE_Group::getRangeByAnyGroup(geo, baseGroup));
-            UTparallelFor(geoSplittableRange, [expandElemGroup, &nebsAttrib_h](const GA_SplittableRange& r)
+            UTparallelFor(geoSplittableRange, [expandElemGroup, &nebs_h](const GA_SplittableRange& r)
             {
                 UT_ValArray<GA_Offset> adjElems(32);
                 GA_Offset start, end;
@@ -185,7 +322,7 @@ namespace GFE_GroupExpand_Namespace {
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        nebsAttrib_h.get(elemoff, adjElems);
+                        nebs_h.get(elemoff, adjElems);
                         for (int i = 0; i < adjElems.size(); ++i)
                         {
                             expandElemGroup->setElement(adjElems[i], true);
@@ -225,7 +362,7 @@ namespace GFE_GroupExpand_Namespace {
         for (exint iternum = 0; iternum < numiter; iternum++)
         {
             //GA_SplittableRange geoSplittableRange(GFE_Group::getRangeByAnyGroup(geo, group));
-            //UTparallelFor(geoSplittableRange, [geo, group, &nebsAttrib_h](const GA_SplittableRange& r)
+            //UTparallelFor(geoSplittableRange, [geo, group, &nebs_h](const GA_SplittableRange& r)
             //{
             //    UT_ValArray<GA_Offset> adjElems;
             //    GA_Offset start, end;
@@ -233,7 +370,7 @@ namespace GFE_GroupExpand_Namespace {
             //    {
             //        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             //        {
-            //            nebsAttrib_h.get(elemoff, adjElems);
+            //            nebs_h.get(elemoff, adjElems);
             //            for (GA_Size i = 0; i < adjElems.size(); ++i)
             //            {
             //                group->setElement(adjElems[i], true);
@@ -310,13 +447,13 @@ namespace GFE_GroupExpand_Namespace {
             GA_Attribute* nebsAttrib = GFE_Adjacency::addAttribAdjacency(geo, groupType, connectivityGroupType);
             if (!nebsAttrib)
                 return;
-            GA_RWHandleT<UT_ValArray<GA_Offset>> nebsAttrib_h(nebsAttrib);
+            GA_RWHandleT<UT_ValArray<GA_Offset>> nebs_h(nebsAttrib);
             for (int iternum = 0; iternum < numiter; iternum++)
             {
                 //GEO_FeE_Group::groupUnion(geo, prevBorderGroup, borderGroup);
                 prevBorderGroup->combine(borderGroup);
                 GA_SplittableRange geoSplittableRange(GFE_Group::getRangeByAnyGroup(geo, prevBorderElemGroup));
-                UTparallelFor(geoSplittableRange, [geo, expandElemGroup, borderElemGroup, prevBorderElemGroup, &nebsAttrib_h](const GA_SplittableRange& r)
+                UTparallelFor(geoSplittableRange, [geo, expandElemGroup, borderElemGroup, prevBorderElemGroup, &nebs_h](const GA_SplittableRange& r)
                 {
                     UT_ValArray<GA_Offset> adjElems(32);
                     GA_Offset start, end;
@@ -327,7 +464,7 @@ namespace GFE_GroupExpand_Namespace {
                             borderElemGroup    ->setElement(elemoff, false);
                             prevBorderElemGroup->setElement(elemoff, false);
 
-                            nebsAttrib_h.get(elemoff, adjElems);
+                            nebs_h.get(elemoff, adjElems);
                             for (int i = 0; i < adjElems.size(); ++i)
                             {
                                 if (expandElemGroup->contains(adjElems[i]))
@@ -391,12 +528,12 @@ namespace GFE_GroupExpand_Namespace {
     //    if (numiter == 0)
     //        return;
 
-    //    GA_RWHandleT<UT_ValArray<GA_Offset>> nebsAttrib_h = GFE_Adjacency::addAttribPointPointEdge(geo);
+    //    GA_RWHandleT<UT_ValArray<GA_Offset>> nebs_h = GFE_Adjacency::addAttribPointPointEdge(geo);
 
     //    for (exint iternum = 0; iternum < numiter; iternum++)
     //    {
     //        GA_SplittableRange geoSplittableRange(GFE_Group::getRangeByAnyGroup(geo, group));
-    //        UTparallelFor(geoSplittableRange, [geo, group, &nebsAttrib_h](const GA_SplittableRange& r)
+    //        UTparallelFor(geoSplittableRange, [geo, group, &nebs_h](const GA_SplittableRange& r)
     //        {
     //            UT_ValArray<GA_Offset> adjElems;
     //            GA_Offset start, end;
@@ -404,7 +541,7 @@ namespace GFE_GroupExpand_Namespace {
     //            {
     //                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     //                {
-    //                    nebsAttrib_h.get(elemoff, adjElems);
+    //                    nebs_h.get(elemoff, adjElems);
     //                    for (GA_Size i = 0; i < adjElems.size(); ++i)
     //                    {
     //                        group->setElement(adjElems[i], true);
@@ -470,5 +607,8 @@ namespace GFE_GroupExpand_Namespace {
 
 
 } // End of namespace GFE_GroupExpand
+
+
+*/
 
 #endif

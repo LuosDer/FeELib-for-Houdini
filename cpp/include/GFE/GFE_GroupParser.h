@@ -434,7 +434,7 @@ public:
             setEdgeGroup();
         return geoEdgeGroup;
     }
-
+    
     SYS_FORCE_INLINE GA_Range getPrimitiveRange()
     { return GA_Range(geo->getPrimitiveMap(), getPrimitiveGroup()); }
 
@@ -443,6 +443,15 @@ public:
 
     SYS_FORCE_INLINE GA_Range getVertexRange()
     { return GA_Range(geo->getVertexMap(), getVertexGroup()); }
+
+    SYS_FORCE_INLINE GA_Range getPrimitiveRange(const bool reverseGroup)
+    { return GA_Range(geo->getPrimitiveMap(), getPrimitiveGroup(), reverseGroup); }
+
+    SYS_FORCE_INLINE GA_Range getPointRange(const bool reverseGroup)
+    { return GA_Range(geo->getPointMap(), getPointGroup(), reverseGroup); }
+
+    SYS_FORCE_INLINE GA_Range getVertexRange(const bool reverseGroup)
+    { return GA_Range(geo->getVertexMap(), getVertexGroup(), reverseGroup); }
 
     SYS_FORCE_INLINE GA_Range getRange(const GA_AttributeOwner attribOwner)
     {

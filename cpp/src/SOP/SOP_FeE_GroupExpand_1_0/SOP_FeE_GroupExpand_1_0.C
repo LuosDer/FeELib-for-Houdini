@@ -62,7 +62,7 @@ static const char *theDsFile = R"THEDSFILE(
     }
     parm {
         name    "prevBorderGroupName"
-        cppname "PrevBorderGroupName"
+        cppname "PrevBorderGroupName" 
         label   "Prev Border Group Name"
         type    string
         default { "prevBorder" }
@@ -105,7 +105,7 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ usestepattrib == 0 }"
     }
     groupsimple {
-        name    "constraintfolder"
+        name    "constraint_folder"
         label   "Constraints"
         grouptag { "group_type" "simple" }
 
@@ -218,6 +218,15 @@ static const char *theDsFile = R"THEDSFILE(
 
     }
 
+
+
+    parm {
+        name    "largeConnectivity"
+        cppname "LargeConnectivity"
+        label   "Large Connectivity"
+        type    toggle
+        default { "0" }
+    }
 
 
     parm {
@@ -353,90 +362,40 @@ void
 SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupExpand_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupExpand_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
-
-
-    const UT_StringHolder& expandGroupName = sopparms.getExpandGroupName();
-    if (!expandGroupName.isstring())
-        return;
-
-    const UT_StringHolder& borderGroupName = sopparms.getBorderGroupName();
-    if (!borderGroupName.isstring())
-        return;
-
-    const UT_StringHolder& prevBorderGroupName = sopparms.getPrevBorderGroupName();
-    if (!prevBorderGroupName.isstring())
-        return;
+    outGeo0.replaceWith(inGeo0);
 
     
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-
-    const exint numsteps = sopparms.getNumsteps();
-
-
-    const bool outTopoAttrib = sopparms.getOutTopoAttrib();
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
-    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(PreferredPrecision);
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    //GA_Group* geo0OutGroup = GEO_FeE_Group::groupDuplicate(outGeo0, geo0Group, geo0AttribNames);
-
-
-    //const GA_GroupType geo0finalGroupType = geo0Group->classType();
-
-    GA_Group* expandGroup     = GFE_Group::newGroup(outGeo0, geo0Group, expandGroupName);
-    GA_Group* borderGroup     = GFE_Group::newGroup(outGeo0, geo0Group, borderGroupName);
-    GA_Group* prevBorderGroup = GFE_Group::newGroup(outGeo0, geo0Group, prevBorderGroupName);
-
-    return outGeo0->getGroupTable(group->classType())->newGroup(groupName);
-
-#if 1
     GFE_GroupExpand groupExpand(outGeo0, cookparms);
-    groupExpand.groupParser.setGroup(groupType, sopparms.getGroup());
-    groupExpand.getOutGroupArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName);
+    
+    //groupExpand.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    
+    if (!groupExpand.setBaseGroup(groupType, sopparms.getGroup()))
+        return;
+    
+    groupExpand.setExpandGroup(false, sopparms.getExpandGroupName());
+    groupExpand.setBorderGroup(false, sopparms.getBorderGroupName());
+    groupExpand.setPrevBorderGroup(false, sopparms.getPrevBorderGroupName());
+    
     groupExpand.setComputeParm(
-        numsteps, outTopoAttrib,
-        subscribeRatio, minGrainSize);
+        sopparms.getLargeConnectivity(), sopparms.getNumsteps(), sopparms.getOutTopoAttrib(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
     groupExpand.computeAndBumpDataId();
-#else
-    GFE_GroupExpand_Namespace::groupExpand(cookparms, outGeo0,
-        expandGroup, borderGroup, prevBorderGroup,
-        groupType, groupName0,
-        GA_GROUP_EDGE, numsteps,
-        outTopoAttrib, subscribeRatio, minGrainSize);
-#endif
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
 
-
-
-    const GA_GroupType geo0finalGroupType = geo0Group->classType();
-
-
-
-
-    //GFE_Group::groupBumpDataId(geo0OutGroup);
 
 
 }
