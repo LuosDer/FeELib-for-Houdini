@@ -47,7 +47,7 @@ public:
         const bool detached = false,
         const bool outVertexEdgeGroup = false,
         const UT_StringRef& name = ""
-    ) const
+    )
     {
         if(outVertexEdgeGroup)
             findOrCreateVertexGroup(detached, name);
@@ -58,14 +58,14 @@ public:
     SYS_FORCE_INLINE GA_VertexGroup* findOrCreateVertexGroup(
         const bool detached = false,
         const UT_StringRef& name = ""
-    ) const
-    { vertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, name); return vertexEdgeGroup; }
+    )
+    { return vertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, name); }
 
     SYS_FORCE_INLINE GA_EdgeGroup* findOrCreateEdgeGroup(
         const bool detached = false,
         const UT_StringRef& name = ""
-    ) const
-    { edgeGroup = getOutGroupArray().findOrCreateEdge(detached, name); return edgeGroup; }
+    )
+    { return edgeGroup = getOutGroupArray().findOrCreateEdge(detached, name); }
 
 private:
 
@@ -193,8 +193,8 @@ private:
     GU_Detail* geoRef0Tmp;
 
     
-    GA_EdgeGroup* const edgeGroup = nullptr;
-    GA_VertexGroup* const vertexEdgeGroup = nullptr;
+    GA_EdgeGroup* edgeGroup = nullptr;
+    GA_VertexGroup* vertexEdgeGroup = nullptr;
 
     
     GA_Attribute* snapPtoffAttrib;
