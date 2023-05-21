@@ -110,7 +110,6 @@ private:
         const GA_ElementGroup* const group = groupParser.getElementGroup();
         if (getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
         {
-            // NOTE: This will bump any data IDs as needed, if any points are split.
             splitPoint();
             return true;
         }
@@ -152,8 +151,8 @@ private:
 
 
     
-    GA_Size
-        splitPoint()
+    // NOTE: This will bump any data IDs as needed, if any points are split.
+    GA_Size splitPoint()
     {
         if (groupParser.isEmpty())
             return 0;
@@ -165,39 +164,21 @@ private:
         if (boss.wasInterrupted())
             return 0;
 
-        // Behaviour is as if it's a point group if no group is present.
-        GA_GroupType grouptype = group ? group->classType() : GA_GROUP_POINT;
-        const GA_PointGroup* point_group = nullptr;
-        GA_PointGroupUPtr point_group_deleter;
-        if (group)
-        {
-            if (grouptype == GA_GROUP_POINT)
-                point_group = static_cast<const GA_PointGroup*>(group);
-            else if (grouptype == GA_GROUP_VERTEX || grouptype == GA_GROUP_PRIMITIVE)
-            {
-                GA_PointGroup* ptgroup = new GA_PointGroup(*geo);
-                point_group_deleter.reset(ptgroup);
-                ptgroup->combine(group);
-                point_group = ptgroup;
-            }
-        }
-
-        GA_Size numpointsadded = 0;
-
+        numPointAdded = 0;
         char bcnt = 0;
-
+        
+        const GA_GroupType groupType = groupParser.classType();
         UT_UniquePtr<GA_PointWrangler> ptwrangler(nullptr);
 
         UT_SmallArray<GA_Offset> vtxoffs;
-        GA_Offset points_end = geo->getPointMap().lastOffset() + 1;
+        GA_Offset ptoff_end = geo->getPointMap().lastOffset() + 1;
         GA_Offset start, end;
-        for (GA_Iterator it(geo->getPointRange(point_group)); it.blockAdvance(start, end); )
+        for (GA_Iterator it(groupParser.getPointSplittableRange()); it.blockAdvance(start, end); )
         {
-            // Prevent going beyond the original points; new points don't need to be split.
-            if (start >= points_end)
+            if (start >= ptoff_end)
                 break;
-            if (end > points_end)
-                end = points_end;
+            if (end > ptoff_end)
+                end = ptoff_end;
 
             for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
             {
@@ -205,8 +186,8 @@ private:
 
                 // Make vertex order consistent, regardless of linked list order,
                 // by sorting in vertex offset order
-                bool has_other = false;
-                if (grouptype == GA_GROUP_POINT)
+                bool hasOther = false;
+                if (groupType == GA_GROUP_POINT)
                 {
                     for (GA_Offset vtxoff = geo->pointVertex(ptoff); GAisValid(vtxoff); vtxoff = geo->vertexToNextVertex(vtxoff))
                         vtxoffs.append(vtxoff);
@@ -216,12 +197,12 @@ private:
                     for (GA_Offset vtxoff = geo->pointVertex(ptoff); GAisValid(vtxoff); vtxoff = geo->vertexToNextVertex(vtxoff))
                     {
                         GA_Offset group_offset = vtxoff;
-                        if (grouptype == GA_GROUP_PRIMITIVE)
+                        if (groupType == GA_GROUP_PRIMITIVE)
                             group_offset = geo->vertexPrimitive(vtxoff);
                         if (group->contains(group_offset))
                             vtxoffs.append(vtxoff);
                         else
-                            has_other = true;
+                            hasOther = true;
                     }
                 }
 
@@ -229,11 +210,11 @@ private:
                 // If there are no vertices in the group, also nothing to split.
                 // Unique all but first vertex if all vertices of the point are in vtxoffs.
                 GA_Size nvtx = vtxoffs.size();
-                GA_Size points_to_add = nvtx - GA_Size(!has_other);
+                GA_Size points_to_add = nvtx - GA_Size(!hasOther);
                 if (points_to_add <= 0)
                     continue;
 
-                numpointsadded += points_to_add;
+                numPointAdded += points_to_add;
 
                 if (!ptwrangler)
                     ptwrangler.reset(new GA_PointWrangler(*geo, GA_AttributeFilter::selectPublic()));
@@ -248,19 +229,19 @@ private:
 #else
                 vtxoffs.stdsort(std::less<GA_Offset>());
 #endif
-                bool skip_first = !has_other;
+                bool skip_first = !hasOther;
                 GA_Offset newptoff = geo->appendPointBlock(points_to_add);
                 for (exint j = exint(skip_first); j < nvtx; ++j, ++newptoff)
                 {
                     if (!bcnt++ && boss.wasInterrupted())
-                        return numpointsadded;
+                        return numPointAdded;
 
                     ptwrangler->copyAttributeValues(newptoff, ptoff);
                     geo->setVertexPoint(vtxoffs(j), newptoff);
                 }
             }
         }
-        if (numpointsadded > 0)
+        if (numPointAdded > 0)
         {
             // If we'd only added/removed points, we could use
             // geo->bumpDataIdsForAddOrRemove(true, false, false),
@@ -281,19 +262,19 @@ private:
             // data IDs, just in case.
             geo->edgeGroups().bumpAllDataIds();
         }
-        return numpointsadded;
+        return numPointAdded;
     }
 
     template<typename T>
     bool compareVertices(
-        GA_Offset v1,
-        GA_Offset v2,
+        const GA_Offset v1,
+        const GA_Offset v2,
         const GA_ROHandleT<T>& attrib,
-        int tuplesize,
-        fpreal tol
+        const int tupleSize,
+        const fpreal tol
     )
     {
-        for (int i = 0; i < tuplesize; i++)
+        for (int i = 0; i < tupleSize; i++)
         {
             if (SYSabs(attrib.get(v1, i) - attrib.get(v2, i)) > tol)
                 return false;
@@ -301,28 +282,25 @@ private:
         return true;
     }
 
-    SYS_FORCE_INLINE GA_Size splitPointByAttrib(const GA_ElementGroup* const attrib)
-    {
-        return splitPointByAttrib(UTverify_cast<const GA_Attribute*>(attrib));
-    }
+    SYS_FORCE_INLINE void splitPointByAttrib(const GA_ElementGroup* const attrib)
+    { splitPointByAttrib(static_cast<const GA_Attribute*>(attrib)); }
     
-    SYS_FORCE_INLINE GA_Size splitPointByAttrib(const GA_Group* const attrib)
+    SYS_FORCE_INLINE void splitPointByAttrib(const GA_Group* const attrib)
     {
-        if (!attrib->isElementGroup())
-            return 0;
-        return splitPointByAttrib(UTverify_cast<const GA_ElementGroup*>(attrib));
+        if (attrib->isElementGroup())
+            splitPointByAttrib(static_cast<const GA_ElementGroup*>(attrib));
     }
     
     // NOTE: This will bump any data IDs as needed, if any points are split.
-    GA_Size
-        splitPointByAttrib(const GA_Attribute* const attrib)
+    template<GA_AttributeOwner OWNER>
+    void splitPointByAttrib(const GA_Attribute* const attrib)
     {
         if (!attrib)
-            return 0;
+            return;
 
         const GA_AttributeOwner owner = attrib->getOwner();
         if (owner == GA_ATTRIB_POINT || owner == GA_ATTRIB_DETAIL)
-            return 0;
+            return;
 
         
         const GA_ElementGroup* const group = groupParser.isPointGroup() ? nullptr : groupParser.getPointGroup();
@@ -331,9 +309,9 @@ private:
         
         const bool isPrimGroup = groupParser.isPrimitiveGroup();
         
-        GA_Size numpointsadded = 0;
+        numPointAdded = 0;
         
-        const GA_AIFCompare* compare = NULL;
+        const GA_AIFCompare* const compare = NULL;
         GA_ROHandleT<int64> attribi;
         GA_ROHandleR attribf;
         int tuplesize;
@@ -365,7 +343,7 @@ private:
             if (compare == NULL)
             {
                 UT_ASSERT_MSG(0, "Missing an implementation of GA_AIFCompare!");
-                return numpointsadded;
+                return numPointAdded;
             }
         }
 
@@ -474,7 +452,7 @@ private:
                         // A split has been found! Create a new point
                         // using all the entries of vtxlist.
                         GA_Offset newptoff = geo->appendPoint();
-                        ++numpointsadded;
+                        ++numPointAdded;
                         if (!ptwrangler)
                             ptwrangler.reset(new GA_PointWrangler(*geo, GA_AttributeFilter::selectPublic()));
                         ptwrangler->copyAttributeValues(newptoff, ptoff);
@@ -485,7 +463,7 @@ private:
             }
         }
 
-        if (numpointsadded > 0)
+        if (numPointAdded > 0)
         {
             // If we'd only added/removed points, we could use
             // geo->bumpDataIdsForAddOrRemove(true, false, false),
@@ -506,7 +484,7 @@ private:
             // data IDs, just in case.
             geo->edgeGroups().bumpAllDataIds();
         }
-        return numpointsadded;
+        return numPointAdded;
     }
 
 public:
@@ -515,6 +493,8 @@ public:
     bool promoteAttrib = false;
 
 private:
+    
+    size_t numPointAdded;
 
     //exint subscribeRatio = 64;
     //exint minGrainSize = 64;
