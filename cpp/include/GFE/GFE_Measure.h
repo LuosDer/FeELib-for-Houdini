@@ -7,10 +7,14 @@
 //#include "GFE/GFE_Measure.h"
 
 
+#include <GA/GA_Attribute.h>
+
 #include "GFE/GFE_GeoFilter.h"
 
-
+#include "GFE/GFE_Bound.h"
 #include "GFE/GFE_Type.h"
+
+
 #include "GEO/GEO_Hull.h"
 
 
@@ -77,6 +81,64 @@ public:
         }
     }
 
+
+
+    
+public:
+
+#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                                                      \
+        fpreal64 FUNC_NAME()                                                                                 \
+        {                                                                                                    \
+            if (!posAttrib)                                                                                  \
+                posAttrib = geo->getP();                                                                     \
+            switch (posAttrib->getAIFTuple()->getStorage(posAttrib))                                         \
+            {                                                                                                \
+                case GA_STORE_REAL32: return FUNC_NAME<fpreal32>();         break;                           \
+                case GA_STORE_REAL64: return FUNC_NAME<fpreal64>();         break;                           \
+                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                  \
+            }                                                                                                \
+            return -1;                                                                                       \
+        }                                                                                                    \
+
+    
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshPerimeter)
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshArea)
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
+    
+#undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
+
+    
+    template<typename FLOAT_T>
+    FLOAT_T computeMeshPerimeter()
+    {
+        ComputePerimeter<FLOAT_T> body(geo, posAttrib);
+        UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
+        return body.getSum();
+    }
+
+    template<typename FLOAT_T>
+    FLOAT_T computeMeshArea()
+    {
+        ComputeArea<FLOAT_T> body(geo, posAttrib);
+        UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
+        return body.getSum();
+    }
+
+    template<typename FLOAT_T>
+    FLOAT_T computeMeshVolume()
+    {
+        const UT_BoundingBoxT<FLOAT_T>& geoBBox = geo->stdBoundingBox<FLOAT_T>(geo->getPointRange(), posAttrib);
+        const UT_Vector3T<FLOAT_T>& bboxCenter = geoBBox.center();
+        ComputeVolume<FLOAT_T> body(geo, bboxCenter);
+        UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
+        return body.getSum();
+    }
+
+
+
+
+
+    
 private:
 
 
@@ -96,12 +158,12 @@ private:
 #if 1
         switch (measureType)
         {
-        case GFE_MeasureType::Perimeter:     computePerimeter();     break;
-        case GFE_MeasureType::Area:          computeArea();          break;
-        case GFE_MeasureType::Volume:        computeMeshVolume(); break;
-        case GFE_MeasureType::MeshPerimeter: computeMeshVolume(); break;
-        case GFE_MeasureType::MeshArea:      computeMeshVolume(); break;
-        case GFE_MeasureType::MeshVolume:    computeMeshVolume(); break;
+        case GFE_MeasureType::Perimeter:     computePerimeter();           break;
+        case GFE_MeasureType::Area:          computeArea();                break;
+        case GFE_MeasureType::Volume:        computeVolume();              break;
+        case GFE_MeasureType::MeshPerimeter: computeMeshPerimeterAttrib(); break;
+        case GFE_MeasureType::MeshArea:      computeMeshAreaAttrib();      break;
+        case GFE_MeasureType::MeshVolume:    computeMeshVolumeAttrib();    break;
         }
 #else
         switch (measureType)
@@ -352,6 +414,15 @@ private:
 
 
 
+    
+    // template<typename FLOAT_T>
+    // FLOAT_T computeVolume(const UT_Vector3T<FLOAT_T>& bboxCenter, const GA_Offset primoff)
+    // {
+    //     const GEO_Hull* const prim = static_cast<const GEO_Hull*>(geo->getPrimitive(primoff));
+    //     return prim->calcVolume(bboxCenter);
+    // }
+
+
 
     
 
@@ -378,11 +449,41 @@ private:
             }, subscribeRatio, minGrainSize);                                                                                        \
         }                                                                                                                            \
 
-    
+
 GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computePerimeter)
 GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
+//GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeVolume)
     
 #undef GFE_MEASUREPRIM_FUNC_SPECIALIZATION
+
+    
+template<typename FLOAT_T>
+void computeVolume()
+{
+    const UT_BoundingBoxT<FLOAT_T>& geoBBox = geo->stdBoundingBox<FLOAT_T>(geo->getPointRange(), posAttrib);
+    const UT_Vector3T<fpreal32> bboxCenter(geoBBox.center());
+    UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &bboxCenter](const GA_SplittableRange& r)
+    {
+        GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                measure_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    const GEO_Hull* const prim = static_cast<const GEO_Hull*>(geo->getPrimitive(elemoff));
+                    const FLOAT_T value = prim->calcVolume(bboxCenter);
+                    measure_ph.set(elemoff, value);
+                    //measure_ph.set(elemoff, computeVolume<FLOAT_T>(elemoff));
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+
 
 
     
@@ -415,75 +516,65 @@ GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
     
 GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computePerimeter)
 GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
+//GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeVolume)
     
 #undef GFE_MEASUREPRIM_FUNC_SPECIALIZATION
 
+    void computeVolume()
+    {
+        switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))
+        {
+        case GA_STORE_REAL32: computeVolume<fpreal32>();     break;
+        case GA_STORE_REAL64: computeVolume<fpreal64>();     break;
+        default: UT_ASSERT_MSG(0, "unhandled storage type"); break;
+        }
+    }
 
 
 
 
 
     
-    
-#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                                                      \
-        template<typename FLOAT_T, typename POS_FLOAT_T>                                                     \
-        void FUNC_NAME()                                                                                     \
-        {                                                                                                    \
-            const GA_RWHandleT<FLOAT_T> measure_h(measureAttrib);                                            \
-            measure_h.set(0, FUNC_NAME<POS_FLOAT_T>());                                                      \
-        }                                                                                                    \
+
+// #define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                              \
+//         template<typename FLOAT_T>                                                   \
+//         void FUNC_NAME()                                                             \
+//         {                                                                            \
+//             const GA_RWHandleT<FLOAT_T> measure_h(measureAttrib);                    \
+//             measure_h.set(0, FUNC_NAME());                                           \
+//         }                                                                            \
+//
+//     
+// GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshPerimeter)
+// GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshArea)
+// GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
+//     
+// #undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
 
     
-GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
+
     
-#undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
-
-
-#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                                                                    \
+#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME, FUNC_SUB_NAME);                                                     \
         void FUNC_NAME()                                                                                                   \
         {                                                                                                                  \
-            const GA_Storage posStorage = posAttrib->getAIFTuple()->getStorage(posAttrib);                                 \
             switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                                               \
             {                                                                                                              \
             case GA_STORE_REAL32:                                                                                          \
-                switch (posStorage)                                                                                        \
-                {                                                                                                          \
-                case GA_STORE_REAL32: FUNC_NAME<fpreal32, fpreal32>(); break;                                              \
-                case GA_STORE_REAL64: FUNC_NAME<fpreal32, fpreal64>(); break;                                              \
-                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
-                }                                                                                                          \
+		        measureAttrib->getAIFTuple()->set(measureAttrib, 0, static_cast<fpreal32>(FUNC_SUB_NAME()));               \
                 break;                                                                                                     \
             case GA_STORE_REAL64:                                                                                          \
-                switch (posStorage)                                                                                        \
-                {                                                                                                          \
-                case GA_STORE_REAL32: FUNC_NAME<fpreal64, fpreal32>(); break;                                              \
-                case GA_STORE_REAL64: FUNC_NAME<fpreal64, fpreal64>(); break;                                              \
-                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
-                }                                                                                                          \
+		        measureAttrib->getAIFTuple()->set(measureAttrib, 0, static_cast<fpreal64>(FUNC_SUB_NAME()));               \
                 break;                                                                                                     \
             default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                    \
             }                                                                                                              \
         }                                                                                                                  \
+
     
-GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshPerimeterAttrib, computeMeshPerimeter)
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshAreaAttrib,      computeMeshArea)
+GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolumeAttrib,    computeMeshVolume)
     
 #undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
-
-
-
-    template<typename FLOAT_T>
-    FLOAT_T computeMeshVolume()
-    {
-        UT_BoundingBoxT<float> geoBounds;
-        geo->enlargeBoundingBox(geoBounds, geo->getPointRange(), posAttrib);
-        const UT_Vector3T<FLOAT_T>& bboxCenter = geoBounds.center();
-
-        ComputeVolume<FLOAT_T> body(geo, bboxCenter);
-        UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
-        return body.getSum();
-    }
-
-
 
 
 
@@ -504,9 +595,9 @@ public:
 #if 0
 
 
-#define computePerimeterMacro(T)                                                                                        \
+#define computePerimeterMacro(T)                                                                                     \
 static fpreal##T                                                                                                     \
-computePerimeter##T(                                                                                                    \
+computePerimeter##T(                                                                                                 \
     const GA_Detail* const geo,                                                                                      \
     const GA_Offset primoff                                                                                          \
 )                                                                                                                    \
@@ -758,8 +849,7 @@ computePerimeter##T(                                                            
     }
 
     
-    SYS_FORCE_INLINE
-        static void
+    static void
         computePerimeter(
             const GA_Detail* const geo,
             GA_Attribute* const pAttrib,
@@ -799,84 +889,81 @@ computePerimeter##T(                                                            
 
 #if 0
 
-#define computeAreaMacro(T)                                                                                                                                \
-static fpreal##T                                                                                                                                        \
-computeArea##T(                                                                                                                                            \
-    const GA_Detail* const geo,                                                                                                                         \
-    const GA_Offset primoff                                                                                                                             \
-)                                                                                                                                                       \
-{                                                                                                                                                       \
-    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);                                                                            \
-                                                                                                                                                        \
-    const bool closed = vertices.getExtraFlag();                                                                                                        \
-    if (!closed)                                                                                                                                        \
-    return 0.0;                                                                                                                                         \
-                                                                                                                                                        \
-    const GA_Size numvtx = vertices.size();                                                                                                             \
-    if (numvtx < 3)                                                                                                                                     \
-        return 0.0;                                                                                                                                     \
-                                                                                                                                                        \
-                                                                                                                                                        \
-                                                                                                                                                        \
-    switch (geo->getPrimitiveTypeId(primoff))                                                                                                           \
-    {                                                                                                                                                   \
-    case GA_PRIMPOLY:                                                                                                                                   \
-    {                                                                                                                                                   \
-    }                                                                                                                                                   \
-    break;                                                                                                                                              \
-    default:                                                                                                                                            \
-        return 0.0;                                                                                                                                     \
-    }                                                                                                                                                   \
-                                                                                                                                                        \
-                                                                                                                                                        \
-                                                                                                                                                        \
-    UT_Vector3T<fpreal##T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));                                                                      \
-    UT_Vector3T<fpreal##T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));                                                                      \
-    const UT_Vector3T<fpreal##T> pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));                                                                \
-                                                                                                                                                        \
-    /*GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));*/                                                                 \
-                                                                                                                                                        \
-    switch (numvtx)                                                                                                                                     \
-    {                                                                                                                                                   \
-    case 3:                                                                                                                                             \
-    {                                                                                                                                                   \
-        return heronsFormula(pos0, pos1, pos2);                                                                                                         \
-    }                                                                                                                                                   \
-    break;                                                                                                                                              \
-    case 4:                                                                                                                                             \
-    {                                                                                                                                                   \
-        const UT_Vector3T<fpreal##T> pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));                                                            \
-        return bretschneidersFormula0(pos0, pos1, pos2, pos3);                                                                                          \
-    }                                                                                                                                                   \
-    break;                                                                                                                                              \
-    default:                                                                                                                                            \
-        UT_ASSERT_MSG(0, "unsupport numvtx");                                                                                                           \
-        break;                                                                                                                                          \
-    }                                                                                                                                                   \
-                                                                                                                                                        \
-                                                                                                                                                        \
-                                                                                                                                                        \
-    const UT_Vector3T<fpreal##T> dir0 = pos1 - pos0;                                                                                                    \
-    const UT_Vector3T<fpreal##T> dir1 = pos2 - pos1;                                                                                                    \
-    const UT_Vector3T<fpreal##T> crossdir0B = cross(dir0, dir1);                                                                                        \
-    fpreal##T lengthdir0B = crossdir0B.length();                                                                                                        \
-    lengthdir0B = 1.0 / lengthdir0B;                                                                                                                    \
-    const fpreal##T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;                      \
-    const fpreal##T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;                      \
-    const fpreal##T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;                      \
-                                                                                                                                                        \
-    fpreal##T areaSum = 0.0;                                                                                                                            \
-    pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));                                                                                    \
-    for (GA_Size i(0); i < numvtx; ++i)                                                                                                                 \
-    {                                                                                                                                                   \
-        pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));                                                                                         \
-        areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])                                                                                      \
-            + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])                                                                                           \
-            + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);                                                                                          \
-        pos0 = pos1;                                                                                                                                    \
-    }                                                                                                                                                   \
-    return abs(0.5 * areaSum);                                                                                                                          \
-}
+#define computeAreaMacro(T)                                                                                                           \
+static fpreal##T                                                                                                                      \
+computeArea##T(const GA_Detail* const geo, const GA_Offset primoff)                                                                   \
+{                                                                                                                                     \
+    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);                                                          \
+                                                                                                                                      \
+    const bool closed = vertices.getExtraFlag();                                                                                      \
+    if (!closed)                                                                                                                      \
+    return 0.0;                                                                                                                       \
+                                                                                                                                      \
+    const GA_Size numvtx = vertices.size();                                                                                           \
+    if (numvtx < 3)                                                                                                                   \
+        return 0.0;                                                                                                                   \
+                                                                                                                                      \
+                                                                                                                                      \
+                                                                                                                                      \
+    switch (geo->getPrimitiveTypeId(primoff))                                                                                         \
+    {                                                                                                                                 \
+    case GA_PRIMPOLY:                                                                                                                 \
+    {                                                                                                                                 \
+    }                                                                                                                                 \
+    break;                                                                                                                            \
+    default:                                                                                                                          \
+        return 0.0;                                                                                                                   \
+    }                                                                                                                                 \
+                                                                                                                                      \
+                                                                                                                                      \
+                                                                                                                                      \
+    UT_Vector3T<fpreal##T> pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));                                                    \
+    UT_Vector3T<fpreal##T> pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));                                                    \
+    const UT_Vector3T<fpreal##T> pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));                                              \
+                                                                                                                                      \
+    /*GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));*/                                               \
+                                                                                                                                      \
+    switch (numvtx)                                                                                                                   \
+    {                                                                                                                                 \
+    case 3:                                                                                                                           \
+    {                                                                                                                                 \
+        return heronsFormula(pos0, pos1, pos2);                                                                                       \
+    }                                                                                                                                 \
+    break;                                                                                                                            \
+    case 4:                                                                                                                           \
+    {                                                                                                                                 \
+        const UT_Vector3T<fpreal##T> pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));                                          \
+        return bretschneidersFormula0(pos0, pos1, pos2, pos3);                                                                        \
+    }                                                                                                                                 \
+    break;                                                                                                                            \
+    default:                                                                                                                          \
+        UT_ASSERT_MSG(0, "unsupport numvtx");                                                                                         \
+        break;                                                                                                                        \
+    }                                                                                                                                 \
+                                                                                                                                      \
+                                                                                                                                      \
+                                                                                                                                      \
+    const UT_Vector3T<fpreal##T> dir0 = pos1 - pos0;                                                                                  \
+    const UT_Vector3T<fpreal##T> dir1 = pos2 - pos1;                                                                                  \
+    const UT_Vector3T<fpreal##T> crossdir0B = cross(dir0, dir1);                                                                      \
+    fpreal##T lengthdir0B = crossdir0B.length();                                                                                      \
+    lengthdir0B = 1.0 / lengthdir0B;                                                                                                  \
+    const fpreal##T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;    \
+    const fpreal##T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;    \
+    const fpreal##T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;    \
+                                                                                                                                      \
+    fpreal##T areaSum = 0.0;                                                                                                          \
+    pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));                                                                  \
+    for (GA_Size i(0); i < numvtx; ++i)                                                                                               \
+    {                                                                                                                                 \
+        pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[i]));                                                                       \
+        areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])                                                                    \
+            + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])                                                                         \
+            + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);                                                                        \
+        pos0 = pos1;                                                                                                                  \
+    }                                                                                                                                 \
+    return abs(0.5 * areaSum);                                                                                                        \
+}                                                                                                                                     \
 
     computeAreaMacro(32);
     computeAreaMacro(64);
@@ -884,11 +971,7 @@ computeArea##T(                                                                 
 
 
     template<typename T>
-    static T
-        computeArea(
-            const GA_Detail* const geo,
-            const GA_Offset primoff
-        )
+    SYS_FORCE_INLINE static T computeArea(const GA_Detail* const geo, const GA_Offset primoff)
     {
         if constexpr (std::is_same<T, float>::value)
             return computeArea32(geo, primoff);
@@ -900,11 +983,7 @@ computeArea##T(                                                                 
 
 
     template<typename T>
-    static T
-        computeArea(
-            const GA_Detail* const geo,
-            const GA_Offset primoff
-        )
+    static T computeArea(const GA_Detail* const geo, const GA_Offset primoff)
     {
         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
 
@@ -1295,21 +1374,19 @@ computeArea##T(                                                                 
         return body.getSum();
     }
 
-    template<typename T>
-    static fpreal32
+    template<typename FLOAT_T>
+    static FLOAT_T
         computeMeshVolume(
             const GA_Detail* const geo,
             //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-            const GA_ROHandleT<UT_Vector3T<T>>& pos_h,
+            const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
             const exint minGrainSize = 1024
         )
     {
-        UT_BoundingBoxT<fpreal32> geoBounds;
-        const GA_Attribute* const posAttribPtr = pos_h.getAttribute();
-        geo->enlargeBoundingBox(geoBounds, geo->getPointRange(), pos_h.getAttribute());
-        const UT_Vector3T<fpreal32>& bboxCenter = geoBounds.center();
+        const UT_BoundingBoxT<FLOAT_T>& geoBBox = static_cast<const GFE_Detail*>(geo)->stdBoundingBox<FLOAT_T>(geo->getPointRange(), pos_h.getAttribute());
+        const UT_Vector3T<FLOAT_T>& bboxCenter = geoBBox.center();
 
         ComputeVolume body(geo, bboxCenter);
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
@@ -1318,19 +1395,19 @@ computeArea##T(                                                                 
     }
 
 
-    static fpreal32
+    template<typename FLOAT_T>
+    static FLOAT_T
         computeMeshVolume(
             const GA_Detail* const geo,
             //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-            const GA_Attribute* const posAttribPtr,
+            const GA_Attribute* const posAttrib,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
             const exint minGrainSize = 1024
         )
     {
-        UT_BoundingBoxT<fpreal32> geoBounds;
-        geo->enlargeBoundingBox(geoBounds, geo->getPointRange(), posAttribPtr);
-        const UT_Vector3T<fpreal32>& bboxCenter = geoBounds.center();
+        const UT_BoundingBoxT<FLOAT_T>& geoBBox = static_cast<const GFE_Detail*>(geo)->stdBoundingBox<FLOAT_T>(geo->getPointRange(), posAttrib);
+        const UT_Vector3T<fpreal32>& bboxCenter = geoBBox.center();
 
         ComputeVolume body(geo, bboxCenter);
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
@@ -1441,6 +1518,83 @@ public:
     
 private:
     
+    
+    template<typename FLOAT_T>
+    class ComputePerimeter
+    {
+    public:
+        ComputePerimeter(const GA_Detail* const a, const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& b)
+            : myGeo(a)
+            , pos_h(b)
+            , mySum(0)
+        {}
+        ComputePerimeter(ComputePerimeter& src, UT_Split)
+            : myGeo(src.myGeo)
+            , pos_h(src.pos_h)
+            , mySum(0)
+        {}
+        void operator()(const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    mySum += computePerimeter<FLOAT_T>(myGeo, elemoff, pos_h);
+                }
+            }
+        }
+        SYS_FORCE_INLINE void join(const ComputePerimeter& other)
+        { mySum += other.mySum; }
+        SYS_FORCE_INLINE FLOAT_T getSum() const
+        { return mySum; }
+    private:
+        FLOAT_T mySum;
+        const GA_Detail* const myGeo;
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h;
+    }; // End of Class ComputePerimeter
+
+
+
+    
+    template<typename FLOAT_T>
+    class ComputeArea
+    {
+    public:
+        ComputeArea(const GA_Detail* const a, const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& b)
+            : myGeo(a)
+            , pos_h(b)
+            , mySum(0)
+        {}
+        ComputeArea(ComputeArea& src, UT_Split)
+            : myGeo(src.myGeo)
+            , pos_h(src.pos_h)
+            , mySum(0)
+        {}
+        void operator()(const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    mySum += computeArea<FLOAT_T>(myGeo, elemoff, pos_h);
+                }
+            }
+        }
+        SYS_FORCE_INLINE void join(const ComputeArea& other)
+        { mySum += other.mySum; }
+        SYS_FORCE_INLINE FLOAT_T getSum() const
+        { return mySum; }
+    private:
+        FLOAT_T mySum;
+        const GA_Detail* const myGeo;
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h;
+    }; // End of Class ComputeArea
+
+
+
+    
     template<typename FLOAT_T>
     class ComputeVolume
     {
@@ -1485,6 +1639,7 @@ private:
 public:
     GFE_MeasureType measureType = GFE_MeasureType::Area;
 
+    
 private:
     GA_Attribute* measureAttrib;
     

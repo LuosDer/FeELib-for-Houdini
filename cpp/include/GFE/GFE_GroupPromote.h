@@ -4,13 +4,12 @@
 #ifndef __GFE_GroupPromote_h__
 #define __GFE_GroupPromote_h__
 
-//#include "GFE/GFE_GroupPromote.h"
+#include "GFE/GFE_GroupPromote.h"
 
 #include "GA/GA_Detail.h"
 
 #include "GFE/GFE_Group.h"
 #include "GFE/GFE_GroupUnion.h"
-//#include "GA/GA_SplittableRange.h"
 
 //#include "GFE/GFE_Type.h"
 

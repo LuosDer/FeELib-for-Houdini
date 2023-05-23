@@ -4,9 +4,13 @@
 #ifndef __GFE_Attribute_h__
 #define __GFE_Attribute_h__
 
-//#include "GFE/GFE_Attribute.h"
+#include "GFE/GFE_Attribute.h"
+
+
+
 
 #include "GA/GA_Detail.h"
+#include "GA/GA_SplittableRange.h" // SOP_FeE_HasGroup_1_0 can not compile without this header
 
 
 #include "GA/GA_AttributeFilter.h"
@@ -648,6 +652,81 @@ findNormal3D(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+    
+template<typename T>
+class ComputeAttribSum
+{
+public:
+    ComputeAttribSum(const GA_ROHandleT<T>& attrib_h)
+        : attrib_h(attrib_h)
+        , mySum(0)
+    {}
+    ComputeAttribSum(ComputeAttribSum& src, UT_Split)
+        : attrib_h(src.attrib_h)
+        , mySum(0)
+    {}
+    void operator()(const GA_SplittableRange& r)
+    {
+        UT_ASSERT_MSG(r.getOwner() == attrib_h->getOwner(), "not same owner");
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                mySum += attrib_h.get(elemoff);
+            }
+        }
+    }
+    SYS_FORCE_INLINE void join(const ComputeAttribSum& other)
+    { mySum += other.mySum; }
+    SYS_FORCE_INLINE T getSum() const
+    { return mySum; }
+private:
+    T mySum;
+    const GA_ROHandleT<T>& attrib_h;
+}; // End of Class ComputeAttribSum
+
+
+
+
+    template<typename T>
+    T computeAttribSum(
+        const GA_ROHandleT<T>& attrib_h,
+        const GA_SplittableRange& splittableRange,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 1024
+    )
+    {
+        ComputeAttribSum body(attrib_h);
+        UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
+        return body.getSum();
+    }
+    
+    template<typename T>
+    SYS_FORCE_INLINE T computeAttribSum(
+        const GA_ROHandleT<T>& attrib_h,
+        const GA_ElementGroup* const group = nullptr,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 1024
+    )
+    {
+        //const GA_Range range(group->getIndexMap(), group);
+        //const GA_SplittableRange splittableRange(range);
+        const GA_SplittableRange splittableRange(GA_Range(attrib_h->getIndexMap(), group));
+        return computeAttribSum<T>(attrib_h, splittableRange, subscribeRatio, minGrainSize);
+    }
 
 
 

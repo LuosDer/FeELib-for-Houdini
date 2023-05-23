@@ -152,9 +152,9 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "delInputPointGroup"
-        cppname "DelInputPointGroup"
-        label   "Delete Input Point Group"
+        name    "delCutPointGroup"
+        cppname "DelCutPointGroup"
+        label   "Delete Cut Point Group"
         type    toggle
         default { "0" }
     }
@@ -331,7 +331,7 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     GFE_PolyCut polyCut(outGeo0, &inGeo0, &cookparms);
     
-    polyCut.setComputeParm(sopparms.getCutPoint(), sopparms.getMergePrimEndsIfClosed(), polyType);
+    polyCut.setComputeParm(sopparms.getCutPoint(), sopparms.getMergePrimEndsIfClosed(), sopparms.getDelCutPointGroup(), polyType);
 
     polyCut.setGroup(sopparms.getCutPointGroup(), sopparms.getPrimGroup());
 
@@ -341,7 +341,6 @@ SOP_FeE_PolyCut_3_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (createSrcPointAttrib)
         polyCut.createSrcPointAttrib(srcPointAttribName);
 
-    polyCut.groupParser_cutPoint.delGroup = sopparms.getDelInputPointGroup();
 
     polyCut.computeAndBumpDataIdsForAddOrRemove();
 

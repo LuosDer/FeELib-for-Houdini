@@ -196,7 +196,7 @@ public:
 
 private:
     GA_Offset extremePrimoff;
-    const GA_Attribute* measureAttrib;
+    GA_Attribute* measureAttrib;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

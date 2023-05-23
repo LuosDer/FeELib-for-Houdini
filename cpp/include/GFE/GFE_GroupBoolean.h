@@ -4,18 +4,19 @@
 #ifndef __GFE_GroupBoolean_h__
 #define __GFE_GroupBoolean_h__
 
-//#include "GFE/GFE_GroupBoolean.h"
+#include "GFE/GFE_GroupBoolean.h"
 
-//#include "GA/GA_Detail.h"
 #include "GA/GA_Detail.h"
-#include "GFE/GFE_GroupUnion.h"
-#include "GFE/GFE_GroupPromote.h"
+
+
+//#include "GFE/GFE_GroupUnion.h"
+//#include "GFE/GFE_GroupPromote.h"
 
 //#include "GA/GA_SplittableRange.h"
 
 //#include "GFE/GFE_Type.h"
 
-#include "GU/GU_Group.h"
+//#include "GU/GU_Group.h"
 
 
 //enum GA_GroupBooleanOp
@@ -29,6 +30,49 @@
 
 
 
+
+
+namespace GFE_GroupBoolean
+{
+    
+    
+    static void groupIntersect(GA_VertexGroup& group, const GA_PointGroup* const groupRef,
+        const exint subscribeRatio = 64, const exint minGrainSize = 1024
+    )
+    {
+        if (!groupRef)
+            return;
+        /*
+        if (group.entries() > groupRef->entries())
+        {
+        }
+        else
+        {
+        }
+        */
+        const GA_Detail& geo = groupRef->getDetail();
+        const GA_SplittableRange geoSplittableRange(GA_Range(groupRef->getIndexMap(), groupRef, true));
+        UTparallelFor(geoSplittableRange, [&geo, &group](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    for (GA_Offset promoff = geo.pointVertex(elemoff); GFE_Type::OffsetIsValid(promoff); promoff = geo.vertexToNextVertex(promoff))
+                    {
+                        group.setElement(promoff, false);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    
+} // End of namespace GFE_GroupBoolean
+
+
+
+/*
 namespace GFE_GroupBoolean {
 
     
@@ -944,5 +988,6 @@ unorderedGroupBoolean(
 
 
 } // End of namespace GFE_GroupBoolean
+*/
 
 #endif

@@ -208,7 +208,7 @@ sopMeasureType(SOP_FeE_Measure_3_0Parms::MeasureType parmgrouptype)
     {
     case MeasureType::PERIMETER:          return GFE_MeasureType::Perimeter;       break;
     case MeasureType::AREA:               return GFE_MeasureType::Area;            break;
-    case MeasureType::VOLUME:             return GFE_MeasureType::Area;            break;
+    case MeasureType::VOLUME:             return GFE_MeasureType::Volume;          break;
     case MeasureType::MESHPERIMETER:      return GFE_MeasureType::MeshPerimeter;   break;
     case MeasureType::MESHAREA:           return GFE_MeasureType::MeshArea;        break;
     case MeasureType::MESHVOLUME:         return GFE_MeasureType::MeshVolume;      break;

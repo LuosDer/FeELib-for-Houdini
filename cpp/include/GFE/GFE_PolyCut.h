@@ -62,6 +62,7 @@ public:
     void setComputeParm(
         const bool cutPoint = false,
         const bool mergePrimEndsIfClosed = true,
+        const bool delCutPointGroup = false,
         const GFE_PolyCutType polyType = GFE_PolyCutType::AUTO
     )
     {
@@ -69,6 +70,7 @@ public:
         this->cutPoint = cutPoint;
         this->mergePrimEndsIfClosed = mergePrimEndsIfClosed;
         this->polyType = polyType;
+        this->delCutPointGroup = delCutPointGroup;
     }
 
 
@@ -120,6 +122,9 @@ private:
 
         polyCut();
 
+        if (delCutPointGroup)
+            groupParser_cutPoint.delGroup();
+        
         return true;
     }
 
@@ -372,7 +377,9 @@ public:
     bool cutPoint = false;
     bool mergePrimEndsIfClosed = true;
     GFE_PolyCutType polyType = GFE_PolyCutType::AUTO;
-
+    
+    bool delCutPointGroup = false;
+    
 private:
     GU_DetailHandle geoSrcTmp_h;
     GU_Detail* geoSrcTmp;

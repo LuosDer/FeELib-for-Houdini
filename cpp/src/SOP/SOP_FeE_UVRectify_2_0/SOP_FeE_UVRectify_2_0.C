@@ -197,11 +197,11 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     //GA_Attribute* uvAttribPtr = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
-    GA_Attribute* geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
+    GA_Attribute* geo0Attrib = outGeo0.findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
     if (!geo0Attrib)
-        geo0Attrib = outGeo0->findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
+        geo0Attrib = outGeo0.findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
     if (!geo0Attrib)
-        geo0Attrib = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, geo0AttribNames, inStorageF, 3, GA_Defaults(0));
+        geo0Attrib = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, geo0AttribNames, inStorageF, 3, GA_Defaults(0));
 
     //const fpreal uniScale = sopparms.getUniScale();
     //const bool doNormalize = sopparms.getNormalize();
@@ -216,7 +216,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_VertexGroup* allVtxGroup;
     if (geo0Group)
     {
-        allVtxGroupUPtr = outGeo0->createDetachedVertexGroup();
+        allVtxGroupUPtr = outGeo0.createDetachedVertexGroup();
         allVtxGroup = allVtxGroupUPtr.get();
         allVtxGroup->combine(geo0Group);
     }
@@ -267,7 +267,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 #endif
 
 #if 0
-        GA_Attribute* geo0AttribNew = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, "newUV", inStorageF, 3, GA_Defaults(0));
+        GA_Attribute* geo0AttribNew = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, "newUV", inStorageF, 3, GA_Defaults(0));
         GA_RWHandleT<UT_Vector3R> uvNew_h(geo0AttribNew);
 
         const bool use_custom_pins = true;
@@ -302,7 +302,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GU_Flatten2::ConstraintSet constraints;
 
     GA_Offset start, end;
-    for (GA_Iterator it(outGeo0->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    for (GA_Iterator it(outGeo0.getPrimitiveRange()); it.fullBlockAdvance(start, end); )
     {
         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
         {
@@ -332,7 +332,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 #endif
 
 #if 0
-    GA_Attribute* geo0AttribNew = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, "newUV", inStorageF, 3, GA_Defaults(0));
+    GA_Attribute* geo0AttribNew = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, "newUV", inStorageF, 3, GA_Defaults(0));
     GA_RWHandleT<UT_Vector3R> uvNew_h(geo0AttribNew);
 
     const bool use_custom_pins = true;

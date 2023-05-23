@@ -114,6 +114,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_ExtractPoint_1_0
     SOP_FeE_FlatEdge_2_0
     SOP_FeE_GroupAttribBoundary_1_0
+    SOP_FeE_GroupByDir_2_0
     SOP_FeE_GroupByMeshWinding_1_0
     SOP_FeE_GroupByPolyWinding_1_0
     SOP_FeE_GroupClosedSharedPoint_2_0

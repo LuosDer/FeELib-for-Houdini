@@ -63,6 +63,21 @@ public:
     { return getP()->getAIFTuple()->getStorage(getP()); }
     
     
+    template<typename FLOAT_T>
+    UT_BoundingBoxT<FLOAT_T> stdBoundingBox(const GA_Range& range, const GA_Attribute* const posAttrib = nullptr) const
+    {
+#if 0
+        #define FLOAT_T_MAX std::numeric_limits<FLOAT_T>::max();
+        #define FLOAT_T_MIN std::numeric_limits<FLOAT_T>::min();
+        UT_BoundingBoxT<FLOAT_T> geoBBox(FLOAT_T_MAX, FLOAT_T_MAX, FLOAT_T_MAX, FLOAT_T_MIN, FLOAT_T_MIN, FLOAT_T_MIN);
+#else
+        UT_BoundingBoxT<float> geoBBox(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN);
+#endif
+        enlargeBoundingBox(geoBBox, range, posAttrib);
+        return geoBBox;
+    }
+
+
     
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
     SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff)
@@ -116,6 +131,17 @@ public:
     
     SYS_FORCE_INLINE GA_Range getVertexRange(const GA_VertexGroup* group = nullptr, const bool reverse = false) const
     { return GA_Range(getVertexMap(), group, reverse); }
+
+    
+    SYS_FORCE_INLINE GA_Range getRange(const GA_PrimitiveGroup* group = nullptr, const bool reverse = false) const
+    { return getPrimitiveRange(group, reverse); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_PointGroup* group = nullptr, const bool reverse = false) const
+    { return getPointRange(group, reverse); }
+    
+    SYS_FORCE_INLINE GA_Range getRange(const GA_VertexGroup* group = nullptr, const bool reverse = false) const
+    { return getVertexRange(group, reverse); }
+
 
     
 private:
@@ -1564,8 +1590,42 @@ public:
 // }
 
 
+public:
+    
+    void groupIntersect(GA_VertexGroup& group, const GA_PointGroup* const groupRef, const exint subscribeRatio = 64, const exint minGrainSize = 1024) const
+    {
+        if (!groupRef)
+            return;
+        /*
+        if (group.entries() > groupRef->entries())
+        {
+        }
+        else
+        {
+        }
+        */
+        const GA_SplittableRange geoSplittableRange(getRange(groupRef, true));
+        UTparallelFor(geoSplittableRange, [this, &group](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    for (GA_Offset promoff = pointVertex(elemoff); GFE_Type::OffsetIsValid(promoff); promoff = vertexToNextVertex(promoff))
+                    {
+                        group.setElement(promoff, false);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
 
 
+    }
+    
+
+    
 
 
     

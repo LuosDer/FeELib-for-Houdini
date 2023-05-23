@@ -1,9 +1,9 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_GroupByPolyWinding_1_0.h"
+#include "SOP_FeE_GroupByDir_2_0.h"
 
 
-#include "SOP_FeE_GroupByPolyWinding_1_0.proto.h"
+#include "SOP_FeE_GroupByDir_2_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -11,9 +11,9 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_GroupByPolyWinding.h"
+#include "GFE/GFE_GroupByDirection.h"
 
-using namespace SOP_FeE_GroupByPolyWinding_1_0_Namespace;
+using namespace SOP_FeE_GroupByDir_2_0_Namespace;
 
 
 
@@ -58,8 +58,8 @@ static const char *theDsFile = R"THEDSFILE(
     // }
 
     parm {
-        name    "groupByPolyWindingMethod"
-        cppname "GroupByPolyWindingMethod"
+        name    "groupByDirMethod"
+        cppname "GroupByDirMethod"
         label   "Method"
         type    ordinal
         default { "restDir2D_avgNormal" }
@@ -168,9 +168,9 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 PRM_Template*
-SOP_FeE_GroupByPolyWinding_1_0::buildTemplates()
+SOP_FeE_GroupByDir_2_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_GroupByPolyWinding_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_GroupByDir_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
@@ -180,18 +180,18 @@ SOP_FeE_GroupByPolyWinding_1_0::buildTemplates()
 }
 
 
-const UT_StringHolder SOP_FeE_GroupByPolyWinding_1_0::theSOPTypeName("FeE::groupByPolyWinding::1.0"_sh);
+const UT_StringHolder SOP_FeE_GroupByDir_2_0::theSOPTypeName("FeE::groupByDir::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_GroupByPolyWinding_1_0::theSOPTypeName,
-        "FeE Group by Polygon Winding",
-        SOP_FeE_GroupByPolyWinding_1_0::myConstructor,
-        SOP_FeE_GroupByPolyWinding_1_0::buildTemplates(),
+        SOP_FeE_GroupByDir_2_0::theSOPTypeName,
+        "FeE Group by Direction",
+        SOP_FeE_GroupByDir_2_0::myConstructor,
+        SOP_FeE_GroupByDir_2_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -203,27 +203,27 @@ newSopOperator(OP_OperatorTable* table)
 
 }
 
-//class SOP_FeE_GroupByPolyWinding_1_0Cache : public SOP_NodeCache
+//class SOP_FeE_GroupByDir_2_0Cache : public SOP_NodeCache
 //{
 //public:
-//    SOP_FeE_GroupByPolyWinding_1_0Cache() : SOP_NodeCache(),
+//    SOP_FeE_GroupByDir_2_0Cache() : SOP_NodeCache(),
 //        myPrevOutputDetailID(-1)
 //    {}
-//    ~SOP_FeE_GroupByPolyWinding_1_0Cache() override {}
+//    ~SOP_FeE_GroupByDir_2_0Cache() override {}
 //
 //    int64 myPrevOutputDetailID;
 //};
 
 
-class SOP_FeE_GroupByPolyWinding_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_GroupByDir_2_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_GroupByPolyWinding_1_0Verb() {}
-    virtual ~SOP_FeE_GroupByPolyWinding_1_0Verb() {}
+    SOP_FeE_GroupByDir_2_0Verb() {}
+    virtual ~SOP_FeE_GroupByDir_2_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupByPolyWinding_1_0Parms(); }
-    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupByPolyWinding_1_0Cache(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_GroupByPolyWinding_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupByDir_2_0Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupByDir_2_0Cache(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_GroupByDir_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -231,17 +231,17 @@ public:
 
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
-    static const SOP_NodeVerb::Register<SOP_FeE_GroupByPolyWinding_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_GroupByDir_2_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_GroupByPolyWinding_1_0Verb> SOP_FeE_GroupByPolyWinding_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_GroupByDir_2_0Verb> SOP_FeE_GroupByDir_2_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_GroupByPolyWinding_1_0::cookVerb() const 
+SOP_FeE_GroupByDir_2_0::cookVerb() const 
 { 
-    return SOP_FeE_GroupByPolyWinding_1_0Verb::theVerb.get();
+    return SOP_FeE_GroupByDir_2_0Verb::theVerb.get();
 }
 
 
@@ -250,9 +250,9 @@ SOP_FeE_GroupByPolyWinding_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupByPolyWinding_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupByDir_2_0Parms::GroupType parmgrouptype)
 {
-    using namespace SOP_FeE_GroupByPolyWinding_1_0Enums;
+    using namespace SOP_FeE_GroupByDir_2_0Enums;
     switch (parmgrouptype)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
@@ -267,26 +267,26 @@ sopGroupType(SOP_FeE_GroupByPolyWinding_1_0Parms::GroupType parmgrouptype)
 
 
 
-static GFE_GroupByPolyWindingMethod
-sopMethod(SOP_FeE_GroupByPolyWinding_1_0Parms::GroupByPolyWindingMethod parmgrouptype)
+static GFE_GroupByDirMethod
+sopMethod(SOP_FeE_GroupByDir_2_0Parms::GroupByDirMethod parmgrouptype)
 {
-    using namespace SOP_FeE_GroupByPolyWinding_1_0Enums;
+    using namespace SOP_FeE_GroupByDir_2_0Enums;
     switch (parmgrouptype)
     {
-    case GroupByPolyWindingMethod::RESTDIR2D_AVGNORMAL:  return GFE_GroupByPolyWindingMethod::RestDir2D_AvgNormal; break;
-    case GroupByPolyWindingMethod::RESTDIR2D_HOUOBB:     return GFE_GroupByPolyWindingMethod::RestDir2D_HouOBB;    break;
-    case GroupByPolyWindingMethod::RAY:                  return GFE_GroupByPolyWindingMethod::Ray;                 break;
+    case GroupByDirMethod::RESTDIR2D_AVGNORMAL:  return GFE_GroupByDirMethod::RestDir2D_AvgNormal; break;
+    case GroupByDirMethod::RESTDIR2D_HOUOBB:     return GFE_GroupByDirMethod::RestDir2D_HouOBB;    break;
+    case GroupByDirMethod::RAY:                  return GFE_GroupByDirMethod::Ray;                 break;
     }
-    UT_ASSERT_MSG(0, "Unhandled GFE_GroupByPolyWinding METHOD!");
-    return GFE_GroupByPolyWindingMethod::RestDir2D_AvgNormal;
+    UT_ASSERT_MSG(0, "Unhandled GFE_GroupByDir METHOD!");
+    return GFE_GroupByDirMethod::RestDir2D_AvgNormal;
 }
 
 void
-SOP_FeE_GroupByPolyWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
+SOP_FeE_GroupByDir_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
-    auto&& sopparms = cookparms.parms<SOP_FeE_GroupByPolyWinding_1_0Parms>();
+    auto&& sopparms = cookparms.parms<SOP_FeE_GroupByDir_2_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_GroupByPolyWinding_1_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_GroupByDir_2_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
@@ -294,10 +294,10 @@ SOP_FeE_GroupByPolyWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     outGeo0.replaceWith(inGeo0);
 
     
-    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const UT_StringHolder& normalAttribName = sopparms.getNormalAttribName();
     
-    const GFE_GroupByPolyWindingMethod method = sopMethod(sopparms.getGroupByPolyWindingMethod());
+    const GFE_GroupByDirMethod method = sopMethod(sopparms.getGroupByDirMethod());
     
     
     UT_AutoInterrupt boss("Processing");
@@ -305,17 +305,17 @@ SOP_FeE_GroupByPolyWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         return;
 
     
-    GFE_GroupByPolyWinding groupByPolyWinding(outGeo0, inGeo1, cookparms);
-    groupByPolyWinding.setComputeParm(method, sopparms.getReverseGroup(), sopparms.getReversePrim(), sopparms.getPolyCap());
+    GFE_GroupByDir groupByDir(outGeo0, inGeo1, cookparms);
+    groupByDir.setComputeParm(method, sopparms.getReverseGroup(), sopparms.getReversePrim(), sopparms.getPolyCap());
 
     if (sopparms.getOutGroup())
     {
         const GA_GroupType outGroupType = sopGroupType(sopparms.getOutGroupType());
-        groupByPolyWinding.getOutGroupArray().findOrCreate(false, outGroupType, sopparms.getOutGroupName());
+        groupByDir.getOutGroupArray().findOrCreate(false, outGroupType, sopparms.getOutGroupName());
     }
     
-    groupByPolyWinding.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
-    groupByPolyWinding.computeAndBumpDataId();
-    groupByPolyWinding.visualizeOutGroup();
+    groupByDir.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
+    groupByDir.computeAndBumpDataId();
+    groupByDir.visualizeOutGroup();
 
 }

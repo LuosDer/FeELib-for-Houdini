@@ -36,50 +36,69 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "sop_input" "0" }
     }
     parm {
-        name    "runOverPieces"
-        cppname "RunOverPieces"
-        label   "Run Over Pieces"
+        name    "groupByMeshWindingMethod"
+        cppname "GroupByMeshWindingMethod"
+        label   "Method"
+        type    ordinal
+        default { "volume" }
+        menu {
+            "volume"      "Volume"
+            "wn_convex"   "Winding Number Convex"
+            "wn_bbox"     "Winding Number BBox"
+        }
+    }
+    parm {
+        name    "meshCap"
+        cppname "MeshCap"
+        label   "Mesh Cap"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "findInputPieceAttrib"
-        cppname "FindInputPieceAttrib"
-        label   "Find Input Piece Attribute"
+        name    "outGroup"
+        cppname "OutGroup"
+        label   "Out Group"
         type    toggle
         default { "0" }
-        disablewhen "{ runOverPieces == 0 }"
     }
     parm {
-        name    "pieceAttribName"
-        cppname "PieceAttribName"
-        label   "Piece Attribute Name"
+        name    "outGroupType"
+        cppname "OutGroupType"
+        label   "Out Group Type"
+        type    ordinal
+        default { "prim" }
+        disablewhen "{ outGroup == 0 }"
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "outGroupName"
+        cppname "OutGroupName"
+        label   "OutGroup Name"
         type    string
-        default { "class" }
-        disablewhen "{ runOverPieces == 0 }"
+        default { "meshWindingCorrect" }
+        disablewhen "{ outGroup == 0 }"
     }
     parm {
-        name    "polyCap"
-        cppname "PolyCap"
-        label   "Poly Cap"
+        name    "outAttrib"
+        cppname "OutAttrib"
+        label   "Out Attrib"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "outReversedGroup"
-        cppname "OutReversedGroup"
-        label   "Output Reversed Group"
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "reversedGroupName"
-        cppname "ReversedGroupName"
-        label   "Reversed Group Name"
+        name    "outAttribName"
+        cppname "OutAttribName"
+        label   "Out Attrib Name"
         type    string
-        default { "reversed" }
-        disablewhen "{ outReversedGroup == 0 }"
+        default { "meshWindingCorrect" }
+        disablewhen "{ outAttrib == 0 }"
     }
+
     parm {
         name    "reverseGroup"
         cppname "ReverseGroup"
@@ -92,28 +111,9 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "ReversePrim"
         label   "Reverse Prim"
         type    toggle
-        default { "1" }
+        default { "0" }
     }
-    //parm {
-    //     name    "deleteGroup"
-    //     cppname "DeleteGroup"
-    //     label   "Delete Group"
-    //     type    toggle
-    //     default { "0" }
-    // }
 
-
-    parm {
-        name    "groupByMeshWindingMethod"
-        cppname "GroupByMeshWindingMethod"
-        label   "Method"
-        type    ordinal
-        default { "volume" }
-        menu {
-            "volume"  "Volume"
-            "wn"      "Winding Number"
-        }
-    }
     //parm {
     //    name    "subscribeRatio"
     //    cppname "SubscribeRatio"
@@ -220,17 +220,36 @@ SOP_FeE_GroupByMeshWinding_1_0::cookVerb() const
 
 
 
+
+static GA_GroupType
+sopGroupType(SOP_FeE_GroupByMeshWinding_1_0Parms::OutGroupType parmGroupType)
+{
+    using namespace SOP_FeE_GroupByMeshWinding_1_0Enums;
+    switch (parmGroupType)
+    {
+    case OutGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case OutGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case OutGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case OutGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
 static GFE_GroupByMeshWindingMethod
 sopMethod(SOP_FeE_GroupByMeshWinding_1_0Parms::GroupByMeshWindingMethod parmgrouptype)
 {
     using namespace SOP_FeE_GroupByMeshWinding_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupByMeshWindingMethod::VOLUME:     return GFE_GroupByMeshWindingMethod_VOLUME;         break;
-    case GroupByMeshWindingMethod::WN:         return GFE_GroupByMeshWindingMethod_WINDINGNUMBER;  break;
+    case GroupByMeshWindingMethod::VOLUME:     return GFE_GroupByMeshWindingMethod::VOLUME;                break;
+    case GroupByMeshWindingMethod::WN_CONVEX:  return GFE_GroupByMeshWindingMethod::WINDINGNUMBER_CONVEX;  break;
+    case GroupByMeshWindingMethod::WN_BBOX:    return GFE_GroupByMeshWindingMethod::WINDINGNUMBER_BBOX;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE_GroupByMeshWinding METHOD!");
-    return GFE_GroupByMeshWindingMethod_VOLUME;
+    return GFE_GroupByMeshWindingMethod::VOLUME;
 }
 
 
@@ -243,6 +262,7 @@ SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     //auto sopcache = (SOP_FeE_GroupByMeshWinding_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
     
     outGeo0.replaceWith(inGeo0);
 
@@ -250,44 +270,25 @@ SOP_FeE_GroupByMeshWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     if (boss.wasInterrupted())
         return;
 
-    const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
     const GFE_GroupByMeshWindingMethod method = sopMethod(sopparms.getGroupByMeshWindingMethod());
 
     
-    const bool runOverPieces = sopparms.getRunOverPieces();
-    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
-    const UT_StringHolder& pieceAttribName = sopparms.getPieceAttribName();
+    GFE_GroupByMeshWinding groupByMeshWinding(outGeo0, inGeo1, cookparms);
+    groupByMeshWinding.setComputeParm(method, sopparms.getReverseGroup(), sopparms.getReversePrim(), sopparms.getMeshCap());
 
-
-    const bool outReversedGroup = sopparms.getOutReversedGroup();
-    const UT_StringHolder& reversedGroupName = sopparms.getReversedGroupName();
-
-    const bool reverseGroup = sopparms.getReverseGroup();
-    const bool reversePrim = sopparms.getReversePrim();
-    const bool polyCap = sopparms.getPolyCap();
-    //const bool delAttrib = sopparms.getDelAttrib();
-
-    GFE_GroupByMeshWinding groupByMeshWinding(outGeo0, cookparms);
-    groupByMeshWinding.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    groupByMeshWinding.setComputeParm(primGroupName, method,
-        runOverPieces, findInputPieceAttrib, pieceAttribName,
-        outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap,
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-    groupByMeshWinding.groupParser.setGroup(groupType, sopparms.getGroup());
+    if (sopparms.getOutGroup())
+    {
+        const GA_GroupType outGroupType = sopGroupType(sopparms.getOutGroupType());
+        groupByMeshWinding.getOutGroupArray().findOrCreate(false, outGroupType, sopparms.getOutGroupName());
+    }
+    
+    if (sopparms.getOutAttrib())
+    {
+        groupByMeshWinding.findOrCreateTuple(false, sopparms.getOutAttribName());
+    }
+    
+    groupByMeshWinding.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
     groupByMeshWinding.computeAndBumpDataId();
+    groupByMeshWinding.visualizeOutGroup();
 
-
-
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorgeI = GFE_Type::getPreferredStorageI(outGeo0);
 }
-
-
-
-namespace SOP_FeE_GroupByMeshWinding_1_0_Namespace {
-
-} // End SOP_FeE_GroupByMeshWinding_1_0_Namespace namespace

@@ -22,18 +22,18 @@ public:
     void
         setComputeParm(
             const GA_Size firstIndex = 0,
-            const bool outAsOffset = true,
             const bool negativeIndex = false,
+            const bool outAsOffset = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        this->firstIndex = firstIndex;
-        this->outAsOffset = outAsOffset;
-        this->negativeIndex = negativeIndex;
+        this->firstIndex     = firstIndex;
+        this->negativeIndex  = negativeIndex;
+        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
     
@@ -104,7 +104,7 @@ private:
         }
         else
         {
-            if(negativeIndex)
+            if (negativeIndex)
             {
                 const GA_IndexMap& indexMap = attribPtr->getIndexMap();
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)

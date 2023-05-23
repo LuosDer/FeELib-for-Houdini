@@ -60,9 +60,9 @@ public:
         )
     {
     	setHasComputed();
-    	this->delGroup = delGroup;
     	this->leaveElement = leaveElement;
     	this->reverseGroup = reverseGroup;
+    	this->delGroup = delGroup;
         this->delPointMode = delPointMode;
         this->delUnusedPoint = delUnusedPoint;
         this->guaranteeNoVertexReference = guaranteeNoVertexReference;

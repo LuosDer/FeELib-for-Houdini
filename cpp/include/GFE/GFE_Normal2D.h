@@ -22,6 +22,15 @@ class GFE_Normal2D : public GFE_AttribCreateFilter {
 
 public:
     GFE_Normal2D(
+        GFE_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , normal3D(geo, cookparms)
+    {
+    }
+    
+    GFE_Normal2D(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -29,53 +38,50 @@ public:
         , normal3D(geo, cookparms)
     {
     }
-
+    
     void
         setComputeParm(
-            const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 },
             const bool scaleByTurns = true,
             const bool normalize = true,
             const fpreal64 uniScale = 1.0,
+            const fpreal64 blend = 1.0,
 
-            const bool useConstantNormal3D = false,
-            const UT_StringRef& normal3DAttribName = "N",
             const bool findNormal3D = false,
             const bool addNormal3DIfNoFind = true,
-            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
-            const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-            const bool copyOrigIfZero = false,
 
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
     {
         setHasComputed();
-        setInAttribBumpDataId(method == GFE_RestDir2D_Method::AvgNormal);
-        getInAttribArray().findOrCreateTuple();
-        this->defaultNormal3D = defaultNormal3D;
+        
         this->scaleByTurns = scaleByTurns;
         this->normalize = normalize;
         this->uniScale = uniScale;
+        this->blend = blend;
 
-        this->useConstantNormal3D = useConstantNormal3D;
-        this->normal3DAttribName = normal3DAttribName;
         this->findNormal3D = findNormal3D;
         this->addNormal3DIfNoFind = addNormal3DIfNoFind;
-
-        this->normalSearchOrder = normalSearchOrder;
-        this->cuspAngleDegrees = cuspAngleDegrees;
-        this->normalMethod = normalMethod;
-        this->copyOrigIfZero = copyOrigIfZero;
 
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
 
-    
 
-    SYS_FORCE_INLINE void setPosAttrib(const UT_StringRef& attribName)
-    { posAttrib = geo->findPointAttribute(attribName); }
+    SYS_FORCE_INLINE void setUseConstantNormal3D()
+    { useConstantNormal3D = false; }
+    
+    SYS_FORCE_INLINE void setUseConstantNormal3D(const UT_Vector3T<fpreal64>& defaultNormal3D = { 0,1,0 })
+    { useConstantNormal3D = true; this->defaultNormal3D = defaultNormal3D; }
+
+
+
+    virtual void bumpDataId() const override
+    {
+        GFE_AttribCreateFilter::bumpDataId();
+        normal3D.bumpDataId();
+    }
+
     
 private:
 
@@ -116,18 +122,16 @@ private:
 
 
 
-    template<typename T>
+    template<typename FLOAT_T>
     void computeNormal2D()
     {
         const GA_PointGroup* const geoPointGroup = groupParser.getPointGroup();
 
         GFE_MeshTopology meshTopology(geo, cookparms);
-        meshTopology.setVertexNextEquivGroup(true);
-        meshTopology.setVertexPointDst(true);
+        GA_VertexGroup* const unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(true);
+        const GA_Attribute* const dstptAttrib = meshTopology.setVertexPointDst(true);
         meshTopology.compute();
 
-        GA_VertexGroup* const unsharedVertexGroup = meshTopology.getVertexNextEquivGroup();
-        const GA_Attribute* const dstptAttrib = meshTopology.getVertexPointDst();
 
         //GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromote(geo, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
 #if 1
@@ -140,44 +144,45 @@ private:
         {
             GA_PointGroupUPtr expandGroupUPtr = geo->createDetachedPointGroup();
             GA_PointGroup* const expandGroup = expandGroupUPtr.get();
-
-            GFE_GroupExpand::groupExpand(geo, expandGroup, geoPointGroup, GA_GROUP_EDGE);
+            
+            GFE_GroupExpand groupExpand(geo, cookparms);
+            groupExpand.setBaseGroup(geoPointGroup);
+            groupExpand.setExpandGroup(expandGroup);
+            //groupExpand.setComputeParm(false, 1);
+            groupExpand.compute();
+            
+            //GFE_GroupExpand::groupExpand(geo, expandGroup, geoPointGroup, GA_GROUP_EDGE);
 
             *unsharedPointGroup &= *expandGroup;
-
-            GFE_GroupBoolean::groupIntersect(geo, unsharedVertexGroup, expandGroup);
+            
+            const GA_PointGroupUPtr expandPointGroupUPtr = GFE_GroupPromote::groupPromotePointDetached(geo, unsharedVertexGroup);
+            GA_PointGroup* const expandPointGroup = expandPointGroupUPtr.get();
+            //geo->groupIntersect(*unsharedVertexGroup, expandPointGroup);
+            GFE_GroupBoolean::groupIntersect(unsharedVertexGroup, expandPointGroup);
         }
 
         const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
 
-
-        
-
-
-        
-        const GA_RWHandleT<UT_Vector3T<T>> normal2D_h(getOutAttribArray()[0]);
-        const GA_ROHandleT<UT_Vector3T<T>> pos_h(posAttrib);
-        const GA_ROHandleT<UT_Vector3T<T>> normal3D_h(normal3DAttrib);
+        const GA_RWHandleT<UT_Vector3T<FLOAT_T>> normal2D_h(getOutAttribArray()[0]);
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal3D_h(normal3DAttrib);
 
         
         const GA_AttributeOwner normal3DOwner = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
         if (normal3DOwner == GA_ATTRIB_GLOBAL)
             defaultNormal3D = normal3D_h.get(0);
 
-
-
+        
         const GA_Topology& topo = geo->getTopology();
         //topo.makePrimitiveRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
 
-
-
         const GA_SplittableRange geoVertexSplittableRange(geo->getVertexRange(unsharedVertexGroup));
         UTparallelFor(geoVertexSplittableRange, [this, &dstptAttrib_h, &normal2D_h, &pos_h, &normal3D_h,
             vtxPointRef, vtxPrimRef, normal3DOwner](const GA_SplittableRange& r)
         {
-            UT_Vector3T<T> dir;
+            UT_Vector3T<FLOAT_T> dir;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -216,8 +221,8 @@ private:
         UTparallelFor(geoPointSplittableRange, [this](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
-            //GA_PageHandleV<UT_Vector3T<typename T>>::RWType normal2D_ph(normal2DAttrib);
-            GA_PageHandleT<UT_Vector3T<T>, typename UT_Vector3T<T>::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
+            //GA_PageHandleV<UT_Vector3T<typename FLOAT_T>>::RWType normal2D_ph(normal2DAttrib);
+            GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
             //GA_PageHandleV<UT_Vector3T<fpreal>>::RWType normal2D_ph(normal2DAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -249,14 +254,13 @@ private:
 public:
     GFE_Normal3D normal3D;
 
-    const GA_Attribute* posAttrib = nullptr;
-
 
     UT_Vector3T<fpreal64> defaultNormal3D = { 0, 1, 0 };
     bool scaleByTurns = true;
     bool normalize = true;
     fpreal64 uniScale = 1.0;
-
+    fpreal64 blend = 1.0;
+    
     bool useConstantNormal3D = false;
     bool findNormal3D = false;
     bool addNormal3DIfNoFind = true;
@@ -286,7 +290,7 @@ private:
 
 
 
-
+/*
 
 namespace GFE_Normal2D_Namespace {
 
@@ -325,8 +329,8 @@ namespace GFE_Normal2D_Namespace {
             GFE_GroupExpand::groupExpand(geo, expandGroup, geoPointGroup, GA_GROUP_EDGE);
 
             *unsharedPointGroup &= *expandGroup;
-            //GFE_GroupBoolean::groupIntersect(geo, unsharedPointGroup, expandGroup);
-            GFE_GroupBoolean::groupIntersect(geo, unsharedVertexGroup, expandGroup);
+            //GFE_GroupBoolean::groupIntersect(unsharedPointGroup, expandGroup);
+            GFE_GroupBoolean::groupIntersect(unsharedVertexGroup, expandGroup);
 
             //GA_PointGroup* expandGroup = GFE_Group::newDetachedGroup(geo, geoGroup);
         }
@@ -690,5 +694,5 @@ namespace GFE_Normal2D_Namespace {
 
 
 } // End of namespace GFE_Normal2D
-
+*/
 #endif

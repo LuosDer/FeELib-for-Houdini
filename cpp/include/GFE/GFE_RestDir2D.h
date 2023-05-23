@@ -4,19 +4,10 @@
 #ifndef __GFE_RestDir2D_h__
 #define __GFE_RestDir2D_h__
 
+#include "GFE/GFE_RestDir2D.h"
 
 
-//#include "GFE/GFE_RestDir2D.h"
-
-#include "GA/GA_Detail.h"
-
-
-
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
-#include "UT/UT_OBBox.h"
-
-
+//#include "UT/UT_OBBox.h"
 
 #include "GFE/GFE_GeoFilter.h"
 #include "GFE/GFE_Normal3D.h"
@@ -65,28 +56,26 @@ public:
 	}
 
 
-	//UT_Vector3T<T> dir2D = restDir2D(geo);
-	template<typename T>
-	UT_Vector3T<T>
-		restDir2D()
+	//UT_Vector3T<FLOAT_T> dir2D = restDir2D(geo);
+	template<typename FLOAT_T>
+	UT_Vector3T<FLOAT_T> restDir2D()
 	{
 		switch (method)
 		{
 		case GFE_RestDir2D_Method::AvgNormal:
-			return restDir2D_avgNormal<T>();
+			return restDir2D_avgNormal<FLOAT_T>();
 			break;
 		case GFE_RestDir2D_Method::HouOBB:
-			return restDir2D_houOBB<T>();
+			return restDir2D_houOBB<FLOAT_T>();
 			break;
 		default:
 			break;
 		}
-		return UT_Vector3T<T>();
+		return UT_Vector3T<FLOAT_T>();
 	}
 
 
-	void
-		restDir2D()
+	void restDir2D()
 	{
 		if (getOutAttribArray().isEmpty())
 			return;
@@ -116,10 +105,9 @@ public:
 
 
 
-	//UT_Vector3T<T> dir2D = restDir2D(geo);
-	template<typename T>
-	UT_Vector3T<T>
-		restDir2D_avgNormal()
+	//UT_Vector3T<FLOAT_T> dir2D = restDir2D(geo);
+	template<typename FLOAT_T>
+	UT_Vector3T<FLOAT_T> restDir2D_avgNormal()
 	{
 		normal3D.groupParser.copy(groupParser);
 
@@ -132,16 +120,15 @@ public:
 
 		const GA_Attribute* const normalAttrib = normal3D.getOutAttribArray()[0];
 
-		ComputeDir2D_AvgNormal<T> body(geo, normalAttrib);
+		ComputeDir2D_AvgNormal<FLOAT_T body(geo, normalAttrib);
 		const GA_SplittableRange geoSplittableRange(groupParser.getPrimitiveRange());
 		UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
 		return body.getSum();
 	}
 
-	//UT_Vector3T<T> dir2D = restDir2D(geo);
-	template<typename T>
-	UT_Vector3T<T>
-		restDir2D_houOBB()
+	//UT_Vector3T<FLOAT_T> dir2D = restDir2D(geo);
+	template<typename FLOAT_T>
+	UT_Vector3T<FLOAT_T> restDir2D_houOBB()
 	{
 		//UT_Matrix4 transform;
 		//UT_Vector3 radii;
@@ -183,29 +170,29 @@ private:
 	}
 
 
-	template<typename T>
+	template<typename FLOAT_T>
 	class ComputeDir2D_AvgNormal {
 	public:
 		ComputeDir2D_AvgNormal(const GA_Detail* const geo, const GA_Attribute* const normal3DAttribPtr = nullptr)
 			: myGeo(geo)
 			, myNormal3DAttribPtr(normal3DAttribPtr)
-			//, mySum(UT_Vector3T<T>(T(0)))
+			//, mySum(UT_Vector3T<FLOAT_T>(FLOAT_T(0)))
 		{
 			mySum = 0;
 		}
 		ComputeDir2D_AvgNormal(ComputeDir2D_AvgNormal& src, UT_Split)
 			: myGeo(src.myGeo)
 			, myNormal3DAttribPtr(src.myNormal3DAttribPtr)
-			//, mySum(UT_Vector3T<T>(T(0)))
+			//, mySum(UT_Vector3T<FLOAT_T>(FLOAT_T(0)))
 		{
 			mySum = 0;
 		}
 		void operator()(const GA_SplittableRange& r)
 		{
-			UT_Vector3T<T> sumTmp(T(0));
+			UT_Vector3T<FLOAT_T> sumTmp(FLOAT_T(0));
 			if (myNormal3DAttribPtr)
 			{
-				GA_PageHandleT<UT_Vector3T<T>, typename UT_Vector3T<T>::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> normal_ph(myNormal3DAttribPtr);
+				GA_PageHandleT<UT_Vector3T<FLOAT_T>, typename UT_Vector3T<FLOAT_T>::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> normal_ph(myNormal3DAttribPtr);
 				for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
 				{
 					GA_Offset start, end;
@@ -231,23 +218,18 @@ private:
 					}
 				}
 			}
-			sumTmp /= T(r.getEntries());
+			sumTmp /= FLOAT_T(r.getEntries());
 			mySum += sumTmp;
 		}
-
-		void join(const ComputeDir2D_AvgNormal& other)
-		{
-			mySum += other.mySum;
-		}
-		UT_Vector3T<T> getSum()
-		{
-			return mySum;
-		}
+		SYS_FORCE_INLINE void join(const ComputeDir2D_AvgNormal& other)
+		{ mySum += other.mySum; }
+		SYS_FORCE_INLINE UT_Vector3T<FLOAT_T> getSum() const
+		{ return mySum; }
 	private:
-		UT_Vector3T<T> mySum;
+		UT_Vector3T<FLOAT_T> mySum;
 		const GA_Detail* const myGeo;
 		const GA_Attribute* const myNormal3DAttribPtr;
-	};
+	}; // End of Class ComputeDir2D_AvgNormal
 
 
 public:

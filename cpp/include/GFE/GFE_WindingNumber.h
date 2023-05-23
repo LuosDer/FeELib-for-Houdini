@@ -633,25 +633,20 @@ public:
     }
 
 
-    SYS_FORCE_INLINE void
+    SYS_FORCE_INLINE GA_Attribute*
         findOrCreateTuple(
             const bool detached = false,
             const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringHolder& attribName = "__topo_windingNumber"
         )
-    {
-        getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, attribName);
-    }
+    { return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_POINT, GA_STORECLASS_FLOAT, storage, attribName); }
 
-    SYS_FORCE_INLINE void
+    SYS_FORCE_INLINE GA_PointGroup*
         findOrCreateGroup(
             const bool detached = false,
             const UT_StringRef& groupName = "pointInMesh_wn"
         )
-    {
-        // UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "must compute wn attrib first");
-        getOutGroupArray().findOrCreate(detached, GA_GROUP_POINT, groupName);
-    }
+    { return getOutGroupArray().findOrCreatePoint(detached, groupName); }
 
     
 
@@ -669,23 +664,25 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        for (int i = 0; i < getOutAttribArray().size(); i++)
+        const size_t size = getOutAttribArray().size();
+        for (size_t i = 0; i < size; i++)
         {
             wnAttribPtr = getOutAttribArray()[i];
             const GA_AIFTuple* const aifTuple = wnAttribPtr->getAIFTuple();
             if(!aifTuple)
                 continue;
-            
-            switch (aifTuple->getStorage(wnAttribPtr))
-            {
-            case GA_STORE_REAL16: computeWindingNumber<fpreal32>(); break;
-            case GA_STORE_REAL32: computeWindingNumber<fpreal32>(); break;
-            case GA_STORE_REAL64: computeWindingNumber<fpreal64>(); break;
-            default: break;
-            }
         }
         
+        if(!wnAttribPtr)
+            return false;
 
+        switch (wnAttribPtr->getAIFTuple()->getStorage(wnAttribPtr))
+        {
+        case GA_STORE_REAL16: computeWindingNumber<fpreal32>(); break;
+        case GA_STORE_REAL32: computeWindingNumber<fpreal32>(); break;
+        case GA_STORE_REAL64: computeWindingNumber<fpreal64>(); break;
+        default:                                                break;
+        }
         
         return true;
     }
@@ -778,6 +775,8 @@ private:
                     delete sopcache;
             }
         }
+
+        
         if(!getOutGroupArray().isEmpty())
         {
             computeOutGroup<FLOAT_T>();

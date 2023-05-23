@@ -1,10 +1,10 @@
 
 #pragma once
 
-#ifndef __GFE_GroupByPolyWinding_h__
-#define __GFE_GroupByPolyWinding_h__
+#ifndef __GFE_GroupByDirection_h__
+#define __GFE_GroupByDirection_h__
 
-#include "GFE/GFE_GroupByPolyWinding.h"
+#include "GFE/GFE_GroupByDirection.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
@@ -16,7 +16,7 @@
 #include "GFE/GFE_RestDir2D.h"
 
 
-enum class GFE_GroupByPolyWindingMethod
+enum class GFE_GroupByDirMethod
 {
 	RestDir2D_AvgNormal,
 	RestDir2D_HouOBB,
@@ -25,7 +25,7 @@ enum class GFE_GroupByPolyWindingMethod
 
 
 
-class GFE_GroupByPolyWinding : public GFE_AttribFilterWithRef {
+class GFE_GroupByDir : public GFE_AttribFilterWithRef {
 
 public:
 	using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
@@ -33,7 +33,7 @@ public:
 
 	void
 		setComputeParm(
-			const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod::VOLUME,
+			const GFE_GroupByDirMethod method = GFE_GroupByDirMethod::VOLUME,
 			
 			const bool useConstant = false,
 			const bool reverseGroup = false,
@@ -48,9 +48,6 @@ public:
 		this->reversePrim = reversePrim;
 		this->meshCap = meshCap;
 	}
-
-	SYS_FORCE_INLINE bool getMeshWindingCorrect() const
-	{ return meshWindingCorrect; }
 
 	SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
 		const bool detached = false,
@@ -77,6 +74,14 @@ private:
 		if (groupParser.isEmpty())
 			return true;
 
+		if (geoRef0)
+		{
+		}
+		else
+		{
+			
+		}
+	
 		GFE_Normal3D normal3D(geo, cookparms);
 		normal3D.set
 		GA_Attribute* const normalAttrib = getOutAttribArray()[0];
@@ -84,9 +89,9 @@ private:
 		outPrimGroup = getOutGroupArray().getPrimitiveGroup(0);
 		switch (method)
 		{
-			case GFE_GroupByPolyWindingMethod::RestDir2D_AvgNormal:    volume(); break;
-			case GFE_GroupByPolyWindingMethod::RestDir2D_HouOBB:
-			case GFE_GroupByPolyWindingMethod::Ray:                    wn();     break;
+			case GFE_GroupByDirMethod::RestDir2D_AvgNormal:    volume(); break;
+			case GFE_GroupByDirMethod::RestDir2D_HouOBB:
+			case GFE_GroupByDirMethod::Ray:                    wn();     break;
 			default: break;
 		}
 
@@ -104,7 +109,7 @@ private:
 	}
 
 	template<typename FLOAT_T>
-	void groupByPolyWindingMethod_ray()
+	void groupByDirMethod()
 	{
 		GFE_RestDir2D restDir2D();
 		
@@ -173,7 +178,7 @@ private:
 	
 
 public:
-	GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod::RestDir2D_AvgNormal;
+	GFE_GroupByDirMethod method = GFE_GroupByDirMethod::RestDir2D_AvgNormal;
 	
 	bool reversePrim = false;
 	bool meshCap = false;
@@ -189,7 +194,7 @@ private:
 	exint subscribeRatio = 64;
 	exint minGrainSize = 1024;
 	
-}; // End of class GFE_GroupByPolyWinding
+}; // End of class GFE_GroupByDir
 
 
 
@@ -281,7 +286,7 @@ groupByPolyWinding(
 	GA_PrimitiveGroup* const reverseOutGroup,
 	const GA_Attribute* normalAttrib,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
+	const GFE_GroupByDirMethod method = GFE_GroupByDirMethod_RestDir2D_AvgNormal,
 	const bool reverseGroup = false,
 	const exint subscribeRatio = 64,
 	const exint minGrainSize = 1024
@@ -298,19 +303,19 @@ groupByPolyWinding(
 	}
 	switch (method)
 	{
-	case GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal:
+	case GFE_GroupByDirMethod_RestDir2D_AvgNormal:
 		groupByPolyWinding_restDir2D<fpreal>(geo, reverseOutGroup, normalAttrib,
 			geoPrimGroup, GFE_RestDir2D_AvgNormal,
 			reverseGroup,
 			subscribeRatio, minGrainSize);
 		break;
-	case GFE_GroupByPolyWinding_RestDir2D_HouOBB:
+	case GFE_GroupByDir_RestDir2D_HouOBB:
 		groupByPolyWinding_restDir2D<fpreal>(geo, reverseOutGroup, normalAttrib,
 			geoPrimGroup, GFE_RestDir2D_HouOBB,
 			reverseGroup,
 			subscribeRatio, minGrainSize);
 		break;
-	case GFE_GroupByPolyWinding_Ray:
+	case GFE_GroupByDir_Ray:
 		groupByPolyWinding_ray<fpreal>(geo, reverseOutGroup, normalAttrib,
 			geoPrimGroup,
 			reverseGroup,
@@ -328,7 +333,7 @@ groupByPolyWinding(
 	GA_PrimitiveGroup* const reverseOutGroup,
 	const GA_Attribute* const normalAttrib,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
+	const GFE_GroupByDirMethod method = GFE_GroupByDirMethod_RestDir2D_AvgNormal,
 	const bool reverseGroup = false,
 	const bool reversePrim = false,
 	const exint subscribeRatio = 64,
@@ -353,7 +358,7 @@ groupByPolyWinding(
 	GA_Detail* const geo,
 	const GA_Attribute* const normalAttrib,
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
+	const GFE_GroupByDirMethod method = GFE_GroupByDirMethod_RestDir2D_AvgNormal,
 
 	const bool outReversedGroup = true,
 	const UT_StringHolder& reversedGroupName = "reversed",
@@ -400,7 +405,7 @@ groupByPolyWinding(
 	GA_Detail* const geo,
 	const UT_StringHolder& normalAttribName = "N",
 	const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
+	const GFE_GroupByDirMethod method = GFE_GroupByDirMethod_RestDir2D_AvgNormal,
 
 	const bool outReversedGroup = true,
 	const UT_StringHolder& reversedGroupName = "reversed",
@@ -427,7 +432,7 @@ groupByPolyWinding(
 	GA_Detail* const geo,
 	const UT_StringHolder& groupName,
 	const UT_StringHolder& normalAttribName = "N",
-	const GFE_GroupByPolyWindingMethod method = GFE_GroupByPolyWindingMethod_RestDir2D_AvgNormal,
+	const GFE_GroupByDirMethod method = GFE_GroupByDirMethod_RestDir2D_AvgNormal,
 	const bool outReversedGroup = true,
 	const UT_StringHolder& reversedGroupName = "reversed",
 	const bool reverseGroup = false,
@@ -460,6 +465,6 @@ groupByPolyWinding(
 
 
 
-} // End of namespace GFE_GroupByPolyWinding
+} // End of namespace GFE_GroupByDir
 
 #endif

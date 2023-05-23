@@ -380,9 +380,6 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     GFE_GroupExpand groupExpand(outGeo0, cookparms);
     
-    //groupExpand.groupParser.setGroup(groupType, sopparms.getGroup());
-    
-    
     if (!groupExpand.setBaseGroup(groupType, sopparms.getGroup()))
         return;
     

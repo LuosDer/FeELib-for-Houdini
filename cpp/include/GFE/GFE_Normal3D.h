@@ -4,7 +4,8 @@
 #ifndef __GFE_Normal3D_h__
 #define __GFE_Normal3D_h__
 
-//#include "GFE/GFE_Normal3D.h"
+
+#include "GFE/GFE_Normal3D.h"
 
 
 
@@ -53,9 +54,8 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        GA_Attribute* const normalAttrib = getOutAttribArray()[0];
 
-        GEOcomputeNormals(*geo->asGEO_Detail(), normalAttrib, groupParser.getGroup(normalAttrib),
+        GEOcomputeNormals(*geo->asGEO_Detail(), getOutAttribArray()[0], groupParser.getGroup(getOutAttribArray()[0]),
             cuspAngleDegrees, normalMethod, copyOrigIfZero);
 
         return true;

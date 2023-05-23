@@ -9,20 +9,28 @@
 
 
 
-#include "GEO/GEO_Hull.h"
+//#include "GEO/GEO_Hull.h"
+#include "GU/GU_PolyFill.h"
+#include "GU/GU_ConvexHull3D.h"
+#include "UT/UT_BoundingBox.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
 
+
+
+#include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_Measure.h"
-#include "GFE/GFE_MeshCap.h"
+#include "GFE/GFE_WindingNumber.h"
+//#include "GFE/GFE_MeshCap.h"
 
 
 
 enum class GFE_GroupByMeshWindingMethod
 {
 	VOLUME,
-	WINDINGNUMBER,
+	WINDINGNUMBER_BBOX,
+	WINDINGNUMBER_CONVEX,
 };
 
 
@@ -35,290 +43,182 @@ public:
 
 	void
 		setComputeParm(
-			const GFE_GroupByMeshWindingMethod method = GFE_GroupByMeshWindingMethod::VOLUME
+			const GFE_GroupByMeshWindingMethod method = GFE_GroupByMeshWindingMethod::VOLUME,
+			
+			const bool reverseGroup = false,
+			const bool reversePrim = false,
+			const bool meshCap = false
 		)
 	{
 		setHasComputed();
 		this->method = method;
+			
+		this->reverseOutGroup = reverseGroup;
+		this->reversePrim = reversePrim;
+		this->meshCap = meshCap;
 	}
 
-	SYS_FORCE_INLINE GA_Attribute* getAttrib() const
-	{ return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0]; }
+	SYS_FORCE_INLINE bool getMeshWindingCorrect() const
+	{ return meshWindingCorrect; }
 
+	SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
+		const bool detached = false,
+		const UT_StringRef& attribName = ""
+	)
+	{ return getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_DETAIL,
+			GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+
+	
+    
+	virtual void bumpDataId() const override
+	{
+		getOutAttribArray().bumpDataId();
+		getOutGroupArray().bumpDataId();
+		if (reversePrim && !(meshWindingCorrect ^ reverseOutGroup))
+			bumpDataIdsForAddOrRemove(false, true, false);
+	}
 
 private:
 
 	virtual bool
 		computeCore() override
 	{
-		if (getOutAttribArray().isEmpty())
-			return false;
-
 		if (groupParser.isEmpty())
 			return true;
 
-		GFE_Measure measure(geo, cookparms);
-		measure.measureType = GFE_MeasureType::MeshVolume;
-		//measure.groupParser.setGroup(groupType, sopparms.getGroup());
-		//measure.setPositionAttrib(sopparms.getPosAttribName());
-		measure.findOrCreateTuple(false, measureAttribName);
-    
-		measure.compute();
-
-		const fpreal32 volume = GFE_Measure::computeMeshVolume(geo, geoPrimGroup);
-
 		
-		GU_RayIntersect rayIntersect(geo->asGU_Detail(), );
-		GA_Attribute* const normalAttrib = getOutAttribArray()[0];
+		if (meshCap)
+		{
+			geoCapTmp = new GU_Detail();
+			geoCap_h.allocateAndSet(geoCapTmp);
+			geoCapTmp->replaceWith(*geo);
+			
+			UT_Array<GA_OffsetArray> rings;
+			UT_Array<GA_OffsetArray> ringOrigs;
+			GU_PolyFill::singlePolys(geoCapTmp, rings, ringOrigs, nullptr);
+			
+			geoCapTmp_GA = geoCapTmp;
+		}
+		else
+		{
+			geoCapTmp_GA = geo;
+		}
+		
+		switch (method)
+		{
+			case GFE_GroupByMeshWindingMethod::VOLUME:               volume(); break;
+			case GFE_GroupByMeshWindingMethod::WINDINGNUMBER_CONVEX:
+			case GFE_GroupByMeshWindingMethod::WINDINGNUMBER_BBOX:   wn();     break;
+			default: break;
+		}
 
-		GEOcomputeNormals(*geo->asGEO_Detail(), normalAttrib, groupParser.getGroup(normalAttrib),
-			cuspAngleDegrees, normalMethod, copyOrigIfZero);
-
+		const bool meshWindingCorrect_reverse = meshWindingCorrect ^ reverseOutGroup;
+		if (!getOutAttribArray().isEmpty())
+		{
+			UT_ASSERT_P(getOutAttribArray()[0]->getAIFTuple());
+			getOutAttribArray()[0]->getAIFTuple()->set(getOutAttribArray()[0], 0, static_cast<int32>(meshWindingCorrect_reverse));
+		}
+		
+		if (!getOutGroupArray().isEmpty())
+		{
+			if (meshWindingCorrect_reverse)
+				getOutGroupArray()[0]->clear();
+			else
+				getOutGroupArray()[0]->addAll();
+		}
+		
+		if (reversePrim && !meshWindingCorrect_reverse)
+		{
+			geo->asGU_Detail()->reverse(nullptr, false);
+			//geo->asGU_Detail()->reversePolys(nullptr);
+		}
+		
+		
 		return true;
 	}
 
+	
+	void volume()
+	{
+		GFE_Measure measure(geoCapTmp_GA, cookparms);
+		measure.measureType = GFE_MeasureType::MeshVolume;
+		measure.groupParser.setGroup(groupParser.getPrimitiveGroup());
+		//measure.setPositionAttrib(sopparms.getPosAttribName());
+		//measure.findOrCreateTuple(!outIntermediateAttrib);
+		//measure.compute();
+		const fpreal64 volume = measure.computeMeshVolume();
+		
+		meshWindingCorrect = volume >= 0;
+	}
+	
+	void wn()
+	{
 
+		GU_DetailHandle geoConvex_h;
+		GU_Detail* geoConvex = new GU_Detail();
+		geoConvex_h.allocateAndSet(geoConvex);
+		
+		switch (method)
+		{
+		case GFE_GroupByMeshWindingMethod::WINDINGNUMBER_CONVEX:
+			{
+				GU_ConvexHull3D convexHull3D;
+#if 1
+				convexHull3D.computeAndShrink(0.1, *geo->asGU_Detail(), groupParser.getPointGroup(), true);
+
+				convexHull3D.getGeometry(*geoConvex, geo->asGU_Detail());
+#else
+				geoConvex->replaceWith(*geo);
+				geoConvex->convex();
+#endif
+			}
+			break;
+		case GFE_GroupByMeshWindingMethod::WINDINGNUMBER_BBOX:
+			{
+				const UT_BoundingBoxT<fpreal32>& geoBBox = geo->stdBoundingBox<fpreal32>(groupParser.getPointRange(), posAttrib);
+				geoConvex->appendPointBlock(8);
+				UT_Vector3T<fpreal32> posArray[8];
+				geoBBox.getBBoxPoints(posArray);
+			
+				for (GA_Size i = 0; i < 8; ++i)
+				{
+					geoConvex->setPos3(geoConvex->pointOffset(i), posArray[i]);
+				}
+			}
+			break;
+		default: break;
+		}
+		
+		
+		GFE_WindingNumber wn(*geoConvex, *geoCapTmp_GA, nullptr, cookparms);
+		GA_Attribute* wnAttrib = wn.findOrCreateTuple(!outIntermediateAttrib);
+		
+		wn.computeAndBumpDataId();
+
+		const fpreal64 wnSum = GFE_Attribute::computeAttribSum<fpreal64>(wnAttrib);
+		
+		meshWindingCorrect = wnSum >= 0;
+	}
+	
 
 public:
 	GFE_GroupByMeshWindingMethod method = GFE_GroupByMeshWindingMethod::VOLUME;
+	
+	//bool reverseGroup = false;
+	bool reversePrim = false;
+	bool meshCap = false;
+	
+	bool outIntermediateAttrib = false;
+	
+private:
+	bool meshWindingCorrect = true;
 
+	GU_DetailHandle geoCap_h;
+	GU_Detail* geoCapTmp;
+	GA_Detail* geoCapTmp_GA;
+	
 }; // End of class GFE_GroupByMeshWinding
 
 
-
-
-namespace GFE_GroupByMeshWinding_Namespace {
-
-
-
-
-
-//isMeshWindingCorrect_volume(geo, group);
-static bool
-isMeshWindingCorrect_volume(
-	const GA_Detail* const geo,
-	const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-)
-{
-	fpreal32 volume = GFE_Measure::computeMeshVolume(geo, geoPrimGroup);
-	return volume > 0;
-}
-
-
-//isMeshWindingCorrect_wn(geo, group);
-static bool
-isMeshWindingCorrect_wn(
-	const GA_Detail* const geo,
-	const GA_PrimitiveGroup* const geoPrimGroup = nullptr
-)
-{
-	fpreal32 volume = GFE_Measure::computeMeshVolume(geo, geoPrimGroup);
-	return volume > 0;
-}
-
-//isMeshWindingCorrect(geo, group, reverseGroup, delGroup);
-SYS_FORCE_INLINE
-static bool
-isMeshWindingCorrect(
-    GA_Detail* const geo,
-	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GFE_GroupByMeshWindingMethod method
-)
-{
-	switch (method)
-	{
-	case GFE_GroupByMeshWindingMethod_VOLUME:
-		return isMeshWindingCorrect_volume(geo, geoPrimGroup);
-		break;
-	case GFE_GroupByMeshWindingMethod_WINDINGNUMBER:
-		return isMeshWindingCorrect_wn(geo, geoPrimGroup);
-		break;
-	default:
-		break;
-	}
-	UT_ASSERT_MSG(0, "cant be possible");
-	return false;
-}
-
-
-//groupByMeshWinding(geo, group, reverseGroup, delGroup);
-static bool
-isMeshWindingCorrect(
-	GA_Detail* const geo,
-	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GFE_GroupByMeshWindingMethod method,
-
-	const bool reversePrim,
-
-	const bool polyCap = false
-)
-{
-	bool isMeshWindingCorrectb;
-	if (polyCap)
-	{
-		GU_DetailHandle geoTmp0_h;
-		GU_Detail* geoTmp0 = new GU_Detail();
-		geoTmp0_h.allocateAndSet(geoTmp0);
-		geoTmp0->replaceWith(*geo);
-
-		GFE_MeshCap::meshCapSingle(geoTmp0);
-
-		isMeshWindingCorrectb = isMeshWindingCorrect(geoTmp0, geoPrimGroup, method);
-	}
-	else
-	{
-		isMeshWindingCorrectb = isMeshWindingCorrect(geo, geoPrimGroup, method);
-	}
-
-	if (reversePrim && !isMeshWindingCorrectb)
-	{
-		GA_Offset start, end;
-		for (GA_Iterator it(geo->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
-		{
-			for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-			{
-				geo->getPrimitive(elemoff)->reverse();
-			}
-		}
-	}
-
-	return isMeshWindingCorrectb;
-}
-
-//groupByMeshWinding(geo, group, reverseGroup, delGroup);
-static GA_PrimitiveGroup*
-groupByMeshWinding(
-	GA_Detail* const geo,
-	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GFE_GroupByMeshWindingMethod method,
-
-	const bool outReversedGroup,
-	const UT_StringHolder& reversedGroupName,
-	const bool reverseGroup,
-	const bool reversePrim,
-
-	const bool polyCap = false
-)
-{
-	const bool isMeshWindingCorrectb = isMeshWindingCorrect(geo, geoPrimGroup, method,
-		reversePrim, polyCap);
-
-	if (outReversedGroup)
-	{
-		GA_PrimitiveGroup* const reversedGroup = geo->newPrimitiveGroup(reversedGroupName);
-		if (isMeshWindingCorrectb ^ reverseGroup)
-			reversedGroup->addAll();
-		else
-			reversedGroup->clear();
-
-		return reversedGroup;
-	}
-
-	return nullptr;
-	//UTparallelFor(geoSplittableRange, [geo, &bboxCenter](const GA_SplittableRange& r)
-	//{
-	//	fpreal volumeSum = 0;
-	//	GA_Offset start, end;
-	//	for (GA_Iterator it(r); it.blockAdvance(start, end); )
-	//	{
-	//		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-	//		{
-	//			GEO_Hull* prim = static_cast<GEO_Hull*>(geo->getPrimitive(elemoff));
-	//			volumeSum += prim->calcVolume(bboxCenter);
-	//			//GA_Primitive* poly1 = geo->getPrimitive(elemoff);
-	//			//poly = static_cast<GEO_Hull*>(poly1);
-	//		}
-	//	}
-	//}
-} 
-
-
-//groupByMeshWinding(geo, group, reverseGroup, delGroup);
-static GA_PrimitiveGroup*
-groupByMeshWinding(
-	GA_Detail* const geo,
-	const GA_PrimitiveGroup* const geoPrimGroup,
-	const GFE_GroupByMeshWindingMethod method,
-
-	const bool runOverPieces,
-	const bool findInputPieceAttrib,
-	const UT_StringHolder& pieceAttribName,
-
-	const bool outReversedGroup,
-	const UT_StringHolder& reversedGroupName,
-	const bool reverseGroup,
-	const bool reversePrim,
-
-	const bool polyCap = false
-)
-{
-	if (runOverPieces)
-	{
-		const bool isMeshWindingCorrectb = isMeshWindingCorrect(geo, geoPrimGroup, method,
-			reversePrim, polyCap);
-
-		if (outReversedGroup)
-		{
-			GA_PrimitiveGroup* const reversedGroup = geo->newPrimitiveGroup(reversedGroupName);
-			if (isMeshWindingCorrectb ^ reverseGroup)
-				reversedGroup->addAll();
-			else
-				reversedGroup->clear();
-
-			return reversedGroup;
-		}
-
-		return nullptr;
-	}
-	else
-	{
-		return groupByMeshWinding(geo, geoPrimGroup, method,
-			outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap);
-	}
-
-}
-
-
-
-
-//groupByMeshWinding(geo, group, reverseGroup, delGroup);
-static void
-groupByMeshWinding(
-	const SOP_NodeVerb::CookParms& cookparms,
-	GA_Detail* const geo,
-	const UT_StringHolder& groupName,
-	const GFE_GroupByMeshWindingMethod method,
-
-	const bool runOverPieces,
-	const bool findInputPieceAttrib,
-	const UT_StringHolder& pieceAttribName,
-
-	const bool outReversedGroup,
-	const UT_StringHolder& reversedGroupName,
-	const bool reverseGroup,
-	const bool reversePrim,
-
-	const bool polyCap = false
-)
-{
-	GOP_Manager gop;
-	const GA_PrimitiveGroup* const geoPrimGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geo, groupName, gop);
-
-	const GA_PrimitiveGroup* const reversedGroup = groupByMeshWinding(geo, geoPrimGroup, method,
-		runOverPieces, findInputPieceAttrib, pieceAttribName,
-		outReversedGroup, reversedGroupName, reverseGroup, reversePrim, polyCap);
-
-	if (outReversedGroup)
-	{
-		cookparms.getNode()->setHighlight(true);
-		cookparms.select(*reversedGroup);
-	}
-}
-
-
-
-
-
-} // End of namespace GFE_GroupByMeshWinding
 
 #endif

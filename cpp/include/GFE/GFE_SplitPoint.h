@@ -37,12 +37,12 @@ public:
 
 
     void
-    setComputeParm(
-        const fpreal splitAttribTol = 1e-05,
-        const bool promoteAttrib = false
-        // ,const exint subscribeRatio = 64,
-        // const exint minGrainSize = 64
-    )
+        setComputeParm(
+            const fpreal splitAttribTol = 1e-05,
+            const bool promoteAttrib = false
+            // ,const exint subscribeRatio = 64,
+            // const exint minGrainSize = 64
+        )
     {
         setHasComputed();
         this->splitAttribTol = splitAttribTol;
@@ -50,7 +50,10 @@ public:
         // this->subscribeRatio = subscribeRatio;
         // this->minGrainSize = minGrainSize;
     }
-
+    
+    SYS_FORCE_INLINE size_t getNumPointAdded() const
+    { return numPointAdded; }
+    
     
     // SYS_FORCE_INLINE void setSplitByAttrib(const GA_Attribute* const attribPtr = nullptr)
     // {
@@ -291,6 +294,18 @@ private:
             splitPointByAttrib(static_cast<const GA_ElementGroup*>(attrib));
     }
     
+    void splitPointByAttrib(const GA_Attribute* const attrib)
+    {
+        switch (attrib->getOwner())
+        {
+            case GA_ATTRIB_PRIMITIVE: splitPointByAttrib<GA_ATTRIB_PRIMITIVE>(attrib); break;
+            // case GA_ATTRIB_POINT:     splitPointByAttrib<GA_ATTRIB_POINT>(attrib);     break;
+            case GA_ATTRIB_VERTEX:    splitPointByAttrib<GA_ATTRIB_VERTEX>(attrib);    break;
+            
+        }
+    }
+
+        
     // NOTE: This will bump any data IDs as needed, if any points are split.
     template<GA_AttributeOwner OWNER>
     void splitPointByAttrib(const GA_Attribute* const attrib)
@@ -298,9 +313,9 @@ private:
         if (!attrib)
             return;
 
-        const GA_AttributeOwner owner = attrib->getOwner();
-        if (owner == GA_ATTRIB_POINT || owner == GA_ATTRIB_DETAIL)
-            return;
+        //const GA_AttributeOwner owner = attrib->getOwner();
+        //if (owner == GA_ATTRIB_POINT || owner == GA_ATTRIB_DETAIL)
+        //    return;
 
         
         const GA_ElementGroup* const group = groupParser.isPointGroup() ? nullptr : groupParser.getPointGroup();
@@ -311,7 +326,7 @@ private:
         
         numPointAdded = 0;
         
-        const GA_AIFCompare* const compare = NULL;
+        const GA_AIFCompare* compare = nullptr;
         GA_ROHandleT<int64> attribi;
         GA_ROHandleR attribf;
         int tuplesize;
@@ -343,7 +358,7 @@ private:
             if (compare == NULL)
             {
                 UT_ASSERT_MSG(0, "Missing an implementation of GA_AIFCompare!");
-                return numPointAdded;
+                return;
             }
         }
 
@@ -405,8 +420,15 @@ private:
 
                     // We have a vertex on the point that's in the group.
                     // If any vertices mismatch, we make a new point.
-
-                    GA_Offset baseoffset = (owner == GA_ATTRIB_VERTEX) ? basevtxoff : baseprimoff;
+                    
+                    GA_Offset baseoffset;
+                    if constexpr(OWNER == GA_ATTRIB_VERTEX)
+                        baseoffset = basevtxoff;
+                    else
+                        baseoffset = baseprimoff;
+                    
+                    //GA_Offset baseoffset = OWNER == GA_ATTRIB_VERTEX ? basevtxoff : baseprimoff;
+                    
                     vtxlist.setSize(1);
                     vtxlist(0) = basevtxoff;
                     splitfound = false;
@@ -414,7 +436,14 @@ private:
                     {
                         if (vtxoff == basevtxoff)
                             continue;
-                        GA_Offset offset = (owner == GA_ATTRIB_VERTEX) ? vtxoff : geo->vertexPrimitive(vtxoff);
+                    
+                        GA_Offset offset;
+                        if constexpr(OWNER == GA_ATTRIB_VERTEX)
+                            offset = vtxoff;
+                        else
+                            offset = geo->vertexPrimitive(vtxoff);
+                        //GA_Offset offset = constexpr(OWNER == GA_ATTRIB_VERTEX) ? vtxoff : geo->vertexPrimitive(vtxoff);
+                        
                         bool match;
                         if (attribi.isValid())
                             match = compareVertices<int64>(baseoffset, offset, attribi, tuplesize, splitAttribTol);
@@ -484,7 +513,7 @@ private:
             // data IDs, just in case.
             geo->edgeGroups().bumpAllDataIds();
         }
-        return numPointAdded;
+        return;
     }
 
 public:

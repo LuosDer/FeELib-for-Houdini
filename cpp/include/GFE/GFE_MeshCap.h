@@ -25,9 +25,7 @@ namespace GFE_MeshCap {
 
 
 static void
-meshCapSingle(
-    GA_Detail* const geo
-)
+meshCapSingle(GA_Detail* const geo)
 {
     UT_Array<GA_OffsetArray> rings;
     UT_Array<GA_OffsetArray> ringOrigs;
