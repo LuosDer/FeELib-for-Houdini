@@ -68,7 +68,7 @@ public:
         set(attribPtr->isDetached() ? "" : attribPtr->getName().c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const UT_StringHolder& s)
+    SYS_FORCE_INLINE UFE_SplittableString &operator=(const UT_StringRef& s)
     {
         set(s.c_str());
         return *this;

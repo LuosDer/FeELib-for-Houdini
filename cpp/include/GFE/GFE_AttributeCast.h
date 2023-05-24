@@ -39,15 +39,15 @@ public:
         newStorageClass = inAttrib.getStorageClass();
         if(inAttrib.getAIFTuple())
         {
-            precision = GFE_Type::precisionFromStorage(inAttrib.getAIFTuple()->getStorage(&inAttrib));
+            newPrecision = GFE_Type::precisionFromStorage(inAttrib.getAIFTuple()->getStorage(&inAttrib));
         }
         else if(inAttrib.getAIFNumericArray())
         {
-            precision = GFE_Type::precisionFromStorage(inAttrib.getAIFNumericArray()->getStorage(&inAttrib));
+            newPrecision = GFE_Type::precisionFromStorage(inAttrib.getAIFNumericArray()->getStorage(&inAttrib));
         }
         else
         {
-            precision = GA_PRECISION_INVALID;
+            newPrecision = GA_PRECISION_INVALID;
         }
         newAttribNames = inAttrib;
     }
@@ -55,7 +55,7 @@ public:
     SYS_FORCE_INLINE void setDestinationGroup(const GA_Group& inGroup)
     {
         newStorageClass = GA_STORECLASS_OTHER;
-        precision = GA_PRECISION_1;
+        newPrecision = GA_PRECISION_1;
         newGroupNames = inGroup;
     }
 
@@ -82,8 +82,8 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        // precision = geo->getPreferredPrecision(precision);
-        precision = geo->getValidPrecision(precision);
+        // newPrecision = geo->getPreferredPrecision(newPrecision);
+        newPrecision = geo->getValidPrecision(newPrecision);
         
         //::std::string newName;
         
@@ -114,7 +114,7 @@ private:
             if (newStorageClass == GA_STORECLASS_INVALID || newStorageClass == GA_STORECLASS_OTHER)
                 return;
             
-            if (GFE_Attribute::getPrecision(attrib) == precision)
+            if (GFE_Attribute::getPrecision(attrib) == newPrecision)
                 return;
         }
         
@@ -132,7 +132,7 @@ private:
         }
         else
         {
-            const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, precision);
+            const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, newPrecision);
             //if(!detached && !attrib.isDetached() && attrib.getName() == newName)
             if(!detached && !attrib.isDetached() && strcmp(attrib.getName().c_str(), newName.c_str()) == 0)
             {
@@ -226,7 +226,7 @@ private:
         switch (attribRef.getStorageClass())
         {
         case GA_STORECLASS_INT:
-            switch (precision)
+            switch (newPrecision)
             {
             case GA_PRECISION_8: attribDuplicate<int8>(group, attribRef); break;
             case GA_PRECISION_16: attribDuplicate<int8>(group, attribRef); break;
@@ -236,7 +236,7 @@ private:
             }
             break;
         case GA_STORECLASS_REAL:
-            switch (precision)
+            switch (newPrecision)
             {
             case GA_PRECISION_16: attribDuplicate<fpreal16>(group, attribRef); break;
             case GA_PRECISION_32: attribDuplicate<fpreal32>(group, attribRef); break;
@@ -265,7 +265,7 @@ private:
         switch (newStorageClass)
         {
         case GA_STORECLASS_INT:
-            switch (precision)
+            switch (newPrecision)
             {
             case GA_PRECISION_8:  setAttribValueTo1<int8> (attrib, geoSplittableRange); return true; break;
             case GA_PRECISION_16: setAttribValueTo1<int16>(attrib, geoSplittableRange); return true; break;
@@ -275,7 +275,7 @@ private:
             }
             break;
         case GA_STORECLASS_REAL:
-            switch (precision)
+            switch (newPrecision)
             {
             case GA_PRECISION_16: setAttribValueTo1<fpreal16>(attrib, geoSplittableRange); return true; break;
             case GA_PRECISION_32: setAttribValueTo1<fpreal32>(attrib, geoSplittableRange); return true; break;
@@ -787,10 +787,7 @@ private:
 
     template<typename T>
     void
-    setAttribValueTo1(
-        GA_Attribute& attrib,
-        const GA_SplittableRange& geoSplittableRange
-    )
+    setAttribValueTo1(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
     {
         UTparallelFor(geoSplittableRange, [&attrib](const GA_SplittableRange& r)
         {
@@ -812,10 +809,7 @@ private:
 
     template<>
     void
-    setAttribValueTo1<UT_StringHolder>(
-        GA_Attribute& attrib,
-        const GA_SplittableRange& geoSplittableRange
-    )
+    setAttribValueTo1<UT_StringHolder>(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
     {
         const GA_RWHandleS attrib_h(&attrib);
         UTparallelFor(geoSplittableRange, [&attrib_h](const GA_SplittableRange& r)
@@ -838,7 +832,7 @@ private:
 
 public:
     GA_StorageClass newStorageClass = GA_STORECLASS_INVALID;
-    GA_Precision precision = GA_PRECISION_INVALID;
+    GA_Precision newPrecision = GA_PRECISION_INVALID;
     bool delOrigin = true;
 
     UFE_SplittableString newAttribNames;

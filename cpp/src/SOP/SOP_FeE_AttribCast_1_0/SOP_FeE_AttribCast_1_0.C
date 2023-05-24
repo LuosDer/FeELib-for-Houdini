@@ -291,7 +291,7 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     attribCast.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 
     attribCast.newStorageClass = sopStorageClass(sopparms.getAttribType());
-    attribCast.precision       = sopPrecision(sopparms.getPrecision());
+    attribCast.newPrecision    = sopPrecision(sopparms.getPrecision());
 
     if (attribCast.newStorageClass == GA_STORECLASS_STRING)
     {

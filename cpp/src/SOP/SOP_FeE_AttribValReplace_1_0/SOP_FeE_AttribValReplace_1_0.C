@@ -322,14 +322,14 @@ SOP_FeE_AttribValReplace_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_AttribValReplace_1_0::theSOPTypeName("FeE::enumerate::1.0"_sh);
+const UT_StringHolder SOP_FeE_AttribValReplace_1_0::theSOPTypeName("FeE::attribValReplace::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_AttribValReplace_1_0::theSOPTypeName,
-        "FeE Enumerate",
+        "FeE Attribute Value Replace",
         SOP_FeE_AttribValReplace_1_0::myConstructor,
         SOP_FeE_AttribValReplace_1_0::buildTemplates(),
         1,
@@ -476,8 +476,10 @@ SOP_FeE_AttribValReplace_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
         
         GFE_AttribValReplace attribValReplace(outGeo0, cookparms);
         
+        attribValReplace.getInAttribArray().appends(attribClass, sopparms.getAttrib());
+    
         attribValReplace.newStorageClass = sopStorageClass(sopparms.getAttribType());
-        attribValReplace.precision       = sopPrecision(sopparms.getPrecision());
+        attribValReplace.newPrecision    = sopPrecision(sopparms.getPrecision());
         
         attribValReplace.setComputeParm(sopparms.getNumEntries(), sopparms.getOutNewAttrib(), sopparms.getNewAttribName(), sopparms.getDelInAttrib(), 
             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
