@@ -942,12 +942,12 @@ private:
         if (xformAttrib->getAIFTuple()->getTupleSize(xformAttrib) == 16)
         {
             
-            if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
-                         std::is_same<T, UT_Matrix3T<int32>>::value    ||
-                         std::is_same<T, UT_Matrix3T<int64>>::value    ||
-                         std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
-                         std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
-                         std::is_same<T, UT_Matrix3T<fpreal64>>::value )
+            if constexpr(std::is_same_v<T, UT_Matrix3T<int16>>    ||
+                         std::is_same_v<T, UT_Matrix3T<int32>>    ||
+                         std::is_same_v<T, UT_Matrix3T<int64>>    ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal16>> ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal32>> ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal64>> )
             {
                 switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
                 {
@@ -996,18 +996,18 @@ private:
     {
         if (xformAttrib && attribPtr->getOwner() != GA_ATTRIB_DETAIL && xformAttrib->getOwner() != GA_ATTRIB_DETAIL)
         {
-            if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
-                         std::is_same<T, UT_Matrix3T<int32>>::value    ||
-                         std::is_same<T, UT_Matrix3T<int64>>::value    ||
-                         std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
-                         std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
-                         std::is_same<T, UT_Matrix3T<fpreal64>>::value ||
-                         std::is_same<T, UT_Matrix4T<int16>>::value    ||
-                         std::is_same<T, UT_Matrix4T<int32>>::value    ||
-                         std::is_same<T, UT_Matrix4T<int64>>::value    ||
-                         std::is_same<T, UT_Matrix4T<fpreal16>>::value ||
-                         std::is_same<T, UT_Matrix4T<fpreal32>>::value ||
-                         std::is_same<T, UT_Matrix4T<fpreal64>>::value )
+            if constexpr(std::is_same_v<T, UT_Matrix3T<int16>>    ||
+                         std::is_same_v<T, UT_Matrix3T<int32>>    ||
+                         std::is_same_v<T, UT_Matrix3T<int64>>    ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal16>> ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal32>> ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal64>> ||
+                         std::is_same_v<T, UT_Matrix4T<int16>>    ||
+                         std::is_same_v<T, UT_Matrix4T<int32>>    ||
+                         std::is_same_v<T, UT_Matrix4T<int64>>    ||
+                         std::is_same_v<T, UT_Matrix4T<fpreal16>> ||
+                         std::is_same_v<T, UT_Matrix4T<fpreal32>> ||
+                         std::is_same_v<T, UT_Matrix4T<fpreal64>> )
             {
                 xformMatrixByAttrib<T>();
             }
@@ -1056,9 +1056,9 @@ private:
                 // else if constexpr(std::is_same_v<T, UT_Vector2T<fpreal32>>);
                 // else if constexpr(std::is_same_v<T, UT_Vector2T<fpreal64> );
                 
-                if      constexpr(std::is_same<T, UT_Matrix3T<fpreal16>>::value);
-                else if constexpr(std::is_same<T, UT_Matrix3T<fpreal32>>::value);
-                else if constexpr(std::is_same<T, UT_Matrix3T<fpreal64>>::value);
+                if      constexpr(std::is_same_v<T, UT_Matrix3T<fpreal16>>);
+                else if constexpr(std::is_same_v<T, UT_Matrix3T<fpreal32>>);
+                else if constexpr(std::is_same_v<T, UT_Matrix3T<fpreal64>>);
                 else
                     value *= UT_Matrix4T<typename T::value_type>(xform4);
             }
@@ -1069,28 +1069,28 @@ private:
         }
         else
         {
-            if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
-                         std::is_same<T, UT_Matrix3T<int32>>::value    ||
-                         std::is_same<T, UT_Matrix3T<int64>>::value    ||
-                         std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
-                         std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
-                         std::is_same<T, UT_Matrix3T<fpreal64>>::value ||
-                         std::is_same<T, UT_Matrix4T<int16>>::value    ||
-                         std::is_same<T, UT_Matrix4T<int32>>::value    ||
-                         std::is_same<T, UT_Matrix4T<int64>>::value    ||
-                         std::is_same<T, UT_Matrix4T<fpreal16>>::value ||
-                         std::is_same<T, UT_Matrix4T<fpreal32>>::value ||
-                         std::is_same<T, UT_Matrix4T<fpreal64>>::value )
+            if constexpr(std::is_same_v<T, UT_Matrix3T<int16>>    ||
+                         std::is_same_v<T, UT_Matrix3T<int32>>    ||
+                         std::is_same_v<T, UT_Matrix3T<int64>>    ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal16>> ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal32>> ||
+                         std::is_same_v<T, UT_Matrix3T<fpreal64>> ||
+                         std::is_same_v<T, UT_Matrix4T<int16>>    ||
+                         std::is_same_v<T, UT_Matrix4T<int32>>    ||
+                         std::is_same_v<T, UT_Matrix4T<int64>>    ||
+                         std::is_same_v<T, UT_Matrix4T<fpreal16>> ||
+                         std::is_same_v<T, UT_Matrix4T<fpreal32>> ||
+                         std::is_same_v<T, UT_Matrix4T<fpreal64>> )
             {
                 if(xformByXform4)
                 {
                     
-                    if constexpr(std::is_same<T, UT_Matrix3T<int16>>::value    ||
-                                 std::is_same<T, UT_Matrix3T<int32>>::value    ||
-                                 std::is_same<T, UT_Matrix3T<int64>>::value    ||
-                                 std::is_same<T, UT_Matrix3T<fpreal16>>::value ||
-                                 std::is_same<T, UT_Matrix3T<fpreal32>>::value ||
-                                 std::is_same<T, UT_Matrix3T<fpreal64>>::value )
+                    if constexpr(std::is_same_v<T, UT_Matrix3T<int16>>    ||
+                                 std::is_same_v<T, UT_Matrix3T<int32>>    ||
+                                 std::is_same_v<T, UT_Matrix3T<int64>>    ||
+                                 std::is_same_v<T, UT_Matrix3T<fpreal16>> ||
+                                 std::is_same_v<T, UT_Matrix3T<fpreal32>> ||
+                                 std::is_same_v<T, UT_Matrix3T<fpreal64>> )
                     {
                         xformMatrixByMatrix<T, UT_Matrix3T<typename T::value_type>>(UT_Matrix3T<typename T::value_type>(xform4));
                     }

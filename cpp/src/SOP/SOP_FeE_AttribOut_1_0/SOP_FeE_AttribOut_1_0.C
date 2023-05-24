@@ -24,6 +24,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "NumAttribOut"
         label   "Number of Attrib Out"
         default 0
+        parmtag { "multistartoffset" "0" }
 
         parm {
             name    "outAttrib#"
@@ -70,6 +71,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "NumGroupOut"
         label   "Number of Group Out"
         default 0
+        parmtag { "multistartoffset" "0" }
 
         parm {
             name    "outGroup#"

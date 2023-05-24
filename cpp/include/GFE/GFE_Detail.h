@@ -566,7 +566,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
 
     
     SYS_FORCE_INLINE void deletePrimitiveOffsets(
-        const GA_PrimitiveGroup* group,
+        const GA_PrimitiveGroup* const group,
         const bool reverseGroup = false,
         const bool withPoint = false
     )
@@ -574,7 +574,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
 
     
     SYS_FORCE_INLINE void deletePointOffsets(
-        const GA_PointGroup* group,
+        const GA_PointGroup* const group,
         const bool reverseGroup = false,
         const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
         const bool guaranteeNoVertexReferences = false
@@ -583,7 +583,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
 
     
     SYS_FORCE_INLINE void deleteVertexOffsets(
-        const GA_VertexGroup* group,
+        const GA_VertexGroup* const group,
         const bool reverseGroup = false
     )
     { destroyVertexOffsets(GA_Range(getVertexMap(), group, reverseGroup)); }
@@ -591,34 +591,43 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
 
 
     
-    SYS_FORCE_INLINE void deletePrimitiveOffsets(const GA_Group* group, const bool reverseGroup = false,
+    SYS_FORCE_INLINE void deletePrimitiveOffsets(const GA_Group* const group, const bool reverseGroup = false,
         const bool withPoint = false
     )
     { deletePrimitiveOffsets(static_cast<const GA_PrimitiveGroup*>(group), reverseGroup, withPoint); }
     
-    SYS_FORCE_INLINE void deletePointOffsets(const GA_Group* group, const bool reverseGroup = false,
+    SYS_FORCE_INLINE void deletePointOffsets(const GA_Group* const group, const bool reverseGroup = false,
         const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
         const bool guaranteeNoVertexReferences = false
     )
     { deletePointOffsets(static_cast<const GA_PointGroup*>(group), reverseGroup, mode, guaranteeNoVertexReferences); }
 
-    SYS_FORCE_INLINE void deleteVertexOffsets(const GA_Group* group, const bool reverseGroup = false)
+    SYS_FORCE_INLINE void deleteVertexOffsets(const GA_Group* const group, const bool reverseGroup = false)
     { deleteVertexOffsets(static_cast<const GA_VertexGroup*>(group), reverseGroup); }
 
     
     void deleteElements(
-        const GA_Group* group,
+        const GA_Group* const group,
         const bool reverseGroup = false,
         const bool withPoint = false,
         const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
         const bool guaranteeNoVertexReferences = false
     )
     {
-        switch (group->classType())
+        if (group)
         {
-        case GA_GROUP_PRIMITIVE: deletePrimitiveOffsets(group, reverseGroup, withPoint);                     break;
-        case GA_GROUP_POINT:     deletePointOffsets(group, reverseGroup, mode, guaranteeNoVertexReferences); break;
-        case GA_GROUP_VERTEX:    deleteVertexOffsets(group, reverseGroup);                                   break;
+            switch (group->classType())
+            {
+            case GA_GROUP_PRIMITIVE: deletePrimitiveOffsets(group, reverseGroup, withPoint);                     break;
+            case GA_GROUP_POINT:     deletePointOffsets(group, reverseGroup, mode, guaranteeNoVertexReferences); break;
+            case GA_GROUP_VERTEX:    deleteVertexOffsets(group, reverseGroup);                                   break;
+            }
+        }
+        else
+        {
+            if (reverseGroup)
+                return;
+            deletePrimitiveOffsets(group, reverseGroup, withPoint);
         }
     }
 

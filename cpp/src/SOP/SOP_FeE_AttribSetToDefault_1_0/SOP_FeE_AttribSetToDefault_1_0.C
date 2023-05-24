@@ -2,10 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribSetToDefault_1_0.h"
 
-
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_AttribSetToDefault_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_AttribSetToDefault_1_0Verb::cook with the correct type.
 #include "SOP_FeE_AttribSetToDefault_1_0.proto.h"
 
 #include "GEO/GEO_Detail.h"
@@ -13,9 +9,9 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GA_FeE/GA_FeE_Type.h"
-#include "GA_FeE/GA_FeE_Group.h"
-#include "GA_FeE/GA_FeE_Attribute.h"
+#include "GFE/GFE_Type.h"
+#include "GFE/GFE_Group.h"
+#include "GFE/GFE_Attribute.h"
 
 
 using namespace SOP_FeE_AttribSetToDefault_1_0_Namespace;
@@ -241,7 +237,7 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     if (boss.wasInterrupted())
         return;
 
-
+    GFE_Attribute::setToDefault()
 
     //const fpreal& uniScale = sopparms.getUniScale();
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
@@ -249,18 +245,6 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
-    //const int minGrainSize = pow(2, 4);
-
-    //const GA_Storage& inStorageF = SYSisSame<T, fpreal32>() ? GA_STORE_REAL32 : GA_STORE_REAL64;
-    const GA_Storage inStorageF = GA_FeE_Type::getPreferredStorageF(outGeo0);
-
-
-    if (geo0AttribClass == GA_ATTRIB_DETAIL)
-    {
-        //GA_FeE_Attribute::setToDefault(outGeo0, attribHandle);
-        return;
-    }
-
 
 
     const UT_StringHolder& geo0AttribNameSub = geo0AttribNames;
@@ -270,37 +254,14 @@ SOP_FeE_AttribSetToDefault_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
 
 #if 0
-    GA_FeE_Attribute::setToDefault(outGeo0, attribPtr, geo0Group);
+    GFE_Attribute::setToDefault(outGeo0, attribPtr, geo0Group);
 #else
     GA_RWHandleT<UT_Vector3T<fpreal32>> attribHandle(attribPtr);
-    GA_FeE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
+    GFE_Attribute::setToDefault(outGeo0, attribHandle, geo0Group);
 #endif  
-    //GA_Attribute* attribPtr;
-    //switch (geo0AttribClass)
-    //{
-    //case GA_ATTRIB_VERTEX:
-    //    attribPtr = outGeo0->findFloatTuple(GA_ATTRIB_VERTEX, GA_SCOPE_PUBLIC, geo0AttribNameSub);
-    //    if (!attribPtr)
-    //        return;
-    //    break;
-    //case GA_ATTRIB_POINT:
-    //    break;
-    //case GA_ATTRIB_PRIMITIVE:
-    //    break;
-    //default:
-    //    return;
-    //}
-    //
-
 
     
 
 
 
 }
-
-
-
-namespace SOP_FeE_AttribSetToDefault_1_0_Namespace {
-
-} // End SOP_FeE_AttribSetToDefault_1_0_Namespace namespace

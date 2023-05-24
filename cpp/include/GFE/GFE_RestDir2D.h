@@ -28,7 +28,7 @@ class GFE_RestDir2D : public GFE_AttribFilter {
 
 public:
 	GFE_RestDir2D(
-		GA_Detail* const geo,
+		GA_Detail& geo,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr
 	)
 		: GFE_AttribFilter(geo, cookparms)
@@ -62,14 +62,9 @@ public:
 	{
 		switch (method)
 		{
-		case GFE_RestDir2D_Method::AvgNormal:
-			return restDir2D_avgNormal<FLOAT_T>();
-			break;
-		case GFE_RestDir2D_Method::HouOBB:
-			return restDir2D_houOBB<FLOAT_T>();
-			break;
-		default:
-			break;
+		case GFE_RestDir2D_Method::AvgNormal: return restDir2D_avgNormal<FLOAT_T>(); break;
+		case GFE_RestDir2D_Method::HouOBB:    return restDir2D_houOBB<FLOAT_T>();    break;
+		default: break;
 		}
 		return UT_Vector3T<FLOAT_T>();
 	}
@@ -146,8 +141,8 @@ public:
 		//}
 
 		UT_OBBoxD obb;
-		//static_cast<const GEO_Detail*>(geo)->setDetailAttributeI("minAbsAxis", minAbsAxis);
-		static_cast<const GU_Detail*>(geo)->getOBBoxForPrims(groupParser.getPrimitiveGroup(), obb);
+		//geo->asGU_Detail()->setDetailAttributeI("minAbsAxis", minAbsAxis);
+		geo->asGU_Detail()->getOBBoxForPrims(groupParser.getPrimitiveGroup(), obb);
 
 		return obb.getMinAxis();
 	}

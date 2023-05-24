@@ -4,7 +4,7 @@
 #ifndef __GFE_Enumerate_h__
 #define __GFE_Enumerate_h__
 
-//#include "GFE/GFE_Enumerate.h"
+#include "GFE/GFE_Enumerate.h"
 
 
 
@@ -104,9 +104,9 @@ private:
         }
         else
         {
+            const GA_IndexMap& indexMap = attribPtr->getIndexMap();
             if (negativeIndex)
             {
-                const GA_IndexMap& indexMap = attribPtr->getIndexMap();
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
@@ -126,7 +126,6 @@ private:
             }
             else
             {
-                const GA_IndexMap& indexMap = attribPtr->getIndexMap();
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
@@ -173,9 +172,9 @@ private:
         }
         else
         {
+            const GA_IndexMap& indexMap = attribPtr->getIndexMap();
             if(negativeIndex)
             {
-                const GA_IndexMap& indexMap = attribPtr->getIndexMap();
                 UTparallelFor(geoSplittableRange0, [this, &attrib_h, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_Offset start, end;
@@ -192,7 +191,6 @@ private:
             }
             else
             {
-                const GA_IndexMap& indexMap = attribPtr->getIndexMap();
                 UTparallelFor(geoSplittableRange0, [this, &attrib_h, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_Offset start, end;

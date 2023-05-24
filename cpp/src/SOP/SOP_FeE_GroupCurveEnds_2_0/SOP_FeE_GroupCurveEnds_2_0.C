@@ -122,8 +122,8 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "endgroupname"
-        cppname "NumEnds"
+        name    "endGroupName"
+        cppname "EndGroupName"
         label   "End Group Name"
         type    string
         default { "end" }
@@ -297,11 +297,27 @@ SOP_FeE_GroupCurveEnds_2_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopGroupType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmgrouptype)
+static GFE_GroupCurveEnds::Type
+sopVisualize(SOP_FeE_GroupCurveEnds_2_0Parms::Visualize parmVisualize)
 {
     using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
-    switch (parmgrouptype)
+    switch (parmVisualize)
+    {
+    case Visualize::ENDS:    return GFE_GroupCurveEnds::Type::Ends;    break;
+    case Visualize::START:   return GFE_GroupCurveEnds::Type::Start;   break;
+    case Visualize::END:     return GFE_GroupCurveEnds::Type::End;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Visualize type!");
+    return GFE_GroupCurveEnds::Type::Ends;
+}
+
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -319,59 +335,36 @@ void
 SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupCurveEnds_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupCurveEnds_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
-
-    const GA_GroupType geo0finalGroupType = geo0Group->classType();
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Precision PreferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(PreferredPrecision);
-    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(PreferredPrecision);
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GFE_GroupCurveEnds::Type visualizeType = sopVisualize(sopparms.getVisualize());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    GFE_GroupCurveEnds::groupCurveEnds(cookparms, outGeo0, expandGroup, borderGroup, pervBorderGroup, geo0Group, GA_GROUP_EDGE, numsteps, subscribeRatio, minGrainSize);
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
+    
+    GFE_GroupCurveEnds groupCurveEnds(outGeo0, cookparms);
+    groupCurveEnds.setStartGroup(false, sopparms.getStartGroupName());
+    groupCurveEnds.setEndGroup(false, sopparms.getEndGroupName());
+    groupCurveEnds.setEndsGroup(false, sopparms.getEndsGroupName());
 
+    groupCurveEnds.setComputeParm(sopparms.getNumEnds(), sopparms.getReverseGroup(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-
-
-    //GA_VertexGroup* geo0VtxGroup = nullptr;
-    //GA_VertexGroup* geo0VtxSeamGroup = nullptr;
-
-    //GA_VertexGroup* unsharedGroup = GFE_VertexNextEquiv::addGroupVertexNextEquiv(outGeo0, "__topo_unshared", geo0VtxSeamGroup, inStorageI);
-    //GA_Group* unshared_promoGroup = const_cast<GA_Group*>(GEO_FeE_Group::groupPromote(outGeo0, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
-
-    //const GA_Attribute* dstptAttrib = GFE_TopologyReference::addAttribVertexPointDst(outGeo0, "__topo_dstpt", geo0VtxGroup, GA_Defaults(-1), GA_STORE_INT32, nullptr);
-
-
-    sopparms.getVisualize();
-
-
-    //GFE_Group::groupBumpDataId(geo0OutGroup);
-
-    //cookparms.selectInputGroup(expandGroup, expandGroup->classType());
-    //cookparms.select(outGeo0->getPrimitiveRange(static_cast<GA_PrimitiveGroup*>(expandGroup)), expandGroup->classType());
-    // 
-    //cookparms.getNode()->setHighlight(true);
-    //cookparms.select(*expandGroup);
-
+    groupCurveEnds.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupCurveEnds.computeAndBumpDataId();
+    groupCurveEnds.visualizeOutGroup(visualizeType);
+    
+    
 
 }
 

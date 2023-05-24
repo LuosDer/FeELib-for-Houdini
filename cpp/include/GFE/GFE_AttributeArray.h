@@ -128,10 +128,11 @@ public:
     
     void set(GA_Attribute* const attribPtr)
     {
-        if (!attribPtr)
-            return;
-        clear();
-        attribArray.emplace_back(attribPtr);
+        if (attribPtr)
+        {
+            clear();
+            attribArray.emplace_back(attribPtr);
+        }
     }
 
     SYS_FORCE_INLINE void set(GA_Attribute& attribPtr)
@@ -152,16 +153,10 @@ public:
 
 
     SYS_FORCE_INLINE void append(GA_Attribute* const attribPtr)
-    {
-        if (!attribPtr)
-            return;
-        attribArray.emplace_back(attribPtr);
-    }
+    { if (attribPtr) attribArray.emplace_back(attribPtr); }
 
     SYS_FORCE_INLINE void append(GA_Attribute& attribPtr)
-    {
-        attribArray.emplace_back(&attribPtr);
-    }
+    { attribArray.emplace_back(&attribPtr); }
 
     GA_Attribute* append(const GA_AttributeOwner attribClass,const UT_StringRef& attribPattern)
     {
@@ -204,11 +199,7 @@ void appends(const GA_AttributeOwner attribClass, const char* attribPattern)
 }
     
 SYS_FORCE_INLINE void appends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
-{
-    if (!attribPattern.isstring() || attribPattern.length() == 0)
-        return;
-    appends(attribClass, attribPattern.c_str());
-}
+{ if (attribPattern.isstring() && attribPattern.length() != 0) appends(attribClass, attribPattern.c_str()); }
 
 SYS_FORCE_INLINE void appendPrimitives(const char* attribPattern)
 { appends(GA_ATTRIB_PRIMITIVE, attribPattern); }

@@ -837,27 +837,27 @@ private:
 
 
 public:
-        GA_StorageClass newStorageClass = GA_STORECLASS_INVALID;
-        GA_Precision precision = GA_PRECISION_INVALID;
-        bool delOrigin = true;
+    GA_StorageClass newStorageClass = GA_STORECLASS_INVALID;
+    GA_Precision precision = GA_PRECISION_INVALID;
+    bool delOrigin = true;
 
-        UFE_SplittableString newAttribNames;
-        UFE_SplittableString newGroupNames;
-    
-        const char* prefix = "";
-        const char* sufix  = "";
+    UFE_SplittableString newAttribNames;
+    UFE_SplittableString newGroupNames;
+
+    const char* prefix = "";
+    const char* sufix  = "";
 
 private:
 
-        bool renameAttrib = false;
-        bool renameGroup = false;
-        // ::std::string newAttribNames;
-        // ::std::string newGroupNames;
-        //UT_String newAttribNames;
-        //UT_String newGroupNames;
+    bool renameAttrib = false;
+    bool renameGroup = false;
+    // ::std::string newAttribNames;
+    // ::std::string newGroupNames;
+    //UT_String newAttribNames;
+    //UT_String newGroupNames;
 
-        exint subscribeRatio = 64;
-        exint minGrainSize = 1024;
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
 
 
 #undef GFE_TEMP_ATTRIBCAST_ATTRIBNAME

@@ -81,7 +81,7 @@ private:
         if (!reverseGroup && groupParser.isEmpty())
             return true;
 
-    	if(leaveElement)
+    	if (leaveElement)
     	{
     		switch (groupParser.classType())
     		{

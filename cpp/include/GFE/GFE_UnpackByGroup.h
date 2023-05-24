@@ -152,7 +152,7 @@ private:
     	{
     		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     		{
-    			if (delSize!=0 ^ reverseGroup)
+    			if (delSize!=0 ^ !reverseGroup)
     				unpackPrim(geoGU, elemoff);
                 
     			if (delSize == skipNPrim)

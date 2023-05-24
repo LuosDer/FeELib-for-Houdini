@@ -289,33 +289,26 @@ void
 SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_RestDir2D_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_RestDir2D_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
+    const UT_StringHolder& restDir2DAttribName = sopparms.getRestDir2DAttribName();
+    if (!restDir2DAttribName.isstring() || restDir2DAttribName.length()==0)
+        return;
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GFE_NormalSearchOrder normalSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
+    const GFE_RestDir2D_Method method = sopMethod(sopparms.getRestDir2DMethod());
+
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
-
-    const bool runOverPieces = sopparms.getRunOverPieces();
-    const bool findInputPieceAttrib = sopparms.getFindInputPieceAttrib();
-    const UT_StringHolder& pieceAttribName = sopparms.getPieceAttribName();
-
-    const UT_StringHolder& restDir2DAttribName = sopparms.getRestDir2DAttribName();
-
-
-    const GFE_NormalSearchOrder normalSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
-    const UT_StringHolder& normal3DAttribName = sopparms.getNormal3DAttribName();
-    
-    const GFE_RestDir2D_Method method = sopMethod(sopparms.getRestDir2DMethod());
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
 
     GFE_RestDir2D restDir2D(outGeo0, &cookparms);
@@ -325,29 +318,15 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     if (method == GFE_RestDir2D_Method::AvgNormal)
     {
-        restDir2D.getOutAttribArray().findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, normal3DAttribName);
+        restDir2D.getOutAttribArray().findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttribName());
         //restDir2D.normal3D.setComputeParm();
     }
 
-    restDir2D.setComputeParm(method, subscribeRatio, minGrainSize);
+    restDir2D.setComputeParm(method, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     restDir2D.computeAndBumpDataId();
     restDir2D.visualizeOutGroup();
 
 
-    //GA_Attribute* const restDir2DAttrib = GFE_RestDir2D::addAttribRestDir2D(
-    //    cookparms, outGeo0, groupType, groupName,
-    //    method, inStorgeF, restDir2DAttribName,
-    //    nullptr, nullptr, GA_ReuseStrategy(),
-    //    subscribeRatio, minGrainSize);
-
-    //restDir2DAttrib->bumpDataId();
-
-
 }
 
-
-
-namespace SOP_FeE_RestDir2D_1_0_Namespace {
-
-} // End SOP_FeE_RestDir2D_1_0_Namespace namespace

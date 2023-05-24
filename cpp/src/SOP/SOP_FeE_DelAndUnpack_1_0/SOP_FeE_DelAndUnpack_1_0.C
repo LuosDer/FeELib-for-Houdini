@@ -49,7 +49,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "GroupType"
         label   "Group Type"
         type    ordinal
-        default { "guess" }
+        default { "prim" }
         menu {
             "guess"     "Guess from Group"
             "prim"      "Primitive"
@@ -224,6 +224,7 @@ SOP_FeE_DelAndUnpack_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
 
+    // Replace by GFE_UnpackByGroup Currently
     GFE_DelAndUnpack delAndUnpack(outGeo0, inGeo0, cookparms);
     
     delAndUnpack.setComputeParm(elemTraversingMethod, sopparms.getReverseGroup(), sopparms.getDelGroup());
@@ -234,9 +235,9 @@ SOP_FeE_DelAndUnpack_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     
     switch (elemTraversingMethod) {
-    case GFE_ElemTraversingMethod::Custom:    delAndUnpack.groupParser.setGroup(groupType, sopparms.getGroup());   break;
-    case GFE_ElemTraversingMethod::OneElem:   delAndUnpack.setPrimoff(primoff);                                             break;
-    case GFE_ElemTraversingMethod::SkipNElem: delAndUnpack.setSkipNPrim(primoff, sopparms.getSkipNPrim());                  break;
+    case GFE_ElemTraversingMethod::Custom:    delAndUnpack.groupParser.setGroup(groupType, sopparms.getGroup());  break;
+    case GFE_ElemTraversingMethod::OneElem:   delAndUnpack.setPrimoff(primoff);                                   break;
+    case GFE_ElemTraversingMethod::SkipNElem: delAndUnpack.setSkipNPrim(primoff, sopparms.getSkipNPrim());        break;
     default: break;
     }
     

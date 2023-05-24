@@ -205,7 +205,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Hit Prim UV Attribute"
         type    string
         default { "hitPrimUV" }
-        disablewhen "{ outPrimUVAttrib == 0 }"
+        disablewhen "{ outHitPrimUVAttrib == 0 }"
     }
     parm {
         name    "sepparm"

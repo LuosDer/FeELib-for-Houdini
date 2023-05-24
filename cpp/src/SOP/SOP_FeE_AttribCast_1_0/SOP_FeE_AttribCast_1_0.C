@@ -222,10 +222,10 @@ SOP_FeE_AttribCast_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribCast_1_0Parms::AttribClass attribClass)
+sopAttribOwner(SOP_FeE_AttribCast_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribCast_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case AttribClass::PRIM:   return GA_ATTRIB_PRIMITIVE; break;
     case AttribClass::POINT:  return GA_ATTRIB_POINT;     break;
@@ -238,10 +238,10 @@ sopAttribOwner(SOP_FeE_AttribCast_1_0Parms::AttribClass attribClass)
 
 
 static GA_StorageClass
-sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType attribType)
+sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType parmAttribType)
 {
     using namespace SOP_FeE_AttribCast_1_0Enums;
-    switch (attribType)
+    switch (parmAttribType)
     {
     case AttribType::BOOL:   return GA_STORECLASS_OTHER;  break;
     case AttribType::INT:    return GA_STORECLASS_INT;    break;
@@ -254,23 +254,17 @@ sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType attribType)
 
 
 static GA_Precision
-sopPrecision(SOP_FeE_AttribCast_1_0Parms::Precision precision)
+sopPrecision(SOP_FeE_AttribCast_1_0Parms::Precision parmPrecision)
 {
     using namespace SOP_FeE_AttribCast_1_0Enums;
-    switch (precision)
+    switch (parmPrecision)
     {
-    case Precision::AUTO: return GA_PRECISION_INVALID;
-        break;
-    case Precision::_1: return GA_PRECISION_1;
-        break;
-    case Precision::_8: return GA_PRECISION_8;
-        break;
-    case Precision::_16: return GA_PRECISION_16;
-        break;
-    case Precision::_32: return GA_PRECISION_32;
-        break;
-    case Precision::_64: return GA_PRECISION_64;
-        break;
+    case Precision::AUTO: return GA_PRECISION_INVALID; break;
+    case Precision::_1:   return GA_PRECISION_1;       break;
+    case Precision::_8:   return GA_PRECISION_8;       break;
+    case Precision::_16:  return GA_PRECISION_16;      break;
+    case Precision::_32:  return GA_PRECISION_32;      break;
+    case Precision::_64:  return GA_PRECISION_64;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled Precision!");
     return GA_PRECISION_INVALID;

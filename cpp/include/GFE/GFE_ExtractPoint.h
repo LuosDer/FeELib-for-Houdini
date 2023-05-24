@@ -72,33 +72,9 @@ public:
 
 
 
-    void setGroup()
-    {
-        pointGroup = groupParser.getPointGroup();
-        if (pointGroup && groupParser.isPointGroup() && !pointGroup->isDetached())
-        {
-            pointGroupNonConst = geo->findPointGroup(pointGroup->getName());
-        }
 
-        hasSetGroup = true;
-    }
-
-    void setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
-    {
-        groupParser.setGroup(groupType, groupName);
-
-        if (groupType == GA_GROUP_POINT)
-        {
-            pointGroupNonConst = geo->findPointGroup(groupName);
-            pointGroup = pointGroupNonConst;
-        }
-        else
-        {
-            pointGroup = groupParser.getPointGroup();
-        }
-
-        hasSetGroup = true;
-    }
+    SYS_FORCE_INLINE void setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
+    { groupParser.setGroup(groupType, groupName); }
 
     SYS_FORCE_INLINE void setGroup(const UT_StringRef& groupName)
     { setGroup(GA_GROUP_POINT, groupName); }
@@ -116,40 +92,40 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        if (!hasSetGroup)
-            setGroup();
+        //if (!hasSetGroup)
+        //    setGroup();
 
-        geo->delStdAttribute(delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+        // geo->delStdAttribute(delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib);
+        //
+        // if (geoSrc)
+        // {
+        //     //geo->replaceWithPoints(*geoSrc);
+        // }
+        // else
+        // {
+        //     if (pointGroup)
+        //     {
+        //         // geo->delStdGroup(delPrimGroup, "", delVertexGroup, delEdgeGroup);
+        //         //
+        //         // GA_GroupTable& groupTable = *geo->getGroupTable(GA_GROUP_POINT);
+        //         // for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
+        //         // {
+        //         //     GA_PointGroup* const geoGroup = static_cast<GA_PointGroup*>(it.group());
+        //         //     //if (geoGroup->getName() == group->getName())
+        //         //     if (geoGroup == group)
+        //         //         continue;
+        //         //     if (geoGroup->getName().match(delPointGroup))
+        //         //         continue;
+        //         //     groupTable.destroy(geoGroup);
+        //         // }
+        //     }
+        //     else
+        //     {
+        //         //geo->delStdGroup(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
+        //     }
+        // }
 
-        if (geoSrc)
-        {
-            geo->replaceWithPoints(*geoSrc);
-        }
-        else
-        {
-            if (pointGroup)
-            {
-                geo->delStdGroup(delPrimGroup, "", delVertexGroup, delEdgeGroup);
-
-                GA_GroupTable& groupTable = *geo->getGroupTable(GA_GROUP_POINT);
-                for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
-                {
-                    GA_PointGroup* const geoGroup = static_cast<GA_PointGroup*>(it.group());
-                    //if (geoGroup->getName() == group->getName())
-                    if (geoGroup == group)
-                        continue;
-                    if (geoGroup->getName().match(delPointGroup))
-                        continue;
-                    groupTable.destroy(geoGroup);
-                }
-            }
-            else
-            {
-                geo->delStdGroup(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
-            }
-        }
-
-
+        pointGroup = groupParser.getPointGroup();
         if (geoSrc)
         {
             extractPointWithSource();
@@ -158,11 +134,12 @@ private:
         {
             extractPoint();
         }
-
-        if (delInputGroup && pointGroupNonConst)
-        {
-            geo->destroyGroup(pointGroupNonConst);
-        }
+        
+        if (delInputGroup)
+            groupParser.delGroup();
+        
+        //if (delInputGroup && pointGroupNonConst)
+        //    geo->destroyGroup(pointGroupNonConst);
         return true;
     }
 
@@ -175,6 +152,7 @@ private:
             {
                 if (reverseGroup)
                 {
+                    geo->replaceWithPoints(*geoSrc);
                     return;
                 }
                 else
@@ -183,7 +161,7 @@ private:
                     return;
                 }
             }
-            else if (pointGroup->entries() == geo->getNumPoints())
+            else if (pointGroup->entries() == pointGroup->getIndexMap().indexSize())
             {
                 if (reverseGroup)
                 {
@@ -192,6 +170,7 @@ private:
                 }
                 else
                 {
+                    geo->replaceWithPoints(*geoSrc);
                     return;
                 }
             }
@@ -200,6 +179,7 @@ private:
         {
             if (reverseGroup)
             {
+                geo->replaceWithPoints(*geoSrc);
                 return;
             }
             else
@@ -284,7 +264,7 @@ private:
                     return;
                 }
             }
-            else if (pointGroup->entries() == geo->getNumPoints())
+            else if (pointGroup->entries() == pointGroup->getIndexMap().indexSize())
             {
                 if (reverseGroup)
                 {
@@ -368,9 +348,9 @@ public:
 
 private:
 
-    const GA_PointGroup* pointGroup = nullptr;
-    GA_PointGroup* pointGroupNonConst = nullptr;
-    bool hasSetGroup = false;
+    const GA_PointGroup* pointGroup;
+    //GA_PointGroup* pointGroupNonConst = nullptr;
+    //bool hasSetGroup = false;
 
     char kernel = 0;
 

@@ -308,20 +308,6 @@ sopGroupType(SOP_FeE_ExtractPoint_1_0Parms::GroupType parmgrouptype)
 }
 
 
-static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_ExtractPoint_1_0Parms::DelPointMode parmDelPointMode)
-{
-    using namespace SOP_FeE_ExtractPoint_1_0Enums;
-    switch (parmDelPointMode)
-    {
-    case DelPointMode::LEAVEPRIMITIVE:                return GA_Detail::GA_LEAVE_PRIMITIVES;                  break;
-    case DelPointMode::DELDEGENERATE:                 return GA_Detail::GA_DESTROY_DEGENERATE;                break;
-    case DelPointMode::DELDEGENERATEINCOMPATIBLE:     return GA_Detail::GA_DESTROY_DEGENERATE_INCOMPATIBLE;   break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_Detail::GA_DESTROY_DEGENERATE;
-}
-
 
 void
 SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
@@ -359,7 +345,7 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
 
 
-    GFE_ExtractPoint extractPoint(outGeo0, inGeo0, &cookparms);
+    GFE_ExtractPoint extractPoint(outGeo0, inGeo0, cookparms);
 
     extractPoint.setGroup(groupType, sopparms.getGroup());
 

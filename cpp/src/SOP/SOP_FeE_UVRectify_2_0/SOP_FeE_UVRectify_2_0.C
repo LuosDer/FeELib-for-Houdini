@@ -201,14 +201,11 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (!geo0Attrib)
         geo0Attrib = outGeo0.findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
     if (!geo0Attrib)
-        geo0Attrib = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, geo0AttribNames, inStorageF, 3, GA_Defaults(0));
-
-    //const fpreal uniScale = sopparms.getUniScale();
-    //const bool doNormalize = sopparms.getNormalize();
+        geo0Attrib = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, geo0AttribNames, GA_STORE_REAL32, 3, GA_Defaults(0));
 
 
     GOP_Manager gop;
-    const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getGroup(), gop);
+    const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, &outGeo0, sopparms.getGroup(), gop);
     if (geo0Group && geo0Group->isEmpty())
         return;
 
@@ -228,7 +225,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const GA_EdgeGroup* const seamGroup = GFE_GroupParser_Namespace::findOrParseEdgeGroupDetached(cookparms, outGeo0, sopparms.getSeamGroup(), gop);
+    const GA_EdgeGroup* const seamGroup = GFE_GroupParser_Namespace::findOrParseEdgeGroupDetached(cookparms, &outGeo0, sopparms.getSeamGroup(), gop);
     
 
 
@@ -242,9 +239,11 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool straightenGrids = sopparms.getStraightenGrids();
     const bool rectifyPatches = sopparms.getRectifyPatches();
 
+    GU_Detail* outGeo0_GU = &static_cast<GU_Detail&>(outGeo0);
 #if 1
-    GU_Flatten2::IslandBundle islandBundle(outGeo0, nullptr, seamGroup, nullptr);
-    islandBundle.forEachIsland([uv_h, outGeo0, layoutit, flattenMethod, straightenArcs, straightenGrids, rectifyPatches](GU_Flatten2::Island& island) {
+    GU_Flatten2::IslandBundle islandBundle(outGeo0_GU, nullptr, seamGroup, nullptr);
+    islandBundle.forEachIsland([uv_h, &outGeo0, layoutit, flattenMethod, straightenArcs, straightenGrids, rectifyPatches](GU_Flatten2::Island& island)
+    {
 
         GU_Flatten2::ConstraintSet constraints;
         //island.triangualte(seamGroup);
@@ -373,7 +372,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         bool axis_align_islands = true;
         bool repack_wasted = true;
 
-        GU_UVPack uvPack(outGeo0, islandGroup,
+        GU_UVPack uvPack(outGeo0_GU, islandGroup,
             resolution, padding,
             correct_area_proprtions, axis_align_islands, repack_wasted);
 

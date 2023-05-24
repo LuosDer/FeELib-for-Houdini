@@ -14,7 +14,7 @@
 
 
 
-	
+// Replace by GFE_UnpackByGroup Currently
 class GFE_DelAndUnpack : public GFE_GeoFilter {
 
 public:
@@ -85,7 +85,7 @@ private:
 
 
 	SYS_FORCE_INLINE void delAndUnpack_Custom()
-    { geo->deleteElements(groupParser.getGroup(), reverseGroup, true, GA_Detail::GA_LEAVE_PRIMITIVES); }
+    { geo->deleteElements(groupParser.getGroup(), reverseGroup, true, GA_Detail::GA_DESTROY_DEGENERATE); }
 	
 	SYS_FORCE_INLINE void delAndUnpack_OneElem()
     { geo->deleteOnePrimitive(inputAsOffset ? primoff : geo->primitiveOffset(primoff), reverseGroup, true); }

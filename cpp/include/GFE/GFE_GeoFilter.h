@@ -194,6 +194,14 @@ public:
     { return geo; }
 
     
+    
+    SYS_FORCE_INLINE void visualizeGroup(const GA_Group& group)
+    { if(cookparms && !group.isDetached()) cookparms->select(group); }
+
+    
+    SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group)
+    { if(group) visualizeGroup(*group); }
+
 
 
 private:
@@ -401,7 +409,6 @@ public:
     { return ref0GroupArray.ref(); }
 
 
-
     
 private:
     SYS_FORCE_INLINE virtual void setRef0DetailBase(const GFE_Detail* const inGeo)
@@ -560,12 +567,9 @@ virtual void delGroupElement()
 }
 
 virtual SYS_FORCE_INLINE void visualizeOutGroup()
-{
-    if (doDelGroupElement || !cookparms || outGroupArray.isEmpty() || !outGroupArray[0] || outGroupArray[0]->isDetached())
-        return;
-    cookparms->select(*outGroupArray[0]);
-}
+{ if (!doDelGroupElement && !outGroupArray.isEmpty()) visualizeGroup(outGroupArray[0]); }
 
+    
 void SYS_FORCE_INLINE delOrVisualizeGroup()
 { doDelGroupElement ? delGroupElement() : visualizeOutGroup(); }
 
