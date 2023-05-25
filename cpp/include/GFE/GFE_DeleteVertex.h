@@ -54,7 +54,7 @@ private:
 		default:                 delVertex();                                break;
 		}
 
-    	if(delGroup)
+    	if (delGroup)
     		groupParser.delGroup();
     	
         return true;
@@ -81,6 +81,7 @@ private:
 					{
 						geo->getPrimitive(primoff)->releaseVertex(vertices[i]);
 						topo.delVertex(vertices[i]);
+                        //geo->destroyVertexOffset(vtxoff);
 					}
 				}
 			}
@@ -217,6 +218,7 @@ private:
 
 				geo->getPrimitive(primoff)->releaseVertex(vtxoff);
 				topo.delVertex(vtxoff);
+                //geo->destroyVertexOffset(vtxoff);
 
 				if (delDegeneratePrims)
 					primGroup->setElement(primoff, true);

@@ -45,7 +45,7 @@ public:
 
     void
         setComputeParm(
-            const GA_Size offset = 0,
+            const int64 offset = 0,
             const bool delOffsetAttrib = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
@@ -58,7 +58,13 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
-
+    
+    SYS_FORCE_INLINE virtual void bumpDataId() const override
+    {
+        //geo->bumpDataIdsForRewire();
+        geo->bumpDataIdsForAddOrRemove(false, true, false);
+    }
+    
 private:
 
     // can not use in parallel unless for each GA_Detail
@@ -78,128 +84,224 @@ private:
             offsetVertexOrder();
 
         if (delOffsetAttrib && offsetAttribNonConst)
-        {
             geo->destroyAttrib(offsetAttribNonConst);
-        }
-
 
 
         return true;
     }
 
 
-    void
-        offsetVertexOrderByAttrib()
+    void offsetVertexOrderByAttrib()
     {
         UT_ASSERT_P(offsetAttrib);
 
-        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
+        GA_Topology& topo = geo->getTopology();
+        
+        GA_PageHandleT<exint, exint, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(offsetAttrib);
+        for (GA_PageIterator pit = groupParser.getPrimitiveSplittableRange().beginPages(); !pit.atEnd(); ++pit)
         {
-            GA_PageHandleT<exint, exint, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(offsetAttrib);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                attrib_ph.setPage(start);
+                for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
-                    attrib_ph.setPage(start);
-                    for (GA_Offset primoff = start; primoff < end; ++primoff)
+                    const int64 offsetFinal = offset + attrib_ph.value(primoff);
+
+                    const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+
+                    const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
+                    const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
+                    
+                    for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                     {
-                        const GA_Size offsetFinal = offset + attrib_ph.value(primoff);
+                        const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
 
-                        const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-
-                        const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
-                        const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
-                        
-                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                        GA_Size vtxpnum_next = vtxpnum + offsetFinal;
+                        if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
                         {
-                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-
-                            GA_Size vtxpnum_next = vtxpnum + offsetFinal;
-                            if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
+                            if (isPrimLooped)
                             {
-                                if (isPrimLooped)
+                                if (isClosed)
                                 {
-                                    if (isClosed)
-                                    {
-                                        vtxpnum_next %= numvtx;
-                                    }
-                                    else
-                                    {
-                                        vtxpnum_next %= numvtx - 1;
-                                    }
+                                    vtxpnum_next %= numvtx;
                                 }
                                 else
                                 {
-                                    geo->destroyVertexOffset(vtxoff);
-                                    continue;
+                                    vtxpnum_next %= numvtx - 1;
                                 }
                             }
-                            geo->getTopology().wireVertexPoint(vtxoff, geo->getPrimitivePointOffset(primoff, vtxpnum_next));
+                            else
+                            {
+                                geo->getPrimitive(primoff)->releaseVertex(vtxoff);
+                                topo.delVertex(vtxoff);
+                                //geo->destroyVertexOffset(vtxoff);
+                                continue;
+                            }
                         }
+                        topo.wireVertexPoint(vtxoff, geo->getPrimitivePointOffset(primoff, vtxpnum_next));
                     }
                 }
             }
-        }, subscribeRatio, minGrainSize);
+        }
     }
 
 
 
-    void
-        offsetVertexOrder()
+    void offsetVertexOrder()
     {
-        UT_ASSERT_P(offsetAttrib);
-
-        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
+        GA_Topology& topo = geo->getTopology();
+        GA_Offset start, end;
+        for (GA_Iterator it(groupParser.getPrimitiveRange()); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset primoff = start; primoff < end; ++primoff)
             {
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+
+                const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
+                const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
+
+                for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                 {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+
+                    GA_Size vtxpnum_next = vtxpnum + offset;
+                    if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
                     {
-                        for (GA_Offset primoff = start; primoff < end; ++primoff)
+                        if (isPrimLooped)
                         {
-                            const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-
-                            const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
-                            const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
-
-                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            if (isClosed)
                             {
-                                const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-
-                                GA_Size vtxpnum_next = vtxpnum + offset;
-                                if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
-                                {
-                                    if (isPrimLooped)
-                                    {
-                                        if (isClosed)
-                                        {
-                                            vtxpnum_next %= numvtx;
-                                        }
-                                        else
-                                        {
-                                            vtxpnum_next %= numvtx - 1;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        geo->destroyVertexOffset(vtxoff);
-                                        continue;
-                                    }
-                                }
-                                geo->getTopology().wireVertexPoint(vtxoff, geo->getPrimitivePointOffset(primoff, vtxpnum_next));
+                                vtxpnum_next %= numvtx;
                             }
+                            else
+                            {
+                                vtxpnum_next %= numvtx - 1;
+                            } 
+                        }
+                        else
+                        {
+                            geo->getPrimitive(primoff)->releaseVertex(vtxoff);
+                            topo.delVertex(vtxoff);
+                            //geo->destroyVertexOffset(vtxoff);
+                            continue;
                         }
                     }
+                    topo.wireVertexPoint(vtxoff, geo->getPrimitivePointOffset(primoff, vtxpnum_next));
                 }
-            }, subscribeRatio, minGrainSize);
+            }
+        }
     }
-
+    
+    // void offsetVertexOrderByAttrib()
+    // {
+    //     UT_ASSERT_P(offsetAttrib);
+    //
+    //     UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
+    //     {
+    //         GA_PageHandleT<exint, exint, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(offsetAttrib);
+    //         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+    //         {
+    //             GA_Offset start, end;
+    //             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+    //             {
+    //                 attrib_ph.setPage(start);
+    //                 for (GA_Offset primoff = start; primoff < end; ++primoff)
+    //                 {
+    //                     const GA_Size offsetFinal = offset + attrib_ph.value(primoff);
+    //
+    //                     const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+    //
+    //                     const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
+    //                     const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
+    //                     
+    //                     for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+    //                     {
+    //                         const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+    //
+    //                         GA_Size vtxpnum_next = vtxpnum + offsetFinal;
+    //                         if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
+    //                         {
+    //                             if (isPrimLooped)
+    //                             {
+    //                                 if (isClosed)
+    //                                 {
+    //                                     vtxpnum_next %= numvtx;
+    //                                 }
+    //                                 else
+    //                                 {
+    //                                     vtxpnum_next %= numvtx - 1;
+    //                                 }
+    //                             }
+    //                             else
+    //                             {
+    //                                 geo->destroyVertexOffset(vtxoff);
+    //                                 continue;
+    //                             }
+    //                         }
+    //                         geo->getTopology().wireVertexPoint(vtxoff, geo->getPrimitivePointOffset(primoff, vtxpnum_next));
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }, subscribeRatio, minGrainSize);
+    // }
+    //
+    //
+    //
+    // void offsetVertexOrder()
+    // {
+    //
+    //     UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
+    //     {
+    //         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+    //         {
+    //             GA_Offset start, end;
+    //             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+    //             {
+    //                 for (GA_Offset primoff = start; primoff < end; ++primoff)
+    //                 {
+    //                     const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+    //
+    //                     const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
+    //                     const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
+    //
+    //                     for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+    //                     {
+    //                         const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+    //
+    //                         GA_Size vtxpnum_next = vtxpnum + offset;
+    //                         if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
+    //                         {
+    //                             if (isPrimLooped)
+    //                             {
+    //                                 if (isClosed)
+    //                                 {
+    //                                     vtxpnum_next %= numvtx;
+    //                                 }
+    //                                 else
+    //                                 {
+    //                                     vtxpnum_next %= numvtx - 1;
+    //                                 } 
+    //                             }
+    //                             else
+    //                             {
+    //                                 geo->destroyVertexOffset(vtxoff);
+    //                                 continue;
+    //                             }
+    //                         }
+    //                         geo->getTopology().wireVertexPoint(vtxoff, geo->getPrimitivePointOffset(primoff, vtxpnum_next));
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }, subscribeRatio, minGrainSize);
+    // }
+    //
 
 
 public:
-    GA_Size offset = 0;
+    int64 offset = 0;
     const GA_Attribute* offsetAttrib = nullptr;
     GA_Attribute* offsetAttribNonConst = nullptr;
     bool delOffsetAttrib = false;
