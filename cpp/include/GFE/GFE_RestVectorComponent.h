@@ -15,23 +15,23 @@
 #include "UFE/UFE_SplittableString.h"
 
 
-class GFE_RestVectorComponent : public GFE_AttribCreateFilter, public GFE_GeoFilterRef {
+class GFE_RestVectorComponent : public GFE_AttribCreateFilterWithRef {
     
-#define GFE_TEMP_RESTVECTORMONPONENT_ATTRIBNAME "__GFE_TEMP_RESTVECTORMONPONENT_ATTRIBNAME"
+#define GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME "__GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME"
     
 public:
 
-    //using GFE_AttribFilter::GFE_AttribFilter;
-
-    GFE_RestVectorComponent(
-        GA_Detail& geo,
-        const GA_Detail* const geoRef,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
-    {
-    }
+    using GFE_AttribCreateFilterWithRef::GFE_AttribCreateFilterWithRef;
+    
+    // GFE_RestVectorComponent(
+    //     GA_Detail& geo,
+    //     const GA_Detail* const geoRef,
+    //     const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    // )
+    //     : GFE_AttribCreateFilter(geo, cookparms)
+    //     , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    // {
+    // }
 
     
     void
@@ -127,7 +127,7 @@ private:
         if(!detached && !attribRef.isDetached() && strcmp(attribRef.getName().c_str(), newName.c_str()) == 0)
         {
             attribRestPtr = getOutAttribArray().findOrCreateTuple(
-                false, attribRef.getOwner(), GA_STORECLASS_FLOAT, storage, GFE_TEMP_RESTVECTORMONPONENT_ATTRIBNAME);
+                false, attribRef.getOwner(), GA_STORECLASS_FLOAT, storage, GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME);
             
             attribDuplicate();
             
@@ -266,9 +266,9 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
-#undef GFE_TEMP_RESTVECTORMONPONENT_ATTRIBNAME
+#undef GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME
     
-};
+}; // End of Class GFE_RestVectorComponent
 
 
 

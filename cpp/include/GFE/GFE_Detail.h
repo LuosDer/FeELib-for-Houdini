@@ -918,7 +918,7 @@ SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib,const UT_StringHol
     return renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
 }
     
-SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib,const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib, const UT_StringHolder& newName)
 {
     UT_ASSERT_P(attrib);
     return renameAttrib(*attrib, newName);

@@ -338,9 +338,9 @@ newSopOperator(OP_OperatorTable* table)
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/Data/Enumerate");
+        "Five elements Elf/Attribute");
 
-    newOp->setIconName("SOP_enumerate");
+    newOp->setIconName("SOP_attribadjustdict");
     table->addOperator(newOp);
 
 }
@@ -471,38 +471,26 @@ SOP_FeE_AttribValReplace_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
         return;
 
 
+    GFE_AttribValReplace attribValReplace(outGeo0, cookparms);
+    
     if (sopparms.getOutNewAttrib())
     {
-        
-        GFE_AttribValReplace attribValReplace(outGeo0, cookparms);
-        
         attribValReplace.getInAttribArray().appends(attribClass, sopparms.getAttrib());
-    
-        attribValReplace.newStorageClass = sopStorageClass(sopparms.getAttribType());
-        attribValReplace.newPrecision    = sopPrecision(sopparms.getPrecision());
-        
-        attribValReplace.setComputeParm(sopparms.getNumEntries(), sopparms.getOutNewAttrib(), sopparms.getNewAttribName(), sopparms.getDelInAttrib(), 
-            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    
-        attribValReplace.groupParser.setGroup(groupType, sopparms.getGroup());
-        attribValReplace.computeAndBumpDataId();
     }
     else
     {
-        GFE_AttribValReplace attribValReplace(outGeo0, cookparms);
         attribValReplace.getOutAttribArray().appends(attribClass, sopparms.getAttrib());
-    
-    
-        const UT_Array<SOP_FeE_AttribValReplace_1_0Parms::NumEntries>& entries = sopparms.getNumEntries();
-    
-        attribValReplace.setComputeParm(sopparms.getNumEntries(), sopparms.getOutNewAttrib(), sopparms.getNewAttribName(), sopparms.getDelInAttrib(), 
-            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-        attribValReplace.groupParser.setGroup(groupType, sopparms.getGroup());
-        attribValReplace.computeAndBumpDataId();
-
-    
     }
+
+    attribValReplace.newStorageClass = sopStorageClass(sopparms.getAttribType());
+    attribValReplace.newPrecision    = sopPrecision(sopparms.getPrecision());
+    
+    attribValReplace.setComputeParm(sopparms.getNumEntries(), sopparms.getOutNewAttrib(), sopparms.getNewAttribName(), sopparms.getDelInAttrib(), 
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    attribValReplace.groupParser.setGroup(groupType, sopparms.getGroup());
+    attribValReplace.computeAndBumpDataId();
+
     
 
 }

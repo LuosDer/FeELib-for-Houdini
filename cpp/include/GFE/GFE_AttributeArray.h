@@ -373,7 +373,7 @@ findOrCreateTuple(
 )
 {
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-    
+        
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
     checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack);
 

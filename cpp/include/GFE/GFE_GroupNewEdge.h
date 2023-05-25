@@ -104,10 +104,10 @@ private:
 
 
     
-        //GFE_MeshTopology meshTopology(geo, cookparms);
-        //vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
-        //meshTopology.compute();
-        //dstpt_h = vertexPointDstAttrib;
+        GFE_MeshTopology meshTopology(geo, cookparms);
+        vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
+        meshTopology.compute();
+        dstpt_h = vertexPointDstAttrib;
     
         GFE_MeshTopology meshTopologyRef0(geoRef0Tmp);
         vertexPointDstRef0Attrib = meshTopologyRef0.setVertexPointDst(true);
@@ -136,19 +136,16 @@ private:
 
     void groupNewEdge(GA_VertexGroup* const group)
     {
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
-        UTparallelFor(groupParser., [this, group](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getVertexSplittableRange(), [this, group](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.value(elemoff) = firstIndex + elemoff;
+                        group->setElement(elemoff, true);
                     }
                 }
             }
@@ -202,8 +199,8 @@ private:
 
     GA_Attribute* vertexPointDstRef0Attrib;
     
-    //GA_Attribute* vertexPointDstAttrib;
-    //GA_RWHandleT<GA_Offset> dstpt_h;
+    GA_Attribute* vertexPointDstAttrib;
+    GA_RWHandleT<GA_Offset> dstpt_h;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

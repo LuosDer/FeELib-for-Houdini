@@ -144,7 +144,7 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/Attribute");
 
-    newOp->setIconName("SOP_attributepromote");
+    newOp->setIconName("SOP_attribpromote");
     table->addOperator(newOp);
 }
 
@@ -253,9 +253,3 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
 
     
 }
-
-
-
-namespace SOP_FeE_AttribPromote_1_0_Namespace {
-
-} // End SOP_FeE_AttribPromote_1_0_Namespace namespace

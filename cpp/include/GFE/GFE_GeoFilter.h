@@ -864,6 +864,94 @@ public:
 
 
 
+class GFE_AttribCreateFilterWithRef : public GFE_AttribCreateFilter, public GFE_GeoFilterRef {
+
+public:
+
+    GFE_AttribCreateFilterWithRef(
+        GFE_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef(
+        GFE_Detail& geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
+    GFE_AttribCreateFilterWithRef(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef(
+        GA_Detail* const geo,
+        const GA_Detail& geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), &cookparms)
+    {
+    }
+
+
+    ~GFE_AttribCreateFilterWithRef()
+    {
+    }
+
+
+
+}; // End of class GFE_AttribCreateFilterWithRef
+
+
+
+
+
 
 
 #endif

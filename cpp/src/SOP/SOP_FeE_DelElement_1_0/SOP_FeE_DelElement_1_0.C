@@ -62,7 +62,7 @@ static const char *theDsFile = R"THEDSFILE(
         parm {
             name    "leaveElement"
             cppname "LeaveElement"
-            label   "Leave Group"
+            label   "Leave Element"
             type    toggle
             default { "off" }
         }

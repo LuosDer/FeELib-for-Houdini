@@ -236,12 +236,12 @@ static GA_Storage getPreferredStorageF(const GA_Precision precision)
 {
     switch (precision)
     {
-    case GA_PRECISION_16:        return  GA_STORE_REAL16;   break;
-    case GA_PRECISION_32:        return  GA_STORE_REAL32;   break;
-    case GA_PRECISION_64:        return  GA_STORE_REAL64;   break;
-    default:                     break;
+    case GA_PRECISION_16: return GA_STORE_REAL16; break;
+    case GA_PRECISION_32: return GA_STORE_REAL32; break;
+    case GA_PRECISION_64: return GA_STORE_REAL64; break;
+    default:              break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Precision!");
+    //UT_ASSERT_MSG(0, "Unhandled Precision!");
     return GA_STORE_INVALID;
 }
     
@@ -250,14 +250,13 @@ static GA_Storage getPreferredStorageI(const GA_Precision precision)
 {
     switch (precision)
     {
-    case GA_PRECISION_8:    return  GA_STORE_INT8;    break;
-    case GA_PRECISION_16:   return  GA_STORE_INT16;   break;
-    case GA_PRECISION_32:   return  GA_STORE_INT32;   break;
-    case GA_PRECISION_64:   return  GA_STORE_INT64;   break;
-    default:
-        break;
+    case GA_PRECISION_8:    return GA_STORE_INT8;    break;
+    case GA_PRECISION_16:   return GA_STORE_INT16;   break;
+    case GA_PRECISION_32:   return GA_STORE_INT32;   break;
+    case GA_PRECISION_64:   return GA_STORE_INT64;   break;
+    default: break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Precision!");
+    //UT_ASSERT_MSG(0, "Unhandled Precision!");
     return GA_STORE_INVALID;
 }
     

@@ -175,30 +175,12 @@ SOP_FeE_GroupNewEdge_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopCombineGroupType(SOP_FeE_GroupNewEdge_1_0Parms::CombineGroupType parmgrouptype)
-{
-    using namespace SOP_FeE_GroupNewEdge_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case CombineGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case CombineGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case CombineGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case CombineGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case CombineGroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
-
-
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupNewEdge_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupNewEdge_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupNewEdge_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
