@@ -178,10 +178,10 @@ SOP_FeE_OffsetAttribToIndex_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_OffsetAttribToIndex_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_OffsetAttribToIndex_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_OffsetAttribToIndex_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -207,7 +207,13 @@ SOP_FeE_OffsetAttribToIndex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
 
     outGeo0.replaceWith(inGeo0);
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    
+
     GFE_OffsetAttribToIndex offsetAttribToIndex(outGeo0, cookparms);
+
+    offsetAttribToIndex.groupParser.setGroup(groupType, sopparms.getGroup());
+    
     //offsetAttribToIndex.offsetToIndex = sopparms.getOffsetToIndex();
     offsetAttribToIndex.setComputeParm(sopparms.getOffsetToIndex(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     offsetAttribToIndex.getOutAttribArray().appends(GA_ATTRIB_PRIMITIVE, sopparms.getPrimAttribName());

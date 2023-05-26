@@ -347,7 +347,7 @@ private:
     virtual bool
         computeCore() override
     {
-        gfeWN.comp
+        //gfeWN.comp
         if (!getOutAttribArray().size())
             findOrCreateTuple();
         

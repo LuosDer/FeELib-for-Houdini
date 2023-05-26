@@ -1,11 +1,11 @@
 
-#ifndef __SOP_FeE_PointInBBox_1_0_h__
-#define __SOP_FeE_PointInBBox_1_0_h__
+#ifndef __SOP_FeE_PointInBBox_2_0_h__
+#define __SOP_FeE_PointInBBox_2_0_h__
 
 #include <SOP/SOP_Node.h>
 #include <UT/UT_StringHolder.h>
 
-namespace SOP_FeE_PointInBBox_1_0_Namespace {
+namespace SOP_FeE_PointInBBox_2_0_Namespace {
 
 class SOP_FeE_PointInBBox_2_0 : public SOP_Node
 {
@@ -16,6 +16,7 @@ public:
         OP_Node* newOp = new SOP_FeE_PointInBBox_2_0(net, name, op);
         //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
         newOp->setNodeShape("tilted");
+        newOp->setHighlight(true);
         //newOp->setUserData("nodeshape", "tilted", false);
         return newOp;
     }
@@ -68,6 +69,6 @@ protected:
 
 
 };
-} // End SOP_FeE_PointInBBox_1_0_Namespace namespace
+} // End SOP_FeE_PointInBBox_2_0_Namespace namespace
 
 #endif

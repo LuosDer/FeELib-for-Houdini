@@ -52,12 +52,16 @@ private:
     virtual bool
         computeCore() override
     {
-    	if(geoSrc)
+    	if (geoSrc)
     	{
+    		if(geoSrc->getNumPrimitives() <= 0)
+    			return true;
         	geoSrcTmp = geoSrc;
     	}
         else
         {
+        	if(geo->getNumPrimitives() <= 0)
+        		return true;
         	geoSrcTmpGU = new GU_Detail();
         	geoSrcTmp_h.allocateAndSet(geoSrcTmpGU);
         	geoSrcTmpGU->replaceWith(*geo->asGA_Detail());
@@ -70,12 +74,12 @@ private:
     	geo->clear();
 		
     	switch (elemTraversingMethod) {
-    	case GFE_ElemTraversingMethod::Custom:    unpackByGroup_Custom(groupParserSrc);      break;
-    	case GFE_ElemTraversingMethod::OneElem:   unpackByGroup_OneElem();     break;
-    	case GFE_ElemTraversingMethod::SkipNElem: unpackByGroup_SkipNElem();   break;
+    	case GFE_ElemTraversingMethod::Custom:    unpackByGroup_Custom(groupParserSrc); break;
+    	case GFE_ElemTraversingMethod::OneElem:   unpackByGroup_OneElem();              break;
+    	case GFE_ElemTraversingMethod::SkipNElem: unpackByGroup_SkipNElem();            break;
     	default: break;
     	}
-    
+     
     	if (delGroup)
     		groupParser.delGroup();
 
@@ -83,8 +87,10 @@ private:
     }
 
 
-	void unpackPrim(GU_Detail& geoGU, const GA_Offset primoff)
+	SYS_FORCE_INLINE void unpackPrim(GU_Detail& geoGU, const GA_Offset primoff)
 	{
+    	//int typeId = geoSrcTmp->getPrimitiveTypeId(primoff);
+    		
     	if (GFE_Type::isPacked(geoSrcTmp->getPrimitiveTypeId(primoff)))
 			static_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
 		//GA_Primitive* const prim = geoSrcTmp->getPrimitive(primoff);
@@ -122,7 +128,9 @@ private:
     	}
     	else
     	{
-    		unpackPrim(geoGU, primoff);
+    		//const GA_Offset offsetSize = geoSrcTmp->getPrimitiveMap().offsetSize();
+    		if(geoSrcTmp->getPrimitiveMap().isOffsetInRange(primoff))
+    			unpackPrim(geoGU, primoff);
     	}
     }
 	

@@ -85,17 +85,9 @@ public:
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:
-            b |= elementGroupPtr->contains(elemoff);
-            break;
-        case GFE_GroupMergeType::Intersect:
-            b &= elementGroupPtr->contains(elemoff);
-            break;
-        case GFE_GroupMergeType::Subtract:
-            b = !b && elementGroupPtr->contains(elemoff);
-            break;
-        // case GFE_GroupMergeType::Replace: break;
-        default: break;
+        case GFE_GroupMergeType::Union:     b |=  elementGroupPtr->contains(elemoff); break;
+        case GFE_GroupMergeType::Intersect: b &=  elementGroupPtr->contains(elemoff); break;
+        case GFE_GroupMergeType::Subtract:  b &= !elementGroupPtr->contains(elemoff); break;
         }
         elementGroupPtr->setElement(elemoff, b);
     }
@@ -111,15 +103,9 @@ public:
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:
-            b |= edgeGroupPtr->contains(elemoff0, elemoff1);
-            break;
-        case GFE_GroupMergeType::Intersect:
-            b &= edgeGroupPtr->contains(elemoff0, elemoff1);
-            break;
-        case GFE_GroupMergeType::Subtract:
-            b = !b && edgeGroupPtr->contains(elemoff0, elemoff1);
-            break;
+        case GFE_GroupMergeType::Union:     b |=  edgeGroupPtr->contains(elemoff0, elemoff1); break;
+        case GFE_GroupMergeType::Intersect: b &=  edgeGroupPtr->contains(elemoff0, elemoff1); break;
+        case GFE_GroupMergeType::Subtract:  b &= !edgeGroupPtr->contains(elemoff0, elemoff1); break;
         // case GFE_GroupMergeType::Replace: break;
         default: break;
         }
@@ -138,19 +124,12 @@ public:
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:
-            b |= edgeGroupPtr->contains(edge);
-            break;
-        case GFE_GroupMergeType::Intersect:
-            b &= edgeGroupPtr->contains(edge);
-            break;
-        case GFE_GroupMergeType::Subtract:
-            b = !b && edgeGroupPtr->contains(edge);
-            break;
-        // case GFE_GroupMergeType::Replace: break;
-        default: break;
+        case GFE_GroupMergeType::Union:     b |=  edgeGroupPtr->contains(edge); break;
+        case GFE_GroupMergeType::Intersect: b &=  edgeGroupPtr->contains(edge); break;
+        case GFE_GroupMergeType::Subtract:  b &= !edgeGroupPtr->contains(edge); break;
+        // case GFE_GroupMergeType::Replace:
+        //default: break;
         }
-        
         if (b)
             edgeGroupPtr->add(edge);
         else
@@ -189,7 +168,17 @@ private:
 
 namespace GFE_Group {
 
+    
 
+SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group& group)
+{ return GFE_Type::attributeOwner_groupType(group.classType()); }
+
+SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group* const group)
+{
+    if (!group)
+        return GA_ATTRIB_INVALID;
+    return getOwner(*group);
+}
 
 SYS_FORCE_INLINE static void groupBumpDataId(GA_Group& group)
 {

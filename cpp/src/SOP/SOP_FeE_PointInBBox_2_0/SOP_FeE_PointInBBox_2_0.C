@@ -210,17 +210,31 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ zp == 0 }"
         range   { 1e-06 10 }
     }
+    // parm {
+    //     name    "numingroup_min"
+    //     cppname "SubscribeRatio"
+    //     label   "Num in Group Min"
+    //     type    integer
+    //     default { "1" }
+    //     disablewhen "{ onlyfull == 1 }"
+    //     range   { 1! 10 }
+    // }
+
     parm {
-        name    "numingroup_min"
-        cppname "SubscribeRatio"
-        label   "Num in Group Min"
-        type    integer
-        default { "1" }
-        disablewhen "{ onlyfull == 1 }"
-        range   { 1! 10 }
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
     }
 
-
+    parm {
+        name    "delElement"
+        cppname "DelElement"
+        label   "Del Element"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -314,19 +328,36 @@ SOP_FeE_PointInBBox_2_0::cookVerb() const
 
 
 
-static GA_GroupMergeType
+static GA_GroupType
+sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_PointInBBox_2_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+static GFE_GroupMergeType
 sopGroupMergeType(SOP_FeE_PointInBBox_2_0Parms::GroupMergeType groupMergeType)
 {
     using namespace SOP_FeE_PointInBBox_2_0Enums;
     switch (groupMergeType)
     {
-    case GroupMergeType::REPLACE:     return GA_GroupMerge_Replace;    break;
-    case GroupMergeType::UNION:       return GA_GroupMerge_Union;      break;
-    case GroupMergeType::INTERSECT:   return GA_GroupMerge_Intersect;  break;
-    case GroupMergeType::SUBTRACT:    return GA_GroupMerge_Subtract;   break;
+    case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
+    case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
+    case GroupMergeType::INTERSECT:   return GFE_GroupMergeType::Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GFE_GroupMergeType::Subtract;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
-    return GA_GroupMerge_Replace;
+    return GFE_GroupMergeType::Replace;
 }
 
 void
@@ -337,43 +368,49 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //auto sopcache = (SOP_FeE_PointInBBox_2_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
-    const bool xn = sopparms.getXN();
-    const bool xp = sopparms.getXP();
-    const bool yn = sopparms.getYN();
-    const bool yp = sopparms.getYP();
-    const bool zn = sopparms.getZN();
-    const bool zp = sopparms.getZP();
+    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
-    const fpreal xnThreshold = sopparms.getXNThreshold();
-    const fpreal xpThreshold = sopparms.getXPThreshold();
-    const fpreal ynThreshold = sopparms.getYNThreshold();
-    const fpreal ypThreshold = sopparms.getYPThreshold();
-    const fpreal znThreshold = sopparms.getZNThreshold();
-    const fpreal zpThreshold = sopparms.getZPThreshold();
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-    const UT_StringHolder& groupName = sopparms.getSeamGroup();
-    const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
+    
 
-    GA_PointGroup* groupPtr = GFE_PointInBBox::addGroupPointInBBox(cookparms, outGeo0, inGeo1, xn, xp, yn, yp, zn, zp);
+    
+    GFE_PointInBBox pointInBBox(outGeo0, inGeo1, cookparms);
+    
+    pointInBBox.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+#define SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(NAME_UPPER)                            \
+        if (sopparms.get##NAME_UPPER())                                                     \
+            pointInBBox.set##NAME_UPPER(sopparms.get##NAME_UPPER##Threshold());             \
+
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(XN)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(XP)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(YN)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(YP)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(ZN)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(ZP)
+    
+#undef SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION
+
+    
+    pointInBBox.setComputeParm(sopparms.getReverseGroup(), groupMergeType, sopparms.getDelElement(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+
+    pointInBBox.computeAndBumpDataIdsForAddOrRemove();
+
+    
+    
 }
 
 
-
-namespace SOP_FeE_PointInBBox_2_0_Namespace {
-
-} // End SOP_FeE_PointInBBox_2_0_Namespace namespace

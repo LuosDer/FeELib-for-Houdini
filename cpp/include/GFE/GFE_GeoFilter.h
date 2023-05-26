@@ -536,22 +536,24 @@ public:
 
 
 
-virtual void delGroupElement()
+virtual void delGroupElement(const GA_Group* group = nullptr)
 {
-    if (outGroupArray.isEmpty() || !outGroupArray[0])
-        return;
-
-    const GA_Group* const outGroup = outGroupArray[0];
-
-    if (outGroup->classType() == GA_GROUP_EDGE)
+    if (!group)
     {
-        geo->asGU_Detail()->dissolveEdges(static_cast<const GA_EdgeGroup&>(*outGroup),
+        if (outGroupArray.isEmpty() || !outGroupArray[0])
+            return;
+        group = outGroupArray[0];
+    }
+
+    if (group->classType() == GA_GROUP_EDGE)
+    {
+        geo->asGU_Detail()->dissolveEdges(static_cast<const GA_EdgeGroup&>(*group),
             false, 0, true, GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
     }
     else
     {
-        const GA_Range range(*static_cast<const GA_ElementGroup*>(outGroup));
-        switch (outGroup->classType())
+        const GA_Range range(*static_cast<const GA_ElementGroup*>(group));
+        switch (group->classType())
         {
         case GA_GROUP_PRIMITIVE:
             geo->destroyPrimitiveOffsets(range, true);

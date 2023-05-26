@@ -212,7 +212,7 @@ SOP_FeE_UnpackByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     //auto sopcache = (SOP_FeE_UnpackByGroup_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());

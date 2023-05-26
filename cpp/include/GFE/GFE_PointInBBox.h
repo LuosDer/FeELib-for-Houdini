@@ -4,119 +4,140 @@
 #ifndef __GFE_PointInBBox_h__
 #define __GFE_PointInBBox_h__
 
-//#include "GFE/GFE_PointInBBox.h"
-
-#include "GA/GA_Detail.h"
+#include "GFE/GFE_PointInBBox.h"
 
 
-//#include "GFE/GFE_Type.h
+#include "GFE/GFE_GeoFilter.h"
 
-
-namespace GFE_PointInBBox {
+//#include "GFE/GFE_Group.h"
 
 
 
+class GFE_PointInBBox : public GFE_AttribFilterWithRef {
+
+public:
+	using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+	
+	
+    void
+        setComputeParm(
+            const bool reverseGroup = true,
+			const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
+            const bool delElement = true,
+			exint subscribeRatio = 64,
+			exint minGrainSize = 1024
+        )
+    {
+        setHasComputed();
+        setGroup.reverseGroup = reverseGroup;
+    	setGroup.groupMergeType = groupMergeType;
+        this->doDelGroupElement = delElement;
+        this->subscribeRatio = subscribeRatio;
+        this->minGrainSize = minGrainSize;
+    }
 
 
-    template<typename T>
-    static UT_Matrix4T<T>
-        pointInBBox(
-            GA_Detail* const geo,
-            const GA_Detail* const refGeo,
-            const GA_Detail* restGeo,
-            const UT_StringHolder& attribToXformPattern,
-            const GA_ROHandleT<UT_Vector3T<T>>& posRest_h,
-            const GA_ROHandleT<UT_Vector3T<T>>& posRef_h
-        ) {
-        if (!attribToXformPattern.isstring() || attribToXformPattern.isEmpty())
-            return nullptr;
+#define GFE_PointInBBox_GETFUN_SPECILIZATION(NAME_LOWER, NAME_UPPER)                \
+		SYS_FORCE_INLINE void set##NAME_UPPER(const fpreal threshold)				\
+		{ NAME_LOWER = true; NAME_LOWER##Threshold = threshold; }					\
+																					\
+		SYS_FORCE_INLINE void set##NAME_UPPER()										\
+		{ NAME_LOWER = false; }														\
 
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(refGeo);
+        
+	GFE_PointInBBox_GETFUN_SPECILIZATION(xn, XN);
+	GFE_PointInBBox_GETFUN_SPECILIZATION(xp, XP);
+	GFE_PointInBBox_GETFUN_SPECILIZATION(yn, YN);
+	GFE_PointInBBox_GETFUN_SPECILIZATION(yp, YP);
+	GFE_PointInBBox_GETFUN_SPECILIZATION(zn, ZN);
+	GFE_PointInBBox_GETFUN_SPECILIZATION(zp, ZP);
+    
+#undef GFE_PointInBBox_GETFUN_SPECILIZATION
 
-        if (!restGeo)
-            restGeo = geo;
 
-        UT_Matrix4T<T> mtx;
+
+private:
+
+    virtual bool
+        computeCore() override
+    {
+    	if (getOutGroupArray().isEmpty() || !getOutGroupArray()[0])
+    		return true;
+    	
+    	if (!xn && !xp && !yn && !yp && !zn && !zp)
+    		return true;
+
+    	if (geo->getNumPoints() <= 0)
+    		return true;
+    	
+    	if (!posAttrib)
+    		posAttrib = geo->getP();
+
+    	
+    	UT_BoundingBoxT<float> bbox;
+    	if (geoRef0)
+    	{
+    		if (!posRefAttrib)
+    			posRefAttrib = geoRef0->getP();
+    		bbox = geoRef0->stdBoundingBox<float>(groupParserRef0.getElementGroup(), posRefAttrib);
+    	}
+        else
+        {
+        	bbox = geoRef0->stdBoundingBox<float>(groupParser.getElementGroup(), posAttrib);
+        }
+
+    	setGroup = getOutGroupArray()[0];
+
+    	if (xn)
+    	{
+    		if ( @P.x <= bound[0] ) {
+    			numingroup++;
+    		}
+    	}
+
+    	ut
+    	setGroup.set();
+    	
+    	if (doDelGroupElement)
+    		delGroupElement();
+
+        return true;
     }
 
 
 
-    static void
-        pointInBBox(
-            GA_Detail* const geo,
-            const GA_Detail* refGeo,
-            const GA_Detail* restGeo,
-            const UT_StringHolder& attribToXformPattern,
-            const UT_StringHolder& restPosAttribName = "",
-            const UT_StringHolder& refPosAttribName = ""
-        ) {
+public:
+	
+	bool xn = false;
+	bool xp = false;
+	bool yn = false;
+	bool yp = false;
+	bool zn = false;
+	bool zp = false;
+	
+	fpreal xnThreshold = 1e-05;
+	fpreal xpThreshold = 1e-05;
+	fpreal ynThreshold = 1e-05;
+	fpreal ypThreshold = 1e-05;
+	fpreal znThreshold = 1e-05;
+	fpreal zpThreshold = 1e-05;
 
-        UT_ASSERT_P(geo);
-        UT_ASSERT_P(refGeo);
-
-        if (!attribToXformPattern.isstring() || attribToXformPattern.isEmpty())
-            return;
-
-        if (!xn && !xp && !yn && !yp && !zn && !zp)
-            return;
-
-        if (!refGeo)
-            refGeo = geo;
-
-        const GA_Attribute* posRestAttribPtr = restGeo->findPointAttribute(restPosAttribName);
-        if(!posRestAttribPtr)
-            posRestAttribPtr = restGeo->findPointAttribute("P");
-
-        const GA_Attribute* posRefAttribPtr = refGeo->findPointAttribute(refPosAttribName);
-        if (!posRefAttribPtr)
-            posRefAttribPtr = refGeo->findPointAttribute("P");
-
-        pointInBBox<fpreal>(geo, refGeo, restGeo, attribToXformPattern, posRestAttribPtr, posRefAttribPtr);
-
-    }
-
-    static GA_PointGroup*
-    addGroupPointInBBox(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geo,
-        const GA_Detail* refGeo,
-
-        const bool xn,
-        const fpreal xnThreshold,
-        const bool xp,
-        const fpreal xpThreshold,
-        const bool yn,
-        const fpreal ynThreshold,
-        const bool yp,
-        const fpreal ypThreshold,
-        const bool zn,
-        const fpreal znThreshold,
-        const bool zp,
-        const fpreal zpThreshold,
-        const UT_StringHolder& pointInBBoxGroupName = "pointInBBox"
-
-        ) {
-        UT_ASSERT_P(geo);
-
-        if (!pointInBBoxGroupName.isstring() || pointInBBoxGroupName.isEmpty())
-            return;
-
-        if (!xn && !xp && !yn && !yp && !zn && !zp)
-            return;
-
-        GA_PointGroup* groupPtr = pointInBBox(geo, refGeo, restGeo, attribToXformPattern, posRestAttribPtr, posRefAttribPtr);
-
-        groupPtr->bumpDataId();
-    }
+private:
+	
+	GFE_SetGroup setGroup;
+	
+	const GA_Detail* geoSrcTmp;
+	GU_Detail* geoSrcTmpGU;
+	
+	GU_DetailHandle geoSrcTmp_h;
+	
+	const GA_Attribute* posRefAttrib = nullptr;
+	
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
 
 
+}; // End of class GFE_PointInBBox
 
-
-
-
-
-
-} // End of namespace GFE_PointInBBox
 
 #endif

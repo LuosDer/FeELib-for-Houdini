@@ -4,11 +4,7 @@
 #ifndef __GFE_RestVectorComponent_h__
 #define __GFE_RestVectorComponent_h__
 
-//#include "GFE/GFE_RestVectorComponent.h"
-
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
-
+#include "GFE/GFE_RestVectorComponent.h"
 
 
 #include "GFE/GFE_GeoFilter.h"

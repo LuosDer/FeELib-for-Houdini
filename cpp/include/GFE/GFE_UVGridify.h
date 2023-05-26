@@ -148,11 +148,11 @@ private:
         const GA_RWHandleT<VECTOR_T> uv_h(uvAttribPtr);
         
         const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
-        const GA_ROHandleT<TEMP_POS_VECTOR_TYPE> pos_h(geo->getP());
+        const GA_ROHandleT<VECTOR_T> pos_h(geo->getP());
         const bool isPointAttrib = uvAttribPtr->getOwner() == GA_ATTRIB_POINT;
 
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange, [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
             //const typename VECTOR_T::value_type zero = 0;
             typename TEMP_POS_VECTOR_TYPE::value_type scale;

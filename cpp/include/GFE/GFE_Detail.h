@@ -24,7 +24,18 @@ class GFE_Detail : public GA_Detail
 {
 
 public:
+    
+    SYS_FORCE_INLINE bool hasPrimitive()
+    { return getNumPrimitives() >= 0; }
+    //{ return getPrimitiveMap().isOffsetInRange(getPrimitiveMap().indexFromOffset(0)); }
 
+    SYS_FORCE_INLINE bool hasPoint()
+    { return getNumPoints() >= 0; }
+
+    SYS_FORCE_INLINE bool hasVertex()
+    { return getNumVertices() >= 0; }
+
+    
     SYS_FORCE_INLINE bool isPacked(const GA_Offset primoff)
     { return GFE_Type::isPacked(getPrimitiveTypeId(primoff)); }
 
@@ -77,7 +88,17 @@ public:
         return geoBBox;
     }
 
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE UT_BoundingBoxT<FLOAT_T> stdBoundingBox(const GA_ElementGroup* const group = nullptr, const GA_Attribute* const posAttrib = nullptr) const
+    { return stdBoundingBox<FLOAT_T>(GA_Range(group ? group->getIndexMap() : getPointMap(), group), posAttrib); }
 
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE UT_BoundingBoxT<FLOAT_T> stdBoundingBox(const GA_Group* const group, const GA_Attribute* const posAttrib = nullptr) const
+    {
+        UT_ASSERT_MSG(!group || group->isElementGroup(), "Must be Element Group");
+        return stdBoundingBox<FLOAT_T>(static_cast<const GA_ElementGroup*>(group), posAttrib);
+    }
+    
     
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
     SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff)

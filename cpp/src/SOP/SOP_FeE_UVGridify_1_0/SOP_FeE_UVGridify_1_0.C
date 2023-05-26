@@ -253,45 +253,32 @@ void
 SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_UVGridify_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVGridify_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
 
     const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVAttribClass());
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
     const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = sopRowsOrColsNumMethod(sopparms.getRowsOrColsNumMethod());
-    const exint rowsOrColsNum = sopparms.getRowsOrColsNum();
-    const bool reverseUVu = sopparms.getReverseUVu();
-    const bool reverseUVv = sopparms.getReverseUVv();
-
-    const bool uniScale = sopparms.getUniScale();
     
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+    
 
-
-
-    GFE_UVGridify uvGridify(outGeo0, &cookparms);
-    uvGridify.groupParser.setGroup(groupType, groupName);
-    uvGridify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName);
+    GFE_UVGridify uvGridify(outGeo0, cookparms);
+    uvGridify.groupParser.setGroup(groupType, sopparms.getGroup());
+    uvGridify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib());
     uvGridify.setComputeParm(
-        rowsOrColsNumMethod, rowsOrColsNum,
-        reverseUVu, reverseUVv, uniScale,
-        subscribeRatio, minGrainSize);
+        rowsOrColsNumMethod, sopparms.getRowsOrColsNum(),
+        sopparms.getReverseUVu(), sopparms.getReverseUVv(), sopparms.getUniScale(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     uvGridify.computeAndBumpDataId();
 
     

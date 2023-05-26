@@ -65,34 +65,22 @@ private:
         computeCore() override
     {
         if (!doUVScalex && !doUVScaley && !doUVScalez)
-            return false;
+            return true;
 
         if (groupParser.isEmpty())
             return true;
 
         const size_t len = getOutAttribArrayRef().size();
         for (size_t i = 0; i < len; ++i) {
-            GA_Attribute* const attribPtr = getOutAttribArrayRef()[i];
+            attribPtr = getOutAttribArrayRef()[i];
             //static_cast<GA_ATINumeric*>(uvAttribPtr)->getStorage();
             switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
             {
-            case GA_STORE_INT32:
-                uvScaletoWorldSize<int>(attribPtr);
-                break;
-            case GA_STORE_INT64:
-                uvScaletoWorldSize<int64>(attribPtr);
-                break;
-            case GA_STORE_REAL16:
-                uvScaletoWorldSize<fpreal16>(attribPtr);
-                break;
-            case GA_STORE_REAL32:
-                uvScaletoWorldSize<fpreal32>(attribPtr);
-                break;
-            case GA_STORE_REAL64:
-                uvScaletoWorldSize<fpreal64>(attribPtr);
-                break;
-            default:
-                break;
+            case GA_STORE_INT32:  uvScaletoWorldSize<int>();      break;
+            case GA_STORE_INT64:  uvScaletoWorldSize<int64>();    break;
+            case GA_STORE_REAL16: uvScaletoWorldSize<fpreal16>(); break;
+            case GA_STORE_REAL32: uvScaletoWorldSize<fpreal32>(); break;
+            case GA_STORE_REAL64: uvScaletoWorldSize<fpreal64>(); break;
             }
         }
         return true;
@@ -101,31 +89,26 @@ private:
 
 
     template<typename T>
-    void
-        uvScaletoWorldSize(
-            const GA_RWHandleT<UT_Vector3T<T>>& uv_h
-        )
+    void uvScaletoWorldSize()
     {
-        const GA_PrimitiveGroup* const geoGroup = groupParser.getPrimitiveGroup();
-
-        const GA_Storage inStorage = uv_h->getStorage();
-
+        const GA_RWHandleT<UT_Vector3T<T>>& uv_h(attribPtr);
+        
         GFE_Measure measure(geo, cookparms);
-        measure.groupParser.setGroup(geoGroup);
+        measure.groupParser.setGroup(groupParser.getPrimitiveGroup());
         //measure.setPositionAttrib();
         //measure.setComputeParm(GFE_MeasureType::Area);
 
         //GA_Attribute* areaATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaAttribName);
-        GA_Attribute* areaATIPtr = measure.getOutAttribArray().findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE);
+        GA_Attribute* areaATIPtr = measure.findOrCreateTuple(true);
         measure.compute();
 
         //GA_Attribute* areaUVATIPtr = measure.getOutAttribArray().set(GA_ATTRIB_PRIMITIVE, GFE_UVScaletoWorldSize_AreaUVAttribName);
-        GA_Attribute* areaUVATIPtr = measure.getOutAttribArray().findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE);
-        measure.setPositionAttrib(uv_h.getAttribute());
+        GA_Attribute* areaUVATIPtr = measure.findOrCreateTuple(true);
+        measure.setPositionAttrib(attribPtr);
         measure.compute();
         
 
-        const GA_AttributeUPtr uvScaleATIUPtr = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, inStorage, 3);
+        const GA_AttributeUPtr uvScaleATIUPtr = geo->createDetachedTupleAttribute(GA_ATTRIB_PRIMITIVE, uv_h->getStorage(), 3);
         GA_Attribute* const uvScaleATIPtr = uvScaleATIUPtr.get();
 
         //GA_ROHandleT<exint> connectivityAttrib_h;
@@ -159,8 +142,7 @@ private:
         GA_ROHandleT<T> areaUVAttrib_h(areaUVATIPtr);
         GA_RWHandleT<UT_Vector3T<T>> uvScaleAttrib_h(uvScaleATIPtr);
 
-        GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geoSplittableRange, [this, &uvScaleAttrib_h, &areaUVAttrib_h, &areaAttrib_h](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uvScaleAttrib_h, &areaUVAttrib_h, &areaAttrib_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             UT_Vector3T<T> uvS;
@@ -179,11 +161,30 @@ private:
             }
         }, subscribeRatio, minGrainSize);
 
-        const GA_AttributeOwner uvAttribClassFinal = uv_h.getAttribute()->getOwner();
+        UTparallelFor(groupParser.getSplittableRange(attribRefPtr), [this](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<typename T::value_type, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRestPtr);
+            GA_PageHandleT<T, typename T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    attribRef_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        attrib_ph.value(elemoff) = attribRef_ph.value(elemoff)[comp];
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+
+
+        
+        const GA_AttributeOwner uvAttribClassFinal = attribPtr->getOwner();
         const bool uvAttribClassFinal_bool = uvAttribClassFinal == GA_ATTRIB_POINT;
-        //geoSplittableRange = GFE_Range::getSplittableRangeByAnyGroup(geo, geoGroup, uvAttribClassFinal);
-        geoSplittableRange = groupParser.getRange(uvAttribClassFinal);
-        UTparallelFor(geoSplittableRange, [this, &uv_h, &uvScaleAttrib_h, uvAttribClassFinal_bool](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getSplittableRange(uvAttribClassFinal), [this, &uv_h, &uvScaleAttrib_h, uvAttribClassFinal_bool](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -209,6 +210,8 @@ public:
     bool doUVScalez = true;
 
 private:
+    GA_Attribute* attribPtr;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
 };
