@@ -161,11 +161,11 @@ private:
                 const bool isClosed = geo->getPrimitiveClosedFlag(primoff);
                 const bool isPrimLooped = geo->isPrimitiveLooped(primoff);
 
+                const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+
+                GA_Size vtxpnum_next = vtxpnum + offset;
                 for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                 {
-                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-
-                    GA_Size vtxpnum_next = vtxpnum + offset;
                     if (vtxpnum_next >= numvtx || vtxpnum_next < 0)
                     {
                         if (isPrimLooped)
