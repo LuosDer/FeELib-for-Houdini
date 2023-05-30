@@ -77,10 +77,10 @@ GFE_Connectivity(
         if (isDetached)
             getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name, 1, GA_Defaults(GFE_INVALID_OFFSET));
     
-        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(isDetached, connectivityOwner, GA_STORECLASS_INT, GA_STORE_INVALID,
+        connectivityAttrib = getOutAttribArray().findOrCreateTuple(isDetached, connectivityOwner, GA_STORECLASS_INT, GA_STORE_INVALID,
             isDetached ? UT_StringRef("") : name, 1, GA_Defaults(GFE_INVALID_OFFSET));
 #else
-        connectivityAttribPtr = getOutAttribArray().findOrCreateTuple(true, connectivityOwner, GA_STORECLASS_INT, storage, isDetached ? GFE_TEMP_ConnectivityAttribName : name);
+        connectivityAttrib = getOutAttribArray().findOrCreateTuple(true, connectivityOwner, GA_STORECLASS_INT, storage, isDetached ? GFE_TEMP_ConnectivityAttribName : name);
         if (isDetached)
             getOutAttribArray().findOrCreateTuple(detached, attribOwner, storageClass, storage, name);
 #endif
@@ -122,8 +122,8 @@ private:
             GFE_AttribPromote attribPromote(geo);
             if (shouldPromote)
             {
-                //GA_Storage sto = GFE_Attribute::getStorage(connectivityAttribPtr);
-                attribPromote.setSourceAttribute(connectivityAttribPtr);
+                //GA_Storage sto = GFE_Attribute::getStorage(connectivityAttrib);
+                attribPromote.setSourceAttribute(connectivityAttrib);
                 
                 if (shouldCast)
                     attribPromote.setDetachedDestinationAttribute(outAttribPtr->getOwner());
@@ -134,7 +134,7 @@ private:
             }
             if (shouldCast)
             {
-                GA_Attribute* const inAttribPtr = shouldPromote ? attribPromote.getDestinationAttribute() : connectivityAttribPtr;
+                GA_Attribute* const inAttribPtr = shouldPromote ? attribPromote.getDestinationAttribute() : connectivityAttrib;
                 //GA_StorageClass storage537 = inAttribPtr->getStorageClass();
                 //GA_Storage storage124 = GFE_Attribute::getStorage(inAttribPtr);
                 GFE_AttribCast attribCast(geo);
@@ -289,12 +289,12 @@ private:
         ++classnum;
     }
     
-    GA_Attribute* const connectivityAttribPtr = this->connectivityAttribPtr;
+    GA_Attribute* const connectivityAttrib = this->connectivityAttrib;
     const GA_IndexMap& indexMap = geo->getIndexMap(connectivityOwner);
     UTparallelFor(groupParser.getSplittableRange(connectivityOwner),
-        [&indexMap, &classnumArray, connectivityAttribPtr](const GA_SplittableRange& r)
+        [&indexMap, &classnumArray, connectivityAttrib](const GA_SplittableRange& r)
     {
-        GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(connectivityAttribPtr);
+        GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(connectivityAttrib);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
             GA_Offset start, end;
@@ -332,7 +332,7 @@ public:
     // bool outAsOffset = true;
 
 private:
-    GA_Attribute* connectivityAttribPtr;
+    GA_Attribute* connectivityAttrib;
     GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h;
 
 

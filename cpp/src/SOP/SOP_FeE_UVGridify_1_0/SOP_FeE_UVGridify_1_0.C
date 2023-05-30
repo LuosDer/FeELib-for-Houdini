@@ -284,8 +284,3 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 }
 
-
-
-namespace SOP_FeE_UVGridify_1_0_Namespace {
-
-} // End SOP_FeE_UVGridify_1_0_Namespace namespace

@@ -4,13 +4,10 @@
 #ifndef __GFE_UVGridify_h__
 #define __GFE_UVGridify_h__
 
-//#include "GFE/GFE_UVGridify.h"
+#include "GFE/GFE_UVGridify.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
-
-//#include "GFE/GFE_Attribute.h"
-//#include "GFE/GFE_GroupPromote.h"
 
 
 enum class GFE_UVGridify_RowColMethod
@@ -53,23 +50,26 @@ public:
 
 private:
 
-    using TEMP_POS_VECTOR_TYPE = UT_Vector3T<fpreal64>;
 
 
     virtual bool
         computeCore() override
     {
+        if (getOutAttribArray().isEmpty())
+            return false;
+        
         if (groupParser.isEmpty())
             return true;
 
-        const size_t len = getOutAttribArray().size();
-        for (size_t i = 0; i < len; i++)
+        const size_t size = getOutAttribArray().size();
+        for (size_t i = 0; i < size; i++)
         {
-            uvAttribPtr = getOutAttribArray()[i];
-            switch (uvAttribPtr->getTupleSize())
+            uvAttrib = getOutAttribArray()[i];
+            const GA_Storage storage = uvAttrib->getAIFTuple()->getStorage(uvAttrib);
+            switch (uvAttrib->getTupleSize())
             {
             case 2:
-                switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+                switch (storage)
                 {
                 case GA_STORE_REAL16: uvGridify<UT_Vector2T<fpreal16>>(); break;
                 case GA_STORE_REAL32: uvGridify<UT_Vector2T<fpreal32>>(); break;
@@ -78,7 +78,7 @@ private:
                 }
                 break;
             case 3:
-                switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+                switch (storage)
                 {
                 case GA_STORE_REAL16: uvGridify<UT_Vector3T<fpreal16>>(); break;
                 case GA_STORE_REAL32: uvGridify<UT_Vector3T<fpreal32>>(); break;
@@ -87,13 +87,13 @@ private:
                 }
                 break;
             case 4:
-                // switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
-                // {
-                // case GA_STORE_REAL16: uvGridify<UT_Vector4T<fpreal16>>(); break;
-                // case GA_STORE_REAL32: uvGridify<UT_Vector4T<fpreal32>>(); break;
-                // case GA_STORE_REAL64: uvGridify<UT_Vector4T<fpreal64>>(); break;
-                // default: break;
-                // }
+                switch (storage)
+                {
+                case GA_STORE_REAL16: uvGridify<UT_Vector4T<fpreal16>>(); break;
+                case GA_STORE_REAL32: uvGridify<UT_Vector4T<fpreal32>>(); break;
+                case GA_STORE_REAL64: uvGridify<UT_Vector4T<fpreal64>>(); break;
+                default: break;
+                }
                 break;
             default: break;
             }
@@ -102,68 +102,29 @@ private:
     }
 
 
-
-    template<typename VECTOR_T, typename POS_VECTOR_T>
-    void uvGridify(
-        const GA_RWHandleT<VECTOR_T>& uv_h,
-        const GA_ROHandleT<POS_VECTOR_T>& pos_h,
-        VECTOR_T& uv,
-        const GA_Offset primoff,
-        const GA_Size vtxpnum,
-        const exint rows,
-        const exint cols,
-        const typename POS_VECTOR_T::value_type scale,
-        const bool scaleIdx,
-        const bool isPointAttrib
-    )
-    {
-        if (reverseUVu)
-        {
-            uv[0] = 1 - uv[0];
-        }
-        if (reverseUVv)
-        {
-            uv[1] = 1 - uv[1];
-        }
-        if (!uniScale)
-        {
-            if (scaleIdx)
-            {
-                uv[1] *= scale;
-            }
-            else
-            {
-                uv[0] *= scale;
-            }
-        }
-        GA_Offset elemoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-        if (isPointAttrib)
-            elemoff = geo->vertexPoint(elemoff);
-        uv_h.set(elemoff, uv);
-    }
-
     template<typename VECTOR_T>
     void uvGridify()
     {
-        const GA_RWHandleT<VECTOR_T> uv_h(uvAttribPtr);
-        
-        const GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
-        const GA_ROHandleT<VECTOR_T> pos_h(geo->getP());
-        const bool isPointAttrib = uvAttribPtr->getOwner() == GA_ATTRIB_POINT;
+        using value_type = typename VECTOR_T::value_type;
+        using POS_VECTOR_T = UT_Vector3T<value_type>;
 
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
+        
+        const GA_RWHandleT<VECTOR_T> uv_h(uvAttrib);
+        const GA_ROHandleT<POS_VECTOR_T> pos_h(geo->getP());
+        const bool isPointAttrib = uvAttrib->getOwner() == GA_ATTRIB_POINT;
+        
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
-            //const typename VECTOR_T::value_type zero = 0;
-            typename TEMP_POS_VECTOR_TYPE::value_type scale;
+            value_type scale;
             bool scaleIdx = true;
-            VECTOR_T uv(typename VECTOR_T::value_type(0));
+            
+            VECTOR_T uv(getZeroVector<VECTOR_T>());
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
-                    GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                    const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
                     if (numvtx == 0)
                         continue;
                     GA_Size rows, cols;
@@ -193,21 +154,21 @@ private:
                     {
                         if (numvtx > rows + rows + cols && numvtx > 2)
                         {
-                            const TEMP_POS_VECTOR_TYPE& pos0 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0)));
-                            const TEMP_POS_VECTOR_TYPE& pos1 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows)));
-                            const TEMP_POS_VECTOR_TYPE& pos2 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + cols)));
+                            const POS_VECTOR_T& pos0 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0)));
+                            const POS_VECTOR_T& pos1 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows)));
+                            const POS_VECTOR_T& pos2 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + cols)));
                             //GA_Offset a = geo->getPrimitiveVertexOffset(primoff, rows + cols + rows);
                             //GA_Offset b = geo->vertexPoint(a);
                             //const POS_VECTOR_T& pos3 = pos_h.get(b);
-                            const TEMP_POS_VECTOR_TYPE& pos3 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + rows + cols)));
-                            const typename TEMP_POS_VECTOR_TYPE::value_type dist0 = pos0.distance(pos1);
-                            const typename TEMP_POS_VECTOR_TYPE::value_type dist1 = pos1.distance(pos2);
-                            const typename TEMP_POS_VECTOR_TYPE::value_type dist2 = pos2.distance(pos3);
-                            const typename TEMP_POS_VECTOR_TYPE::value_type dist3 = pos3.distance(pos0);
+                            const POS_VECTOR_T& pos3 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + rows + cols)));
+                            const value_type dist0 = pos0.distance(pos1);
+                            const value_type dist1 = pos1.distance(pos2);
+                            const value_type dist2 = pos2.distance(pos3);
+                            const value_type dist3 = pos3.distance(pos0);
 
                             scale = (dist0 + dist2) / (dist1 + dist3);
 
-                            typename TEMP_POS_VECTOR_TYPE::value_type tmpScale = dist0 + dist2;
+                            const value_type tmpScale = dist0 + dist2;
                             scale = dist1 + dist3;
 
                             scaleIdx = tmpScale > scale;
@@ -267,6 +228,58 @@ private:
 
 
 
+
+    template<typename VECTOR_T, typename POS_VECTOR_T>
+    void uvGridify(
+        const GA_RWHandleT<VECTOR_T>& uv_h,
+        const GA_ROHandleT<POS_VECTOR_T>& pos_h,
+        VECTOR_T& uv,
+        const GA_Offset primoff,
+        const GA_Size vtxpnum,
+        const exint rows,
+        const exint cols,
+        const typename POS_VECTOR_T::value_type scale,
+        const bool scaleIdx,
+        const bool isPointAttrib
+    )
+    {
+        if (reverseUVu)
+        {
+            uv[0] = 1 - uv[0];
+        }
+        if (reverseUVv)
+        {
+            uv[1] = 1 - uv[1];
+        }
+        if (!uniScale)
+        {
+            if (scaleIdx)
+            {
+                uv[1] *= scale;
+            }
+            else
+            {
+                uv[0] *= scale;
+            }
+        }
+        GA_Offset elemoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+        if (isPointAttrib)
+            elemoff = geo->vertexPoint(elemoff);
+        uv_h.set(elemoff, uv);
+    }
+
+
+    template<typename VECTOR_T>
+    SYS_FORCE_INLINE VECTOR_T getZeroVector() const
+    {
+        if constexpr(VECTOR_T::tuple_size == 4)
+            return VECTOR_T(0, 0, 0, 0);
+        else
+            return VECTOR_T(0.0);
+    }
+
+
+    
 public:
     GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform;
     GA_Size rowsOrColsNum = 2;
@@ -275,7 +288,7 @@ public:
     bool uniScale = false;
 
 private:
-    GA_Attribute* uvAttribPtr = nullptr;
+    GA_Attribute* uvAttrib = nullptr;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
@@ -469,7 +482,7 @@ private:
 //static bool
 //    uvGridify(
 //        const GA_Detail* const geo,
-//        GA_Attribute* const uvAttribPtr,
+//        GA_Attribute* const uvAttrib,
 //        const GA_PrimitiveGroup* const geoPrimGroup,
 //        const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //        const GA_Size rowsOrColsNum = 2,
@@ -480,25 +493,25 @@ private:
 //        const exint minGrainSize = 64
 //    )
 //{
-//    switch (uvAttribPtr->getTupleSize())
+//    switch (uvAttrib->getTupleSize())
 //    {
 //    case 2:
-//        switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+//        switch (uvAttrib->getAIFTuple()->getStorage(uvAttrib))
 //        {
 //        case GA_STORE_REAL16:
-//            uvGridify(geo, GA_RWHandleT<UT_Vector2T<fpreal16>>(uvAttribPtr), geoPrimGroup,
+//            uvGridify(geo, GA_RWHandleT<UT_Vector2T<fpreal16>>(uvAttrib), geoPrimGroup,
 //                rowsOrColsNumMethod, rowsOrColsNum,
 //                reverseUVu, reverseUVv, uniScale,
 //                subscribeRatio, minGrainSize);
 //            break;
 //        case GA_STORE_REAL32:
-//            uvGridify(geo, GA_RWHandleT<UT_Vector2T<fpreal32>>(uvAttribPtr), geoPrimGroup,
+//            uvGridify(geo, GA_RWHandleT<UT_Vector2T<fpreal32>>(uvAttrib), geoPrimGroup,
 //                rowsOrColsNumMethod, rowsOrColsNum,
 //                reverseUVu, reverseUVv, uniScale,
 //                subscribeRatio, minGrainSize);
 //            break;
 //        case GA_STORE_REAL64:
-//            uvGridify(geo, GA_RWHandleT<UT_Vector2T<fpreal64>>(uvAttribPtr), geoPrimGroup,
+//            uvGridify(geo, GA_RWHandleT<UT_Vector2T<fpreal64>>(uvAttrib), geoPrimGroup,
 //                rowsOrColsNumMethod, rowsOrColsNum,
 //                reverseUVu, reverseUVv, uniScale,
 //                subscribeRatio, minGrainSize);
@@ -509,22 +522,22 @@ private:
 //        }
 //        break;
 //    case 3:
-//        switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+//        switch (uvAttrib->getAIFTuple()->getStorage(uvAttrib))
 //        {
 //        case GA_STORE_REAL16:
-//            uvGridify(geo, GA_RWHandleT<UT_Vector3T<fpreal16>>(uvAttribPtr), geoPrimGroup,
+//            uvGridify(geo, GA_RWHandleT<UT_Vector3T<fpreal16>>(uvAttrib), geoPrimGroup,
 //                rowsOrColsNumMethod, rowsOrColsNum,
 //                reverseUVu, reverseUVv, uniScale,
 //                subscribeRatio, minGrainSize);
 //            break;
 //        case GA_STORE_REAL32:
-//            uvGridify(geo, GA_RWHandleT<UT_Vector3T<fpreal32>>(uvAttribPtr), geoPrimGroup,
+//            uvGridify(geo, GA_RWHandleT<UT_Vector3T<fpreal32>>(uvAttrib), geoPrimGroup,
 //                rowsOrColsNumMethod, rowsOrColsNum,
 //                reverseUVu, reverseUVv, uniScale,
 //                subscribeRatio, minGrainSize);
 //            break;
 //        case GA_STORE_REAL64:
-//            uvGridify(geo, GA_RWHandleT<UT_Vector3T<fpreal64>>(uvAttribPtr), geoPrimGroup,
+//            uvGridify(geo, GA_RWHandleT<UT_Vector3T<fpreal64>>(uvAttrib), geoPrimGroup,
 //                rowsOrColsNumMethod, rowsOrColsNum,
 //                reverseUVu, reverseUVv, uniScale,
 //                subscribeRatio, minGrainSize);
@@ -536,22 +549,22 @@ private:
 //        break;
 //    case 4:
 //        return false;
-//        //switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
+//        //switch (uvAttrib->getAIFTuple()->getStorage(uvAttrib))
 //        //{
 //        //case GA_STORE_REAL16:
-//        //    uvGridify(geo, GA_RWHandleT<UT_Vector4T<fpreal16>>(uvAttribPtr), geoPrimGroup,
+//        //    uvGridify(geo, GA_RWHandleT<UT_Vector4T<fpreal16>>(uvAttrib), geoPrimGroup,
 //        //        rowsOrColsNumMethod, rowsOrColsNum,
 //        //        reverseUVu, reverseUVv, uniScale,
 //        //        subscribeRatio, minGrainSize);
 //        //    break;
 //        //case GA_STORE_REAL32:
-//        //    uvGridify(geo, GA_RWHandleT<UT_Vector4T<fpreal32>>(uvAttribPtr), geoPrimGroup,
+//        //    uvGridify(geo, GA_RWHandleT<UT_Vector4T<fpreal32>>(uvAttrib), geoPrimGroup,
 //        //        rowsOrColsNumMethod, rowsOrColsNum,
 //        //        reverseUVu, reverseUVv, uniScale,
 //        //        subscribeRatio, minGrainSize);
 //        //    break;
 //        //case GA_STORE_REAL64:
-//        //    uvGridify(geo, GA_RWHandleT<UT_Vector4T<fpreal64>>(uvAttribPtr), geoPrimGroup,
+//        //    uvGridify(geo, GA_RWHandleT<UT_Vector4T<fpreal64>>(uvAttrib), geoPrimGroup,
 //        //        rowsOrColsNumMethod, rowsOrColsNum,
 //        //        reverseUVu, reverseUVv, uniScale,
 //        //        subscribeRatio, minGrainSize);
@@ -573,7 +586,7 @@ private:
 //static void
 //uvGridify(
 //    const GA_Detail* const geo,
-//    GA_Attribute* const uvAttribPtr,
+//    GA_Attribute* const uvAttrib,
 //    const GA_Group* const geoGroup,
 //    const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
 //    const GA_Size rowsOrColsNum = 2,
@@ -585,7 +598,7 @@ private:
 //)
 //{
 //    GA_PrimitiveGroupUPtr geoPrimGroupUPtr = GFE_GroupPromote::groupPromotePrimitiveDetached(geo, geoGroup);
-//    uvGridify(geo, uvAttribPtr, geoPrimGroupUPtr.get(),
+//    uvGridify(geo, uvAttrib, geoPrimGroupUPtr.get(),
 //        rowsOrColsNumMethod, rowsOrColsNum,
 //        reverseUVu, reverseUVv, uniScale,
 //        subscribeRatio, minGrainSize);
@@ -607,14 +620,14 @@ private:
 //    const exint minGrainSize = 64
 //)
 //{
-//    GA_Attribute* uvAttribPtr = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
+//    GA_Attribute* uvAttrib = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
 //
-//    uvGridify(geo, uvAttribPtr, geoGroup,
+//    uvGridify(geo, uvAttrib, geoGroup,
 //        rowsOrColsNumMethod, rowsOrColsNum,
 //        reverseUVu, reverseUVv, uniScale,
 //        subscribeRatio, minGrainSize);
 //
-//    return uvAttribPtr;
+//    return uvAttrib;
 //}
 //
 //SYS_FORCE_INLINE
@@ -638,16 +651,16 @@ private:
 //    GOP_Manager gop;
 //    const GA_Group* const geoGroup = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, geo, groupType, groupName, gop);
 //
-//    GA_Attribute* const uvAttribPtr = uvGridify(geo,
+//    GA_Attribute* const uvAttrib = uvGridify(geo,
 //        uvAttribClass, uvAttribName, geoGroup,
 //        rowsOrColsNumMethod, rowsOrColsNum,
 //        reverseUVu, reverseUVv, uniScale,
 //        subscribeRatio, minGrainSize);
 //
-//    if(uvAttribPtr)
-//        uvAttribPtr->bumpDataId();
+//    if(uvAttrib)
+//        uvAttrib->bumpDataId();
 //
-//    return uvAttribPtr;
+//    return uvAttrib;
 //}
 //
 //

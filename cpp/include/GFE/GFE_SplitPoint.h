@@ -120,8 +120,8 @@ private:
         const auto attribSize = getOutAttribArray().size();
         for (size_t i = 0; i < attribSize; ++i)
         {
-            const GA_Attribute* const attrib = getOutAttribArray()[i];
-            splitPointByAttrib(attrib);
+            splitAttrib = getOutAttribArray()[i];
+            splitPointByAttrib();
         }
         if (promoteAttrib)
         {
@@ -135,8 +135,12 @@ private:
         const auto groupSize = getOutGroupArray().size();
         for (size_t i = 0; i < groupSize; ++i)
         {
-            const GA_Group* const attrib = getOutGroupArray()[i];
-            splitPointByAttrib(attrib);
+            splitPointByAttrib(getOutGroupArray()[i]);
+            // const GA_Group* const group = getOutGroupArray()[i];
+            // if (!group->isElementGroup())
+            //     continue;
+            // splitAttrib = static_cast<const GA_Attribute*>(static_cast<const GA_ElementGroup*>(group));
+            // splitPointByAttrib();
         }
         if (promoteAttrib)
         {
@@ -157,12 +161,6 @@ private:
     // NOTE: This will bump any data IDs as needed, if any points are split.
     GA_Size splitPoint()
     {
-        if (groupParser.isEmpty())
-            return 0;
-        
-        const GA_ElementGroup* const group = groupParser.getElementGroup();
-        
-        
         UT_AutoInterrupt boss("Making Unique Points");
         if (boss.wasInterrupted())
             return 0;
@@ -173,6 +171,8 @@ private:
         const GA_GroupType groupType = groupParser.classType();
         UT_UniquePtr<GA_PointWrangler> ptwrangler(nullptr);
 
+        const GA_ElementGroup* const group = groupParser.getElementGroup();
+        
         UT_SmallArray<GA_Offset> vtxoffs;
         GA_Offset ptoff_end = geo->getPointMap().lastOffset() + 1;
         GA_Offset start, end;
@@ -202,7 +202,7 @@ private:
                         GA_Offset group_offset = vtxoff;
                         if (groupType == GA_GROUP_PRIMITIVE)
                             group_offset = geo->vertexPrimitive(vtxoff);
-                        if (group->contains(group_offset))
+                        if (!group || group->contains(group_offset))
                             vtxoffs.append(vtxoff);
                         else
                             hasOther = true;
@@ -285,39 +285,27 @@ private:
         return true;
     }
 
-    SYS_FORCE_INLINE void splitPointByAttrib(const GA_ElementGroup* const attrib)
-    { splitPointByAttrib(static_cast<const GA_Attribute*>(attrib)); }
+    SYS_FORCE_INLINE void splitPointByAttrib(const GA_ElementGroup* const group)
+    { splitAttrib = static_cast<const GA_Attribute*>(group); splitPointByAttrib(); }
     
-    SYS_FORCE_INLINE void splitPointByAttrib(const GA_Group* const attrib)
-    {
-        if (attrib->isElementGroup())
-            splitPointByAttrib(static_cast<const GA_ElementGroup*>(attrib));
-    }
+    SYS_FORCE_INLINE void splitPointByAttrib(const GA_Group* const group)
+    { if (group->isElementGroup()) splitPointByAttrib(static_cast<const GA_ElementGroup*>(group)); }
     
-    void splitPointByAttrib(const GA_Attribute* const attrib)
+    void splitPointByAttrib()
     {
-        switch (attrib->getOwner())
+        switch (splitAttrib->getOwner())
         {
-            case GA_ATTRIB_PRIMITIVE: splitPointByAttrib<GA_ATTRIB_PRIMITIVE>(attrib); break;
-            // case GA_ATTRIB_POINT:     splitPointByAttrib<GA_ATTRIB_POINT>(attrib);     break;
-            case GA_ATTRIB_VERTEX:    splitPointByAttrib<GA_ATTRIB_VERTEX>(attrib);    break;
-            
+            case GA_ATTRIB_PRIMITIVE: splitPointByAttrib<GA_ATTRIB_PRIMITIVE>(); break;
+            // case GA_ATTRIB_POINT:     splitPointByAttrib<GA_ATTRIB_POINT>();     break;
+            case GA_ATTRIB_VERTEX:    splitPointByAttrib<GA_ATTRIB_VERTEX>();    break;
         }
     }
 
         
     // NOTE: This will bump any data IDs as needed, if any points are split.
     template<GA_AttributeOwner OWNER>
-    void splitPointByAttrib(const GA_Attribute* const attrib)
+    void splitPointByAttrib()
     {
-        if (!attrib)
-            return;
-
-        //const GA_AttributeOwner owner = attrib->getOwner();
-        //if (owner == GA_ATTRIB_POINT || owner == GA_ATTRIB_DETAIL)
-        //    return;
-
-        
         const GA_ElementGroup* const group = groupParser.isPointGroup() ? nullptr : groupParser.getPointGroup();
         // Point groups should be weeded out by the wrappers below.
         // UT_ASSERT(!group || group->classType() == GA_GROUP_PRIMITIVE || group->classType() == GA_GROUP_VERTEX);
@@ -330,31 +318,31 @@ private:
         GA_ROHandleT<int64> attribi;
         GA_ROHandleR attribf;
         int tuplesize;
-        const GA_ATINumeric* numeric = dynamic_cast<const GA_ATINumeric*>(attrib);
+        const GA_ATINumeric* numeric = dynamic_cast<const GA_ATINumeric*>(splitAttrib);
         if (numeric)
         {
-            GA_StorageClass storeclass = attrib->getStorageClass();
+            GA_StorageClass storeclass = splitAttrib->getStorageClass();
             if (storeclass == GA_STORECLASS_INT)
             {
-                attribi = attrib;
+                attribi = splitAttrib;
                 UT_ASSERT(attribi.isValid());
                 tuplesize = attribi.getTupleSize();
             }
             else if (storeclass == GA_STORECLASS_FLOAT)
             {
-                attribf = attrib;
+                attribf = splitAttrib;
                 UT_ASSERT(attribf.isValid());
                 tuplesize = attribf.getTupleSize();
             }
             else
             {
                 UT_ASSERT_MSG(0, "Why does a GA_ATINumeric have a storage class other than int or float?");
-                compare = attrib->getAIFCompare();
+                compare = splitAttrib->getAIFCompare();
             }
         }
         else
         {
-            compare = attrib->getAIFCompare();
+            compare = splitAttrib->getAIFCompare();
             if (compare == NULL)
             {
                 UT_ASSERT_MSG(0, "Missing an implementation of GA_AIFCompare!");
@@ -375,9 +363,8 @@ private:
         {
             for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
             {
-                const GA_Index ptidx = geo->pointIndex(ptoff);
-                if (ptidx >= initnumpts)
-                    break; // New points are already split
+                if (geo->pointIndex(ptoff) >= initnumpts)
+                    break;
 
                 bool splitfound;
                 do
@@ -392,7 +379,7 @@ private:
                     // Lowest would make more sense, but highest is more compatible with
                     // the previous code.
                     GA_Offset primoff = geo->vertexPrimitive(vtxoff);
-                    GA_Offset basevtxoff = GA_INVALID_OFFSET;
+                    GA_Offset basevtxoff  = GA_INVALID_OFFSET;
                     GA_Offset baseprimoff = GA_INVALID_OFFSET;
                     if (!group || group->contains(isPrimGroup ? primoff : vtxoff))
                     {
@@ -451,7 +438,7 @@ private:
                             match = compareVertices<fpreal>(baseoffset, offset, attribf, tuplesize, splitAttribTol);
                         else
                         {
-                            bool success = compare->isEqual(match, *attrib, baseoffset, *attrib, offset);
+                            bool success = compare->isEqual(match, *splitAttrib, baseoffset, *splitAttrib, offset);
                             if (!success)
                                 match = true;
                         }
@@ -513,11 +500,10 @@ private:
             // data IDs, just in case.
             geo->edgeGroups().bumpAllDataIds();
         }
-        return;
     }
 
 public:
-    //const GA_Attribute* splitAttribPtr = nullptr;
+    const GA_Attribute* splitAttrib = nullptr;
     fpreal splitAttribTol = 1e-05;
     bool promoteAttrib = false;
 

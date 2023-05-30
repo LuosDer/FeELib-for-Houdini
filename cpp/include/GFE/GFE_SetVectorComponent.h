@@ -4,11 +4,7 @@
 #ifndef __GFE_SetVectorComponent_h__
 #define __GFE_SetVectorComponent_h__
 
-//#include "GFE/GFE_SetVectorComponent.h"
-
-#include "GA/GA_PageHandle.h"
-#include "GA/GA_PageIterator.h"
-
+#include "GFE/GFE_SetVectorComponent.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
@@ -164,55 +160,53 @@ private:
             case 1:
                 switch (storage)
                 {
-                    case GA_STORE_REAL16: setFloat<fpreal16>(); break;
-                    case GA_STORE_REAL32: setFloat<fpreal32>(); break;
-                    case GA_STORE_REAL64: setFloat<fpreal64>(); break;
-                    default: break;
+                case GA_STORE_REAL16: setFloat<fpreal16>(); break;
+                case GA_STORE_REAL32: setFloat<fpreal32>(); break;
+                case GA_STORE_REAL64: setFloat<fpreal64>(); break;
+                default: break;
                 }
-            break;
+                break;
             case 2:
                 switch (storage)
                 {
-                    case GA_STORE_REAL16: setVectorComponent<UT_Vector2T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: setVectorComponent<UT_Vector2T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: setVectorComponent<UT_Vector2T<fpreal64>>(); break;
-                    default: break;
+                case GA_STORE_REAL16: setVectorComponent<UT_Vector2T<fpreal16>>(); break;
+                case GA_STORE_REAL32: setVectorComponent<UT_Vector2T<fpreal32>>(); break;
+                case GA_STORE_REAL64: setVectorComponent<UT_Vector2T<fpreal64>>(); break;
+                default: break;
                 }
-            break;
+                break;
             case 3:
                 switch (storage)
                 {
-                    case GA_STORE_REAL16: setVectorComponent<UT_Vector3T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: setVectorComponent<UT_Vector3T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: setVectorComponent<UT_Vector3T<fpreal64>>(); break;
-                    default: break;
+                case GA_STORE_REAL16: setVectorComponent<UT_Vector3T<fpreal16>>(); break;
+                case GA_STORE_REAL32: setVectorComponent<UT_Vector3T<fpreal32>>(); break;
+                case GA_STORE_REAL64: setVectorComponent<UT_Vector3T<fpreal64>>(); break;
+                default: break;
                 }
-            break;
+                break;
             case 4:
                 switch (storage)
                 {
-                    case GA_STORE_REAL16: setVectorComponent<UT_Vector4T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: setVectorComponent<UT_Vector4T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: setVectorComponent<UT_Vector4T<fpreal64>>(); break;
-                    default: break;
+                case GA_STORE_REAL16: setVectorComponent<UT_Vector4T<fpreal16>>(); break;
+                case GA_STORE_REAL32: setVectorComponent<UT_Vector4T<fpreal32>>(); break;
+                case GA_STORE_REAL64: setVectorComponent<UT_Vector4T<fpreal64>>(); break;
+                default: break;
                 }
-            break;
+                break;
             default:
-            break;
+                break;
             }
         }
         
         if (delRefAttrib && !geoRef0 && attribRefPtrNonConst)
-        {
             geo->destroyAttrib(attribRefPtrNonConst);
-        }
         return true;
     }
 
     template<typename T>
     void setVectorComponent()
     {
-        
+        using value_type = typename T::value_type;
         if (attribRefPtr)
         {
             // const GA_AIFTuple* const aifTuple = attribRefPtr->getAIFTuple();
@@ -267,10 +261,10 @@ private:
         }
         else
         {
-            const typename T::value_type attribVal = attribValF;
+            const value_type attribVal = attribValF;
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, attribVal](const GA_SplittableRange& r)
             {
-                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_PageHandleT<T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     GA_Offset start, end;
@@ -294,7 +288,7 @@ private:
         UT_ASSERT(attribPtr->getOwner() == attribRefPtr->getOwner());
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GA_PageHandleT<T,     typename T::value_type,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             GA_PageHandleT<T_REF, typename T_REF::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {

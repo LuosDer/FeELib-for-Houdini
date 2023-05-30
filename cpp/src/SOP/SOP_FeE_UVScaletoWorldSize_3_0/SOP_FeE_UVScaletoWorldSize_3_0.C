@@ -146,13 +146,32 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "doUVScalew"
+        cppname "DoUVScalew"
+        label   "Do Scale W"
+        type    toggle
+        default { "1" }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "uvScalew"
+        cppname "UVScalew"
+        label   "UV Scale W"
+        type    float
+        default { 1 }
+        range   { -1 10 }
+        disablewhen "{ doUVScalew == 0 }"
+    }
+
+    parm {
         name    "uvScale"
         cppname "UVScale"
         label   "UV Scale"
         type    float
         default { 1 }
         range   { -10 10 }
-        disablewhen "{ doUVScalex == 0 doUVScaley == 0 doUVScalez == 0 }"
+        disablewhen "{ doUVScalex == 0 doUVScaley == 0 doUVScalez == 0 doUVScalew == 0 }"
     }
 
 
@@ -313,15 +332,12 @@ void
 SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_UVScaletoWorldSize_3_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVScaletoWorldSize_3_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const bool doUVScalex = sopparms.getDoUVScalex();
@@ -344,14 +360,10 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const fpreal uniScale = sopparms.getUVScale();
-    const fpreal uvScalex = sopparms.getUVScalex();
-    const fpreal uvScaley = sopparms.getUVScaley();
-    const fpreal uvScalez = sopparms.getUVScalez();
 
 #if 1
-    UT_Vector3R uvScale(uvScalex, uvScaley, uvScalez);
-    uvScale *= uniScale;
+    UT_Vector4R uvScale(sopparms.getUVScalex(), sopparms.getUVScaley(), sopparms.getUVScalez(), sopparms.getUVScalew());
+    uvScale *= sopparms.getUVScale();
 #else
     UT_Vector3R uvScale(doUVScalex, doUVScaley, doUVScalez);
     uvScale *= UT_Vector3R(uvScalex, uvScaley, uvScalez) * uniScale;
@@ -363,38 +375,17 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     const fpreal uvSplitDistThreshold = sopparms.getUVSplitDistThreshold();
 
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
-
-    //const GA_Precision preferredPrecision = outGeo0->getPreferredPrecision();
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(preferredPrecision);
-    //const GA_Storage inStorageF = GFE_Type::getPreferredStorageF(preferredPrecision);
-    
-
-#if 1
-    GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(outGeo0, &cookparms);
+    GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(outGeo0, cookparms);
 
     gfeUVScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
     gfeUVScaletoWorldSize.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);
     gfeUVScaletoWorldSize.setComputeParm(computeUVAreaInPiece, uvScale,
         doUVScalex, doUVScaley, doUVScalez,
         sopparms.getOutTopoAttrib(),
-        subscribeRatio, minGrainSize);
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     gfeUVScaletoWorldSize.computeAndBumpDataId();
-#else
-    GFE_UVScaletoWorldSize_Namespace::uvScaletoWorldSize(cookparms, outGeo0,
-        geo0AttribClass, geo0AttribNames,
-        groupType, sopparms.getGroup(),
-        computeUVAreaInPiece, uvScale, doUVScalex, doUVScaley, doUVScalez, sopparms.getOutTopoAttrib(),
-        subscribeRatio, minGrainSize);
-#endif
 
 }
 
-
-
-namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace {
-
-} // End SOP_FeE_UVScaletoWorldSize_3_0_Namespace namespace

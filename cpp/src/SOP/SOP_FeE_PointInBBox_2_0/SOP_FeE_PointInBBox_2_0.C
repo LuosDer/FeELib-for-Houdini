@@ -103,111 +103,111 @@ static const char *theDsFile = R"THEDSFILE(
         range   { 0! 2! }
     }
     parm {
-        name    "xn"
-        cppname "XN"
-        label   "XN"
+        name    "xMin"
+        cppname "XMin"
+        label   "XMin"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "xnThreshold"
-        cppname "XNThreshold"
-        label   "X Negative"
+        name    "xMinThreshold"
+        cppname "XMinThreshold"
+        label   "X Min"
         type    log
         default { "0" }
-        disablewhen "{ xn == 0 }"
+        disablewhen "{ xMin == 0 }"
         range   { 1e-06 10 }
     }
     parm {
-        name    "xp"
-        cppname "XP"
-        label   "XP"
+        name    "xMax"
+        cppname "XMax"
+        label   "XMax"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "xpThreshold"
-        cppname "XPThreshold"
-        label   "X Positive"
+        name    "xMaxThreshold"
+        cppname "XMaxThreshold"
+        label   "X Max"
         type    log
         default { "0" }
-        disablewhen "{ xp == 0 }"
+        disablewhen "{ xMax == 0 }"
         range   { 1e-06 10 }
     }
     parm {
-        name    "yn"
-        cppname "YN"
-        label   "YN"
+        name    "yMin"
+        cppname "YMin"
+        label   "YMin"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "ynThreshold"
-        cppname "YNThreshold"
-        label   "Y Negative"
+        name    "yMinThreshold"
+        cppname "YMinThreshold"
+        label   "Y Min"
         type    log
         default { "0" }
-        disablewhen "{ yn == 0 }"
+        disablewhen "{ yMin == 0 }"
         range   { 1e-06 10 }
     }
     parm {
-        name    "yp"
-        cppname "YP"
-        label   "YP"
+        name    "yMax"
+        cppname "YMax"
+        label   "YMax"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "ypThreshold"
-        cppname "YPThreshold"
-        label   "Y Positive"
+        name    "yMaxThreshold"
+        cppname "YMaxThreshold"
+        label   "Y Max"
         type    log
         default { "0" }
-        disablewhen "{ yp == 0 }"
+        disablewhen "{ yMax == 0 }"
         range   { 1e-06 10 }
     }
     parm {
-        name    "zn"
-        cppname "ZN"
-        label   "ZN"
+        name    "zMin"
+        cppname "ZMin"
+        label   "ZMin"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "znThreshold"
-        cppname "ZNThreshold"
-        label   "Z Negative"
+        name    "zMinThreshold"
+        cppname "ZMinThreshold"
+        label   "Z Min"
         type    log
         default { "0" }
-        disablewhen "{ zn == 0 }"
+        disablewhen "{ zMin == 0 }"
         range   { 1e-06 10 }
     }
     parm {
-        name    "zp"
-        cppname "ZP"
-        label   "ZP"
+        name    "zMax"
+        cppname "ZMax"
+        label   "ZMax"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
     parm {
-        name    "zpThreshold"
-        cppname "ZPThreshold"
-        label   "Z Positive"
+        name    "zMaxThreshold"
+        cppname "ZMaxThreshold"
+        label   "Z Max"
         type    log
         default { "0" }
-        disablewhen "{ zp == 0 }"
+        disablewhen "{ zMax == 0 }"
         range   { 1e-06 10 }
     }
     // parm {
@@ -393,19 +393,27 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         if (sopparms.get##NAME_UPPER())                                                     \
             pointInBBox.set##NAME_UPPER(sopparms.get##NAME_UPPER##Threshold());             \
 
-    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(XN)
-    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(XP)
-    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(YN)
-    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(YP)
-    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(ZN)
-    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(ZP)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(XMin)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(XMax)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(YMin)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(YMax)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(ZMin)
+    SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(ZMax)
     
 #undef SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION
-
     
-    pointInBBox.setComputeParm(sopparms.getReverseGroup(), groupMergeType, sopparms.getDelElement(),
+    // pointInBBox.enlargeBBox.setBounds(
+    //     sopparms.getXMinThreshold(),
+    //     sopparms.getYMinThreshold(),
+    //     sopparms.getZMinThreshold(),
+    //     sopparms.getXMaxThreshold(),
+    //     sopparms.getYMaxThreshold(),
+    //     sopparms.getZMaxThreshold());
+    
+    pointInBBox.setComputeParm(sopparms.getDelElement(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
+    pointInBBox.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
 
     pointInBBox.computeAndBumpDataIdsForAddOrRemove();
 

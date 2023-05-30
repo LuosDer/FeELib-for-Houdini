@@ -29,6 +29,18 @@ public:
 
     ~GFE_SetGroup(){}
 
+	
+    void
+        setComputeParm(
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
+            const bool reverseGroup = false
+        )
+    {
+        this->groupMergeType = groupMergeType;
+        this->reverseGroup = reverseGroup;
+    }
+
+    
     GFE_SetGroup& operator=(GA_Group* const inGroupPtr)
     {
         if (inGroupPtr->isElementGroup())
@@ -140,8 +152,8 @@ public:
     
 public:
     
-    bool reverseGroup = false;
     GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace;
+    bool reverseGroup = false;
 
     
 private:
