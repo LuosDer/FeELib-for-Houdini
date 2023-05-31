@@ -101,7 +101,7 @@ public:
     
     
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
-    SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff)
+    SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff) const
     {
         if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
         {
@@ -133,15 +133,13 @@ public:
     }
 
 
-    bool isPrimitiveLooped(const GA_Offset primoff)
+    SYS_FORCE_INLINE bool isPrimitiveClosedLooped(const GA_Offset primoff) const
+    { return getPrimitiveClosedFlag(primoff) || isPrimitiveLooped(primoff); }
+    
+    SYS_FORCE_INLINE bool isPrimitiveLooped(const GA_Offset primoff) const
     {
-        if (getPrimitiveClosedFlag(primoff))
-            return true;
-
-        const GA_Offset primpoint0 = getPrimitivePointOffset(primoff, 0);
         const GA_Offset primpoint1 = getPrimitivePointOffset(primoff, getPrimitiveVertexCount(primoff)-1);
-
-        return primpoint0 == primpoint1;
+        return primpoint1 == getPrimitivePointOffset(primoff, 0);
     }
 
     SYS_FORCE_INLINE GA_Range getPrimitiveRange(const GA_PrimitiveGroup* group = nullptr, const bool reverse = false) const
