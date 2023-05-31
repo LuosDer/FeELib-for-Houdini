@@ -4,9 +4,8 @@
 #ifndef __GFE_AttributeArray_h__
 #define __GFE_AttributeArray_h__
 
-//#include "GFE/GFE_AttributeArray.h"
+#include "GFE/GFE_AttributeArray.h"
 
-#include "GA/GA_Detail.h"
 #include "GA/GA_Detail.h"
 
 
@@ -1064,6 +1063,9 @@ public:
 
 
     SYS_FORCE_INLINE GA_Group* &operator[](const size_t i)
+    { return groupArray[i]; }
+
+    SYS_FORCE_INLINE GA_Group* const &operator[](const size_t i) const
     { return groupArray[i]; }
 
     SYS_FORCE_INLINE bool isEmpty() const

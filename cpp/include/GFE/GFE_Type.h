@@ -4,11 +4,10 @@
 #ifndef __GFE_Type_h__
 #define __GFE_Type_h__
 
-//#include "GFE/GFE_Type.h"
+#include "GFE/GFE_Type.h"
 
 #include "GA/GA_Detail.h"
 
-//#include "limits"
 
 
 #define GFE_MAX_LOOP_COUNT 1e10
@@ -115,7 +114,17 @@ namespace GFE_Type {
 
 #endif
 
+
+template<typename VECTOR_T>
+SYS_FORCE_INLINE static VECTOR_T getZeroVector()
+{
+    if constexpr(VECTOR_T::tuple_size == 4)
+        return VECTOR_T(0, 0, 0, 0);
+    else
+        return VECTOR_T(0.0);
+}
     
+
 SYS_FORCE_INLINE static bool isPacked(const int i)
 { return i >= 25 && i <= 27; }
 

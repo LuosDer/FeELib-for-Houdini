@@ -58,7 +58,7 @@ static const char *theDsFile = R"THEDSFILE(
     }
     parm {
         name    "preFusePoint"
-        name    "PreFusePoint"
+        cppname "PreFusePoint"
         label   "preFusePoint"
         type    toggle
         default { "0" }
@@ -104,6 +104,27 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+
+    parm {
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
+        type    ordinal
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
+        }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -196,6 +217,38 @@ SOP_FeE_GroupOneNebPoint_1_0::cookVerb() const
 
 
 
+static GA_GroupType
+sopGroupType(SOP_FeE_GroupOneNebPoint_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_GroupOneNebPoint_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+static GFE_GroupMergeType
+sopGroupMergeType(SOP_FeE_GroupOneNebPoint_1_0Parms::GroupMergeType groupMergeType)
+{
+    using namespace SOP_FeE_GroupOneNebPoint_1_0Enums;
+    switch (groupMergeType)
+    {
+    case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
+    case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
+    case GroupMergeType::INTERSECT:   return GFE_GroupMergeType::Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GFE_GroupMergeType::Subtract;   break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
+    return GFE_GroupMergeType::Replace;
+}
+
+
 void
 SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -207,6 +260,9 @@ SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
 
     outGeo0.replaceWith(inGeo0);
 
+    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -217,10 +273,13 @@ SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
 
     GFE_GroupOneNebPoint groupOneNebPoint(outGeo0, cookparms);
 
-    groupOneNebPoint.setComputeParm(sopparms.getPreFusePoint(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    groupOneNebPoint.setComputeParm(sopparms.getPreFusePoint(), sopparms.getFuseDist(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    groupOneNebPoint.groupParser.setGroup(sopparms.getGroup());
-    groupOneNebPoint.findOrCreateGroup(false, sopparms.getOneNebGroupName());
+    
+    groupOneNebPoint.setGroup.setComputeParm(groupMergeType, sopparms.getGroup());
+    groupOneNebPoint.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupOneNebPoint.findOrCreatePointGroup(false, sopparms.getOneNebGroupName());
 
     groupOneNebPoint.computeAndBumpDataId();
 

@@ -110,7 +110,7 @@ public:
         this->minGrainSize = minGrainSize;
     }
 
-    SYS_FORCE_INLINE void setKernel(const int kernel)
+    SYS_FORCE_INLINE void setKernel(const uint8 kernel)
     { this->kernel = kernel; }
 
 
@@ -1671,7 +1671,7 @@ private:
     GFE_GroupParser vertexEdgeSeamGroup;
     GFE_GroupParser edgeSeamGroup;
 
-    int kernel = 0;
+    uint8 kernel = 0;
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
 

@@ -167,14 +167,14 @@ SOP_FeE_RestDir2D_1_0::buildTemplates()
 }
 
 
-const UT_StringHolder SOP_FeE_RestDir2D_1_0::theSOPTypeName("FeE::groupByPolyWinding::1.0"_sh);
+const UT_StringHolder SOP_FeE_RestDir2D_1_0::theSOPTypeName("FeE::restDir2D::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_RestDir2D_1_0::theSOPTypeName,
-        "FeE Group by Polygon Winding",
+        "FeE Rest Direction 2D",
         SOP_FeE_RestDir2D_1_0::myConstructor,
         SOP_FeE_RestDir2D_1_0::buildTemplates(),
         1,
@@ -253,17 +253,17 @@ sopGroupType(SOP_FeE_RestDir2D_1_0Parms::GroupType parmgrouptype)
 }
 
 
-static GFE_RestDir2D_Method
+static GFE_RestDir2DMethod
 sopMethod(SOP_FeE_RestDir2D_1_0Parms::RestDir2DMethod parmgrouptype)
 {
     using namespace SOP_FeE_RestDir2D_1_0Enums;
     switch (parmgrouptype)
     {
-    case RestDir2DMethod::AVGNORMAL:   return GFE_RestDir2D_Method::AvgNormal;   break;
-    case RestDir2DMethod::HOUOBB:      return GFE_RestDir2D_Method::HouOBB;   break;
+    case RestDir2DMethod::AVGNORMAL:   return GFE_RestDir2DMethod::AvgNormal;   break;
+    case RestDir2DMethod::HOUOBB:      return GFE_RestDir2DMethod::HouOBB;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled RestDir2DMethod!");
-    return GFE_RestDir2D_Method::AvgNormal;
+    return GFE_RestDir2DMethod::AvgNormal;
 }
 
 
@@ -302,7 +302,7 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_NormalSearchOrder normalSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
-    const GFE_RestDir2D_Method method = sopMethod(sopparms.getRestDir2DMethod());
+    const GFE_RestDir2DMethod method = sopMethod(sopparms.getRestDir2DMethod());
 
     
     UT_AutoInterrupt boss("Processing");
@@ -314,9 +314,10 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GFE_RestDir2D restDir2D(outGeo0, &cookparms);
     restDir2D.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    restDir2D.getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_DETAIL, GA_STORE_INVALID, restDir2DAttribName);
+    //restDir2D.getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_DETAIL, GA_STORE_INVALID, restDir2DAttribName);
+    restDir2D.findOrCreateDir(false, GA_STORE_INVALID, restDir2DAttribName);
 
-    if (method == GFE_RestDir2D_Method::AvgNormal)
+    if (method == GFE_RestDir2DMethod::AvgNormal)
     {
         restDir2D.getOutAttribArray().findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttribName());
         //restDir2D.normal3D.setComputeParm();

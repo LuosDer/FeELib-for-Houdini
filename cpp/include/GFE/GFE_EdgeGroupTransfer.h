@@ -4,7 +4,7 @@
 #ifndef __GFE_EdgeGroupTransfer_h__
 #define __GFE_EdgeGroupTransfer_h__
 
-//#include "GFE/GFE_EdgeGroupTransfer.h"
+#include "GFE/GFE_EdgeGroupTransfer.h"
 
 #include "GFE/GFE_GeoFilter.h"
 #include "UFE/UFE_SplittableString.h"
@@ -33,7 +33,6 @@ public:
     setComputeParm(
         const bool useSnapDist = true,
         const fpreal snapDist = 0.001,
-        const bool reverseOutGroup = false,
         const bool outAsVertexGroup = false,
         const exint subscribeRatio = 64,
         const exint minGrainSize = 1024
@@ -42,7 +41,6 @@ public:
         setHasComputed();
         this->useSnapDist      = useSnapDist;
         this->snapDist         = snapDist;
-        this->reverseOutGroup  = reverseOutGroup;
         this->outAsVertexGroup = outAsVertexGroup;
         this->subscribeRatio   = subscribeRatio;
         this->minGrainSize     = minGrainSize;
@@ -182,9 +180,9 @@ void vertexEdgeGroupTransfer()
                                      vertexEdgeGroup->getName();
     const bool detached = !GFE_Type::isPublicAttribName(newName);
 
-    GA_SplittableRange geoRefSplittableRange(geoRef0->getVertexRange(vertexEdgeGroup));
+    const GA_SplittableRange geoRefSplittableRange(geoRef0->getVertexRange(vertexEdgeGroup));
     
-    if ( outAsVertexGroup )
+    if (outAsVertexGroup)
     {
         newVertexEdgeGroup = getOutGroupArray().findOrCreateVertex(detached, newName);
         newVertexEdgeGroup->clear();

@@ -75,32 +75,25 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
+        name    "posAttrib"
+        cppname "PosAttrib"
+        label   "Pos Attrib"
+        type    string
+        default { "P" }
+    }
+    parm {
+        name    "posAttribRef"
+        cppname "PosAttribRef"
+        label   "Pos Attrib Ref"
+        type    string
+        default { "P" }
+    }
+    parm {
         name    "groupName"
         cppname "GroupName"
         label   "Group Name"
         type    string
         default { "pointInBBox" }
-    }
-    parm {
-        name    "groupMergeType"
-        cppname "GroupMergeType"
-        label   "Group Merge Type"
-        type    ordinal
-        default { "replace" }
-        menu {
-            "replace"   "Replace Existing"
-            "union"     "Union with Existing"
-            "intersect" "Intersect with Existing"
-            "subtract"  "Subtract from Existing"
-        }
-    }
-    parm {
-        name    "intersectNum"
-        cppname "IntersectNum"
-        label   "Intersect Num"
-        type    integer
-        default { "0" }
-        range   { 0! 2! }
     }
     parm {
         name    "xMin"
@@ -118,7 +111,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0" }
         disablewhen "{ xMin == 0 }"
-        range   { 1e-06 10 }
+        range   { 1e-03 10 }
     }
     parm {
         name    "xMax"
@@ -136,7 +129,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0" }
         disablewhen "{ xMax == 0 }"
-        range   { 1e-06 10 }
+        range   { 1e-03 10 }
     }
     parm {
         name    "yMin"
@@ -154,7 +147,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0" }
         disablewhen "{ yMin == 0 }"
-        range   { 1e-06 10 }
+        range   { 1e-03 10 }
     }
     parm {
         name    "yMax"
@@ -172,7 +165,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0" }
         disablewhen "{ yMax == 0 }"
-        range   { 1e-06 10 }
+        range   { 1e-03 10 }
     }
     parm {
         name    "zMin"
@@ -190,7 +183,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0" }
         disablewhen "{ zMin == 0 }"
-        range   { 1e-06 10 }
+        range   { 1e-03 10 }
     }
     parm {
         name    "zMax"
@@ -208,18 +201,39 @@ static const char *theDsFile = R"THEDSFILE(
         type    log
         default { "0" }
         disablewhen "{ zMax == 0 }"
-        range   { 1e-06 10 }
+        range   { 1e-03 10 }
     }
-    // parm {
-    //     name    "numingroup_min"
-    //     cppname "SubscribeRatio"
-    //     label   "Num in Group Min"
-    //     type    integer
-    //     default { "1" }
-    //     disablewhen "{ onlyfull == 1 }"
-    //     range   { 1! 10 }
-    // }
+    parm {
+        name    "numInBoundMin"
+        cppname "NumInBoundMin"
+        label   "Num in Bound Min"
+        type    integer
+        default { "1" }
+        range   { 1! 6! }
+    }
 
+    //parm {
+    //    name    "intersectNum"
+    //    cppname "IntersectNum"
+    //    label   "Intersect Num"
+    //    type    integer
+    //    default { "0" }
+    //    range   { 0! 2! }
+    //}
+
+    parm {
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
+        type    ordinal
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
+        }
+    }
     parm {
         name    "reverseGroup"
         cppname "ReverseGroup"
@@ -262,7 +276,8 @@ SOP_FeE_PointInBBox_2_0::buildTemplates()
     if (templ.justBuilt())
     {
         //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::allTextureCoordMenu);
+        templ.setChoiceListPtr("posAttrib"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("posAttribRef"_sh, &SOP_Node::pointAttribReplaceMenu);
         
     }
     return templ.templates();
@@ -345,6 +360,23 @@ sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupType parmGroupType)
 }
 
 
+static GA_GroupType
+sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupTypeRef parmGroupType)
+{
+    using namespace SOP_FeE_PointInBBox_2_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupTypeRef::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupTypeRef::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupTypeRef::POINT:     return GA_GROUP_POINT;      break;
+    case GroupTypeRef::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupTypeRef::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
 static GFE_GroupMergeType
 sopGroupMergeType(SOP_FeE_PointInBBox_2_0Parms::GroupMergeType groupMergeType)
 {
@@ -375,6 +407,7 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupTypeRef = sopGroupType(sopparms.getGroupTypeRef());
     
     
     UT_AutoInterrupt boss("Processing");
@@ -387,7 +420,6 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     
     GFE_PointInBBox pointInBBox(outGeo0, inGeo1, cookparms);
     
-    pointInBBox.groupParser.setGroup(groupType, sopparms.getGroup());
     
 #define SOP_FeE_PointInBBox_2_0_GETFUN_SPECILIZATION(NAME_UPPER)                            \
         if (sopparms.get##NAME_UPPER())                                                     \
@@ -410,12 +442,18 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //     sopparms.getYMaxThreshold(),
     //     sopparms.getZMaxThreshold());
     
-    pointInBBox.setComputeParm(sopparms.getDelElement(),
+    pointInBBox.groupParser.setGroup(groupType, sopparms.getGroup());
+    pointInBBox.groupParserBound.setGroup(groupTypeRef, sopparms.getGroupRef());
+    
+    pointInBBox.setComputeParm(sopparms.getNumInBoundMin(), sopparms.getDelElement(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    pointInBBox.findOrCreatePointGroup(false, sopparms.getGroupName());
     
     pointInBBox.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
 
-    pointInBBox.computeAndBumpDataIdsForAddOrRemove();
+    pointInBBox.computeAndBumpDataId();
+    pointInBBox.delOrVisualizeGroup();
 
     
     

@@ -110,20 +110,21 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_EdgeGroupTransfer_3_0
     SOP_FeE_Enumerate_1_0
     SOP_FeE_ExtendCurveStraight_1_0
+    SOP_FeE_ExtremeElem_1_0
     SOP_FeE_ExtremePrim_1_0
     SOP_FeE_ExtrudeBorder2D_1_0
     SOP_FeE_ExtractPoint_1_0
     SOP_FeE_FlatEdge_2_0
     SOP_FeE_GroupAttribBoundary_1_0
-    SOP_FeE_GroupByDir_2_0
-    SOP_FeE_GroupByMeshWinding_1_0
-    SOP_FeE_GroupByPolyWinding_1_0
-    SOP_FeE_GroupClosedSharedPoint_2_0
     SOP_FeE_GroupCombine_1_0
     SOP_FeE_GroupCurveEnds_2_0
     SOP_FeE_GroupExpand_1_0
+    SOP_FeE_GroupLoopedPrim_1_0
+    SOP_FeE_GroupMeshByWinding_1_0
     SOP_FeE_GroupNewEdge_1_0
     SOP_FeE_GroupOneNebPoint_1_0
+    SOP_FeE_GroupPolyByDir_1_0
+    SOP_FeE_GroupPolyByWinding_1_0
     SOP_FeE_GroupReverse_1_0
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
@@ -155,6 +156,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_SmallPiece_1_0
     # SOP_FeE_Split_2_0
     SOP_FeE_SplitPoint_1_0
+    SOP_FeE_Triangulate_1_0
     SOP_FeE_Triangulate2D_2_0
     SOP_FeE_UnpackByGroup_1_0
     SOP_FeE_UVGridify_1_0

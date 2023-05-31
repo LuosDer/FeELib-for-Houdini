@@ -66,7 +66,7 @@ public:
         this->guaranteeNoVertexReference = guaranteeNoVertexReference;
     }
 
-    SYS_FORCE_INLINE void setKernel(const char kernel)
+    SYS_FORCE_INLINE void setKernel(const uint8 kernel)
     { this->kernel = kernel; }
     
 
@@ -127,13 +127,9 @@ private:
 
         pointGroup = groupParser.getPointGroup();
         if (geoSrc)
-        {
             extractPointWithSource();
-        }
         else
-        {
             extractPoint();
-        }
         
         if (delInputGroup)
             groupParser.delGroup();
@@ -146,49 +142,31 @@ private:
     // can not use in parallel unless for each GA_Detail
     void extractPointWithSource()
     {
-        if (pointGroup)
-        {
-            if (pointGroup->isEmpty())
-            {
-                if (reverseGroup)
-                {
-                    geo->replaceWithPoints(*geoSrc);
-                    return;
-                }
-                else
-                {
-                    geo->clearElement();
-                    return;
-                }
-            }
-            else if (pointGroup->entries() == pointGroup->getIndexMap().indexSize())
-            {
-                if (reverseGroup)
-                {
-                    geo->clearElement();
-                    return;
-                }
-                else
-                {
-                    geo->replaceWithPoints(*geoSrc);
-                    return;
-                }
-            }
-        }
-        else
+        if (!pointGroup)
         {
             if (reverseGroup)
-            {
-                geo->replaceWithPoints(*geoSrc);
-                return;
-            }
-            else
-            {
                 geo->clearElement();
-                return;
-            }
+            else
+                geo->replaceWithPoints(*geoSrc);
+            return;
         }
-
+        if (pointGroup->isEmpty())
+        {
+            if (reverseGroup)
+                geo->replaceWithPoints(*geoSrc);
+            else
+                geo->clearElement();
+            return;
+        }
+        if (pointGroup->entries() == pointGroup->getIndexMap().indexSize())
+        {
+            if (reverseGroup)
+                geo->clearElement();
+            else
+                geo->replaceWithPoints(*geoSrc);
+            return;
+        }
+        
         switch (kernel)
         {
         case 0:
@@ -250,46 +228,25 @@ private:
     // can not use in parallel unless for each GA_Detail
     void extractPoint()
     {
-        if (pointGroup)
-        {
-            if (pointGroup->isEmpty())
-            {
-                if (reverseGroup)
-                {
-                    return;
-                }
-                else
-                {
-                    geo->clearElement();
-                    return;
-                }
-            }
-            else if (pointGroup->entries() == pointGroup->getIndexMap().indexSize())
-            {
-                if (reverseGroup)
-                {
-                    geo->clearElement();
-                    return;
-                }
-                else
-                {
-                    return;
-                }
-            }
-        }
-        else
+        if (!pointGroup)
         {
             if (reverseGroup)
-            {
-                return;
-            }
-            else
-            {
                 geo->clearElement();
-                return;
-            }
+            return;
         }
-
+        if (pointGroup->isEmpty())
+        {
+            if (!reverseGroup)
+                geo->clearElement();
+            return;
+        }
+        if (pointGroup->entries() == pointGroup->getIndexMap().indexSize())
+        {
+            if (reverseGroup)
+                geo->clearElement();
+            return;
+        }
+        
         switch (kernel)
         {
         case 0:
@@ -352,7 +309,7 @@ private:
     //GA_PointGroup* pointGroupNonConst = nullptr;
     //bool hasSetGroup = false;
 
-    char kernel = 0;
+    uint8 kernel = 0;
 
     //exint subscribeRatio = 64;
     //exint minGrainSize = 1024;
