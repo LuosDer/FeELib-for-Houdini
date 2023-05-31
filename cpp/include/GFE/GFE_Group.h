@@ -40,6 +40,16 @@ public:
         this->reverseGroup = reverseGroup;
     }
 
+    void
+        setComputeParm(
+            const bool reverseGroup = false,
+            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace
+        )
+    {
+        this->groupMergeType = groupMergeType;
+        this->reverseGroup = reverseGroup;
+    }
+
     
     GFE_SetGroup& operator=(GA_Group* const inGroupPtr)
     {

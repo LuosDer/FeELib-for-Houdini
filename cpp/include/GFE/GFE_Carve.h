@@ -24,6 +24,14 @@ enum class GFE_CarveSpace {
 };
 
 
+enum class GFE_CarveType {
+    Start,
+    End,
+    Both,
+};
+
+
+
 
 
 
@@ -64,9 +72,11 @@ private:
     GA_Attribute* startCarveUAttrib_nonConst = nullptr;
     GA_Attribute* endCarveUAttrib_nonConst = nullptr;
     
-    GA_PointGroupUPtr destroyPointGroupUPtr;
-    GA_PointGroup* destroyPointGroup;
+    GA_PointGroupUPtr carvePointGroupUPtr;
+    GA_PointGroup* carvePointGroup;
 
+    GA_PrimitiveGroupUPtr carvePrimGroupUPtr;
+    GA_PrimitiveGroup* carvePrimGroup;
 
     GU_DetailHandle geoOrigin_h;
     const GA_Detail* geoOrigin;
@@ -78,16 +88,18 @@ public:
     //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_Carve(
-        GA_Detail* const geo,
+        GA_Detail& inGeo,
         //const GA_Detail* const geoOrigin = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
+        : GFE_AttribFilter(inGeo, cookparms)
         , groupParser_carveStart(geo, groupParser.getGOP(), cookparms)
         , groupParser_carveEnd(geo, groupParser.getGOP(), cookparms)
     {
-        destroyPointGroupUPtr = geo->createDetachedPointGroup();
-        destroyPointGroup = destroyPointGroupUPtr.get();
+        carvePointGroupUPtr = geo->createDetachedPointGroup();
+        carvePointGroup = carvePointGroupUPtr.get();
+        carvePrimGroupUPtr = geo->createDetachedPrimitiveGroup();
+        carvePrimGroup = carvePrimGroupUPtr.get();
 
         //if (geoOrigin)
         //{
@@ -104,7 +116,6 @@ public:
         //}
     }
 
-
     ~GFE_Carve()
     {
         if (delStartCarveUAttrib && startCarveUAttrib_nonConst)
@@ -120,7 +131,7 @@ public:
     SYS_FORCE_INLINE void setGroup( const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
     { groupParser.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
+    SYS_FORCE_INLINE void setGroup(const UT_StringRef& primGroupName = "")
     { groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);}
 
     SYS_FORCE_INLINE void setCarveStartGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
@@ -129,16 +140,16 @@ public:
     SYS_FORCE_INLINE void setCarveEndGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
     { groupParser_carveEnd.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE void setCarveStartGroup(const UT_StringHolder& primGroupName = "")
+    SYS_FORCE_INLINE void setCarveStartGroup(const UT_StringRef& primGroupName = "")
     { groupParser_carveStart.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
 
-    SYS_FORCE_INLINE void setCarveEndGroup(const UT_StringHolder& primGroupName = "")
+    SYS_FORCE_INLINE void setCarveEndGroup(const UT_StringRef& primGroupName = "")
     { groupParser_carveEnd.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
 
-    SYS_FORCE_INLINE void createSrcPrimAttrib(const UT_StringHolder& attribName = "srcPrim", const GA_Storage storage = GA_STORE_INVALID)
+    SYS_FORCE_INLINE void createSrcPrimAttrib(const UT_StringRef& attribName = "srcPrim", const GA_Storage storage = GA_STORE_INVALID)
     { getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false); }
 
-    SYS_FORCE_INLINE void createSrcPointAttrib(const UT_StringHolder& attribName = "srcPoint", const GA_Storage storage = GA_STORE_INVALID)
+    SYS_FORCE_INLINE void createSrcPointAttrib(const UT_StringRef& attribName = "srcPoint", const GA_Storage storage = GA_STORE_INVALID)
     { getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(-1), false); }
 
     void
@@ -148,7 +159,6 @@ public:
             const bool keepOutsideEnd = false,
             const bool keepInside = true,
             const bool absCarveUEnd = false
-            
         )
     {
         setHasComputed();
@@ -164,21 +174,17 @@ public:
     {
         const bool IsLocal = carveSpace == GFE_CarveSpace::LocalAverage || carveSpace == GFE_CarveSpace::LocalArcLength;
         const fpreal carveU = IsLocal ? carveULocal : carveUWorld;
-        if (IsEnd)
-        {
+        if constexpr(IsEnd)
             endCarveU = carveU;
-        }
         else
-        {
             startCarveU = carveU;
-        }
     }
     
-    void setUVAttrib(const UT_StringHolder& customCarveUVAttribName = "uv")
+    void setUVAttrib(const UT_StringRef& customCarveUVAttribName = "uv")
     {
         setHasComputed();
         if (carveSpace == GFE_CarveSpace::CustomAttrib)
-            uvAttrib = GFE_Attribute::findUVAttributePointVertex(geo, GA_ATTRIB_INVALID, customCarveUVAttribName);
+            uvAttrib = GFE_Attribute::findUVAttributePointVertex(*geo, GA_ATTRIB_INVALID, customCarveUVAttribName);
         else
             uvAttrib = nullptr;
     }
@@ -202,7 +208,7 @@ public:
         setStartCarveUAttrib(static_cast<const GA_Attribute*>(carveUAttrib), delCarveUAttrib);
     }
 
-    void setStartCarveUAttrib(const UT_StringHolder& carveUAttribName = "startCarveU", const bool delCarveUAttrib = false)
+    void setStartCarveUAttrib(const UT_StringRef& carveUAttribName = "startCarveU", const bool delCarveUAttrib = false)
     {
         startCarveUAttrib_nonConst = geo->findPrimitiveAttribute(carveUAttribName);
         if (!startCarveUAttrib_nonConst)
@@ -245,7 +251,7 @@ public:
     }
 
     
-    void setEndCarveUAttrib(const UT_StringHolder& carveUAttribName = "endCarveU", const bool delCarveUAttrib = false)
+    void setEndCarveUAttrib(const UT_StringRef& carveUAttribName = "endCarveU", const bool delCarveUAttrib = false)
     {
         endCarveUAttrib_nonConst = geo->findPrimitiveAttribute(carveUAttribName);
         if (!endCarveUAttrib_nonConst)
@@ -266,15 +272,9 @@ public:
         }
     }
 
-
-
-
-
-
-    SYS_FORCE_INLINE virtual void bumpDataIdsForAddOrRemove() const override
-    {
-        geo->bumpDataIdsForAddOrRemove(true, true, true);
-    }
+    
+    // SYS_FORCE_INLINE virtual void bumpDataIdsForAddOrRemove() const override
+    // { geo->bumpDataIdsForAddOrRemove(true, true, true); }
 
 
 
@@ -284,30 +284,19 @@ private:
     virtual bool
         computeCore() override
     {
-
         if (groupParser.isEmpty())
             return true;
 
+        GFE_CurveUV curveUV(geo, cookparms);
         if (carveSpace != GFE_CarveSpace::CustomAttrib)
         {
-            GFE_CurveUV curveUV(geo, cookparms);
             switch (carveSpace)
             {
-            case GFE_CarveSpace::LocalAverage:
-                curveUV.curveUVMethod = GFE_CurveUVMethod::LocalAverage;
-                break;
-            case GFE_CarveSpace::LocalArcLength:
-                curveUV.curveUVMethod = GFE_CurveUVMethod::LocalArcLength;
-                break;
-            case GFE_CarveSpace::WorldAverage:
-                curveUV.curveUVMethod = GFE_CurveUVMethod::WorldAverage;
-                break;
+            case GFE_CarveSpace::LocalAverage:   curveUV.curveUVMethod = GFE_CurveUVMethod::LocalAverage;   break;
+            case GFE_CarveSpace::LocalArcLength: curveUV.curveUVMethod = GFE_CurveUVMethod::LocalArcLength; break;
+            case GFE_CarveSpace::WorldAverage:   curveUV.curveUVMethod = GFE_CurveUVMethod::WorldAverage;   break;
             case GFE_CarveSpace::WorldArcLength:
-                curveUV.curveUVMethod = GFE_CurveUVMethod::WorldArcLength;
-                break;
-            default:
-                curveUV.curveUVMethod = GFE_CurveUVMethod::WorldArcLength;
-                break;
+            default:                             curveUV.curveUVMethod = GFE_CurveUVMethod::WorldArcLength; break;
             }
             curveUV.setGroup(groupParser.getPrimitiveGroup());
             uvAttrib = curveUV.findOrCreateUV(true, GA_ATTRIB_VERTEX, GA_STORE_INVALID);
@@ -316,7 +305,7 @@ private:
         if (!uvAttrib)
             return false;
 
-        uvAttrib_h.bind(uvAttrib);
+        uvAttrib_h = uvAttrib;
 
         carve();
 
@@ -615,16 +604,15 @@ private:
 
 
 
-    template<int CARVE_TYPE>
+    template<GFE_CarveType CARVE_TYPE>
     void
         carve()
     {
-        const bool carveSpace_isWorld = carveSpace == GFE_CarveSpace::CustomAttrib ||
-                                        carveSpace == GFE_CarveSpace::WorldAverage ||
+        const bool carveSpace_isWorld = carveSpace == GFE_CarveSpace::CustomAttrib  ||
+                                        carveSpace == GFE_CarveSpace::WorldAverage  ||
                                         carveSpace == GFE_CarveSpace::WorldArcLength;
 
-        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange, [this, carveSpace_isWorld](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, carveSpace_isWorld](const GA_SplittableRange& r)
         {
             fpreal domainUMin, domainUMax, uvmax;
             GA_Offset primvtx0, primpt0, primvtx1, primpt1;
@@ -633,52 +621,47 @@ private:
             {
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
-                    GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-                    if (CARVE_TYPE != 1)
+                    const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+
+                    if constexpr(CARVE_TYPE != GFE_CarveType::End)
                     {
                         primvtx0 = geo->getPrimitiveVertexOffset(primoff, 0);
                         primpt0 = geo->vertexPrimitive(primvtx0);
                     }
-                    if (CARVE_TYPE == 0)
+                    if constexpr(CARVE_TYPE == GFE_CarveType::Start)
                     {
                         if (!groupParser_carveStart.getPrimitiveGroup()->contains(primoff))
                         {
-                            i@outgrp = 1;
-                            return;
+                            carvePrimGroup->setElement(primoff, true);
+                            continue;
                         }
                     }
 
-                    if (CARVE_TYPE != 0) {
+                    if constexpr(CARVE_TYPE != GFE_CarveType::Start)
+                    {
                         primvtx1 = geo->getPrimitiveVertexOffset(primoff, numvtx-1);
                         primpt1 = geo->vertexPrimitive(primvtx0);
                     }
 
-                    if (CARVE_TYPE == 1) {
+                    if constexpr(CARVE_TYPE == GFE_CarveType::End)
+                    {
                         if (!groupParser_carveEnd.getPrimitiveGroup()->contains(primoff))
                         {
-                            i@outgrp = 1;
-                            return;
+                            carvePrimGroup->setElement(primoff, true);
+                            continue;
                         }
                     }
 
-                    if (CARVE_TYPE != 1)
+                    if constexpr(CARVE_TYPE != GFE_CarveType::End)
                     {
                         if (startCarveUAttrib)
                         {
                             switch (startCarveUAttrib->getOwner())
                             {
-                            case GA_ATTRIB_PRIMITIVE:
-                                domainUMin = startCarveU_h.get(primoff);
-                                break;
-                            case GA_ATTRIB_POINT:
-                                domainUMin = startCarveU_h.get(primpt0);
-                                break;
-                            case GA_ATTRIB_VERTEX:
-                                domainUMin = startCarveU_h.get(primvtx0);
-                                break;
-                            default:
-                                UT_ASSERT_MSG(0, "unhandled carveU Attrib class");
-                                break;
+                            case GA_ATTRIB_PRIMITIVE: domainUMin = startCarveU_h.get(primoff);  break;
+                            case GA_ATTRIB_POINT:     domainUMin = startCarveU_h.get(primpt0);  break;
+                            case GA_ATTRIB_VERTEX:    domainUMin = startCarveU_h.get(primvtx0); break;
+                            default: UT_ASSERT_MSG(0, "unhandled carveU Attrib class");         break;
                             }
                         }
                         else
@@ -686,61 +669,51 @@ private:
                             domainUMin = startCarveU;
                         }
 
-                        if (CARVE_TYPE == 2) {
+                        if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                        {
                             if (carveSpace_isWorld)
                             {
                                 switch (uvAttrib->getOwner())
                                 {
-                                case GA_ATTRIB_POINT:
-                                    uvmax = uvAttrib_h.get(primpt1);
-                                    break;
-                                case GA_ATTRIB_VERTEX:
-                                    uvmax = uvAttrib_h.get(primvtx1);
-                                    break;
-                                default:
-                                    UT_ASSERT_MSG(0, "unhandled uv class");
-                                    break;
+                                case GA_ATTRIB_POINT:  uvmax = uvAttrib_h.get(primpt1);  break;
+                                case GA_ATTRIB_VERTEX: uvmax = uvAttrib_h.get(primvtx1); break;
+                                default: UT_ASSERT_MSG(0, "unhandled uv class");         break;
                                 }
 
-                                if (groupParser_carveStart.getPrimitiveGroup()->contains(primoff) && domainUMin >= uvmax) {
-                                    i@outgrp = 1;
-                                    return;
+                                if (groupParser_carveStart.getPrimitiveGroup()->contains(primoff) && domainUMin >= uvmax)
+                                {
+                                    carvePrimGroup->setElement(primoff, true);
+                                    continue;
                                 }
                             }
                             else
                             {
                                 uvmax = 1;
-                                if (groupParser_carveStart.getPrimitiveGroup()->contains(primoff) && domainUMin >= 1) {
-                                    i@outgrp = 1;
-                                    return;
+                                if (groupParser_carveStart.getPrimitiveGroup()->contains(primoff) && domainUMin >= 1)
+                                {
+                                    carvePrimGroup->setElement(primoff, true);
+                                    continue;
                                 }
                             }
                         }
                         else if (domainUMin <= 0)
                         {
-                            i@outgrp = 1;
-                            return;
+                            carvePrimGroup->setElement(primoff, true);
+                            continue;
                         }
                     }
                 
 
 
-                    if (CARVE_TYPE != 0) {
+                    if constexpr(CARVE_TYPE != GFE_CarveType::Start) {
                         if (endCarveUAttrib)
                         {
                             switch (endCarveUAttrib->getOwner())
                             {
-                            case GA_ATTRIB_PRIMITIVE:
-                                domainUMax = endCarveU_h.get(primoff);
-                                break;
-                            case GA_ATTRIB_POINT:
-                                domainUMax = endCarveU_h.get(primpt0);
-                                break;
-                            case GA_ATTRIB_VERTEX:
-                                domainUMax = endCarveU_h.get(primvtx0);
-                                break;
-                            default:
-                                break;
+                            case GA_ATTRIB_PRIMITIVE: domainUMax = endCarveU_h.get(primoff);  break;
+                            case GA_ATTRIB_POINT:     domainUMax = endCarveU_h.get(primpt0);  break;
+                            case GA_ATTRIB_VERTEX:    domainUMax = endCarveU_h.get(primvtx0); break;
+                            default: break;
                             }
                         }
                         else
@@ -749,27 +722,25 @@ private:
                         }
                         
                         // cout(domainUMax);
-                        if (!absCarveUEnd) {
-                            if (CARVE_TYPE != 2) {
+                        if (!absCarveUEnd)
+                        {
+                            if constexpr(CARVE_TYPE != GFE_CarveType::Both)
+                            {
                                 // if ( domainUMax <= domainUMin ) {
-                                if (domainUMax <= 0) {
-                                    i@outgrp = 1;
+                                if (domainUMax <= 0)
+                                {
+                                    carvePrimGroup->setElement(primoff, true);
                                     continue;
                                 }
                             }
-                            if (carveSpace_isWorld) {
+                            if (carveSpace_isWorld)
+                            {
                                 fpreal uvmax2;
                                 switch (uvAttrib->getOwner())
                                 {
-                                case GA_ATTRIB_POINT:
-                                    uvmax2 = uvAttrib_h.get(primpt1);
-                                    break;
-                                case GA_ATTRIB_VERTEX:
-                                    uvmax2 = uvAttrib_h.get(primvtx1);
-                                    break;
-                                default:
-                                    UT_ASSERT_MSG(0, "unhandled uv class");
-                                    break;
+                                case GA_ATTRIB_POINT:  uvmax2 = uvAttrib_h.get(primpt1);  break;
+                                case GA_ATTRIB_VERTEX: uvmax2 = uvAttrib_h.get(primvtx1); break;
+                                default: UT_ASSERT_MSG(0, "unhandled uv class"); break;
                                 }
                                 domainUMax = uvmax2 - domainUMax;
                             }
@@ -779,20 +750,24 @@ private:
                             }
                         }
                         // cout(domainUMax);
-                        if (CARVE_TYPE == 2) {
+                        if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                        {
                             // if ( inpointgroup(0, chs("../secondptgroup"), primpt1) && domainUMax <= domainUMin ) {
-                            if (groupParser_carveEnd.getPrimitiveGroup()->contains(primoff) && domainUMax <= 0) {
-                                i@outgrp = 1;
-                                return;
+                            if (groupParser_carveEnd.getPrimitiveGroup()->contains(primoff) && domainUMax <= 0)
+                            {
+                                carvePrimGroup->setElement(primoff, true);
+                                continue;
                             }
                         }
                     }
 
 
-                    if (CARVE_TYPE == 2) {
-                        if (delReversedInsidePrim && domainUMax < domainUMin) {
-                            i@outgrp = 1;
-                            return;
+                    if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                    {
+                        if (delReversedInsidePrim && domainUMax < domainUMin)
+                        {
+                            carvePrimGroup->setElement(primoff, true);
+                            continue;
                         }
                     }
 
@@ -808,13 +783,8 @@ private:
                     }
 
 
-
-
-
                 }
             }
-        }
-        getOutAttribArray();
 #if 0
 #if 0
 #if 0
@@ -822,14 +792,14 @@ private:
 
         /////////////////// start ///////////////////
 
-        if (CARVE_TYPE != 1) {
+        if constexpr(CARVE_TYPE != GFE_CarveType::End) {
 
 #define carveKernelType 0
 
 
 
             {
-                if (CARVE_TYPE == 2) {
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                     if (inpointgroup(0, chs("../firstptgroup"), primpt0)) {
 #if carveKernelType
                         if (domainUMax <= uvmax) {
@@ -865,7 +835,7 @@ private:
 #if carveKernelType
                                 if (uv <= domainUMax) {
                                     int breakvtxpnum = vtxpnum + (uv != domainUMax);
-                                    if (CARVE_TYPE == 2) {
+                                    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                         for (int vtxpnum_prev = @numvtx - 1; vtxpnum_prev > breakvtxpnum; --vtxpnum_prev) {
                                         }
                                     else
@@ -876,7 +846,7 @@ private:
                                     }
 
                                     if (vtxpnum == @numvtx - 1 && uv == domainUMax) break;
-                                    if (CARVE_TYPE == 2) {
+                                    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                         if (chi('../outBreakPtsGrp_inside1')) {
                                             setpointgroup(0, chs("../breakPtsGrp_inside1"), vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)), 1);
                                         }
@@ -890,7 +860,7 @@ private:
                                     if (uv == domainUMax) break;
 
 
-                                    if (CARVE_TYPE == 2) {
+                                    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                         interpAttribs(0, attribNames, vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)), vertexpoint(0, vtxnum), (domainUMax - uv_rest) / (uv - uv_rest));
                                     }
                                     else {
@@ -903,7 +873,7 @@ private:
                                     if (uv >= domainUMin)
                                     {
                                         int breakvtxpnum = vtxpnum - (uv != domainUMin);
-                                        if (CARVE_TYPE == 2) {
+                                        if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                             for (int vtxpnum_prev = 0; vtxpnum_prev < breakvtxpnum; ++vtxpnum_prev)
                                             {
                             }
@@ -915,7 +885,7 @@ private:
                                         }
 
                                         if (vtxpnum == 0 && uv == domainUMin) break;
-                                        if (CARVE_TYPE == 2) {
+                                        if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                             if (chi('../outBreakPtsGrp_inside2'))
                                             {
                                                 setpointgroup(0, chs("../breakPtsGrp_inside2"), vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)), 1);
@@ -930,7 +900,7 @@ private:
                                         if (uv == domainUMin) break;
 
 
-                                        if (CARVE_TYPE == 2) {
+                                        if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                             // printf('\n%d', vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)));
                                             // printf('\n%d', vertexpoint(0, vtxnum));
                                             // printf('\n%f', (domainUMin - uv_rest) / (uv - uv_rest));
@@ -955,7 +925,7 @@ private:
 #endif
                                         }
                     }
-                                    if (CARVE_TYPE == 2) {
+                                    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                     }
                 }
             }
@@ -974,7 +944,7 @@ if(CARVE_TYPE!=0) {
 #define carveKernelType 1
 
         {
-if(CARVE_TYPE == 2){
+if(CARVE_TYPE == GFE_CarveType::Both){
     if (inpointgroup(0, chs("../secondptgroup"), primpt1)) {
         // cout(1);
 #if carveKernelType
@@ -1011,7 +981,7 @@ if(CARVE_TYPE == 2){
 #if carveKernelType
                         if (uv <= domainUMax) {
                             int breakvtxpnum = vtxpnum + (uv != domainUMax);
-                            if (CARVE_TYPE == 2) {
+                            if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                                 for (int vtxpnum_prev = @numvtx - 1; vtxpnum_prev > breakvtxpnum; --vtxpnum_prev) {
 #else
                         for (int vtxpnum_prev = 0; vtxpnum_prev < breakvtxpnum - 1; ++vtxpnum_prev) {
@@ -1020,7 +990,7 @@ if(CARVE_TYPE == 2){
                                 }
 
                         if (vtxpnum == @numvtx - 1 && uv == domainUMax) break;
-                        if (CARVE_TYPE == 2) {
+                        if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                             if (chi('../outBreakPtsGrp_inside1')) {
                                 setpointgroup(0, chs("../breakPtsGrp_inside1"), vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)), 1);
                             }
@@ -1033,7 +1003,7 @@ if(CARVE_TYPE == 2){
                         if (uv == domainUMax) break;
 
 
-                        if (CARVE_TYPE == 2) {
+                        if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
                             interpAttribs(0, attribNames, vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)), vertexpoint(0, vtxnum), (domainUMax - uv_rest) / (uv - uv_rest));
                         }
                         else {
@@ -1044,7 +1014,7 @@ if(CARVE_TYPE == 2){
 #else
 if (uv >= domainUMin) {
     int breakvtxpnum = vtxpnum - (uv != domainUMin);
-    if (CARVE_TYPE == 2) {
+    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
         for (int vtxpnum_prev = 0; vtxpnum_prev < breakvtxpnum; ++vtxpnum_prev) {
         }
     else {
@@ -1054,7 +1024,7 @@ if (uv >= domainUMin) {
     }
 
     if (vtxpnum == 0 && uv == domainUMin) break;
-    if (CARVE_TYPE == 2) {
+    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
         if (chi('../outBreakPtsGrp_inside2')) {
             setpointgroup(0, chs("../breakPtsGrp_inside2"), vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)), 1);
         }
@@ -1067,7 +1037,7 @@ if (uv >= domainUMin) {
     if (uv == domainUMin) break;
 
 
-    if (CARVE_TYPE == 2) {
+    if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
         // printf('\n%d', vertexpoint(0, vertexindex(0, @primnum, breakvtxpnum)));
         // printf('\n%d', vertexpoint(0, vtxnum));
         // printf('\n%f', (domainUMin - uv_rest) / (uv - uv_rest));
@@ -1092,7 +1062,7 @@ if (uv >= domainUMin) {
 #endif
     }
 }
-if (CARVE_TYPE == 2) {
+if constexpr(CARVE_TYPE == GFE_CarveType::Both) {
 }
                         }
                     }
@@ -1103,6 +1073,7 @@ if (CARVE_TYPE == 2) {
 #endif
 
 
+                    }, 1, 1);
     }
 
 

@@ -543,30 +543,23 @@ void
 SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_Carve_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Carve_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
     const GFE_CarveSpace carveSpace = sopCarveSpace(sopparms.getCarveSpace());
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-
+    
     const UT_StringHolder& customCarveUVAttribName = sopparms.getCustomCarveUVAttribName();
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    
-#if 1
     GFE_Carve carve(outGeo0, &cookparms);
-#else
-    outGeo0->replaceWith(*inGeo0);
-    GFE_PolyCut polyCut(outGeo0, nullptr, &cookparms);
-#endif
+    
     carve.setGroup(sopparms.getPrimGroup());
 
     carve.setComputeParm(carveSpace,
@@ -579,7 +572,7 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     carve.setUVAttrib(customCarveUVAttribName);
 
     carve.setStartCarveUAttrib(sopparms.getStartCarveUAttrib(), sopparms.getDelStartCarveUAttrib());
-    carve.setEndCarveUAttrib(sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
+    carve.setEndCarveUAttrib( sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
 
     carve.setCarveStartGroup(sopparms.getCarveStartPrimGroup());
     carve.setCarveEndGroup(sopparms.getCarveEndPrimGroup());
@@ -595,15 +588,9 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     carve.computeAndBumpDataIdsForAddOrRemove();
 
     carve.visualizeOutGroup();
-
-
-
+    
 
 
 }
 
 
-
-namespace SOP_FeE_Carve_1_0_Namespace {
-
-} // End SOP_FeE_Carve_1_0_Namespace namespace

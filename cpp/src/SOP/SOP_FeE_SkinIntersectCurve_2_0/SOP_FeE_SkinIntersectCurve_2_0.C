@@ -10,13 +10,10 @@
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include "GU/GU_IntersectionAnalysis.h"
-#include "GU/GU_PrimMesh.h"
 
 
 
-
-#include "GFE/GFE_GroupParser.h"
+#include "GFE/GFE_SkinIntersectCurve.h"
 
 
 
@@ -90,17 +87,17 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-        name    "delInputPointGroup"
-        cppname "DelInputPointGroup"
-        label   "Delete Input Point Group"
+        name    "delInputPrimGroup"
+        cppname "DelInputPrimGroup"
+        label   "Delete Input Prim Group"
         type    toggle
         default { "0" }
     }
 
     parm {
-        name    "threshold"
-        cppname "Threshold"
-        label   "Threshold"
+        name    "tolerance"
+        cppname "Tolerance"
+        label   "Tolerance"
         type    log
         default { "1e-05" }
         range { 0! 1 }
@@ -206,86 +203,30 @@ void
 SOP_FeE_SkinIntersectCurve_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_SkinIntersectCurve_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_SkinIntersectCurve_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
+    outGeo0.replaceWith(inGeo0);
 
-
-    GU_DetailHandle tmpGeoH0;
-    GU_Detail* tmpGeo0 = new GU_Detail();
-    tmpGeoH0.allocateAndSet(tmpGeo0);
-    tmpGeo0->replaceWith(*inGeo0);
-
-
-    outGeo0->replaceWithPoints(*inGeo0);
-    //outGeo0->replaceWith(*inGeo0);
-
-    //GA_PointGroup* groupOneNeb = GFE_TopologyReference::addGroupOneNeb(outGeo0, nullptr);
-
-    
-    GOP_Manager gop;
-    const GA_PrimitiveGroup* const primGroup = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, outGeo0, sopparms.getPrimGroup(), gop);
-    if (primGroup && primGroup->isEmpty())
-        return;
-
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
 
+    
 
-    fpreal64 threshold = sopparms.getThreshold();
+    GFE_SkinIntersectCurve skinIntersectCurve(outGeo0, inGeo1, cookparms);
+    skinIntersectCurve.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
+    
+    skinIntersectCurve.setComputeParm(sopparms.getTolerance(), 
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    //UT_Array<UT_Int32Array>*    input_num_arr = nullptr;
-    //UT_Array<UT_Int64Array>*    prim_num_arr  = nullptr;
-    //UT_Array<UT_Fpreal32Array>* prim_uvw_arr  = nullptr;
-    UT_Array<UT_Int32Array>    input_num_arr;
-    UT_Array<UT_Int64Array>    prim_num_arr;
-    UT_Array<UT_Fpreal32Array> prim_uvw_arr;
-    UT_Array<UT_Int64Array>*    pt_num_arr    = nullptr;
-    UT_Vector3DArray intersectionPoses = GU_IntersectionAnalysis::findIntersectionPoints(
-        static_cast<const GEO_Detail*>(inGeo0), NULL,
-        static_cast<const GEO_Detail*>(inGeo1), NULL,
-        threshold,
-        //input_num_arr,
-        //prim_num_arr,
-        //prim_uvw_arr,
-        &input_num_arr,
-        &prim_num_arr,
-        &prim_uvw_arr,
-        pt_num_arr
-    );
+    skinIntersectCurve.computeAndBumpDataId();
 
-    for (exint i = intersectionPoses.size() - 1; i >= 0; i--)
-    {
-        float u = prim_uvw_arr[0][0];
-        if (u < 1 && u > 0) continue;
-        intersectionPoses.removeIndex(i);
-        input_num_arr.removeIndex(i);
-        prim_num_arr.removeIndex(i);
-        prim_uvw_arr.removeIndex(i);
-    }
-
-
-
-
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    tmpGeoH0.deleteGdp();
 
 }
 
-
-
-namespace SOP_FeE_SkinIntersectCurve_2_0_Namespace {
-
-} // End SOP_FeE_SkinIntersectCurve_2_0_Namespace namespace

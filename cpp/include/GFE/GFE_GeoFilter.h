@@ -5,10 +5,8 @@
 #define __GFE_GeoFilter_h__
 
 
-//#include "GFE/GFE_GeoFilter.h"
+#include "GFE/GFE_GeoFilter.h"
 
-
-//#include "GA/GA_Detail.h"
 
 
 #include "GFE/GFE_Detail.h"
@@ -195,11 +193,11 @@ public:
 
     
     
-    SYS_FORCE_INLINE void visualizeGroup(const GA_Group& group)
+    SYS_FORCE_INLINE void visualizeGroup(const GA_Group& group) const
     { if(cookparms && !group.isDetached()) cookparms->select(group); }
 
     
-    SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group)
+    SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group) const
     { if(group) visualizeGroup(*group); }
 
 
@@ -524,15 +522,27 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE virtual void findOrCreateGroup(
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(
         const bool detached,
         const GA_GroupType groupType,
         const UT_StringRef& groupName = ""
     )
-    { getOutGroupArray().findOrCreate(detached, groupType, groupName); }
+    { return getOutGroupArray().findOrCreate(detached, groupType, groupName); }
 
-    SYS_FORCE_INLINE virtual void findOrCreateGroup(const GA_GroupType groupType, const UT_StringRef& groupName = "")
-    { getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_GroupType groupType, const UT_StringRef& groupName = "")
+    { return getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }
+
+    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached, const UT_StringRef& groupName = "")
+    { return getOutGroupArray().findOrCreatePrimitive(detached, groupName); }
+
+    SYS_FORCE_INLINE virtual GA_PointGroup* findOrCreatePointGroup(const bool detached, const UT_StringRef& groupName = "")
+    { return getOutGroupArray().findOrCreatePoint(detached, groupName); }
+
+    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached, const UT_StringRef& groupName = "")
+    { return getOutGroupArray().findOrCreateVertex(detached, groupName); }
+
+    SYS_FORCE_INLINE virtual GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached, const UT_StringRef& groupName = "")
+    { return getOutGroupArray().findOrCreateEdge(detached, groupName); }
 
 
 
@@ -568,11 +578,11 @@ virtual void delGroupElement(const GA_Group* group = nullptr)
     }
 }
 
-virtual SYS_FORCE_INLINE void visualizeOutGroup()
+virtual SYS_FORCE_INLINE void visualizeOutGroup() const
 { if (!doDelGroupElement && !outGroupArray.isEmpty()) visualizeGroup(outGroupArray[0]); }
 
     
-void SYS_FORCE_INLINE delOrVisualizeGroup()
+SYS_FORCE_INLINE void delOrVisualizeGroup()
 { doDelGroupElement ? delGroupElement() : visualizeOutGroup(); }
 
 
@@ -622,7 +632,8 @@ SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo) override
 
 
 public:
-    bool reverseOutGroup = false;
+    GFE_SetGroup setGroup;
+    //bool reverseOutGroup = false;
     bool doDelGroupElement = false;
     
 private:
@@ -740,11 +751,17 @@ public:
 
     virtual void bumpDataId() const override
     {
-        GFE_AttribFilter::bumpDataId();
-        if (inAttribBumpDataId)
-            inAttribArray.bumpDataId();
-        if (inGroupBumpDataId)
-            inGroupArray.bumpDataId();
+        if (doDelGroupElement)
+            bumpDataIdsForAddOrRemove();
+        else
+        {
+            getOutAttribArray().bumpDataId();
+            getOutGroupArray().bumpDataId();
+            if (inAttribBumpDataId)
+                inAttribArray.bumpDataId();
+            if (inGroupBumpDataId)
+                inGroupArray.bumpDataId();
+        }
     }
 
     void visualizeInGroup()

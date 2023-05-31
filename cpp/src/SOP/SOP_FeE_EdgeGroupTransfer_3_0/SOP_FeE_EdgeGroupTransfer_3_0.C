@@ -123,13 +123,6 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ renameEdgeGroup == 0 }"
     }
     parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
-        type    toggle
-        default { "off" }
-    }
-    parm {
         name    "outAsVertexGroup"
         cppname "OutAsVertexGroup"
         label   "Output as Vertex Group"
@@ -137,6 +130,29 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
 
+
+
+
+    parm {
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
+        type    ordinal
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
+        }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "off" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -229,10 +245,10 @@ SOP_FeE_EdgeGroupTransfer_3_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_EdgeGroupTransfer_3_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_EdgeGroupTransfer_3_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_EdgeGroupTransfer_3_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -243,6 +259,22 @@ sopGroupType(SOP_FeE_EdgeGroupTransfer_3_0Parms::GroupType parmgrouptype)
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
 }
+
+static GFE_GroupMergeType
+sopGroupMergeType(SOP_FeE_EdgeGroupTransfer_3_0Parms::GroupMergeType groupMergeType)
+{
+    using namespace SOP_FeE_EdgeGroupTransfer_3_0Enums;
+    switch (groupMergeType)
+    {
+    case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
+    case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
+    case GroupMergeType::INTERSECT:   return GFE_GroupMergeType::Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GFE_GroupMergeType::Subtract;   break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
+    return GFE_GroupMergeType::Replace;
+}
+
 
 
 void
@@ -259,6 +291,7 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -268,25 +301,24 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     GFE_EdgeGroupTransfer edgeGroupTransfer(outGeo0, inGeo1, cookparms);
     
     if (sopparms.getRenameEdgeGroup())
-    {
         edgeGroupTransfer.newEdgeGroupNames = sopparms.getNewEdgeGroupName();
-    }
+    
     if (sopparms.getRenameVertexEdgeGroup())
-    {
         edgeGroupTransfer.newVertexEdgeGroupNames = sopparms.getNewVertexEdgeGroupName();
-    }
     
     edgeGroupTransfer.setComputeParm(
         sopparms.getUseSnapDist(), sopparms.getSnapDist(),
-        sopparms.getOutAsVertexGroup(), sopparms.getReverseGroup(),
+        sopparms.getOutAsVertexGroup(), 
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     edgeGroupTransfer.groupParser.setGroup(groupType, sopparms.getGroup());
     edgeGroupTransfer.getRef0GroupArray().appends(GA_GROUP_EDGE, sopparms.getEdgeGroup());
     edgeGroupTransfer.getRef0GroupArray().appends(GA_GROUP_VERTEX, sopparms.getVertexEdgeGroup());
-
+    
+    edgeGroupTransfer.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
     
     edgeGroupTransfer.computeAndBumpDataId();
+    edgeGroupTransfer.visualizeOutGroup();
 
 
     

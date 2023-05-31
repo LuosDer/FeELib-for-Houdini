@@ -9,18 +9,12 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
-//#include "GEO/GEO_Curve.h"
-//#include "GFE/GFE_Type.h"
-//#include "GFE/GFE_Attribute.h"
-//#include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_Measure.h"
+#include "GU/GU_Snap.h"
 
 
 
 
 class GFE_GroupOneNebPoint : public GFE_AttribFilter {
-
-
 
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
@@ -33,19 +27,21 @@ public:
     void
         setComputeParm(
             const bool preFusePoint = false,
+            const fpreal fuseDist = 1e-05,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        this->preFusePoint = preFusePoint;
+        this->preFusePoint   = preFusePoint;
+        this->fuseDist       = fuseDist;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
      
-    SYS_FORCE_INLINE GA_Group* findOrCreateGroup(const bool detached = false, const UT_StringHolder& groupName = "")
-    { return getOutGroupArray().findOrCreate(detached, GA_GROUP_POINT, groupName); }
+    //SYS_FORCE_INLINE GA_PointGroup* findOrCreateGroup(const bool detached = false, const UT_StringRef& groupName = "")
+    //{ return getOutGroupArray().findOrCreatePoint(detached, groupName); }
 
 
 private:
@@ -60,7 +56,12 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        outGroup = static_cast<GA_PointGroup*>(getOutGroupArray()[0]);
+        
+        if (preFusePoint)
+        {
+            fuseDist
+        }
+        oneNebPointGroup = static_cast<GA_PointGroup*>(getOutGroupArray()[0]);
         
         if (groupParser.isFull())
         {
@@ -107,7 +108,7 @@ private:
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff))
                         if (vtxoff == GA_INVALID_OFFSET)
-                            outGroup->setElement(ptoff, true);
+                            oneNebPointGroup->setElement(ptoff, true);
 
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
                         ptoff  = vtxPointRef->getLink(vtxoff);
@@ -115,11 +116,11 @@ private:
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff))
                         if (vtxoff == GA_INVALID_OFFSET)
-                            outGroup->setElement(ptoff, true);
+                            oneNebPointGroup->setElement(ptoff, true);
                     }
                 }
             }, subscribeRatio, minGrainSize);
-        outGroup->invalidateGroupEntries();
+        oneNebPointGroup->invalidateGroupEntries();
     }
 
 
@@ -153,7 +154,7 @@ private:
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
                         if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(ptoff))
-                            outGroup->setElement(ptoff, true);
+                            oneNebPointGroup->setElement(ptoff, true);
 
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
                         ptoff = vtxPointRef->getLink(vtxoff);
@@ -161,11 +162,11 @@ private:
                         vtxoff = vtxNextRef->getLink(vtxoff);
                         //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
                         if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(ptoff))
-                            outGroup->setElement(ptoff, true);
+                            oneNebPointGroup->setElement(ptoff, true);
                     }
                 }
             }, subscribeRatio, minGrainSize);
-        outGroup->invalidateGroupEntries();
+        oneNebPointGroup->invalidateGroupEntries();
     }
 
 
@@ -199,7 +200,7 @@ private:
                         vtxoff_next = vtxNextRef->getLink(vtxoff_next);
                         //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
                         if (vtxoff_next == GA_INVALID_OFFSET && geoGroup->contains(vtxoff))
-                            outGroup->setElement(ptoff, true);
+                            oneNebPointGroup->setElement(ptoff, true);
 
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
                         ptoff = vtxPointRef->getLink(vtxoff);
@@ -207,20 +208,24 @@ private:
                         vtxoff_next = vtxNextRef->getLink(vtxoff_next);
                         //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
                         if (vtxoff_next == GA_INVALID_OFFSET && geoGroup->contains(vtxoff))
-                            outGroup->setElement(ptoff, true);
+                            oneNebPointGroup->setElement(ptoff, true);
                     }
                 }
             }, subscribeRatio, minGrainSize);
-        outGroup->invalidateGroupEntries();
+        oneNebPointGroup->invalidateGroupEntries();
     }
 
 
 
 public:
     bool preFusePoint = false;
+    fpreal fuseDist = 1e-05;
     
 private:
-    GA_PointGroup* outGroup = nullptr;
+    GA_PointGroup* oneNebPointGroup = nullptr;
+    
+    GU_DetailHandle geoRef0_h;
+    GU_Detail* geoRef0Tmp;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 256;

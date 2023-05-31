@@ -118,7 +118,7 @@ private:
             value_type scale;
             bool scaleIdx = true;
             
-            VECTOR_T uv(getZeroVector<VECTOR_T>());
+            VECTOR_T uv(GFE_Type::getZeroVector<VECTOR_T>());
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -268,15 +268,6 @@ private:
         uv_h.set(elemoff, uv);
     }
 
-
-    template<typename VECTOR_T>
-    SYS_FORCE_INLINE VECTOR_T getZeroVector() const
-    {
-        if constexpr(VECTOR_T::tuple_size == 4)
-            return VECTOR_T(0, 0, 0, 0);
-        else
-            return VECTOR_T(0.0);
-    }
 
 
     

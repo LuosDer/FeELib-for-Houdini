@@ -4,20 +4,14 @@
 #ifndef __GFE_ExtremePrim_h__
 #define __GFE_ExtremePrim_h__
 
+#include "GFE/GFE_ExtremePrim.h"
 
 
-//#include "GFE/GFE_ExtremePrim.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
 #include "GFE/GFE_Measure.h"
-
-
-
-
-
-
 
 
 class GFE_ExtremePrim : public GFE_AttribFilter {

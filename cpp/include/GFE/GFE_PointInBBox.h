@@ -16,19 +16,40 @@
 class GFE_PointInBBox : public GFE_AttribFilterWithRef {
 
 public:
-	using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+	//using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
 	
+	GFE_PointInBBox(
+		GA_Detail& geo,
+		const GA_Detail* const geoRef,
+		const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	)
+		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		, groupParserBound(geoRef ? geoRef : &geo, groupParser.getGOPRef(), cookparms)
+	{
+	}
+
+	GFE_PointInBBox(
+		GA_Detail& geo,
+		const GA_Detail* const geoRef,
+		const SOP_NodeVerb::CookParms& cookparms
+	)
+		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		, groupParserBound(geoRef ? geoRef : &geo, groupParser.getGOPRef(), cookparms)
+	{
+	}
+
+
 	
     void
         setComputeParm(
-			const char numInLimitMin = 1,
+			const char numInBoundMin = 1,
             const bool delElement = true,
 			exint subscribeRatio = 64,
 			exint minGrainSize = 1024
         )
     {
         setHasComputed();
-        this->numInLimitMin = numInLimitMin;
+        this->numInBoundMin = numInBoundMin;
         this->doDelGroupElement = delElement;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
@@ -80,11 +101,11 @@ private:
     	{
     		if (!posRefAttrib)
     			posRefAttrib = geoRef0->getP();
-    		bbox = geoRef0->stdBoundingBox<float>(groupParserRef0.getElementGroup(), posRefAttrib);
+    		bbox = geoRef0->stdBoundingBox<float>(groupParserBound.getElementGroup(), posRefAttrib);
     	}
         else
         {
-        	bbox = geoRef0->stdBoundingBox<float>(groupParser.getElementGroup(), posAttrib);
+        	bbox = geo->stdBoundingBox<float>(groupParserBound.getElementGroup(), posAttrib);
         }
     	//GFE_Bound::expandBounds(bbox, enlargeBBox);
     	bbox(0,0) += xMinThreshold;
@@ -143,7 +164,7 @@ private:
 						if (zMax && pos_ph.value(elemoff)[2] <= bbox.zmax())
 							++numInLimit;
 						
-    					setGroup.set(elemoff, numInLimit > numInLimitMin);
+    					setGroup.set(elemoff, numInLimit >= numInBoundMin);
 					}
 				}
 			}
@@ -153,6 +174,7 @@ private:
 
 
 public:
+	GFE_GroupParser groupParserBound;
 	GFE_SetGroup setGroup;
 	
 	//UT_BoundingBoxT<float> enlargeBBox = UT_BoundingBoxT<float>(0, 0, 0, 0, 0, 0);
@@ -166,9 +188,10 @@ public:
 
 private:
 	
+	
 	//uint8 numInLimit = 0;
 	
-	uint8 numInLimitMin = 1;
+	uint8 numInBoundMin = 1;
 	
 	//const GA_Detail* geoSrcTmp;
 	//GU_Detail* geoSrcTmpGU;
