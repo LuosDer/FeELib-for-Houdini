@@ -128,10 +128,10 @@ SYS_FORCE_INLINE static VECTOR_T getZeroVector()
 SYS_FORCE_INLINE static bool isPacked(const int i)
 { return i >= 25 && i <= 27; }
 
-SYS_FORCE_INLINE static bool OffsetIsValid(const GA_Offset v)
+SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
 { return v >= 0 && v != GFE_INVALID_OFFSET; }
 
-SYS_FORCE_INLINE static bool OffsetIsInvalid(const GA_Offset v)
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
 { return v < 0 || v == GFE_INVALID_OFFSET; }
 
     

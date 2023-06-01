@@ -36,6 +36,38 @@ public:
         this->copyOrigIfZero = copyOrigIfZero;
     }
 
+    
+    SYS_FORCE_INLINE bool isEmpty() const
+    { return getOutAttribArray().isEmpty(); }
+
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
+        const bool detached = false, 
+        const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::ALL,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const int tuple_size = 3
+        )
+    { return getOutAttribArray().findOrCreateNormal3D(detached, normalSearchOrder, storage, attribName, tuple_size); }
+
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
+        const bool detached = false, 
+        const GA_GroupType groupType = GA_GROUP_N,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const int tuple_size = 3
+        )
+    { return findOrCreateNormal3D(detached, GFE_Attribute::toNormalSearchOrder(groupType), storage, attribName, tuple_size); }
+
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
+        const bool detached = false, 
+        const GA_AttributeOwner owner = GA_ATTRIB_OWNER_N,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const int tuple_size = 3
+        )
+    { return findOrCreateNormal3D(detached, GFE_Attribute::toNormalSearchOrder(owner), storage, attribName, tuple_size); }
+
+    
     SYS_FORCE_INLINE GA_Attribute* getAttrib() const
     {
         //UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "no attrib found");

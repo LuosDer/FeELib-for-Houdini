@@ -42,8 +42,8 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "Offset"
         label   "Offset"
         type    integer
-        default { 64 }
-        range   { 0! 256 }
+        default { 1 }
+        range   { -10 10 }
     }
 
     parm {
@@ -51,7 +51,9 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "UseOffsetAttrib"
         label   "Use Offset Attrib"
         type    toggle
-        default { 0 }
+        nolabel
+        joinnext
+        default { "0" }
     }
     parm {
         name    "offsetAttrib"
@@ -60,6 +62,31 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "offset" }
         disablewhen "{ useOffsetAttrib == 0 }"
+    }
+
+    parm {
+        name    "treatLoopedPrimAsClosed"
+        cppname "TreatLoopedPrimAsClosed"
+        label   "Treat Looped Prim as Closed"
+        type    toggle
+        default { "1" }
+    }
+
+    parm {
+        name    "delOffsetAttrib"
+        cppname "DelOffsetAttrib"
+        label   "Del Offset Attrib"
+        type    toggle
+        default { "1" }
+        disablewhen "{ useOffsetAttrib == 0 }"
+    }
+
+    parm {
+        name    "delUnusedPoint"
+        cppname "DelUnusedPoint"
+        label   "Del Unused Point"
+        type    toggle
+        default { "1" }
     }
 
     parm {
@@ -180,7 +207,8 @@ SOP_FeE_OffsetVertexOrder_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     {
         offsetVertexOrder.setOffsetAttrib(sopparms.getOffsetAttrib());
     }
-    offsetVertexOrder.setComputeParm(sopparms.getOffset(),
+    offsetVertexOrder.setComputeParm(sopparms.getOffset(), sopparms.getTreatLoopedPrimAsClosed(),
+        sopparms.getDelOffsetAttrib(), sopparms.getDelUnusedPoint(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     

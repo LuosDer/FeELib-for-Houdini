@@ -118,12 +118,12 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupAttribBoundary_1_0
     SOP_FeE_GroupCombine_1_0
     SOP_FeE_GroupCurveEnds_2_0
+    SOP_FeE_GroupElemByDir_1_0
     SOP_FeE_GroupExpand_1_0
     SOP_FeE_GroupLoopedPrim_1_0
     SOP_FeE_GroupMeshByWinding_1_0
     SOP_FeE_GroupNewEdge_1_0
     SOP_FeE_GroupOneNebPoint_1_0
-    SOP_FeE_GroupPolyByDir_1_0
     SOP_FeE_GroupPolyByWinding_1_0
     SOP_FeE_GroupReverse_1_0
     SOP_FeE_GroupUnshared_1_0

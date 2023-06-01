@@ -46,29 +46,29 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
-    parm {
-        name    "runOverPieces"
-        cppname "RunOverPieces"
-        label   "Run Over Pieces"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "findInputPieceAttrib"
-        cppname "FindInputPieceAttrib"
-        label   "Find Input Piece Attribute"
-        type    toggle
-        default { "0" }
-        disablewhen "{ runOverPieces == 0 }"
-    }
-    parm {
-        name    "pieceAttribName"
-        cppname "PieceAttribName"
-        label   "Piece Attribute Name"
-        type    string
-        default { "class" }
-        disablewhen "{ runOverPieces == 0 }"
-    }
+    // parm {
+    //     name    "runOverPieces"
+    //     cppname "RunOverPieces"
+    //     label   "Run Over Pieces"
+    //     type    toggle
+    //     default { "0" }
+    // }
+    // parm {
+    //     name    "findInputPieceAttrib"
+    //     cppname "FindInputPieceAttrib"
+    //     label   "Find Input Piece Attribute"
+    //     type    toggle
+    //     default { "0" }
+    //     disablewhen "{ runOverPieces == 0 }"
+    // }
+    // parm {
+    //     name    "pieceAttribName"
+    //     cppname "PieceAttribName"
+    //     label   "Piece Attribute Name"
+    //     type    string
+    //     default { "class" }
+    //     disablewhen "{ runOverPieces == 0 }"
+    // }
 
     parm {
         name    "restDir2DMethod"
@@ -81,6 +81,8 @@ static const char *theDsFile = R"THEDSFILE(
             "houOBB"     "Houdini OBB"
         }
     }
+
+
 
 
     parm {
@@ -100,9 +102,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "normal3DAttribName"
-        cppname "Normal3DAttribName"
-        label   "Normal 3D Attribute Name"
+        name    "normal3DAttrib"
+        cppname "Normal3DAttrib"
+        label   "Normal 3D Attribute"
         type    string
         default { "N" }
         disablewhen "{ restDir2DMethod != avgNormal }"
@@ -115,22 +117,40 @@ static const char *theDsFile = R"THEDSFILE(
         default { "restDir2D" }
     }
 
-    parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "reversePrim"
-        cppname "ReversePrim"
-        label   "Reverse Prim"
-        type    toggle
-        default { "0" }
-    }
+    // parm {
+    //     name    "reverseGroup"
+    //     cppname "ReverseGroup"
+    //     label   "Reverse Group"
+    //     type    toggle
+    //     default { "0" }
+    // }
+    // parm {
+    //     name    "reversePrim"
+    //     cppname "ReversePrim"
+    //     label   "Reverse Prim"
+    //     type    toggle
+    //     default { "0" }
+    // }
 
 
+    parm {
+        name    "matchUpDir"
+        cppname "MatchUpDir"
+        label   "Match Up Dir"
+        type    toggle
+        nolabel
+        joinnext
+        default { "1" }
+    }
+    parm {
+        name    "up"
+        cppname "Up"
+        label   "Up"
+        type    vector
+        size    3
+        default { "0" "1" "0" }
+        disablewhen "{ matchUpDir == 0 }"
+    }
 
     parm {
         name    "subscribeRatio"
@@ -161,7 +181,8 @@ SOP_FeE_RestDir2D_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_RestDir2D_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("normal3DAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -309,24 +330,25 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
 
-
+    
 
     GFE_RestDir2D restDir2D(outGeo0, &cookparms);
     restDir2D.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    //restDir2D.getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_DETAIL, GA_STORE_INVALID, restDir2DAttribName);
     restDir2D.findOrCreateDir(false, GA_STORE_INVALID, restDir2DAttribName);
 
     if (method == GFE_RestDir2DMethod::AvgNormal)
-    {
-        restDir2D.getOutAttribArray().findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttribName());
-        //restDir2D.normal3D.setComputeParm();
-    }
+        restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
 
-    restDir2D.setComputeParm(method, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    if (sopparms.getMatchUpDir())
+        restDir2D.setMatchUpDir(sopparms.getUp());
+    else
+        restDir2D.setMatchUpDir();
+    
+    restDir2D.setComputeParm(method,
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     restDir2D.computeAndBumpDataId();
-    restDir2D.visualizeOutGroup();
 
 
 }

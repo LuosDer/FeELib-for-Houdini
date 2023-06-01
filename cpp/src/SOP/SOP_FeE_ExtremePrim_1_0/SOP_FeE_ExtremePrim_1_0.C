@@ -340,7 +340,8 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         extremePrim.setPieceAttrib(GA_ATTRIB_PRIMITIVE, sopparms.getPieceAttrib());
     }
     extremePrim.doDelGroupElement = sopparms.getDelOutGroupGeo();
-    extremePrim.reverseOutGroup = sopparms.getReverseGroup();
+    extremePrim.setGroup.setComputeParm(sopparms.getReverseGroup());
+
 
     extremePrim.groupParser.setGroup(groupType, sopparms.getGroup());
 

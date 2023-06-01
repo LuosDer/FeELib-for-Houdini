@@ -369,12 +369,57 @@ public:
         return nullptr;
     }
 
-    SYS_FORCE_INLINE const GA_Group* getGroup(const GA_AttributeOwner attribOwner)
-    { return getGroup(GFE_Type::attributeOwner_groupType(attribOwner)); }
-    
-    SYS_FORCE_INLINE const GA_Group* getGroup(const GA_Attribute* attribPtr)
-    { return getGroup(attribPtr->getOwner()); }
+    const GA_Group* getGroup(const GA_AttributeOwner attribOwner)
+    {
+        if (!hasGroup)
+            return nullptr;
+        switch (attribOwner)
+        {
+        case GA_ATTRIB_PRIMITIVE: return getPrimitiveGroup(); break;
+        case GA_ATTRIB_POINT:     return getPointGroup();     break;
+        case GA_ATTRIB_VERTEX:    return getVertexGroup();    break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Attrib Owner");
+        return nullptr;
+    }
 
+    // SYS_FORCE_INLINE const GA_Group* getGroup(const GA_AttributeOwner attribOwner)
+    // { return getGroup(GFE_Type::attributeOwner_groupType(attribOwner)); }
+    
+    SYS_FORCE_INLINE const GA_Group* getGroup(const GA_Attribute& attrib)
+    { return getGroup(attrib.getOwner()); }
+
+    SYS_FORCE_INLINE const GA_Group* getGroup(const GA_Attribute* const attrib)
+    { UT_ASSERT_P(attrib); return getGroup(*attrib); }
+
+    SYS_FORCE_INLINE const GA_Group* getGroup(const GA_Group& group)
+    { return getGroup(group.classType()); }
+
+    SYS_FORCE_INLINE const GA_Group* getGroup(const GA_Group* const group)
+    { UT_ASSERT_P(group); return getGroup(*group); }
+
+
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const GA_GroupType groupType)
+    { return static_cast<const GA_ElementGroup*>(getGroup(groupType)); }
+    
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const GA_AttributeOwner attribOwner)
+    { return static_cast<const GA_ElementGroup*>(getGroup(attribOwner)); }
+
+    
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const GA_Attribute& attrib)
+    { return getElementGroup(attrib.getOwner()); }
+    
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const GA_Attribute* const attrib)
+    { UT_ASSERT_P(attrib); return getElementGroup(*attrib); }
+    
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const GA_Group& group)
+    { return getElementGroup(group.classType()); }
+    
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup(const GA_Group* const group)
+    { UT_ASSERT_P(group); return getElementGroup(*group); }
+
+    
+    
     GA_GroupType classType() const
     {
         if (!hasGroup)
@@ -463,7 +508,45 @@ public:
         default:                  return GA_Range();          break;
         }
     }
+    
+    
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Attribute& attrib)
+    { return GA_Range(getIndexMap(attrib), getElementGroup(attrib)); }
 
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Attribute* const attrib)
+    { UT_ASSERT_P(attrib); return getRange(*attrib); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Attribute& attrib, const bool reverseGroup)
+    { return GA_Range(getIndexMap(attrib), getElementGroup(attrib), reverseGroup); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Attribute* const attrib, const bool reverseGroup)
+    { UT_ASSERT_P(attrib); return getRange(*attrib, reverseGroup); }
+
+#if 1
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Group& group)
+    { return GA_Range(getIndexMap(group), getElementGroup(group)); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Group* const group)
+    { UT_ASSERT_P(group); return getRange(*group); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Group& group, const bool reverseGroup)
+    { return GA_Range(getIndexMap(group), getElementGroup(group), reverseGroup); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_Group* const group, const bool reverseGroup)
+    { UT_ASSERT_P(group); return getRange(*group, reverseGroup); }
+#else
+    SYS_FORCE_INLINE GA_Range getRange(const GA_ElementGroup& group)
+    { return GA_Range(getIndexMap(group), getElementGroup(group)); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_ElementGroup* const group)
+    { UT_ASSERT_P(group); return getRange(*group); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_ElementGroup& group, const bool reverseGroup)
+    { return GA_Range(getIndexMap(group), getElementGroup(group), reverseGroup); }
+
+    SYS_FORCE_INLINE GA_Range getRange(const GA_ElementGroup* const group, const bool reverseGroup)
+    { UT_ASSERT_P(group); return getRange(*group, reverseGroup); }
+#endif
     
     SYS_FORCE_INLINE GA_SplittableRange getPrimitiveSplittableRange()
     { return GA_SplittableRange(getPrimitiveRange()); }
@@ -496,23 +579,17 @@ public:
         }
     }
     
-    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Attribute* const attrib)
-    {
-        UT_ASSERT_P(attrib);
-        return getSplittableRange(attrib->getOwner());
-    }
-    
-    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Group* const group)
-    {
-        UT_ASSERT_P(group);
-        return getSplittableRange(group->classType());
-    }
-    
     SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Attribute& attrib)
     { return getSplittableRange(attrib.getOwner()); }
     
+    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Attribute* const attrib)
+    { UT_ASSERT_P(attrib); return getSplittableRange(*attrib); }
+    
     SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Group& group)
     { return getSplittableRange(group.classType()); }
+    
+    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_Group* const group)
+    { UT_ASSERT_P(group); return getSplittableRange(*group); }
     
 
 
@@ -526,6 +603,34 @@ public:
 
 private:
 
+    SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_AttributeOwner attribOwner) const
+    { return geo->getIndexMap(attribOwner); }
+
+    SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_GroupType groupType) const
+    { return getIndexMap(GFE_Type::attributeOwner_groupType(groupType)); }
+
+        
+    SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_Attribute& attrib) const
+    { return getIndexMap(attrib.getOwner()); }
+        
+    SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_Attribute* const attrib) const
+    { return getIndexMap(*attrib); }
+
+    SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_Group& group) const
+    { return getIndexMap(group.classType()); }
+
+    SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_Group* const group) const
+    { return getIndexMap(*group); }
+    
+    // SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_ElementGroup& group) const
+    // { return getIndexMap(GFE_Type::attributeOwner_groupType(group.classType())); }
+    //
+    // SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_ElementGroup* const group) const
+    // { return getIndexMap(*group); }
+
+
+
+    
     void clearElementGroup()
     {
         hasPrimitiveGroup = false;

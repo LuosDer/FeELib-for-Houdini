@@ -18,9 +18,6 @@
 
 enum class GFE_GroupPolyByWindingMethod
 {
-	Input,
-	RestDir2D_AvgNormal,
-	RestDir2D_HouOBB,
 	Ray,
 };
 
@@ -34,31 +31,20 @@ public:
 
 	void
 		setComputeParm(
-			const GFE_GroupPolyByWindingMethod method = GFE_GroupPolyByWindingMethod::Input,
-			
-			const bool useConstant = false,
+			const GFE_GroupPolyByWindingMethod method = GFE_GroupPolyByWindingMethod::Ray,
 			const bool reversePrim = false,
 			const bool meshCap = false
 		)
 	{
 		setHasComputed();
 		this->method = method;
-			
-		this->reversePrim = reversePrim;
 		this->meshCap = meshCap;
+		this->reversePrim = reversePrim;
 	}
 
 	SYS_FORCE_INLINE bool getMeshWindingCorrect() const
 	{ return meshWindingCorrect; }
 
-	SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
-		const bool detached = false,
-		const UT_StringRef& attribName = ""
-	)
-	{ return getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_DETAIL,
-			GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
-
-	
     
 	virtual void bumpDataId() const override
 	{
@@ -176,6 +162,7 @@ public:
 	GFE_GroupPolyByWindingMethod method = GFE_GroupPolyByWindingMethod::Input;
 	
 	bool reversePrim = false;
+	bool meshCap = false;
 	
 	bool outIntermediateAttrib = false;
 	

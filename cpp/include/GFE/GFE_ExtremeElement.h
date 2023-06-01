@@ -14,38 +14,57 @@
 #include "GFE/GFE_Measure.h"
 
 
-class GFE_ExtremeElement : public GFE_AttribFilter {
+class GFE_ExtremeElement : public GFE_AttribCreateFilterWithRef {
+
+#define __GFE_ExtremeElement_UseMeasureAttrib__ 0
+
 
 public:
-
-    using GFE_AttribFilter::GFE_AttribFilter;
-
+    
+#if __GFE_ExtremeElement_UseMeasureAttrib__
+    GFE_ExtremeElement(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef0,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilterWithRef(geo, cookparms)
+        , measure(geo, cookparms)
+    {
+    }
+#else
+    using GFE_AttribCreateFilterWithRef::GFE_AttribCreateFilterWithRef;
+#endif
+    
     void
         setComputeParm(
             const GFE_StatisticalFunction statisticalFunction = GFE_StatisticalFunction::Min,
-            const GFE_MeasureType measureType = GFE_MeasureType::Area,
+            const bool delExtremeAttrib = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
     {
         setHasComputed();
         this->statisticalFunction = statisticalFunction;
-        this->measureType = measureType;
+        this->delExtremeAttrib = delExtremeAttrib;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
 
-    SYS_FORCE_INLINE GA_Offset getExtremePrimoff() const
-    { return extremePrimoff; }
+    
+    SYS_FORCE_INLINE GA_Attribute* setExtremeElemAttrib(const bool detached = false, const UT_StringRef& attribName = "")
+    { return extremeElemAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL,
+                GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    
+    SYS_FORCE_INLINE GA_Attribute* setExtremeValueAttrib(const bool detached = false, const UT_StringRef& attribName = "")
+    { return extremeValueAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL,
+                GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    
 
-    SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(const bool detached = false, const UT_StringRef& attribName = "")
-    { return getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL,
-        GA_STORECLASS_INT, GA_STORE_INVALID, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
+    
 
-    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached = false, const UT_StringRef& groupName = "")
-    { return getOutGroupArray().findOrCreate(detached, GA_GROUP_PRIMITIVE, groupName); }
-
-
+    SYS_FORCE_INLINE GA_Offset getExtremeElemoff() const
+    { return extremeElemoff; }
+    
 
     
 private:
@@ -54,55 +73,83 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getOutGroupArray().isEmpty())
+        if (getInAttribArray().isEmpty() || getOutGroupArray().isEmpty())
             return false;
 
         if (groupParser.isEmpty())
             return true;
 
-        GA_PrimitiveGroup* const outGroup = static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0]);
-        
-        // GA_Size numElems;
-        // if (measureType <= 1)
-        // {
-        //     numElems = geo->getNumPrimitives();
-        // }
 
-        GFE_Measure measure(geo, cookparms);
-        measure.groupParser.setGroup(groupParser);
-        measureAttrib = measure.findOrCreateTuple(false);
-        
-        measure.measureType = measureType;
-        measure.compute();
-
-        switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))
+#if __GFE_ExtremeElement_UseMeasureAttrib__
         {
-        case GA_STORE_INT16:  computeExtremePrimoff<int16>();    break;
-        case GA_STORE_INT32:  computeExtremePrimoff<int32>();    break;
-        case GA_STORE_INT64:  computeExtremePrimoff<int64>();    break;
-        case GA_STORE_REAL16: computeExtremePrimoff<fpreal16>(); break;
-        case GA_STORE_REAL32: computeExtremePrimoff<fpreal32>(); break;
-        case GA_STORE_REAL64: computeExtremePrimoff<fpreal64>(); break;
+            measure.groupParser.setGroup(groupParser);
+            extremeAttrib = measure.findOrCreateTuple(false);
+            measure.compute();
+        }
+#else
+        {
+            extremeAttribNonConst = getInAttribArray()[0];
+            extremeAttrib = extremeAttribNonConst;
+        }
+#endif
+        
+        const GA_Size numElems = geo->getNumElements(extremeAttrib);
+        
+        if (numElems <= 1)
+        {
+            if (numElems == 1)
+                extremeElemoff = 0;
+            else
+                extremeElemoff = GFE_INVALID_OFFSET;
+            
+            if (delExtremeAttrib && extremeAttribNonConst)
+                geo->destroyAttrib(extremeAttribNonConst);
+            return true;
+        }
+        
+
+        if (extremeElemAttrib)
+        {
+            
+        }
+        if (extremeValueAttrib)
+        {
+            
+        }
+        
+
+        switch (extremeAttrib->getAIFTuple()->getStorage(extremeAttrib))
+        {
+        case GA_STORE_INT16:  computeExtremeElemoff<int16>();    break;
+        case GA_STORE_INT32:  computeExtremeElemoff<int32>();    break;
+        case GA_STORE_INT64:  computeExtremeElemoff<int64>();    break;
+        case GA_STORE_REAL16: computeExtremeElemoff<fpreal16>(); break;
+        case GA_STORE_REAL32: computeExtremeElemoff<fpreal32>(); break;
+        case GA_STORE_REAL64: computeExtremeElemoff<fpreal64>(); break;
         }
 
         if (!getOutAttribArray().isEmpty())
         {
             GA_Attribute* const outAttrib = getOutAttribArray()[0];
-            const GA_AIFTuple* aIFTuple = outAttrib->getAIFTuple();
+            const GA_AIFTuple* const aIFTuple = outAttrib->getAIFTuple();
             if (aIFTuple)
             {
-                aIFTuple->set(outAttrib, 0, extremePrimoff);
+                aIFTuple->set(outAttrib, 0, extremeElemoff);
             }
         }
         
         if (!getOutGroupArray().isEmpty())
         {
+            GA_ElementGroup* const outGroup = getOutGroupArray().getElementGroup(0);
             if (getOutGroupArray()[0]->classType() == GA_GROUP_PRIMITIVE)
             {
-                static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0])->setElement(extremePrimoff, true);
+                static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0])->setElement(extremeElemoff, true);
             }
         }
 
+        if (delExtremeAttrib && extremeAttribNonConst)
+            geo->destroyAttrib(extremeAttribNonConst);
+    
         
         return true;
     }
@@ -111,36 +158,36 @@ private:
 
     
     template<typename FLOAT_T>
-    void computeExtremePrimoff()
+    void computeExtremeElemoff()
     {
-        ComputeExtremePrimoff<FLOAT_T> body(geo, measureAttrib, statisticalFunction);
+        ComputeExtremeElemoff<FLOAT_T> body(geo, extremeAttrib, statisticalFunction);
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(groupParser.getPrimitiveGroup()));
         UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
-        extremePrimoff = body.getExtremePrimoff();
+        extremeElemoff = body.getExtremeElemoff();
     }
     
     
-    template<typename FLOAT_T>
-    class ComputeExtremePrimoff
+    template<typename T>
+    class ComputeExtremeElemoff
     {
     public:
-        ComputeExtremePrimoff(const GFE_Detail* const a, const GA_ROHandleT<FLOAT_T>& b, const GFE_StatisticalFunction c)
+        ComputeExtremeElemoff(const GFE_Detail* const a, const GA_Attribute* b, const GFE_StatisticalFunction c)
             : myGeo(a)
-            , myAttrib_h(b)
+            , myAttrib(b)
             , myStatisticalFunction(c)
-            , myExtremePrimoff(GA_INVALID_OFFSET)
-            , mtExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
+            , myExtremeElemoff(GA_INVALID_OFFSET)
+            , myExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
         {}
-        ComputeExtremePrimoff(ComputeExtremePrimoff& src, UT_Split)
+        ComputeExtremeElemoff(ComputeExtremeElemoff& src, UT_Split)
             : myGeo(src.myGeo)
-            , myAttrib_h(src.myAttrib_h)
+            , myAttrib(src.myAttrib)
             , myStatisticalFunction(src.myStatisticalFunction)
-            , myExtremePrimoff(GA_INVALID_OFFSET)
-            , mtExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
+            , myExtremeElemoff(GA_INVALID_OFFSET)
+            , myExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
         {}
         void operator()(const GA_SplittableRange& r)
         {
-            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(myAttrib_h.getAttribute());
+            GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(myAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -152,12 +199,12 @@ private:
                         switch (myStatisticalFunction)
                         {
                         case GFE_StatisticalFunction::Min:
-                            if (attrib_ph.value(elemoff) < mtExtremeValue) 
-                                mtExtremeValue = attrib_ph.value(elemoff);
+                            if (attrib_ph.value(elemoff) < myExtremeValue) 
+                                myExtremeValue = attrib_ph.value(elemoff);
                             break;
                         case GFE_StatisticalFunction::Max:
-                            if (attrib_ph.value(elemoff) > mtExtremeValue)
-                                mtExtremeValue = attrib_ph.value(elemoff);
+                            if (attrib_ph.value(elemoff) > myExtremeValue)
+                                myExtremeValue = attrib_ph.value(elemoff);
                             break;
                         default: break;
                         }
@@ -165,35 +212,48 @@ private:
                 }
             }
         }
-        void join(const ComputeExtremePrimoff& other)
+        void join(const ComputeExtremeElemoff& other)
         {
-            myExtremePrimoff = other.myExtremePrimoff;
-            mtExtremeValue = other.mtExtremeValue;
+            myExtremeElemoff = other.myExtremeElemoff;
+            myExtremeValue = other.myExtremeValue;
         }
-        SYS_FORCE_INLINE GA_Offset getExtremePrimoff() const
-        { return myExtremePrimoff; }
-        
+        SYS_FORCE_INLINE GA_Offset getExtremeElemoff() const
+        { return myExtremeElemoff; }
+        SYS_FORCE_INLINE T getExtremeValue() const
+        { return myExtremeValue; }
     private:
         const GFE_Detail* const myGeo;
-        const GA_ROHandleT<FLOAT_T> myAttrib_h;
+        const GA_Attribute* myAttrib;
         GFE_StatisticalFunction myStatisticalFunction;
-        GA_Offset myExtremePrimoff;
-        fpreal mtExtremeValue;
-    }; // End of Class ComputeExtremePrimoff
+        GA_Offset myExtremeElemoff;
+        T myExtremeValue;
+    }; // End of Class ComputeExtremeElemoff
 
 
 public:
     
+#if __GFE_ExtremeElement_UseMeasureAttrib__
+    GFE_Measure measure;
+#endif
+    
     GFE_StatisticalFunction statisticalFunction = GFE_StatisticalFunction::Min;
-    GFE_MeasureType measureType = GFE_MeasureType::Area;
-
-
+    bool delExtremeAttrib = false;
+    
+    const UT_StringRef* extremeElemGroupName = nullptr;
+    
 private:
-    GA_Offset extremePrimoff;
-    GA_Attribute* measureAttrib;
+    GA_Offset extremeElemoff = GFE_INVALID_OFFSET;
+    const GA_Attribute* extremeAttrib;
+    GA_Attribute* extremeAttribNonConst;
+    
+    GA_Attribute* extremeElemAttrib = nullptr;
+    GA_Attribute* extremeValueAttrib = nullptr;
+
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
+    
+#undef __GFE_ExtremeElement_UseMeasureAttrib__
     
 }; // End of Class GFE_ExtremeElement
 

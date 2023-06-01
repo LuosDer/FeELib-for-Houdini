@@ -11,7 +11,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_ExtremePrim.h"
+#include "GFE/GFE_ExtremeElement.h"
 
 using namespace SOP_FeE_ExtremeElem_1_0_Namespace;
 
@@ -56,59 +56,104 @@ static const char *theDsFile = R"THEDSFILE(
             "max"   "Maximum"
         }
     }
+
     parm {
-        name    "measure"
-        cppname "Measure"
-        label   "Measure"
+        name    "extremeAttribClass"
+        cppname "ExtremeAttribClass"
+        label   "Extreme Attrib Class"
         type    ordinal
-        default { "perimeter" }
+        default { "prim" }
         menu {
-            "perimeter"         "Perimeter"
-            "area"              "Area"
-            "volume"            "Volume"
-            "centroid"          "Centroid"
-            "curvature"         "Curvature"
-            "gradient"          "Gradient"
-            "laplacian"         "Laplacian"
-            "boundaryintegral"  "Boundary Integral"
-            "surfaceintegral"   "Surface Integral"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
         }
     }
-
-
     parm {
-        name    "outExtremePrimAttrib"
-        cppname "OutExtremePrimAttrib"
-        label   "Out Extreme Prim Attrib Name"
+        name    "extremeAttrib"
+        cppname "ExtremeAttrib"
+        label   "Extreme Attrib"
         type    toggle
         default { "0" }
     }
+    // parm {
+    //     name    "measure"
+    //     cppname "Measure"
+    //     label   "Measure"
+    //     type    ordinal
+    //     default { "perimeter" }
+    //     menu {
+    //         "perimeter"         "Perimeter"
+    //         "area"              "Area"
+    //         "volume"            "Volume"
+    //         "centroid"          "Centroid"
+    //         "curvature"         "Curvature"
+    //         "gradient"          "Gradient"
+    //         "laplacian"         "Laplacian"
+    //         "boundaryintegral"  "Boundary Integral"
+    //         "surfaceintegral"   "Surface Integral"
+    //     }
+    // }
+
+
     parm {
-        name    "extremePrimAttribName"
-        cppname "ExtremePrimAttribName"
-        label   "Extreme Prim Attrib Name"
+        name    "outExtremeElemAttrib"
+        cppname "OutExtremeElemAttrib"
+        label   "Out Extreme Elem Attrib"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "extremeElemAttribName"
+        cppname "ExtremeElemAttribName"
+        label   "Extreme Elem Attrib Name"
         type    string
-        default { "extremePrim" }
-        disablewhen "{ outExtremePrimAttrib == 0 }"
+        default { "extremeElem" }
+        disablewhen "{ outExtremeElemAttrib == 0 }"
         parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Details kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
 
     parm {
-        name    "outExtremePrimGroup"
-        cppname "OutExtremePrimGroup"
-        label   "Out Extreme Prim Group Name"
+        name    "outExtremeValueAttrib"
+        cppname "OutExtremeValueAttrib"
+        label   "Out Extreme Value Attrib"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "extremeValueAttribName"
+        cppname "ExtremeValueAttribName"
+        label   "Extreme Value Attrib Name"
+        type    string
+        default { "extremeValue" }
+        disablewhen "{ outExtremeElemAttrib == 0 }"
+        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Details kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+
+
+    parm {
+        name    "outExtremeElemGroup"
+        cppname "OutExtremeElemGroup"
+        label   "Out Extreme Elem Group Name"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "extremePrimGroupName"
-        cppname "ExtremePrimGroupName"
-        label   "Extreme Prim Group Name"
+        name    "extremeElemGroupName"
+        cppname "ExtremeElemGroupName"
+        label   "Extreme Elem Group Name"
         type    string
-        default { "extremePrim" }
-        disablewhen "{ delOutGroupGeo == 1 } { outExtremePrimGroup == 0 }"
+        default { "extremeElem" }
+        disablewhen "{ delElement == 1 } { outExtremeElemGroup == 0 }"
         parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Primitives kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -122,38 +167,47 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "delOutGroupGeo"
-        cppname "DelOutGroupGeo"
-        label   "Delete Out Group Geo"
+        name    "delExtremeAttrib"
+        cppname "DelExtremeAttrib"
+        label   "Delete Extreme Attrib"
+        type    toggle
+        default { "0" }
+    }
+
+    parm {
+        name    "delElement"
+        cppname "DelElement"
+        label   "Delete Element"
         type    toggle
         default { "off" }
     }
 
-    parm {
-        name    "usePieceAttrib"
-        cppname "UsePieceAttrib"
-        label   "Use Piece Attribute"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-    }
-    parm {
-        name    "pieceAttribClass"
-        cppname "PieceAttribClass"
-        label   "Piece Attrib Class"
-        type    string
-        default { "class" }
-        disablewhen "{ usePieceAttrib == 0 }"
-    }
-    parm {
-        name    "pieceAttrib"
-        cppname "PieceAttrib"
-        label   "Piece Attrib"
-        type    string
-        default { "class" }
-        disablewhen "{ usePieceAttrib == 0 }"
-    }
+    // parm {
+    //     name    "usePieceAttrib"
+    //     cppname "UsePieceAttrib"
+    //     label   "Use Piece Attribute"
+    //     type    toggle
+    //     nolabel
+    //     joinnext
+    //     default { "off" }
+    // }
+    // parm {
+    //     name    "pieceAttribClass"
+    //     cppname "PieceAttribClass"
+    //     label   "Piece Attrib Class"
+    //     type    string
+    //     default { "class" }
+    //     disablewhen "{ usePieceAttrib == 0 }"
+    // }
+    // parm {
+    //     name    "pieceAttrib"
+    //     cppname "PieceAttrib"
+    //     label   "Piece Attrib"
+    //     type    string
+    //     default { "class" }
+    //     disablewhen "{ usePieceAttrib == 0 }"
+    // }
+
     parm {
        name    "subscribeRatio"
        cppname "SubscribeRatio"
@@ -198,7 +252,7 @@ newSopOperator(OP_OperatorTable* table)
         SOP_FeE_ExtremeElem_1_0::myConstructor,
         SOP_FeE_ExtremeElem_1_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -255,11 +309,29 @@ SOP_FeE_ExtremeElem_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopGroupType(SOP_FeE_ExtremeElem_1_0Parms::GroupType parmgrouptype)
+
+
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_ExtremeElem_1_0Parms::ExtremeAttribClass attribClass)
 {
     using namespace SOP_FeE_ExtremeElem_1_0Enums;
-    switch (parmgrouptype)
+    switch (attribClass)
+    {
+    case ExtremeAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case ExtremeAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case ExtremeAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case ExtremeAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_ExtremeElem_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_ExtremeElem_1_0Enums;
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -287,19 +359,18 @@ sopStatisticalFunction(SOP_FeE_ExtremeElem_1_0Parms::StatisticalFunction parmSta
 }
 
 
-
-static GFE_MeasureType
-sopMeasureType(SOP_FeE_ExtremeElem_1_0Parms::Measure parmMeasureType)
-{
-    using namespace SOP_FeE_ExtremeElem_1_0Enums;
-    switch (parmMeasureType)
-    {
-    case Measure::PERIMETER:     return GFE_MeasureType::Perimeter;    break;
-    case Measure::AREA:          return GFE_MeasureType::Area;         break;
-    }
-    //UT_ASSERT_MSG(0, "Unhandled GFE_MeasureType!");
-    return GFE_MeasureType::Area;
-}
+// static GFE_MeasureType
+// sopMeasureType(SOP_FeE_ExtremeElem_1_0Parms::Measure parmMeasureType)
+// {
+//     using namespace SOP_FeE_ExtremeElem_1_0Enums;
+//     switch (parmMeasureType)
+//     {
+//     case Measure::PERIMETER:     return GFE_MeasureType::Perimeter;    break;
+//     case Measure::AREA:          return GFE_MeasureType::Area;         break;
+//     }
+//     //UT_ASSERT_MSG(0, "Unhandled GFE_MeasureType!");
+//     return GFE_MeasureType::Area;
+// }
 
 
 void
@@ -310,13 +381,15 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //auto sopcache = (SOP_FeE_ExtremeElem_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
+    
     outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     const GFE_StatisticalFunction statisticalFunction = sopStatisticalFunction(sopparms.getStatisticalFunction());
-    const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
+    //const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
         
 
 
@@ -328,33 +401,40 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     
-    GFE_ExtremePrim extremePrim(outGeo0, cookparms);
+    GFE_ExtremeElement extremeElem(outGeo0, inGeo1, &cookparms);
     
-    extremePrim.setComputeParm(
-        statisticalFunction, measureType,
+    extremeElem.setComputeParm(
+        statisticalFunction, sopparms.getDelExtremeAttrib(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    //extremeElem.measure.measureType = measureType;
+    
+    // if (sopparms.getUsePieceAttrib())
+    // {
+    //     extremeElem.setPieceAttrib(GA_ATTRIB_PRIMITIVE, sopparms.getPieceAttrib());
+    // }
+    
+    extremeElem.doDelGroupElement = sopparms.getDelElement();
+    extremeElem.setGroup.setComputeParm(sopparms.getReverseGroup());
+    
+    extremeElem.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    if (sopparms.getUsePieceAttrib())
-    {
-        extremePrim.setPieceAttrib(GA_ATTRIB_PRIMITIVE, sopparms.getPieceAttrib());
-    }
-    extremePrim.doDelGroupElement = sopparms.getDelOutGroupGeo();
-    extremePrim.reverseOutGroup = sopparms.getReverseGroup();
+    extremeElem.getInGroupArray().set(GA_ATTRIB_DETAIL, sopparms.getExtremeElemAttribName());
 
-    extremePrim.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    if (sopparms.getOutExtremeElemGroup())
+        extremeElem.extremeElemGroupName = &sopparms.getExtremeElemGroupName();
+    
+    if (sopparms.getOutExtremeElemAttrib())
+        extremeElem.setExtremeElemAttrib(;
+    
+    if (sopparms.getOutExtremeValueAttrib())
+        extremeElem.getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_DETAIL,
+            GA_STORECLASS_INT, GA_STORE_INVALID, sopparms.getExtremeValueAttribName());
+    
+    extremeElem.computeAndBumpDataId();
 
-    if (sopparms.getOutExtremePrimAttrib())
-    {
-        extremePrim.findOrCreateTuple(false, sopparms.getExtremePrimAttribName());
-    }
-    if (sopparms.getOutExtremePrimGroup())
-    {
-        extremePrim.findOrCreateGroup(false, sopparms.getExtremePrimGroupName());
-    }
-
-    extremePrim.computeAndBumpDataId();
-
-    extremePrim.delOrVisualizeGroup();
+    extremeElem.delOrVisualizeGroup();
 
 
 }

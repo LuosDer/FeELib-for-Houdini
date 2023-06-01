@@ -58,8 +58,8 @@ static const char *theDsFile = R"THEDSFILE(
     // }
 
     parm {
-        name    "groupByPolyWindingMethod"
-        cppname "GroupByPolyWindingMethod"
+        name    "groupPolyByWindingMethod"
+        cppname "GroupPolyByWindingMethod"
         label   "Method"
         type    ordinal
         default { "restDir2D_avgNormal" }
@@ -77,33 +77,11 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "outGroup"
-        cppname "OutGroup"
-        label   "Out Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "outGroupType"
-        cppname "OutGroupType"
-        label   "Out Group Type"
-        type    ordinal
-        default { "prim" }
-        disablewhen "{ outGroup == 0 }"
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
-        }
-    }
-    parm {
         name    "outGroupName"
         cppname "OutGroupName"
         label   "OutGroup Name"
         type    string
         default { "meshWindingCorrect" }
-        disablewhen "{ outGroup == 0 }"
     }
     parm {
         name    "normalAttribName"
@@ -178,7 +156,8 @@ SOP_FeE_GroupPolyByWinding_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_GroupPolyByWinding_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh,            &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("outGroupName"_sh,     &SOP_Node::groupNameMenu);
         templ.setChoiceListPtr("normalAttribName"_sh, &SOP_Node::primAttribReplaceMenu);
     }
     return templ.templates();
@@ -287,18 +266,18 @@ sopGroupMergeType(SOP_FeE_GroupPolyByWinding_1_0Parms::GroupMergeType groupMerge
 
 
 
-static GFE_GroupByPolyWindingMethod
-sopMethod(SOP_FeE_GroupPolyByWinding_1_0Parms::GroupByPolyWindingMethod parmgrouptype)
+static GFE_GroupPolyByWindingMethod
+sopMethod(SOP_FeE_GroupPolyByWinding_1_0Parms::GroupPolyByWindingMethod parmgrouptype)
 {
     using namespace SOP_FeE_GroupPolyByWinding_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupByPolyWindingMethod::RESTDIR2D_AVGNORMAL:  return GFE_GroupByPolyWindingMethod::RestDir2D_AvgNormal; break;
-    case GroupByPolyWindingMethod::RESTDIR2D_HOUOBB:     return GFE_GroupByPolyWindingMethod::RestDir2D_HouOBB;    break;
-    case GroupByPolyWindingMethod::RAY:                  return GFE_GroupByPolyWindingMethod::Ray;                 break;
+    case GroupPolyByWindingMethod::RESTDIR2D_AVGNORMAL:  return GFE_GroupPolyByWindingMethod::RestDir2D_AvgNormal; break;
+    case GroupPolyByWindingMethod::RESTDIR2D_HOUOBB:     return GFE_GroupPolyByWindingMethod::RestDir2D_HouOBB;    break;
+    case GroupPolyByWindingMethod::RAY:                  return GFE_GroupPolyByWindingMethod::Ray;                 break;
     }
-    UT_ASSERT_MSG(0, "Unhandled GFE_GroupByPolyWinding METHOD!");
-    return GFE_GroupByPolyWindingMethod::RestDir2D_AvgNormal;
+    UT_ASSERT_MSG(0, "Unhandled GFE_GroupPolyByWinding METHOD!");
+    return GFE_GroupPolyByWindingMethod::RestDir2D_AvgNormal;
 }
 
 void
@@ -319,7 +298,7 @@ SOP_FeE_GroupPolyByWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const UT_StringHolder& normalAttribName = sopparms.getNormalAttribName();
     
-    const GFE_GroupByPolyWindingMethod method = sopMethod(sopparms.getGroupByPolyWindingMethod());
+    const GFE_GroupPolyByWindingMethod method = sopMethod(sopparms.getGroupPolyByWindingMethod());
     
     
     UT_AutoInterrupt boss("Processing");
@@ -327,19 +306,19 @@ SOP_FeE_GroupPolyByWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         return;
 
     
-    GFE_GroupByPolyWinding groupByPolyWinding(outGeo0, inGeo1, cookparms);
-    groupByPolyWinding.setComputeParm(method, sopparms.getReversePrim(), sopparms.getPolyCap());
+    GFE_GroupPolyByWinding groupPolyByWinding(outGeo0, inGeo1, cookparms);
+    groupPolyByWinding.setComputeParm(method, sopparms.getReversePrim(), sopparms.getMeshCap());
 
-    groupByPolyWinding.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
+    groupPolyByWinding.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
     
     if (sopparms.getOutGroup())
     {
         const GA_GroupType outGroupType = sopGroupType(sopparms.getOutGroupType());
-        groupByPolyWinding.getOutGroupArray().findOrCreate(false, outGroupType, sopparms.getOutGroupName());
+        groupPolyByWinding.getOutGroupArray().findOrCreate(false, outGroupType, sopparms.getOutGroupName());
     }
     
-    groupByPolyWinding.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
-    groupByPolyWinding.computeAndBumpDataId();
-    groupByPolyWinding.visualizeOutGroup();
+    groupPolyByWinding.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
+    groupPolyByWinding.computeAndBumpDataId();
+    groupPolyByWinding.visualizeOutGroup();
 
 }

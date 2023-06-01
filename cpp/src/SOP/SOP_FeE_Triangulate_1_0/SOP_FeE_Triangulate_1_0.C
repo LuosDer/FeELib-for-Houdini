@@ -57,7 +57,7 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/Filter/Topo/Artificial Line");
 
-    newOp->setIconName("SOP_triangulate2d-2.0");
+    newOp->setIconName("SOP_divide");
     table->addOperator(newOp);
 
 }

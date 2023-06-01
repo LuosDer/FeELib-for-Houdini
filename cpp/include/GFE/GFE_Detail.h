@@ -25,18 +25,26 @@ class GFE_Detail : public GA_Detail
 
 public:
     
-    SYS_FORCE_INLINE bool hasPrimitive()
+    SYS_FORCE_INLINE bool hasPrimitive() const
     { return getNumPrimitives() >= 0; }
     //{ return getPrimitiveMap().isOffsetInRange(getPrimitiveMap().indexFromOffset(0)); }
 
-    SYS_FORCE_INLINE bool hasPoint()
+    SYS_FORCE_INLINE bool hasPoint() const
     { return getNumPoints() >= 0; }
 
-    SYS_FORCE_INLINE bool hasVertex()
+    SYS_FORCE_INLINE bool hasVertex() const
     { return getNumVertices() >= 0; }
 
     
-    SYS_FORCE_INLINE bool isPacked(const GA_Offset primoff)
+    SYS_FORCE_INLINE bool isUsedPoint(const GA_Offset ptoff) const
+    { return GFE_Type::isValidOffset(pointVertex(ptoff)); }
+
+    SYS_FORCE_INLINE bool isUnusedPoint(const GA_Offset ptoff) const
+    { return GFE_Type::isInvalidOffset(pointVertex(ptoff)); }
+
+
+    
+    SYS_FORCE_INLINE bool isPacked(const GA_Offset primoff) const
     { return GFE_Type::isPacked(getPrimitiveTypeId(primoff)); }
 
     SYS_FORCE_INLINE GA_Detail* asGA_Detail()
@@ -166,7 +174,7 @@ public:
 private:
     GA_Offset vertexFromEdge_sub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
     {
-        for (GA_Offset vtxoff = pointVertex(ptoff0); GFE_Type::OffsetIsValid(vtxoff); vtxoff = vertexToNextVertex(vtxoff))
+        for (GA_Offset vtxoff = pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = vertexToNextVertex(vtxoff))
         {
             const GA_Offset primoff = vertexPrimitive(vtxoff);
             const GA_Size numvtx = getPrimitiveVertexCount(primoff);
@@ -199,7 +207,7 @@ public:
     GA_Offset vertexFromEdge(const GA_Offset ptoff0, const GA_Offset ptoff1) const
     {
         GA_Offset result = vertexFromEdge_sub(ptoff0, ptoff1);
-        if (GFE_Type::OffsetIsInvalid(result))
+        if (GFE_Type::isInvalidOffset(result))
             result = vertexFromEdge_sub(ptoff1, ptoff0);
 
         return result;
@@ -481,42 +489,37 @@ GA_Size getNumElements(const GA_AttributeOwner attribClass) const
 {
     switch (attribClass)
     {
-    case GA_ATTRIB_PRIMITIVE:
-        return getNumPrimitives();
-        break;
-    case GA_ATTRIB_POINT:
-        return getNumPoints();
-        break;
-    case GA_ATTRIB_VERTEX:
-        return getNumVertices();
-        break;
-    default:
-        return -1;
-        break;
+    case GA_ATTRIB_PRIMITIVE: return getNumPrimitives(); break;
+    case GA_ATTRIB_POINT:     return getNumPoints();     break;
+    case GA_ATTRIB_VERTEX:    return getNumVertices();   break;
     }
-    return -1;
+    return GFE_INVALID_OFFSET;
 }
 
 GA_Size getNumElements(const GA_GroupType groupType) const
 {
     switch (groupType)
     {
-    case GA_GROUP_PRIMITIVE:
-        return getNumPrimitives();
-        break;
-    case GA_GROUP_POINT:
-        return getNumPoints();
-        break;
-    case GA_GROUP_VERTEX:
-        return getNumVertices();
-        break;
-    default:
-        return -1;
-        break;
+    case GA_GROUP_PRIMITIVE: return getNumPrimitives(); break;
+    case GA_GROUP_POINT:     return getNumPoints();     break;
+    case GA_GROUP_VERTEX:    return getNumVertices();   break;
     }
-    return -1;
+    return GFE_INVALID_OFFSET;
 }
 
+SYS_FORCE_INLINE GA_Size getNumElements(const GA_Attribute* const attrib) const
+{ return getNumElements(attrib->getOwner()); }
+
+SYS_FORCE_INLINE GA_Size getNumElements(const GA_Attribute& attrib) const
+{ return getNumElements(attrib.getOwner()); }
+
+SYS_FORCE_INLINE GA_Size getNumElements(const GA_Group* const group) const
+{ return getNumElements(group->classType()); }
+
+SYS_FORCE_INLINE GA_Size getNumElements(const GA_Group& group) const
+{ return getNumElements(group.classType()); }
+
+    
 void clearElement()
 {
     //clear();
@@ -1641,7 +1644,7 @@ public:
                 
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset promoff = pointVertex(elemoff); GFE_Type::OffsetIsValid(promoff); promoff = vertexToNextVertex(promoff))
+                    for (GA_Offset promoff = pointVertex(elemoff); GFE_Type::isValidOffset(promoff); promoff = vertexToNextVertex(promoff))
                     {
                         group.setElement(promoff, false);
                     }

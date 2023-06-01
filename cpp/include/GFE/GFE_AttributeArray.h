@@ -381,7 +381,7 @@ findOrCreateTuple(
         if(finalStorage == GA_STORE_STRING)
             attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, "string", create_args, attribute_options));
         else
-            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tuple_size, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
@@ -557,7 +557,7 @@ findOrCreateTuple(
 
         if (detached)
         {
-            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+            attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tuple_size, defaults, attribute_options));
             attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
             //attribPtr = attribUPtr.get();
         }
@@ -646,7 +646,7 @@ findOrCreateUV(
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
     if (detached)
     {
-        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, 1));
+        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tuple_size, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
@@ -710,7 +710,7 @@ findOrCreateDir(
         
     if (detached)
     {
-        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, 1));
+        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tuple_size, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
@@ -777,7 +777,7 @@ findOrCreateNormal3D(
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
     if (detached)
     {
-        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, 1));
+        attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tuple_size, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
         //attribPtr = attribUPtr.get();
     }
