@@ -1027,9 +1027,80 @@ public:
     }
 
 
+    SYS_FORCE_INLINE GA_Group* &operator[](const size_t i)
+    { return groupArray[i]; }
+
+    SYS_FORCE_INLINE GA_Group* const &operator[](const size_t i) const
+    { return groupArray[i]; }
+
+
+    void eraseByGroupType(const GA_GroupType groupType, const bool reverse = false)
+    {
+        const auto begin = groupArray.begin();
+        if (groupArray.size() > 0)
+        {
+            for (size_t i = groupArray.size()-1; ; --i)
+            {
+                if (groupArray[i]->classType() == groupType ^ reverse)
+                    groupArray.erase(begin+i);
+                if (i == 0)
+                    break;
+            }
+        }
+        if (groupUPtrArray.size() > 0)
+        {
+            const auto uPtrbegin = groupUPtrArray.begin();
+            for (size_t i = groupUPtrArray.size()-1; ; --i)
+            {
+                if (groupUPtrArray[i].get()->classType() == groupType ^ reverse)
+                    groupUPtrArray.erase(uPtrbegin+i);
+                if (i == 0)
+                    break;
+            }
+        }
+    }
+
+    SYS_FORCE_INLINE void erasePrimitiveGroup()
+    { eraseByGroupType(GA_GROUP_PRIMITIVE, false); }
+    
+    SYS_FORCE_INLINE void eraseNonPrimitiveGroup()
+    { eraseByGroupType(GA_GROUP_PRIMITIVE, true); }
+
+    SYS_FORCE_INLINE void erasePointGroup()
+    { eraseByGroupType(GA_GROUP_POINT, false); }
+    
+    SYS_FORCE_INLINE void eraseNonPointGroup()
+    { eraseByGroupType(GA_GROUP_POINT, true); }
+
+    SYS_FORCE_INLINE void eraseVertexGroup()
+    { eraseByGroupType(GA_GROUP_VERTEX, false); }
+    
+    SYS_FORCE_INLINE void eraseNonVertexGroup()
+    { eraseByGroupType(GA_GROUP_VERTEX, true); }
+
+    SYS_FORCE_INLINE void eraseEdgeGroup()
+    { eraseByGroupType(GA_GROUP_EDGE, false); }
+    
+    SYS_FORCE_INLINE void eraseNonEdgeGroup()
+    { eraseByGroupType(GA_GROUP_EDGE, true); }
 
 
     
+    SYS_FORCE_INLINE bool isElementGroup(const size_t i) const
+    { return groupArray[i]->isElementGroup(); }
+
+    SYS_FORCE_INLINE bool isPrimitiveGroup(const size_t i) const
+    { return groupArray[i]->classType() == GA_GROUP_PRIMITIVE; }
+
+    SYS_FORCE_INLINE bool isPointGroup(const size_t i) const
+    { return groupArray[i]->classType() == GA_GROUP_POINT; }
+
+    SYS_FORCE_INLINE bool isVertexGroup(const size_t i) const
+    { return groupArray[i]->classType() == GA_GROUP_VERTEX; }
+    
+    SYS_FORCE_INLINE bool isEdgeGroup(const size_t i) const
+    { return groupArray[i]->classType() == GA_GROUP_EDGE; }
+
     
     SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i) const
     {
@@ -1060,13 +1131,6 @@ public:
         UT_ASSERT(groupArray[i]->classType() == GA_GROUP_EDGE);
         return static_cast<GA_EdgeGroup*>(groupArray[i]);
     }
-
-
-    SYS_FORCE_INLINE GA_Group* &operator[](const size_t i)
-    { return groupArray[i]; }
-
-    SYS_FORCE_INLINE GA_Group* const &operator[](const size_t i) const
-    { return groupArray[i]; }
 
     SYS_FORCE_INLINE bool isEmpty() const
     { return groupArray.size() == 0; }

@@ -2,7 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_Triangulate_1_0.h"
 
-
 #include "SOP_FeE_Triangulate_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
@@ -13,7 +12,7 @@
 
 
 
-#include "GU/GU_TriangleMesh.h"
+#include "GFE/GFE_Convex.h"
 
 
 
@@ -25,6 +24,50 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
 
+    parm {
+        name    "convexPoly"
+        cppname "ConvexPoly"
+        label   "Convex Polygon"
+        type    toggle
+        default { "on" }
+    }
+    parm {
+        name    "primGroup"
+        cppname "PrimGroup"
+        label   "Prim Group"
+        type    string
+        default { "" }
+        disablewhen "{ convexPoly == 0 }"
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "maxPoint"
+        cppname "MaxPoint"
+        label   "Max Point"
+        type    integer
+        default { "3" }
+        disablewhen "{ convexPoly == 0 }"
+        range   { 3! 10 }
+    }
+    parm {
+        name    "flipEdge"
+        cppname "FlipEdge"
+        label   "Flip Edge"
+        type    toggle
+        default { "1" }
+        disablewhen "{ convexPoly == 0 }"
+    }
+    parm {
+        name    "avoidDegeneracy"
+        cppname "AvoidDegeneracy"
+        label   "Avoid Degeneracy"
+        type    toggle
+        default { "0" }
+        disablewhen "{ convexPoly == 0 }"
+    }
+
 }
 )THEDSFILE";
 
@@ -34,7 +77,7 @@ SOP_FeE_Triangulate_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_Triangulate_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
@@ -109,19 +152,19 @@ SOP_FeE_Triangulate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
-
+    
+    if (!sopparms.getConvexPoly())
+        return;
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-#if 1
-    static_cast<GU_Detail&>(outGeo0).convex(3);
-#else
-    outGeo0.replaceWith(inGeo0);
-    GU_TriangleMeshT<fpreal> triangleMesh(static_cast<const GU_Detail*>(&outGeo0));
-    triangleMesh.buildMesh();
-#endif
-    outGeo0.bumpDataIdsForAddOrRemove(false, true, true);
+    GFE_Convex convex(outGeo0, cookparms);
+    convex.setComputeParm(sopparms.getMaxPoint(), sopparms.getFlipEdge(), sopparms.getAvoidDegeneracy());
+    convex.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
+    convex.computeAndBumpDataId();
+    
 }
 
 

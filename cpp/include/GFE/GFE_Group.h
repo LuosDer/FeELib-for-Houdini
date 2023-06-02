@@ -21,97 +21,91 @@ public:
     GFE_SetGroup(GA_Group* inGroupPtr)
     { operator=(inGroupPtr); }
     
-    GFE_SetGroup(GA_ElementGroup* groupPtr)   : elementGroupPtr(groupPtr) {}
-    GFE_SetGroup(GA_PrimitiveGroup* groupPtr) : elementGroupPtr(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_SetGroup(GA_PointGroup* groupPtr)     : elementGroupPtr(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_SetGroup(GA_VertexGroup* groupPtr)    : elementGroupPtr(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_SetGroup(GA_EdgeGroup* groupPtr)      : edgeGroupPtr(groupPtr) {}
+    GFE_SetGroup(GA_ElementGroup* groupPtr)   : elementGroup(groupPtr) {}
+    GFE_SetGroup(GA_PrimitiveGroup* groupPtr) : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
+    GFE_SetGroup(GA_PointGroup* groupPtr)     : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
+    GFE_SetGroup(GA_VertexGroup* groupPtr)    : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
+    GFE_SetGroup(GA_EdgeGroup* groupPtr)      : edgeGroup(groupPtr) {}
 
     ~GFE_SetGroup(){}
 
 	
-    void
-        setComputeParm(
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
-            const bool reverseGroup = false
-        )
-    {
-        this->groupMergeType = groupMergeType;
-        this->reverseGroup = reverseGroup;
-    }
+    SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup)
+    { this->groupMergeType = groupMergeType; this->reverseGroup = reverseGroup; }
 
-    void
-        setComputeParm(
-            const bool reverseGroup = false,
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace
-        )
-    {
-        this->groupMergeType = groupMergeType;
-        this->reverseGroup = reverseGroup;
-    }
+    SYS_FORCE_INLINE void setParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType)
+    { setParm(groupMergeType, reverseGroup); }
 
+    SYS_FORCE_INLINE void setComputeParm(const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace, const bool reverseGroup = false)
+    { setParm(groupMergeType, reverseGroup); }
+
+    SYS_FORCE_INLINE void setComputeParm(const bool reverseGroup = false, const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace)
+    { setParm(groupMergeType, reverseGroup); }
+    
     
     GFE_SetGroup& operator=(GA_Group* const inGroupPtr)
     {
         if (inGroupPtr->isElementGroup())
-            elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
+        {
+            elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr);
+            edgeGroup    = nullptr;
+        }
         else
-            edgeGroupPtr    = static_cast<GA_EdgeGroup*>(inGroupPtr);
+        {
+            edgeGroup    = static_cast<GA_EdgeGroup*>(inGroupPtr);
+            elementGroup = nullptr;
+        }
         return *this;
     }
+
 
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_ElementGroup* const inGroupPtr)
-    {
-        elementGroupPtr = inGroupPtr;
-        return *this;
-    }
+    { elementGroup = inGroupPtr; edgeGroup = nullptr; return *this; }
 
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_PrimitiveGroup* const inGroupPtr)
-    {
-        elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
-        return *this;
-    }
+    { elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr); edgeGroup = nullptr; return *this; }
 
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_PointGroup* const inGroupPtr)
-    {
-        elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
-        return *this;
-    }
+    { elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr); edgeGroup = nullptr; return *this; }
 
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_VertexGroup* const inGroupPtr)
-    {
-        elementGroupPtr = static_cast<GA_ElementGroup*>(inGroupPtr);
-        return *this;
-    }
+    { elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr); edgeGroup = nullptr; return *this; }
 
     SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_EdgeGroup* const inGroupPtr)
-    {
-        edgeGroupPtr = inGroupPtr;
-        return *this;
-    }
+    { edgeGroup = inGroupPtr; elementGroup = nullptr; return *this; }
+
 
 
     
-    SYS_FORCE_INLINE void setParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType)
-    {
-        this->reverseGroup = reverseGroup;
-        this->groupMergeType = groupMergeType;
+    SYS_FORCE_INLINE GA_Group* getGroup()
+    { 
+         if (elementGroup)
+             return static_cast<GA_Group*>(elementGroup);
+         else
+             return static_cast<GA_Group*>(edgeGroup);
     }
+
+    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup()
+    { return elementGroup; }
+    
+    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup()
+    { return edgeGroup; }
+
 
     
     void set(const GA_Offset elemoff, bool b)
     {
-        UT_ASSERT_P(elementGroupPtr);
+        UT_ASSERT_P(elementGroup);
 
         b ^= reverseGroup;
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:     b |=  elementGroupPtr->contains(elemoff); break;
-        case GFE_GroupMergeType::Intersect: b &=  elementGroupPtr->contains(elemoff); break;
-        case GFE_GroupMergeType::Subtract:  b &= !elementGroupPtr->contains(elemoff); break;
+        case GFE_GroupMergeType::Union:     b |=  elementGroup->contains(elemoff); break;
+        case GFE_GroupMergeType::Intersect: b &=  elementGroup->contains(elemoff); break;
+        case GFE_GroupMergeType::Subtract:  b &= !elementGroup->contains(elemoff); break;
         }
-        elementGroupPtr->setElement(elemoff, b);
+        elementGroup->setElement(elemoff, b);
     }
     
     SYS_FORCE_INLINE void set(const GA_Offset elemoff0, const GA_Offset elemoff1, bool b)
@@ -119,45 +113,44 @@ public:
 #if 1
         set(GA_Edge(elemoff0, elemoff1), b);
 #else
-        UT_ASSERT_P(edgeGroupPtr);
+        UT_ASSERT_P(edgeGroup);
         
         b ^= reverseGroup;
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:     b |=  edgeGroupPtr->contains(elemoff0, elemoff1); break;
-        case GFE_GroupMergeType::Intersect: b &=  edgeGroupPtr->contains(elemoff0, elemoff1); break;
-        case GFE_GroupMergeType::Subtract:  b &= !edgeGroupPtr->contains(elemoff0, elemoff1); break;
+        case GFE_GroupMergeType::Union:     b |=  edgeGroup->contains(elemoff0, elemoff1); break;
+        case GFE_GroupMergeType::Intersect: b &=  edgeGroup->contains(elemoff0, elemoff1); break;
+        case GFE_GroupMergeType::Subtract:  b &= !edgeGroup->contains(elemoff0, elemoff1); break;
         // case GFE_GroupMergeType::Replace: break;
         default: break;
         }
         if (b)
-            edgeGroupPtr->add(elemoff0, elemoff1);
+            edgeGroup->add(elemoff0, elemoff1);
         else
-            edgeGroupPtr->remove(elemoff0, elemoff1);
+            edgeGroup->remove(elemoff0, elemoff1);
 #endif
     }
     
     void set(const GA_Edge& edge, bool b)
     {
-        UT_ASSERT_P(edgeGroupPtr);
+        UT_ASSERT_P(edgeGroup);
         
         b ^= reverseGroup;
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:     b |=  edgeGroupPtr->contains(edge); break;
-        case GFE_GroupMergeType::Intersect: b &=  edgeGroupPtr->contains(edge); break;
-        case GFE_GroupMergeType::Subtract:  b &= !edgeGroupPtr->contains(edge); break;
+        case GFE_GroupMergeType::Union:     b |=  edgeGroup->contains(edge); break;
+        case GFE_GroupMergeType::Intersect: b &=  edgeGroup->contains(edge); break;
+        case GFE_GroupMergeType::Subtract:  b &= !edgeGroup->contains(edge); break;
         // case GFE_GroupMergeType::Replace:
         //default: break;
         }
         if (b)
-            edgeGroupPtr->add(edge);
+            edgeGroup->add(edge);
         else
-            edgeGroupPtr->remove(edge);
+            edgeGroup->remove(edge);
     }
-    
     
     
 public:
@@ -167,8 +160,8 @@ public:
 
     
 private:
-    GA_ElementGroup* elementGroupPtr = nullptr;
-    GA_EdgeGroup* edgeGroupPtr = nullptr;
+    GA_ElementGroup* elementGroup = nullptr;
+    GA_EdgeGroup* edgeGroup = nullptr;
     
 }; // End of Class GFE_SetGroup
 
@@ -683,26 +676,10 @@ SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 } // End of namespace GFE_Group
+
+
+
+
 
 #endif

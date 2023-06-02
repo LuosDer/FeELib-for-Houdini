@@ -254,8 +254,48 @@ public:
     }
     
 
+    SYS_FORCE_INLINE static void groupUnionFull(
+        GA_PrimitiveGroup& group,
+        const GA_PointGroup* const groupRef,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize = 1024
+    )
+    {
+        if (!groupRef)
+        {
+            group.addAll();
+            return;
+        }
+        group.clear();
+        const GA_Detail& geo = group.getDetail();
+        const GA_SplittableRange splittableRange(GA_Range(group.getIndexMap()));
+        UTparallelFor(splittableRange, [&geo, &group, groupRef](const GA_SplittableRange& r)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    bool flag = true;
+                    const GA_Size numvtx = geo.getPrimitiveVertexCount(elemoff);
+                    for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                    {
+                        const GA_Offset ptoff = geo.vertexPoint(geo.getPrimitiveVertexOffset(elemoff, vtxpnum));
+                        if (!groupRef->contains(ptoff))
+                        {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag)
+                        group.setElement(elemoff, true);
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    
 
-
+    
 
 
 

@@ -20,54 +20,64 @@ using namespace SOP_FeE_GroupPolyByWinding_1_0_Namespace;
 static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
-    
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
-    // parm {
-    //     name    "group"
-    //     cppname "Group"
-    //     label   "Group"
-    //     type    string
-    //     default { "" }
-    //     parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-    //     parmtag { "script_action_help" "Select geometry from an available viewport." }
-    //     parmtag { "script_action_icon" "BUTTONS_reselect" }
-    // }
-    // parm {
-    //     name    "groupType"
-    //     cppname "GroupType"
-    //     label   "Group Type"
-    //     type    ordinal
-    //     default { "point" }
-    //     menu {
-    //         "guess"     "Guess from Group"
-    //         "prim"      "Primitive"
-    //         "point"     "Point"
-    //         "vertex"    "Vertex"
-    //         "edge"      "Edge"
-    //     }
-    // }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "prim" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
 
     parm {
         name    "groupPolyByWindingMethod"
         cppname "GroupPolyByWindingMethod"
         label   "Method"
         type    ordinal
-        default { "restDir2D_avgNormal" }
+        default { "ray" }
         menu {
-            "restDir2D_avgNormal"  "RestDir2D AvgNormal"
-            "restDir2D_houOBB"     "RestDir2D Hou OBB"
-            "ray"                  "Ray"
+            "ray"    "Ray"
         }
+    }
+    parm {
+        name    "outGroup"
+        cppname "OutGroup"
+        label   "Out Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "1" }
+    }
+    parm {
+        name    "outGroupName"
+        cppname "OutGroupName"
+        label   "Out Group Name"
+        type    string
+        default { "polyWindingCorrect" }
+        disablewhen "{ outGroup == 0 }"
+    }
+    parm {
+        name    "dirAttrib"
+        cppname "DirAttrib"
+        label   "Dir Attribute"
+        type    string
+        default { "N" }
     }
     parm {
         name    "meshCap"
@@ -76,29 +86,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { "0" }
     }
-    parm {
-        name    "outGroupName"
-        cppname "OutGroupName"
-        label   "OutGroup Name"
-        type    string
-        default { "meshWindingCorrect" }
-    }
-    parm {
-        name    "normalAttribName"
-        cppname "NormalAttribName"
-        label   "Normal Attribute Name"
-        type    string
-        default { "N" }
-    }
-
-    parm {
-        name    "reverseGroup"
-        cppname "ReverseGroup"
-        label   "Reverse Group"
-        type    toggle
-        default { "0" }
-    }
-
 
     parm {
         name    "groupMergeType"
@@ -158,7 +145,7 @@ SOP_FeE_GroupPolyByWinding_1_0::buildTemplates()
     {
         templ.setChoiceListPtr("group"_sh,            &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("outGroupName"_sh,     &SOP_Node::groupNameMenu);
-        templ.setChoiceListPtr("normalAttribName"_sh, &SOP_Node::primAttribReplaceMenu);
+        templ.setChoiceListPtr("dirAttrib"_sh,        &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -272,12 +259,10 @@ sopMethod(SOP_FeE_GroupPolyByWinding_1_0Parms::GroupPolyByWindingMethod parmgrou
     using namespace SOP_FeE_GroupPolyByWinding_1_0Enums;
     switch (parmgrouptype)
     {
-    case GroupPolyByWindingMethod::RESTDIR2D_AVGNORMAL:  return GFE_GroupPolyByWindingMethod::RestDir2D_AvgNormal; break;
-    case GroupPolyByWindingMethod::RESTDIR2D_HOUOBB:     return GFE_GroupPolyByWindingMethod::RestDir2D_HouOBB;    break;
-    case GroupPolyByWindingMethod::RAY:                  return GFE_GroupPolyByWindingMethod::Ray;                 break;
+    case GroupPolyByWindingMethod::RAY:   return GFE_GroupPolyByWindingMethod::Ray;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE_GroupPolyByWinding METHOD!");
-    return GFE_GroupPolyByWindingMethod::RestDir2D_AvgNormal;
+    return GFE_GroupPolyByWindingMethod::Ray;
 }
 
 void
@@ -293,31 +278,33 @@ SOP_FeE_GroupPolyByWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     outGeo0.replaceWith(inGeo0);
 
     
-    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
-
-    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& normalAttribName = sopparms.getNormalAttribName();
-    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_GroupPolyByWindingMethod method = sopMethod(sopparms.getGroupPolyByWindingMethod());
     
+    //const GA_GroupType outGroupType = sopGroupType(sopparms.getOutGroupType());
+    
+    
+    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
+
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
     
-    GFE_GroupPolyByWinding groupPolyByWinding(outGeo0, inGeo1, cookparms);
-    groupPolyByWinding.setComputeParm(method, sopparms.getReversePrim(), sopparms.getMeshCap());
+    GFE_GroupPolyByWinding groupPolyByWinding(outGeo0, inGeo1, &cookparms);
+    groupPolyByWinding.setComputeParm(method, sopparms.getMeshCap(), sopparms.getReversePrim());
 
-    groupPolyByWinding.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
+    groupPolyByWinding.setGroup.setParm(groupMergeType, sopparms.getReverseGroup());
     
+    if (method == GFE_GroupPolyByWindingMethod::Ray)
+        groupPolyByWinding.findOrCreateNormal3D(true, GA_STORE_INVALID, sopparms.getDirAttrib());
+
     if (sopparms.getOutGroup())
-    {
-        const GA_GroupType outGroupType = sopGroupType(sopparms.getOutGroupType());
-        groupPolyByWinding.getOutGroupArray().findOrCreate(false, outGroupType, sopparms.getOutGroupName());
-    }
+        groupPolyByWinding.findOrCreatePrimitiveGroup(false, sopparms.getOutGroupName());
     
-    groupPolyByWinding.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
+    
+    groupPolyByWinding.groupParser.setGroup(groupType, sopparms.getGroup());
     groupPolyByWinding.computeAndBumpDataId();
     groupPolyByWinding.visualizeOutGroup();
 

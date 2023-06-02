@@ -2,7 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_DelElement_1_0.h"
 
-
 #include "SOP_FeE_DelElement_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
@@ -241,7 +240,7 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     GFE_DelElement delElement(outGeo0, inGeo0, cookparms);
-
+       
     delElement.groupParser.setGroup(groupType, sopparms.getDelElementGroup());
 
     delElement.setComputeParm(

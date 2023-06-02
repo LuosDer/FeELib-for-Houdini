@@ -103,9 +103,11 @@ private:
 			normal3D.groupParser.setGroup(groupParser);
 
 			if (normal3D.isEmpty())
-				dirAttrib = normal3D.findOrCreateNormal3D(true, GFE_Attribute::toNormalSearchOrder(outElemGroup), GA_STORE_INVALID, "N");
+				normal3D.findOrCreateNormal3D(true, GFE_Attribute::toNormalSearchOrder(outElemGroup), GA_STORE_INVALID, "N");
 		
 			normal3D.compute();
+			
+			dirAttrib = normal3D.getAttrib();
 		}
 		
 		// switch (method)
@@ -183,7 +185,7 @@ public:
 	
 private:
 	UT_Vector3R restDir;
-	GA_Attribute* dirAttrib;
+	GA_Attribute* dirAttrib = nullptr;
 	GA_ElementGroup* outElemGroup;
 	
 	exint subscribeRatio = 64;

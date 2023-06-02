@@ -4,10 +4,13 @@
 #ifndef __GFE_GroupParser_h__
 #define __GFE_GroupParser_h__
 
-//#include "GFE/GFE_GroupParser.h"
+#include "GFE/GFE_GroupParser.h"
+
+#include "GA/GA_SplittableRange.h"
+#include "SOP/SOP_NodeVerb.h"
+
 
 #include "GFE/GFE_Detail.h"
-#include "GA/GA_SplittableRange.h"
 
 #include "GFE/GFE_GroupUnion.h"
 
@@ -306,11 +309,15 @@ public:
                 }
             }
         }
+        
+        //hasGroup = true;
+        //const char* nameChar = groupName.c_str();
+        geoGroup = gop->parseGroupDetached(groupName, groupType, geo, false, false, hasGroup);
+        hasGroup &= bool(geoGroup);
 
-        geoGroup = gop->parseGroupDetached(groupName, groupType, geo, true, false, hasGroup);
-
-        // if (cookparms && verb)
-        //     verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, geo, geoGroup);
+        verb = cookparms->getNode()->cookVerb();
+        if (cookparms && verb)
+            verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, static_cast<const GU_Detail*>(geo), geoGroup);
         
         if (!hasGroup && cookparms)
             cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
@@ -793,10 +800,10 @@ private:
 
     //GEO_Detail* geo = nullptr;
     const SOP_NodeVerb::CookParms* cookparms;
-    //const SOP_NodeVerb* verb;
+    const SOP_NodeVerb* verb = nullptr;
     const GEO_Detail* geo;
     GA_Detail* geoNonconst;
-    
+        
     GOP_Manager* gop;
 
 

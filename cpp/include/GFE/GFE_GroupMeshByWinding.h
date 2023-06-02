@@ -4,12 +4,11 @@
 #ifndef __GFE_GroupMeshByWinding_h__
 #define __GFE_GroupMeshByWinding_h__
 
-//#include "GFE/GFE_GroupMeshByWinding.h"
+#include "GFE/GFE_GroupMeshByWinding.h"
 
 
 
 
-//#include "GEO/GEO_Hull.h"
 #include "GU/GU_PolyFill.h"
 #include "GU/GU_ConvexHull3D.h"
 #include "UT/UT_BoundingBox.h"
@@ -19,7 +18,7 @@
 
 
 
-#include "GFE/GFE_Attribute.h"
+//#include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_Measure.h"
 #include "GFE/GFE_WindingNumber.h"
 //#include "GFE/GFE_MeshCap.h"
@@ -45,15 +44,15 @@ public:
 		setComputeParm(
 			const GFE_GroupMeshByWindingMethod method = GFE_GroupMeshByWindingMethod::VOLUME,
 			const fpreal shrinkAmount = 0.01,
-			const bool reversePrim = false,
-			const bool meshCap = false
+			const bool meshCap = false,
+			const bool reversePrim = false
 		)
 	{
 		setHasComputed();
 		this->method = method;
 		this->shrinkAmount = shrinkAmount;
-		this->reversePrim = reversePrim;
 		this->meshCap = meshCap;
+		this->reversePrim = reversePrim;
 	}
 
 	SYS_FORCE_INLINE bool getMeshWindingCorrect() const
