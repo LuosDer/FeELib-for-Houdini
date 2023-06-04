@@ -310,14 +310,12 @@ public:
             }
         }
         
-        //hasGroup = true;
-        //const char* nameChar = groupName.c_str();
-        geoGroup = gop->parseGroupDetached(groupName, groupType, geo, false, false, hasGroup);
-        hasGroup &= bool(geoGroup);
+        geoGroup = gop->parseGroupDetached(groupName, groupType, geo, true, false, hasGroup);
+        //hasGroup &= bool(geoGroup);
 
-        verb = cookparms->getNode()->cookVerb();
-        if (cookparms && verb)
-            verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, static_cast<const GU_Detail*>(geo), geoGroup);
+        // const SOP_NodeVerb* const verb = cookparms->getNode()->cookVerb();
+        // if (cookparms && verb)
+        //     verb->notifyGroupParmListeners(cookparms->getNode(), 0, 1, static_cast<const GU_Detail*>(geo), geoGroup);
         
         if (!hasGroup && cookparms)
             cookparms->sopAddWarning(SOP_ERR_BADGROUP, groupName);
@@ -800,7 +798,7 @@ private:
 
     //GEO_Detail* geo = nullptr;
     const SOP_NodeVerb::CookParms* cookparms;
-    const SOP_NodeVerb* verb = nullptr;
+    //const SOP_NodeVerb* verb = nullptr;
     const GEO_Detail* geo;
     GA_Detail* geoNonconst;
         

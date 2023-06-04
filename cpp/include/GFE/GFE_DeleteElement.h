@@ -16,38 +16,28 @@
 class GFE_DelElement : public GFE_GeoFilter {
 
 public:
-	using GFE_GeoFilter::GFE_GeoFilter;
-	//
-	// GFE_DelElement(
-	// 	GFE_Detail* const geo,
-	// 	const GA_Detail* const inGeo0 = nullptr,
-	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, geoSrc(inGeo0)
-	// {
-	// }
-	//
-	// GFE_DelElement(
-	// 	GA_Detail& geo,
-	// 	const GA_Detail* const geoSrc = nullptr,
-	// 	const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, geoSrc(geoSrc)
-	// {
-	// }
-	//
-	// GFE_DelElement(
-	// 	GA_Detail& geo,
-	// 	const GA_Detail* const geoSrc,
-	// 	const SOP_NodeVerb::CookParms& cookparms
-	// )
-	// 	: GFE_GeoFilter(geo, cookparms)
-	// 	, geoSrc(geoSrc)
-	// {
-	// }
-
+	//using GFE_GeoFilter::GFE_GeoFilter;
+	
+	GFE_DelElement(
+		GFE_Detail* const geo,
+		const GA_Detail* const geoSrc = nullptr,
+		const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	)
+		: GFE_GeoFilter(geo, geoSrc, cookparms)
+		, groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(geo), groupParser.getGOPRef(), cookparms)
+	{
+	}
+	
+	GFE_DelElement(
+		GA_Detail& geo,
+		const GA_Detail* const geoSrc = nullptr,
+		const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	)
+		: GFE_GeoFilter(geo, cookparms)
+		, groupParserIn0(geoSrc ? geoSrc : &geo, groupParser.getGOPRef(), cookparms)
+	{
+	}
+	
 	
     void
         setComputeParm(
@@ -68,6 +58,9 @@ public:
         this->guaranteeNoVertexReference = guaranteeNoVertexReference;
     }
 
+	SYS_FORCE_INLINE const GA_Group* setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
+    { return groupParserIn0.setGroup(groupType, groupName); }
+
 
 
 
@@ -78,34 +71,40 @@ private:
     virtual bool
         computeCore() override
     {
-        if (!reverseGroup && groupParser.isEmpty())
+        if (!reverseGroup && groupParserIn0.isEmpty())
             return true;
-
+    	
+    	geoGU = geo->asGU_Detail();
+    	geoGU->merge();
     	if (leaveElement)
     	{
-    		switch (groupParser.classType())
+    		switch (groupParserIn0.classType())
     		{
-    		case GA_GROUP_PRIMITIVE: leaveElementFunc(groupParser.getPrimitiveGroup()); break;
-    		case GA_GROUP_POINT:     leaveElementFunc(groupParser.getPointGroup());     break;
-    		case GA_GROUP_VERTEX:    leaveElementFunc(groupParser.getVertexGroup());    break;
-    		case GA_GROUP_EDGE:      leaveElementFunc(groupParser.getEdgeGroup());      break;
-    		default:                 leaveElementFunc();                                break;
+    		case GA_GROUP_PRIMITIVE: leaveElementFunc(groupParserIn0.getPrimitiveGroup()); break;
+    		case GA_GROUP_POINT:     leaveElementFunc(groupParserIn0.getPointGroup());     break;
+    		case GA_GROUP_VERTEX:    leaveElementFunc(groupParserIn0.getVertexGroup());    break;
+    		case GA_GROUP_EDGE:      leaveElementFunc(groupParserIn0.getEdgeGroup());      break;
+    		default:                 leaveElementFunc();                                   break;
     		}
     	}
         else
         {
-        	switch (groupParser.classType())
+        	if (geoSrc)
+        		geo->replaceWith(geoSrc);
+        	switch (groupParserIn0.classType())
         	{
-        	case GA_GROUP_PRIMITIVE: delElement(groupParser.getPrimitiveGroup()); break;
-        	case GA_GROUP_POINT:     delElement(groupParser.getPointGroup());     break;
-        	case GA_GROUP_VERTEX:    delElement(groupParser.getVertexGroup());    break;
-        	case GA_GROUP_EDGE:      delElement(groupParser.getEdgeGroup());      break;
-        	default:                 delElement();                                break;
+        	case GA_GROUP_PRIMITIVE: delElement(groupParserIn0.getPrimitiveGroup()); break;
+        	case GA_GROUP_POINT:     delElement(groupParserIn0.getPointGroup());     break;
+        	case GA_GROUP_VERTEX:    delElement(groupParserIn0.getVertexGroup());    break;
+        	case GA_GROUP_EDGE:      delElement(groupParserIn0.getEdgeGroup());      break;
+        	default:                 delElement();                                   break;
         	}
+		
+    	
         }
     	
     	if (delGroup)
-    		groupParser.delGroup();
+    		groupParserIn0.delGroup();
     	
         return true;
     }
@@ -113,6 +112,9 @@ private:
 	
 	void leaveElementFunc()
     {
+    	if (geoSrc)
+    		geo->replaceWith(geoSrc);
+    	
     }
 	
 	void leaveElementFunc(const GA_PrimitiveGroup* const group)
@@ -135,53 +137,58 @@ private:
     		if (reverseGroup)
     		{
     			geo->replaceWith(*geoSrc);
-    			return;
     		}
+            else
+            {
+            	const GA_AttributeFilter attribFilter();
+            	geo->cloneMissingAttributes(*geoSrc, GA_ATTRIB_OWNER_N,   attribFilter);
+            	geo->cloneMissingGroups    (*geoSrc, GA_ATTRIB_OWNER_N,   attribFilter);
+            	
+            	//geo->cloneMissingAttributes(*geoSrc, GA_ATTRIB_PRIMITIVE, attribFilter);
+            	//geo->cloneMissingAttributes(*geoSrc, GA_ATTRIB_POINT,     attribFilter);
+            	//geo->cloneMissingAttributes(*geoSrc, GA_ATTRIB_VERTEX,    attribFilter);
+            	//geo->cloneMissingAttributes(*geoSrc, GA_ATTRIB_DETAIL,    attribFilter);
+            	//
+            	//geo->cloneMissingGroups    (*geoSrc, GA_ATTRIB_PRIMITIVE, attribFilter);
+            	//geo->cloneMissingGroups    (*geoSrc, GA_ATTRIB_POINT,     attribFilter);
+            	//geo->cloneMissingGroups    (*geoSrc, GA_ATTRIB_VERTEX,    attribFilter);
+            }
+    		return;
     	}
-    	else
+    	if (reverseGroup)
+    		return;
+    	
+    	if (delPointMode)
     	{
-    		if (reverseGroup)
-    			return;
-    		
-    		if (delPointMode)
-    			//geo->destroyPointOffsets(GA_Range(geo->getPointMap(), nullptr), delPointMode, guaranteeNoVertexReference);
-    			geo->destroyPrimitives(geo->getPrimitiveRange(), delUnusedPoint);
-    		else
+    		//geo->destroyPointOffsets(GA_Range(geo->getPointMap(), nullptr), delPointMode, guaranteeNoVertexReference);
+    		//geo->destroyPrimitives(geo->getPrimitiveRange(), delUnusedPoint);
+            geo->clearElement();
+    		return;
+    	}
+    	GA_Topology& topo = geo->getTopology();
+    	GA_Offset start, end;
+    	for (GA_Iterator it(geo->getPrimitiveRange()); it.blockAdvance(start, end); )
+    	{
+    		for (GA_Offset primoff = start; primoff < end; ++primoff)
     		{
-    			GA_Topology& topo = geo->getTopology();
-    			GA_Offset start, end;
-    			for (GA_Iterator it(geo->getPrimitiveRange()); it.blockAdvance(start, end); )
+    			const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+    			for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
     			{
-    				for (GA_Offset primoff = start; primoff < end; ++primoff)
-    				{
-    					const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-    					for (GA_Size i = 0; i < vertices.size(); i++)
-    					{
-    						geo->getPrimitive(primoff)->releaseVertex(vertices[i]);
-    						topo.delVertex(vertices[i]);
-    					}
-    				}
+    				const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+    				geo->getPrimitive(primoff)->releaseVertex(vtxoff);
+    				topo.delVertex(vtxoff);
     			}
-    			if (delUnusedPoint)
-    				geo->destroyUnusedPoints();
     		}
     	}
+    	if (delUnusedPoint)
+    		geo->destroyUnusedPoints();
 	}
 
 
 	void delElement(const GA_PrimitiveGroup* const group)
     {
-    	if (geoSrc)
-    	{
-    	}
-    	else
-    	{
-    	}
-    	if (!group)
-			return delElement();
-
     	const GA_Range range(geo->getPrimitiveMap(), group, reverseGroup);
-    	geo->destroyPrimitives(range, delUnusedPoint);
+    	geo->destroyPrimitives(geo->getPrimitiveRange(group, reverseGroup), delUnusedPoint);
     	
 		if (delPointMode)
 			geo->destroyPrimitives(geo->getPrimitiveRange(group, reverseGroup), delUnusedPoint);
@@ -317,7 +324,7 @@ private:
 		{
 			for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
 			{
-				GA_Offset primoff = vtxPrimRef->getLink(vtxoff);
+				const GA_Offset primoff = vtxPrimRef->getLink(vtxoff);
 
 				geo->getPrimitive(primoff)->releaseVertex(vtxoff);
 				topo.delVertex(vtxoff);
@@ -355,6 +362,7 @@ private:
 
 
 public:
+	
 	bool leaveElement = false;
 	bool reverseGroup = false;
 	bool delGroup = true;
@@ -364,7 +372,10 @@ public:
     bool guaranteeNoVertexReference = false;
 	
 private:
-
+	GFE_GroupParser groupParserIn0;
+	
+	GU_Detail* geoGU;
+	
     //exint subscribeRatio = 64;
     //exint minGrainSize = 1024;
 

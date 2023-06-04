@@ -4,9 +4,9 @@
 #ifndef __GFE_Detail_h__
 #define __GFE_Detail_h__
 
+#include "GFE/GFE_Detail.h"
 
 
-//#include "GFE/GFE_Detail.h"
 
 #include "GA/GA_Detail.h"
 

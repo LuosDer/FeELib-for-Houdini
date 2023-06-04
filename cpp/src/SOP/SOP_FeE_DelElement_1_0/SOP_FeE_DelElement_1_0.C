@@ -184,10 +184,10 @@ SOP_FeE_DelElement_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmgrouptype)
+sopGroupType(SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmGroupType)
 {
     using namespace SOP_FeE_DelElement_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case DelElementGroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case DelElementGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -200,10 +200,10 @@ sopGroupType(SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmgrouptype)
 }
 
 static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_DelElement_1_0Parms::DelElementPointMode delPointMode)
+sopDelPointMode(SOP_FeE_DelElement_1_0Parms::DelElementPointMode parmDelPointMode)
 {
     using namespace SOP_FeE_DelElement_1_0Enums;
-    switch (delPointMode)
+    switch (parmDelPointMode)
     {
     case DelElementPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
     case DelElementPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
@@ -239,9 +239,9 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
 
-    GFE_DelElement delElement(outGeo0, inGeo0, cookparms);
+    GFE_DelElement delElement(outGeo0, &inGeo0, &cookparms);
        
-    delElement.groupParser.setGroup(groupType, sopparms.getDelElementGroup());
+    delElement.setGroup(groupType, sopparms.getDelElementGroup());
 
     delElement.setComputeParm(
         sopparms.getLeaveElement(),
