@@ -4,7 +4,7 @@
 #ifndef __GFE_DeleteVertex_h__
 #define __GFE_DeleteVertex_h__
 
-#include "GFE/GFE_DelVertex.h"
+#include "GFE/GFE_DeleteVertex.h"
 
 
 
@@ -22,16 +22,16 @@ public:
     void
         setComputeParm(
             const bool delDegeneratePrims = false,
-            const bool delUnusedPoints = true,
-            const bool reverseGroup = false,
-			const bool delGroup = false
+            const bool delUnusedPoints    = true,
+            const bool reverseGroup       = false,
+			const bool delGroup           = false
         )
     {
         setHasComputed();
         this->delDegeneratePrims = delDegeneratePrims;
-        this->delUnusedPoints = delUnusedPoints;
-        this->reverseGroup = reverseGroup;
-        this->delGroup = delGroup;
+        this->delUnusedPoints    = delUnusedPoints;
+        this->reverseGroup       = reverseGroup;
+        this->delGroup           = delGroup;
     }
 
 
@@ -44,9 +44,17 @@ private:
     virtual bool
         computeCore() override
     {
-        if (!reverseGroup && groupParser.isEmpty())
-            return true;
-
+    	if (groupParser.isEmpty())
+    	{
+    		reverseGroup = !reverseGroup;
+            delVertex();
+    		reverseGroup = !reverseGroup;
+    	}
+    	if (groupParser.isFull())
+    	{
+            delVertex();
+    	}
+    	
 		switch (groupParser.classType())
 		{
 		case GA_GROUP_PRIMITIVE: delVertex(groupParser.getPrimitiveGroup()); break;
@@ -64,28 +72,34 @@ private:
 
 
 	void delVertex()
-	{
-		if (reverseGroup)
-			return;
+    {
+    	if (reverseGroup)
+    		return;
     	
 		if (delDegeneratePrims)
 		{
-			geo->destroyPrimitives(geo->getPrimitiveRange(), delUnusedPoints);
+			if (delUnusedPoints)
+				geo->clearElement();
+			else
+				geo->replaceWithPoints(*geo);
 			return;
 		}
+    	
 		GA_Topology& topo = geo->getTopology();
 		GA_Offset start, end;
 		for (GA_Iterator it(geo->getPrimitiveRange()); it.blockAdvance(start, end); )
 		{
 			for (GA_Offset primoff = start; primoff < end; ++primoff)
 			{
-    			const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-				for (GA_Size vtxoff = 0; vtxoff < numvtx; ++vtxoff)
+				const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+				for (GA_Size vtxpnum = numvtx-1; ; --vtxpnum)
 				{
     				const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
 					geo->getPrimitive(primoff)->releaseVertex(vtxoff);
 					topo.delVertex(vtxoff);
-                    //geo->destroyVertexOffset(vtxoff);
+					//geo->destroyVertexOffset(vtxoff);
+					if (vtxpnum == 0)
+						break;
 				}
 			}
 		}
@@ -95,92 +109,92 @@ private:
 
 
 	void delVertex(const GA_PrimitiveGroup* const group)
-	{
-    	if (!group)
-			return delVertex();
-
+    {
+    	const GA_Range range = geo->getPrimitiveRange(group, reverseGroup);
 		if (delDegeneratePrims)
-			geo->destroyPrimitives(geo->getPrimitiveRange(group, reverseGroup), delUnusedPoints);
-		else
 		{
-			GA_PointGroupUPtr pointGroupUPtr;
-			GA_PointGroup* pointGroup;
-			if (delUnusedPoints)
-			{
-				pointGroupUPtr = geo->createDetachedPointGroup();
-				pointGroup = pointGroupUPtr.get();
-			}
+			geo->destroyPrimitives(range, delUnusedPoints);
+			return;
+		}
+    
+		GA_PointGroupUPtr pointGroupUPtr;
+		GA_PointGroup* pointGroup;
+		if (delUnusedPoints)
+		{
+			pointGroupUPtr = geo->createDetachedPointGroup();
+			pointGroup = pointGroupUPtr.get();
+		}
 
-			GA_Topology& topo = geo->getTopology();
-			const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+		GA_Topology& topo = geo->getTopology();
+		const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
-			GA_Offset start, end;
-			for (GA_Iterator it(geo->getPrimitiveRange(group, reverseGroup)); it.blockAdvance(start, end); )
+		GA_Offset start, end;
+		for (GA_Iterator it(range); it.blockAdvance(start, end); )
+		{
+			for (GA_Offset primoff = start; primoff < end; ++primoff)
 			{
-				for (GA_Offset primoff = start; primoff < end; ++primoff)
+    			const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+				for (GA_Size vtxpnum = numvtx-1; ; --vtxpnum)
 				{
-    				const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-					for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
-					{
-    					const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-						if (delUnusedPoints)
-							pointGroup->setElement(vtxPointRef->getLink(vtxoff), true);
-						geo->getPrimitive(primoff)->releaseVertex(vtxoff);
-						topo.delVertex(vtxoff);
-					}
+    				const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+					if (delUnusedPoints)
+						pointGroup->setElement(vtxPointRef->getLink(vtxoff), true);
+					
+					geo->getPrimitive(primoff)->releaseVertex(vtxoff);
+					topo.delVertex(vtxoff);
+					if (vtxpnum == 0)
+						break;
 				}
 			}
-			if (delUnusedPoints)
-				geo->destroyUnusedPoints(pointGroup);
 		}
+		if (delUnusedPoints)
+			geo->destroyUnusedPoints(pointGroup);
 	}
 
 
 	void delVertex(const GA_PointGroup* const group)
-	{
-		if (!group)
-			return delVertex();
-
+    {
+    	const GA_Range range = geo->getPointRange(group, reverseGroup);
 		if (delUnusedPoints)
 		{
-			geo->destroyPointOffsets(geo->getPointRange(group, reverseGroup),
-				delDegeneratePrims ? GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE : GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES);
+			geo->destroyPointOffsets(range, delDegeneratePrims ?
+				GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE :
+				GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES);
+			return;
 		}
-		else
+    	
+		GA_PrimitiveGroupUPtr primGroupUPtr;
+		GA_PrimitiveGroup* primGroup;
+		if (delDegeneratePrims)
 		{
-			GA_PrimitiveGroupUPtr primGroupUPtr;
-			GA_PrimitiveGroup* primGroup;
-			if (delDegeneratePrims)
-			{
-				primGroupUPtr = geo->createDetachedPrimitiveGroup();
-				primGroup = primGroupUPtr.get();
-			}
+			primGroupUPtr = geo->createDetachedPrimitiveGroup();
+			primGroup = primGroupUPtr.get();
+		}
 
-			GA_Topology& topo = geo->getTopology();
-			const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-			const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
-			const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
+		GA_Topology& topo = geo->getTopology();
+		const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+		const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+		const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-			GA_Offset start, end;
-			for (GA_Iterator it(geo->getPointRange(group, reverseGroup)); it.blockAdvance(start, end); )
+		GA_Offset start, end;
+		for (GA_Iterator it(range); it.blockAdvance(start, end); )
+		{
+			for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
 			{
-				for (GA_Offset ptoff = start; ptoff < end; ++ptoff)
+				for (GA_Offset vtxoff_next = pointVtxRef->getLink(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
 				{
-					for (GA_Offset vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-					{
-						GA_Offset primoff = vtxPrimRef->getLink(vtxoff_next);
+					const GA_Offset primoff = vtxPrimRef->getLink(vtxoff_next);
 
-						geo->getPrimitive(primoff)->releaseVertex(vtxoff_next);
-						topo.delVertex(vtxoff_next);
+					geo->getPrimitive(primoff)->releaseVertex(vtxoff_next);
+					topo.delVertex(vtxoff_next);
 
-						if (delDegeneratePrims)
-							primGroup->setElement(primoff, true);
-					}
+					if (delDegeneratePrims)
+						primGroup->setElement(primoff, true);
 				}
 			}
-			if (delDegeneratePrims)
-				geo->destroyPrimitives(geo->getPrimitiveRange(primGroup));
 		}
+		if (delDegeneratePrims)
+			geo->destroyPrimitives(geo->getPrimitiveRange(primGroup));
 	}
 
 
@@ -189,11 +203,8 @@ private:
 
 	void delVertex(const GA_VertexGroup* const group)
 	{
-		if (!group)
-			return delVertex();
-
 		GA_Topology& topo = geo->getTopology();
-		const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+		const GA_ATITopology* const vtxPrimRef  = topo.getPrimitiveRef();
 		const GA_ATITopology* const vtxPointRef = topo.getPointRef();
 
 		GA_PrimitiveGroupUPtr primGroupUPtr;
@@ -217,7 +228,7 @@ private:
 		{
 			for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
 			{
-				GA_Offset primoff = vtxPrimRef->getLink(vtxoff);
+				const GA_Offset primoff = vtxPrimRef->getLink(vtxoff);
 
 				geo->getPrimitive(primoff)->releaseVertex(vtxoff);
 				topo.delVertex(vtxoff);
@@ -261,11 +272,8 @@ private:
 
 	void delVertex(const GA_EdgeGroup* const group)
 	{
-		if (!group)
-			return delVertex();
-
 		const GA_VertexGroupUPtr vtxGroupUPtr = geo->createDetachedVertexGroup();
-		GA_VertexGroup* vtxGroup = vtxGroupUPtr.get();
+		GA_VertexGroup* const vtxGroup = vtxGroupUPtr.get();
 		vtxGroup->combine(group);
 		delVertex(vtxGroup);
 	}

@@ -228,6 +228,7 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         return;
     }
 
+    outGeo0.clear();
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
@@ -240,7 +241,7 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     GFE_DelElement delElement(outGeo0, &inGeo0, &cookparms);
-       
+    
     delElement.setGroup(groupType, sopparms.getDelElementGroup());
 
     delElement.setComputeParm(

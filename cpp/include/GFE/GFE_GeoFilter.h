@@ -93,8 +93,19 @@ public:
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
+    GFE_GeoFilter(
+        GA_Detail& geo,
+        const GA_Detail* const geoSrc,
+        const SOP_NodeVerb::CookParms* const cookparms
+    )
+        : geo(static_cast<GFE_Detail*>(&geo))
+        , geoSrc(geoSrc)
+        , cookparms(cookparms)
+        , groupParser(geo, gop, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
 
-    
     ~GFE_GeoFilter()
     {
         //delTopoAttrib();

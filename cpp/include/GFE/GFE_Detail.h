@@ -76,6 +76,27 @@ public:
     { return getAttributes().getDict(GA_ATTRIB_DETAIL); }
 
 
+    void cloneAllMissingAttribGroup(const GA_Detail& geoSrc)
+    {
+        const GA_AttributeFilter attribFilter = GA_AttributeFilter::selectPublic();
+        //cloneMissingAttributes(geoSrc, GA_ATTRIB_OWNER_N,   attribFilter);
+        //cloneMissingGroups    (geoSrc, GA_ATTRIB_OWNER_N,   attribFilter);
+            
+        cloneMissingAttributes(geoSrc, GA_ATTRIB_PRIMITIVE, attribFilter);
+        cloneMissingAttributes(geoSrc, GA_ATTRIB_POINT,     attribFilter);
+        cloneMissingAttributes(geoSrc, GA_ATTRIB_VERTEX,    attribFilter);
+        cloneMissingAttributes(geoSrc, GA_ATTRIB_DETAIL,    attribFilter);
+        
+        cloneMissingGroups    (geoSrc, GA_ATTRIB_PRIMITIVE, attribFilter);
+        cloneMissingGroups    (geoSrc, GA_ATTRIB_POINT,     attribFilter);
+        cloneMissingGroups    (geoSrc, GA_ATTRIB_VERTEX,    attribFilter);
+    }
+    
+    SYS_FORCE_INLINE void cloneAllMissingAttribGroup(const GA_Detail* const geoSrc)
+    { cloneAllMissingAttribGroup(*geoSrc); }
+
+
+
     
     //const GA_Storage posStorage = geo->getPStorage();
     SYS_FORCE_INLINE GA_Storage getPStorage() const

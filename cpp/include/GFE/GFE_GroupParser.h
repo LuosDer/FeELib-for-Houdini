@@ -340,7 +340,7 @@ public:
     { return hasGroup ? ( bool(geoGroup) && geoGroup->isEmpty() ) : false; }
     
     SYS_FORCE_INLINE bool isFull() const
-    { return hasGroup ? ( !bool(geoGroup) || !geoGroup->isEmpty() ) : true; }
+    { return hasGroup ? ( !bool(geoGroup) || (geoGroup->classType() != GA_GROUP_EDGE && !geoGroup->entries() == static_cast<const GA_ElementGroup*>(geoGroup)->getIndexMap().indexSize()) ) : true; }
     
     SYS_FORCE_INLINE bool getHasGroup() const
     { return hasGroup; }

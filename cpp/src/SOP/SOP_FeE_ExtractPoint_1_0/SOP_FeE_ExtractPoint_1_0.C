@@ -324,20 +324,22 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         outGeo0.replaceWith(inGeo0);
         return;
     }
+    
+    outGeo0.clear();
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
 
-    const UT_StringHolder& delPrimAttrib   = sopparms.getDelPrimAttrib();
-    const UT_StringHolder& delPointAttrib  = sopparms.getDelPointAttrib();
-    const UT_StringHolder& delVertexAttrib = sopparms.getDelVertexAttrib();
-    const UT_StringHolder& delDetailAttrib = sopparms.getDelDetailAttrib();
+    //const UT_StringHolder& delPrimAttrib   = sopparms.getDelPrimAttrib();
+    //const UT_StringHolder& delPointAttrib  = sopparms.getDelPointAttrib();
+    //const UT_StringHolder& delVertexAttrib = sopparms.getDelVertexAttrib();
+    //const UT_StringHolder& delDetailAttrib = sopparms.getDelDetailAttrib();
 
-    const UT_StringHolder& delPrimGroup    = sopparms.getDelPrimGroup();
-    const UT_StringHolder& delPointGroup   = sopparms.getDelPointGroup();
-    const UT_StringHolder& delVertexGroup  = sopparms.getDelVertexGroup();
-    const UT_StringHolder& delEdgeGroup    = sopparms.getDelEdgeGroup();
+    //const UT_StringHolder& delPrimGroup    = sopparms.getDelPrimGroup();
+    //const UT_StringHolder& delPointGroup   = sopparms.getDelPointGroup();
+    //const UT_StringHolder& delVertexGroup  = sopparms.getDelVertexGroup();
+    //const UT_StringHolder& delEdgeGroup    = sopparms.getDelEdgeGroup();
 
 
     UT_AutoInterrupt boss("Processing");
@@ -345,7 +347,7 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
 
 
-    GFE_ExtractPoint extractPoint(outGeo0, inGeo0, cookparms);
+    GFE_ExtractPoint extractPoint(outGeo0, &inGeo0, &cookparms);
 
     extractPoint.setGroup(groupType, sopparms.getGroup());
 
