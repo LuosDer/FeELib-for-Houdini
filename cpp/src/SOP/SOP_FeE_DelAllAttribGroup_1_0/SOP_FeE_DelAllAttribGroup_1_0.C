@@ -306,19 +306,19 @@ SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
 */
         
 
-    const UT_StringHolder& allPattern = "*";
-    const UT_StringHolder& keepPrimAttrib   = sopparms.getDoKeepPrimAttrib()   ? sopparms.getKeepPrimAttrib()   : allPattern;
-    const UT_StringHolder& keepPointAttrib  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttrib()  : allPattern;
-    const UT_StringHolder& keepVertexAttrib = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttrib() : allPattern;
-    const UT_StringHolder& keepDetailAttrib = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttrib() : allPattern;
+    const char* const allPattern = "*";
+    const char* const keepPrimAttrib   = sopparms.getDoKeepPrimAttrib()   ? sopparms.getKeepPrimAttrib()  .c_str() : allPattern;
+    const char* const keepPointAttrib  = sopparms.getDoKeepPointAttrib()  ? sopparms.getKeepPointAttrib() .c_str() : allPattern;
+    const char* const keepVertexAttrib = sopparms.getDoKeepVertexAttrib() ? sopparms.getKeepVertexAttrib().c_str() : allPattern;
+    const char* const keepDetailAttrib = sopparms.getDoKeepDetailAttrib() ? sopparms.getKeepDetailAttrib().c_str() : allPattern;
     outGFE0.keepStdAttribute(keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
     //GA_AttributeSet& attribSet = outGeo0.getAttributes();
     //GFE_Attribute::keepStdAttribute(attribSet, attribSet, keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
 
-    const UT_StringHolder& keepPrimGroup   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroup()   : allPattern;
-    const UT_StringHolder& keepPointGroup  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroup()  : allPattern;
-    const UT_StringHolder& keepVertexGroup = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroup() : allPattern;
-    const UT_StringHolder& keepEdgeGroup   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroup()   : allPattern;
+    const char* const keepPrimGroup   = sopparms.getDoKeepPrimGroup()   ? sopparms.getKeepPrimGroup()  .c_str() : allPattern;
+    const char* const keepPointGroup  = sopparms.getDoKeepPointGroup()  ? sopparms.getKeepPointGroup() .c_str() : allPattern;
+    const char* const keepVertexGroup = sopparms.getDoKeepVertexGroup() ? sopparms.getKeepVertexGroup().c_str() : allPattern;
+    const char* const keepEdgeGroup   = sopparms.getDoKeepEdgeGroup()   ? sopparms.getKeepEdgeGroup()  .c_str() : allPattern;
     outGFE0.keepStdGroup(keepPrimGroup, keepPointGroup, keepVertexGroup, keepEdgeGroup);
     //GFE_Group::keepStdGroup(outGeo0, keepPrimGroup, keepPointGroup, keepVertexGroup, keepEdgeGroup);
 }

@@ -4,6 +4,7 @@
 #ifndef __GFE_Detail_h__
 #define __GFE_Detail_h__
 
+#include "GFE_GroupUnion.h"
 #include "GFE/GFE_Detail.h"
 
 
@@ -97,13 +98,22 @@ public:
 
 
 
-    void dissolveVertexEdgeGroup(const GA_VertexGroup* group = nullptr)
+    void dissolveVertexEdgeGroup(const GA_VertexGroup* group = nullptr,
+        const bool delInlinePoint              = false,
+        const fpreal inlineTol                 = 1e-05,
+        const bool delUnusedPoint              = true,
+        const GU_Detail::BridgeMode bridgeMode = GU_Detail::GU_BRIDGEMODE_BRIDGE,
+        const bool delDegenerateBridge         = false,
+        const bool boundaryCurves              = false
+    )
     {
         const GA_EdgeGroupUPtr edgeGroupUPtr = createDetachedEdgeGroup();
-        const GA_EdgeGroup* const edgeGroup = edgeGroupUPtr.get();
-        asGU_Detail()->dissolveEdges(edgeGroup, false, 0, true, GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
+        GA_EdgeGroup* const edgeGroup = edgeGroupUPtr.get();
+        GFE_GroupUnion::groupUnion(*edgeGroup, group);
+        asGU_Detail()->dissolveEdges(edgeGroup,
+            delInlinePoint, inlineTol, delUnusedPoint, bridgeMode, delDegenerateBridge, boundaryCurves);
     }
-    
+            
     
     //const GA_Storage posStorage = geo->getPStorage();
     SYS_FORCE_INLINE GA_Storage getPStorage() const

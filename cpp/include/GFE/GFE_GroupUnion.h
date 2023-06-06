@@ -4,9 +4,13 @@
 #ifndef __GFE_GroupUnion_h__
 #define __GFE_GroupUnion_h__
 
-//#include "GFE/GFE_GroupUnion.h"
+#include "GFE_Type.h"
+#include "GFE/GFE_GroupUnion.h"
+
+
 
 #include "GA/GA_Detail.h"
+#include "GA/GA_SplittableRange.h"
 
 
 
@@ -71,7 +75,7 @@ public:
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 GA_Offset pt_next;
-                for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); vtxoff_next != GA_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                 {
                     const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
                     const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
@@ -91,8 +95,9 @@ public:
                         group.add(elemoff, pt_next);
                     }
 
-                    const GA_Size vtxpnum_next = vtxpnum + 1;
-                    if (vtxpnum_next == numvtx) {
+                    const GA_Size vtxpnum_next = vtxpnum+1;
+                    if (vtxpnum_next == numvtx)
+                    {
                         if (geo.getPrimitiveClosedFlag(primoff))
                         {
                             pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
@@ -186,25 +191,17 @@ public:
     SYS_FORCE_INLINE static void groupUnion(GA_Group& group, const GA_VertexGroup* const groupRef)
     {
         if (group.classType() == GA_GROUP_EDGE)
-        {
             groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef);
-        }
         else
-        {
             static_cast<GA_ElementGroup&>(group).combine(groupRef);
-        }
     }
 
     SYS_FORCE_INLINE static void groupUnion(GA_Group& group, const GA_EdgeGroup* const groupRef)
     {
         if (group.classType() == GA_GROUP_EDGE)
-        {
             groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef);
-        }
         else
-        {
             static_cast<GA_ElementGroup&>(group).combine(groupRef);
-        }
     }
 
 
@@ -223,13 +220,9 @@ public:
         if (group.classType() == GA_GROUP_EDGE)
         {
             if (groupRef->classType() == GA_GROUP_VERTEX)
-            {
                 groupUnion_topoAttrib(geo, static_cast<GA_EdgeGroup&>(group), static_cast<const GA_VertexGroup*>(groupRef));
-            }
             else
-            {
                 groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef);
-            }
         }
         else
         {
@@ -244,17 +237,13 @@ public:
     SYS_FORCE_INLINE static void groupUnion(GA_Group& group, const GA_Group* const groupRef)
     {
         if (group.classType() == GA_GROUP_EDGE)
-        {
             groupUnion(static_cast<GA_EdgeGroup&>(group), groupRef);
-        }
         else
-        {
             static_cast<GA_ElementGroup&>(group).combine(groupRef);
-        }
     }
     
 
-    SYS_FORCE_INLINE static void groupUnionFull(
+    static void groupUnionFull(
         GA_PrimitiveGroup& group,
         const GA_PointGroup* const groupRef,
         const exint subscribeRatio = 64,
@@ -442,13 +431,9 @@ private:
         const GA_Size vtxpnum_next = vtxpnum + 1;
         if (vtxpnum_next == geo.getPrimitiveVertexCount(primoff)) {
             if (geo.getPrimitiveClosedFlag(primoff))
-            {
                 return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
-            }
             else
-            {
-                return -1;
-            }
+                return GFE_INVALID_OFFSET;
         }
         else
         {
