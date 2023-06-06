@@ -406,6 +406,12 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
+/*
+
+    
+    GFE_AttribCopy attribCopy(geo, &geoTmp, cookparms);
+ 
+ */
     
     GFE_AttribCopy attribCopy(outGeo0, &inGeo1, &cookparms);
 

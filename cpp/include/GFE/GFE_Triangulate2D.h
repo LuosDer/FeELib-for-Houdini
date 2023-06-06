@@ -10,9 +10,15 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GU/GU_TriangleMesh.h"
 
+//#include "GFE/GFE_AttributeCopy.h"
 
+#include "GFE/GFE_RestVectorComponent.h"
+#include "GFE/GFE_GroupElementByDirection.h"
+#include "GFE/GFE_GroupUnshared.h"
+
+#include "SOP/SOP_Triangulate2D-3.0.h"
+#include "SOP/SOP_Triangulate2D-3.0.proto.h"
 
 class GFE_Triangulate2D : public GFE_AttribFilter {
 
@@ -26,51 +32,189 @@ public:
     
     void
         setComputeParm(
-            const bool preFusePoint = false,
-            const fpreal fuseDist = 1e-05,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+        
+            const bool preDelSharedEdge = false,
+            const bool keepUnsharedSilhouette = false,
+            const bool keepOutsidePrim = false,
+            const bool keepHeight = false
+            //,const exint subscribeRatio = 64,
+            //const exint minGrainSize = 64
         )
     {
         setHasComputed();
-        this->preFusePoint   = preFusePoint;
-        this->fuseDist       = fuseDist;
-        this->subscribeRatio = subscribeRatio;
-        this->minGrainSize   = minGrainSize;
+        this->preDelSharedEdge       = preDelSharedEdge;
+        this->keepUnsharedSilhouette = keepUnsharedSilhouette;
+        this->keepOutsidePrim        = keepOutsidePrim;
+        this->keepHeight             = keepHeight;
+        
+        // this->subscribeRatio = subscribeRatio;
+        // this->minGrainSize   = minGrainSize;
     }
 
-     
-    //SYS_FORCE_INLINE GA_PointGroup* findOrCreateGroup(const bool detached = false, const UT_StringRef& groupName = "")
-    //{ return getOutGroupArray().findOrCreatePoint(detached, groupName); }
+    
+    SYS_FORCE_INLINE void setPreFuse(const fpreal fuseDist)
+    {
+        preFuse = true;
+        preFuseDist = fuseDist;
+    }
+    SYS_FORCE_INLINE void setPreFuse()
+    { preFuse = false; }
 
 
+    
+    SYS_FORCE_INLINE void setPostFuse(const fpreal fuseDist)
+    {
+        postFuse = true;
+        postFuseDist = fuseDist;
+    }
+    SYS_FORCE_INLINE void setPostFuse()
+    { postFuse = false; }
+
+
+    
+    SYS_FORCE_INLINE void setKeepSingleSide(const bool reverse)
+    {
+        keepSingleSide = true;
+        reverseSide = reverse;
+    }
+    SYS_FORCE_INLINE void setKeepSingleSide()
+    { keepSingleSide = false; }
+
+
+    SYS_FORCE_INLINE void setDir(const GFE_Axis inAxis)
+    {
+        UT_ASSERT_MSG(inAxis != GFE_Axis::Invalid, "cant handled axis");
+        axis = inAxis;
+        dir = GFE_Type::axisDirD(inAxis);
+    }
+    
+    SYS_FORCE_INLINE void setDir(const UT_Vector3D& inDir)
+    {
+        axis = GFE_Axis::Invalid;
+        dir = inDir;
+    }
+    
 private:
 
-    // can not use in parallel unless for each GA_Detail
+    
     virtual bool
         computeCore() override
     {
-        if (getOutGroupArray().isEmpty())
+        UT_ASSERT_MSG_P(cookparms, "must have cookparms");
+        if (!cookparms)
             return false;
         
-        if (groupParser.isEmpty())
-            return true;
+        // if (groupParser.isEmpty())
+        //     return true;
         
-        if (groupParser.isFull())
+        GU_Snap::PointSnapParms fuseParms;
+        if (preFuse || postFuse)
         {
-            triangulate2D(const GA_PrimitiveGroup*());
-            return true;
-        }
-        
-        switch (groupParser.classType())
-        {
-        case GA_GROUP_PRIMITIVE: return triangulate2D(groupParser.getPrimitiveGroup()); break;
-        case GA_GROUP_POINT:     return triangulate2D(groupParser.getPointGroup());     break;
-        case GA_GROUP_VERTEX:    return triangulate2D(groupParser.getVertexGroup());    break;
-        case GA_GROUP_EDGE:      return triangulate2D(groupParser.getEdgeGroup());      break;
-        default: break;
+            fuseParms.myAlgorithm = GU_Snap::PointSnapParms::SnapAlgorithm::ALGORITHM_CLOSEST_POINT;
+            fuseParms.myConsolidate = true;
+            fuseParms.myDeleteConsolidated = true;
+            fuseParms.myQPosH = geo->getP();
+            fuseParms.myTPosH = geo->getP();
         }
 
+
+        
+        geo->keepStdAttribute("*", "", "", "");
+        geo->keepStdGroup("*", "", "", "");
+        
+        if (keepSingleSide)
+        {
+            GFE_GroupElemByDir groupByDir(geo, nullptr, cookparms);
+            groupByDir.up = dir;
+            groupByDir.doDelGroupElement = true;
+            groupByDir.setGroup.setComputeParm(reverseSide);
+            groupByDir.findOrCreateGroup(true, GA_GROUP_PRIMITIVE);
+            //groupByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
+        }
+        
+        if (preFuse)
+        {
+            fuseParms.myDistance = preFuseDist;
+            GU_Snap::snapPoints(*geo, nullptr, fuseParms);
+        }
+        
+        if (preDelSharedEdge)
+        {
+            
+            GFE_GroupUnshared groupUnshared(geo, cookparms);
+            groupUnshared.doDelGroupElement = true;
+        }
+        if (keepHeight)
+        {
+            GFE_RestVectorComponent restVectorComponent(geo, cookparms);
+            restVectorComponent.comp = axis;
+            restVectorComponent.setRestAttrib(geo->getP());
+            restVectorComponent.newAttribNames = "height";
+            restVectorComponent.compute();
+        }
+
+        if (keepUnsharedSilhouette)
+        {
+            
+            GFE_GroupElemByDir groupByDir(geo, nullptr, cookparms);
+            groupByDir.up = dir;
+            groupByDir.doDelGroupElement = true;
+    
+            groupByDir.setGroup.setComputeParm(sopparms.getReverseGroup());
+    
+            groupByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
+            groupByDir.findOrCreateGroup(false, outGroupType, sopparms.getOutGroupName());
+    
+            
+        }
+        if (method == GFE_GroupElemByDirMethod::RestDir2D_AvgNormal)
+            groupByDir.restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
+
+        if (sopparms.getMatchUpDir())
+            groupByDir.restDir2D.setMatchUpDir(sopparms.getUp());
+        else
+            groupByDir.restDir2D.setMatchUpDir();
+
+    
+        if (postFuse)
+        {
+            fuseParms.myDistance = postFuseDist;
+            GU_Snap::snapPoints(*geo, nullptr, fuseParms);
+        }
+
+        groupByDir.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+        groupByDir.computeAndBumpDataId();
+        groupByDir.visualizeOutGroup();
+
+        
+        UT_Array<GU_ConstDetailHandle> tri2dPInputs;
+    
+        const size_t nInputs = cookparms->nInputs();
+        for (size_t i = 0; i < nInputs; ++i)
+        {
+            tri2dPInputs.emplace_back(cookparms->inputGeoHandle(i));
+        }
+
+        SOP_Node* const node = cookparms->getNode();
+        const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
+    
+        SOP_Triangulate2D_3_0Parms tri2dParms;
+        tri2dParms.setConstrSplitPtsGrp(dir);
+        tri2dParms.setDir(dir);
+        SOP_NodeCache* tri2dCache = nullptr;
+    
+        const SOP_NodeVerb::CookParms tri2dCookparms(cookparms->gdh(), tri2dPInputs, cookEngine, node, cookparms->getContext(),
+              &tri2dParms, tri2dCache, cookparms->error(), cookparms->depnode());
+
+        tri2dVerb->cook(tri2dCookparms);
+
+
+        if (keepHeight)
+        {
+            geo->
+        }
+        
         return true;
     }
 
@@ -79,49 +223,29 @@ private:
     {
         //UT_ASSERT_P(geoGroup);
         
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geoSplittableRange0, [this,
-            vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
-            {
-                GA_Offset vtxoff, ptoff;
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                        ptoff  = vtxPointRef->getLink(vtxoff);
-                        vtxoff = pointVtxRef->getLink(ptoff);
-                        vtxoff = vtxNextRef->getLink(vtxoff);
-                        //if (!topo.isPointShared(ptoff))
-                        if (vtxoff == GA_INVALID_OFFSET)
-                            oneNebPointGroup->setElement(ptoff, true);
-
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-                        ptoff  = vtxPointRef->getLink(vtxoff);
-                        vtxoff = pointVtxRef->getLink(ptoff);
-                        vtxoff = vtxNextRef->getLink(vtxoff);
-                        //if (!topo.isPointShared(ptoff))
-                        if (vtxoff == GA_INVALID_OFFSET)
-                            oneNebPointGroup->setElement(ptoff, true);
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        oneNebPointGroup->invalidateGroupEntries();
     }
 
 
 
-
 public:
-    bool preFusePoint = false;
-    fpreal fuseDist = 1e-05;
+    bool preFuse = true;
+    bool postFuse = false;
+    GFE_Axis axis = GFE_Axis::Y;
+    UT_Vector3D dir = UT_Vector3D(0,1,0);
+
+    bool keepSingleSide = false;
+    bool reverseSide = false;
+    
+public:
+    fpreal preFuseDist = 1e-03;
+    fpreal postFuseDist = 1e-03;
+    
+        
+    bool preDelSharedEdge = false;
+    bool keepUnsharedSilhouette = false;
+    bool keepOutsidePrim = false;
+    bool keepHeight = false;
+
     
 private:
     GA_PointGroup* oneNebPointGroup = nullptr;
@@ -129,8 +253,10 @@ private:
     GU_DetailHandle geoRef0_h;
     GU_Detail* geoRef0Tmp;
     
-    exint subscribeRatio = 64;
-    exint minGrainSize = 256;
+    const SOP_NodeVerb* const tri2dVerb = SOP_NodeVerb::lookupVerb("triangulate2d::3.0");
+    
+    // exint subscribeRatio = 64;
+    // exint minGrainSize = 256;
 
 }; // End of class GFE_Triangulate2D
 

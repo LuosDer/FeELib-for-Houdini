@@ -202,27 +202,17 @@ void
 SOP_FeE_GroupLoopedPrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_GroupLoopedPrim_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupLoopedPrim_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
-
-    //const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-
-    const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVClass());
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
-
-    const GFE_CurveUVMethod curveUVMethod = sopCurveUVMethod(sopparms.getCurveUVMethod());
-        
     
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
 
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -232,24 +222,15 @@ SOP_FeE_GroupLoopedPrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
 
 
-    GFE_CurveUV curveUV(cookparms, outGeo0);
+    GFE_GroupLoopedPrim groupLoopedPrim(outGeo0, cookparms);
 
-    curveUV.setComputeParm(curveUVMethod, subscribeRatio, minGrainSize);
-
-
-    curveUV.setGroup(sopparms.getPrimGroup());
-    curveUV.findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName, 3);
-
-    curveUV.computeAndBumpDataId();
+    groupLoopedPrim.setComputeParm(curveUVMethod, subscribeRatio, minGrainSize);
 
 
-    //GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
-    //    GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
-    //    subscribeRatio, minGrainSize);
+    groupLoopedPrim.setGroup(sopparms.getPrimGroup());
+    groupLoopedPrim.findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName, 3);
+
+    groupLoopedPrim.computeAndBumpDataId();
+
+
 }
-
-
-
-namespace SOP_FeE_GroupLoopedPrim_1_0_Namespace {
-
-} // End SOP_FeE_GroupLoopedPrim_1_0_Namespace namespace

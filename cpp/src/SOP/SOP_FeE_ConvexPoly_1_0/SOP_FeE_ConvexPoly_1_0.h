@@ -1,23 +1,21 @@
 
-#ifndef __SOP_FeE_ConvexPoint_1_0_h__
-#define __SOP_FeE_ConvexPoint_1_0_h__
+#ifndef __SOP_FeE_ConvexPoly_1_0_h__
+#define __SOP_FeE_ConvexPoly_1_0_h__
 
 #include <SOP/SOP_Node.h>
 #include <UT/UT_StringHolder.h>
 
-namespace SOP_FeE_ConvexPoint_1_0_Namespace {
+namespace SOP_FeE_ConvexPoly_1_0_Namespace {
 
-
-class SOP_FeE_ConvexPoint_1_0 : public SOP_Node
+class SOP_FeE_ConvexPoly_1_0 : public SOP_Node
 {
 public:
     static PRM_Template *buildTemplates();
     static OP_Node *myConstructor(OP_Network *net, const char *name, OP_Operator *op)
     {
-        OP_Node* newOp = new SOP_FeE_ConvexPoint_1_0(net, name, op);
+        OP_Node* newOp = new SOP_FeE_ConvexPoly_1_0(net, name, op);
         //newOp->setColor(UT_Color(UT_ColorType::UT_RGB, 0.8, 0.5, 0.5));
         newOp->setNodeShape("tilted");
-        newOp->setHighlight(true);
         //newOp->setUserData("nodeshape", "tilted", false);
         return newOp;
     }
@@ -27,19 +25,22 @@ public:
     const SOP_NodeVerb *cookVerb() const override;
 
 protected:
-    SOP_FeE_ConvexPoint_1_0(OP_Network *net, const char *name, OP_Operator *op)
+    SOP_FeE_ConvexPoly_1_0(OP_Network *net, const char *name, OP_Operator *op)
         : SOP_Node(net, name, op)
     {
+        // All verb SOPs must manage data IDs, to track what's changed
+        // from cook to cook.
         mySopFlags.setManagesDataIDs(true);
     }
     
-    ~SOP_FeE_ConvexPoint_1_0() override {}
+    ~SOP_FeE_ConvexPoly_1_0() override {}
 
+
+    /// Since this SOP implements a verb, cookMySop just delegates to the verb.
     OP_ERROR cookMySop(OP_Context &context) override
     {
         return cookMyselfAsVerb(context);
     }
-
     const char* inputLabel(unsigned idx) const override
     {
         switch (idx)
@@ -66,6 +67,6 @@ protected:
 
 
 };
-} // End SOP_FeE_ConvexPoint_1_0_Namespace namespace
+} // End SOP_FeE_ConvexPoly_1_0_Namespace namespace
 
 #endif

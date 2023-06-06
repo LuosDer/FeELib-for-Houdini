@@ -314,7 +314,12 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
     
-
+/*
+    GFE_Enumerate enumerate(geo, cookparms);
+    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    enumerate.compute();
+*/
+    
     GFE_Enumerate enumerate(outGeo0, cookparms);
     enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 

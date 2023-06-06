@@ -4,7 +4,7 @@
 #ifndef __GFE_GroupUnshared_h__
 #define __GFE_GroupUnshared_h__
 
-//#include "GFE/GFE_GroupUnshared.h"
+#include "GFE/GFE_GroupUnshared.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
@@ -59,43 +59,37 @@ public:
     }
 
 
-    void findOrCreateGroup(
+    virtual GA_Group* findOrCreateGroup(
         const bool detached = false,
         const GA_GroupType groupType = GA_GROUP_VERTEX,
         const UT_StringRef& name = "__topo_unshared"
-    )
+    ) override
     {
         switch (groupType)
         {
-        case GA_GROUP_PRIMITIVE:
-            break;
-        case GA_GROUP_POINT:
-            break;
-        case GA_GROUP_VERTEX:
-            findOrCreateVertexGroup(detached, name);
-            break;
-        case GA_GROUP_EDGE:
-            findOrCreateEdgeGroup(detached, name);
-            break;
+        case GA_GROUP_PRIMITIVE:    break;
+        case GA_GROUP_POINT:        break;
+        case GA_GROUP_VERTEX:    return findOrCreateVertexGroup(detached, name); break;
+        case GA_GROUP_EDGE:      return findOrCreateEdgeGroup(detached, name);   break;
         }
     }
 
-    void findOrCreateGroup(
+    virtual void findOrCreateGroup(
         const bool detached = false,
         const bool outVertexGroup = true,
         const UT_StringRef& name = "__topo_unshared"
     )
     {
-        if(outVertexGroup)
+        if (outVertexGroup)
             findOrCreateVertexGroup(detached, name);
         else
             findOrCreateEdgeGroup(detached, name);
     }
 
-    SYS_FORCE_INLINE GA_VertexGroup* findOrCreateVertexGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared")
+    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared") override
     { return unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(detached, name); }
 
-    SYS_FORCE_INLINE GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared")
+    SYS_FORCE_INLINE virtual GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached = false, const UT_StringRef& name = "__topo_unshared") override
     { return unsharedEdgeGroup = meshTopology.setUnsharedEdgeGroup(detached, name); }
 
     SYS_FORCE_INLINE GA_VertexGroup* getVertexGroup() const
@@ -154,6 +148,10 @@ private:
 
         //GFE_GroupPromote::groupPromote(geoOriginTmp, unsharedGroup, unsharedAttribClass, unsharedAttribName, true);
         GFE_GroupUnion::groupUnion(*getOutGroupArray()[0], unsharedVertexGroup);
+        
+        if (doDelGroupElement)
+            delGroupElement();
+        
         //GFE_GroupUnion::groupUnion_topoAttrib(geo, *getOutGroupArray()[0], unsharedVertexGroup);
     
 

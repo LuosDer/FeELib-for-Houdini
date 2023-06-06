@@ -40,7 +40,7 @@ public:
     SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
         const bool detached = false,
         const GA_AttributeOwner owner = GA_ATTRIB_POINT,
-        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
+        const GA_StorageClass storageClass = GA_STORECLASS_INT,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = ""
     )

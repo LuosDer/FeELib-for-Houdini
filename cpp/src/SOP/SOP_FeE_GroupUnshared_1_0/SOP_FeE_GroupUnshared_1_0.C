@@ -100,6 +100,13 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "delElem"
+        cppname "DelElem"
+        label   "Delete Element"
+        type    toggle
+        default { "0" }
+    }
+    parm {
         name    "outTopoAttrib"
         cppname "OutTopoAttrib"
         label   "Output Topo Attribute"
@@ -285,13 +292,19 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
     const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
 
-
+/*
+    
+    GFE_GroupUnshared groupUnshared(geo, cookparms);
+    
+ */
     GFE_GroupUnshared groupUnshared(outGeo0, &cookparms);
 
     groupUnshared.groupParser.setGroup(groupType, sopparms.getGroup());
 
     groupUnshared.setComputeParm(sopparms.getGroupUnsharedAfterFuse(), sopparms.getFuseDist(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    groupUnshared.doDelGroupElement = sopparms.getDelElem();
     
     groupUnshared.outTopoAttrib = sopparms.getOutTopoAttrib();
     

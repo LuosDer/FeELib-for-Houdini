@@ -59,6 +59,15 @@ public:
     { return findOrCreateNormal3D(detached, GFE_Attribute::toNormalSearchOrder(groupType), storage, attribName, tuple_size); }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
+        const bool detached, 
+        const GA_Group& group,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const int tuple_size = 3
+        )
+    { return findOrCreateNormal3D(detached, group.classType(), storage, attribName, tuple_size); }
+
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
         const bool detached = false, 
         const GA_AttributeOwner owner = GA_ATTRIB_OWNER_N,
         const GA_Storage storage = GA_STORE_INVALID,

@@ -97,6 +97,13 @@ public:
 
 
 
+    void dissolveVertexEdgeGroup(const GA_VertexGroup* group = nullptr)
+    {
+        const GA_EdgeGroupUPtr edgeGroupUPtr = createDetachedEdgeGroup();
+        const GA_EdgeGroup* const edgeGroup = edgeGroupUPtr.get();
+        asGU_Detail()->dissolveEdges(edgeGroup, false, 0, true, GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
+    }
+    
     
     //const GA_Storage posStorage = geo->getPStorage();
     SYS_FORCE_INLINE GA_Storage getPStorage() const

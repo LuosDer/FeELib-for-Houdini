@@ -297,6 +297,13 @@ SOP_FeE_DelAllAttribGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
         return;
 
     GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
+    
+/*
+            geo->keepStdAttribute(keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
+            geo->keepStdGroup(keepPrimGroup, keepPointGroup, keepVertexGroup, keepEdgeGroup);
+            geo->keepStdAttribute("*", "", "", "");
+            geo->keepStdGroup("*", "", "", "");
+*/
         
 
     const UT_StringHolder& allPattern = "*";

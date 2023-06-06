@@ -534,9 +534,9 @@ public:
     }
 
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(
-        const bool detached, const GA_GroupType groupType, const UT_StringRef& groupName = ""
+        const bool detached, const GA_GroupType groupType, const UT_StringRef& name = ""
     )
-    { return getOutGroupArray().findOrCreate(detached, groupType, groupName); }
+    { return getOutGroupArray().findOrCreate(detached, groupType, name); }
 
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_GroupType groupType, const UT_StringRef& groupName = "")
     { return getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }

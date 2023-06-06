@@ -25,84 +25,175 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
 
-
     parm {
-        name    "outSrcPrims"
-        cppname "OutSrcPrims"
-        label   "Source Prims"
-        type    toggle
-        default { 0 }
-        nolabel
-        joinnext
-    }
-    parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
-        type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
-    }
-
-
-
-    parm {
-        name    "primType"
-        cppname "PrimType"
-        label   "Prim Type"
+        name    "axis"
+        cppname "Axis"
+        label   "Axis"
         type    ordinal
-        default { "polyline" }
+        default { "y" }
         menu {
-            "polyline"  "Polyline"
-            "poly"      "Poly"
+            "x"         "X"
+            "y"         "Y"
+            "z"         "Z"
+            "custom"    "Custom"
         }
     }
-
     parm {
-        name    "excludeSharedEdge"
-        cppname "ExcludeSharedEdge"
-        label   "Exclude Shared Edge"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "projectplane"
-        label   "Project Plane"
-        type    ordinal
-        default { "zx" }
-        menu {
-            "xy"    "XY Plane"
-            "yz"    "YZ Plane"
-            "zx"    "ZX Plane"
-        }
+        name    "customDir"
+        cppname "CustomDir"
+        label   "Direction"
+        type    direction
+        size    3
+        default { "0" "-1" "0" }
+        disablewhen "{ axis != custom }"
         range   { 0 1 }
     }
     parm {
-        name    "constraint_unshared"
-        label   "Constraint Unshared"
+        name    "keepUnsharedSilhouette"
+        cppname "KeepUnsharedSilhouette"
+        label   "Keep Unshared Silhouette"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "keepOutside"
-        label   "Keep Outside"
+        name    "keepOutsidePrim"
+        cppname "KeepOutsidePrim"
+        label   "Keep Outside Prim"
         type    toggle
         default { "off" }
     }
     parm {
-        name    "copyFirstElemAttribname"
-        label   "Copy First Elem Attrib Name"
-        type    string
-        default { "" }
-    }
-
-    parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
+        name    "keepHeight"
+        cppname "KeepHeight"
+        label   "Keep Height"
         type    toggle
         default { "0" }
     }
+
+    //parm {
+    //    name    "copyFirstElemAttrib"
+    //    cppname "CopyFirstElemAttrib"
+    //    label   "Copy First Elem Attrib"
+    //    type    string
+    //    default { "" }
+    //}
+
+    groupsimple {
+        name    "pre"
+        label   "Pre"
+        grouptag { "group_type" "simple" }
+
+
+        parm {
+            name    "keepSingleSide"
+            cppname "KeepSingleSide"
+            label   "Keep Single Side"
+            type    toggle
+            default { "off" }
+        }
+        parm {
+            name    "reverseSide"
+            cppname "ReverseSide"
+            label   "Reverse Side"
+            type    toggle
+            default { "off" }
+            disablewhen "{ keepSingleSide == 0 }"
+        }
+
+        parm {
+            name    "preDelSharedEdge"
+            cppname "PreDelSharedEdge"
+            label   "Pre Delete Shared Edge"
+            type    toggle
+            default { "0" }
+        }
+        parm {
+            name    "preFuse"
+            cppname "PreFuse"
+            label   "Pre Fuse"
+            type    toggle
+            nolabel
+            joinnext
+            default { "0" }
+        }
+        parm {
+            name    "preFuseDist"
+            cppname "PreFuseDist"
+            label   "Pre Fuse Dist"
+            type    log
+            default { "0.001" }
+            disablewhen "{ preFuse == 0 }"
+            range   { 0.001 10 }
+        }
+    }
+
+    groupsimple {
+        name    "post"
+        label   "Post"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "delSmallPrim"
+            cppname "DelSmallPrim"
+            label   "Del Small Prim"
+            type    toggle
+            nolabel
+            joinnext
+            default { "0" }
+        }
+        parm {
+            name    "thresholdAreaPerimeterRatio"
+            cppname "ThresholdAreaPerimeterRatio"
+            label   "Threshold Area Perimeter Ratio"
+            type    log
+            default { "0.001" }
+            disablewhen "{ delSmallPrim == 0 }"
+            range   { 0.00001 0.1 }
+        }
+        parm {
+            name    "ignoreHole"
+            cppname "IgnoreHole"
+            label   "Ignore Hole"
+            type    toggle
+            default { "1" }
+        }
+        parm {
+            name    "postFuse"
+            cppname "PostFuse"
+            label   "Post Fuse"
+            type    toggle
+            nolabel
+            joinnext
+            default { "0" }
+        }
+        parm {
+            name    "postFuseDist"
+            cppname "PostFuseDist"
+            label   "Post Fuse Distance"
+            type    log
+            default { "0.001" }
+            disablewhen "{ postFuse == 0 }"
+            range   { 1e-05 100 }
+        }
+    }
+
+
+    //parm {
+    //    name    "excludeSharedEdge"
+    //    cppname "ExcludeSharedEdge"
+    //    label   "Exclude Shared Edge"
+    //    type    toggle
+    //    default { "0" }
+    //}
+
+    // parm {
+    //     name    "reverseOutPrim"
+    //     label   "Reverse Out Prim"
+    //     type    toggle
+    //     default { "0" }
+    // }
+
+
 
     parm {
         name    "subscribeRatio"
@@ -194,6 +285,23 @@ SOP_FeE_Triangulate2D_2_0::cookVerb() const
 
 
 
+
+static GFE_Axis
+sopAxis(SOP_FeE_Triangulate2D_2_0Parms::Axis parmAxis)
+{
+    using namespace SOP_FeE_Triangulate2D_2_0Enums;
+    switch (parmAxis)
+    {
+    case Axis::X:       return GFE_Axis::X;       break;
+    case Axis::Y:       return GFE_Axis::Y;       break;
+    case Axis::Z:       return GFE_Axis::Z;       break;
+    case Axis::CUSTOM:  return GFE_Axis::Invalid; break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Axis!");
+    return GFE_Axis::Invalid;
+}
+
+
 void
 SOP_FeE_Triangulate2D_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -201,31 +309,45 @@ SOP_FeE_Triangulate2D_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Triangulate2D_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
+    //GU_DetailHandle geoTmp_h;
+    //GU_Detail* geoTmp = new GU_Detail();
+    //geoTmp_h.allocateAndSet(geoTmp);
+    //geoTmp->replaceWith(inGeo0);
+    
+    const GFE_Axis axis = sopAxis(sopparms.getAxis());
 
-    GU_DetailHandle geoTmp_h;
-    GU_Detail* geoTmp = new GU_Detail();
-    geoTmp_h.allocateAndSet(geoTmp);
-    geoTmp->replaceWith(inGeo0);
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
-
+    
+    
+    
     GFE_Triangulate2D triangulat2D(outGeo0, cookparms);
 
-    triangulat2D.setComputeParm(sopparms.getPreFusePoint(), sopparms.getFuseDist(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    if (axis == GFE_Axis::Invalid)
+        triangulat2D.setDir(axis);
+    else
+        triangulat2D.setDir(sopparms.getCustomDir());
     
-    triangulat2D.setGroup.setComputeParm(groupMergeType, sopparms.getGroup());
-    triangulat2D.groupParser.setGroup(groupType, sopparms.getGroup());
-    triangulat2D.findOrCreatePointGroup(false, sopparms.getOneNebGroupName());
-
+    if (sopparms.getPreFuse())
+        triangulat2D.setPreFuse(sopparms.getPreFuseDist());
+    if (sopparms.getPostFuse())
+        triangulat2D.setPreFuse(sopparms.getPostFuseDist());
+    
+    if (sopparms.getKeepSingleSide())
+        triangulat2D.setKeepSingleSide(sopparms.getReverseSide());
+    
+    triangulat2D.setComputeParm(sopparms.getPreDelSharedEdge(), sopparms.getKeepUnsharedSilhouette(), sopparms.getKeepOutsidePrim(), sopparms.getKeepHeight()
+        //,sopparms.getSubscribeRatio(), sopparms.getMinGrainSize()
+        );
+    
+    //triangulat2D.setGroup(sopparms.getGroup());
+    
     triangulat2D.computeAndBumpDataId();
 
 

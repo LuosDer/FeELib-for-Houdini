@@ -1,10 +1,10 @@
 
 #pragma once
 
-#ifndef __GFE_ConvexPoint_h__
-#define __GFE_ConvexPoint_h__
+#ifndef __GFE_GroupConvexPoint_h__
+#define __GFE_GroupConvexPoint_h__
 
-//#include "GFE/GFE_ConvexPoint.h"
+#include "GFE/GFE_GroupConvexPoint.h"
 
 
 #include "GFE/GFE_GeoFilter.h"
@@ -12,14 +12,14 @@
 
 
 
-class GFE_ConvexPoint : public GFE_AttribFilter {
+class GFE_GroupConvexPoint : public GFE_AttribFilter {
 
 
 
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
 
-    ~GFE_Enumerate()
+    ~GFE_GroupConvexPoint()
     {
     }
 
@@ -187,7 +187,7 @@ private:
     exint minGrainSize = 64;
 
 
-}; // End of class GFE_ConvexPoint
+}; // End of class GFE_GroupConvexPoint
 
 
 

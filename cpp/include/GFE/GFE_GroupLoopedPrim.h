@@ -45,8 +45,7 @@ public:
 
     void
         setComputeParm(
-            const bool groupUnsharedAfterFuse = false,
-            const bool outTopoAttrib = false,
+            const bool preFuse = false,
             const fpreal fuseDist = 1e-05,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
@@ -54,12 +53,10 @@ public:
     {
         setHasComputed();
 
-        this->groupUnsharedAfterFuse = groupUnsharedAfterFuse;
-        this->fuseDist = fuseDist;
+        this->preFuse        = preFuse;
+        this->fuseDist       = fuseDist;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
-
-        setOutTopoAttrib(outTopoAttrib);
+        this->minGrainSize   = minGrainSize;
     }
 
     void
@@ -68,7 +65,7 @@ public:
             const GA_StorageClass storageClass = GA_STORECLASS_INT,
             const GA_Storage storage = GA_STORE_INVALID,
             const bool detached = false,
-            const UT_StringHolder& name = "__topo_connectivity"
+            const UT_StringHolder& name = "__topo_looped"
         )
     {
         if (storageClass == GA_STORECLASS_OTHER)
@@ -152,7 +149,7 @@ private:
 
 
 public:
-    bool groupUnsharedAfterFuse = false;
+    bool preFuse = false;
     fpreal fuseDist = 1e-05;
 
 private:

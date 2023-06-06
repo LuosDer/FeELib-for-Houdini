@@ -98,7 +98,13 @@ enum class GFE_ElemTraversingMethod
     SkipNElem,
 };
 
-
+enum class GFE_Axis
+{
+    X,
+    Y,
+    Z,
+    Invalid,
+};
 
 namespace GFE_Type {
 
@@ -115,6 +121,31 @@ namespace GFE_Type {
 #endif
 
 
+template<typename VECTOR_T>
+static VECTOR_T axisDir(const GFE_Axis axis)
+{
+    switch (axis)
+    {
+    case GFE_Axis::X: return VECTOR_T(1,0,0); break;
+    case GFE_Axis::Y: return VECTOR_T(0,1,0); break;
+    case GFE_Axis::Z: return VECTOR_T(0,0,1); break;
+    }
+    UT_ASSERT_MSG(0, "cant handled axis");
+    return VECTOR_T(0,1,0);
+}
+
+SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal64>>(axis); }
+    
+SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal32>>(axis); }
+    
+SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
+
+    
+
+    
 template<typename VECTOR_T>
 SYS_FORCE_INLINE static VECTOR_T getZeroVector()
 {

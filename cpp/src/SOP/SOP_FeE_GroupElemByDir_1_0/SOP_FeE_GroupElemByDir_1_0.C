@@ -136,6 +136,13 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
+        name    "delElem"
+        cppname "DelElem"
+        label   "Delete Element"
+        type    toggle
+        default { "0" }
+    }
+    parm {
         name    "reversePrim"
         cppname "ReversePrim"
         label   "Reverse Prim"
@@ -343,6 +350,7 @@ SOP_FeE_GroupElemByDir_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) c
     
     groupByDir.setComputeParm(method, sopparms.getUp(), sopparms.getReversePrim(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    groupByDir.doDelGroupElement = sopparms.getDelElem();
     
     groupByDir.setGroup.setComputeParm(sopparms.getReverseGroup());
     

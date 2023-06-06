@@ -256,11 +256,19 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
     if (boss.wasInterrupted())
         return;
 
+/*
+            GFE_RestVectorComponent restVectorComponent(geo, cookparms);
+            restVectorComponent.comp = axis;
+            restVectorComponent.setRestAttrib(geo->getP());
+            restVectorComponent.newAttribNames = "height";
+            restVectorComponent.compute();
+*/
+    
     GFE_RestVectorComponent restVectorComponent(outGeo0, inGeo1, &cookparms);
 
     restVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    restVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),sopparms.getDelOriginAttrib(),
+    restVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()), sopparms.getDelOriginAttrib(),
                                       sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     if (sopparms.getRenameAttrib())
     {
@@ -271,8 +279,3 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
 
     
 }
-
-
-namespace SOP_FeE_RestVectorComponent_1_0_Namespace
-{
-} // End SOP_FeE_RestVectorComponent_1_0_Namespace namespace

@@ -45,6 +45,7 @@ public:
 			//const bool matchUpDir = true,
 			const UT_Vector3R& up = UT_Vector3R(0,1,0),
 			const bool reversePrim = false,
+			const bool delElem = false,
 			const exint subscribeRatio = 64,
 			const exint minGrainSize = 1024
 		)
@@ -54,6 +55,7 @@ public:
 		//this->matchUpDir = matchUpDir;
 		this->up = up;
 		this->reversePrim = reversePrim;
+		this->doDelGroupElement = delElem;
 		this->subscribeRatio = subscribeRatio;
 		this->minGrainSize = minGrainSize;
 	}
@@ -94,16 +96,17 @@ private:
 		{
 			restDir = up;
 		}
+
+		
 		outElemGroup = getOutGroupArray().getElementGroup(0);
 		setGroup = outElemGroup;
-
-
+		
 		if (!dirAttrib)
 		{
 			normal3D.groupParser.setGroup(groupParser);
 
 			if (normal3D.isEmpty())
-				normal3D.findOrCreateNormal3D(true, GFE_Attribute::toNormalSearchOrder(outElemGroup), GA_STORE_INVALID, "N");
+				normal3D.findOrCreateNormal3D(true, *outElemGroup, GA_STORE_INVALID, "N");
 		
 			normal3D.compute();
 			
@@ -136,8 +139,10 @@ private:
 			}
 			break;
 		}
-
-		if (reversePrim && outElemGroup->classType() == GA_GROUP_PRIMITIVE)
+		
+		if (doDelGroupElement)
+			delGroupElement();
+		else if (reversePrim && outElemGroup->classType() == GA_GROUP_PRIMITIVE)
 			geo->asGU_Detail()->reverse(static_cast<const GA_PrimitiveGroup*>(outElemGroup), false);
 		
 		return true;

@@ -48,25 +48,21 @@ public:
 
     SYS_FORCE_INLINE void setRestAttrib(GA_Attribute* const attribPtr)
     {
-        if(&attribPtr->getDetail() == geo)
-        {
-            getRef0AttribArray().clear();
-            getInAttribArray().set(attribPtr);
-        }
+        UT_ASSERT_MSG(&attribPtr->getDetail() == geo, "not same detail");
+        getRef0AttribArray().clear();
+        getInAttribArray().set(attribPtr);
     }
 
     SYS_FORCE_INLINE void setRestAttrib(const GA_Attribute* const attribPtr)
     {
-        if(&attribPtr->getDetail() == geoRef0)
-        {
-            getInAttribArray().clear();
-            getRef0AttribArray().set(attribPtr);
-        }
+        UT_ASSERT_MSG(&attribPtr->getDetail() == geoRef0, "not same detail");
+        getInAttribArray().clear();
+        getRef0AttribArray().set(attribPtr);
     }
     
     SYS_FORCE_INLINE void setRestAttrib(const GA_AttributeOwner owner, const UT_StringHolder& name)
     {
-        if(geoRef0)
+        if (geoRef0)
         {
             getInAttribArray().clear();
             getRef0AttribArray().append(owner, name);

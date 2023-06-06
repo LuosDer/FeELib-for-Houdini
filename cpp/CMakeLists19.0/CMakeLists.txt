@@ -98,7 +98,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_Clip_1_0
     SOP_FeE_Connectivity_1_0
     SOP_FeE_ConvertLine_1_0
-    SOP_FeE_ConvexPoint_1_0
+    SOP_FeE_ConvexPoly_1_0
     SOP_FeE_CornerPoint_1_0
     SOP_FeE_CurveExpand2d_3_0
     SOP_FeE_CurveSetExpand2d_3_0
@@ -107,6 +107,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_DelAndUnpack_1_0
     SOP_FeE_DelElement_1_0
     SOP_FeE_DelVertex_1_0
+    SOP_FeE_DissolveEdge_1_0
     SOP_FeE_EdgeGroupTransfer_3_0
     SOP_FeE_Enumerate_1_0
     SOP_FeE_ExtendCurveStraight_1_0
@@ -117,6 +118,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_FlatEdge_2_0
     SOP_FeE_GroupAttribBoundary_1_0
     SOP_FeE_GroupCombine_1_0
+    SOP_FeE_GroupConvexPoint_1_0
     SOP_FeE_GroupCurveEnds_2_0
     SOP_FeE_GroupElemByDir_1_0
     SOP_FeE_GroupExpand_1_0
@@ -156,7 +158,6 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_SmallPiece_1_0
     # SOP_FeE_Split_2_0
     SOP_FeE_SplitPoint_1_0
-    SOP_FeE_Triangulate_1_0
     SOP_FeE_Triangulate2D_2_0
     SOP_FeE_UnpackByGroup_1_0
     SOP_FeE_UVGridify_1_0
