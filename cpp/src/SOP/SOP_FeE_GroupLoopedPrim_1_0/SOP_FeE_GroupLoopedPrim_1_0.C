@@ -224,7 +224,7 @@ SOP_FeE_GroupLoopedPrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     GFE_GroupLoopedPrim groupLoopedPrim(outGeo0, cookparms);
 
-    groupLoopedPrim.setComputeParm(curveUVMethod, subscribeRatio, minGrainSize);
+    groupLoopedPrim.setComputeParm(, subscribeRatio, minGrainSize);
 
 
     groupLoopedPrim.setGroup(sopparms.getPrimGroup());

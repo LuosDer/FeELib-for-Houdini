@@ -4,7 +4,7 @@
 #ifndef __GFE_PointInMeshWN_h__
 #define __GFE_PointInMeshWN_h__
 
-//#include "GFE/GFE_PointInMeshWN.h"
+#include "GFE/GFE_PointInMeshWN.h"
 
 
 
@@ -310,7 +310,7 @@ public:
         GFE_WindingNumber_Cache* const sopcache = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef(geo, geoRef0, cookparms)
+        : GFE_AttribFilterWithRef(geo, &geoRef0, cookparms)
         , gfeWN(geo, geoRef0, sopcache, cookparms)
     {
     }
@@ -326,16 +326,16 @@ public:
             const bool groupInGeoPoint = true,
             const bool groupOnGeoPoint = true,
             const fpreal threshold = 1e-05,
-            const bool reverseGroup = false,
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 1024
         )
     {
         setHasComputed();
         this->groupInGeoPoint = groupInGeoPoint;
         this->groupOnGeoPoint = groupOnGeoPoint;
-        this->threshold = threshold;
-        this->reverseGroup = reverseGroup;
-        this->groupMergeType = groupMergeType;
+        this->threshold       = threshold;
+        this->subscribeRatio  = subscribeRatio;
+        this->minGrainSize    = minGrainSize;
     }
 
 
@@ -347,56 +347,34 @@ private:
     virtual bool
         computeCore() override
     {
-        //gfeWN.comp
-        if (!getOutAttribArray().size())
-            findOrCreateTuple();
+        if (gfeWN.getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
+            return false;
         
         if (groupParser.isEmpty())
             return true;
 
         if (!gfeWN.getHasComputed())
             gfeWN.compute();
-
-        if (!hasParm_outGroup)
-            setOutGroup();
-
-        if (outGroupDetached)
+        
+        switch (gfeWN.getOutAttribArray()[0]->getAIFTuple()->getStorage(gfeWN.getOutAttribArray()[0]))
         {
-            pointInMeshGroupUPtr = geoPoint->createDetachedPointGroup();
-            pointInMeshGroup = pointInMeshGroupUPtr.get();
-        }
-        else
-        {
-            pointInMeshGroup = geoPoint->newPointGroup(groupName);
-        }
-
-        switch (gfeWN.getAttrib()->getAIFTuple()->getStorage(gfeWN.getAttrib()))
-        {
-        case GA_STORE_REAL16:
-            computeOutGroup<fpreal16>();
-            break;
-        case GA_STORE_REAL32:
-            computeOutGroup<fpreal32>();
-            break;
-        case GA_STORE_REAL64:
-            computeOutGroup<fpreal64>();
-            break;
-        default:
-            break;
+        case GA_STORE_REAL16: computeOutGroup<fpreal16>(); break;
+        case GA_STORE_REAL32: computeOutGroup<fpreal32>(); break;
+        case GA_STORE_REAL64: computeOutGroup<fpreal64>(); break;
+        default: break;
         }
         
-        return pointInMeshGroup;
+        return true;
     }
 
     
     template<typename FLOAT_T>
-    void
-        computeOutGroup()
+    void computeOutGroup()
     {
         const GA_SplittableRange geoPointRange(groupParser.getPointRange());
         UTparallelFor(geoPointRange, [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(gfeWN.getAttrib());
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(gfeWN.getOutAttribArray()[0]);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -408,9 +386,8 @@ private:
                         FLOAT_T windingNumber = attrib_ph.value(elemoff);
                         windingNumber = abs(windingNumber);
 
-                        if (gfeWN.asSolidAngle) {
+                        if (gfeWN.asSolidAngle)
                             windingNumber /= PI * 2.0;
-                        }
 
                         bool outval;
                         if (groupInGeoPoint && groupOnGeoPoint)
@@ -428,31 +405,7 @@ private:
                                 outval = windingNumber > (0.5 - threshold) && windingNumber < (0.5 + threshold);
                             }
                         }
-                        //
-                        // outval ^= reverseGroup;
-                        //
-                        // switch (groupMergeType)
-                        // {
-                        // case GFE_GroupMergeType::Replace:
-                        //     break;
-                        // case GFE_GroupMerge_Union:
-                        //     outval = outval || pointInMeshGroup->contains(elemoff);
-                        //     break;
-                        // case GFE_GroupMerge_Intersect:
-                        //     outval = outval && pointInMeshGroup->contains(elemoff);
-                        //     break;
-                        // case GFE_GroupMerge_Subtract:
-                        //     outval = !outval && pointInMeshGroup->contains(elemoff);
-                        //     break;
-                        // default:
-                        //     break;
-                        // }
-                        //
-                        // pointInMeshGroup->setElement(elemoff, outval);
-
-                        //if (outIntAttrib && intAttrib) {
-                        //    intAttrib_ph.value() = outval;
-                        //}
+                        setGroup.set(elemoff, outval);
                     }
                 }
             }
@@ -463,13 +416,12 @@ private:
     
 public:
     GFE_WindingNumber gfeWN;
+    
 
-
-    bool groupInGeoPoint;
-    bool groupOnGeoPoint;
-    fpreal threshold;
-    bool reverseGroup;
-    GFE_GroupMergeType groupMergeType;
+    bool groupInGeoPoint = true;
+    bool groupOnGeoPoint = true;
+    fpreal threshold = 1e-05;
+    GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace;
 
 
     bool hasParm_outNumeric = false;
@@ -504,191 +456,5 @@ private:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
-namespace GFE_PointInMeshWN_Namespace {
-
-
-
-
-    template<typename FLOAT_T>
-    static void
-        pointInMesh_wn(
-            GA_Detail* const geoPoint,
-            const GA_Detail* const geoRefMesh,
-            const GA_ROHandleT<FLOAT_T>& wnAttribPtr,
-            GA_PointGroup* const group,
-
-            GFE_WindingNumber_Cache* const sopcache = nullptr,
-            const GA_PointGroup* const geoPointGroup = nullptr,
-            const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
-
-
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
-            const bool groupInGeoPoint = true,
-            const bool groupOnGeoPoint = true,
-            const fpreal threshold = 1e-05
-
-        ) {
-        UT_ASSERT_P(geoPoint);
-        UT_ASSERT_P(geoRefMesh);
-        UT_ASSERT_P(group);
-    }
-
-    template<typename FLOAT_T>
-    static void
-        pointInMesh_wn(
-            GA_Detail* const geoPoint,
-            const GA_Detail* const geoRefMesh,
-            const GA_RWHandleT<FLOAT_T>& wnAttribPtr,
-            GA_PointGroup* const group,
-
-            GFE_WindingNumber_Cache* const sopcache = nullptr,
-            const GA_PointGroup* const geoPointGroup = nullptr,
-            const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
-
-
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
-            const bool groupInGeoPoint = true,
-            const bool groupOnGeoPoint = true,
-            const fpreal threshold = 1e-05,
-
-            const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
-            const bool fullAccuracy = false,
-            const fpreal accuracyScale = 2.0,
-            const bool asSolidAngle = false,
-            const bool negate = false
-
-        ) {
-        UT_ASSERT_P(geoPoint);
-        UT_ASSERT_P(geoRefMesh);
-
-        if (!outWN && !outGroup && !outIntAttrib)
-            return;
-
-        if (!geoRefMesh)
-            geoRefMesh = geoPoint;
-
-        UT_Matrix4T<T> mtx;
-    }
-
-
-
-    static GA_PointGroup*
-        pointInMesh_wn(
-            GA_Detail* const geoPoint,
-            const GA_Detail* const geoRefMesh,
-            GFE_WindingNumber_Cache* const sopcache = nullptr,
-            const GA_PointGroup* const geoPointGroup = nullptr,
-            const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr,
-
-            const bool outWN = false,
-            const UT_StringHolder& wnName = "__topo_windingNumber",
-            const bool outGroup = true,
-            const UT_StringHolder& groupName = "pointInMesh_wn",
-            const bool outIntAttrib = false,
-            const GA_Storage intStorage = GA_STORE_INVALID,
-            const UT_StringHolder& intAttribName = "pointInMesh_wn",
-
-            const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
-            const bool groupInGeoPoint = true,
-            const bool groupOnGeoPoint = true,
-            const fpreal threshold = 1e-05,
-
-            const GA_Storage wnStorage = GA_STORE_INVALID,
-            const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
-            const bool fullAccuracy = false,
-            const fpreal accuracyScale = 2.0,
-            const bool asSolidAngle = false,
-            const bool negate = false
-        ) {
-        UT_ASSERT_P(geoPoint);
-        UT_ASSERT_P(geoRefMesh);
-
-        if (!outWN && !outGroup && !outIntAttrib)
-            return nullptr;
-
-        const GA_Attribute* const wnAttribPtr = GFE_WindingNumber::addAttribWindingNumber(
-            geoPoint, geoRefMesh, nullptr,
-            geoPointGroup, geoRefMeshGroup,
-            wnStorage, wnName,
-            wnType, fullAccuracy, accuracyScale, asSolidAngle, negate);
-
-        //pointInMesh_wn<fpreal>(geoPoint, geoRefMesh, restGeo, attribToXformPattern, posRestAttribPtr, posRefAttribPtr);
-
-    }
-
-    static GA_PointGroup*
-    addOutGroup(
-        const SOP_NodeVerb::CookParms& cookparms,
-        GA_Detail* const geoPoint,
-        const GA_Detail* const geoRefMesh,
-        const UT_StringHolder& geoPointGroupName,
-        const UT_StringHolder& geoRefMeshGroupName,
-        GFE_WindingNumber_Cache* const sopcache = nullptr,
-
-        const bool outWN = false,
-        const UT_StringHolder& wnName = "__topo_windingNumber",
-        const bool outGroup = true,
-        const UT_StringHolder& groupName = "pointInMesh_wn",
-        const bool outIntAttrib = false,
-        const GA_Storage intStorage = GA_STORE_INVALID,
-        const UT_StringHolder& intAttribName = "pointInMesh_wn",
-
-        const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace,
-        const bool groupInGeoPoint = true,
-        const bool groupOnGeoPoint = true,
-        const fpreal threshold = 1e-05,
-
-        const GA_Storage wnStorage = GA_STORE_INVALID,
-        const GFE_WindingNumberType wnType = GFE_WNType_XYZ,
-        const bool fullAccuracy = false,
-        const fpreal accuracyScale = 2.0,
-        const bool asSolidAngle = false,
-        const bool negate = false
-        )
-    {
-        UT_ASSERT_P(geoPoint);
-        UT_ASSERT_P(geoRefMesh);
-
-        if (!outWN && !outGroup && !outIntAttrib)
-            return;
-
-        GOP_Manager gop;
-        const GA_PointGroup* const geoPointGroup = GFE_GroupParse_Namespace::findOrParsePointGroupDetached(cookparms, geoPoint, geoPointGroupName, gop);
-        const GA_PrimitiveGroup* const geoRefMeshGroup = GFE_GroupParse_Namespace::findOrParsePrimitiveGroupDetached(cookparms, geoRefMesh, geoRefMeshGroupName, gop);
-
-        GA_PointGroup* pointInMesh_wn_groupPtr = pointInMesh_wn(
-            geoPoint, geoRefMesh, sopcache,
-            geoPointGroup, geoRefMeshGroup,
-            outWN, wnName,
-            outGroup, groupName,
-            outIntAttrib, intStorage, intAttribName,
-            groupMergeType, groupInGeoPoint, groupOnGeoPoint, threshold,
-            wnStorage, wnType,
-            fullAccuracy, accuracyScale,
-            asSolidAngle, negate);
-
-        pointInMesh_wn_groupPtr->bumpDataId();
-
-        return pointInMesh_wn_groupPtr;
-    }
-
-
-} // End of namespace GFE_PointInMeshWN
-
-#endif
 
 #endif

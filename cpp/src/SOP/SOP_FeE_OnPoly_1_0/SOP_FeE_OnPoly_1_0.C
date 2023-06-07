@@ -375,16 +375,13 @@ void
 SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_OnPoly_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_OnPoly_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(1);
+    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0->replaceWith(*inGeo0);
-    // outGeo0->clearAndDestroy();
-
-    //outGeo0 = sopNodeProcess(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroupName();
@@ -399,6 +396,7 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
+    GFE_OnPoly::onPoly(cookparms, outGeo0, inGeo1, sopparms.getPointGroup(), );
     
     const exint subscribeRatio = sopparms.getSubscribeRatio();
     const exint minGrainSize = sopparms.getMinGrainSize();
@@ -413,12 +411,6 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const bool outHitPrimAttrib = sopparms.getOutHitPrimAttrib();
     const bool outHitPrimUVAttrib = sopparms.getOutHitPrimUVAttrib();
     
-    GFE_OnPoly::onPoly(cookparms, outGeo0, inGeo1, sopparms.getPointGroup(), );
     
 }
 
-
-
-namespace SOP_FeE_OnPoly_1_0_Namespace {
-
-} // End SOP_FeE_OnPoly_1_0_Namespace namespace

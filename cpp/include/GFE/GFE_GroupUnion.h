@@ -410,35 +410,29 @@ public:
     //}
 
 private:
-
-    //Get Vertex Prim Index
+    
     SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset vtxoff)
-    { return geo.getPrimitiveVertexList(geo.vertexPrimitive(vtxoff)).find(vtxoff); }
+    { return vertexPrimIndex(geo, geo.vertexPrimitive(vtxoff), vtxoff); }
 
-    SYS_FORCE_INLINE static GA_Size vertexPrimIndex(
-            const GA_Detail& geo,
-            const GA_Offset primoff,
-            const GA_Offset vtxoff
-        )
-    { return geo.getPrimitiveVertexList(primoff).find(vtxoff); }
-
-    static GA_Offset vertexPointDst(
-            const GA_Detail& geo,
-            const GA_Offset primoff,
-            const GA_Size vtxpnum
-        )
+    static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset primoff, const GA_Offset vtxoff)
     {
-        const GA_Size vtxpnum_next = vtxpnum + 1;
-        if (vtxpnum_next == geo.getPrimitiveVertexCount(primoff)) {
-            if (geo.getPrimitiveClosedFlag(primoff))
-                return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
-            else
-                return GFE_INVALID_OFFSET;
-        }
-        else
+        const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
+        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
         {
-            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
+            if (geo.getPrimitiveVertexOffset(primoff, vtxpnum) == vtxoff)
+                return vtxpnum;
         }
+        return GFE_INVALID_OFFSET;
+    }
+
+    static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset primoff, const GA_Size vtxpnum)
+    {
+        const GA_Size vtxpnum_next = vtxpnum+1;
+        if (vtxpnum_next != geo.getPrimitiveVertexCount(primoff))
+            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
+        if (geo.getPrimitiveClosedFlag(primoff))
+            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
+        return GFE_INVALID_OFFSET;
     }
 
     SYS_FORCE_INLINE static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset vtxoff)

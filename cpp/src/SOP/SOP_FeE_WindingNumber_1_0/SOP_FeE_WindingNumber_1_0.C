@@ -96,11 +96,21 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
+        name    "outWN"
+        cppname "OutWN"
+        label   "Output Winding Number"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
         name    "wnAttribName"
         cppname "WNAttribName"
         label   "Attribute Name"
         type    string
         default { "windingNumber" }
+        disablewhen "{ outWN == 0 }"
     }
     parm {
         name    "wnAsSolidAngle"
@@ -340,13 +350,14 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     
     GFE_WindingNumber wn(geoPoint, geoRefMesh, sopcache, &cookparms);
 
-    wn.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    wn.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    wn.findOrCreateTuple(false, wnStorage, sopparms.getWNAttribName());
+    if (sopparms.getOutPointInMeshGroup() || sopparms.getOutWN())
+        wn.findOrCreateTuple(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
 
     if (sopparms.getOutPointInMeshGroup())
     {
-        wn.pointInMeshGroup.setParm(sopparms.getReverseGroup(), groupMergeType);
+        wn.setGroup.setParm(groupMergeType, sopparms.getReverseGroup());
         wn.setPointInMeshComputeParm(
             sopparms.getGroupInGeoPoint(),
             sopparms.getGroupOnGeoPoint(),
@@ -355,7 +366,7 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
         wn.findOrCreateGroup(false, sopparms.getPointInMeshGroupName());
     }
 
-    wn.setWNComputeParm(sopWNType(sopparms.getWNType()),
+    wn.setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 

@@ -532,25 +532,10 @@ public:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-class GFE_WindingNumber : public GFE_AttribFilter, public GFE_GeoFilterRef {
-
+class GFE_WindingNumber : public GFE_AttribFilterWithRef {
 
 public:
-
-    //using GFE_AttribFilter::GFE_AttribFilter;
+    //using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
 
     GFE_WindingNumber(
         GA_Detail& geo,
@@ -558,8 +543,7 @@ public:
         GFE_WindingNumber_Cache* const sopcache = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GFE_AttribFilterWithRef(geo, &geoRef0, cookparms)
         , sopcache(sopcache)
     {
     }
@@ -584,20 +568,20 @@ public:
 
     
     void
-        setWNComputeParm(
+        setComputeParm(
             const GFE_WNType wnType = GFE_WNType::XYZ,
             const bool fullAccuracy = false,
-            const fpreal64 accuracyScale = 2.0,
+            const fpreal accuracyScale = 2.0,
             const bool asSolidAngle = false,
             const bool negate = false
         )
     {
         setHasComputed();
-        this->wnType = wnType;
-        this->fullAccuracy = fullAccuracy;
+        this->wnType        = wnType;
+        this->fullAccuracy  = fullAccuracy;
         this->accuracyScale = accuracyScale;
-        this->asSolidAngle = asSolidAngle;
-        this->negate = negate;
+        this->asSolidAngle  = asSolidAngle;
+        this->negate        = negate;
     }
     
     void
@@ -614,7 +598,7 @@ public:
     }
     
 
-    SYS_FORCE_INLINE void setGroup(
+    SYS_FORCE_INLINE void setInGroup(
         const GA_PointGroup* const geoPointGroup = nullptr,
         const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr
     )
@@ -623,7 +607,7 @@ public:
         groupParserRef0.setGroup(geoRefMeshGroup);
     }
     
-    SYS_FORCE_INLINE void setGroup(
+    SYS_FORCE_INLINE void setInGroup(
         const UT_StringHolder& geoPoint_groupName,
         const UT_StringHolder& geoRefMesh_groupName
     )
@@ -673,15 +657,14 @@ private:
                 continue;
         }
         
-        if(!wnAttribPtr)
+        if (!wnAttribPtr)
             return false;
 
         switch (wnAttribPtr->getAIFTuple()->getStorage(wnAttribPtr))
         {
-        case GA_STORE_REAL16: computeWindingNumber<fpreal32>(); break;
+        case GA_STORE_REAL16:
         case GA_STORE_REAL32: computeWindingNumber<fpreal32>(); break;
         case GA_STORE_REAL64: computeWindingNumber<fpreal64>(); break;
-        default:                                                break;
         }
         
         return true;
@@ -695,8 +678,7 @@ private:
 
         const GA_RWHandleT<FLOAT_T>& wn_h(wnAttribPtr);
         
-        //const GA_SplittableRange geoPointRange(geo->getPointRange(groupParser.getPointGroup()));
-        const GA_SplittableRange geoPointRange(groupParser.getPointRange());
+        const GA_SplittableRange geoPointRange = groupParser.getPointSplittableRange();
         const GA_PrimitiveGroup* const geoRefMeshGroup = groupParserRef0.getPrimitiveGroup();
 
         if (wnType == GFE_WNType::XYZ)
@@ -775,12 +757,9 @@ private:
                     delete sopcache;
             }
         }
-
         
         if(!getOutGroupArray().isEmpty())
-        {
             computeOutGroup<FLOAT_T>();
-        }
     }
 
 
@@ -1540,7 +1519,7 @@ private:
         UT_ASSERT(!getOutAttribArray().isEmpty());
         UT_ASSERT(!getOutGroupArray().isEmpty());
         
-        pointInMeshGroup = getOutGroupArray()[0];
+        setGroup = getOutGroupArray()[0];
         UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
         {
             GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(wnAttribPtr);
@@ -1575,7 +1554,7 @@ private:
                             }
                         }
                         
-                        pointInMeshGroup.set(elemoff, outval);
+                        setGroup.set(elemoff, outval);
                     }
                 }
             }
@@ -1589,11 +1568,9 @@ private:
 public:
     GFE_WNType wnType = GFE_WNType::XYZ;
     bool fullAccuracy = false;
-    fpreal64 accuracyScale = 2.0;
+    fpreal accuracyScale = 2.0;
     bool asSolidAngle = false;
     bool negate = false;
-
-    GFE_SetGroup pointInMeshGroup;
     
 public:
     bool groupInGeoPoint = true;

@@ -59,11 +59,16 @@ static const char *theDsFile = R"THEDSFILE(
             }
         }
         parm {
-            name    "leaveElement"
-            cppname "LeaveElement"
-            label   "Leave Element"
-            type    toggle
-            default { "off" }
+            name    "delElementMethod"
+            cppname "DelElementMethod"
+            label   "Delete Element Method"
+            type    ordinal
+            default { "auto" }
+            menu {
+                "delete"     "Delete"
+                "leave"      "Leave"
+                "auto"       "Auto"
+            }
         }
         parm {
             name    "delElementReverseGroup"
@@ -213,6 +218,20 @@ sopDelPointMode(SOP_FeE_DelElement_1_0Parms::DelElementPointMode parmDelPointMod
     return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
 }
 
+static GFE_DelElementMethod
+sopDelElementMethod(SOP_FeE_DelElement_1_0Parms::DelElementMethod parmDelPointMode)
+{
+    using namespace SOP_FeE_DelElement_1_0Enums;
+    switch (parmDelPointMode)
+    {
+    case DelElementMethod::DELETE: return GFE_DelElementMethod::Delete;    break;
+    case DelElementMethod::LEAVE:  return GFE_DelElementMethod::Leave;     break;
+    case DelElementMethod::AUTO:   return GFE_DelElementMethod::Auto;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
+    return GFE_DelElementMethod::Delete;
+}
+
 void
 SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
@@ -227,10 +246,10 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
         outGeo0.replaceWith(inGeo0);
         return;
     }
-
+    
     outGeo0.clear();
-
-
+    
+    const GFE_DelElementMethod delElementMethod = sopDelElementMethod(sopparms.getDelElementMethod());
     const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
     const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
     
@@ -245,7 +264,7 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     delElement.setGroup(groupType, sopparms.getDelElementGroup());
 
     delElement.setComputeParm(
-        sopparms.getLeaveElement(),
+        delElementMethod,
         sopparms.getDelElementReverseGroup(),
         sopparms.getDelElementInputGroup(),
         delPointMode,

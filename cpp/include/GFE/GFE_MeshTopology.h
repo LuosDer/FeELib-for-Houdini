@@ -260,16 +260,23 @@ GFE_GETGROUP_SPECIALIZATION(VertexNextEquivNoLoop, vertexNextEquivNoLoop)
         const GA_Storage storage = GA_STORE_INVALID
     )
     {
-        switch (attribOwner)
+        if (largeConnectivity)
         {
-        case GA_ATTRIB_PRIMITIVE:
-            return largeConnectivity ? setPrimPrimPoint (detached, attribName, storage) : setPrimPrimEdge  (detached, attribName, storage);
-            break;
-        case GA_ATTRIB_POINT:
-            return largeConnectivity ? setPointPointPrim(detached, attribName, storage) : setPointPointEdge(detached, attribName, storage);
-            break;
-        case GA_ATTRIB_VERTEX:
-            break;
+            switch (attribOwner)
+            {
+            case GA_ATTRIB_PRIMITIVE: return setPrimPrimPoint (detached, attribName, storage); break;
+            case GA_ATTRIB_POINT:     return setPointPointPrim(detached, attribName, storage); break;
+            case GA_ATTRIB_VERTEX:    break;
+            }
+        }
+        else
+        {
+            switch (attribOwner)
+            {
+            case GA_ATTRIB_PRIMITIVE: return setPrimPrimEdge  (detached, attribName, storage); break;
+            case GA_ATTRIB_POINT:     return setPointPointEdge(detached, attribName, storage); break;
+            case GA_ATTRIB_VERTEX:    break;
+            }
         }
         return nullptr;
     }
@@ -1509,8 +1516,7 @@ private:
 
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        primPrimEdge4()
+    void primPrimEdge4()
     {
         if(!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
@@ -1556,8 +1562,7 @@ private:
         }, subscribeRatio, minGrainSize);
     }
 
-    void
-        primPrimPoint()
+    void primPrimPoint()
     {
         if(!primPrimPointAttrib)
             setPrimPrimPoint(!outIntermediateAttrib);

@@ -4,7 +4,9 @@
 #ifndef __GFE_Group_h__
 #define __GFE_Group_h__
 
-//#include "GFE/GFE_Group.h"
+#include "GFE/GFE_Group.h"
+
+
 
 #include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"

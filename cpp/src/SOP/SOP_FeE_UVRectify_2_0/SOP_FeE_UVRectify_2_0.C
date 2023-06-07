@@ -10,11 +10,11 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GU/GU_Flatten2.h"
-#include "GU/GU_UVPack.h"
+// #include "GU/GU_Flatten2.h"
+// #include "GU/GU_UVPack.h"
 
 
-#include "GFE/GFE_GroupParser.h"
+#include "GFE/GFE_UVRectify.h"
 
 
 using namespace SOP_FeE_UVRectify_2_0_Namespace;
@@ -30,9 +30,35 @@ static const char* theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nkwargs['ordered'] = pwd.parm('ordered').eval()\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "prim" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "uvAttribClass"
+        cppname "UVAttribClass"
+        label   "UV Attribute Class"
+        type    ordinal
+        default { "auto" }
+        menu {
+            "auto"      "Auto"
+            "point"     "Point"
+            "vertex"    "Vertex"
+        }
     }
     parm {
         name    "uvAttrib"
@@ -64,40 +90,35 @@ static const char* theDsFile = R"THEDSFILE(
     }
 
 
-
-
-
-    parm {
-        name    "straightenArcs"
-        cppname "StraightenArcs"
-        label   "Straighten Arcs"
-        type    toggle
-        default { "on" }
-        disablewhen "{ flattenMethod != abf }"
-    }
-    parm {
-        name    "straightenGrids"
-        cppname "StraightenGrids"
-        label   "Straighten Grids"
-        type    toggle
-        default { "on" }
-        disablewhen "{ flattenMethod != abf }"
-    }
-    parm {
-        name    "rectifyPatches"
-        cppname "RectifyPatches"
-        label   "Rectify Patches"
-        type    toggle
-        default { "on" }
-        disablewhen "{ flattenMethod != abf }"
-    }
-
-
+    // parm {
+    //     name    "straightenArcs"
+    //     cppname "StraightenArcs"
+    //     label   "Straighten Arcs"
+    //     type    toggle
+    //     default { "on" }
+    //     disablewhen "{ flattenMethod != abf }"
+    // }
+    // parm {
+    //     name    "straightenGrids"
+    //     cppname "StraightenGrids"
+    //     label   "Straighten Grids"
+    //     type    toggle
+    //     default { "on" }
+    //     disablewhen "{ flattenMethod != abf }"
+    // }
+    // parm {
+    //     name    "rectifyPatches"
+    //     cppname "RectifyPatches"
+    //     label   "Rectify Patches"
+    //     type    toggle
+    //     default { "on" }
+    //     disablewhen "{ flattenMethod != abf }"
+    // }
 
     parm {
-        name    "layout"
-        cppname "Layout"
-        label   "Layout"
+        name    "manualLayout"
+        cppname "ManualLayout"
+        label   "Manual Layout"
         type    toggle
         default { "on" }
     }
@@ -110,13 +131,14 @@ SOP_FeE_UVRectify_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_UVRectify_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("group"_sh,     &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("uvAttrib"_sh,  &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("seamGroup"_sh, &SOP_Node::edgeGroupMenu);
     }
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_UVRectify_2_0::theSOPTypeName("FeE::uvRectify::0.5"_sh);
+const UT_StringHolder SOP_FeE_UVRectify_2_0::theSOPTypeName("FeE::uvRectify::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
@@ -171,11 +193,43 @@ sopFlattenMethod(SOP_FeE_UVRectify_2_0Parms::FlattenMethod flattenMethod)
     using namespace SOP_FeE_UVRectify_2_0Enums;
     switch (flattenMethod)
     {
-    case FlattenMethod::SCP:      return false;  break;
-    case FlattenMethod::ABF:      return true;      break;
+    case FlattenMethod::SCP:  return false;  break;
+    case FlattenMethod::ABF:  return true;   break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return false;
+}
+
+
+
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_UVRectify_2_0Parms::UVAttribClass attribClass)
+{
+    using namespace SOP_FeE_UVRectify_2_0Enums;
+    switch (attribClass)
+    {
+    case UVAttribClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
+    case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case UVAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+static GA_GroupType
+sopGroupType(SOP_FeE_UVRectify_2_0Parms::GroupType parmgrouptype)
+{
+    using namespace SOP_FeE_UVRectify_2_0Enums;
+    switch (parmgrouptype)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
 
 
@@ -190,50 +244,40 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     outGeo0.replaceWith(inGeo0);
 
+#if 1
 
-
-    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttrib();
-    if (!geo0AttribNames.isstring() || geo0AttribNames.length()==0)
+    const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
+    if (!uvAttribName.isstring() || uvAttribName.length()==0)
         return;
+    
+    const bool flattenMethod = sopFlattenMethod(sopparms.getFlattenMethod());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVAttribClass());
 
-    //GA_Attribute* uvAttribPtr = GFE_Attribute::findOrCreateUVAttributePointVertex(geo, uvAttribClass, uvAttribName);
-    GA_Attribute* geo0Attrib = outGeo0.findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
-    if (!geo0Attrib)
-        geo0Attrib = outGeo0.findAttribute(GA_ATTRIB_VERTEX, geo0AttribNames);
-    if (!geo0Attrib)
-        geo0Attrib = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, geo0AttribNames, GA_STORE_REAL32, 3, GA_Defaults(0));
-
-
-    GOP_Manager gop;
-    const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParsePrimitiveGroupDetached(cookparms, &outGeo0, sopparms.getGroup(), gop);
-    if (geo0Group && geo0Group->isEmpty())
+    
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
         return;
+    
 
-    GA_VertexGroupUPtr allVtxGroupUPtr;
-    GA_VertexGroup* allVtxGroup;
-    if (geo0Group)
-    {
-        allVtxGroupUPtr = outGeo0.createDetachedVertexGroup();
-        allVtxGroup = allVtxGroupUPtr.get();
-        allVtxGroup->combine(geo0Group);
-    }
-    else
-    {
-        allVtxGroup = nullptr;
-    }
+    GFE_UVRectify uvRectify(outGeo0, cookparms);
 
+    uvRectify.setComputeParm(flattenMethod, sopparms.getManualLayout());
 
-
+    uvRectify.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    uvRectify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib());
+    
+    uvRectify.computeAndBumpDataId();
+    
+#else
+    
+    const bool layoutit = sopparms.getLayout();
 
     const GA_EdgeGroup* const seamGroup = GFE_GroupParser_Namespace::findOrParseEdgeGroupDetached(cookparms, &outGeo0, sopparms.getSeamGroup(), gop);
     
-
-
-    const GA_AttributeOwner geo0AttribClass = geo0Attrib->getOwner();
-    const bool layoutit = sopparms.getLayout();
-    const bool flattenMethod = sopFlattenMethod(sopparms.getFlattenMethod());
-
     GA_RWHandleT<UT_Vector3R> uv_h(geo0Attrib);
+
 
     const bool straightenArcs = sopparms.getStraightenArcs();
     const bool straightenGrids = sopparms.getStraightenGrids();
@@ -383,6 +427,14 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
+
+
+
+
+
+
+
+#endif
 
 
 

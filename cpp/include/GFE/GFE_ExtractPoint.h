@@ -19,23 +19,45 @@ public:
     //using GFE_GeoFilter::GFE_GeoFilter;
     
     GFE_ExtractPoint(
-        GFE_Detail* const geo,
-        const GA_Detail* const geoSrc = nullptr,
+        GFE_Detail* const inGeo,
+        const GA_Detail* const inGeoSrc = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
-        , groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(geo), groupParser.getGOPRef(), cookparms)
+        : GFE_GeoFilter(inGeo, inGeoSrc, cookparms)
+        , groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(inGeo), groupParser.getGOPRef(), cookparms)
     {
+        if (geoSrc)
+        {
+            geoSrcGUTmp = new GU_Detail();
+            geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
+            geoSrcTmp = geoSrcGUTmp;
+            geoSrcTmp->replaceWithPoints(*geoSrc);
+        }
+        else
+        {
+            geoSrcTmp = geo;
+        }
     }
 	
     GFE_ExtractPoint(
-        GA_Detail& geo,
-        const GA_Detail* const geoSrc = nullptr,
+        GA_Detail& inGeo,
+        const GA_Detail* const inGeoSrc = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
-        , groupParserIn0(geoSrc ? geoSrc : &geo, groupParser.getGOPRef(), cookparms)
+        : GFE_GeoFilter(inGeo, inGeoSrc, cookparms)
+        , groupParserIn0(geoSrc ? geoSrc : &inGeo, groupParser.getGOPRef(), cookparms)
     {
+        if (geoSrc)
+        {
+            geoSrcGUTmp = new GU_Detail();
+            geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
+            geoSrcTmp = geoSrcGUTmp;
+            geoSrcTmp->replaceWithPoints(*geoSrc);
+        }
+        else
+        {
+            geoSrcTmp = geo;
+        }
     }
 	
 
@@ -54,14 +76,14 @@ public:
         //this->minGrainSize = minGrainSize;
     }
     
-    void setDeleteParm(
-        const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DESTROY_DEGENERATE_INCOMPATIBLE,
-        const bool guaranteeNoVertexReference = false
-    )
-    {
-        this->delPointMode = delPointMode;
-        this->guaranteeNoVertexReference = guaranteeNoVertexReference;
-    }
+    // void setDeleteParm(
+    //     const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DESTROY_DEGENERATE_INCOMPATIBLE,
+    //     const bool guaranteeNoVertexReference = false
+    // )
+    // {
+    //     this->delPointMode = delPointMode;
+    //     this->guaranteeNoVertexReference = guaranteeNoVertexReference;
+    // }
 
     SYS_FORCE_INLINE void setKernel(const uint8 kernel)
     { this->kernel = kernel; }
@@ -80,17 +102,59 @@ public:
     
 private:
 
+    void keepStdGroup(const char* pattern)
+    { 
+        if (!pattern || pattern == "*")
+            return;
+        GA_GroupTable& groupTable = *geoSrcTmp->getGroupTable(GA_GROUP_POINT);
+        for (GA_GroupTable::iterator<GA_Group> it = groupTable.beginTraverse(); !it.atEnd(); ++it)
+        {
+            GA_Group* const group = it.group();
+            //if (group->isDetached())
+            //    continue;
+            if (group->getName().multiMatch(pattern))
+                continue;
+            if (group->getName() == pointGroup->getName())
+                continue;
+            groupTable.destroy(group);
+        }
+    }
+
+    SYS_FORCE_INLINE void keepStdGroup(const GA_GroupType groupType, const char* keepGroupPattern)
+    { GFE_Group::keepStdGroup(*geoSrcTmp->getGroupTable(groupType), keepGroupPattern); }
+
+    void keepStdGroup(
+        const char* primGroupPattern,
+        const char* pointGroupPattern,
+        const char* vertexGroupPattern,
+        const char* edgeGroupPattern
+    )
+    {
+        keepStdGroup(GA_GROUP_PRIMITIVE, primGroupPattern);
+        if (pointGroup && !pointGroup->isDetached())
+            keepStdGroup(pointGroupPattern);
+        else
+            keepStdGroup(GA_GROUP_POINT,     pointGroupPattern);
+        keepStdGroup(GA_GROUP_VERTEX,    vertexGroupPattern);
+        keepStdGroup(GA_GROUP_EDGE,      edgeGroupPattern);
+    }
+    
     virtual bool
         computeCore() override
     {
         pointGroup = groupParserIn0.getPointGroup();
+        
+        GFE_AttributeDelete::keepStdAttribute(geoSrcTmp->getAttributes(), keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
+        keepStdGroup(keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
+        
         if (geoSrc)
             extractPointWithSource();
         else
             extractPoint();
         
-        if (delInputGroup)
-            groupParserIn0.delGroup();
+        if (delInputGroup && pointGroup && !pointGroup->isDetached())
+            geo->getGroupTable(GA_GROUP_POINT)->destroy(pointGroup->getName());
+            //groupParserIn0.delGroup();
         
         //if (delInputGroup && pointGroupNonConst)
         //    geo->destroyGroup(pointGroupNonConst);
@@ -105,13 +169,13 @@ private:
             if (reverseGroup)
                 geo->clearElement();
             else
-                geo->replaceWithPoints(*geoSrc);
+                geo->replaceWithPoints(*geoSrcTmp);
             return;
         }
         if (pointGroup->isEmpty())
         {
             if (reverseGroup)
-                geo->replaceWithPoints(*geoSrc);
+                geo->replaceWithPoints(*geoSrcTmp);
             else
                 geo->clearElement();
             return;
@@ -121,7 +185,7 @@ private:
             if (reverseGroup)
                 geo->clearElement();
             else
-                geo->replaceWithPoints(*geoSrc);
+                geo->replaceWithPoints(*geoSrcTmp);
             return;
         }
         
@@ -129,15 +193,15 @@ private:
         {
         case 0:
             //geo->asGEO_Detail()->mergePoints(*srcGeo, pointGroup, false, false);
-            geo->asGEO_Detail()->mergePoints(static_cast<const GEO_Detail&>(*geoSrc), GA_Range(geoSrc->getPointMap(), pointGroup, reverseGroup));
+            geo->asGEO_Detail()->mergePoints(static_cast<const GEO_Detail&>(*geoSrcTmp), GA_Range(geoSrcTmp->getPointMap(), pointGroup, reverseGroup));
             break;
         case 1:
-            geo->replaceWithPoints(*geoSrc);
+            geo->replaceWithPoints(*geoSrcTmp);
             geo->destroyPointOffsets(GA_Range(geo->getPointMap(), pointGroup, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
             break;
         case 2:
         {
-            geo->replaceWithPoints(*geoSrc);
+            geo->replaceWithPoints(*geoSrcTmp);
             GA_OffsetList offList = geo->getOffsetList(pointGroup, !reverseGroup);
             GA_IndexMap& ptmap = geo->getIndexMap(GA_ATTRIB_POINT);
 
@@ -153,26 +217,26 @@ private:
             {
                 if (pointGroup->entries() <= 4096)
                 {
-                    geo->replaceWithPoints(*geoSrc);
+                    geo->replaceWithPoints(*geoSrcTmp);
                     geo->destroyPointOffsets(GA_Range(geo->getPointMap(), pointGroup, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
                 }
                 else
                 {
                     //geo->clearElement();
-                    geo->asGEO_Detail()->mergePoints(*static_cast<const GEO_Detail*>(geoSrc), pointGroup, false, false);
+                    geo->asGEO_Detail()->mergePoints(*static_cast<const GEO_Detail*>(geoSrcTmp), pointGroup, false, false);
                 }
             }
             else
             {
                 if (pointGroup->entries() >= geo->getNumPoints() - 4096)
                 {
-                    geo->replaceWithPoints(*geoSrc);
+                    geo->replaceWithPoints(*geoSrcTmp);
                     geo->destroyPointOffsets(GA_Range(geo->getPointMap(), pointGroup, !reverseGroup), GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES, true);
                 }
                 else
                 {
                     //geo->clearElement();
-                    geo->asGEO_Detail()->mergePoints(*static_cast<const GEO_Detail*>(geoSrc), pointGroup, false, false);
+                    geo->asGEO_Detail()->mergePoints(*static_cast<const GEO_Detail*>(geoSrcTmp), pointGroup, false, false);
                 }
             }
         }
@@ -263,18 +327,32 @@ private:
         //geo->destroyUnusedPoints(pointGroup);
     }
 
-
 public:
     bool reverseGroup = false;
     bool delInputGroup = true;
     
-    GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
-    bool guaranteeNoVertexReference = false;
-
+    const char* keepPrimAttrib   = nullptr;
+    const char* keepPointAttrib  = nullptr;
+    const char* keepVertexAttrib = nullptr;
+    const char* keepDetailAttrib = nullptr;
+    const char* keepPrimGroup    = nullptr;
+    const char* keepPointGroup   = nullptr;
+    const char* keepVertexGroup  = nullptr;
+    const char* keepEdgeGroup    = nullptr;
+        
 private:
     GFE_GroupParser groupParserIn0;
-
+    
+    GU_DetailHandle geoSrcTmp_h;
+    GU_Detail* geoSrcGUTmp;
+    GA_Detail* geoSrcTmp;
+    
     const GA_PointGroup* pointGroup;
+
+    
+    GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_LEAVE_PRIMITIVES;
+    bool guaranteeNoVertexReference = true;
+
     //GA_PointGroup* pointGroupNonConst = nullptr;
     //bool hasSetGroup = false;
 

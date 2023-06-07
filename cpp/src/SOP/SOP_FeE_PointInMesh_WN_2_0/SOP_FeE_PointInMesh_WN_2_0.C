@@ -388,75 +388,33 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         return;
     
         
-#if 1
     GFE_PointInMeshWN pointInMeshWN(outGeo0, inGeo1, sopcache, &cookparms);
 
-    pointInMeshWN.gfeWN.setGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    pointInMeshWN.gfeWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    pointInMeshWN.gfeWN.setOutAttrib(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
+    if (sopparms.getOutWN() || sopparms.getOutGroup() || sopparms.getOutNumericAttrib())
+        pointInMeshWN.gfeWN.findOrCreateTuple(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
 
     pointInMeshWN.gfeWN.setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
-        sopparms.getWNAsSolidAngle(), sopparms.getWNNegate(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+        sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 
-    pointInMeshWN.getOutGroupArray().findOrCreate()
+    
+    pointInMeshWN.setGroup.setParm(groupMergeType, sopparms.getReverseGroup());
     //groupMergeType
-    pointInMeshWN.setOutGroup(
-        !sopparms.getOutGroup(),
-        sopparms.getGroupName(),
-        sopparms.getInGeo(),
-        sopparms.getOnGeo(),
-        sopparms.getThreshold(),
-        sopparms.getReverseGroup(),
-        
-    );
-    pointInMeshWN.setNumericAttrib(
-        !sopparms.getOutNumericAttrib(),
-        GA_STORE_INVALID,
-        sopparms.getNumericAttribName()
-    );
+    
     if (sopparms.getOutGroup())
-    {
-        pointInMeshWN.addOutGroup();
-    }
-    if (sopparms.getOutNumericAttrib())
-    {
-        pointInMeshWN.addNumericAttrib();
-    }
-    pointInMeshWN.bumpDataId();
-    pointInMeshWN.visualizeGroup();
-#else
-
-    GA_PointGroup* pointInMesh_wn_groupPtr = GFE_PointInMesh::addGroupPointInMesh_wn(
-        cookparms, outGeo0, inGeo1, 
-        sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup(), sopcache,
-
-        sopparms.getOutWN(),
-        sopparms.getWNName(),
-        sopparms.getOutGroup(),
-        sopparms.getGroupName(),
-        sopparms.getOutNumericAttrib(),
-        GA_STORE_INVALID,
-        sopparms.getNumericAttribName(),
-        groupMergeType,
+        pointInMeshWN.findOrCreatePointGroup(false, sopparms.getGroupName());
+    
+    pointInMeshWN.setComputeParm(
         sopparms.getInGeo(),
         sopparms.getOnGeo(),
         sopparms.getThreshold(),
-        
-        GA_STORE_INVALID,
-        sopWNType(sopparms.getWNType()),
-        sopparms.getWNFullAccuracy(),
-        sopparms.getWNAccuracyScale(),
-        sopparms.getWNAsSolidAngle(),
-        sopparms.getWNNegate()
-    );
-#endif
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    pointInMeshWN.computeAndBumpDataId();
+    pointInMeshWN.delOrVisualizeGroup();
 
 }
 
 
-
-namespace SOP_FeE_PointInMesh_WN_2_0_Namespace {
-
-} // End SOP_FeE_PointInMesh_WN_2_0_Namespace namespace

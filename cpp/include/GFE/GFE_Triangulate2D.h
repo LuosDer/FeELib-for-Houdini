@@ -17,7 +17,7 @@
 #include "GFE/GFE_GroupElementByDirection.h"
 #include "GFE/GFE_GroupUnshared.h"
 
-#include "SOP/SOP_Triangulate2D-3.0.h"
+//#include "SOP/SOP_Triangulate2D-3.0.h"
 #include "SOP/SOP_Triangulate2D-3.0.proto.h"
 
 class GFE_Triangulate2D : public GFE_AttribFilter {
@@ -187,28 +187,28 @@ private:
         groupByDir.computeAndBumpDataId();
         groupByDir.visualizeOutGroup();
 
-        
-        UT_Array<GU_ConstDetailHandle> tri2dPInputs;
-    
-        const size_t nInputs = cookparms->nInputs();
-        for (size_t i = 0; i < nInputs; ++i)
         {
-            tri2dPInputs.emplace_back(cookparms->inputGeoHandle(i));
+            UT_Array<GU_ConstDetailHandle> nodeInputs;
+        
+            const size_t nInputs = cookparms->nInputs();
+            for (size_t i = 0; i < nInputs; ++i)
+            {
+                nodeInputs.emplace_back(cookparms->inputGeoHandle(i));
+            }
+
+            SOP_Node* const node = cookparms->getNode();
+            const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
+        
+            SOP_Triangulate2D_3_0Parms tri2DParms;
+            tri2DParms.setConstrSplitPtsGrp(dir);
+            tri2DParms.setDir(dir);
+            SOP_NodeCache* nodeCache = nullptr;
+        
+            const SOP_NodeVerb::CookParms tri2dCookparms(cookparms->gdh(), nodeInputs, cookEngine, node, cookparms->getContext(),
+                  &tri2DParms, nodeCache, cookparms->error(), cookparms->depnode());
+
+            tri2dVerb->cook(tri2dCookparms);
         }
-
-        SOP_Node* const node = cookparms->getNode();
-        const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
-    
-        SOP_Triangulate2D_3_0Parms tri2dParms;
-        tri2dParms.setConstrSplitPtsGrp(dir);
-        tri2dParms.setDir(dir);
-        SOP_NodeCache* tri2dCache = nullptr;
-    
-        const SOP_NodeVerb::CookParms tri2dCookparms(cookparms->gdh(), tri2dPInputs, cookEngine, node, cookparms->getContext(),
-              &tri2dParms, tri2dCache, cookparms->error(), cookparms->depnode());
-
-        tri2dVerb->cook(tri2dCookparms);
-
 
         if (keepHeight)
         {

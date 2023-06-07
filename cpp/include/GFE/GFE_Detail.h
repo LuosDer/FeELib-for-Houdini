@@ -4,7 +4,6 @@
 #ifndef __GFE_Detail_h__
 #define __GFE_Detail_h__
 
-#include "GFE_GroupUnion.h"
 #include "GFE/GFE_Detail.h"
 
 
@@ -18,6 +17,7 @@
 
 
 #include "GFE/GFE_Group.h"
+#include "GFE/GFE_GroupUnion.h"
 #include "GFE/GFE_AttributeDelete.h"
 
 
@@ -108,8 +108,8 @@ public:
     )
     {
         const GA_EdgeGroupUPtr edgeGroupUPtr = createDetachedEdgeGroup();
-        GA_EdgeGroup* const edgeGroup = edgeGroupUPtr.get();
-        GFE_GroupUnion::groupUnion(*edgeGroup, group);
+        GA_EdgeGroup& edgeGroup = *edgeGroupUPtr.get();
+        GFE_GroupUnion::groupUnion(edgeGroup, group);
         asGU_Detail()->dissolveEdges(edgeGroup,
             delInlinePoint, inlineTol, delUnusedPoint, bridgeMode, delDegenerateBridge, boundaryCurves);
     }
@@ -324,18 +324,14 @@ SYS_FORCE_INLINE void delStdAttribute(
     const char* vertexAttribPattern,
     const char* detailAttribPattern
 )
-{
-    GFE_AttributeDelete::delStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern);
-}
+{ GFE_AttributeDelete::delStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern); }
 SYS_FORCE_INLINE void keepStdAttribute(
     const char* primAttribPattern,
     const char* pointAttribPattern,
     const char* vertexAttribPattern,
     const char* detailAttribPattern
 )
-{
-   GFE_AttributeDelete::keepStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern);
-}
+{ GFE_AttributeDelete::keepStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern); }
 
 
 
@@ -427,66 +423,37 @@ void keepStdGroup(
             return getPos3D(ptoff);
     }
 #endif
-    
 
-#if 1
-    //This is Faster than use linear vertex offset
-    GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
-    {
-        const GA_Size vtxpnum_next = vtxpnum + 1;
-        if (vtxpnum_next == getPrimitiveVertexCount(primoff)) {
-            if (getPrimitiveClosedFlag(primoff))
-            {
-                return vertexPoint(getPrimitiveVertexOffset(primoff, 0));
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        else
-        {
-            return vertexPoint(getPrimitiveVertexOffset(primoff, vtxpnum_next));
-        }
-    }
-    
-    SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset primoff,const GA_Offset vtxoff)
-    {
-        return getPrimitiveVertexList(primoff).find(vtxoff);
-    }
 
-    SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset vtxoff)
+SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset vtxoff)
+{ return vertexPrimIndex(vertexPrimitive(vtxoff), vtxoff); }
+
+GA_Size vertexPrimIndex(const GA_Offset primoff, const GA_Offset vtxoff)
+{
+    const GA_Size numvtx = getPrimitiveVertexCount(primoff);
+    for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
     {
-        const GA_Offset primoff = vertexPrimitive(vtxoff);
-        return vertexPointDst(primoff, vertexPrimIndex(primoff, vtxoff));
+        if (getPrimitiveVertexOffset(primoff, vtxpnum) == vtxoff)
+            return vtxpnum;
     }
-#else
-    GA_Offset vertexPointDst(const GA_Offset vtxoff)
-    {
-        const GA_Offset vertexVertexDst = vertexPointDst(vtxoff);
-        if (vertexVertexDst == -1)
-        {
-            return -1;
-        }
-        else
-        {
-            return vertexPoint(vertexVertexDst);
-        }
-    }
+    return GFE_INVALID_OFFSET;
+}
     
-    GA_Offset vertexPointDst(const GA_Offset primoff,const GA_Size vtxpnu)
-    {
-        const GA_Offset vertexVertexDst = vertexPointDst(primoff, vtxpnum);
-        if (vertexVertexDst == -1)
-        {
-            return -1;
-        }
-        else
-        {
-            return vertexPoint(vertexVertexDst);
-        }
-    }
-#endif
+GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
+{
+    const GA_Size vtxpnum_next = vtxpnum+1;
+    if (vtxpnum_next != getPrimitiveVertexCount(primoff))
+        return vertexPoint(getPrimitiveVertexOffset(primoff, vtxpnum_next));
+    if (getPrimitiveClosedFlag(primoff))
+        return vertexPoint(getPrimitiveVertexOffset(primoff, 0));
+    return GFE_INVALID_OFFSET;
+}
+
+SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset vtxoff)
+{
+    const GA_Offset primoff = vertexPrimitive(vtxoff);
+    return vertexPointDst(primoff, vertexPrimIndex(primoff, vtxoff));
+}
 
 
     
@@ -1783,7 +1750,6 @@ private:
 
 
 
-
 /*
 
 
@@ -1863,10 +1829,10 @@ static GA_Size
         return geo.getNumVertices();
         break;
     default:
-        return -1;
+        return GFE_INVALID_OFFSET;
         break;
     }
-    return -1;
+    return GFE_INVALID_OFFSET;
 }
 
 SYS_FORCE_INLINE
@@ -1890,10 +1856,10 @@ getNumElements(
         return geo.getNumVertices();
         break;
     default:
-        return -1;
+        return GFE_INVALID_OFFSET;
         break;
     }
-    return -1;
+    return GFE_INVALID_OFFSET;
 }
 
 

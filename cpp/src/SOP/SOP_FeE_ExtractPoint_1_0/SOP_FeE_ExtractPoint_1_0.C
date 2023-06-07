@@ -67,6 +67,62 @@ static const char *theDsFile = R"THEDSFILE(
         }
 
         parm {
+            name    "keepPrimAttrib"
+            cppname "KeepPrimAttrib"
+            label   "Keep Prim Attributes"
+            type    string
+            default { "" }
+        }
+        parm {
+            name    "keepPointAttrib"
+            cppname "KeepPointAttrib"
+            label   "Keep Point Attributes"
+            type    string
+            default { "*" }
+        }
+        parm {
+            name    "keepVertexAttrib"
+            cppname "KeepVertexAttrib"
+            label   "Keep Vertex Attributes"
+            type    string
+            default { "" }
+        }
+        parm {
+            name    "keepDetailAttrib"
+            cppname "KeepDetailAttrib"
+            label   "Keep Detail Attributes"
+            type    string
+            default { "" }
+        }
+        parm {
+            name    "keepPrimGroup"
+            cppname "KeepPrimGroup"
+            label   "Keep Prim Group"
+            type    string
+            default { "" }
+        }
+        parm {
+            name    "keepPointGroup"
+            cppname "KeepPointGroup"
+            label   "Keep Point Group"
+            type    string
+            default { "*" }
+        }
+        parm {
+            name    "keepVertexGroup"
+            cppname "KeepVertexGroup"
+            label   "Keep Vertex Group"
+            type    string
+            default { "" }
+        }
+        parm {
+            name    "keepEdgeGroup"
+            cppname "KeepEdgeGroup"
+            label   "Keep Edge Group"
+            type    string
+            default { "" }
+        }
+        parm {
             name    "delInputGroup"
             cppname "DelInputGroup"
             label   "Delete Input Group"
@@ -74,62 +130,6 @@ static const char *theDsFile = R"THEDSFILE(
             default { 1 }
         }
 
-        parm {
-            name    "delPrimAttrib"
-            cppname "DelPrimAttrib"
-            label   "Delete Prim Attributes"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delPointAttrib"
-            cppname "DelPointAttrib"
-            label   "Delete Point Attributes"
-            type    string
-            default { "" }
-        }
-        parm {
-            name    "delVertexAttrib"
-            cppname "DelVertexAttrib"
-            label   "Delete Vertex Attributes"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delDetailAttrib"
-            cppname "DelDetailAttrib"
-            label   "Delete Detail Attributes"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delPrimGroup"
-            cppname "DelPrimGroup"
-            label   "Delete Prim Group"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delPointGroup"
-            cppname "DelPointGroup"
-            label   "Delete Point Group"
-            type    string
-            default { "" }
-        }
-        parm {
-            name    "delVertexGroup"
-            cppname "DelVertexGroup"
-            label   "Delete Vertex Group"
-            type    string
-            default { "*" }
-        }
-        parm {
-            name    "delEdgeGroup"
-            cppname "DelEdgeGroup"
-            label   "Delete Edge Group"
-            type    string
-            default { "*" }
-        }
 
         parm {
             name    "delPointMode"
@@ -142,7 +142,7 @@ static const char *theDsFile = R"THEDSFILE(
                 "delDegenerate"              "Delete Degenerate"
                 "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
             }
-        //    invisible
+            invisible
         }
         parm {
             name    "guaranteeNoVertexReference"
@@ -150,7 +150,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Guarantee No Vertex Reference"
             type    toggle
             default { 0 }
-        //    invisible
+            invisible
         }
     }
 
@@ -160,6 +160,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Kernel"
         type    integer
         default { 0 }
+        invisible
         range   { 0! 3! }
     }
     parm {
@@ -191,17 +192,17 @@ SOP_FeE_ExtractPoint_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_ExtractPoint_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("group"_sh,            &SOP_Node::pointGroupMenu);
 
-        templ.setChoiceListPtr("delPrimAttrib"_sh, &SOP_Node::primAttribMenu);
-        templ.setChoiceListPtr("delPointAttrib"_sh, &SOP_Node::pointAttribMenu);
-        templ.setChoiceListPtr("delVertexAttrib"_sh, &SOP_Node::vertexAttribMenu);
-        templ.setChoiceListPtr("delDetailAttrib"_sh, &SOP_Node::detailAttribMenu);
+        templ.setChoiceListPtr("keepPrimAttrib"_sh,   &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("keepPointAttrib"_sh,  &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("keepVertexAttrib"_sh, &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("keepDetailAttrib"_sh, &SOP_Node::detailAttribMenu);
 
-        templ.setChoiceListPtr("delPrimGroup"_sh, &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("delPointGroup"_sh, &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("delVertexGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
-        templ.setChoiceListPtr("delEdgeGroup"_sh, &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("keepPrimGroup"_sh,    &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("keepPointGroup"_sh,   &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("keepVertexGroup"_sh,  &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroup"_sh,    &SOP_Node::edgeGroupMenu);
     }
     return templ.templates();
 }
@@ -329,17 +330,7 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
-
-    //const UT_StringHolder& delPrimAttrib   = sopparms.getDelPrimAttrib();
-    //const UT_StringHolder& delPointAttrib  = sopparms.getDelPointAttrib();
-    //const UT_StringHolder& delVertexAttrib = sopparms.getDelVertexAttrib();
-    //const UT_StringHolder& delDetailAttrib = sopparms.getDelDetailAttrib();
-
-    //const UT_StringHolder& delPrimGroup    = sopparms.getDelPrimGroup();
-    //const UT_StringHolder& delPointGroup   = sopparms.getDelPointGroup();
-    //const UT_StringHolder& delVertexGroup  = sopparms.getDelVertexGroup();
-    //const UT_StringHolder& delEdgeGroup    = sopparms.getDelEdgeGroup();
+    // const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelPointMode());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -351,8 +342,16 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     extractPoint.setGroup(groupType, sopparms.getGroup());
 
-    //delPrimAttrib, delPointAttrib, delVertexAttrib, delDetailAttrib,
-    //    delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup,
+    extractPoint.keepPrimAttrib   = sopparms.getKeepPrimAttrib();
+    extractPoint.keepPointAttrib  = sopparms.getKeepPointAttrib();
+    extractPoint.keepVertexAttrib = sopparms.getKeepVertexAttrib();
+    extractPoint.keepDetailAttrib = sopparms.getKeepDetailAttrib();
+
+    extractPoint.keepPrimGroup    = sopparms.getKeepPrimGroup();
+    extractPoint.keepPointGroup   = sopparms.getKeepPointGroup();
+    extractPoint.keepVertexGroup  = sopparms.getKeepVertexGroup();
+    extractPoint.keepEdgeGroup    = sopparms.getKeepEdgeGroup();
+
         
     extractPoint.setComputeParm(
         sopparms.getReverseGroup(), sopparms.getDelInputGroup()
@@ -360,7 +359,7 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     );
     extractPoint.setKernel(sopparms.getKernel());
 
-    extractPoint.setDeleteParm(delPointMode, sopparms.getGuaranteeNoVertexReference());
+    // extractPoint.setDeleteParm(delPointMode, sopparms.getGuaranteeNoVertexReference());
 
     extractPoint.computeAndBumpDataIdsForAddOrRemove();
 

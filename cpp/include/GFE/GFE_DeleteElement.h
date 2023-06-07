@@ -11,7 +11,12 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-
+enum class GFE_DelElementMethod
+{
+	Delete,
+	Leave,
+	Auto,
+};
 
 class GFE_DelElement : public GFE_GeoFilter {
 
@@ -41,7 +46,7 @@ public:
 	
     void
         setComputeParm(
-	        const bool leaveElement = false,
+			const GFE_DelElementMethod method = GFE_DelElementMethod::Delete,
 			const bool reverseGroup = false,
 			const bool delGroup = true,
 			const GA_Detail::GA_DestroyPointMode delPointMode = GA_Detail::GA_LEAVE_PRIMITIVES,
@@ -50,10 +55,10 @@ public:
         )
     {
     	setHasComputed();
-    	this->leaveElement = leaveElement;
-    	this->reverseGroup = reverseGroup;
-    	this->delGroup = delGroup;
-        this->delPointMode = delPointMode;
+    	this->method         = method;
+    	this->reverseGroup   = reverseGroup;
+    	this->delGroup       = delGroup;
+        this->delPointMode   = delPointMode;
         this->delUnusedPoint = delUnusedPoint;
         this->guaranteeNoVertexReference = guaranteeNoVertexReference;
     }
@@ -74,6 +79,17 @@ private:
         //if ((leaveElement ^ reverseGroup) ^ groupParserIn0.isEmpty())
         //    return true;
     	
+    	switch (method)
+    	{
+    	case GFE_DelElementMethod::Delete: leaveElement = false; break;
+    	case GFE_DelElementMethod::Leave : leaveElement = true;  break;
+    	case GFE_DelElementMethod::Auto  :
+    		leaveElement = groupParserIn0.entries() > groupParserIn0.getNumElements() / 2;
+    		break;
+    	}
+    	if (leaveElement)
+    		reverseGroup = !reverseGroup;
+    	
     	if (leaveElement && geoSrc)
     	{
     		geoGU = geo->asGU_Detail();
@@ -88,8 +104,8 @@ private:
     	}
         else
         {
-    		if (leaveElement)
-				reverseGroup = !reverseGroup;
+    		//if (leaveElement)
+			//	reverseGroup = !reverseGroup;
 
         	const GA_GroupType groupType = groupParserIn0.classType();
         	switch (groupType)
@@ -114,12 +130,18 @@ private:
         	default:                 delElement();                                   break;
         	}
         	
-        	if (leaveElement)
-        		reverseGroup = !reverseGroup;
+        	//if (leaveElement)
+        	//	reverseGroup = !reverseGroup;
         }
     	
     	if (delGroup)
     		groupParserIn0.delGroup();
+    	
+    	//if (method == GFE_DelElementMethod::Auto)
+    	//	reverseGroup = !reverseGroup;
+    	
+    	if (leaveElement)
+    		reverseGroup = !reverseGroup;
     	
         return true;
     }
@@ -134,17 +156,15 @@ private:
     }
 	
 	void leaveElementFunc(const GA_PrimitiveGroup* const group)
-    {
-    	geoGU->merge(static_cast<const GEO_Detail&>(*geoSrc), group);
-    }
+    { geoGU->mergePrimitives(static_cast<const GEO_Detail&>(*geoSrc), GA_Range(group->getIndexMap(), group, reverseGroup)); }
 	
 	void leaveElementFunc(const GA_PointGroup* const group)
     {
     	const GA_PrimitiveGroupUPtr primGroupUPtr = geo->createDetachedPrimitiveGroup();
     	GA_PrimitiveGroup* const primGroup = primGroupUPtr.get();
     	primGroup->combine(group);
-    	geoGU->merge(static_cast<const GEO_Detail&>(*geoSrc), primGroup);
-    	geoGU->mergePoints(static_cast<const GEO_Detail&>(*geoSrc), group);
+    	leaveElementFunc(primGroup);
+    	//geoGU->mergePoints(static_cast<const GEO_Detail&>(*geoSrc), group);
     	reverseGroup = !reverseGroup;
     	delElement(group);
     	reverseGroup = !reverseGroup;
@@ -312,9 +332,6 @@ private:
 	}
 
 
-
-
-
 	void delElement(const GA_VertexGroup* const group)
     {
     	const GA_Range range = geo->getVertexRange(group, reverseGroup);
@@ -374,8 +391,8 @@ private:
 
 
 public:
+	GFE_DelElementMethod method = GFE_DelElementMethod::Delete;
 	
-	bool leaveElement = false;
 	bool reverseGroup = false;
 	bool delGroup = true;
 	
@@ -384,6 +401,8 @@ public:
     bool guaranteeNoVertexReference = false;
 	
 private:
+	bool leaveElement = false;
+	
 	GFE_GroupParser groupParserIn0;
 	
 	GU_Detail* geoGU;

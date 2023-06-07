@@ -4,7 +4,7 @@
 #ifndef __GFE_AttributeDelete_h__
 #define __GFE_AttributeDelete_h__
 
-//#include "GFE/GFE_AttributeDelete.h"
+#include "GFE/GFE_AttributeDelete.h"
 
 #include "GA/GA_Detail.h"
 

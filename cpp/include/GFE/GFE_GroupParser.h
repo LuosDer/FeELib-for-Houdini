@@ -60,6 +60,7 @@ public:
         //, verb(verb)
     {
     }
+    
     GFE_GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
@@ -73,6 +74,7 @@ public:
         //, verb(verb)
     {
     }
+    
     GFE_GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
@@ -99,6 +101,7 @@ public:
         , gop(&gop)
     {
     }
+    
     GFE_GroupParser(
         GA_Detail& geo,
         GOP_Manager& gop,
@@ -111,6 +114,7 @@ public:
         , gop(&gop)
     {
     }
+    
     GFE_GroupParser(
         const GA_Detail& geo,
         GOP_Manager& gop,
@@ -123,6 +127,7 @@ public:
         , gop(&gop)
     {
     }
+    
     GFE_GroupParser(
         const GA_Detail& geo,
         GOP_Manager& gop,
@@ -135,9 +140,6 @@ public:
         , gop(&gop)
     {
     }
-
-
-
 
     ~GFE_GroupParser()
     {
@@ -148,7 +150,9 @@ public:
     SYS_FORCE_INLINE void delGroup()
     {
         if (geoNonconst && geoGroup && !geoGroup->isDetached())
-            geoNonconst->destroyGroup(geoNonconst->getGroupTable(geoGroup->classType())->find(geoGroup->getName()));
+            geoNonconst->getGroupTable(geoGroup->classType())->destroy(geoGroup->getName());
+            //geoNonconst->destroyGroup(geoNonconst->getGroupTable(geoGroup->classType())->find(geoGroup->getName()));
+            //geoNonconst->destroyGroup(geoGroup);
     }
 
     void copy(const GFE_GroupParser& groupParser)
@@ -341,10 +345,67 @@ public:
     
     SYS_FORCE_INLINE bool isFull() const
     { return hasGroup ? ( !bool(geoGroup) || (geoGroup->classType() != GA_GROUP_EDGE && !geoGroup->entries() == static_cast<const GA_ElementGroup*>(geoGroup)->getIndexMap().indexSize()) ) : true; }
+
+#if 1
+    GA_Size getNumElements() const
+    {
+        const GA_GroupType groupType = classType();
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE:
+        case GA_GROUP_POINT:
+        case GA_GROUP_VERTEX:
+            return static_cast<const GA_ElementGroup*>(geoGroup)->getIndexMap().indexSize();
+        }
+        return GFE_INVALID_OFFSET;
+    }
+
+    GA_Size entries() const
+    {
+        const GA_GroupType groupType = classType();
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE:
+        case GA_GROUP_POINT:
+        case GA_GROUP_VERTEX:
+            return static_cast<const GA_ElementGroup*>(geoGroup)->entries(); break;
+        case GA_GROUP_EDGE: return static_cast<const GA_EdgeGroup*>(geoGroup)->entries(); break;
+        }
+        return GFE_INVALID_OFFSET;
+    }
+
+#else
+    GA_Size getNumElements() const
+    {
+        const GA_GroupType groupType = classType();
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE: return static_cast<const GA_PrimitiveGroup*>(geoGroup)->getIndexMap().indexSize(); break;
+        case GA_GROUP_POINT:     return static_cast<const GA_PointGroup*    >(geoGroup)->getIndexMap().indexSize(); break;
+        case GA_GROUP_VERTEX:    return static_cast<const GA_VertexGroup*   >(geoGroup)->getIndexMap().indexSize(); break;
+        }
+        return GFE_INVALID_OFFSET;
+    }
+
+    GA_Size entries() const
+    {
+        const GA_GroupType groupType = classType();
+        switch (groupType)
+        {
+        case GA_GROUP_PRIMITIVE: return static_cast<const GA_PrimitiveGroup*>(geoGroup)->entries(); break;
+        case GA_GROUP_POINT:     return static_cast<const GA_PointGroup*    >(geoGroup)->entries(); break;
+        case GA_GROUP_VERTEX:    return static_cast<const GA_VertexGroup*   >(geoGroup)->entries(); break;
+        case GA_GROUP_EDGE:      return static_cast<const GA_EdgeGroup*     >(geoGroup)->entries(); break;
+        }
+        return GFE_INVALID_OFFSET;
+    }
+#endif
+    
+
     
     SYS_FORCE_INLINE bool getHasGroup() const
     { return hasGroup; }
-
+    
     const GA_Group* getGroup() const
     {
         if (!hasGroup)
