@@ -271,12 +271,12 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
+
+    
     GFE_SetVectorComponent setVectorComponent(outGeo0, inGeo1, &cookparms);
-
-
+    
     setVectorComponent.groupParser.setGroup(groupType, sopparms.getGroup());
 
     setVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()),
@@ -285,19 +285,14 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
     const GA_Attribute* const outAttrib = setVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
+
     if (!outAttrib)
         return;
-
     if (sopparms.getUseRefAttrib())
-    {
         setVectorComponent.setRefAttrib(sopparms.getRefAttrib());
-    }
     if (sopparms.getRestAttrib())
-    {
         setVectorComponent.setRestAttrib(sopparms.getRestAttribName());
-    }
+    
     setVectorComponent.computeAndBumpDataId();
-
-
     
 }

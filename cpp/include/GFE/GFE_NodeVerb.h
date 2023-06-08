@@ -11,45 +11,55 @@
 
 namespace GFE_NodeVerb {
 
+
+    
     
 static SOP_NodeVerb::CookParms newCookParms(
     const SOP_NodeVerb::CookParms& cookparms,
-    GU_DetailHandle &destgdh,
-    const UT_Array<GU_ConstDetailHandle>& inputs,
     const SOP_NodeParms* const nodeParms,
+    GU_DetailHandle* const destgdh = nullptr,
+    const UT_Array<GU_ConstDetailHandle>* const inputs = nullptr,
     SOP_NodeCache* const nodeCache = nullptr
 )
 {
     UT_Array<GU_ConstDetailHandle> nodeInputs;
-        
-    const size_t nInputs = cookparms.nInputs();
-    for (size_t i = 0; i < nInputs; ++i)
+    if (!inputs)
     {
-        nodeInputs.emplace_back(cookparms.inputGeoHandle(i));
+        const size_t nInputs = cookparms.nInputs();
+        for (size_t i = 0; i < nInputs; ++i)
+        {
+            nodeInputs.emplace_back(cookparms.inputGeoHandle(i));
+        }
     }
-
+    
     SOP_Node* const node = cookparms.getNode();
     const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
-        
     
-    return SOP_NodeVerb::CookParms(cookparms.gdh(), nodeInputs, cookEngine, node, cookparms.getContext(),
-          nodeParms, nodeCache, cookparms.error(), cookparms.depnode());
+    return SOP_NodeVerb::CookParms(
+        destgdh ? *destgdh : cookparms.gdh(),
+        inputs  ? *inputs  : nodeInputs,
+        cookEngine, node, cookparms.getContext(),
+        nodeParms, nodeCache, cookparms.error(), cookparms.depnode());
 }
 
     
 SYS_FORCE_INLINE static SOP_NodeVerb::CookParms newCookParms(
     const SOP_NodeVerb::CookParms* const cookparms,
     const SOP_NodeParms* const nodeParms,
+    GU_DetailHandle* const destgdh = nullptr,
+    const UT_Array<GU_ConstDetailHandle>* const inputs = nullptr,
     SOP_NodeCache* const nodeCache = nullptr
 )
-{ return newCookParms(*cookparms, nodeParms); }
+{ return newCookParms(*cookparms, nodeParms, destgdh, inputs, nodeCache); }
 
 SYS_FORCE_INLINE static SOP_NodeVerb::CookParms newCookParms(
     const SOP_NodeVerb::CookParms* const cookparms,
     const SOP_NodeParms& nodeParms,
+    GU_DetailHandle* const destgdh = nullptr,
+    const UT_Array<GU_ConstDetailHandle>* const inputs = nullptr,
     SOP_NodeCache* const nodeCache = nullptr
 )
-{ return newCookParms(*cookparms, &nodeParms); }
+{ return newCookParms(*cookparms, &nodeParms, destgdh, inputs, nodeCache); }
 
 
 

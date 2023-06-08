@@ -505,6 +505,45 @@ public:
     {
     }
 
+
+    
+    GFE_AttribFilter(
+        GFE_Detail* const geo,
+        const GA_Detail* const geoSrc,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_AttribFilter(
+        GA_Detail& geo,
+        const GA_Detail& geoSrc,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_AttribFilter(
+        GA_Detail& geo,
+        const GA_Detail* const geoSrc,
+        const SOP_NodeVerb::CookParms* const cookparms
+    )
+        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    
     ~GFE_AttribFilter()
     {
     }

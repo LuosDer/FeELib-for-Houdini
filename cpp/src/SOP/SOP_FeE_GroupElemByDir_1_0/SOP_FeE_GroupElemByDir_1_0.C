@@ -345,31 +345,31 @@ SOP_FeE_GroupElemByDir_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) c
 
     
     
-    GFE_GroupElemByDir groupByDir(outGeo0, inGeo1, &cookparms);
+    GFE_GroupElemByDir groupElemByDir(outGeo0, inGeo1, &cookparms);
 
     
-    groupByDir.setComputeParm(method, sopparms.getUp(), sopparms.getReversePrim(),
+    groupElemByDir.setComputeParm(method, sopparms.getUp(), sopparms.getReversePrim(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    groupByDir.doDelGroupElement = sopparms.getDelElem();
+    groupElemByDir.doDelGroupElement = sopparms.getDelElem();
     
-    groupByDir.setGroup.setComputeParm(sopparms.getReverseGroup());
+    groupElemByDir.setGroup.setComputeParm(sopparms.getReverseGroup());
     
-    groupByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
-    groupByDir.findOrCreateGroup(false, outGroupType, sopparms.getOutGroupName());
+    groupElemByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
+    groupElemByDir.findOrCreateGroup(false, outGroupType, sopparms.getOutGroupName());
     
     if (method == GFE_GroupElemByDirMethod::RestDir2D_AvgNormal)
-        groupByDir.restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
+        groupElemByDir.restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
 
     if (sopparms.getMatchUpDir())
-        groupByDir.restDir2D.setMatchUpDir(sopparms.getUp());
+        groupElemByDir.restDir2D.setMatchUpDir(sopparms.getUp());
     else
-        groupByDir.restDir2D.setMatchUpDir();
+        groupElemByDir.restDir2D.setMatchUpDir();
 
     
 
-    groupByDir.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupElemByDir.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    groupByDir.computeAndBumpDataId();
-    groupByDir.visualizeOutGroup();
+    groupElemByDir.computeAndBumpDataId();
+    groupElemByDir.visualizeOutGroup();
 
 }

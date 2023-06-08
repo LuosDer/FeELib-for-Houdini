@@ -34,6 +34,15 @@ public:
 	//using GFE_AttribFilter::GFE_AttribFilter;
 	
 	GFE_RestDir2D(
+		GFE_Detail* const geo,
+		const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	)
+		: GFE_AttribFilter(geo, cookparms)
+		, normal3D(geo, cookparms)
+	{
+	}
+
+	GFE_RestDir2D(
 		GA_Detail& geo,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr
 	)

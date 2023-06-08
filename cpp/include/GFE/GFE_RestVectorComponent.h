@@ -13,7 +13,7 @@
 
 class GFE_RestVectorComponent : public GFE_AttribCreateFilterWithRef {
     
-#define GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME "__GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME"
+#define __TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME "__TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME"
     
 public:
 
@@ -118,18 +118,18 @@ private:
         //if(!detached && !attrib.isDetached() && attrib.getName() == newName)
         if(!detached && !attribRef.isDetached() && strcmp(attribRef.getName().c_str(), newName.c_str()) == 0)
         {
-            attribRestPtr = getOutAttribArray().findOrCreateTuple(
-                false, attribRef.getOwner(), GA_STORECLASS_FLOAT, storage, GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME);
+            attribRest = getOutAttribArray().findOrCreateTuple(
+                false, attribRef.getOwner(), GA_STORECLASS_FLOAT, storage, __TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME);
             
             attribDuplicate();
             
             if (attribRefPtrNonConst)
                 geo->destroyAttrib(attribRefPtrNonConst);
-            geo->renameAttrib(attribRestPtr, newName);
+            geo->renameAttrib(attribRest, newName);
         }
         else
         {
-            attribRestPtr = getOutAttribArray().findOrCreateTuple(
+            attribRest = getOutAttribArray().findOrCreateTuple(
                 detached, attribRef.getOwner(), GA_STORECLASS_FLOAT, storage, newName);
             
             attribDuplicate();
@@ -199,7 +199,7 @@ private:
     {
         UTparallelFor(groupParser.getSplittableRange(attribRefPtr), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<typename T::value_type, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRestPtr);
+            GA_PageHandleT<typename T::value_type, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRest);
             GA_PageHandleT<T, typename T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -222,7 +222,7 @@ private:
     {
         UTparallelFor(groupParser.getSplittableRange(attribRefPtr), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRestPtr);
+            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRest);
             GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -248,7 +248,7 @@ public:
     bool delOrigin = false;
 private:
 
-    GA_Attribute* attribRestPtr;
+    GA_Attribute* attribRest;
     
     GA_Attribute* attribRefPtrNonConst;
     const GA_Attribute* attribRefPtr;
@@ -258,7 +258,7 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
-#undef GFE_TEMP_REST_VECTOR_COMPONENT_ATTRIBNAME
+#undef __TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME
     
 }; // End of Class GFE_RestVectorComponent
 

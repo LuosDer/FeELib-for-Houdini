@@ -57,17 +57,29 @@ private:
         if (!cookparms)
             return false;
         
-        if (getOutAttribArray().isEmpty())
-            return false;
+        //if (getOutAttribArray().isEmpty())
+        //    return false;
         
-        if (groupParser.isEmpty())
-            return true;
+        //if (groupParser.isEmpty())
+        //    return true;
+        
+        
+        // GU_DetailHandle geoTmp_h;
+        // geoTmp = new GU_Detail();
+        // geoTmp_h.allocateAndSet(geoTmp);
+        // geoTmp->replaceWith(*geoSrc);
+        // 
+        // inputgdh.clear();
+        // inputgdh.emplace_back(geoTmp_h);
+        // 
+        // GA_VertexGroup* const rectifyGroup = geoTmp->newVertexGroup(__TEMP_GFE_UVRectify_VertexGroupName);
+        // GFE_GroupUnion::groupUnion(rectifyGroup, groupParser.getGroup());
 
-        GA_VertexGroup* const rectifyGroup = geo->newVertexGroup(__TEMP_GFE_UVRectify_VertexGroupName);
-        if (groupParser.getGroup())
-            rectifyGroup->combine(groupParser.getGroup());
-        else
-            rectifyGroup->addAll();
+        
+        //if (groupParser.getGroup())
+        //    GFE_GroupUnion::groupUnion(rectifyGroup, groupParser.getVertexGroup());
+        //else
+        //    rectifyGroup->addAll();
         
         uvRectify();
         
@@ -77,17 +89,41 @@ private:
 
     void uvRectify()
     {
-        uvFlattenParms.setKeepExistingLayout(true);
-        uvFlattenParms.setKeepExistingSeams(true);
-        uvFlattenParms.setRectifyGroup(__TEMP_GFE_UVRectify_VertexGroupName);
-
+        SOP_UVFlatten_3_0Parms uvFlattenParms;
+        // uvFlattenParms.setKeepExistingLayout(true);
+        // uvFlattenParms.setKeepExistingSeams(true);
+        // uvFlattenParms.setRectifyGroup(__TEMP_GFE_UVRectify_VertexGroupName);
+        // uvFlattenParms.setMethod(flattenMethod ? SOP_UVFlatten_3_0Enums::Method::ABF : SOP_UVFlatten_3_0Enums::Method::SCP);
+        // 
+        // uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
+        // uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
+        // uvFlattenParms.setManualLayout(manualLayout);
         
-        uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
-        uvFlattenParms.setManualLayout(manualLayout);
-            
-        const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms);
-            
-        uvFlattenVerb->cook(uvFlattenCookparms);
+        //const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nullptr, &inputgdh);
+        //const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms);
+        
+        //geo->clear();
+        
+        //geo->replaceWith(*geoTmp);
+        //return;
+
+        UT_Array<GU_ConstDetailHandle> nodeInputs;
+        const size_t nInputs = cookparms->nInputs();
+        for (size_t i = 0; i < nInputs; ++i)
+        {
+            nodeInputs.emplace_back(cookparms->inputGeoHandle(i));
+        }
+    
+        SOP_Node* const node = cookparms->getNode();
+        const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
+    
+        SOP_NodeVerb::CookParms uvFlattenCookparms(cookparms->gdh(), nodeInputs,
+            cookEngine, node, cookparms->getContext(),
+            &uvFlattenParms, nullptr, cookparms->error(), cookparms->depnode());
+        
+        const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
+        if (uvFlattenVerb)
+            uvFlattenVerb->cook(uvFlattenCookparms);
     }
 
 
@@ -97,10 +133,11 @@ public:
     bool manualLayout = true;
     
 private:
+    GU_Detail* geoTmp = nullptr;
     
-    const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
-    
-    SOP_UVFlatten_3_0Parms uvFlattenParms;
+    UT_Array<GU_ConstDetailHandle> inputgdh;
+    //SOP_UVFlatten_3_0Parms uvFlattenParms;
+    //const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
     
     // exint subscribeRatio = 64;
     // exint minGrainSize = 256;

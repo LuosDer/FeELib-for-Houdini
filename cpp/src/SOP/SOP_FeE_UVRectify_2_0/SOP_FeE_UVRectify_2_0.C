@@ -242,7 +242,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 #if 1
 
@@ -260,15 +260,15 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 
-    GFE_UVRectify uvRectify(outGeo0, cookparms);
+    GFE_UVRectify uvRectify(outGeo0, inGeo0, cookparms);
 
     uvRectify.setComputeParm(flattenMethod, sopparms.getManualLayout());
-
-    uvRectify.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    uvRectify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib());
+    //uvRectify.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    uvRectify.computeAndBumpDataId();
+    //uvRectify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib());
+    
+    uvRectify.compute();
     
 #else
     

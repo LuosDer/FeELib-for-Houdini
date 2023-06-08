@@ -73,6 +73,30 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+    parm {
+        name    "reverse"
+        cppname "Reverse"
+        label   "Reverse"
+        type    toggle
+        default { 0 }
+    }
+
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 16 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
+    }
 
 }
 )THEDSFILE";
@@ -212,17 +236,36 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     outGeo0.replaceWith(inGeo0);
 
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getCombineGroup();
-    if (!geo0AttribNames.isstring())
+    const UT_StringHolder& combineGroupName = sopparms.getCombineGroup();
+    if (!combineGroupName.isstring() || combineGroupName.length() == 0)
         return;
-
     
     const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
-    GA_Group* const combineGroupPtr = outGeo0.getGroupTable(combineGroupType)->find(geo0AttribNames);
+
+    const GA_GroupTable* groupTable = outGeo0.getGroupTable(combineGroupType);
+    GA_Group* combineGroupPtr;
+    if (groupTable)
+        combineGroupPtr = groupTable->find(combineGroupName);
+    else
+    {
+        combineGroupPtr = outGeo0.getGroupTable(GA_GROUP_PRIMITIVE)->find(combineGroupName);
+        if (!combineGroupPtr)
+        {
+            combineGroupPtr = outGeo0.getGroupTable(GA_GROUP_POINT)->find(combineGroupName);
+            if (!combineGroupPtr)
+            {
+                combineGroupPtr = outGeo0.getGroupTable(GA_GROUP_VERTEX)->find(combineGroupName);
+                if (!combineGroupPtr)
+                {
+                    combineGroupPtr = outGeo0.getGroupTable(GA_GROUP_EDGE)->find(combineGroupName);
+                }
+            }
+        }
+    }
     if (!combineGroupPtr)
         return;
     GA_Group& combineGroup = *combineGroupPtr;
-
+    
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
     GOP_Manager gop;
@@ -230,28 +273,19 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     //const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, &outGeo0, groupType, sopparms.getGroup(), gop);
     const GA_Group* const geo0Group = groupParser.setGroup(groupType, sopparms.getGroup());
     
-    if (!geo0Group)
-        return;
-
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
 
-    GFE_GroupUnion::groupUnion(combineGroup, geo0Group);
+    GFE_GroupUnion::groupUnion(combineGroup, geo0Group, sopparms.getReverse(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     GFE_Group::groupBumpDataId(combineGroup);
 
-    if (geo0Group)
-        cookparms.select(combineGroup);
+    cookparms.select(combineGroup);
     
 
 
 }
 
-
-
-namespace SOP_FeE_GroupCombine_1_0_Namespace {
-
-} // End SOP_FeE_GroupCombine_1_0_Namespace namespace

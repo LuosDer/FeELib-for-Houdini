@@ -11,9 +11,12 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "GFE/GFE_NodeVerb.h"
+
 //#include "GFE/GFE_AttributeCopy.h"
 
 #include "GFE/GFE_RestVectorComponent.h"
+#include "GFE/GFE_SetVectorComponent.h"
 #include "GFE/GFE_GroupElementByDirection.h"
 #include "GFE/GFE_GroupUnshared.h"
 
@@ -124,18 +127,18 @@ private:
         
         if (keepSingleSide)
         {
-            GFE_GroupElemByDir groupByDir(geo, nullptr, cookparms);
-            groupByDir.up = dir;
-            groupByDir.doDelGroupElement = true;
-            groupByDir.setGroup.setComputeParm(reverseSide);
-            groupByDir.findOrCreateGroup(true, GA_GROUP_PRIMITIVE);
-            //groupByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
+            GFE_GroupElemByDir groupElemByDir(geo, nullptr, cookparms);
+            groupElemByDir.up = dir;
+            groupElemByDir.doDelGroupElement = true;
+            groupElemByDir.setGroup.setComputeParm(reverseSide);
+            groupElemByDir.findOrCreateGroup(true, GA_GROUP_PRIMITIVE);
+            //groupElemByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
         }
         
         if (preFuse)
         {
             fuseParms.myDistance = preFuseDist;
-            GU_Snap::snapPoints(*geo, nullptr, fuseParms);
+            GU_Snap::snapPoints(*geo->asGU_Detail(), nullptr, fuseParms);
         }
         
         if (preDelSharedEdge)
@@ -144,85 +147,79 @@ private:
             GFE_GroupUnshared groupUnshared(geo, cookparms);
             groupUnshared.doDelGroupElement = true;
         }
-        if (keepHeight)
+        
+        GA_Attribute* restAttrib;
+        if (keepHeight && axis != GFE_Axis::Invalid)
         {
-            GFE_RestVectorComponent restVectorComponent(geo, cookparms);
-            restVectorComponent.comp = axis;
+            GFE_RestVectorComponent restVectorComponent(geo, nullptr, cookparms);
+            restVectorComponent.comp = static_cast<int8>(axis);
             restVectorComponent.setRestAttrib(geo->getP());
-            restVectorComponent.newAttribNames = "height";
+            //restVectorComponent.newAttribNames = "height";
             restVectorComponent.compute();
+            
+            restAttrib = restVectorComponent.getOutAttribArray()[0];
         }
 
         if (keepUnsharedSilhouette)
         {
             
-            GFE_GroupElemByDir groupByDir(geo, nullptr, cookparms);
-            groupByDir.up = dir;
-            groupByDir.doDelGroupElement = true;
+            GFE_GroupElemByDir groupElemByDir(geo, nullptr, cookparms);
+            groupElemByDir.up = dir;
+            groupElemByDir.doDelGroupElement = true;
     
-            groupByDir.setGroup.setComputeParm(sopparms.getReverseGroup());
+            groupElemByDir.setGroup.setParm(reverseSide);
     
-            groupByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
-            groupByDir.findOrCreateGroup(false, outGroupType, sopparms.getOutGroupName());
-    
+            groupElemByDir.normal3D.findOrCreateNormal3D(true, GFE_NormalSearchOrder::PRIMITIVE, GA_STORE_INVALID);
+            groupElemByDir.findOrCreateGroup(true, GA_GROUP_PRIMITIVE);
             
-        }
-        if (method == GFE_GroupElemByDirMethod::RestDir2D_AvgNormal)
-            groupByDir.restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
-
-        if (sopparms.getMatchUpDir())
-            groupByDir.restDir2D.setMatchUpDir(sopparms.getUp());
-        else
-            groupByDir.restDir2D.setMatchUpDir();
-
+            groupElemByDir.groupParser.setGroup(groupParser);
     
+            groupElemByDir.compute();
+        }
+        
+        triangulate2D();
+
         if (postFuse)
         {
             fuseParms.myDistance = postFuseDist;
-            GU_Snap::snapPoints(*geo, nullptr, fuseParms);
+            GU_Snap::snapPoints(*geo->asGU_Detail(), nullptr, fuseParms);
         }
-
-        groupByDir.groupParser.setGroup(groupType, sopparms.getGroup());
+        
+        if (keepHeight && axis != GFE_Axis::Invalid)
+        {
+            GFE_SetVectorComponent setVectorComponent(geo, nullptr, cookparms);
     
-        groupByDir.computeAndBumpDataId();
-        groupByDir.visualizeOutGroup();
+            setVectorComponent.groupParser.setGroup(groupParser);
+            setVectorComponent.comp = static_cast<int8>(axis);
+            
+            setVectorComponent.getOutAttribArray().set(geo->getP());
 
-        {
-            UT_Array<GU_ConstDetailHandle> nodeInputs;
-        
-            const size_t nInputs = cookparms->nInputs();
-            for (size_t i = 0; i < nInputs; ++i)
-            {
-                nodeInputs.emplace_back(cookparms->inputGeoHandle(i));
-            }
-
-            SOP_Node* const node = cookparms->getNode();
-            const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
-        
-            SOP_Triangulate2D_3_0Parms tri2DParms;
-            tri2DParms.setConstrSplitPtsGrp(dir);
-            tri2DParms.setDir(dir);
-            SOP_NodeCache* nodeCache = nullptr;
-        
-            const SOP_NodeVerb::CookParms tri2dCookparms(cookparms->gdh(), nodeInputs, cookEngine, node, cookparms->getContext(),
-                  &tri2DParms, nodeCache, cookparms->error(), cookparms->depnode());
-
-            tri2dVerb->cook(tri2dCookparms);
-        }
-
-        if (keepHeight)
-        {
-            geo->
+            setVectorComponent.setRefAttrib(restAttrib);
+    
+            setVectorComponent.compute();
         }
         
         return true;
     }
 
 
-    void triangulate2D(const GA_PrimitiveGroup* const geoGroup)
+    void triangulate2D()
     {
-        //UT_ASSERT_P(geoGroup);
+        //tri2DParms.setConstrSplitPtsGrp(dir);
+        tri2DParms.setDir(dir);
+            
+        GU_DetailHandle geoTmp_h;
+        geoTmp = new GU_Detail;
+        geoTmp_h.allocateAndSet(geoTmp);
+        geoTmp->replaceWith(*geo);
+
+        inputgdh.clear();
+        inputgdh.emplace_back(geoTmp_h);
         
+        geo->clear();
+        
+        const auto tri2dCookparms = GFE_NodeVerb::newCookParms(cookparms, tri2DParms, nullptr, &inputgdh);
+        tri2dVerb->cook(tri2dCookparms);
     }
 
 
@@ -250,9 +247,11 @@ public:
 private:
     GA_PointGroup* oneNebPointGroup = nullptr;
     
-    GU_DetailHandle geoRef0_h;
-    GU_Detail* geoRef0Tmp;
+    GU_DetailHandle geoTmp_h;
+    GU_Detail* geoTmp;
     
+    UT_Array<GU_ConstDetailHandle> inputgdh;
+    SOP_Triangulate2D_3_0Parms tri2DParms;
     const SOP_NodeVerb* const tri2dVerb = SOP_NodeVerb::lookupVerb("triangulate2d::3.0");
     
     // exint subscribeRatio = 64;

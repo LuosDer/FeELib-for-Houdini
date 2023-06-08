@@ -32,16 +32,16 @@ public:
     ~GFE_SetGroup(){}
 
 	
-    SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup)
+    SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
     { this->groupMergeType = groupMergeType; this->reverseGroup = reverseGroup; }
 
-    SYS_FORCE_INLINE void setParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType)
+    SYS_FORCE_INLINE void setParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace)
     { setParm(groupMergeType, reverseGroup); }
 
-    SYS_FORCE_INLINE void setComputeParm(const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace, const bool reverseGroup = false)
+    SYS_FORCE_INLINE void setComputeParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
     { setParm(groupMergeType, reverseGroup); }
 
-    SYS_FORCE_INLINE void setComputeParm(const bool reverseGroup = false, const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace)
+    SYS_FORCE_INLINE void setComputeParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace)
     { setParm(groupMergeType, reverseGroup); }
     
     

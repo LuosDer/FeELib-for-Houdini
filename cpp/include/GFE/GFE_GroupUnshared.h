@@ -72,6 +72,7 @@ public:
         case GA_GROUP_VERTEX:    return findOrCreateVertexGroup(detached, name); break;
         case GA_GROUP_EDGE:      return findOrCreateEdgeGroup(detached, name);   break;
         }
+        return nullptr;
     }
 
     virtual void findOrCreateGroup(

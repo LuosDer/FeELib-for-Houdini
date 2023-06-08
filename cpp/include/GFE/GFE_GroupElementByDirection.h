@@ -28,6 +28,17 @@ public:
 	// using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
 	
 	GFE_GroupElemByDir(
+		GFE_Detail* const geo,
+		const GA_Detail* const geoRef,
+		const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	)
+		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		, restDir2D(geo, cookparms)
+		, normal3D(geo, cookparms)
+	{
+	}
+
+	GFE_GroupElemByDir(
 		GA_Detail& geo,
 		const GA_Detail* const geoRef,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr

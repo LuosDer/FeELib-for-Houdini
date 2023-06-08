@@ -315,6 +315,14 @@ public:
         }
         
         geoGroup = gop->parseGroupDetached(groupName, groupType, geo, true, false, hasGroup);
+        // if (geoGroup->isElementGroup())
+        // {
+        //     GA_Size a = static_cast<const GA_ElementGroup*>(geoGroup)->computeGroupEntries();
+        //     GA_Size b = static_cast<const GA_ElementGroup*>(geoGroup)->entries();
+        //     GA_Size c = a + b;
+        //     
+        // }
+
         //hasGroup &= bool(geoGroup);
 
         // const SOP_NodeVerb* const verb = cookparms->getNode()->cookVerb();
@@ -406,19 +414,11 @@ public:
     SYS_FORCE_INLINE bool getHasGroup() const
     { return hasGroup; }
     
-    const GA_Group* getGroup() const
-    {
-        if (!hasGroup)
-            return nullptr;
-        return geoGroup;
-    }
+    SYS_FORCE_INLINE const GA_Group* getGroup() const
+    { return hasGroup ? geoGroup : nullptr; }
 
-    const GA_ElementGroup* getElementGroup() const
-    {
-        if (!hasGroup || !geoGroup || !geoGroup->isElementGroup())
-            return nullptr;
-        return static_cast<const GA_ElementGroup*>(geoGroup);
-    }
+    SYS_FORCE_INLINE const GA_ElementGroup* getElementGroup() const
+    { return (!hasGroup || !geoGroup || !geoGroup->isElementGroup()) ? nullptr : static_cast<const GA_ElementGroup*>(geoGroup); }
 
     const GA_Group* getGroup(const GA_GroupType groupType)
     {
@@ -792,15 +792,11 @@ private:
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        //GFE_GroupUnion::groupUnion(newGroup, group);
-        if (groupType == GA_GROUP_EDGE)
-        {
-            GFE_GroupUnion::groupUnion(*static_cast<GA_EdgeGroup*>(newGroup), group);
-        }
-        else
-        {
-            static_cast<GA_ElementGroup*>(newGroup)->combine(group);
-        }
+        GFE_GroupUnion::groupUnion(newGroup, group);
+        //if (groupType == GA_GROUP_EDGE)
+        //    GFE_GroupUnion::groupUnion(static_cast<GA_EdgeGroup&>(*newGroup), group);
+        //else
+        //    static_cast<GA_ElementGroup*>(newGroup)->combine(group);
 
         gop->appendAdhocGroup(newGroup, false);
 

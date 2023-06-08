@@ -73,7 +73,7 @@ public:
         set(s.c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const char* s)
+    SYS_FORCE_INLINE UFE_SplittableString &operator=(const char* const s)
     {
         set(s);
         return *this;
@@ -198,7 +198,7 @@ private:
     }
 
     
-    void set(const char* s)
+    void set(const char* const s)
     {
         if (!s)
             return;

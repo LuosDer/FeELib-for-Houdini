@@ -19,6 +19,17 @@ public:
     //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_SetVectorComponent(
+        GFE_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+        , restVectorComponent(geo, nullptr, cookparms)
+    {
+    }
+
+    GFE_SetVectorComponent(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -69,9 +80,7 @@ public:
     //     return attribRefPtr;
     // }
     SYS_FORCE_INLINE void setRefAttrib(const UT_StringHolder& attribPattern)
-    {
-        refAttribNames = attribPattern;
-    }
+    { refAttribNames = attribPattern; }
 
 
     
@@ -92,10 +101,8 @@ public:
     //     attribRestPtr = geo->findAttribute(getOutAttribArray()[0]->getOwner(), attribPattern);
     //     return attribRestPtr;
     // }
-    SYS_FORCE_INLINE void setRestAttrib(const UT_StringHolder& attribPattern)
-    {
-        restVectorComponent.newAttribNames = attribPattern;
-    }
+    SYS_FORCE_INLINE void setRestAttrib(const char* const attribPattern)
+    { restVectorComponent.newAttribNames = attribPattern; }
     
 private:
 
@@ -379,7 +386,7 @@ private:
     }
 
 
-protected:
+public:
     UFE_SplittableString refAttribNames;
     // UFE_SplittableString restAttribNames;
     
