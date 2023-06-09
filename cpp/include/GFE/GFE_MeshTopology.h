@@ -81,15 +81,17 @@ public:
         primPrimPointAttrib         = nullptr;
         vertexNextEquivGroup        = nullptr;
         vertexNextEquivNoLoopGroup  = nullptr;
-        unsharedEdgeGroup           = nullptr;
+        //unsharedEdgeGroup           = nullptr;
     }
     
-    virtual void reset(GA_Detail& geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
+    virtual void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const inCookparms = nullptr) override
     {
-        GFE_AttribFilter::reset(geo, cookparms);
-        pointSeamGroup.reset(geo, cookparms);
-        vertexEdgeSeamGroup.reset(geo, cookparms);
-        edgeSeamGroup.reset(geo, cookparms);
+        if (geo == &inGeo && cookparms == inCookparms)
+            return;
+        GFE_AttribFilter::reset(inGeo, inCookparms);
+        pointSeamGroup.reset(inGeo, inCookparms);
+        vertexEdgeSeamGroup.reset(inGeo, inCookparms);
+        edgeSeamGroup.reset(inGeo, inCookparms);
         clear();
     }
 
@@ -115,16 +117,16 @@ public:
 
 
 
-    SYS_FORCE_INLINE GA_EdgeGroup* setUnsharedEdgeGroup(const bool detached = false, const UT_StringRef& groupName = "__topo_unshared")
-    {
-        unsharedEdgeGroup = getOutGroupArray().findOrCreateEdge(detached, groupName);
-        return unsharedEdgeGroup;
-    }
-    SYS_FORCE_INLINE void setUnsharedEdgeGroup(GA_EdgeGroup* const groupPtr)
-    { unsharedEdgeGroup = groupPtr; }
-    
-    SYS_FORCE_INLINE GA_EdgeGroup* getUnsharedEdgeGroup() const
-    { return unsharedEdgeGroup; }
+    // SYS_FORCE_INLINE GA_EdgeGroup* setUnsharedEdgeGroup(const bool detached = false, const UT_StringRef& groupName = "__topo_unshared")
+    // {
+    //     unsharedEdgeGroup = getOutGroupArray().findOrCreateEdge(detached, groupName);
+    //     return unsharedEdgeGroup;
+    // }
+    // SYS_FORCE_INLINE void setUnsharedEdgeGroup(GA_EdgeGroup* const groupPtr)
+    // { unsharedEdgeGroup = groupPtr; }
+    // 
+    // SYS_FORCE_INLINE GA_EdgeGroup* getUnsharedEdgeGroup() const
+    // { return unsharedEdgeGroup; }
     
 
 
@@ -319,7 +321,9 @@ private:
             !pointPointEdgeAttrib &&
             !pointPointPrimAttrib &&
             !primPrimEdgeAttrib &&
-            !primPrimPointAttrib)
+            !primPrimPointAttrib &&
+            !vertexNextEquivGroup &&
+            !vertexNextEquivNoLoopGroup)
                 return false;
 
         if (groupParser.isEmpty())
@@ -447,7 +451,7 @@ private:
     //template<typename T>
     void vertexPrimIndex()
     {
-        if(!vertexPrimIndexAttrib)
+        if (!vertexPrimIndexAttrib)
             setVertexPrimIndex(!outIntermediateAttrib);
         
         int_wh.bind(vertexPrimIndexAttrib);
@@ -505,7 +509,7 @@ private:
 
     void vertexPointDstByVtxpnum()
     {
-        if(!vertexPointDstAttrib)
+        if (!vertexPointDstAttrib)
             setVertexPointDst(!outIntermediateAttrib);
         
         int_wh.bind(vertexPointDstAttrib);
@@ -533,7 +537,7 @@ private:
 
     void vertexVertexPrim()
     {
-        if(!vertexVertexPrimPrevAttrib && !vertexVertexPrimNextAttrib)
+        if (!vertexVertexPrimPrevAttrib && !vertexVertexPrimNextAttrib)
             setVertexVertexPrim(!outIntermediateAttrib);
         
         int_wh.bind(vertexVertexPrimPrevAttrib);
@@ -626,8 +630,7 @@ private:
         }
     }
 
-    void
-        vertexVertexPrim1()
+    void vertexVertexPrim1()
     {
         if(!vertexVertexPrimPrevAttrib && !vertexVertexPrimNextAttrib)
             setVertexVertexPrim(!outIntermediateAttrib);
@@ -659,12 +662,10 @@ private:
     
     void vertexPointDst()
     {
-        if(!vertexPointDstAttrib)
+        if (!vertexPointDstAttrib)
             setVertexPointDst(!outIntermediateAttrib);
         
-        //const GA_Detail* const geo = this->geo;
-        const GA_Topology& topo = geo->getTopology();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+        const GA_ATITopology* const vtxPointRef = geo->getTopology().getPointRef();
 
         //const GA_VertexGroup* const geoGroup = groupParser.getVertexGroup();
         //const GA_SplittableRange geoSplittableRange0(geo->getVertexRange(geoGroup));
@@ -681,7 +682,7 @@ private:
                     vtxPrimNext_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        if (vtxPrimNext_ph.value(elemoff) == GFE_INVALID_OFFSET)
+                        if (GFE_Type::isValidOffset(vtxPrimNext_ph.value(elemoff)))
                         {
                             dstpt_ph.value(elemoff) = GFE_INVALID_OFFSET;
                         }
@@ -699,13 +700,9 @@ private:
 
 
     
-    
-
-    //Get all vertices NextEquiv Vertex
-    void
-        vertexNextEquiv()
+    void vertexNextEquiv()
     {
-        if(!vertexNextEquivAttrib && !vertexNextEquivGroup)
+        if (!vertexNextEquivAttrib && !vertexNextEquivGroup)
             setVertexNextEquiv(!outIntermediateAttrib);
         
         int_wh.bind(vertexNextEquivAttrib);
@@ -734,7 +731,7 @@ private:
                         continue;
                     }
 
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != dstpt)
                             continue;
@@ -748,7 +745,7 @@ private:
                         continue;
 
                     ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = pointVtxRef->getLink(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != ptnum)
                             continue;
@@ -757,7 +754,7 @@ private:
                             int_wh.set(elemoff, vtxoff_next);
                         break;
                     }
-                    if (dstpt != GFE_INVALID_OFFSET)
+                    if (GFE_Type::isValidOffset(dstpt))
                     {
                         if (vertexNextEquivGroup)
                             vertexNextEquivGroup->setElement(elemoff, true);
@@ -774,8 +771,7 @@ private:
 
 
     
-    void
-        vertexNextEquivNoLoop()
+    void vertexNextEquivNoLoop()
     {
         if(!vertexNextEquivNoLoopAttrib && !vertexNextEquivNoLoopGroup)
             setVertexNextEquivNoLoop(!outIntermediateAttrib);
@@ -806,7 +802,7 @@ private:
                         continue;
                     }
 
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != dstpt)
                             continue;
@@ -820,7 +816,7 @@ private:
                         continue;
 
                     ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (vtxoff_next = pointVtxRef->getLink(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         if (int_oh.get(vtxoff_next) != ptnum)
                             continue;
@@ -832,7 +828,7 @@ private:
                         }
                         break;
                     }
-                    if (dstpt != GFE_INVALID_OFFSET)
+                    if (GFE_Type::isValidOffset(dstpt))
                     {
                         if (vertexNextEquivNoLoopGroup)
                             vertexNextEquivNoLoopGroup->setElement(elemoff, true);
@@ -851,77 +847,12 @@ private:
 
 
     
-    void unsharedEdge()
-    {
-        if(!unsharedEdgeGroup)
-            setUnsharedEdgeGroup(!outIntermediateAttrib);
-        
-        int_wh.bind(vertexNextEquivNoLoopAttrib);
-        int_oh.bind(vertexPointDstAttrib);
-        
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-
-        UTparallelFor(groupParser.getVertexSplittableRange(),
-            [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
-        {
-            GA_Offset vtxoff_next, dstpt, ptnum;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    dstpt = int_oh.get(elemoff);
-                    if (dstpt == GFE_INVALID_OFFSET)
-                    {
-                        if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
-                        continue;
-                    }
-
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        if (int_oh.get(vtxoff_next) != dstpt)
-                            continue;
-                        dstpt = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, vtxoff_next);
-                        break;
-                    }
-
-                    if (dstpt == GFE_INVALID_OFFSET)
-                        continue;
-
-                    ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        if (int_oh.get(vtxoff_next) != ptnum)
-                            continue;
-                        if (dstpt > ptnum)
-                        {
-                            dstpt = GFE_INVALID_OFFSET;
-                            if (vertexNextEquivNoLoopAttrib)
-                                int_wh.set(elemoff, vtxoff_next);
-                        }
-                        break;
-                    }
-                    if (dstpt != GFE_INVALID_OFFSET)
-                    {
-                        if (vertexNextEquivNoLoopGroup)
-                            vertexNextEquivNoLoopGroup->setElement(elemoff, true);
-                        if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-        
-        if (vertexNextEquivNoLoopGroup)
-            vertexNextEquivNoLoopGroup->invalidateGroupEntries();
-    }
+    // void unsharedEdge()
+    // {
+    //     if(!unsharedEdgeGroup)
+    //         setUnsharedEdgeGroup(!outIntermediateAttrib);
+    //     
+    // }
 
     
 
@@ -949,7 +880,7 @@ private:
                     ptoffArray.clear();
 
                     GA_Offset pt_next;
-                    for (GA_Offset vtxoff_next = geo->pointVertex(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                    for (GA_Offset vtxoff_next = geo->pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                     {
                         const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
                         const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
@@ -1025,10 +956,10 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     ptoffArray.clear();
-                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                     {
                         const GA_Offset vtxPrev = int_oh.get(vtxoff_next);
-                        if (vtxPrev != GFE_INVALID_OFFSET)
+                        if (GFE_Type::isValidOffset(vtxPrev))
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxPrev);
                             //ptoffArray.uniqueSortedInsert(pt_next);
@@ -1039,7 +970,7 @@ private:
                             }
                         }
                         const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
-                        if (vtxNext != GFE_INVALID_OFFSET)
+                        if (GFE_Type::isValidOffset(vtxNext))
                         {
                             const GA_Offset pt_next = vtxPointRef->getLink(vtxNext);
                             //ptoffArray.uniqueSortedInsert(pt_next);
@@ -1058,8 +989,7 @@ private:
 
 
     //Get Vertex Destination Point
-    void
-        pointPointEdge2(
+    void pointPointEdge2(
             const GA_Offset ptoff,
             UT_ValArray<GA_Offset>& ptoffArray
         )
@@ -1068,7 +998,7 @@ private:
         ptoffArray.clear();
 
         GA_Offset pt_next;
-        for (GA_Offset vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+        for (GA_Offset vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
         {
             const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
             const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
@@ -1248,7 +1178,7 @@ private:
                             if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -1259,7 +1189,7 @@ private:
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
@@ -1287,22 +1217,22 @@ private:
                             if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1347,7 +1277,7 @@ private:
                             if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -1358,7 +1288,7 @@ private:
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
@@ -1386,22 +1316,22 @@ private:
                             if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1448,7 +1378,7 @@ private:
                             if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -1459,7 +1389,7 @@ private:
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
@@ -1487,22 +1417,22 @@ private:
                             if (dstpt == GFE_INVALID_OFFSET)
                                 continue;
                             const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo->pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
-                            for (vtxoff_next = geo->pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                            for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
                                     continue;
                                 adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
@@ -1600,7 +1530,7 @@ private:
                             const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
                             if (seamGroup->contains(ptoff))
                                 continue;
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                            for (vtxoff_next = pointVtxRef->getLink(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -1625,7 +1555,7 @@ private:
                         for (GA_Size i = 0; i < numvtx; ++i)
                         {
                             const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                            for (vtxoff_next = pointVtxRef->getLink(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
                                 if (vtxoff_next == vertices[i])
                                     continue;
@@ -1662,7 +1592,7 @@ private:
     GA_Attribute*   primPrimPointAttrib         = nullptr;
     GA_VertexGroup* vertexNextEquivGroup        = nullptr; // unshared vertex
     GA_VertexGroup* vertexNextEquivNoLoopGroup  = nullptr;
-    GA_EdgeGroup*   unsharedEdgeGroup           = nullptr;
+    //GA_EdgeGroup*   unsharedEdgeGroup           = nullptr;
     
         
     GA_RWHandleT<GA_Size> int_wh;
@@ -1682,1088 +1612,6 @@ private:
 
 }; // End of class GFE_MeshTopology
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-namespace GFE_MeshTopology_Namespace {
-
-
-
-    //Get Vertex Destination Point
-    static void
-        pointPointEdge(
-            const GA_Detail& geo,
-            const GA_Offset ptoff,
-            UT_ValArray<GA_Offset>& ptoffArray
-        )
-    {
-        //exint cap = 0;
-        ptoffArray.clear();
-
-        GA_Offset pt_next;
-        for (GA_Offset vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-        {
-            const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
-            const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
-            const GA_Size vtxpnum = GFE_TopologyReference_Namespace::vertexPrimIndex(geo, primoff, vtxoff_next);
-
-            if (vtxpnum == 0)
-            {
-                if (geo.getPrimitiveClosedFlag(primoff))
-                {
-                    pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, numvtx-1));
-                    if (ptoffArray.find(pt_next) == -1)
-                        ptoffArray.emplace_back(pt_next);
-                }
-            }
-            else
-            {
-                pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum-1));
-                if (ptoffArray.find(pt_next) == -1)
-                    ptoffArray.emplace_back(pt_next);
-            }
-
-            const GA_Size vtxpnum_next = vtxpnum + 1;
-            if (vtxpnum_next == numvtx) {
-                if (geo.getPrimitiveClosedFlag(primoff))
-                {
-                    pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
-                    if (ptoffArray.find(pt_next) == -1)
-                        ptoffArray.emplace_back(pt_next);
-                }
-            }
-            else
-            {
-                pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
-                if (ptoffArray.find(pt_next) == -1)
-                    ptoffArray.emplace_back(pt_next);
-            }
-        }
-    }
-
-
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-        pointPointEdge(
-            const GA_Detail& geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-            const GA_ROHandleT<GA_Size>& vtxpnumAttrib_h,
-            const GA_PointGroup* const geoGroup = nullptr,
-            const GA_PointGroup* const seamGroup = nullptr,
-            const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
-        )
-    {
-        const GA_SplittableRange geo0SplittableRange0(geo.getPointRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, &vtxpnumAttrib_h, seamGroup](const GA_SplittableRange& r)
-        {
-            UT_ValArray<GA_Offset> ptoffArray;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    ptoffArray.clear();
-
-                    GA_Offset pt_next;
-                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                    {
-                        const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
-                        const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
-                        const GA_Size vtxpnum = vtxpnumAttrib_h.get(vtxoff_next);
-
-                        if (vtxpnum == 0)
-                        {
-                            if (geo.getPrimitiveClosedFlag(primoff))
-                            {
-                                pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, numvtx - 1));
-                                if (ptoffArray.find(pt_next) == -1)
-                                    ptoffArray.emplace_back(pt_next);
-                            }
-                        }
-                        else
-                        {
-                            pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum - 1));
-                            if (ptoffArray.find(pt_next) == -1)
-                                ptoffArray.emplace_back(pt_next);
-                        }
-
-                        const GA_Size vtxpnum_next = vtxpnum + 1;
-                        if (vtxpnum_next == numvtx) {
-                            if (geo.getPrimitiveClosedFlag(primoff))
-                            {
-                                pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
-                                if (ptoffArray.find(pt_next) == -1)
-                                    ptoffArray.emplace_back(pt_next);
-                            }
-                        }
-                        else
-                        {
-                            pt_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
-                            if (ptoffArray.find(pt_next) == -1)
-                                ptoffArray.emplace_back(pt_next);
-                        }
-                    }
-                    attrib_h.set(elemoff, ptoffArray);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-    pointPointEdge(
-        const GA_Detail& geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-        const GA_PointGroup* const geoGroup = nullptr,
-        const GA_PointGroup* const seamGroup = nullptr,
-        const exint subscribeRatio = 128,
-        const exint minGrainSize = 64
-    )
-    {
-
-        const GA_SplittableRange geo0SplittableRange0(geo.getPointRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, seamGroup](const GA_SplittableRange& r)
-        {
-            UT_ValArray<GA_Offset> adjElems;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    pointPointEdge(geo, elemoff, adjElems);
-                    attrib_h.set(elemoff, adjElems);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-    //Get Vertex Destination Point
-    static void
-    pointPointEdge(
-        GA_Detail& geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-        const GA_ROHandleT<GA_Offset>& vtxPrev_h,
-        const GA_ROHandleT<GA_Offset>& vtxNext_h,
-        const GA_PointGroup* const geoGroup = nullptr,
-        const GA_PointGroup* const seamGroup = nullptr,
-        const exint subscribeRatio = 128,
-        const exint minGrainSize = 64
-    )
-    {
-        GA_Topology& topo = geo.getTopology();
-        topo.makeFull();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        //const GA_ATITopology* const vtxPrevRef = topo.getVertexPrevRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-        const GA_SplittableRange geo0SplittableRange0(geo.getPointRange(geoGroup));
-
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, &vtxPrev_h, &vtxNext_h, pointVtxRef, vtxNextRef, vtxPointRef, seamGroup](const GA_SplittableRange& r)
-        {
-            UT_ValArray<GA_Offset> ptoffArray(32);
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    ptoffArray.clear();
-                    for (GA_Offset vtxoff_next = pointVtxRef->getLink(elemoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        const GA_Offset vtxPrev = vtxPrev_h.get(vtxoff_next);
-                        if (vtxPrev != GFE_INVALID_OFFSET)
-                        {
-                            const GA_Offset pt_next = vtxPointRef->getLink(vtxPrev);
-                            //ptoffArray.uniqueSortedInsert(pt_next);
-                            if (ptoffArray.uniqueSortedFindAscending(pt_next) == -1)
-                            {
-                                ptoffArray.emplace_back(pt_next);
-                                ptoffArray.sort();
-                            }
-                        }
-                        const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
-                        if (vtxNext != GFE_INVALID_OFFSET)
-                        {
-                            const GA_Offset pt_next = vtxPointRef->getLink(vtxNext);
-                            //ptoffArray.uniqueSortedInsert(pt_next);
-                            if (ptoffArray.uniqueSortedFindAscending(pt_next) == -1)
-                            {
-                                ptoffArray.emplace_back(pt_next);
-                                ptoffArray.sort();
-                            }
-                        }
-                    }
-                    attrib_h.set(elemoff, ptoffArray);
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-        primPrimEdge(
-            GA_Detail& geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-            const GA_ROHandleT<GA_Offset>& nextEquivAttrib_h,
-            const GA_PrimitiveGroup* const geoGroup = nullptr,
-            const GA_VertexGroup* const seamGroup = nullptr,
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        GA_Topology& topo = geo.getTopology();
-        topo.makePrimitiveRef();
-        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
-
-        const GA_SplittableRange geo0SplittableRange0(geo.getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, &nextEquivAttrib_h, seamGroup, vtxPrimRef](const GA_SplittableRange& r)
-        {
-            UT_ValArray<GA_Offset> adjElems;
-            GA_Offset vtxoff_next;
-            GA_Offset start, end;
-            if (seamGroup)
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        //for (GA_Offset vtxoff : vertices)
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset vtxoff_start = vertices[i];
-                            if (!seamGroup->contains(vtxoff_start))
-                                continue;
-                            GA_Offset vtxoff_next = nextEquivAttrib_h.get(vtxoff_start);
-                            if (vtxoff_next == GFE_INVALID_OFFSET)
-                                continue;
-                            for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttrib_h.get(vtxoff_next))
-                            {
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-            else
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        //for (GA_Offset vtxoff : vertices)
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset vtxoff_start = vertices[i];
-                            GA_Offset vtxoff_next = nextEquivAttrib_h.get(vtxoff_start);
-                            if (vtxoff_next == GFE_INVALID_OFFSET)
-                                continue;
-                            for (; vtxoff_next != vtxoff_start; vtxoff_next = nextEquivAttrib_h.get(vtxoff_next))
-                            {
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-        primPrimEdge1(
-            const GA_Detail& geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
-            const GA_PrimitiveGroup* const geoGroup = nullptr,
-            const GA_VertexGroup*    const seamGroup = nullptr,
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        const GA_SplittableRange geoSplittableRange(geo.getPrimitiveRange(geoGroup));
-        UTparallelFor(geoSplittableRange, [&geo, &attrib_h, &dstptAttrib_h, seamGroup](const GA_SplittableRange& r)
-        {
-            UT_ValArray<GA_Offset> adjElems(32);
-            GA_Offset vtxoff_next;
-            GA_Offset start, end;
-            if (seamGroup)
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
-                                continue;
-                            const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-            else
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
-                                continue;
-                            const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-        primPrimEdge2(
-            const GA_Detail& geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
-            const GA_PrimitiveGroup* const geoGroup = nullptr,
-            const GA_VertexGroup*    const seamGroup = nullptr,
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        const GA_SplittableRange geo0SplittableRange0(geo.getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, &dstptAttrib_h, seamGroup](const GA_SplittableRange& r)
-        {
-            //UT_SmallArray<GA_Offset> adjElems;
-            //UT_ValArray<GA_Offset> adjElems;
-            GA_Offset vtxoff_next;
-            GA_Offset start, end;
-            if (seamGroup)
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
-                                continue;
-                            const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-            else
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
-                                continue;
-                            const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-        primPrimEdge3(
-            const GA_Detail& geo,
-            const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-            const GA_ROHandleT<GA_Offset>& dstptAttrib_h,
-            const GA_PrimitiveGroup* const geoGroup = nullptr,
-            const GA_VertexGroup*    const seamGroup = nullptr,
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        const GA_SplittableRange geo0SplittableRange0(geo.getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, &dstptAttrib_h, seamGroup](const GA_SplittableRange& r)
-        {
-            //UT_SmallArray<GA_Offset> adjElems;
-            //UT_ValArray<GA_Offset> adjElems;
-            GA_Offset vtxoff_next;
-            GA_Offset start, end;
-            if (seamGroup)
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
-                                continue;
-                            const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-            else
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset dstpt = dstptAttrib_h.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
-                                continue;
-                            const GA_Offset ptoff = geo.vertexPoint(vertices[i]);
-                            for (vtxoff_next = geo.pointVertex(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (dstptAttrib_h.get(vtxoff_next) != dstpt)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-
-                            for (vtxoff_next = geo.pointVertex(dstpt); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
-                            {
-                                if (dstptAttrib_h.get(vtxoff_next) != ptoff)
-                                    continue;
-                                if (adjElems.find(geo.vertexPrimitive(vtxoff_next)) != GFE_INVALID_OFFSET)
-                                    continue;
-                                adjElems.emplace_back(geo.vertexPrimitive(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-    primPrimEdge4(
-        const GA_Detail& geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-        const GA_PrimitiveGroup* const geoGroup = nullptr,
-        const GA_VertexGroup*    const seamGroup = nullptr,
-        const exint subscribeRatio = 128,
-        const exint minGrainSize = 64
-    )
-    {
-        const GA_SplittableRange geo0SplittableRange0(geo.getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, seamGroup](const GA_SplittableRange& r)
-        {
-            GEO_Detail::GEO_EdgeAdjArray adjElemStruct;
-            UT_ValArray<GA_Offset> adjElems;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                if (seamGroup)
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        GA_Size numAdj = static_cast<const GEO_Detail&>(geo).getEdgeAdjacentPolygons(adjElemStruct, elemoff);
-                        adjElems.setSizeNoInit(numAdj);
-                        for (GA_Size i = 0; i < numAdj; ++i)
-                        {
-                            adjElems[i] = adjElemStruct[i].myAdjacentPolygon;
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-                else
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        GA_Size numAdj = static_cast<const GEO_Detail&>(geo).getEdgeAdjacentPolygons(adjElemStruct, elemoff);
-                        adjElems.setSizeNoInit(numAdj);
-                        for (GA_Size i = 0; i < numAdj; ++i)
-                        {
-                            adjElems[i] = adjElemStruct[i].myAdjacentPolygon;
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-
-
-    //Get all prims neighbours prims with adjacent by edge
-    static void
-    primPrimPoint(
-        GA_Detail& geo,
-        const GA_RWHandleT<UT_ValArray<GA_Offset>>& attrib_h,
-        const GA_PrimitiveGroup* const geoGroup  = nullptr,
-        const GA_PointGroup*     const seamGroup = nullptr,
-        const exint subscribeRatio = 128,
-        const exint minGrainSize = 64
-    )
-    {
-        GA_Topology& topo = geo.getTopology();
-        //topo.makeFull();
-        //topo.makePrimitiveRef();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-
-
-        const GA_SplittableRange geo0SplittableRange0(geo.getPrimitiveRange(geoGroup));
-        UTparallelFor(geo0SplittableRange0, [&geo, &attrib_h, seamGroup, vtxNextRef, vtxPointRef, pointVtxRef, vtxPrimRef](const GA_SplittableRange& r)
-        {
-            UT_ValArray<GA_Offset> adjElems(64);
-            GA_Offset vtxoff_next;
-            GA_Offset start, end;
-            if (seamGroup)
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
-                            if (seamGroup->contains(ptoff))
-                                continue;
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-            else
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
-                            for (vtxoff_next = pointVtxRef->getLink(ptoff); vtxoff_next != GFE_INVALID_OFFSET; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                            {
-                                if (vtxoff_next == vertices[i])
-                                    continue;
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != -1)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
-                            }
-                        }
-                        attrib_h.set(elemoff, adjElems);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //GFE_MeshTopology_Namespace::addAttribPointPointEdge(geo, name, geoGroup, seamGroup, storage, nullptr, nullptr, GA_ReuseStrategy(), subscribeRatio, minGrainSize);
-    static GA_Attribute*
-        addAttribPointPointEdge(
-            GA_Detail& geo,
-            const GA_PointGroup* const geoGroup = nullptr,
-            const GA_PointGroup* const seamGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringRef& name = "__topo_nebs",
-            const UT_Options* const creation_args = nullptr,
-            const GA_AttributeOptions* const attribute_options = nullptr,
-            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        GA_Attribute* attribPtr = geo.findPointAttribute(GFE_TOPO_SCOPE, name);
-        if (attribPtr)
-            return attribPtr;
-        GA_Attribute* vtxPrevAttrib = nullptr;
-        GA_Attribute* vtxNextAttrib = nullptr;
-
-        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
-
-        GFE_TopologyReference_Namespace::addAttribVertexVertexPrim(geo, vtxPrevAttrib, vtxNextAttrib, nullptr, finalStorage);
-
-        attribPtr = geo.getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GFE_TOPO_SCOPE, name, finalStorage, 1,
-            creation_args, attribute_options, "arraydata", reuse);
-        //attribPtr = geo.addIntTuple(GA_ATTRIB_POINT, name, 1, defaults,
-        //          creation_args, attribute_options, finalStorage, reuse);
-        //attribPtr = geo.addIntArray(GA_ATTRIB_POINT, GFE_TOPO_SCOPE, name, 1,
-        //          creation_args, attribute_options, finalStorage, reuse);
-
-        pointPointEdge(geo, attribPtr, vtxPrevAttrib, vtxNextAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
-        //UT_ASSERT_P(vtxPrevAttrib);
-        //UT_ASSERT_P(vtxNextAttrib);
-        //GA_ROHandleT<GA_Offset> vtxPrev_h(vtxPrevAttrib);
-        //GA_ROHandleT<GA_Offset> vtxNext_h(vtxNextAttrib);
-        //pointPointEdge(geo, attribPtr, vtxPrev_h, vtxNext_h, geoGroup, seamGroup, subscribeRatio, minGrainSize);
-        return attribPtr;
-    }
-
-
-
-
-
-    static GA_Attribute*
-        addAttribPrimPrimEdge(
-            GA_Detail& geo,
-            const GA_PrimitiveGroup* const geoGroup = nullptr,
-            const GA_VertexGroup* const seamGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringRef& name = "__topo_nebs",
-            const UT_Options* creation_args = nullptr,
-            const GA_AttributeOptions* const attribute_options = nullptr,
-            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        GA_Attribute* attribPtr = geo.findPrimitiveAttribute(GFE_TOPO_SCOPE, name);
-        if (attribPtr)
-            return attribPtr;
-
-        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageI(geo) : storage;
-        //GA_Attribute* dstptAttrib = GFE_TopologyReference_Namespace::addAttribVertexPointDst(
-        //      geo, "dstpt", nullptr, GA_Defaults(-1), finalStorage, subscribeRatio, minGrainSize);
-        //GA_RWHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
-        //GA_Attribute* vtxPrimNextAttrib = addAttribVertexVertexPrimNext(geo, "vtxPrimNext", nullptr, GA_Defaults(-1), finalStorage, subscribeRatio, minGrainSize);
-
-        GA_Attribute* vtxNextEquivAttrib = GFE_VertexNextEquiv_Namespace::addAttribVertexNextEquiv(geo, nullptr, finalStorage);
-
-        attribPtr = geo.getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, finalStorage, 1, creation_args, attribute_options, "arraydata", reuse);
-        //attribPtr = geo.addIntArray(GA_ATTRIB_PRIMITIVE, GFE_TOPO_SCOPE, name, 1,
-        //          creation_args, attribute_options, finalStorage, reuse);
-        //GA_ROHandleT<UT_ValArray<GA_Offset>> attrib_h(attribPtr);
-        primPrimEdge(geo, attribPtr, vtxNextEquivAttrib, geoGroup, seamGroup, subscribeRatio, minGrainSize);
-        return attribPtr;
-    }
-
-
-
-
-    //GFE_MeshTopology_Namespace::addAttribAdjacency(geo, groupType, connectivityGroupType);
-
-    static GA_Attribute*
-        addAttribAdjacency(
-            GA_Detail& geo,
-            const GA_GroupType groupType,
-            const GA_GroupType connectivityGroupType,
-            const GA_Group* const geoGroup = nullptr,
-            const GA_Group* const seamGroup = nullptr,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringRef& name = "__topo_nebs",
-            const UT_Options* const creation_args = nullptr,
-            const GA_AttributeOptions* const attribute_options = nullptr,
-            const GA_ReuseStrategy& reuse = GA_ReuseStrategy(),
-            const exint subscribeRatio = 128,
-            const exint minGrainSize = 64
-        )
-    {
-        switch (groupType)
-        {
-        case GA_GROUP_PRIMITIVE:
-            switch (connectivityGroupType)
-            {
-            case GA_GROUP_PRIMITIVE:
-                //return GFE_MeshTopology_Namespace::addAttribPrimPrimPrim(geo,
-                //    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PrimitiveGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_POINT:
-                //return GFE_MeshTopology_Namespace::addAttribPrimPrimPoint(geo,
-                //    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PointGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_VERTEX:
-                //return GFE_MeshTopology_Namespace::addAttribPrimPrimVertex(geo,
-                //    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
-                //    UTverify_cast<const GA_VertexGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_EDGE:
-                return addAttribPrimPrimEdge(geo,
-                    UTverify_cast<const GA_PrimitiveGroup*>(geoGroup),
-                    UTverify_cast<const GA_VertexGroup*>(seamGroup),
-                    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            }
-
-            break;
-        case GA_GROUP_POINT:
-            switch (connectivityGroupType)
-            {
-            case GA_GROUP_PRIMITIVE:
-                //return GFE_MeshTopology_Namespace::addAttribPointPointPrim(geo,
-                //    UTverify_cast<const GA_PointGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PrimitiveGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_POINT:
-                //return GFE_MeshTopology_Namespace::addAttribPointPointPoint(geo,
-                //    UTverify_cast<const GA_PointGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PointGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_VERTEX:
-                //return GFE_MeshTopology_Namespace::addAttribPointPointVertex(geo,
-                //    UTverify_cast<const GA_PointGroup*>(geoGroup),
-                //    UTverify_cast<const GA_VertexGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_EDGE:
-                return GFE_MeshTopology_Namespace::addAttribPointPointEdge(geo,
-                    UTverify_cast<const GA_PointGroup*>(geoGroup),
-                    UTverify_cast<const GA_PointGroup*>(seamGroup),
-                    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            }
-
-            break;
-        case GA_GROUP_VERTEX:
-            switch (connectivityGroupType)
-            {
-            case GA_GROUP_PRIMITIVE:
-                //return GFE_MeshTopology_Namespace::addAttribVertexVertexPrim(geo,
-                //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PrimitiveGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_POINT:
-                //return GFE_MeshTopology_Namespace::addAttribVertexVertexPoint(geo,
-                //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PointGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_VERTEX:
-                //return GFE_MeshTopology_Namespace::addAttribVertexVertexVertex(geo,
-                //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
-                //    UTverify_cast<const GA_VertexGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            case GA_GROUP_EDGE:
-                //return GFE_MeshTopology_Namespace::addAttribVertexVertexEdge(geo,
-                //    UTverify_cast<const GA_VertexGroup*>(geoGroup),
-                //    UTverify_cast<const GA_PointGroup*>(seamGroup),
-                //    storage, name, creation_args, attribute_options, reuse, subscribeRatio, minGrainSize);
-                break;
-            }
-            break;
-        }
-        return nullptr;
-    }
-
-    
-
-
-
-
-} // End of namespace GFE_MeshTopology
-
-
-
-*/
 
 
 

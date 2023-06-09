@@ -309,14 +309,10 @@ SOP_FeE_Triangulate2D_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Triangulate2D_2_0Cache*)cookparms.cache();
 
-    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    //outGeo0.replaceWith(inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
-    //GU_DetailHandle geoTmp_h;
-    //GU_Detail* geoTmp = new GU_Detail();
-    //geoTmp_h.allocateAndSet(geoTmp);
-    //geoTmp->replaceWith(inGeo0);
     
     const GFE_Axis axis = sopAxis(sopparms.getAxis());
 
@@ -333,14 +329,23 @@ SOP_FeE_Triangulate2D_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
         triangulat2D.setDir(axis);
     else
         triangulat2D.setDir(sopparms.getCustomDir());
-    
-    if (sopparms.getPreFuse())
-        triangulat2D.setPreFuse(sopparms.getPreFuseDist());
-    if (sopparms.getPostFuse())
-        triangulat2D.setPreFuse(sopparms.getPostFuseDist());
+
     
     if (sopparms.getKeepSingleSide())
         triangulat2D.setKeepSingleSide(sopparms.getReverseSide());
+    
+    if (sopparms.getPreFuse())
+        triangulat2D.setPreFuse(sopparms.getPreFuseDist());
+    
+    //triangulat2D.preDelSharedEdge = sopparms.getPreDelSharedEdge();
+    
+    //triangulat2D.keepUnsharedSilhouette = sopparms.getKeepUnsharedSilhouette()();
+    //triangulat2D.keepOutsidePrim = sopparms.getKeepOutsidePrim();
+    //triangulat2D.keepHeight = sopparms.getKeepHeight();
+    
+    if (sopparms.getPostFuse())
+        triangulat2D.setPreFuse(sopparms.getPostFuseDist());
+
     
     triangulat2D.setComputeParm(sopparms.getPreDelSharedEdge(), sopparms.getKeepUnsharedSilhouette(), sopparms.getKeepOutsidePrim(), sopparms.getKeepHeight()
         //,sopparms.getSubscribeRatio(), sopparms.getMinGrainSize()

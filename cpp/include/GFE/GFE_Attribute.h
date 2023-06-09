@@ -163,7 +163,7 @@ static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOr
 // static void bumpDataId(
 //     GA_Detail& geo,
 //     const GA_AttributeOwner owner,
-//     const UT_StringHolder& attribPattern
+//     const UT_StringRef& attribPattern
 // )
 // {
 //     GA_AttributeFilter filter = GA_AttributeFilter::selectByPattern(attribPattern);
@@ -179,7 +179,7 @@ static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOr
 static GA_Attribute* findPieceAttrib(
     GA_Detail& geo,
     const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
-    const UT_StringHolder& pieceAttribName
+    const UT_StringRef& pieceAttribName
 )
 {
     GA_Attribute* attribPtr = nullptr;
@@ -219,7 +219,7 @@ static GA_Attribute* findPieceAttrib(
 // renameAttribute(
 //     GA_Detail& geo,
 //     const GA_Attribute& attrib,
-//     const UT_StringHolder& newName
+//     const UT_StringRef& newName
 // )
 // {
 //     return geo.renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
@@ -227,16 +227,14 @@ static GA_Attribute* findPieceAttrib(
 //
 //
 //
-SYS_FORCE_INLINE static bool renameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
-{
-    return attrib.getDetail().renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
-}
+SYS_FORCE_INLINE static bool renameAttribute(GA_Attribute& attrib, const UT_StringRef& newName)
+{ return attrib.getDetail().renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName); }
 
     
 static bool forceRenameAttribute(
     GA_Detail& geo,
     GA_Attribute& attrib,
-    const UT_StringHolder& newName
+    const UT_StringRef& newName
 )
 {
     GA_Attribute* const existAttribute = geo.findAttribute(attrib.getOwner(), newName);
@@ -246,7 +244,7 @@ static bool forceRenameAttribute(
 }
 
 
-SYS_FORCE_INLINE static bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
+SYS_FORCE_INLINE static bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringRef& newName)
 {
     return forceRenameAttribute(attrib.getDetail(), attrib, newName);
 }
@@ -398,28 +396,16 @@ findAttributePointVertex(
     if (!attribName.isstring() || attribName.length() == 0)
         return nullptr;
 
-    GA_Attribute* attribPtr = nullptr;
+    GA_Attribute* attribPtr;
     GA_AttributeSet& geoAttribs = geo.getAttributes();
     if (attribOwner < 0 || attribOwner >= GA_ATTRIB_PRIMITIVE)//not point or vertex means Auto
     {
         attribPtr = geoAttribs.findAttribute(GA_ATTRIB_VERTEX, scope, attribName);
         if (!attribPtr)
-        {
             attribPtr = geoAttribs.findAttribute(GA_ATTRIB_POINT, scope, attribName);
-            if (!attribPtr)
-            {
-                return nullptr;
-            }
-        }
     }
     else
-    {
         attribPtr = geoAttribs.findAttribute(attribOwner, scope, attribName);
-        if (!attribPtr)
-        {
-            return nullptr;
-        }
-    }
     return attribPtr;
 }
 

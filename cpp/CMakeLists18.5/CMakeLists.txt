@@ -144,6 +144,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_OffsetVertexOrder_2_0
     SOP_FeE_OnPoly_1_0
     SOP_FeE_OrientAlongCurve_1_0
+    SOP_FeE_PointGenPerElem_1_0
     SOP_FeE_PointInBBox_2_0
     SOP_FeE_PointInMesh_WN_2_0
     SOP_FeE_PolyCut_3_0

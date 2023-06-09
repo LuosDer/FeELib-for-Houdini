@@ -104,6 +104,19 @@ static const char* theDsFile = R"THEDSFILE(
         joinnext
         default { "0" }
     }
+
+    parm {
+        name    "wnAttribClass"
+        cppname "WNAttribClass"
+        label   "Attribute Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+        }
+    }
     parm {
         name    "wnAttribName"
         cppname "WNAttribName"
@@ -172,6 +185,19 @@ static const char* theDsFile = R"THEDSFILE(
         grouptag { "group_type" "simple" }
         disablewhen "{ outPointInMeshGroup == 0 }"
 
+        parm {
+            name    "pointInMeshGroupType"
+            cppname "PointInMeshGroupType"
+            label   "Point in Mesh Group Type"
+            type    ordinal
+            default { "point" }
+            menu {
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+                "edge"      "Edge"
+            }
+        }
         parm {
             name    "pointInMeshGroupName"
             cppname "PointInMeshGroupName"
@@ -317,6 +343,37 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 }
 
 
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_WindingNumber_1_0Parms::WNAttribClass parmAttribClass)
+{
+    using namespace SOP_FeE_WindingNumber_1_0Enums;
+    switch (parmAttribClass)
+    {
+    case WNAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case WNAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case WNAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+static GA_GroupType
+sopGroupType(SOP_FeE_WindingNumber_1_0Parms::PointInMeshGroupType parmGroupType)
+{
+    using namespace SOP_FeE_WindingNumber_1_0Enums;
+    switch (parmGroupType)
+    {
+    case PointInMeshGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case PointInMeshGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case PointInMeshGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case PointInMeshGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Point in Mesh Group Type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
 static GFE_GroupMergeType
 sopGroupMergeType(SOP_FeE_WindingNumber_1_0Parms::GroupMergeType groupMergeType)
 {
@@ -352,8 +409,10 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     wn.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
+    const GA_AttributeOwner attribOwner = sopAttribOwner(sopparms.getWNAttribClass());
+            
     if (sopparms.getOutPointInMeshGroup() || sopparms.getOutWN())
-        wn.findOrCreateTuple(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
+        wn.findOrCreateTuple(!sopparms.getOutWN(), attribOwner, wnStorage, sopparms.getWNAttribName());
 
     if (sopparms.getOutPointInMeshGroup())
     {
@@ -363,7 +422,9 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
             sopparms.getGroupOnGeoPoint(),
             sopparms.getPointInMeshThreshold());
         
-        wn.findOrCreateGroup(false, sopparms.getPointInMeshGroupName());
+        const GA_GroupType groupType = sopGroupType(sopparms.getPointInMeshGroupType());
+            
+        wn.findOrCreateGroup(false, groupType, sopparms.getPointInMeshGroupName());
     }
 
     wn.setComputeParm(sopWNType(sopparms.getWNType()),

@@ -48,29 +48,9 @@ static const char *theDsFile = R"THEDSFILE(
     
     
     parm {
-        name    "unsharedAttribName"
-        cppname "UnsharedAttribName"
-        label   "Unshared Attrib Name"
-        type    string
-        default { "unshared" }
-    }
-    parm {
-        name    "unsharedAttribType"
-        cppname "UnsharedAttribType"
-        label   "Unshared Attrib Type"
-        type    ordinal
-        default { "vertex" }
-        menu {
-            "group"     "Group"
-            "int"       "Integer"
-            "float"     "Float"
-            "string"    "String"
-        }
-    }
-    parm {
-        name    "unsharedAttribClass"
-        cppname "UnsharedAttribClass"
-        label   "Unshared Attrib Class"
+        name    "unsharedGroupType"
+        cppname "UnsharedGroupType"
+        label   "Unshared Group Type"
         type    ordinal
         default { "vertex" }
         menu {
@@ -80,6 +60,26 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+    parm {
+        name    "unsharedGroupName"
+        cppname "UnsharedGroupName"
+        label   "Unshared Group Name"
+        type    string
+        default { "unshared" }
+    }
+    // parm {
+    //     name    "unsharedAttribType"
+    //     cppname "UnsharedAttribType"
+    //     label   "Unshared Attrib Type"
+    //     type    ordinal
+    //     default { "vertex" }
+    //     menu {
+    //         "group"     "Group"
+    //         "int"       "Integer"
+    //         "float"     "Float"
+    //         "string"    "String"
+    //     }
+    // }
 
 
     parm {
@@ -142,6 +142,7 @@ SOP_FeE_GroupUnshared_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("unsharedGroupName"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -211,12 +212,12 @@ newSopOperator(OP_OperatorTable* table)
 }
 
 
-
+/*
 static GA_StorageClass
-sopUnsharedStorageClass(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmgrouptype)
+sopUnsharedStorageClass(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmStorageClass)
 {
     using namespace SOP_FeE_GroupUnshared_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmStorageClass)
     {
     case UnsharedAttribType::GROUP:   return GA_STORECLASS_OTHER;    break;
     case UnsharedAttribType::INT:     return GA_STORECLASS_INT;      break;
@@ -226,30 +227,30 @@ sopUnsharedStorageClass(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribType parmg
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_STORECLASS_INVALID;
 }
-
+*/
 
 static GA_GroupType
-sopUnsharedAttribClass(SOP_FeE_GroupUnshared_1_0Parms::UnsharedAttribClass parmgrouptype)
+sopUnsharedGroupType(SOP_FeE_GroupUnshared_1_0Parms::UnsharedGroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupUnshared_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
-    case UnsharedAttribClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case UnsharedAttribClass::POINT:     return GA_GROUP_POINT;      break;
-    case UnsharedAttribClass::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case UnsharedAttribClass::EDGE:      return GA_GROUP_EDGE;       break;
+    case UnsharedGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case UnsharedGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case UnsharedGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case UnsharedGroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Unshared Group type!");
     return GA_GROUP_INVALID;
 }
 
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupUnshared_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupUnshared_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupUnshared_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -257,7 +258,7 @@ sopGroupType(SOP_FeE_GroupUnshared_1_0Parms::GroupType parmgrouptype)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
     return GA_GROUP_INVALID;
 }
 
@@ -276,27 +277,21 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getUnsharedAttribName();
-    if (!geo0AttribNames.isstring())
-        return;
-
-
-    UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
+    const UT_StringHolder& groupName = sopparms.getUnsharedGroupName();
+    if (!groupName.isstring())
         return;
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType unsharedGroupType = sopUnsharedGroupType(sopparms.getUnsharedGroupType());
+    //const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
 
-
-    const GA_StorageClass unsharedAttribStorageClass = sopUnsharedStorageClass(sopparms.getUnsharedAttribType());
-    const GA_GroupType unsharedAttribClass = sopUnsharedAttribClass(sopparms.getUnsharedAttribClass());
-
-/*
     
-    GFE_GroupUnshared groupUnshared(geo, cookparms);
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
+
     
- */
     GFE_GroupUnshared groupUnshared(outGeo0, &cookparms);
 
     groupUnshared.groupParser.setGroup(groupType, sopparms.getGroup());
@@ -308,7 +303,7 @@ SOP_FeE_GroupUnshared_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     
     groupUnshared.outTopoAttrib = sopparms.getOutTopoAttrib();
     
-    groupUnshared.findOrCreateGroup(false, unsharedAttribClass, geo0AttribNames);
+    groupUnshared.findOrCreateGroup(false, unsharedGroupType, groupName);
 
     
     groupUnshared.computeAndBumpDataId();

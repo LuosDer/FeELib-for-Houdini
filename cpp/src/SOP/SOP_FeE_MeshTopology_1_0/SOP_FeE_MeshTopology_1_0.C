@@ -166,6 +166,23 @@ static const char *theDsFile = R"THEDSFILE(
         default { "nextEquiv" }
         disablewhen "{ calVertexNextEquiv == 0 }"
     }
+    parm {
+        name    "calVertexNextEquivGroup"
+        cppname "CalVertexNextEquivGroup"
+        label   "Calculate Vertex Next Equiv Group"
+        type    toggle
+        default { "0" }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "vertexNextEquivGroupName"
+        cppname "VertexNextEquivGroupName"
+        label   "Vertex Next Equiv Group Name"
+        type    string
+        default { "nextEquiv" }
+        disablewhen "{ calVertexNextEquivGroup == 0 }"
+    }
 
     parm {
         name    "calVertexNextEquivNoLoop"
@@ -184,6 +201,24 @@ static const char *theDsFile = R"THEDSFILE(
         default { "nextEquivNoLoop" }
         disablewhen "{ calVertexNextEquivNoLoop == 0 }"
     }
+    parm {
+        name    "calVertexNextEquivNoLoopGroup"
+        cppname "CalVertexNextEquivNoLoopGroup"
+        label   "Calculate Vertex Next Equiv No Loop Group"
+        type    toggle
+        default { "0" }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "vertexNextEquivNoLoopGroupName"
+        cppname "VertexNextEquivNoLoopGroupName"
+        label   "Vertex Next Equiv No Loop Group Name"
+        type    string
+        default { "nextEquivNoLoop" }
+        disablewhen "{ calVertexNextEquivNoLoopGroup == 0 }"
+    }
+
 
     parm {
         name    "calPointPointEdge"
@@ -418,37 +453,43 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
-    bool calVertexPrimIndex       = sopparms.getCalVertexPrimIndex();
-    bool calVertexVertexPrim      = sopparms.getCalVertexVertexPrim();
-    bool calVertexPointDst        = sopparms.getCalVertexPointDst();
-    bool calVertexNextEquiv       = sopparms.getCalVertexNextEquiv();
-    bool calVertexNextEquivNoLoop = sopparms.getCalVertexNextEquivNoLoop();
-    bool calPointPointEdge        = sopparms.getCalPointPointEdge();
-    bool calPointPointPrim        = sopparms.getCalPointPointPrim();
-    bool calPrimPrimEdge          = sopparms.getCalPrimPrimEdge();
-    bool calPrimPrimPoint         = sopparms.getCalPrimPrimPoint();
-
+    bool calVertexPrimIndex            = sopparms.getCalVertexPrimIndex();
+    bool calVertexVertexPrim           = sopparms.getCalVertexVertexPrim();
+    bool calVertexPointDst             = sopparms.getCalVertexPointDst();
+    bool calVertexNextEquiv            = sopparms.getCalVertexNextEquiv();
+    bool calVertexNextEquivNoLoop      = sopparms.getCalVertexNextEquivNoLoop();
+    bool calVertexNextEquivGroup       = sopparms.getCalVertexNextEquivGroup();
+    bool calVertexNextEquivNoLoopGroup = sopparms.getCalVertexNextEquivNoLoopGroup();
+    bool calPointPointEdge             = sopparms.getCalPointPointEdge();
+    bool calPointPointPrim             = sopparms.getCalPointPointPrim();
+    bool calPrimPrimEdge               = sopparms.getCalPrimPrimEdge();
+    bool calPrimPrimPoint              = sopparms.getCalPrimPrimPoint();
+    
 #if 1
     const UT_StringHolder& vertexPrimIndexAttribName             = sopparms.getVertexPrimIndexAttribName();
     const UT_StringHolder& vertexVertexPrimNextAttribName        = sopparms.getVertexVertexPrimNextAttribName();
     const UT_StringHolder& vertexPointDstAttribName              = sopparms.getVertexPointDstAttribName();
     const UT_StringHolder& vertexNextEquivAttribName             = sopparms.getVertexNextEquivAttribName();
     const UT_StringHolder& vertexNextEquivNoLoopAttribName       = sopparms.getVertexNextEquivNoLoopAttribName();
+    const UT_StringHolder& vertexNextEquivGroupName              = sopparms.getVertexNextEquivGroupName();
+    const UT_StringHolder& vertexNextEquivNoLoopGroupName        = sopparms.getVertexNextEquivNoLoopGroupName();
     const UT_StringHolder& pointPointEdgeAttribName              = sopparms.getPointPointEdgeAttribName();
     const UT_StringHolder& pointPointPrimAttribName              = sopparms.getPointPointPrimAttribName();
     const UT_StringHolder& primPrimEdgeAttribName                = sopparms.getPrimPrimEdgeAttribName();
     const UT_StringHolder& primPrimPointAttribName               = sopparms.getPrimPrimPointAttribName();
     const UT_StringHolder& vertexVertexPrimPrevAttribName        = sopparms.getVertexVertexPrimPrevAttribName();
 
-    calVertexPrimIndex         = calVertexPrimIndex       && vertexPrimIndexAttribName.isstring()        && vertexPrimIndexAttribName.length() != 0;
-    calVertexVertexPrim        = calVertexVertexPrim      && ((vertexVertexPrimPrevAttribName.isstring() && vertexVertexPrimPrevAttribName.length() != 0) || (vertexVertexPrimNextAttribName.isstring() && vertexVertexPrimNextAttribName.length() != 0));
-    calVertexPointDst          = calVertexPointDst        && vertexPointDstAttribName.isstring()         && vertexPointDstAttribName.length() != 0;
-    calVertexNextEquiv         = calVertexNextEquiv       && vertexNextEquivAttribName.isstring()        && vertexNextEquivAttribName.length() != 0;
-    calVertexNextEquivNoLoop   = calVertexNextEquivNoLoop && vertexNextEquivNoLoopAttribName.isstring()  && vertexNextEquivNoLoopAttribName.length() != 0;
-    calPointPointEdge          = calPointPointEdge        && pointPointEdgeAttribName.isstring()         && pointPointEdgeAttribName.length() != 0;
-    calPointPointPrim          = calPointPointPrim        && pointPointPrimAttribName.isstring()         && pointPointPrimAttribName.length() != 0;
-    calPrimPrimEdge            = calPrimPrimEdge          && primPrimEdgeAttribName.isstring()           && primPrimEdgeAttribName.length() != 0;
-    calPrimPrimPoint           = calPrimPrimPoint         && primPrimPointAttribName.isstring()          && primPrimPointAttribName.length() != 0;
+    calVertexPrimIndex            = calVertexPrimIndex            && vertexPrimIndexAttribName.isstring()        && vertexPrimIndexAttribName.length() != 0;
+    calVertexVertexPrim           = calVertexVertexPrim           && ((vertexVertexPrimPrevAttribName.isstring() && vertexVertexPrimPrevAttribName.length() != 0) || (vertexVertexPrimNextAttribName.isstring() && vertexVertexPrimNextAttribName.length() != 0));
+    calVertexPointDst             = calVertexPointDst             && vertexPointDstAttribName.isstring()         && vertexPointDstAttribName.length() != 0;
+    calVertexNextEquiv            = calVertexNextEquiv            && vertexNextEquivAttribName.isstring()        && vertexNextEquivAttribName.length() != 0;
+    calVertexNextEquivNoLoop      = calVertexNextEquivNoLoop      && vertexNextEquivNoLoopAttribName.isstring()  && vertexNextEquivNoLoopAttribName.length() != 0;
+    calVertexNextEquivGroup       = calVertexNextEquivGroup       && vertexNextEquivGroupName.isstring()         && vertexNextEquivGroupName.length() != 0;
+    calVertexNextEquivNoLoopGroup = calVertexNextEquivNoLoopGroup && vertexNextEquivNoLoopGroupName.isstring()   && vertexNextEquivNoLoopGroupName.length() != 0;
+    calPointPointEdge             = calPointPointEdge             && pointPointEdgeAttribName.isstring()         && pointPointEdgeAttribName.length() != 0;
+    calPointPointPrim             = calPointPointPrim             && pointPointPrimAttribName.isstring()         && pointPointPrimAttribName.length() != 0;
+    calPrimPrimEdge               = calPrimPrimEdge               && primPrimEdgeAttribName.isstring()           && primPrimEdgeAttribName.length() != 0;
+    calPrimPrimPoint              = calPrimPrimPoint              && primPrimPointAttribName.isstring()          && primPrimPointAttribName.length() != 0;
 #else
     UT_StringHolder& pointPointEdgeAttribName;
     UT_StringHolder& pointPointPrimAttribName;
@@ -487,6 +528,8 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         !calVertexPointDst &&
         !calVertexNextEquiv &&
         !calVertexNextEquivNoLoop &&
+        !calVertexNextEquivGroup &&
+        !calVertexNextEquivNoLoopGroup &&
         !calPointPointEdge &&
         !calPointPointPrim &&
         !calPrimPrimEdge &&
@@ -556,6 +599,18 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     {
         meshTopology.setVertexNextEquivNoLoop(false, vertexNextEquivNoLoopAttribName);
     }
+
+    
+    if(calVertexNextEquivGroup)
+    {
+        meshTopology.setVertexNextEquivGroup(false, vertexNextEquivGroupName);
+    }
+    if(calVertexNextEquivNoLoopGroup)
+    {
+        meshTopology.setVertexNextEquivNoLoopGroup(false, vertexNextEquivNoLoopGroupName);
+    }
+    
+    
     if(calPointPointEdge)
     {
         meshTopology.setPointPointEdge(false, pointPointEdgeAttribName);
@@ -845,8 +900,3 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     
 }
 
-
-
-namespace SOP_FeE_MeshTopology_1_0_Namespace {
-
-} // End SOP_FeE_MeshTopology_1_0_Namespace namespace

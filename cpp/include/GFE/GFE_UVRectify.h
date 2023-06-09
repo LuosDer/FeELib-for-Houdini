@@ -12,18 +12,35 @@
 
 #include "GFE/GFE_NodeVerb.h"
 
-//#include "GFE/GFE_RestVectorComponent.h"
-//#include "GFE/GFE_GroupElementByDirection.h"
-//#include "GFE/GFE_GroupUnshared.h"
-
+// #include "SOP/SOP_UVFlatten-3.0.h"
 #include "SOP/SOP_UVFlatten-3.0.proto.h"
 
 class GFE_UVRectify : public GFE_AttribFilter {
 
-#define __TEMP_GFE_UVRectify_VertexGroupName "__TEMP_GFE_UVRectify"
+#define __TEMP_GFE_UVRectify_VertexGroupName "__TEMP_GFE_UVRectify_GROUP"
+#define __TEMP_GFE_UVRectify_VertexRectifyGroupName "__TEMP_GFE_UVRectify_Rectify_GROUP"
     
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    //using GFE_AttribFilter::GFE_AttribFilter;
+
+    GFE_UVRectify(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , groupParserRectify(geo, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_UVRectify(
+        GA_Detail& geo,
+        const GA_Detail& geoSrc,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, geoSrc, cookparms)
+        , groupParserRectify(geoSrc, groupParser.getGOPRef(), cookparms)
+    {
+    }
 
     ~GFE_UVRectify()
     {
@@ -53,96 +70,89 @@ private:
     virtual bool
         computeCore() override
     {
-        UT_ASSERT_MSG_P(cookparms, "must have cookparms");
+        UT_ASSERT_MSG_P(uvFlattenVerb, "Does not have UV Flatten 3.0 Verb");
+        
+        UT_ASSERT_MSG_P(cookparms, "Does not have cookparms");
         if (!cookparms)
             return false;
         
         //if (getOutAttribArray().isEmpty())
         //    return false;
         
-        //if (groupParser.isEmpty())
-        //    return true;
+        if (groupParser.isEmpty())
+            return true;
+        
+        GU_DetailHandle geoTmp_h;
+        geoTmp = new GU_Detail();
+        geoTmp_h.allocateAndSet(geoTmp);
+        geoTmp->replaceWith(geoSrc ? *geoSrc : *geo);
+        
+        // if (!getOutAttribArray().isEmpty())
+        // {
+        //     const GA_Attribute& attrib = *getOutAttribArray()[0];
+        //     if (!geoTmp->findAttribute(attrib.getOwner(), attrib.getName()))
+        //         geoTmp->getAttributes().cloneAttribute(attrib.getOwner(), attrib.getName(), attrib, true);
+        // }
+        
+        inputgdh.clear();
+        inputgdh.emplace_back(geoTmp_h);
         
         
-        // GU_DetailHandle geoTmp_h;
-        // geoTmp = new GU_Detail();
-        // geoTmp_h.allocateAndSet(geoTmp);
-        // geoTmp->replaceWith(*geoSrc);
-        // 
-        // inputgdh.clear();
-        // inputgdh.emplace_back(geoTmp_h);
-        // 
-        // GA_VertexGroup* const rectifyGroup = geoTmp->newVertexGroup(__TEMP_GFE_UVRectify_VertexGroupName);
-        // GFE_GroupUnion::groupUnion(rectifyGroup, groupParser.getGroup());
-
         
-        //if (groupParser.getGroup())
-        //    GFE_GroupUnion::groupUnion(rectifyGroup, groupParser.getVertexGroup());
-        //else
-        //    rectifyGroup->addAll();
+        GA_PrimitiveGroup* const inGroup = geoTmp->newPrimitiveGroup(__TEMP_GFE_UVRectify_VertexGroupName);
+        GA_VertexGroup* const rectifyGroup = geoTmp->newVertexGroup(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
+        GFE_GroupUnion::groupUnion(inGroup, groupParser.getGroup());
+        GFE_GroupUnion::groupUnion(rectifyGroup, groupParserRectify.getGroup());
+        //rectifyGroup->combine(groupParser.getGroup());
         
         uvRectify();
-        
+
+        geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_UVRectify_VertexGroupName);
+        geo->getGroupTable(GA_GROUP_VERTEX)   ->destroy(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
         return true;
     }
 
 
     void uvRectify()
     {
-        SOP_UVFlatten_3_0Parms uvFlattenParms;
-        // uvFlattenParms.setKeepExistingLayout(true);
-        // uvFlattenParms.setKeepExistingSeams(true);
-        // uvFlattenParms.setRectifyGroup(__TEMP_GFE_UVRectify_VertexGroupName);
-        // uvFlattenParms.setMethod(flattenMethod ? SOP_UVFlatten_3_0Enums::Method::ABF : SOP_UVFlatten_3_0Enums::Method::SCP);
-        // 
-        // uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
-        // uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
-        // uvFlattenParms.setManualLayout(manualLayout);
+        uvFlattenParms.setGroup(__TEMP_GFE_UVRectify_VertexGroupName);
+        uvFlattenParms.setRectifyGroup(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
         
-        //const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nullptr, &inputgdh);
-        //const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms);
+        uvFlattenParms.setKeepExistingLayout(true);
+        uvFlattenParms.setKeepExistingSeams(true);
+        uvFlattenParms.setMethod(flattenMethod ? SOP_UVFlatten_3_0Enums::Method::ABF : SOP_UVFlatten_3_0Enums::Method::SCP);
         
-        //geo->clear();
+        //uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
+        uvFlattenParms.setUVAttrib(uvAttribName);
         
-        //geo->replaceWith(*geoTmp);
-        //return;
-
-        UT_Array<GU_ConstDetailHandle> nodeInputs;
-        const size_t nInputs = cookparms->nInputs();
-        for (size_t i = 0; i < nInputs; ++i)
-        {
-            nodeInputs.emplace_back(cookparms->inputGeoHandle(i));
-        }
-    
-        SOP_Node* const node = cookparms->getNode();
-        const SOP_CookEngine cookEngine = node == nullptr ? SOP_COOK_COMPILED : SOP_COOK_TRADITIONAL;
-    
-        SOP_NodeVerb::CookParms uvFlattenCookparms(cookparms->gdh(), nodeInputs,
-            cookEngine, node, cookparms->getContext(),
-            &uvFlattenParms, nullptr, cookparms->error(), cookparms->depnode());
+        uvFlattenParms.setManualLayout(manualLayout);
+        SOP_NodeCache* const nodeCache = uvFlattenVerb->allocCache();
+        const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nodeCache, nullptr, &inputgdh);
         
-        const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
-        if (uvFlattenVerb)
-            uvFlattenVerb->cook(uvFlattenCookparms);
+        uvFlattenVerb->cook(uvFlattenCookparms);
     }
 
 
 
 public:
+    GFE_GroupParser groupParserRectify;
+    
     bool flattenMethod = true; // true means ABF  while  false means SCP
     bool manualLayout = true;
+    const char* uvAttribName = "uv";
     
 private:
     GU_Detail* geoTmp = nullptr;
     
     UT_Array<GU_ConstDetailHandle> inputgdh;
-    //SOP_UVFlatten_3_0Parms uvFlattenParms;
-    //const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
+    SOP_UVFlatten_3_0Parms uvFlattenParms;
+    const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
     
     // exint subscribeRatio = 64;
     // exint minGrainSize = 256;
     
 #undef __TEMP_GFE_UVRectify_VertexGroupName
+#undef __TEMP_GFE_UVRectify_VertexRectifyGroupName
     
 }; // End of class GFE_UVRectify
 

@@ -75,7 +75,7 @@ public:
         : geo(geo)
         , geoSrc(geoSrc)
         , cookparms(cookparms)
-        , groupParser(geo, gop, cookparms)
+        , groupParser(geoSrc, gop, cookparms)
     {
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -88,7 +88,20 @@ public:
         : geo(static_cast<GFE_Detail*>(&geo))
         , geoSrc(&geoSrc)
         , cookparms(&cookparms)
-        , groupParser(geo, gop, cookparms)
+        , groupParser(geoSrc, gop, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_GeoFilter(
+        GA_Detail& geo,
+        const GA_Detail& geoSrc,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : geo(static_cast<GFE_Detail*>(&geo))
+        , geoSrc(&geoSrc)
+        , cookparms(cookparms)
+        , groupParser(geoSrc, gop, cookparms)
     {
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -96,12 +109,12 @@ public:
     GFE_GeoFilter(
         GA_Detail& geo,
         const GA_Detail* const geoSrc,
-        const SOP_NodeVerb::CookParms* const cookparms
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geo(static_cast<GFE_Detail*>(&geo))
         , geoSrc(geoSrc)
         , cookparms(cookparms)
-        , groupParser(geo, gop, cookparms)
+        , groupParser(geoSrc, gop, cookparms)
     {
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
@@ -533,6 +546,18 @@ public:
 
     GFE_AttribFilter(
         GA_Detail& geo,
+        const GA_Detail& geoSrc,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        , outAttribArray(geo, cookparms)
+        , outGroupArray(geo, cookparms)
+    {
+        //UT_ASSERT_MSG(geo, "do not find geo");
+    }
+
+    GFE_AttribFilter(
+        GA_Detail& geo,
         const GA_Detail* const geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms
     )
@@ -610,7 +635,7 @@ virtual void delGroupElement(const GA_Group* group = nullptr)
     }
     else
     {
-        const GA_Range range(*static_cast<const GA_ElementGroup*>(group));
+        const GA_Range range(static_cast<const GA_ElementGroup&>(*group));
         switch (group->classType())
         {
         case GA_GROUP_PRIMITIVE:

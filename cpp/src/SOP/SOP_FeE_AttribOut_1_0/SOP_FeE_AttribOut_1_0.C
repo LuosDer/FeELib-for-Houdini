@@ -83,9 +83,9 @@ static const char* theDsFile = R"THEDSFILE(
             joinnext
         }
         parm {
-            name    "groupClass#"
-            cppname "GroupClass#"
-            label   "Group Class"
+            name    "groupType#"
+            cppname "GroupType#"
+            label   "Group Type"
             type    ordinal
             default { "point" }
             menu {
@@ -221,10 +221,10 @@ sopAttribOwner(const int64 attribClass)
 }
 
 static GA_GroupType
-sopGroupType(const int64 parmGroupClass)
+sopGroupType(const int64 parmGroupType)
 {
     using namespace SOP_FeE_AttribOut_1_0Enums;
-    switch (parmGroupClass)
+    switch (parmGroupType)
     {
     default:
     case 0:      return GA_GROUP_PRIMITIVE;  break;
@@ -320,7 +320,7 @@ SOP_FeE_AttribOut_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     {
         const SOP_FeE_AttribOut_1_0Parms::NumGroupOut& groupOut = numGroupOut[i];
 
-        const GA_GroupType groupClass = sopGroupType(groupOut.groupClass);
+        const GA_GroupType groupClass = sopGroupType(groupOut.groupType);
         if (groupOut.outGroup)
         {
             outGeo0.getGroupTable(groupClass)->renameGroup(groupOut.group, groupOut.newGroupName);

@@ -31,31 +31,25 @@ public:
     { UT_ASSERT_P(group); groupUnion(*group, groupRef, reverse, subscribeRatio, minGrainSize); }
     
     template<typename GROUP_T, typename GROUP_REF_T>
-    static void groupUnion(
+    SYS_FORCE_INLINE static void groupUnion(
         GROUP_T& group, const GROUP_REF_T* const groupRef,
         const bool reverse = false,
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
     {
-        if (!groupRef)
-        {
-            if (!reverse)
-                group.addAll();
-            return;
-        }
-        groupUnion(group, *groupRef, reverse, subscribeRatio, minGrainSize);
+        if (groupRef)
+            groupUnion(group, *groupRef, reverse, subscribeRatio, minGrainSize);
+        else if (!reverse)
+            group.addAll();
     }
 
-#define GFE_GroupUnion_FUNC_SPECILIZATION(GroupType)                                                     \
-static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, const bool reverse = false) \
-{                                                                                                        \
-    if (!groupRef)                                                                                       \
-    {                                                                                                    \
-        if (!reverse)                                                                                    \
-            group.addAll();                                                                              \
-        return;                                                                                          \
-    }                                                                                                    \
-    groupUnion(group, *groupRef, reverse);                                                               \
-}                                                                                                        \
+#define GFE_GroupUnion_FUNC_SPECILIZATION(GroupType)                                                                      \
+SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, const bool reverse = false) \
+{                                                                                                                         \
+    if (groupRef)                                                                                                         \
+        groupUnion(group, *groupRef, reverse);                                                                            \
+    else if (!reverse)                                                                                                    \
+        group.addAll();                                                                                                   \
+}                                                                                                                         \
 
     GFE_GroupUnion_FUNC_SPECILIZATION(GA_PrimitiveGroup);
     GFE_GroupUnion_FUNC_SPECILIZATION(GA_PointGroup);
@@ -64,15 +58,12 @@ static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, con
 #undef GFE_GroupUnion_FUNC_SPECILIZATION
 
     template<typename GROUP_T>
-    static void groupUnion(GROUP_T& group, const GA_EdgeGroup* const groupRef, const bool reverse = false)
+    SYS_FORCE_INLINE static void groupUnion(GROUP_T& group, const GA_EdgeGroup* const groupRef, const bool reverse = false)
     {
-        if (!groupRef)
-        {
-            if (!reverse)
-                group->addAll();
-            return;
-        }
-        groupUnion(group, *groupRef, reverse);
+        if (groupRef)
+            groupUnion(group, *groupRef, reverse);
+        else if (!reverse)
+            group->addAll();
     }
 
 
@@ -81,7 +72,7 @@ static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, con
     
     /////////////////////////// Utility //////////////////////////
 
-    static void groupUnion(
+    SYS_FORCE_INLINE static void groupUnion(
         GA_Group& group, const GA_Group& groupRef,
         const bool reverse = false,
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
@@ -96,7 +87,7 @@ static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, con
     }
 
     template<typename GROUP_T>
-    static void groupUnion(
+    SYS_FORCE_INLINE static void groupUnion(
         GROUP_T& group, const GA_Group& groupRef,
         const bool reverse = false,
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
@@ -110,7 +101,7 @@ static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, con
         }
     }
     
-    static void groupUnion(GA_EdgeGroup& group, const GA_Group& groupRef, const bool reverse = false)
+    SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GA_Group& groupRef, const bool reverse = false)
     {
         switch (groupRef.classType())
         {
@@ -130,7 +121,7 @@ static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, con
 
     
 #define GFE_GroupUnion_FUNC_SPECILIZATION(GroupType)                         \
-static void groupUnion(                                                      \
+SYS_FORCE_INLINE static void groupUnion(                                     \
     GroupType& group, const GroupType& groupRef,                             \
     const bool reverse = false,                                              \
     const exint subscribeRatio = 64, const exint minGrainSize = 1024)        \
@@ -228,7 +219,7 @@ static void groupUnion(                                                      \
         }, subscribeRatio, minGrainSize);
     }
     
-    static void groupUnion(GA_PrimitiveGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    SYS_FORCE_INLINE static void groupUnion(GA_PrimitiveGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
         group.combine(&groupRef);
     }
@@ -283,7 +274,7 @@ static void groupUnion(                                                      \
         }, subscribeRatio, minGrainSize);
     }
     
-    static void groupUnion(GA_PointGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    SYS_FORCE_INLINE static void groupUnion(GA_PointGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
         group.combine(&groupRef);
     }
@@ -346,7 +337,7 @@ static void groupUnion(                                                      \
         }, subscribeRatio, minGrainSize);
     }
     
-    static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    SYS_FORCE_INLINE static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
         group.combine(&groupRef);
     }
@@ -467,13 +458,10 @@ static void groupUnion(                                                      \
             const bool reverse = false
         )
     {
-        if (!groupRef)
-        {
-            if (!reverse)
-                group.addAll();
-            return;
-        }
-        groupUnion(group, groupRef, dstptAttrib, reverse);
+        if (groupRef)
+            groupUnion(group, groupRef, dstptAttrib, reverse);
+        else if (!reverse)
+            group.addAll();
     }
     
     static void
