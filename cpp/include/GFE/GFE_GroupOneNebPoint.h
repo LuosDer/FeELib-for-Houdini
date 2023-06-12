@@ -4,15 +4,13 @@
 #ifndef __GFE_GroupOneNebPoint_h__
 #define __GFE_GroupOneNebPoint_h__
 
-//#include "GFE/GFE_GroupOneNebPoint.h"
+#include "GFE/GFE_GroupOneNebPoint.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
+
 #include "GU/GU_Snap.h"
-
-
-
 
 class GFE_GroupOneNebPoint : public GFE_AttribFilter {
 
@@ -26,10 +24,10 @@ public:
     
     void
         setComputeParm(
-            const bool preFusePoint = false,
-            const fpreal fuseDist = 1e-05,
+            const bool preFusePoint    = false,
+            const fpreal fuseDist      = 1e-05,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+            const exint minGrainSize   = 64
         )
     {
         setHasComputed();
@@ -39,88 +37,114 @@ public:
         this->minGrainSize   = minGrainSize;
     }
 
-     
-    //SYS_FORCE_INLINE GA_PointGroup* findOrCreateGroup(const bool detached = false, const UT_StringRef& groupName = "")
-    //{ return getOutGroupArray().findOrCreatePoint(detached, groupName); }
-
-
+    
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
-        if (getOutGroupArray().isEmpty())
+        if (getOutGroupArray().isEmpty() || getOutGroupArray()[0]->classType() != GA_GROUP_POINT)
             return false;
         
         if (groupParser.isEmpty())
             return true;
 
-        
+        GU_DetailHandle geoOrigin_h;
         if (preFusePoint)
         {
-            fuseDist
+            geoOriginTmp = new GU_Detail();
+            geoOrigin_h.allocateAndSet(geoOriginTmp);
+            geoOriginTmp->replaceWith(*geo);
+
+            fuseParms.myDistance = fuseDist;
+            fuseParms.myAlgorithm = GU_Snap::PointSnapParms::SnapAlgorithm::ALGORITHM_CLOSEST_POINT;
+            fuseParms.myConsolidate = true;
+            fuseParms.myDeleteConsolidated = true;
+            fuseParms.myQPosH = geoOriginTmp->getP();
+            fuseParms.myTPosH = geoOriginTmp->getP();
+            GU_Snap::snapPoints(*geoOriginTmp, nullptr, fuseParms);
+            //GU_Snap::snapPoints(*geoOriginTmp, static_cast<const GU_Detail*>(geo), fuseParms);
         }
-        oneNebPointGroup = static_cast<GA_PointGroup*>(getOutGroupArray()[0]);
-        
-        if (groupParser.isFull())
+        else
         {
-            groupOneNeb(const GA_PrimitiveGroup*());
-            return true;
+            geoOriginTmp = geo->asGU_Detail();
         }
         
+        groupSetter = getOutGroupArray().getPointGroup(0);
+
         switch (groupParser.classType())
         {
-        case GA_GROUP_PRIMITIVE: return groupOneNeb(groupParser.getPrimitiveGroup()); break;
-        case GA_GROUP_POINT:     return groupOneNeb(groupParser.getPointGroup());     break;
-        case GA_GROUP_VERTEX:    return groupOneNeb(groupParser.getVertexGroup());    break;
-        case GA_GROUP_EDGE:      return groupOneNeb(groupParser.getEdgeGroup());      break;
-        default: break;
+        default:
+        case GA_GROUP_PRIMITIVE: return groupOneNeb<GA_GROUP_PRIMITIVE>(); break;
+        case GA_GROUP_POINT:     return groupOneNeb<GA_GROUP_POINT>    (); break;
+        case GA_GROUP_VERTEX:    return groupOneNeb<GA_GROUP_VERTEX>   (); break;
         }
 
         return true;
     }
 
-
-    void groupOneNeb(const GA_PrimitiveGroup* const geoGroup)
+    template<GA_GroupType GroupType_T>
+    void groupOneNeb()
     {
         //UT_ASSERT_P(geoGroup);
         
         const GA_Topology& topo = geo->getTopology();
         //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology& vtxPointRef = *topo.getPointRef();
+        const GA_ATITopology& pointVtxRef = *topo.getVertexRef();
+        const GA_ATITopology& vtxNextRef = *topo.getVertexNextRef();
 
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoGroup));
-        UTparallelFor(geoSplittableRange0, [this,
-            vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &vtxPointRef, &pointVtxRef, &vtxNextRef](const GA_SplittableRange& r)
+        {
+            GA_Offset vtxoff, vtxoff_next, ptoff;
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
-                GA_Offset vtxoff, ptoff;
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                    if (numvtx <= 0)
+                        continue;
+                    
+                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
+                    if constexpr (GroupType_T == GA_GROUP_POINT)
                     {
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                        ptoff  = vtxPointRef->getLink(vtxoff);
-                        vtxoff = pointVtxRef->getLink(ptoff);
-                        vtxoff = vtxNextRef->getLink(vtxoff);
-                        //if (!topo.isPointShared(ptoff))
-                        if (vtxoff == GA_INVALID_OFFSET)
-                            oneNebPointGroup->setElement(ptoff, true);
-
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-                        ptoff  = vtxPointRef->getLink(vtxoff);
-                        vtxoff = pointVtxRef->getLink(ptoff);
-                        vtxoff = vtxNextRef->getLink(vtxoff);
-                        //if (!topo.isPointShared(ptoff))
-                        if (vtxoff == GA_INVALID_OFFSET)
-                            oneNebPointGroup->setElement(ptoff, true);
+                        
+                    }
+                    if constexpr (GroupType_T == GA_GROUP_VERTEX)
+                    {
+                        
+                        if (groupParser.cont)
+                        {
+                        
+                        }
+                    }
+                    
+                    ptoff       = vtxPointRef.getLink(vtxoff);
+                    vtxoff_next = pointVtxRef.getLink(ptoff);
+                    if (vtxoff_next == vtxoff)
+                    {
+                        vtxoff_next = vtxNextRef.getLink(vtxoff_next);
+                        if (GFE_Type::isInvalidOffset(vtxoff_next))
+                            groupSetter.set(ptoff, true);
+                    }
+                    
+                    if (numvtx <= 1)
+                        continue;
+                    
+                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, numvtx-1);
+                    ptoff       = vtxPointRef.getLink(vtxoff);
+                    vtxoff_next = pointVtxRef.getLink(ptoff);
+                    if (vtxoff_next == vtxoff)
+                    {
+                        vtxoff_next = vtxNextRef.getLink(vtxoff_next);
+                        if (GFE_Type::isInvalidOffset(vtxoff_next))
+                            groupSetter.set(ptoff, true);
                     }
                 }
-            }, subscribeRatio, minGrainSize);
-        oneNebPointGroup->invalidateGroupEntries();
+            }
+        }, subscribeRatio, minGrainSize);
+        groupSetter.invalidateGroupEntries();
     }
 
 
@@ -215,6 +239,9 @@ private:
         oneNebPointGroup->invalidateGroupEntries();
     }
 
+    SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GU_Detail* const geo, const GA_Offset primoff, const GA_Size vtxpnum) const
+    { return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum)); }
+
 
 
 public:
@@ -222,10 +249,11 @@ public:
     fpreal fuseDist = 1e-05;
     
 private:
-    GA_PointGroup* oneNebPointGroup = nullptr;
+    GU_Snap::PointSnapParms fuseParms;
     
     GU_DetailHandle geoRef0_h;
     GU_Detail* geoRef0Tmp;
+    GU_Detail* geoOriginTmp;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 256;

@@ -13,7 +13,7 @@
 #include "GFE/GFE_MeshTopology.h"
 
 #include "GFE/GFE_GroupPromote.h"
-#include "GFE/GFE_GroupBoolean.h"
+//#include "GFE/GFE_GroupBoolean.h"
 #include "GFE/GFE_GroupExpand.h"
 
 
@@ -56,15 +56,15 @@ public:
         setHasComputed();
         
         this->scaleByTurns = scaleByTurns;
-        this->normalize = normalize;
-        this->uniScale = uniScale;
-        this->blend = blend;
+        this->normalize    = normalize;
+        this->uniScale     = uniScale;
+        this->blend        = blend;
 
         this->findNormal3D = findNormal3D;
         this->addNormal3DIfNoFind = addNormal3DIfNoFind;
 
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
 
@@ -132,14 +132,11 @@ private:
         const GA_Attribute* const dstptAttrib = meshTopology.setVertexPointDst(true);
         meshTopology.compute();
 
-
-        //GA_PointGroup* unsharedPointGroup = const_cast<GA_PointGroup*>(GEO_FeE_Group::groupPromote(geo, unsharedGroup, GA_GROUP_POINT, geo0AttribNames, true));
-#if 1
-        const GA_PointGroupUPtr unsharedPointGroupUPtr = GFE_GroupPromote::groupPromotePointDetached(geo, unsharedVertexGroup);
+        const GA_PointGroupUPtr unsharedPointGroupUPtr = geo->createDetachedPointGroup();
+        //const GA_PointGroupUPtr unsharedPointGroupUPtr = GFE_GroupPromote::groupPromotePointDetached(geo, unsharedVertexGroup);
         GA_PointGroup* const unsharedPointGroup = unsharedPointGroupUPtr.get();
-#else
-        GA_PointGroup* const unsharedPointGroup = GFE_GroupPromote::groupPromotePoint(geo, unsharedVertexGroup);
-#endif
+        unsharedPointGroup->combine(unsharedVertexGroup);
+        
         if (geoPointGroup)
         {
             GA_PointGroupUPtr expandGroupUPtr = geo->createDetachedPointGroup();
@@ -157,8 +154,8 @@ private:
             
             const GA_PointGroupUPtr expandPointGroupUPtr = GFE_GroupPromote::groupPromotePointDetached(geo, unsharedVertexGroup);
             GA_PointGroup* const expandPointGroup = expandPointGroupUPtr.get();
-            //geo->groupIntersect(*unsharedVertexGroup, expandPointGroup);
-            GFE_GroupBoolean::groupIntersect(unsharedVertexGroup, expandPointGroup);
+            geo->groupIntersect(*unsharedVertexGroup, expandPointGroup);
+            //*unsharedVertexGroup &= expandPointGroup;
         }
 
         const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);

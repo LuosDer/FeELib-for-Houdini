@@ -22,15 +22,28 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "1" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "collisionGroup"
@@ -42,13 +55,6 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
         parmtag { "sop_input" "1" }
-    }
-    parm {
-        name    "runOverPiece"
-        cppname "RunOverPiece"
-        label   "Run Over Piece"
-        type    toggle
-        default { "off" }
     }
     parm {
         name    "class"
@@ -73,30 +79,6 @@ static const char *theDsFile = R"THEDSFILE(
             "prim"      "Primitive"
             "point"     "Point"
         }
-    }
-    parm {
-        name    "usePieceAttrib"
-        cppname "UsePieceAttrib"
-        label   "Piece Attribute"
-        type    toggle
-        default { "on" }
-        disablewhen "{ runOverPiece == 0 }"
-    }
-    parm {
-        name    "pieceAttrib"
-        cppname "PieceAttrib"
-        label   "Piece Attribute"
-        type    string
-        default { "name" }
-        disablewhen "{ usePieceAttrib == 0 } { runOverPiece == 0 }"
-    }
-    parm {
-        name    "pieceAttribRef"
-        cppname "PieceAttribRef"
-        label   "Piece Attribute Ref"
-        type    string
-        default { "name" }
-        disablewhen "{ usePieceAttrib == 0 } { runOverPiece == 0 }"
     }
     parm {
         name    "sepparm2"
@@ -388,7 +370,7 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (!geo0AttribNames.isstring())
         return;
 
-    //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
 
@@ -396,11 +378,15 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GFE_OnPoly::onPoly(cookparms, outGeo0, inGeo1, sopparms.getPointGroup(), );
     
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
+    GFE_OnPoly onPoly(outGeo0, cookparms);
+    onPoly.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
+    onPoly.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    onPoly.groupParser.setGroup(groupType, sopparms.getGroup());
+    onPoly.computeAndBumpDataId();
 
     
     const UT_StringHolder& collisionGroupName = sopparms.getCollisionGroupName();

@@ -1632,14 +1632,6 @@ public:
     {
         if (!groupRef)
             return;
-        /*
-        if (group.entries() > groupRef->entries())
-        {
-        }
-        else
-        {
-        }
-        */
         const GA_SplittableRange geoSplittableRange(getRange(groupRef, true));
         UTparallelFor(geoSplittableRange, [this, &group](const GA_SplittableRange& r)
         {

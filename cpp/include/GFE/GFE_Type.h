@@ -143,7 +143,15 @@ SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
 SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
 { return axisDir<UT_Vector3T<fpreal16>>(axis); }
 
+
     
+    
+SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute& posAttrib)
+{ return posAttrib.getOwner() == GA_ATTRIB_POINT && posAttrib.getAIFTuple() && posAttrib.getTupleSize()==3; }
+    
+SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAttrib)
+{ return posAttrib && isInvalidPosAttrib(*posAttrib); }
+
 
     
 template<typename VECTOR_T>

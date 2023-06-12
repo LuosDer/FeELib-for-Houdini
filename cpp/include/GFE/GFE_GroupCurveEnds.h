@@ -16,7 +16,11 @@ class GFE_GroupCurveEnds : public GFE_AttribFilter {
 
 public:
     
-// GFE_GroupCurveEnds::Type::Ends
+/*
+
+GFE_GroupCurveEnds::Type::Ends
+
+*/
     enum Type
     {
         Ends,
@@ -33,14 +37,12 @@ public:
     void
         setComputeParm(
             const size_t numEnds = 1,
-            const bool reverseGroup = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
     {
         setHasComputed();
         this->numEnds  = numEnds;
-        this->reverseOutGroup = reverseGroup;
         this->subscribeRatio  = subscribeRatio;
         this->minGrainSize    = minGrainSize;
     }
@@ -97,6 +99,9 @@ private:
         if (getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
             return false;
 
+        if (!(startGroup || endGroup || endsGroup))
+            return false;
+        
         if (numEnds <= 0)
             return true;
         
@@ -127,62 +132,62 @@ private:
     {
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
         {
-            //GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            GA_Offset start, end;
+            for (GA_Iterator it(r.begin()); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                //attrib_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    //attrib_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                    if (numvtx <= 0)
+                        continue;
+                    else if (numvtx == 1)
                     {
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const size_t numvtx = vertices.size();
-                        if (numvtx <= 0)
-                            continue;
-                        
-                        const GA_Size numEnds_forward  = SYSmin(numvtx, numEnds);
-                        const GA_Size numEnds_backward = SYSmax(size_t(0), numvtx-numEnds);
+                        const GA_Offset endPtoff = geo->getPrimitivePointOffset(elemoff, 0);
+                        if (startGroup)
+                            startGroup->setElement(endPtoff, true);
+                        if (endGroup)
+                            endGroup->setElement(endPtoff, true);
                         if (endsGroup)
+                            endsGroup->setElement(endPtoff, true);
+                    }
+                    
+                    const GA_Size numEnds_forward  = SYSmin(numvtx, numEnds);
+                    const GA_Size numEnds_backward = SYSmax(GA_Size(0), numvtx-numEnds);
+                    if (endsGroup)
+                    {
+                        for (GA_Size vtxpnum = 0; vtxpnum < numEnds_forward; ++vtxpnum)
                         {
-                            for (GA_Size vtxpnum = 0; vtxpnum < numEnds_forward; ++vtxpnum)
-                            {
-                                const GA_Offset endPtoff = geo->vertexPoint(vertices[vtxpnum]);
-                                endsGroup->setElement(endPtoff, true);
-                                if (startGroup)
-                                    startGroup->setElement(endPtoff, true);
-                            }
-                            
-                            for (GA_Size vtxpnum = numvtx-1; vtxpnum >= numEnds_backward; --vtxpnum)
-                            {
-                                const GA_Offset endPtoff = geo->vertexPoint(vertices[vtxpnum]);
-                                endsGroup->setElement(endPtoff, true);
-                                if (startGroup)
-                                    startGroup->setElement(endPtoff, true);
-                            }
+                            const GA_Offset endPtoff = geo->getPrimitivePointOffset(elemoff, vtxpnum);
+                            endsGroup->setElement(endPtoff, true);
+                            if (startGroup)
+                                startGroup->setElement(endPtoff, true);
                         }
-                        else
+                        
+                        for (GA_Size vtxpnum = numvtx-1; vtxpnum >= numEnds_backward; --vtxpnum)
                         {
-                            // if (startGroup)
-                            //     startGroup->setElement(geo->vertexPoint(vertices[0]), true);
-                            // if (endGroup)
-                            //     endGroup->setElement(geo->vertexPoint(vertices[lastVertexIndex]), true);
-                            //
-                            for (GA_Size vtxpnum = 0; vtxpnum < numEnds_forward; ++vtxpnum)
-                            {
-                                const GA_Offset endPtoff = geo->vertexPoint(vertices[vtxpnum]);
-                                endsGroup->setElement(endPtoff, true);
-                                if (startGroup)
-                                    startGroup->setElement(endPtoff, true);
-                            }
-                            
-                            for (GA_Size vtxpnum = numvtx-1; vtxpnum >= numEnds_backward; --vtxpnum)
-                            {
-                                const GA_Offset endPtoff = geo->vertexPoint(vertices[vtxpnum]);
-                                endsGroup->setElement(endPtoff, true);
-                                if (startGroup)
-                                    startGroup->setElement(endPtoff, true);
-                            }
+                            const GA_Offset endPtoff = geo->getPrimitivePointOffset(elemoff, vtxpnum);
+                            endsGroup->setElement(endPtoff, true);
+                            if (endGroup)
+                                endGroup->setElement(endPtoff, true);
+                        }
+                    }
+                    else
+                    {
+                        for (GA_Size vtxpnum = 0; vtxpnum < numEnds_forward; ++vtxpnum)
+                        {
+                            const GA_Offset endPtoff = geo->getPrimitivePointOffset(elemoff, vtxpnum);
+                            endsGroup->setElement(endPtoff, true);
+                            if (startGroup)
+                                startGroup->setElement(endPtoff, true);
+                        }
+                        
+                        for (GA_Size vtxpnum = numvtx-1; vtxpnum >= numEnds_backward; --vtxpnum)
+                        {
+                            const GA_Offset endPtoff = geo->getPrimitivePointOffset(elemoff, vtxpnum);
+                            endsGroup->setElement(endPtoff, true);
+                            if (endGroup)
+                                endGroup->setElement(endPtoff, true);
                         }
                     }
                 }

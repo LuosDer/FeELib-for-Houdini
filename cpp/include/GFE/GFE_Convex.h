@@ -10,9 +10,6 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-
-//#include "GU/GU_TriangleMesh.h"
-
 class GFE_Convex : public GFE_GeoFilter {
 
 
@@ -44,13 +41,15 @@ private:
     {
         if (groupParser.isEmpty())
             return true;
-
-        GA_PrimitiveGroup* geoPrimGroup = groupParser.getPrimitiveGroup();
-        if (geoPrimGroup)
+        
+        GA_PrimitiveGroupUPtr geoPrimGroupUPtr;
+        GA_PrimitiveGroup* geoPrimGroup = nullptr;
+        const GA_PrimitiveGroup* const groupParserPrimGroup = groupParser.getPrimitiveGroup();
+        if (groupParserPrimGroup)
         {
-            const GA_PrimitiveGroupUPtr geoPrimGroupUPtr = geo->createDetachedPrimitiveGroup();
+            geoPrimGroupUPtr = geo->createDetachedPrimitiveGroup();
             geoPrimGroup = geoPrimGroupUPtr.get();
-            geoPrimGroup->combine(groupParser.getPrimitiveGroup());
+            geoPrimGroup->combine(groupParserPrimGroup);
         }
         
 #if 1

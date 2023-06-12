@@ -416,7 +416,7 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     if (sopparms.getOutPointInMeshGroup())
     {
-        wn.setGroup.setParm(groupMergeType, sopparms.getReverseGroup());
+        wn.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
         wn.setPointInMeshComputeParm(
             sopparms.getGroupInGeoPoint(),
             sopparms.getGroupOnGeoPoint(),

@@ -179,21 +179,22 @@ SOP_FeE_SmallPiece_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GFE_SmallPiece smallPiece
 
+    GFE_SmallPiece smallPiece(outGeo0, cookparms);
+    smallPiece.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+
+    smallPiece.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    smallPiece.groupParser.setGroup(groupType, sopparms.getGroup());
+    smallPiece.computeAndBumpDataId();
+    smallPiece.visu
     
     const GA_Group* const geo0Group = GA_FeE_SmallPiece::(outGeo0, groupType, groupName);
 
     if (!geo0Group)
         return;
 
-    cookparms.getNode()->setHighlight(true);
-    cookparms.select(*geo0Group);
 
 }
 
-
-
-namespace SOP_FeE_SmallPiece_1_0_Namespace {
-
-} // End SOP_FeE_SmallPiece_1_0_Namespace namespace

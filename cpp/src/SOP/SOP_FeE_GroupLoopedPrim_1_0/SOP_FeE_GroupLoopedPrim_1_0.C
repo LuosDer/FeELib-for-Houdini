@@ -25,52 +25,74 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "curveUVMethod"
-        cppname "CurveUVMethod"
-        label   "Curve UV Method"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
         type    ordinal
-        default { "arcLength" }
+        default { "guess" }
         menu {
-            "worldArcLength"  "World Arc Length"
-            "worldAverage"    "World Average"
-            "localArcLength"  "Local Arc Length"
-            "localAverage"    "Local Average"
-        }
-    }
-    parm {
-        name    "uvAttrib"
-        cppname "UVAttrib"
-        label   "UV Attribute"
-        type    string
-        default { "uv" }
-    }
-    parm {
-        name    "uvClass"
-        cppname "UVClass"
-        label   "UV Class"
-        type    ordinal
-        default { "auto" }
-        menu {
-            "auto"      "Auto"
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
             "point"     "Point"
             "vertex"    "Vertex"
+            "edge"      "Edge"
         }
     }
 
     parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
+        name    "loopedPrimGroupName"
+        cppname "LoopedPrimGroupName"
+        label   "Looped Prim Group Name"
+        type    string
+        default { "looped" }
+    }
+    parm {
+        name    "preFusePoint"
+        cppname "PreFusePoint"
+        label   "preFusePoint"
+        type    toggle
+        joinnext
+        nolabel
+        default { "0" }
+    }
+    parm {
+        name    "fuseDist"
+        cppname "FuseDist"
+        label   "Fuse Distance"
+        type    log
+        default { "1e-05" }
+        range   { 0.00001 0.1 }
+        disablewhen "{ preFusePoint == 0 }"
+    }
+
+
+    parm {
+        name    "groupMergeType"
+        cppname "GroupMergeType"
+        label   "Group Merge Type"
+        type    ordinal
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "union"     "Union with Existing"
+            "intersect" "Intersect with Existing"
+            "subtract"  "Subtract from Existing"
+        }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
         type    toggle
         default { "0" }
     }
@@ -101,9 +123,7 @@ SOP_FeE_GroupLoopedPrim_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_GroupLoopedPrim_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allTextureCoordMenu);
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
     }
     return templ.templates();
 }
@@ -166,37 +186,21 @@ SOP_FeE_GroupLoopedPrim_1_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_GroupLoopedPrim_1_0Parms::UVClass attribClass)
+static GA_GroupType
+sopGroupType(SOP_FeE_GroupLoopedPrim_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupLoopedPrim_1_0Enums;
-    switch (attribClass)
+    switch (parmGroupType)
     {
-    case UVClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
-    case UVClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case UVClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
-
-
-static GFE_CurveUVMethod
-sopCurveUVMethod(SOP_FeE_GroupLoopedPrim_1_0Parms::CurveUVMethod curveUVMethod)
-{
-    using namespace SOP_FeE_GroupLoopedPrim_1_0Enums;
-    switch (curveUVMethod)
-    {
-    case CurveUVMethod::WORLDARCLENGTH:     return GFE_CurveUVMethod::WorldArcLength;    break;
-    case CurveUVMethod::WORLDAVERAGE:       return GFE_CurveUVMethod::WorldAverage;      break;
-    case CurveUVMethod::LOCALARCLENGTH:     return GFE_CurveUVMethod::LocalArcLength;    break;
-    case CurveUVMethod::LOCALAVERAGE:       return GFE_CurveUVMethod::LocalAverage;      break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled CurveUVMethod!");
-    return GFE_CurveUVMethod::WorldArcLength;
-}
-
-
 
 void
 SOP_FeE_GroupLoopedPrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -209,10 +213,8 @@ SOP_FeE_GroupLoopedPrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     outGeo0.replaceWith(inGeo0);
 
-    
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -224,13 +226,13 @@ SOP_FeE_GroupLoopedPrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     GFE_GroupLoopedPrim groupLoopedPrim(outGeo0, cookparms);
 
-    groupLoopedPrim.setComputeParm(, subscribeRatio, minGrainSize);
+    groupLoopedPrim.setComputeParm(sopparms.getPreFusePoint(), sopparms.getFuseDist(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
 
-    groupLoopedPrim.setGroup(sopparms.getPrimGroup());
-    groupLoopedPrim.findOrCreateUV(uvAttribClass, GA_STORE_INVALID, false, uvAttribName, 3);
+    groupLoopedPrim.groupParser.setGroup(groupType, sopparms.getGroup());
 
     groupLoopedPrim.computeAndBumpDataId();
+    groupLoopedPrim.visualizeOutGroup();
 
 
 }

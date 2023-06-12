@@ -15,21 +15,21 @@
 #include "GFE/GFE_Type.h"
 
 
-class GFE_SetGroup
+class GFE_GroupSetter
 {
 public:
-    GFE_SetGroup() {}
+    GFE_GroupSetter() {}
     
-    GFE_SetGroup(GA_Group* inGroupPtr)
+    GFE_GroupSetter(GA_Group* inGroupPtr)
     { operator=(inGroupPtr); }
     
-    GFE_SetGroup(GA_ElementGroup* groupPtr)   : elementGroup(groupPtr) {}
-    GFE_SetGroup(GA_PrimitiveGroup* groupPtr) : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_SetGroup(GA_PointGroup* groupPtr)     : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_SetGroup(GA_VertexGroup* groupPtr)    : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_SetGroup(GA_EdgeGroup* groupPtr)      : edgeGroup(groupPtr) {}
+    GFE_GroupSetter(GA_ElementGroup* groupPtr)   : elementGroup(groupPtr) {}
+    GFE_GroupSetter(GA_PrimitiveGroup* groupPtr) : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
+    GFE_GroupSetter(GA_PointGroup* groupPtr)     : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
+    GFE_GroupSetter(GA_VertexGroup* groupPtr)    : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
+    GFE_GroupSetter(GA_EdgeGroup* groupPtr)      : edgeGroup(groupPtr) {}
 
-    ~GFE_SetGroup(){}
+    ~GFE_GroupSetter(){}
 
 	
     SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
@@ -45,7 +45,7 @@ public:
     { setParm(groupMergeType, reverseGroup); }
     
     
-    GFE_SetGroup& operator=(GA_Group* const inGroupPtr)
+    GFE_GroupSetter& operator=(GA_Group* const inGroupPtr)
     {
         if (inGroupPtr->isElementGroup())
         {
@@ -61,22 +61,25 @@ public:
     }
 
 
-    SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_ElementGroup* const inGroupPtr)
+    SYS_FORCE_INLINE GFE_GroupSetter& operator=(GA_ElementGroup* const inGroupPtr)
     { elementGroup = inGroupPtr; edgeGroup = nullptr; return *this; }
 
-    SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_PrimitiveGroup* const inGroupPtr)
+    SYS_FORCE_INLINE GFE_GroupSetter& operator=(GA_PrimitiveGroup* const inGroupPtr)
     { elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr); edgeGroup = nullptr; return *this; }
 
-    SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_PointGroup* const inGroupPtr)
+    SYS_FORCE_INLINE GFE_GroupSetter& operator=(GA_PointGroup* const inGroupPtr)
     { elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr); edgeGroup = nullptr; return *this; }
 
-    SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_VertexGroup* const inGroupPtr)
+    SYS_FORCE_INLINE GFE_GroupSetter& operator=(GA_VertexGroup* const inGroupPtr)
     { elementGroup = static_cast<GA_ElementGroup*>(inGroupPtr); edgeGroup = nullptr; return *this; }
 
-    SYS_FORCE_INLINE GFE_SetGroup& operator=(GA_EdgeGroup* const inGroupPtr)
+    SYS_FORCE_INLINE GFE_GroupSetter& operator=(GA_EdgeGroup* const inGroupPtr)
     { edgeGroup = inGroupPtr; elementGroup = nullptr; return *this; }
 
+    
 
+    SYS_FORCE_INLINE void invalidateGroupEntries()
+    {  if (elementGroup) elementGroup->invalidateGroupEntries(); }
 
     
     SYS_FORCE_INLINE GA_Group* getGroup()
@@ -165,7 +168,7 @@ private:
     GA_ElementGroup* elementGroup = nullptr;
     GA_EdgeGroup* edgeGroup = nullptr;
     
-}; // End of Class GFE_SetGroup
+}; // End of Class GFE_GroupSetter
 
 
 

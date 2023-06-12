@@ -354,6 +354,11 @@ public:
     SYS_FORCE_INLINE bool isFull() const
     { return hasGroup ? ( !bool(geoGroup) || (geoGroup->classType() != GA_GROUP_EDGE && !geoGroup->entries() == static_cast<const GA_ElementGroup*>(geoGroup)->getIndexMap().indexSize()) ) : true; }
 
+    SYS_FORCE_INLINE bool contains(const GA_Offset elemoff) const
+    { return hasGroup ? (geoGroup ? (geoGroup->isElementGroup() ? static_cast<const GA_ElementGroup*>(geoGroup)->contains(elemoff) : false) : true) : false; }
+
+
+    
 #if 1
     GA_Size getNumElements() const
     {
