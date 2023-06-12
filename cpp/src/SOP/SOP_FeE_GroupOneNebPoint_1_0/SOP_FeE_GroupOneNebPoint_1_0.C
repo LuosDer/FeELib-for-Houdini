@@ -61,6 +61,8 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "PreFusePoint"
         label   "preFusePoint"
         type    toggle
+        joinnext
+        nolabel
         default { "0" }
     }
     parm {
@@ -69,7 +71,8 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Fuse Distance"
         type    log
         default { "1e-05" }
-        range   { 1e-05 0.1 }
+        range   { 0.00001 0.1 }
+        disablewhen "{ preFusePoint == 0 }"
     }
     parm {
         name    "outDirAttrib"

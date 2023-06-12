@@ -175,10 +175,13 @@ public:
 
     
     SYS_FORCE_INLINE void setPositionAttrib(const GA_Attribute* const inPosAttrib)
-    { posAttrib = inPosAttrib; }
+    { posAttrib = inPosAttrib; posAttribNonConst = nullptr; }
+
+    SYS_FORCE_INLINE void setPositionAttrib(GA_Attribute* const inPosAttrib)
+    { posAttrib = inPosAttrib; posAttribNonConst = inPosAttrib; }
 
     SYS_FORCE_INLINE void setPositionAttrib(const UT_StringRef& attribName)
-    { posAttrib = geo->findPointAttribute(attribName); }
+    { posAttribNonConst = geo->findPointAttribute(attribName); posAttrib = posAttribNonConst; }
 
 
 
@@ -292,6 +295,7 @@ protected:
     
     const GA_Attribute* pieceAttrib = nullptr;
     const GA_Attribute* posAttrib = nullptr;
+    GA_Attribute* posAttribNonConst = nullptr;
 
 private:
     //bool outTopoAttrib = true;
@@ -706,7 +710,7 @@ SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo) override
 
 
 public:
-    GFE_SetGroup setGroup;
+    GFE_GroupSetter groupSetter;
     //bool reverseOutGroup = false;
     bool doDelGroupElement = false;
     

@@ -53,9 +53,9 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-        name    "posAttribName"
-        cppname "PosAttribName"
-        label   "Pos Attrib Name"
+        name    "posAttrib"
+        cppname "PosAttrib"
+        label   "Pos Attrib"
         type    string
         default { "P" }
     }
@@ -160,9 +160,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "normal3DAttribName"
-        cppname "Normal3DAttribName"
-        label   "Normal3D Attrib Name"
+        name    "normal3DAttrib"
+        cppname "Normal3DAttrib"
+        label   "Normal3D Attrib"
         type    string
         default { "N" }
         disablewhen "{ useConstantNormal3D == 1 } { findNormal3D == 0 }"
@@ -218,9 +218,9 @@ SOP_FeE_Normal2D_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_Normal2D_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
-        templ.setChoiceListPtr("normal3DAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("posAttrib"_sh,      &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("normal3DAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -357,17 +357,13 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     outGeo0.replaceWith(inGeo0);
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getNormal2DAttribName();
-    if (!geo0AttribNames.isstring() || geo0AttribNames.length() == 0)
+    const UT_StringHolder& normal2DAttribName = sopparms.getNormal2DAttribName();
+    if (!normal2DAttribName.isstring() || normal2DAttribName.length() == 0)
         return;
 
-
-    const GFE_NormalSearchOrder geo0Normal3DSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GFE_NormalSearchOrder geo0Normal3DSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
     
-
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
@@ -379,12 +375,12 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GFE_Normal2D normal2D(outGeo0, &cookparms);
     normal2D.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    normal2D.setPositionAttrib(sopparms.getPosAttribName());
+    normal2D.setPositionAttrib(sopparms.getPosAttrib());
     
     normal2D.getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, sopparms.getNormal2DAttribName());
 
     if (sopparms.getFindNormal3D() && sopparms.getAddNormal3DIfNoFind())
-        normal2D.normal3D.getOutAttribArray().findOrCreateNormal3D(true, geo0Normal3DSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttribName());
+        normal2D.normal3D.getOutAttribArray().findOrCreateNormal3D(true, geo0Normal3DSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
 
     
     const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
@@ -399,7 +395,6 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         sopparms.getScaleByTurns(), sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend(),
         sopparms.getExtrapolateEnds(),
         sopparms.getAddNormal3DIfNoFind(),
-        
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     normal2D.computeAndBumpDataId();

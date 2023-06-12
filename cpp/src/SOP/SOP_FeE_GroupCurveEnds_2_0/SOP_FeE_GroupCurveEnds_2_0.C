@@ -331,6 +331,22 @@ sopGroupType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmGroupType)
 
 
 
+static GFE_GroupMergeType
+sopGroupMergeType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupMergeType groupMergeType)
+{
+    using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
+    switch (groupMergeType)
+    {
+    case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
+    case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
+    case GroupMergeType::INTERSECT:   return GFE_GroupMergeType::Intersect;  break;
+    case GroupMergeType::SUBTRACT:    return GFE_GroupMergeType::Subtract;   break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Merge Type!");
+    return GFE_GroupMergeType::Replace;
+}
+
+
 void
 SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -344,6 +360,7 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
     const GFE_GroupCurveEnds::Type visualizeType = sopVisualize(sopparms.getVisualize());
 
     UT_AutoInterrupt boss("Processing");
@@ -356,8 +373,10 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     groupCurveEnds.setStartGroup(false, sopparms.getStartGroupName());
     groupCurveEnds.setEndGroup(false, sopparms.getEndGroupName());
     groupCurveEnds.setEndsGroup(false, sopparms.getEndsGroupName());
-
-    groupCurveEnds.setComputeParm(sopparms.getNumEnds(), sopparms.getReverseGroup(),
+    
+    groupCurveEnds.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
+    
+    groupCurveEnds.setComputeParm(sopparms.getNumEnds(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     groupCurveEnds.groupParser.setGroup(groupType, sopparms.getGroup());

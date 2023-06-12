@@ -21,11 +21,11 @@ public:
 
     void
         setComputeParm(
-            const GA_Size firstIndex = 0,
-            const bool negativeIndex = false,
-            const bool outAsOffset = true,
+            const GA_Size firstIndex   = 0,
+            const bool negativeIndex   = false,
+            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+            const exint minGrainSize   = 64
         )
     {
         setHasComputed();
@@ -228,19 +228,6 @@ private:
 
 
 }; // End of class GFE_Enumerate
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

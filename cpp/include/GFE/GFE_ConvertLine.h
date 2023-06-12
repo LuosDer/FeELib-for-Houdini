@@ -61,14 +61,14 @@ public:
 
     void
         setComputeParm(
-            const bool isClosed = false,
+            const bool isClosed       = false,
             const bool keepSourcePrim = false
         )
     {
         setHasComputed();
         primoff_first = GFE_INVALID_OFFSET;
         
-        this->isClosed = isClosed;
+        this->isClosed       = isClosed;
         this->keepSourcePrim = keepSourcePrim;
     }
 
@@ -104,12 +104,7 @@ private:
 
         if (!keepSourcePrim)
             geo->replaceWithPoints(*geoOrigin);
-        //if (hasInGeo)
-        //{
-        //}
-        //else
-        //{
-        //}
+        
         GA_AttributeSet& geoAttribSet = geo->getAttributes();
         GA_Attribute* attribPtr = nullptr;
         ::std::vector<GA_Attribute*> copyPrimAttribArray;
@@ -157,24 +152,15 @@ private:
 
         
         GFE_MeshTopology meshTopology(geoOriginTmp);
-        //meshTopology.outAsOffset = false;
         meshTopology.outIntermediateAttrib = false;
         meshTopology.groupParser.setGroup(groupParser.getVertexGroup());
-        
         const GA_VertexGroup* const creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
-        const GA_RWHandleT<GA_Offset> dstpt_h(meshTopology.setVertexPointDst(true));
-        
+        const GA_ROHandleT<GA_Offset> dstpt_h(meshTopology.setVertexPointDst(true));
         meshTopology.compute();
-        // const GA_VertexGroup* const creatingGroup = meshTopology.getVertexNextEquivNoLoopGroup();
-        // const GA_RWHandleT<GA_Offset> dstpt_h(meshTopology.getVertexPointDst());
         
-        //const GA_VertexGroup* const creatingGroup = GFE_VertexNextEquiv::addGroupVertexNextEquivNoLoop(geoOriginTmp, groupParser.getVertexGroup());
-        //const GA_RWHandleT<GA_Offset> dstpt_h = GFE_TopologyReference::addAttribVertexPointDst(geoOriginTmp, groupParser.getVertexGroup());
+        const GA_Size entries = creatingGroup->entries();
 
         UT_ASSERT_P(dstpt_h.getAttribute());
-
-
-        const GA_Size entries = creatingGroup->getGroupEntries();
 
         GA_Offset vtxoff_first;
         primoff_first = geo->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
@@ -198,13 +184,13 @@ private:
 
 
         GA_Topology& topo = geo->getTopology();
-        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+        const GA_ATITopology& vtxPrimRef = *topo.getPrimitiveRef();
 
 
         const GA_Topology& topo_tmpGeo0 = geoOriginTmp->getTopology();
         //topo_tmpGeo0.makePrimitiveRef();
-        const GA_ATITopology* const vtxPointRef_geoTmp = topo_tmpGeo0.getPointRef();
-        const GA_ATITopology* const vtxPrimRef_geoTmp = topo_tmpGeo0.getPrimitiveRef();
+        const GA_ATITopology& vtxPointRef_geoTmp = *topo_tmpGeo0.getPointRef();
+        const GA_ATITopology& vtxPrimRef_geoTmp  = *topo_tmpGeo0.getPrimitiveRef();
 
         GA_Offset start, end;
         for (GA_Iterator it(geoOriginTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
@@ -213,13 +199,13 @@ private:
             {
                 if (createSrcPrimAttrib)
                 {
-                    srcPrim_h.set(vtxPrimRef->getLink(vtxoff_first), vtxPrimRef_geoTmp->getLink(vtxoff));
+                    srcPrim_h.set(vtxPrimRef.getLink(vtxoff_first), vtxPrimRef_geoTmp.getLink(vtxoff));
                 }
                 if (copyVertexAttrib)
                 {
-                    srcVtx_h.set(vtxPrimRef->getLink(vtxoff_first), vtxoff);
+                    srcVtx_h.set(vtxPrimRef.getLink(vtxoff_first), vtxoff);
                 }
-                topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp->getLink(vtxoff));
+                topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp.getLink(vtxoff));
                 ++vtxoff_first;
                 topo.wireVertexPoint(vtxoff_first, dstpt_h.get(vtxoff));
                 ++vtxoff_first;

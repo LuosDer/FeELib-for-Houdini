@@ -59,9 +59,9 @@ namespace GFE_GroupBoolean
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset promoff = geo.pointVertex(elemoff); GFE_Type::OffsetIsValid(promoff); promoff = geo.vertexToNextVertex(promoff))
+                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                     {
-                        group.setElement(promoff, false);
+                        group.setElement(vtxoff_next, false);
                     }
                 }
             }

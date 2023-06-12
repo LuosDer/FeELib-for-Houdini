@@ -22,26 +22,28 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        range   { 0 1 }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
-        type    string
-        default { "" }
-        range   { 0 1 }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
 
     parm {
@@ -59,9 +61,9 @@ static const char *theDsFile = R"THEDSFILE(
         default { "1" }
     }
     parm {
-        name    "tryFindNextOverlapPoint"
-        cppname "TryFindNextOverlapPoint"
-        label   "Try Find Next Overlaping Point"
+        name    "tryFindNextPointIfOverlap"
+        cppname "TryFindNextPointIfOverlap"
+        label   "Try Find Next Point if Overlap"
         type    toggle
         default { "0" }
     }
@@ -71,7 +73,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Distance"
         type    float
         default { "0" }
-        range   { -10 10 }
+        range   { -1 1 }
     }
 
     parm {
@@ -95,7 +97,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -107,8 +109,8 @@ SOP_FeE_ExtendCurveStraight_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_ExtendCurveStraight_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("group"_sh,     &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("posAttrib"_sh, &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -172,58 +174,49 @@ SOP_FeE_ExtendCurveStraight_1_0::cookVerb() const
 
 
 
+static GA_GroupType
+sopGroupType(SOP_FeE_ExtendCurveStraight_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_ExtendCurveStraight_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
 void
 SOP_FeE_ExtendCurveStraight_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ExtendCurveStraight_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ExtendCurveStraight_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
-    const bool extendStartPoint = sopparms.getExtendStartPoint();
-    const bool extendEndPoint = sopparms.getExtendEndPoint();
-
-    const bool tryFindNextOverlapPoint = sopparms.getTryFindNextOverlapPoint();
-    const fpreal extendCurveStraightDist = sopparms.getExtendCurveStraightDist();
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
 
     
-    //if (cutPoint)
-    //{
-    //    if (createSrcPointAttrib || keepPointAttribName.length() > 0 || keepPointGroupName.length() > 0)
-    //    {
-    //        const UT_StringHolder& srcPointAttribName = sopparms.getSrcPointAttribName();
-    //        srcPointsAttrib = outGeo0->addIntTuple(GA_ATTRIB_POINT, srcPointAttribName, 1, GA_Defaults(-1), nullptr, nullptr, inStorageI);
-    //    }
-    //}
-
-
+    GFE_ExtendCurveStraight extendCurveStraight(outGeo0, cookparms);
     
-        
-    GFE_ExtendCurveStraight::extendCurveStraight(cookparms, outGeo0,
-        extendCurveStraightDist, sopparms.getPrimGroup(), sopparms.getPointGroup(),
-        extendStartPoint, extendEndPoint, tryFindNextOverlapPoint,
-        sopparms.getPosAttrib(),
-        subscribeRatio, minGrainSize);
+    extendCurveStraight.setPositionAttrib(sopparms.getPosAttrib());
+    
+    extendCurveStraight.setComputeParm(sopparms.getExtendCurveStraightDist(), sopparms.getExtendStartPoint(), sopparms.getExtendEndPoint(), sopparms.getTryFindNextPointIfOverlap(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-
-    outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
+    extendCurveStraight.groupParser.setGroup(groupType, sopparms.getGroup());
+    extendCurveStraight.computeAndBumpDataId();
 
 }
-
-
-
-namespace SOP_FeE_ExtendCurveStraight_1_0_Namespace {
-
-} // End SOP_FeE_ExtendCurveStraight_1_0_Namespace namespace

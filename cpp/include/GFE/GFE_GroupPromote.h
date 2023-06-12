@@ -8,10 +8,10 @@
 
 #include "GA/GA_Detail.h"
 
+
+
 #include "GFE/GFE_Group.h"
 #include "GFE/GFE_GroupUnion.h"
-
-//#include "GFE/GFE_Type.h"
 
 namespace GFE_GroupPromote {
 
@@ -711,10 +711,7 @@ namespace GFE_GroupPromote {
         return GA_PrimitiveGroupUPtr(static_cast<GA_PrimitiveGroup*>(newGroup));
     }
 
-    static GA_PointGroupUPtr
-        groupPromotePointDetached(
-            const GA_Group* const group
-        )
+    static GA_PointGroupUPtr groupPromotePointDetached(const GA_Group* const group)
     {
         if (!group)
             return GA_PointGroupUPtr();

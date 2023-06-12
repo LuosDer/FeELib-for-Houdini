@@ -55,9 +55,9 @@ static const char *theDsFile = R"THEDSFILE(
         type    ordinal
         default { "prim" }
         menu {
-            "prim"      "Primitives"
-            "point"     "Points"
-            "vertex"    "Vertices"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
         }
     }
     parm {
@@ -245,10 +245,10 @@ SOP_FeE_Enumerate_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Enumerate_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_Enumerate_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Enumerate_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -261,10 +261,10 @@ sopGroupType(SOP_FeE_Enumerate_1_0Parms::GroupType parmgrouptype)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Enumerate_1_0Parms::Class attribClass)
+sopAttribOwner(SOP_FeE_Enumerate_1_0Parms::Class parmAttribClass)
 {
     using namespace SOP_FeE_Enumerate_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case Class::POINT:     return GA_ATTRIB_POINT;      break;
@@ -275,10 +275,10 @@ sopAttribOwner(SOP_FeE_Enumerate_1_0Parms::Class attribClass)
 }
 
 static GA_StorageClass
-sopStorageClass(SOP_FeE_Enumerate_1_0Parms::StorageClass storageClass)
+sopStorageClass(SOP_FeE_Enumerate_1_0Parms::StorageClass parmStorageClass)
 {
     using namespace SOP_FeE_Enumerate_1_0Enums;
-    switch (storageClass)
+    switch (parmStorageClass)
     {
     case StorageClass::INT:       return GA_STORECLASS_INT;        break;
     case StorageClass::FLOAT:     return GA_STORECLASS_FLOAT;      break;

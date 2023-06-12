@@ -664,10 +664,6 @@ private:
         if (!outWNAttribPtr)
         {
             const GA_GroupType groupType = getOutGroupArray()[0]->classType();
-            
-            GA_GROUP_POINT	= 0,
-            GA_GROUP_PRIMITIVE	= 1,
-            GA_GROUP_EDGE	= 2,
         }
         switch (groupType)
         {
@@ -1561,7 +1557,7 @@ private:
         UT_ASSERT(!getOutAttribArray().isEmpty());
         UT_ASSERT(!getOutGroupArray().isEmpty());
         
-        setGroup = getOutGroupArray()[0];
+        groupSetter = getOutGroupArray()[0];
         UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
         {
             GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(wnAttribPtr);
@@ -1596,7 +1592,7 @@ private:
                             }
                         }
                         
-                        setGroup.set(elemoff, outval);
+                        groupSetter.set(elemoff, outval);
                     }
                 }
             }

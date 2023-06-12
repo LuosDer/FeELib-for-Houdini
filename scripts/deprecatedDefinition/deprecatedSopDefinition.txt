@@ -442,3 +442,10 @@ attribrescale_fee::1.0
 
 
 
+reverse_fee
+attribreverse_elemnum_fee
+FeE::groupReverseEdges
+FeE::groupReverseVertex
+FeE::extendCurveSetEnds_straight::1.0
+FeE::extendCurve_straight::1.0
+
