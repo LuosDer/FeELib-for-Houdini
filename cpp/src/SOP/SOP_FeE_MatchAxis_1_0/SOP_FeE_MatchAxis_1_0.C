@@ -25,14 +25,28 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = hou.geometryType.Points\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "matchAxisAttribClass"
@@ -48,9 +62,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "matchAxisAttribName"
-        cppname "MatchAxisAttribName"
-        label   "Match Axis Attrib Name"
+        name    "matchAxisAttrib"
+        cppname "MatchAxisAttrib"
+        label   "Match Axis Attrib"
         type    string
         default { "P" }
     }
@@ -72,15 +86,15 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" "1" "0" }
         range   { -1 1 }
     }
-    //parm {
-    //    name    "upVec"
-    //    cppname "UpVec"
-    //    label   "Up Vector"
-    //    type    direction
-    //    size    3
-    //    default { "0" "1" "0" }
-    //    range   { -1 1 }
-    //}
+    parm {
+        name    "upVec"
+        cppname "UpVec"
+        label   "Up Vector"
+        type    direction
+        size    3
+        default { "0" "1" "0" }
+        range   { -1 1 }
+    }
     parm {
         name    "center"
         cppname "Center"
@@ -108,22 +122,22 @@ static const char *theDsFile = R"THEDSFILE(
     }
     
 
-    //parm {
-    //    name    "subscribeRatio"
-    //    cppname "SubscribeRatio"
-    //    label   "Subscribe Ratio"
-    //    type    integer
-    //    default { 64 }
-    //    range   { 0! 256 }
-    //}
-    //parm {
-    //    name    "minGrainSize"
-    //    cppname "MinGrainSize"
-    //    label   "Min Grain Size"
-    //    type    intlog
-    //    default { 64 }
-    //    range   { 0! 2048 }
-    //}
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
+    }
 }
 )THEDSFILE";
 
@@ -133,7 +147,8 @@ SOP_FeE_MatchAxis_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_MatchAxis_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::edgeGroupMenu);
+        templ.setChoiceListPtr("matchAxisAttrib"_sh, &SOP_Node::pointAttribMenu);
         
     }
     return templ.templates();
@@ -199,6 +214,23 @@ SOP_FeE_MatchAxis_1_0::cookVerb() const
 
 
 
+
+static GA_GroupType
+sopGroupType(SOP_FeE_MatchAxis_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_MatchAxis_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
 static GA_AttributeOwner
 sopAttribOwner(SOP_FeE_MatchAxis_1_0Parms::MatchAxisAttribClass attribClass)
 {
@@ -220,36 +252,32 @@ void
 SOP_FeE_MatchAxis_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_MatchAxis_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_MatchAxis_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
-
-            
-    //const exint subscribeRatio = sopparms.getSubscribeRatio();
-    //const exint minGrainSize = sopparms.getMinGrainSize();
-    const UT_Vector3D fromVec = sopparms.getFromVec();
-    const UT_Vector3D toVec = sopparms.getToVec();
-    //const UT_Vector3D upVec = sopparms.getUpVec();
+    outGeo0.replaceWith(inGeo0);
     
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
+    const GA_AttributeOwner owner = sopAttribOwner(sopparms.getMatchAxisAttribClass());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    const GA_AttributeOwner owner = sopAttribOwner(sopparms.getMatchAxisAttribClass());
-    //GFE_MatchAxis::matchAxis(cookparms, outGeo0, sopparms.getPointGroup(), owner, sopparms.getMatchAxisAttribName(), fromVec, toVec, upVec);
-    GFE_MatchAxis::matchAxis(cookparms, outGeo0, sopparms.getPointGroup(), owner, sopparms.getMatchAxisAttribName(), fromVec, toVec);
+    GFE_MatchAxis matchAxis(outGeo0, cookparms);
+
+    matchAxis.setComputeParm(sopparms.getFromVec(), sopparms.getToVec(), sopparms.getUpVec(), sopparms.getCenter(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    matchAxis.getOutAttribArray().appends(owner, sopparms.getMatchAxisAttrib());
+
+    matchAxis.groupParser.setGroup(groupType, sopparms.getGroup());
+    matchAxis.computeAndBumpDataId();
 
 
 }
 
 
-
-namespace SOP_FeE_MatchAxis_1_0_Namespace {
-
-} // End SOP_FeE_MatchAxis_1_0_Namespace namespace
+    
