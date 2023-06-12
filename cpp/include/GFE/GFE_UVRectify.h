@@ -140,10 +140,13 @@ public:
     bool flattenMethod = true; // true means ABF  while  false means SCP
     bool manualLayout = true;
     const char* uvAttribName = "uv";
+
     
 private:
     GU_Detail* geoTmp = nullptr;
+
     
+private:
     UT_Array<GU_ConstDetailHandle> inputgdh;
     SOP_UVFlatten_3_0Parms uvFlattenParms;
     const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");

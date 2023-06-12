@@ -409,8 +409,25 @@ public:
     }
 #endif
     
+        
+    SYS_FORCE_INLINE const UT_StringHolder& getName() const
+    { return hasGroup && geoGroup ? geoGroup->getName() : UT_StringHolder(""); }
 
-    
+    SYS_FORCE_INLINE bool isDetached() const
+    { return hasGroup && geoGroup ? geoGroup->isDetached() : true; }
+
+    SYS_FORCE_INLINE bool isPrimitiveDetached() const
+    { return hasPrimitiveGroup && geoPrimitiveGroup ? geoPrimitiveGroup->isDetached() : true; }
+
+    SYS_FORCE_INLINE bool isPointDetached() const
+    { return hasPointGroup     && geoPointGroup     ? geoPointGroup->isDetached() : true; }
+
+    SYS_FORCE_INLINE bool isVertexDetached() const
+    { return hasPointGroup     && geoVertexGroup    ? geoVertexGroup->isDetached() : true; }
+        
+    SYS_FORCE_INLINE bool isEdgeDetached() const
+    { return hasEdgeGroup      && geoEdgeGroup      ? geoEdgeGroup->isDetached() : true; }
+        
     SYS_FORCE_INLINE bool getHasGroup() const
     { return hasGroup; }
     

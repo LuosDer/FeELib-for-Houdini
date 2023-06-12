@@ -12,6 +12,7 @@
 #include "GFE/GFE_Detail.h"
 #include "GFE/GFE_AttributeArray.h"
 #include "GFE/GFE_GroupParser.h"
+#include "GFE/GFE_NodeVerb.h"
 
 
 

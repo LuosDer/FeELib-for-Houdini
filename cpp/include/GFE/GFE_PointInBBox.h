@@ -169,7 +169,6 @@ private:
 				}
 			}
 		}, subscribeRatio, minGrainSize);
-
     }
 
 

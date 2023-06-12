@@ -49,16 +49,25 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
+        name    "elementClass"
+        cppname "ElementClass"
+        label   "Element Class"
         type    ordinal
         default { "prim" }
         menu {
-            "prim"      "Primitives"
-            "point"     "Points"
-            "vertex"    "Vertices"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "edge"      "Edge"
         }
+    }
+    parm {
+        name    "outSrcElemoffAttrib"
+        cppname "OutSrcElemoffAttrib"
+        label   "Out Source Elemoff Attrib"
+        type    toggle
+        default { "0" }
+        nolabel
+        joinnext
     }
     parm {
         name    "srcElemoffAttribName"
@@ -66,26 +75,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Source Elemoff Attrib Name"
         type    string
         default { "index" }
-    }
-    parm {
-        name    "storageClass"
-        cppname "StorageClass"
-        label   "Storage Class"
-        type    ordinal
-        default { "int" }
-        menu {
-            "int"       "Integer"
-            "float"     "Float"
-            "string"    "String"
-        }
-    }
-
-    parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Out as Offset"
-        type    toggle
-        default { "off" }
+        disablewhen "{ outSrcElemoffAttrib == 0 }"
     }
 
     parm {
@@ -101,7 +91,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -113,8 +103,8 @@ SOP_FeE_PointGenPerElem_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_PointGenPerElem_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("srcElemoffAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
         
     }
     return templ.templates();
@@ -179,10 +169,10 @@ SOP_FeE_PointGenPerElem_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_PointGenPerElem_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -194,18 +184,18 @@ sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::GroupType parmgrouptype)
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_PointGenPerElem_1_0Parms::Class attribClass)
+static GA_GroupType
+sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::ElementClass parmElementClass)
 {
     using namespace SOP_FeE_PointGenPerElem_1_0Enums;
-    switch (attribClass)
+    switch (parmElementClass)
     {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case ElementClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case ElementClass::POINT:     return GA_GROUP_POINT;      break;
+    case ElementClass::EDGE:      return GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
+    return GA_GROUP_INVALID;
 }
 
 
@@ -224,9 +214,7 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     outGeo0.replaceWith(inGeo0);
 
 
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
+    const GA_GroupType elementClass = sopGroupType(sopparms.getElementClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
@@ -236,9 +224,8 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     
     
     GFE_PointGenPerElem pointGenPerElem(outGeo0, cookparms);
-    pointGenPerElem.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
-    pointGenPerElem.setComputeParm(sopparms.getFirstIndex(), ,
+    
+    pointGenPerElem.setComputeParm(elementClass,
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     pointGenPerElem.groupParser.setGroup(groupType, sopparms.getGroup());
