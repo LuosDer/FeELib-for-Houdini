@@ -415,8 +415,8 @@ public:
 #endif
     
         
-    SYS_FORCE_INLINE const UT_StringHolder& getName() const
-    { return hasGroup && geoGroup ? geoGroup->getName() : UT_StringHolder(""); }
+    SYS_FORCE_INLINE const char* getName() const
+    { return hasGroup && geoGroup ? geoGroup->getName().c_str() : ""; }
 
     SYS_FORCE_INLINE bool isDetached() const
     { return hasGroup && geoGroup ? geoGroup->isDetached() : true; }

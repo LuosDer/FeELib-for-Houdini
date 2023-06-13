@@ -280,12 +280,12 @@ SOP_FeE_GroupOneNebPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     
-    groupOneNebPoint.setGroup.setComputeParm(groupMergeType, sopparms.getGroup());
+    groupOneNebPoint.groupSetter.setParm(groupMergeType, sopparms.getGroup());
     groupOneNebPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     groupOneNebPoint.findOrCreatePointGroup(false, sopparms.getOneNebGroupName());
 
     groupOneNebPoint.computeAndBumpDataId();
-
+    groupOneNebPoint.visualizeOutGroup();
 
 
     

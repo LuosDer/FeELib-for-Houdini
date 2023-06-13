@@ -163,35 +163,6 @@ SOP_FeE_CurveSetExpand2d_3_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_CurveSetExpand2d_3_0Parms::UVAttribClass attribClass)
-{
-    using namespace SOP_FeE_CurveSetExpand2d_3_0Enums;
-    switch (attribClass)
-    {
-    case UVAttribClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
-    case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case UVAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-
-static UVGridify_RowsOrColsNumMethod
-sopRowsOrColsNumMethod(SOP_FeE_CurveSetExpand2d_3_0Parms::RowsOrColsNumMethod parmgrouptype)
-{
-    using namespace SOP_FeE_CurveSetExpand2d_3_0Enums;
-    switch (parmgrouptype)
-    {
-    case RowsOrColsNumMethod::UNIFORM:     return UVGridifyMethod_Uniform;    break;
-    case RowsOrColsNumMethod::ROWS:        return UVGridifyMethod_Rows;       break;
-    case RowsOrColsNumMethod::COLS:        return UVGridifyMethod_Columns;    break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled UVGridify Rows Or Cols Num Method!");
-    return UVGridifyMethod_Uniform;
-}
-
 
 static GA_GroupType
 sopGroupType(SOP_FeE_CurveSetExpand2d_3_0Parms::GroupType parmgrouptype)
@@ -214,46 +185,27 @@ void
 SOP_FeE_CurveSetExpand2d_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_CurveSetExpand2d_3_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_CurveSetExpand2d_3_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const UT_StringHolder& groupName = sopparms.getGroup();
-
-    const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVAttribClass());
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
-    const UVGridify_RowsOrColsNumMethod rowsOrColsNumMethod = sopRowsOrColsNumMethod(sopparms.getRowsOrColsNumMethod());
-    const exint rowsOrColsNum = sopparms.getRowsOrColsNum();
-    const bool reverseUVu = sopparms.getReverseUVu();
-    const bool reverseUVv = sopparms.getReverseUVv();
-
-    const bool uniScale = sopparms.getUniScale();
     
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    GA_Attribute* posAttribPtr = GFE_CurveSetExpand2d::curveSetExpand2d(cookparms, outGeo0, groupType, groupName,
-        uvAttribClass, uvAttribName,
-        rowsOrColsNumMethod, rowsOrColsNum, 
-        reverseUVu, reverseUVv, uniScale,
-        subscribeRatio, minGrainSize
-    );
+    GFE_CurveSetExpand2d curveSetExpand2d(outGeo0, cookparms);
+    
+    curveSetExpand2d.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    curveSetExpand2d.groupParser.setGroup(groupType, sopparms.getGroup());
+    curveSetExpand2d.computeAndBumpDataId();
+
 }
 
-
-
-namespace SOP_FeE_CurveSetExpand2d_3_0_Namespace {
-
-} // End SOP_FeE_CurveSetExpand2d_3_0_Namespace namespace

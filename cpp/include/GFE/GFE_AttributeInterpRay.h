@@ -4,16 +4,15 @@
 #ifndef __GFE_AttributeInterpRay_h__
 #define __GFE_AttributeInterpRay_h__
 
-//#include "GFE/GFE_AttributeInterpRay.h"
-
-
-#include <GA/GA_AttributeRefMap.h>
-#include <GA/GA_WeightedSum.h>
+#include "GFE/GFE_AttributeInterpRay.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GU/GU_RayIntersect.h"
 
+
+#include "GA/GA_AttributeRefMap.h"
+#include "GA/GA_WeightedSum.h"
+#include "GU/GU_RayIntersect.h"
 
 
 
@@ -25,21 +24,10 @@ public:
 
     void
         setComputeParm(
-            const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-            const bool copyOrigIfZero = false
         )
     {
         setHasComputed();
         this->cuspAngleDegrees = cuspAngleDegrees;
-        this->normalMethod = normalMethod;
-        this->copyOrigIfZero = copyOrigIfZero;
-    }
-
-    SYS_FORCE_INLINE GA_Attribute* getAttrib() const
-    {
-        //UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "no attrib found");
-        return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
     }
 
 

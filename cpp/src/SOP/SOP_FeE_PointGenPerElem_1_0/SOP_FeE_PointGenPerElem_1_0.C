@@ -60,6 +60,32 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+    
+    
+    parm {
+        name    "setPositionOnElem"
+        cppname "SetPositionOnElem"
+        label   "Set Position on Elem"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "useNumPointAttrib"
+        cppname "UseNumPointAttrib"
+        label   "Use Num Point Attrib"
+        type    toggle
+        default { "0" }
+        nolabel
+        joinnext
+    }
+    parm {
+        name    "numPointAttrib"
+        cppname "NumPointAttrib"
+        label   "Num Point Attrib"
+        type    string
+        default { "numpt" }
+        disablewhen "{ useNumPointAttrib == 0 }"
+    }
     parm {
         name    "outSrcElemoffAttrib"
         cppname "OutSrcElemoffAttrib"
@@ -104,8 +130,8 @@ SOP_FeE_PointGenPerElem_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("numPointAttrib"_sh,       &SOP_Node::allAttribReplaceMenu);
         templ.setChoiceListPtr("srcElemoffAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
-        
     }
     return templ.templates();
 }
@@ -217,17 +243,22 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     const GA_GroupType elementClass = sopGroupType(sopparms.getElementClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
     
-    GFE_PointGenPerElem pointGenPerElem(outGeo0, cookparms);
+    GFE_PointGenPerElem pointGenPerElem(outGeo0, inGeo0, cookparms);
     
-    pointGenPerElem.setComputeParm(elementClass,
+    pointGenPerElem.setComputeParm(elementClass, sopparms.getSetPositionOnElem(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
+    if (sopparms.getUseNumPointAttrib())
+        pointGenPerElem.setNumPointAttrib(sopparms.getNumPointAttrib());
+    
+    if (sopparms.getOutSrcElemoffAttrib())
+        pointGenPerElem.setSrcElemoffAttrib(sopparms.getSrcElemoffAttribName());
+    
     pointGenPerElem.groupParser.setGroup(groupType, sopparms.getGroup());
     pointGenPerElem.computeAndBumpDataId();
 

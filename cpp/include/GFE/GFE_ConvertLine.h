@@ -151,7 +151,7 @@ private:
         //const bool hasInputGroup = !groupParser.isEmpty();
 
         
-        GFE_MeshTopology meshTopology(geoOriginTmp);
+        GFE_MeshTopology meshTopology(geoOriginTmp, cookparms);
         meshTopology.outIntermediateAttrib = false;
         meshTopology.groupParser.setGroup(groupParser.getVertexGroup());
         const GA_VertexGroup* const creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
@@ -192,23 +192,25 @@ private:
         const GA_ATITopology& vtxPointRef_geoTmp = *topo_tmpGeo0.getPointRef();
         const GA_ATITopology& vtxPrimRef_geoTmp  = *topo_tmpGeo0.getPrimitiveRef();
 
-        GA_Offset start, end;
-        for (GA_Iterator it(geoOriginTmp->getVertexRange(creatingGroup)); it.fullBlockAdvance(start, end); )
+        GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstpt_ph(dstpt_h.getAttribute());
+        const GA_SplittableRange geoSplittableRange(geoOriginTmp->getVertexRange(creatingGroup));
+        for (GA_PageIterator pit = geoSplittableRange.beginPages(); !pit.atEnd(); ++pit)
         {
-            for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
-                if (createSrcPrimAttrib)
+                dstpt_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    srcPrim_h.set(vtxPrimRef.getLink(vtxoff_first), vtxPrimRef_geoTmp.getLink(vtxoff));
+                    if (createSrcPrimAttrib)
+                        srcPrim_h.set(vtxPrimRef.getLink(vtxoff_first), vtxPrimRef_geoTmp.getLink(elemoff));
+                    if (copyVertexAttrib)
+                        srcVtx_h.set(vtxPrimRef.getLink(vtxoff_first), elemoff);
+                    topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp.getLink(elemoff));
+                    ++vtxoff_first;
+                    topo.wireVertexPoint(vtxoff_first, dstpt_ph.value(elemoff));
+                    ++vtxoff_first;
                 }
-                if (copyVertexAttrib)
-                {
-                    srcVtx_h.set(vtxPrimRef.getLink(vtxoff_first), vtxoff);
-                }
-                topo.wireVertexPoint(vtxoff_first, vtxPointRef_geoTmp.getLink(vtxoff));
-                ++vtxoff_first;
-                topo.wireVertexPoint(vtxoff_first, dstpt_h.get(vtxoff));
-                ++vtxoff_first;
             }
         }
 

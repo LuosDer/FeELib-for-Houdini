@@ -4,13 +4,9 @@
 #ifndef __GFE_ScaleAttributeElement_h__
 #define __GFE_ScaleAttributeElement_h__
 
-//#include "GFE/GFE_ScaleAttribElement.h"
-
-
+#include "GFE/GFE_ScaleAttributeElement.h"
 
 #include "GFE/GFE_GeoFilter.h"
-
-
 
 
 class GFE_ScaleAttribElement : public GFE_AttribFilter {

@@ -22,42 +22,258 @@ static const char *theDsFile = R"THEDSFILE(
     name        parameters
     
     parm {
-        name    "visGroup"
-        cppname "VisGroup"
-        label   "Visualize Group"
-        type    toggle
-        default { 1 }
+        name    "group"
+        cppname "Group"
+        label   "Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
-    groupsimple {
-        name    "visGroup_folder"
-        cppname "VisGroup_folder"
-        label   "Visualize Group"
-        disablewhentab "{ visGroup == 0 }"
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
 
-        parm {
-            name    "group"
-            cppname "Group"
-            label   "Group"
-            type    string
-            default { "" }
-            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-            parmtag { "script_action_help" "Select geometry from an available viewport." }
-            parmtag { "script_action_icon" "BUTTONS_reselect" }
-        }
-        parm {
-            name    "groupType"
-            cppname "GroupType"
-            label   "Group Type"
-            type    ordinal
-            default { "guess" }
-            menu {
-                "guess"     "Guess from Group"
-                "prim"      "Primitive"
-                "point"     "Point"
-                "vertex"    "Vertex"
-                "edge"      "Edge"
-            }
-        }
+    parm {
+        name    "check_oneof_xyzsize"
+        label   "check_oneof_xyzsize"
+        type    toggle
+        nolabel
+        joinnext
+        default { "on" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_oneof_xyzsize"
+        label   "Threshold One of XYZ Size"
+        type    log
+        default { "0.1" }
+        disablewhen "{ check_oneof_xyzsize == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "threshold_oneof_xyzsize_attrib"
+        label   "Threshold One of XYZ Size Attrib"
+        type    string
+        default { "" }
+        disablewhen "{ check_oneof_xyzsize == 0 }"
+    }
+    parm {
+        name    "check_all_xyzsize"
+        label   "check_all_xyzsize"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_all_xyzsize"
+        label   "Threshold All XYZ Size"
+        type    log
+        default { "0.1" }
+        disablewhen "{ check_all_xyzsize == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "threshold_all_xyzsize_attrib"
+        label   "Threshold All XYZ Size Attrib"
+        type    string
+        default { "" }
+        disablewhen "{ check_all_xyzsize == 0 }"
+    }
+    parm {
+        name    "check_xyzsize_sum"
+        label   "check_xyzsize_sum"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_xyzsize_sum"
+        label   "Threshold XYZ Size Sum"
+        type    log
+        default { "0.1" }
+        disablewhen "{ check_xyzsize_sum == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "checkperimeter"
+        label   "Check Perimeter"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_perimeter"
+        label   "Threshold Perimeter"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkperimeter == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "checkarea"
+        label   "Check Area"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_area"
+        label   "Threshold Area"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkarea == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "checkvolume"
+        label   "Check Volume"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_volume"
+        label   "Threshold Volume"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkvolume == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "check_bbox_area"
+        label   "Check BBox Area"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_bbox_area"
+        label   "Threshold BBox Area"
+        type    log
+        default { "0.1" }
+        disablewhen "{ check_bbox_area == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "check_area_perimeter_ratio"
+        label   "Check Area Perimeter Ratio"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_area_perimeter_ratio"
+        label   "Threshold Area Perimeter Ratio"
+        type    log
+        default { "0.1" }
+        disablewhen "{ check_area_perimeter_ratio == 0 }"
+        range   { 0.001 10 }
+    }
+    parm {
+        name    "check_bbox_volume"
+        label   "Check BBox Volume"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        range   { 0 10 }
+    }
+    parm {
+        name    "threshold_bbox_volume"
+        label   "Threshold BBox Volume"
+        type    log
+        default { "0.1" }
+        disablewhen "{ check_bbox_volume == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "numConditionMatch"
+        label   "num Condition Match"
+        type    integer
+        default { "1" }
+        range   { 1! 6 }
+    }
+
+    parm {
+        name    "smallPieceGroupName"
+        cppname "SmallPieceGroupName"
+        label   "Small Piece Group Name"
+        type    string
+        default { "small" }
+        disablewhen "{ delElem == 1 delGroup == 1 }"
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "delElem"
+        cppname "DelElem"
+        label   "Delete Element"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "delGroup"
+        cppname "DelGroup"
+        label   "Delete Group"
+        type    toggle
+        default { "1" }
+        disablewhen "{ delElem == 0 }"
+    }
+    parm {
+        name    "delUnusedPoint"
+        cppname "DelUnusedPoint"
+        label   "Delete Unused Point"
+        type    toggle
+        default { "1" }
+        disablewhen "{ delElem == 0 }"
+    }
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 1024 }
+        range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -70,20 +286,21 @@ SOP_FeE_SmallPiece_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_SmallPiece_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh,               &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("smallPieceGroupName"_sh, &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
 
 
-const UT_StringHolder SOP_FeE_SmallPiece_1_0::theSOPTypeName("FeE::groupVis::2.0"_sh);
+const UT_StringHolder SOP_FeE_SmallPiece_1_0::theSOPTypeName("FeE::smallPiece::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_SmallPiece_1_0::theSOPTypeName,
-        "FeE Group Visualize",
+        "FeE Small Piece",
         SOP_FeE_SmallPiece_1_0::myConstructor,
         SOP_FeE_SmallPiece_1_0::buildTemplates(),
         1,
@@ -181,20 +398,14 @@ SOP_FeE_SmallPiece_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     GFE_SmallPiece smallPiece(outGeo0, cookparms);
-    smallPiece.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    smallPiece.findOrCreatePrimitiveGroup(sopparms.getSmallPieceGroupName(), sopparms.getSmallPieceGroupName());
 
-    smallPiece.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    smallPiece.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     smallPiece.groupParser.setGroup(groupType, sopparms.getGroup());
     smallPiece.computeAndBumpDataId();
-    smallPiece.visu
+    smallPiece.visualizeOutGroup();
     
-    const GA_Group* const geo0Group = GA_FeE_SmallPiece::(outGeo0, groupType, groupName);
-
-    if (!geo0Group)
-        return;
-
-
 }
 

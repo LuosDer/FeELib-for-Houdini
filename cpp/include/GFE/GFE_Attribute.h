@@ -53,7 +53,262 @@ namespace GFE_Attribute {
 
     
 
+template<typename FLOAT_T>
+static void accumulateT(GA_Attribute& attrib, const GA_SplittableRange& r)
+{
+    FLOAT_T valuePrev = 0;
+    GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+        {
+            attrib_ph.setPage(start);
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                valuePrev += attrib_ph.value(elemoff);
+                attrib_ph.value(elemoff) = valuePrev;
+            }
+        }
+    }
+}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template<typename VECTOR_T>
+static void cloneVec(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
+    
+    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
+    UTparallelFor(geoSplittableRange, [&outAttrib, &inAttrib](const GA_SplittableRange& r)
+    {
+        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> out_ph(&outAttrib);
+        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&outAttrib);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                out_ph.setPage(start);
+                in_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    out_ph.value(elemoff) = in_ph.value(elemoff);
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+
+template<typename FLOAT_T>
+static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
+    
+    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
+    UTparallelFor(geoSplittableRange, [&outAttrib, &inAttrib](const GA_SplittableRange& r)
+    {
+        GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> out_ph(&outAttrib);
+        GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&outAttrib);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                out_ph.setPage(start);
+                in_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    out_ph.value(elemoff) = in_ph.value(elemoff);
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+    
+template<>
+static void clone<UT_StringHolder>(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+    const exint subscribeRatio, const exint minGrainSize)
+{
+    UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
+
+    GA_RWHandleS out_h(&outAttrib);
+    GA_ROHandleS in_h(&inAttrib);
+    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
+    UTparallelFor(geoSplittableRange, [&out_h, &in_h](const GA_SplittableRange& r)
+    {
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    out_h.set(elemoff, in_h.get(elemoff));
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+template<>
+static void clone<UT_OptionsHolder>(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+    const exint subscribeRatio, const exint minGrainSize)
+{
+    UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
+
+    GA_RWHandleDict out_h(&outAttrib);
+    GA_ROHandleDict in_h(&inAttrib);
+    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
+    UTparallelFor(geoSplittableRange, [&out_h, &in_h](const GA_SplittableRange& r)
+    {
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    out_h.set(elemoff, in_h.get(elemoff));
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+}
+
+
+static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same Owner");
+    UT_ASSERT_MSG(outAttrib.getTupleSize() == inAttrib.getTupleSize(), "not same Tuple Size");
+    UT_ASSERT_MSG(outAttrib.getStorageClass() == inAttrib.getStorageClass(), "not same Storage Class");
+    
+    GA_Storage storage;
+    if (outAttrib.getAIFTuple())
+        storage = outAttrib.getAIFTuple()->getStorage(&outAttrib);
+    else if (outAttrib.getAIFStringTuple())
+        storage = GA_STORE_STRING;
+    else
+    {
+        UT_ASSERT_MSG(0, "not correct storage");
+        storage = GA_STORE_INVALID;
+        return;
+    }
+
+    const int tupleSize = outAttrib.getTupleSize();
+    switch (tupleSize)
+    {
+    case 1:
+    case 2:
+    case 3:
+    case 4: break;
+    default: UT_ASSERT_MSG(0, "not correct TupleSize");
+    }
+    switch (storage)
+    {
+    // case GA_STORE_INT16:
+    //     switch (tupleSize)
+    //     {
+    //     case 1: clone               <int16> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     case 2: cloneVec<UT_Vector2T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     case 3: cloneVec<UT_Vector3T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     case 4: cloneVec<UT_Vector4T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     }
+    case GA_STORE_INT32:
+        switch (tupleSize)
+        {
+        case 1: clone               <int32> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 2: cloneVec<UT_Vector2T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 3: cloneVec<UT_Vector3T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 4: cloneVec<UT_Vector4T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        }
+    case GA_STORE_INT64:
+        switch (tupleSize)
+        {
+        case 1: clone               <int64> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 2: cloneVec<UT_Vector2T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 3: cloneVec<UT_Vector3T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 4: cloneVec<UT_Vector4T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        }
+    case GA_STORE_REAL16:
+        switch (tupleSize)
+        {
+        case 1: clone               <fpreal16> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 2: cloneVec<UT_Vector2T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 3: cloneVec<UT_Vector3T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 4: cloneVec<UT_Vector4T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        }
+    case GA_STORE_REAL32:
+        switch (tupleSize)
+        {
+        case 1: clone               <fpreal32> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 2: cloneVec<UT_Vector2T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 3: cloneVec<UT_Vector3T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 4: cloneVec<UT_Vector4T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        }
+    case GA_STORE_REAL64:
+        switch (tupleSize)
+        {
+        case 1: clone               <fpreal64> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 2: cloneVec<UT_Vector2T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 3: cloneVec<UT_Vector3T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        case 4: cloneVec<UT_Vector4T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+        }
+    break;
+    case GA_STORE_STRING: clone<UT_StringHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize);  break;
+    case GA_STORE_DICT:   clone<UT_OptionsHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    default: UT_ASSERT_MSG(0, "not correct storage"); break;
+    }
+}
+    
+
+
+    
+static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    GA_Attribute* const outAttrib = geo.getAttributes().cloneTempAttribute(inAttrib.getOwner(), inAttrib, true);
+    clone(*outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    return outAttrib;
+}
+
+static GA_Attribute* clone(const GA_Attribute& inAttrib,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    GA_Attribute* const outAttrib = inAttrib.clone(inAttrib.getIndexMap(), "", true);
+    clone(*outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    return outAttrib;
+}
+
+    
+
+    
+    
 static GA_Storage getStorage(const GA_Attribute& attrib)
 {
     const GA_AIFTuple* const aifTuple = attrib.getAIFTuple();

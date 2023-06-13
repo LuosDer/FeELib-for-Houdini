@@ -4,16 +4,14 @@
 #ifndef __GFE_CurveExpand2d_h__
 #define __GFE_CurveExpand2d_h__
 
-
-
-//#include "GFE/GFE_CurveExpand2d.h"
-
-#include "GA/GA_Detail.h"
-//#include "GA/GA_Types.h"
+#include "GFE/GFE_CurveExpand2d.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
-enum GFE_CurveExpand2dType
+
+
+
+enum class GFE_CurveExpand2dType
 {
     GFE_CurveExpand2dType_AUTO,
     GFE_CurveExpand2dType_OPEN,
@@ -22,19 +20,7 @@ enum GFE_CurveExpand2dType
 
 
 
-
-
-
-
-
-
-
 class GFE_CurveExpand2d : public GFE_AttribFilter {
-
-
-
-    
-
 
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
@@ -65,62 +51,16 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-
-        GA_Attribute* const uvAttribPtr = getOutAttribArray()[0];
-        switch (uvAttribPtr->getAIFTuple()->getTupleSize(uvAttribPtr))
+        if (!posAttrib)
+            posAttrib = geo->getP();
+        
+        switch (posAttrib->getAIFTuple()->getStorage(posAttrib))
         {
-        case 2:
-            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
-            {
-            case GA_STORE_REAL16:
-                curveUV<UT_Vector2T<fpreal16>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL32:
-                curveUV<UT_Vector2T<fpreal32>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL64:
-                curveUV<UT_Vector2T<fpreal64>>(uvAttribPtr);
-                break;
-            default:
-                break;
-            }
-            break;
-        case 3:
-            switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
-            {
-            case GA_STORE_REAL16:
-                curveUV<UT_Vector3T<fpreal16>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL32:
-                curveUV<UT_Vector3T<fpreal32>>(uvAttribPtr);
-                break;
-            case GA_STORE_REAL64:
-                curveUV<UT_Vector3T<fpreal64>>(uvAttribPtr);
-                break;
-            default:
-                break;
-            }
-            break;
-            //case 4:
-            //    switch (uvAttribPtr->getAIFTuple()->getStorage(uvAttribPtr))
-            //    {
-            //    case GA_STORE_REAL16:
-            //        curveUV<UT_Vector4T<fpreal16>>(uvAttribPtr);
-            //        break;
-            //    case GA_STORE_REAL32:
-            //        curveUV<UT_Vector4T<fpreal32>>(uvAttribPtr);
-            //        break;
-            //    case GA_STORE_REAL64:
-            //        curveUV<UT_Vector4T<fpreal64>>(uvAttribPtr);
-            //        break;
-            //    default:
-            //        break;
-            //    }
-            //break;
-        default:
-            break;
+        case GA_STORE_REAL16: curveExpand2d<UT_Vector3T<fpreal16>>(); break;
+        case GA_STORE_REAL32: curveExpand2d<UT_Vector3T<fpreal32>>(); break;
+        case GA_STORE_REAL64: curveExpand2d<UT_Vector3T<fpreal64>>(); break;
+        default: break;
         }
-
 
         return true;
     }
@@ -128,10 +68,7 @@ private:
 
 
     template<typename VECTOR_T>
-    SYS_FORCE_INLINE
-    void
-        curveExpand2d(
-        )
+    void curveExpand2d()
     {
     }
 

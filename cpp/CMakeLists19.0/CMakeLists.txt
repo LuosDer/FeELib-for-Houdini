@@ -94,6 +94,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
     SOP_FeE_AttribValReplace_1_0
+    SOP_FeE_BezierCurveInsertPoint_1_0
     SOP_FeE_Carve_1_0
     SOP_FeE_Clip_1_0
     SOP_FeE_Connectivity_1_0
@@ -132,6 +133,8 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupVis_2_0
     SOP_FeE_HasGroup_1_0
     SOP_FeE_InlinePoint_1_0
+    SOP_FeE_IntersectionAnalysis_1_0
+    SOP_FeE_IntersectionStitch_1_0
     SOP_FeE_JoinCurve_2_0
     SOP_FeE_KuhnMunkres_2_0
     SOP_FeE_MatchAxis_1_0
@@ -149,6 +152,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_PointInMesh_WN_2_0
     SOP_FeE_PolyCut_3_0
     SOP_FeE_PolyExpand2DSimple_2_0
+    SOP_FeE_PolyInsertPoint_1_0
     SOP_FeE_PolyReduce2D_4_0
     SOP_FeE_RestDir2D_1_0
     SOP_FeE_RestVectorComponent_1_0

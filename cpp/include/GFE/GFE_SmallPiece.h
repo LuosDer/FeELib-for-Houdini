@@ -11,38 +11,19 @@
 
 class GFE_SmallPiece : public GFE_AttribFilter {
 
-
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
-
-
+    
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
-
-    
-    SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
-        const bool detached = false,
-        const GA_AttributeOwner owner = GA_ATTRIB_POINT,
-        const GA_StorageClass storageClass = GA_STORECLASS_INT,
-        const GA_Storage storage = GA_STORE_INVALID,
-        const UT_StringRef& attribName = ""
-    )
-    { return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
 
 private:
 

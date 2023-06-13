@@ -35,25 +35,11 @@ public:
     }
 
     
-    SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
-        const bool detached = false,
-        const GA_AttributeOwner owner = GA_ATTRIB_POINT,
-        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
-        const GA_Storage storage = GA_STORE_INVALID,
-        const UT_StringRef& attribName = ""
-    )
-    { return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
-
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
-
         if (groupParser.isEmpty())
             return true;
         
@@ -61,7 +47,7 @@ private:
         GU_DetailHandle tmpGeoH0;
         GU_Detail* tmpGeo0 = new GU_Detail();
         tmpGeoH0.allocateAndSet(tmpGeo0);
-        tmpGeo0->replaceWith(geo);
+        tmpGeo0->replaceWith(*geo);
 
 
         //UT_Array<UT_Int32Array>*    input_num_arr = nullptr;

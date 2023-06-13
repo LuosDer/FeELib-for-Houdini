@@ -4,7 +4,7 @@
 #ifndef __GFE_GroupExpand_h__
 #define __GFE_GroupExpand_h__
 
-//#include "GFE/GFE_GroupExpand.h"
+#include "GFE/GFE_GroupExpand.h"
 
 
 #include "GFE/GFE_GeoFilter.h"

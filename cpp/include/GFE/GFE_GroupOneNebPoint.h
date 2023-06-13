@@ -72,12 +72,20 @@ private:
         
         groupSetter = getOutGroupArray().getPointGroup(0);
 
+
+        
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makeVertexRef();
+        vtxPointRef = topo.getPointRef();
+        pointVtxRef = topo.getVertexRef();
+        vtxNextRef  = topo.getVertexNextRef();
+        
         switch (groupParser.classType())
         {
         default:
-        case GA_GROUP_PRIMITIVE: return groupOneNeb<GA_GROUP_PRIMITIVE>(); break;
-        case GA_GROUP_POINT:     return groupOneNeb<GA_GROUP_POINT>    (); break;
-        case GA_GROUP_VERTEX:    return groupOneNeb<GA_GROUP_VERTEX>   (); break;
+        case GA_GROUP_PRIMITIVE: groupOneNeb<GA_GROUP_PRIMITIVE>(); break;
+        case GA_GROUP_POINT:     groupOneNeb<GA_GROUP_POINT>    (); break;
+        case GA_GROUP_VERTEX:    groupOneNeb<GA_GROUP_VERTEX>   (); break;
         }
 
         return true;
@@ -88,13 +96,13 @@ private:
     {
         //UT_ASSERT_P(geoGroup);
         
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology& vtxPointRef = *topo.getPointRef();
-        const GA_ATITopology& pointVtxRef = *topo.getVertexRef();
-        const GA_ATITopology& vtxNextRef = *topo.getVertexNextRef();
 
-        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &vtxPointRef, &pointVtxRef, &vtxNextRef](const GA_SplittableRange& r)
+        if constexpr (GroupType_T == GA_GROUP_PRIMITIVE || GroupType_T == GA_GROUP_POINT || GroupType_T == GA_GROUP_VERTEX)
+            geoElementGroup = groupParser.getElementGroup();
+        else
+            geoElementGroup = nullptr;
+        
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
         {
             GA_Offset vtxoff, vtxoff_next, ptoff;
             GA_Offset start, end;
@@ -105,138 +113,44 @@ private:
                     const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
                     if (numvtx <= 0)
                         continue;
-                    
-                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                    if constexpr (GroupType_T == GA_GROUP_POINT)
-                    {
-                        
-                    }
-                    if constexpr (GroupType_T == GA_GROUP_VERTEX)
-                    {
-                        
-                        if (groupParser.cont)
-                        {
-                        
-                        }
-                    }
-                    
-                    ptoff       = vtxPointRef.getLink(vtxoff);
-                    vtxoff_next = pointVtxRef.getLink(ptoff);
-                    if (vtxoff_next == vtxoff)
-                    {
-                        vtxoff_next = vtxNextRef.getLink(vtxoff_next);
-                        if (GFE_Type::isInvalidOffset(vtxoff_next))
-                            groupSetter.set(ptoff, true);
-                    }
+
+                    groupOneNeb<GroupType_T>(elemoff, 0);
                     
                     if (numvtx <= 1)
                         continue;
                     
-                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, numvtx-1);
-                    ptoff       = vtxPointRef.getLink(vtxoff);
-                    vtxoff_next = pointVtxRef.getLink(ptoff);
-                    if (vtxoff_next == vtxoff)
-                    {
-                        vtxoff_next = vtxNextRef.getLink(vtxoff_next);
-                        if (GFE_Type::isInvalidOffset(vtxoff_next))
-                            groupSetter.set(ptoff, true);
-                    }
+                    groupOneNeb<GroupType_T>(elemoff, numvtx-1);
                 }
             }
         }, subscribeRatio, minGrainSize);
         groupSetter.invalidateGroupEntries();
     }
 
-
-    void groupOneNeb(const GA_PointGroup* const geoGroup)
+    template<GA_GroupType GroupType_T>
+    SYS_FORCE_INLINE void groupOneNeb(
+        const GA_Offset primoff,
+        const GA_Size vtxpnum
+    )
     {
-        UT_ASSERT_P(geoGroup);
+        const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+        if constexpr (GroupType_T == GA_GROUP_VERTEX)
+            if (!geoElementGroup->contains(vtxoff))
+                return;
+                    
+        const GA_Offset ptoff = vtxPointRef->getLink(vtxoff);
+        if constexpr (GroupType_T == GA_GROUP_POINT)
+            if (!geoElementGroup->contains(ptoff))
+                return;
         
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-
-        const GA_PrimitiveGroupUPtr geoPromoGroupUPtr = geo->createDetachedPrimitiveGroup();
-        GA_PrimitiveGroup* geoPromoGroup = geoPromoGroupUPtr.get();
-        geoPromoGroup->combine(geoGroup);
-
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
-        UTparallelFor(geoSplittableRange0, [this, geoGroup,
-            vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
-            {
-                GA_Offset vtxoff, ptoff;
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                        ptoff = vtxPointRef->getLink(vtxoff);
-                        vtxoff = pointVtxRef->getLink(ptoff);
-                        vtxoff = vtxNextRef->getLink(vtxoff);
-                        //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
-                        if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(ptoff))
-                            oneNebPointGroup->setElement(ptoff, true);
-
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-                        ptoff = vtxPointRef->getLink(vtxoff);
-                        vtxoff = pointVtxRef->getLink(ptoff);
-                        vtxoff = vtxNextRef->getLink(vtxoff);
-                        //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
-                        if (vtxoff == GA_INVALID_OFFSET && geoGroup->contains(ptoff))
-                            oneNebPointGroup->setElement(ptoff, true);
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        oneNebPointGroup->invalidateGroupEntries();
-    }
-
-
-    void groupOneNeb(const GA_VertexGroup* const geoGroup)
-    {
-        UT_ASSERT_P(geoGroup);
+        GA_Offset vtxoff_next = pointVtxRef->getLink(ptoff);
+        if (vtxoff_next != vtxoff)
+            return;
         
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-
-        const GA_PrimitiveGroupUPtr geoPromoGroupUPtr = geo->createDetachedPrimitiveGroup();
-        GA_PrimitiveGroup* const geoPromoGroup = geoPromoGroupUPtr.get();
-        geoPromoGroup->combine(geoGroup);
-
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPromoGroup));
-        UTparallelFor(geoSplittableRange0, [this, geoGroup,
-            vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
-            {
-                GA_Offset vtxoff, ptoff, vtxoff_next;
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, 0);
-                        ptoff = vtxPointRef->getLink(vtxoff);
-                        vtxoff_next = pointVtxRef->getLink(ptoff);
-                        vtxoff_next = vtxNextRef->getLink(vtxoff_next);
-                        //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
-                        if (vtxoff_next == GA_INVALID_OFFSET && geoGroup->contains(vtxoff))
-                            oneNebPointGroup->setElement(ptoff, true);
-
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, geo->getPrimitiveVertexCount(elemoff) - 1);
-                        ptoff = vtxPointRef->getLink(vtxoff);
-                        vtxoff_next = pointVtxRef->getLink(ptoff);
-                        vtxoff_next = vtxNextRef->getLink(vtxoff_next);
-                        //if (!topo.isPointShared(ptoff) && geoGroup->contains(ptoff))
-                        if (vtxoff_next == GA_INVALID_OFFSET && geoGroup->contains(vtxoff))
-                            oneNebPointGroup->setElement(ptoff, true);
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        oneNebPointGroup->invalidateGroupEntries();
+        vtxoff_next = vtxNextRef->getLink(vtxoff_next);
+        if (GFE_Type::isValidOffset(vtxoff_next))
+            return;
+        
+        groupSetter.set(ptoff, true);
     }
 
     SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GU_Detail* const geo, const GA_Offset primoff, const GA_Size vtxpnum) const
@@ -250,6 +164,11 @@ public:
     
 private:
     GU_Snap::PointSnapParms fuseParms;
+    
+    const GA_ATITopology* vtxPointRef;
+    const GA_ATITopology* pointVtxRef;
+    const GA_ATITopology* vtxNextRef;
+    const GA_ElementGroup* geoElementGroup;
     
     GU_DetailHandle geoRef0_h;
     GU_Detail* geoRef0Tmp;

@@ -270,8 +270,7 @@ SYS_FORCE_INLINE static bool isInvalid(const GA_GroupType groupType)
 
 SYS_FORCE_INLINE static bool isElementGroup(const GA_AttributeOwner attribOwner)
 { return attribOwner == GA_ATTRIB_PRIMITIVE || attribOwner == GA_ATTRIB_POINT || attribOwner == GA_ATTRIB_VERTEX; }
-
-
+    
 SYS_FORCE_INLINE static bool isElementGroup(const GA_GroupType groupType)
 { return groupType == GA_GROUP_PRIMITIVE || groupType == GA_GROUP_POINT || groupType == GA_GROUP_VERTEX; }
 

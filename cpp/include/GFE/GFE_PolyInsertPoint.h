@@ -1,16 +1,18 @@
 
 #pragma once
 
-#ifndef __GA_FeE_CurveSetExpand2d_h__
-#define __GA_FeE_CurveSetExpand2d_h__
+#ifndef __GFE_PolyInsertPoint_h__
+#define __GFE_PolyInsertPoint_h__
 
-#include "GFE/GFE_CurveSetExpand2d.h"
+#include "GFE/GFE_PolyInsertPoint.h"
+
+
 
 #include "GFE/GFE_GeoFilter.h"
 
 
 
-class GFE_CurveSetExpand2d : public GFE_AttribFilter {
+class GFE_PolyInsertPoint : public GFE_AttribFilter {
 
 
 public:
@@ -19,9 +21,6 @@ public:
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
@@ -41,6 +40,9 @@ private:
     virtual bool
         computeCore() override
     {
+        if (getOutAttribArray().isEmpty())
+            return false;
+
         if (groupParser.isEmpty())
             return true;
         
@@ -62,11 +64,8 @@ private:
         return true;
     }
 
-
-    
-
-
 public:
+    
 
 private:
     
@@ -74,7 +73,9 @@ private:
     exint minGrainSize = 1024;
 
 
-}; // End of class GFE_CurveSetExpand2d
+}; // End of class GFE_PolyInsertPoint
+
+
 
 
 

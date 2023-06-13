@@ -1,16 +1,18 @@
 
 #pragma once
 
-#ifndef __GA_FeE_CurveSetExpand2d_h__
-#define __GA_FeE_CurveSetExpand2d_h__
+#ifndef __GFE_IntersectionAnalysis_h__
+#define __GFE_IntersectionAnalysis_h__
 
-#include "GFE/GFE_CurveSetExpand2d.h"
+#include "GFE/GFE_IntersectionAnalysis.h"
+
+
 
 #include "GFE/GFE_GeoFilter.h"
 
 
 
-class GFE_CurveSetExpand2d : public GFE_AttribFilter {
+class GFE_IntersectionAnalysis : public GFE_AttribFilter {
 
 
 public:
@@ -41,6 +43,9 @@ private:
     virtual bool
         computeCore() override
     {
+        if (getOutAttribArray().isEmpty())
+            return false;
+
         if (groupParser.isEmpty())
             return true;
         
@@ -62,19 +67,19 @@ private:
         return true;
     }
 
-
-    
-
-
 public:
+    
 
 private:
     
+    GA_Attribute* attribPtr;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
 
-}; // End of class GFE_CurveSetExpand2d
+}; // End of class GFE_IntersectionAnalysis
+
+
 
 
 
