@@ -151,6 +151,16 @@ public:
     }
 
 
+
+    void append(const GFE_AttributeArray& inAttribArray)
+    {
+        const size_t size = inAttribArray.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            attribArray.emplace_back(inAttribArray[i]);
+        }
+    }
+
     SYS_FORCE_INLINE void append(GA_Attribute* const attribPtr)
     { if (attribPtr) attribArray.emplace_back(attribPtr); }
 
@@ -181,7 +191,7 @@ public:
 
 
 
-void appends(const GA_AttributeOwner attribClass, const char* attribPattern)
+void appends(const GA_AttributeOwner attribClass, const char* const attribPattern)
 {
     if (!attribPattern)
         return;
@@ -198,23 +208,23 @@ void appends(const GA_AttributeOwner attribClass, const char* attribPattern)
 }
     
 SYS_FORCE_INLINE void appends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
-{ if (attribPattern.isstring() && attribPattern.length() != 0) appends(attribClass, attribPattern.c_str()); }
+{ appends(attribClass, attribPattern.c_str()); }
 
-SYS_FORCE_INLINE void appendPrimitives(const char* attribPattern)
+SYS_FORCE_INLINE void appendPrimitives(const char* const attribPattern)
 { appends(GA_ATTRIB_PRIMITIVE, attribPattern); }
 
-SYS_FORCE_INLINE void appendPoints(const char* attribPattern)
+SYS_FORCE_INLINE void appendPoints(const char* const attribPattern)
 { appends(GA_ATTRIB_POINT, attribPattern); }
 
-SYS_FORCE_INLINE void appendVertices(const char* attribPattern)
+SYS_FORCE_INLINE void appendVertices(const char* const attribPattern)
 { appends(GA_ATTRIB_VERTEX, attribPattern); }
 
-SYS_FORCE_INLINE void appendDetails(const char* attribPattern)
+SYS_FORCE_INLINE void appendDetails(const char* const attribPattern)
 { appends(GA_ATTRIB_DETAIL, attribPattern); }
 
 
 
-void oappends(const GA_AttributeOwner attribClass, const char* attribPattern)
+void oappends(const GA_AttributeOwner attribClass, const char* const attribPattern)
 {
     if (!attribPattern)
         return;
@@ -235,16 +245,16 @@ SYS_FORCE_INLINE void oappends(const GA_AttributeOwner attribClass, const UT_Str
     oappends(attribClass, attribPattern.c_str());
 }
     
-SYS_FORCE_INLINE void oappendPrims(const char* attribPattern)
+SYS_FORCE_INLINE void oappendPrims(const char* const attribPattern)
 { return oappends(GA_ATTRIB_PRIMITIVE, attribPattern); }
 
-SYS_FORCE_INLINE void oappendPoints(const char* attribPattern)
+SYS_FORCE_INLINE void oappendPoints(const char* const attribPattern)
 { return oappends(GA_ATTRIB_POINT, attribPattern); }
     
-SYS_FORCE_INLINE void oappendVertices(const char* attribPattern)
+SYS_FORCE_INLINE void oappendVertices(const char* const attribPattern)
 { return oappends(GA_ATTRIB_VERTEX, attribPattern); }
     
-SYS_FORCE_INLINE void oappendDetails(const char* attribPattern)
+SYS_FORCE_INLINE void oappendDetails(const char* const attribPattern)
 { return oappends(GA_ATTRIB_DETAIL, attribPattern); }
 
 
@@ -1244,16 +1254,16 @@ public:
         appends(groupClass, groupPattern.c_str());
     }
 
-    SYS_FORCE_INLINE void oappendPrims(const char* attribPattern)
+    SYS_FORCE_INLINE void oappendPrims(const char* const attribPattern)
     { return oappends(GA_GROUP_PRIMITIVE, attribPattern); }
 
-    SYS_FORCE_INLINE void oappendPoints(const char* attribPattern)
+    SYS_FORCE_INLINE void oappendPoints(const char* const attribPattern)
     { return oappends(GA_GROUP_POINT, attribPattern); }
     
-    SYS_FORCE_INLINE void oappendVertices(const char* attribPattern)
+    SYS_FORCE_INLINE void oappendVertices(const char* const attribPattern)
     { return oappends(GA_GROUP_VERTEX, attribPattern); }
     
-    SYS_FORCE_INLINE void oappendEdges(const char* attribPattern)
+    SYS_FORCE_INLINE void oappendEdges(const char* const attribPattern)
     { return oappends(GA_GROUP_EDGE, attribPattern); }
 
 

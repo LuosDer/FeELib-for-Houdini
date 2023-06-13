@@ -286,15 +286,12 @@ SOP_FeE_XformByAttrib_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
 
     xformByAttrib.setXformAttrib(owner, sopparms.getXformAttrib());
 
-    xformByAttrib.setComputeParm(sopparms.getInvertXform(), sopparms.getPreserveLength(), sopparms.getDelXformAttrib(),
+    xformByAttrib.setComputeParm(sopparms.getPreserveLength(), sopparms.getInvertXform(), sopparms.getDelXformAttrib(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     xformByAttrib.groupParser.setGroup(groupType, sopparms.getGroup());
     
     xformByAttrib.computeAndBumpDataId();
-
-
-    
 
 }
 

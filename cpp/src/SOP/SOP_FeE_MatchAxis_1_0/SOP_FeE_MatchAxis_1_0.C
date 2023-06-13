@@ -49,24 +49,32 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "matchAxisAttribClass"
-        cppname "MatchAxisAttribClass"
-        label   "Attribute Class"
-        type    ordinal
-        default { "point" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "detail"    "Detail"
-        }
+        name    "primAttribToXform"
+        cppname "PrimAttribToXform"
+        label   "Prim Attrib to Transform"
+        type    string
+        default { "" }
     }
     parm {
-        name    "matchAxisAttrib"
-        cppname "MatchAxisAttrib"
-        label   "Match Axis Attrib"
+        name    "pointAttribToXform"
+        cppname "PointAttribToXform"
+        label   "Point Attrib to Transform"
         type    string
         default { "P" }
+    }
+    parm {
+        name    "vertexAttribToXform"
+        cppname "VertexAttribToXform"
+        label   "Vertex Attrib to Transform"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "detailAttribToXform"
+        cppname "DetailAttribToXform"
+        label   "Detail Attrib to Transform"
+        type    string
+        default { "" }
     }
     parm {
         name    "fromVec"
@@ -113,14 +121,24 @@ static const char *theDsFile = R"THEDSFILE(
         default { "1" }
         range   { 0! 1! }
     }
-    parm {
-        name    "sepparm"
-        cppname "Sepparm"
-        label   "Separator"
-        type    separator
-        default { "" }
-    }
     
+    parm {
+        name    "outXformAttrib"
+        cppname "OutXformAttrib"
+        label   "Out Xform Attrib"
+        type    toggle
+        default { "0" }
+        joinnext
+        nolabel
+    }
+    parm {
+        name    "xformAttribName"
+        cppname "XformAttribName"
+        label   "Xform Attrib Name"
+        type    string
+        default { "xform" }
+        disablewhen "{ outXformAttrib == 0 }"
+    }
 
     parm {
         name    "subscribeRatio"
@@ -231,22 +249,6 @@ sopGroupType(SOP_FeE_MatchAxis_1_0Parms::GroupType parmGroupType)
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_MatchAxis_1_0Parms::MatchAxisAttribClass attribClass)
-{
-    using namespace SOP_FeE_MatchAxis_1_0Enums;
-    switch (attribClass)
-    {
-    case MatchAxisAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case MatchAxisAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case MatchAxisAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case MatchAxisAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-
 
 void
 SOP_FeE_MatchAxis_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -259,7 +261,6 @@ SOP_FeE_MatchAxis_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     outGeo0.replaceWith(inGeo0);
     
-    const GA_AttributeOwner owner = sopAttribOwner(sopparms.getMatchAxisAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     UT_AutoInterrupt boss("Processing");
@@ -267,11 +268,20 @@ SOP_FeE_MatchAxis_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     GFE_MatchAxis matchAxis(outGeo0, cookparms);
-
-    matchAxis.setComputeParm(sopparms.getFromVec(), sopparms.getToVec(), sopparms.getUpVec(), sopparms.getCenter(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    matchAxis.getOutAttribArray().appends(owner, sopparms.getMatchAxisAttrib());
+    matchAxis.getOutAttribArray().appendPrimitives(sopparms.getPrimAttribToXform());
+    matchAxis.getOutAttribArray().appendPoints    (sopparms.getPointAttribToXform());
+    matchAxis.getOutAttribArray().appendVertices  (sopparms.getVertexAttribToXform());
+    matchAxis.getOutAttribArray().appendDetails   (sopparms.getDetailAttribToXform());
+
+    
+    matchAxis.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    matchAxis.setXformVector(sopparms.getFromVec(), sopparms.getToVec(), sopparms.getUpVec(), sopparms.getCenter());
+
+    if (sopparms.getOutXformAttrib())
+        matchAxis.setXformAttrib(false, GA_STORE_INVALID, sopparms.getXformAttribName());
+    
 
     matchAxis.groupParser.setGroup(groupType, sopparms.getGroup());
     matchAxis.computeAndBumpDataId();

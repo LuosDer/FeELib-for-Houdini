@@ -4,13 +4,15 @@
 #ifndef __GFE_XformByAttrib_h__
 #define __GFE_XformByAttrib_h__
 
-//#include "GFE/GFE_XformByAttrib.h"
+#include "GFE/GFE_XformByAttrib.h"
+
+#include "GFE/GFE_GeoFilter.h"
+
+
 
 
 #include "GA/GA_AttributeTransformer.h"
 
-
-#include "GFE/GFE_GeoFilter.h"
 
 
 class GFE_XformByAttrib : public GFE_AttribFilterWithRef
@@ -105,10 +107,8 @@ private:
         for (size_t i = 0; i < size; ++i)
         {
             attribPtr = getOutAttribArray()[i];
-            
             const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-
-            if(!aifTuple)
+            if (!aifTuple)
                 continue;
             
             // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
@@ -176,13 +176,10 @@ private:
                 break;
             default: break;
             }
-
         }
         
         if (delXformAttrib && xformAttribNonConst)
-        {
             geo->destroyAttrib(xformAttribNonConst);
-        }
 
         return true;
     }
@@ -706,9 +703,9 @@ private:
     template <typename T, typename MATRIX_T>
     void xformMatrixByAttrib()
     {
-        if(attribPtr->getOwner() == xformAttrib->getOwner())
+        if (attribPtr->getOwner() == xformAttrib->getOwner())
         {
-            if(&xformAttrib->getDetail() == geo)
+            if (&xformAttrib->getDetail() == geo)
             {
                 UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
                 {
