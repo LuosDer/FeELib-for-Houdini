@@ -12,13 +12,10 @@
 #include "UT/UT_BoundingBox.h"
 
 
-
-
-
 namespace GFE_Bound {
 
     template<typename FLOAT_T>
-    SYS_FORCE_INLINE static UT_BoundingBoxT<FLOAT_T> stdBoundingBox()
+    SYS_FORCE_INLINE static UT_BoundingBoxT<FLOAT_T> stdBoundingBoxT()
     { return UT_BoundingBoxT<FLOAT_T>(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN); }
 
     template<typename FLOAT_T, typename FLOAT_T2>
@@ -31,6 +28,10 @@ namespace GFE_Bound {
         bound(2,0) += boundRef(2,0);
         bound(2,1) += boundRef(2,1);
     }
+
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE static void setStd(UT_BoundingBoxT<FLOAT_T>& bbox)
+    { bbox.setBounds(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN); }
 
     
 

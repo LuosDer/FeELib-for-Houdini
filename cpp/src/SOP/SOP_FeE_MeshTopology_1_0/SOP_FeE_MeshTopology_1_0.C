@@ -668,12 +668,12 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
     if (calVertexPrimIndex)
     {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPrimIndexAttribName, inStorageI, 1, GA_Defaults(-1));
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPrimIndexAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         vtxpnumAttribHandle.bind(attribPtr);
     }
     else if (calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
     {
-        vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         //GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
         vtxpnumAttribHandle.bind(vtxpnumAttribUPtr.get());
     }
@@ -692,12 +692,12 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<GA_Offset> dstptAttribHandle;
     if (calVertexPointDst)
     {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPointDstAttribName, inStorageI, 1, GA_Defaults(-1));
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPointDstAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         dstptAttribHandle.bind(attribPtr);
     }
     else if (calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge)
     {
-        dstptAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        dstptAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
         dstptAttribHandle.bind(dstptAttribUPtr.get());
     }
@@ -727,13 +727,13 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<GA_Offset> vtxPrevAttribHandle, vtxNextAttribHandle;
     if (calVertexVertexPrim)
     {
-        vtxPrevAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, inStorageI, 1, GA_Defaults(-1));
-        vtxNextAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, inStorageI, 1, GA_Defaults(-1));
+        vtxPrevAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
+        vtxNextAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
     }
     else if (calPointPointEdge)
     {
-        vtxPrevAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
-        vtxNextAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        vtxPrevAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
+        vtxNextAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
         vtxPrevAttribHandle = vtxPrevAttribUPtr.get();
         vtxNextAttribHandle = vtxNextAttribUPtr.get();
@@ -766,11 +766,11 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_RWHandleT<GA_Offset> vtxNextEquivAttribHandle;
     if (calVertexNextEquiv)
     {
-        vtxNextEquivAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, inStorageI, 1, GA_Defaults(-1));
+        vtxNextEquivAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
     }
     else if (calPrimPrimEdge)
     {
-        vtxNextEquivAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(-1));
+        vtxNextEquivAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         vtxNextEquivAttribHandle = vtxNextEquivAttribUPtr.get();
     }
     if (calVertexNextEquiv || calPrimPrimEdge)
@@ -789,7 +789,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     if (calVertexNextEquivNoLoop)
     {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, inStorageI, 1, GA_Defaults(-1));
+        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
         intAttribHandle.bind(attribPtr);
         GFE_VertexNextEquiv_Namespace::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
             static_cast<const GA_VertexGroup*>(geo0Group),
@@ -799,7 +799,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     if (calPointPointEdge)
     {
-        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(-1));
+        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointEdgeAttribName, inStorageI, 1);
         attribHandle.bind(attribPtr);
         switch (kernel)
@@ -828,7 +828,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (calPointPointPrim)
     {
         GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointPrimAttribName, inStorageI, 1);
-        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(-1));
+        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         attribHandle.bind(attribPtr);
         //GFE_Adjacency_Namespace::pointPointPrim(outGeo0, attribHandle,
         //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
@@ -849,7 +849,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         else
         {
             GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimEdgeAttribName, inStorageI, 1);
-            //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(-1));
+            //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
             attribHandle.bind(attribPtr);
             switch (kernel)
             {
@@ -888,7 +888,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (calPrimPrimPoint)
     {
         GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimPointAttribName, inStorageI, 1);
-        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(-1));
+        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         attribHandle.bind(attribPtr);
         GFE_Adjacency_Namespace::primPrimPoint(outGeo0, attribHandle,
             static_cast<const GA_PrimitiveGroup*>(geo0Group), pointSeamGroup,

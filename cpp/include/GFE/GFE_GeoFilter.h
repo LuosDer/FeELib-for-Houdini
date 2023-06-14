@@ -636,7 +636,7 @@ virtual void delGroupElement(const GA_Group* group = nullptr)
     if (group->classType() == GA_GROUP_EDGE)
     {
         geo->asGU_Detail()->dissolveEdges(static_cast<const GA_EdgeGroup&>(*group),
-            false, 0, true, GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
+            false, 0, delUnusedPoint, GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
     }
     else
     {
@@ -644,7 +644,7 @@ virtual void delGroupElement(const GA_Group* group = nullptr)
         switch (group->classType())
         {
         case GA_GROUP_PRIMITIVE:
-            geo->destroyPrimitiveOffsets(range, true);
+            geo->destroyPrimitiveOffsets(range, delUnusedPoint);
             break;
         case GA_GROUP_POINT:
             geo->destroyPointOffsets(range, GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE);
@@ -713,6 +713,7 @@ public:
     GFE_GroupSetter groupSetter;
     //bool reverseOutGroup = false;
     bool doDelGroupElement = false;
+    bool delUnusedPoint = true;
     
 private:
     //::std::vector<GA_AttributeUPtr> attribUPtrArray;

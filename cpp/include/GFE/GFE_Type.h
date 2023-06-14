@@ -36,7 +36,8 @@ using GFE_INVALID_OFFSET = numeric_limits<GA_Offset>::max();
 
 #if 1
 
-#define GFE_INVALID_OFFSET 9223372036854775807
+//#define GFE_INVALID_OFFSET 9223372036854775807
+#define GFE_INVALID_OFFSET 2147483647
 
 #else
 
@@ -168,10 +169,10 @@ SYS_FORCE_INLINE static bool isPacked(const int i)
 { return i >= 25 && i <= 27; }
 
 SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
-{ return v >= 0 && v != GFE_INVALID_OFFSET; }
+{ return v < GFE_INVALID_OFFSET && v >= 0; }
 
 SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
-{ return v < 0 || v == GFE_INVALID_OFFSET; }
+{ return v >= GFE_INVALID_OFFSET || v < 0; }
 
     
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)

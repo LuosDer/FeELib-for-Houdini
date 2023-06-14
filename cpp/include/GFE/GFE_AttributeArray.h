@@ -102,10 +102,7 @@ public:
     }
 
     SYS_FORCE_INLINE void clear()
-    {
-        attribArray.clear();
-        attribUPtrArray.clear();
-    }
+    { attribArray.clear(); attribUPtrArray.clear(); }
 
     SYS_FORCE_INLINE ::std::vector<GA_Attribute*>::size_type size() const
     { return attribArray.size(); }
@@ -388,7 +385,7 @@ findOrCreateTuple(
 
     if (detached)
     {
-        if(finalStorage == GA_STORE_STRING)
+        if (finalStorage == GA_STORE_STRING)
             attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, "string", create_args, attribute_options));
         else
             attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tuple_size, defaults, attribute_options));
@@ -398,7 +395,7 @@ findOrCreateTuple(
     else
     {
         if (!attribPtr)
-            if(finalStorage == GA_STORE_STRING)
+            if (finalStorage == GA_STORE_STRING)
                 attribPtr = geo->createStringAttribute(owner, attribName, create_args, attribute_options);
             else
                 attribPtr = geo->createTupleAttribute(owner, attribName, finalStorage,
@@ -1267,8 +1264,15 @@ public:
     { return oappends(GA_GROUP_EDGE, attribPattern); }
 
 
+    void append(const GFE_GroupArray& inArray)
+    {
+        const size_t size = inArray.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            groupArray.emplace_back(inArray[i]);
+        }
+    }
 
-    
     SYS_FORCE_INLINE void appends(const GA_AttributeOwner groupClass, const char* groupPattern)
     { appends(GFE_Type::attributeOwner_groupType(groupClass), groupPattern); }
 
@@ -1338,6 +1342,24 @@ public:
             const bool emplaceBack = true
         )
     { return findOrCreate(detached, GFE_Type::attributeOwner_groupType(owner), groupName, emplaceBack); }
+
+    SYS_FORCE_INLINE GA_ElementGroup*
+        findOrCreateElement(
+            const bool detached = false,
+            const GA_GroupType owner = GA_GROUP_POINT,
+            const UT_StringRef& groupName = "",
+            const bool emplaceBack = true
+        )
+    { return static_cast<GA_ElementGroup*>(findOrCreate(detached, owner, groupName, emplaceBack)); }
+
+    SYS_FORCE_INLINE GA_ElementGroup*
+        findOrCreateElement(
+            const bool detached = false,
+            const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+            const UT_StringRef& groupName = "",
+            const bool emplaceBack = true
+        )
+    { return findOrCreateElement(detached, GFE_Type::attributeOwner_groupType(owner), groupName, emplaceBack); }
 
 
     SYS_FORCE_INLINE GA_PrimitiveGroup*

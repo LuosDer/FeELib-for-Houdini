@@ -241,13 +241,13 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    GFE_Measure measure(outGeo0, &cookparms);
+    GFE_Measure measure(outGeo0, cookparms);
     measure.groupParser.setGroup(groupType, sopparms.getGroup());
     measure.setPositionAttrib(sopparms.getPosAttribName());
     measure.setComputeParm(measureType,
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    measure.findOrCreateTuple(false, measureAttribName);
+    measure.findOrCreateTuple(false, GA_STORE_INVALID, measureAttribName);
     
 
     measure.computeAndBumpDataId();

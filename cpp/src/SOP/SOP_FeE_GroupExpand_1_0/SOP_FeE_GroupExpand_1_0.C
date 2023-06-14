@@ -47,11 +47,30 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "outExpandGroup"
+        cppname "OutExpandGroup"
+        label   "Output Expand Group"
+        type    toggle
+        default { "0" }
+        joinnext
+        nolabel
+    }
+    parm {
         name    "expandGroupName"
         cppname "ExpandGroupName"
         label   "Expand Group Name"
         type    string
         default { "expand" }
+        disablewhen "{ outExpandGroup == 0 }"
+    }
+    parm {
+        name    "outBorderGroup"
+        cppname "OutBorderGroup"
+        label   "Output Border Group"
+        type    toggle
+        default { "0" }
+        joinnext
+        nolabel
     }
     parm {
         name    "borderGroupName"
@@ -59,14 +78,15 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Border Group Name"
         type    string
         default { "border" }
+        disablewhen "{ outBorderGroup == 0 }"
     }
-    parm {
-        name    "prevBorderGroupName"
-        cppname "PrevBorderGroupName" 
-        label   "Prev Border Group Name"
-        type    string
-        default { "prevBorder" }
-    }
+    // parm {
+    //     name    "prevBorderGroupName"
+    //     cppname "PrevBorderGroupName" 
+    //     label   "Prev Border Group Name"
+    //     type    string
+    //     default { "prevBorder" }
+    // }
 
     parm {
         name    "primshareedge"
@@ -369,6 +389,9 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     outGeo0.replaceWith(inGeo0);
 
+    if (sopparms.getNumsteps() == 0 || (!sopparms.getOutExpandGroup() && !sopparms.getOutBorderGroup()))
+        return;
+        
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
@@ -380,21 +403,32 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     GFE_GroupExpand groupExpand(outGeo0, cookparms);
     
+    //groupExpand.groupParser.setGroup(groupType, sopparms.getGroup());
     if (!groupExpand.setBaseGroup(groupType, sopparms.getGroup()))
         return;
     
-    groupExpand.setExpandGroup(false, sopparms.getExpandGroupName());
-    groupExpand.setBorderGroup(false, sopparms.getBorderGroupName());
-    groupExpand.setPrevBorderGroup(false, sopparms.getPrevBorderGroupName());
-    
-    groupExpand.setComputeParm(
-        sopparms.getLargeConnectivity(), sopparms.getNumsteps(), sopparms.getOutTopoAttrib(),
+    groupExpand.setComputeParm(sopparms.getNumsteps(), sopparms.getLargeConnectivity(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
+    groupExpand.outTopoAttrib = sopparms.getOutTopoAttrib();
+
+    if (sopparms.getNumsteps() == 1)
+    {
+        if (sopparms.getOutExpandGroup())
+            groupExpand.setExpandGroup(false, sopparms.getExpandGroupName());
+        if (sopparms.getOutBorderGroup())
+            groupExpand.setBorderGroup(false, sopparms.getBorderGroupName());
+    }
+    else
+    {
+        groupExpand.setExpandGroup(!sopparms.getOutExpandGroup(), sopparms.getExpandGroupName());
+        groupExpand.setBorderGroup(!sopparms.getOutBorderGroup(), sopparms.getBorderGroupName());
+    }
+    //groupExpand.setPrevBorderGroup(false, sopparms.getPrevBorderGroupName());
+    
     groupExpand.computeAndBumpDataId();
-
-
-
+    groupExpand.visualizeOutGroup();
+    
 }
 
 

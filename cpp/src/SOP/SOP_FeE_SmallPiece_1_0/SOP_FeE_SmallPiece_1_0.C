@@ -15,6 +15,32 @@
 
 using namespace SOP_FeE_SmallPiece_1_0_Namespace;
 
+// #define SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION(Name, Label)  \
+// R"THEDSFILE(                                                    
+//         parm {                                                  
+//             name    "check%s" 
+//             label   "Check%s"                           
+//             type    toggle                                      
+//             nolabel                                             
+//             joinnext                                            
+//             default { "0" }                                   
+//         }                                                       
+//         parm {                                                  
+//             name    "threshold%s"                         
+//             label   "Threshold %s"                        
+//             type    log                                         
+//             default { "0.1" }                                 
+//             disablewhen "{ check%s == 0 }"          
+//             range   { 0.01 100 }                                
+//         }                                                       
+//         parm {                                                  
+//             name    "threshold%sAttrib"                   
+//             label   "Threshold %s Attrib"                 
+//             type    string                                      
+//             default { "" }                                    
+//             disablewhen "{ check%s == 0 }"                
+//         }                                                   
+// )THEDSFILE"                                                     
 
 
 static const char *theDsFile = R"THEDSFILE(
@@ -46,175 +72,232 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
+)THEDSFILE"
+
+//SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION(OneOfXYZSize, One of XYZ Size)
+
+R"THEDSFILE(
+
+
+
     parm {
-        name    "check_oneof_xyzsize"
-        label   "check_oneof_xyzsize"
-        type    toggle
-        nolabel
-        joinnext
-        default { "on" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_oneof_xyzsize"
-        label   "Threshold One of XYZ Size"
-        type    log
-        default { "0.1" }
-        disablewhen "{ check_oneof_xyzsize == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "threshold_oneof_xyzsize_attrib"
-        label   "Threshold One of XYZ Size Attrib"
-        type    string
-        default { "" }
-        disablewhen "{ check_oneof_xyzsize == 0 }"
-    }
-    parm {
-        name    "check_all_xyzsize"
-        label   "check_all_xyzsize"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_all_xyzsize"
-        label   "Threshold All XYZ Size"
-        type    log
-        default { "0.1" }
-        disablewhen "{ check_all_xyzsize == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "threshold_all_xyzsize_attrib"
-        label   "Threshold All XYZ Size Attrib"
-        type    string
-        default { "" }
-        disablewhen "{ check_all_xyzsize == 0 }"
-    }
-    parm {
-        name    "check_xyzsize_sum"
-        label   "check_xyzsize_sum"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_xyzsize_sum"
-        label   "Threshold XYZ Size Sum"
-        type    log
-        default { "0.1" }
-        disablewhen "{ check_xyzsize_sum == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "checkperimeter"
-        label   "Check Perimeter"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_perimeter"
-        label   "Threshold Perimeter"
-        type    log
-        default { "0.1" }
-        disablewhen "{ checkperimeter == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "checkarea"
-        label   "Check Area"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_area"
-        label   "Threshold Area"
-        type    log
-        default { "0.1" }
-        disablewhen "{ checkarea == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "checkvolume"
-        label   "Check Volume"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_volume"
-        label   "Threshold Volume"
-        type    log
-        default { "0.1" }
-        disablewhen "{ checkvolume == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "check_bbox_area"
-        label   "Check BBox Area"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_bbox_area"
-        label   "Threshold BBox Area"
-        type    log
-        default { "0.1" }
-        disablewhen "{ check_bbox_area == 0 }"
-        range   { 0.01 100 }
-    }
-    parm {
-        name    "check_area_perimeter_ratio"
+        name    "checkAreaPerimeterRatio"
+        cppname "CheckAreaPerimeterRatio"
         label   "Check Area Perimeter Ratio"
         type    toggle
         nolabel
         joinnext
-        default { "off" }
-        range   { 0 10 }
+        default { "0" }
     }
     parm {
-        name    "threshold_area_perimeter_ratio"
+        name    "thresholdAreaPerimeterRatio"
+        cppname "ThresholdAreaPerimeterRatio"
         label   "Threshold Area Perimeter Ratio"
         type    log
         default { "0.1" }
-        disablewhen "{ check_area_perimeter_ratio == 0 }"
-        range   { 0.001 10 }
-    }
-    parm {
-        name    "check_bbox_volume"
-        label   "Check BBox Volume"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-        range   { 0 10 }
-    }
-    parm {
-        name    "threshold_bbox_volume"
-        label   "Threshold BBox Volume"
-        type    log
-        default { "0.1" }
-        disablewhen "{ check_bbox_volume == 0 }"
+        disablewhen "{ checkAreaPerimeterRatio == 0 }"
         range   { 0.01 100 }
     }
     parm {
+        name    "thresholdAttribAreaPerimeterRatio"
+        cppname "ThresholdAttribAreaPerimeterRatio"
+        label   "Attrib Area Perimeter Ratio"
+        type    string
+        default { "" }
+        disablewhen "{ checkAreaPerimeterRatio == 0 }"
+    }
+
+
+
+    parm {
+        name    "checkPerimeter"
+        cppname "CheckPerimeter"
+        label   "Check Perimeter"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "thresholdPerimeter"
+        cppname "ThresholdPerimeter"
+        label   "Threshold Perimeter"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkPerimeter == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "thresholdAttribPerimeter"
+        cppname "ThresholdAttribPerimeter"
+        label   "Attrib Perimeter"
+        type    string
+        default { "" }
+        disablewhen "{ checkPerimeter == 0 }"
+    }
+
+
+
+
+    parm {
+        name    "checkArea"
+        cppname "CheckArea"
+        label   "Check Area"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "thresholdArea"
+        cppname "ThresholdArea"
+        label   "Threshold Area"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkArea == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "thresholdAttribArea"
+        cppname "ThresholdAttribArea"
+        label   "Attrib Area"
+        type    string
+        default { "" }
+        disablewhen "{ checkArea == 0 }"
+    }
+
+
+
+    parm {
+        name    "checkVolume"
+        cppname "CheckVolume"
+        label   "Check Volume"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "thresholdVolume"
+        cppname "ThresholdVolume"
+        label   "Threshold Volume"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkVolume == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "thresholdAttribVolume"
+        cppname "ThresholdAttribVolume"
+        label   "Attrib Volume"
+        type    string
+        default { "" }
+        disablewhen "{ checkVolume == 0 }"
+    }
+
+
+
+
+
+
+    parm {
+        name    "checkOneOfXYZSize"
+        cppname "CheckOneOfXYZSize"
+        label   "Check One of XYZ Size"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "thresholdOneOfXYZSize"
+        cppname "ThresholdOneOfXYZSize"
+        label   "Threshold One of XYZ Size"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkOneOfXYZSize == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "thresholdAttribOneOfXYZSize"
+        cppname "ThresholdAttribOneOfXYZSize"
+        label   "Attrib One of XYZ Size"
+        type    string
+        default { "" }
+        disablewhen "{ checkOneOfXYZSize == 0 }"
+    }
+
+
+
+
+    parm {
+        name    "checkAllXYZSize"
+        cppname "CheckAllXYZSize"
+        label   "Check All XYZ Size"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "thresholdAllXYZSize"
+        cppname "ThresholdAllXYZSize"
+        label   "Threshold All XYZ Size"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkAllXYZSize == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "thresholdAttribAllXYZSize"
+        cppname "ThresholdAttribAllXYZSize"
+        label   "Attrib All XYZ Size"
+        type    string
+        default { "" }
+        disablewhen "{ checkAllXYZSize == 0 }"
+    }
+
+
+
+
+
+    parm {
+        name    "checkXYZSizeSum"
+        cppname "CheckXYZSizeSum"
+        label   "Check XYZ Size Sum"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "thresholdXYZSizeSum"
+        cppname "ThresholdXYZSizeSum"
+        label   "Threshold XYZ Size Sum"
+        type    log
+        default { "0.1" }
+        disablewhen "{ checkXYZSizeSum == 0 }"
+        range   { 0.01 100 }
+    }
+    parm {
+        name    "thresholdAttribXYZSizeSum"
+        cppname "ThresholdAttribXYZSizeSum"
+        label   "Attrib XYZ Size Sum"
+        type    string
+        default { "" }
+        disablewhen "{ checkXYZSizeSum == 0 }"
+    }
+
+
+
+)THEDSFILE"
+R"THEDSFILE(
+
+
+
+    parm {
         name    "numConditionMatch"
+        cppname "NumConditionMatch"
         label   "num Condition Match"
         type    integer
         default { "1" }
@@ -278,6 +361,15 @@ static const char *theDsFile = R"THEDSFILE(
 }
 )THEDSFILE";
 
+#ifdef SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION
+#undef SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION
+#endif
+
+
+
+
+#define SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION(NAME)                                  \
+        templ.setChoiceListPtr("thresholdAttrib"#NAME""_sh, &SOP_Node::primAttribReplaceMenu); \
 
 
 PRM_Template*
@@ -287,10 +379,14 @@ SOP_FeE_SmallPiece_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh,               &SOP_Node::allGroupMenu);
+        GFE_SmallPiece_SPECILIZATION_MULTI_CONDITION_FUNC(SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION)
         templ.setChoiceListPtr("smallPieceGroupName"_sh, &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
+
+
+#undef SOP_FeE_SmallPiece_1_0_PARM_SPECILIZATION
 
 
 const UT_StringHolder SOP_FeE_SmallPiece_1_0::theSOPTypeName("FeE::smallPiece::1.0"_sh);
@@ -311,7 +407,7 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/Group");
 
-    newOp->setIconName("SOP_groupcreate");
+    newOp->setIconName("SOP_measure-2.0");
     table->addOperator(newOp);
 }
 
@@ -398,14 +494,29 @@ SOP_FeE_SmallPiece_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     GFE_SmallPiece smallPiece(outGeo0, cookparms);
-    smallPiece.findOrCreatePrimitiveGroup(sopparms.getSmallPieceGroupName(), sopparms.getSmallPieceGroupName());
-
-    smallPiece.setComputeParm(
+    smallPiece.setComputeParm(sopparms.getNumConditionMatch(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    
+    smallPiece.findOrCreatePrimitiveGroup(sopparms.getDelElem() && sopparms.getDelGroup(), sopparms.getSmallPieceGroupName());
+    smallPiece.groupSetter.setParm(sopparms.getReverseGroup());
+    
+    smallPiece.doDelGroupElement = sopparms.getDelElem();
+    smallPiece.delUnusedPoint = sopparms.getDelUnusedPoint();
+    
     smallPiece.groupParser.setGroup(groupType, sopparms.getGroup());
+
+    
+#define SOP_FeE_SmallPiece_1_0_SPECILIZATION(Name)                                                          \
+        if (sopparms.getCheck##Name())                                                                      \
+            smallPiece.setCheck##Name(sopparms.getThreshold##Name(), sopparms.getThresholdAttrib##Name());  \
+
+    
+    GFE_SmallPiece_SPECILIZATION_MULTI_CONDITION_FUNC(SOP_FeE_SmallPiece_1_0_SPECILIZATION)
+    
+#undef SOP_FeE_SmallPiece_1_0_SPECILIZATION
+    
     smallPiece.computeAndBumpDataId();
-    smallPiece.visualizeOutGroup();
+    smallPiece.delOrVisualizeGroup();
     
 }
 

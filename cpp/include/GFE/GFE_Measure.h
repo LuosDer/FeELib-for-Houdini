@@ -4,17 +4,13 @@
 #ifndef __GFE_Measure_h__
 #define __GFE_Measure_h__
 
-//#include "GFE/GFE_Measure.h"
-
-
-#include <GA/GA_Attribute.h>
+#include "GFE/GFE_Measure.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
+
+
 #include "GFE/GFE_Bound.h"
-#include "GFE/GFE_Type.h"
-
-
 #include "GEO/GEO_Hull.h"
 
 
@@ -42,24 +38,24 @@ public:
         setComputeParm(
             const GFE_MeasureType measureType = GFE_MeasureType::Area,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->measureType = measureType;
+        this->measureType    = measureType;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
-    GA_Attribute*
-    findOrCreateTuple(
+    GA_Attribute* findOrCreateTuple(
         const bool detached = false,
-        const UT_StringRef& attribName = "",
-        const GA_Storage storage = GA_STORE_INVALID
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = ""
     )
     {
+        //getOutAttribArray().clear();
         const GA_AttributeOwner owner = measureType < GFE_MeasureType::MeshPerimeter ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_DETAIL;
-        if(!detached && (!attribName.isstring() || attribName.length()==0) )
+        if (!detached && (!attribName.isstring() || attribName.length()==0) )
         {
             const char* measureName;
             switch (measureType)
@@ -72,8 +68,7 @@ public:
             case GFE_MeasureType::MeshVolume:    measureName = "__topo_meshVolume";    break;
             default: break;
             }
-            
-            return getOutAttribArray().findOrCreateTuple(false, owner,    GA_STORECLASS_FLOAT, storage, measureName);
+            return getOutAttribArray().findOrCreateTuple(false,    owner, GA_STORECLASS_FLOAT, storage, measureName);
         }
         else
         {
@@ -86,19 +81,19 @@ public:
     
 public:
 
-#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                                                      \
-        fpreal64 FUNC_NAME()                                                                                 \
-        {                                                                                                    \
-            if (!posAttrib)                                                                                  \
-                posAttrib = geo->getP();                                                                     \
-            switch (posAttrib->getAIFTuple()->getStorage(posAttrib))                                         \
-            {                                                                                                \
-                case GA_STORE_REAL32: return FUNC_NAME<fpreal32>();         break;                           \
-                case GA_STORE_REAL64: return FUNC_NAME<fpreal64>();         break;                           \
-                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                  \
-            }                                                                                                \
-            return -1;                                                                                       \
-        }                                                                                                    \
+#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                       \
+        fpreal64 FUNC_NAME()                                                  \
+        {                                                                     \
+            if (!posAttrib)                                                   \
+                posAttrib = geo->getP();                                      \
+            switch (posAttrib->getAIFTuple()->getStorage(posAttrib))          \
+            {                                                                 \
+                case GA_STORE_REAL32: return FUNC_NAME<fpreal32>();  break;   \
+                case GA_STORE_REAL64: return FUNC_NAME<fpreal64>();  break;   \
+                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;   \
+            }                                                                 \
+            return -1;                                                        \
+        }                                                                     \
 
     
 GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshPerimeter)
@@ -141,7 +136,6 @@ GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
     
 private:
 
-
     virtual bool
         computeCore() override
     {
@@ -154,7 +148,7 @@ private:
         if (!posAttrib)
             posAttrib = geo->getP();
 
-        measureAttrib = getOutAttribArray()[0];
+        measureAttrib = getOutAttribArray().last();
 #if 1
         switch (measureType)
         {
@@ -190,10 +184,6 @@ private:
             break;
         }
 #endif
-        //GA_ROHandleT<fpreal> measure_h(measureAttrib);
-
-
-
         return true;
     }
 
@@ -237,7 +227,6 @@ private:
         default:
             return 0.0;
         }
-
 
         const GA_AttributeOwner attribOwner = pos_h.getAttribute()->getOwner();
 
@@ -488,31 +477,31 @@ void computeVolume()
 
     
 
-#define GFE_MEASUREPRIM_FUNC_SPECIALIZATION(FUNC_NAME);                                                                    \
-        void FUNC_NAME()                                                                                                   \
-        {                                                                                                                  \
-            const GA_Storage posStorage = posAttrib->getAIFTuple()->getStorage(posAttrib);                                 \
-            switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                                               \
-            {                                                                                                              \
-            case GA_STORE_REAL32:                                                                                          \
-                switch (posStorage)                                                                                        \
-                {                                                                                                          \
-                case GA_STORE_REAL32: FUNC_NAME<fpreal32, fpreal32>(); break;                                              \
-                case GA_STORE_REAL64: FUNC_NAME<fpreal32, fpreal64>(); break;                                              \
-                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
-                }                                                                                                          \
-                break;                                                                                                     \
-            case GA_STORE_REAL64:                                                                                          \
-                switch (posStorage)                                                                                        \
-                {                                                                                                          \
-                case GA_STORE_REAL32: FUNC_NAME<fpreal64, fpreal32>(); break;                                              \
-                case GA_STORE_REAL64: FUNC_NAME<fpreal64, fpreal64>(); break;                                              \
-                default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                \
-                }                                                                                                          \
-                break;                                                                                                     \
-            default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                    \
-            }                                                                                                              \
-        }                                                                                                                  \
+#define GFE_MEASUREPRIM_FUNC_SPECIALIZATION(FUNC_NAME);                                       \
+        void FUNC_NAME()                                                                      \
+        {                                                                                     \
+            const GA_Storage posStorage = posAttrib->getAIFTuple()->getStorage(posAttrib);    \
+            switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                  \
+            {                                                                                 \
+            case GA_STORE_REAL32:                                                             \
+                switch (posStorage)                                                           \
+                {                                                                             \
+                case GA_STORE_REAL32: FUNC_NAME<fpreal32, fpreal32>(); break;                 \
+                case GA_STORE_REAL64: FUNC_NAME<fpreal32, fpreal64>(); break;                 \
+                default: UT_ASSERT_MSG(0, "unhandled storage type");   break;                 \
+                }                                                                             \
+                break;                                                                        \
+            case GA_STORE_REAL64:                                                             \
+                switch (posStorage)                                                           \
+                {                                                                             \
+                case GA_STORE_REAL32: FUNC_NAME<fpreal64, fpreal32>(); break;                 \
+                case GA_STORE_REAL64: FUNC_NAME<fpreal64, fpreal64>(); break;                 \
+                default: UT_ASSERT_MSG(0, "unhandled storage type");   break;                 \
+                }                                                                             \
+                break;                                                                        \
+            default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                       \
+            }                                                                                 \
+        }                                                                                     \
     
 GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computePerimeter)
 GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
@@ -536,13 +525,13 @@ GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
 
     
 
-// #define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                              \
-//         template<typename FLOAT_T>                                                   \
-//         void FUNC_NAME()                                                             \
-//         {                                                                            \
-//             const GA_RWHandleT<FLOAT_T> measure_h(measureAttrib);                    \
-//             measure_h.set(0, FUNC_NAME());                                           \
-//         }                                                                            \
+// #define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);             \
+//         template<typename FLOAT_T>                                  \
+//         void FUNC_NAME()                                            \
+//         {                                                           \
+//             const GA_RWHandleT<FLOAT_T> measure_h(measureAttrib);   \
+//             measure_h.set(0, FUNC_NAME());                          \
+//         }                                                           \
 //
 //     
 // GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshPerimeter)
@@ -554,20 +543,20 @@ GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
     
 
     
-#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME, FUNC_SUB_NAME);                                                     \
-        void FUNC_NAME()                                                                                                   \
-        {                                                                                                                  \
-            switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                                               \
-            {                                                                                                              \
-            case GA_STORE_REAL32:                                                                                          \
-		        measureAttrib->getAIFTuple()->set(measureAttrib, 0, static_cast<fpreal32>(FUNC_SUB_NAME()));               \
-                break;                                                                                                     \
-            case GA_STORE_REAL64:                                                                                          \
-		        measureAttrib->getAIFTuple()->set(measureAttrib, 0, static_cast<fpreal64>(FUNC_SUB_NAME()));               \
-                break;                                                                                                     \
-            default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                                    \
-            }                                                                                                              \
-        }                                                                                                                  \
+#define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME, FUNC_SUB_NAME);                                        \
+        void FUNC_NAME()                                                                                      \
+        {                                                                                                     \
+            switch (measureAttrib->getAIFTuple()->getStorage(measureAttrib))                                  \
+            {                                                                                                 \
+            case GA_STORE_REAL32:                                                                             \
+		        measureAttrib->getAIFTuple()->set(measureAttrib, 0, static_cast<fpreal32>(FUNC_SUB_NAME()));  \
+                break;                                                                                        \
+            case GA_STORE_REAL64:                                                                             \
+		        measureAttrib->getAIFTuple()->set(measureAttrib, 0, static_cast<fpreal64>(FUNC_SUB_NAME()));  \
+                break;                                                                                        \
+            default: UT_ASSERT_MSG(0, "unhandled storage type"); break;                                       \
+            }                                                                                                 \
+        }                                                                                                     \
 
     
 GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshPerimeterAttrib, computeMeshPerimeter)
@@ -629,7 +618,7 @@ computePerimeter##T(                                                            
     }                                                                                                                \
                                                                                                                      \
     return pSum;                                                                                                     \
-}
+}                                                                                                                    \
 
     computePerimeterMacro(32);
     computePerimeterMacro(64);
@@ -637,11 +626,7 @@ computePerimeter##T(                                                            
 
 
     template<typename T>
-    static T
-        computePerimeter(
-            const GA_Detail* const geo,
-            const GA_Offset primoff
-        )
+    static T computePerimeter(const GA_Detail* const geo, const GA_Offset primoff)
     {
         if constexpr (std::is_same<T, float>::value)
             return computePerimeter32(geo, primoff);
@@ -652,11 +637,7 @@ computePerimeter##T(                                                            
 #else
 
     template<typename T>
-    static T
-        computePerimeter(
-            const GA_Detail* const geo,
-            const GA_Offset primoff
-        )
+    static T computePerimeter(const GA_Detail* const geo, const GA_Offset primoff)
     {
         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
         const GA_Size numvtx = vertices.size();
@@ -704,12 +685,7 @@ computePerimeter##T(                                                            
     //GU_Detail::compute3DArea(const GA_Offset primoff)
 
     template<typename T>
-    static T
-        computePerimeter(
-            const GA_Detail* const geo,
-            const GA_Offset primoff,
-            const GA_ROHandleT<UT_Vector3T<T>>& pos_h
-        )
+    static T computePerimeter(const GA_Detail* const geo, const GA_Offset primoff, const GA_ROHandleT<UT_Vector3T<T>>& pos_h)
     {
         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
         const GA_Size numvtx = vertices.size();
@@ -728,8 +704,7 @@ computePerimeter##T(                                                            
         default:
             return 0.0;
         }
-
-
+        
         const GA_AttributeOwner attribOwner = pos_h.getAttribute()->getOwner();
 
         UT_Vector3T<T> pos0, pos1;
@@ -792,8 +767,7 @@ computePerimeter##T(                                                            
         }, subscribeRatio, minGrainSize);
     }
 
-    SYS_FORCE_INLINE
-        static void
+    SYS_FORCE_INLINE static void
         computePerimeter(
             const GA_Detail* const geo,
             GA_Attribute* const pAttrib,
@@ -1175,8 +1149,6 @@ computeArea##T(const GA_Detail* const geo, const GA_Offset primoff)             
             break;
         }
 
-
-
         const UT_Vector3T<T>& dir0 = pos1 - pos0;
         const UT_Vector3T<T>& dir1 = pos2 - pos1;
         const UT_Vector3T<T>& crossdir0B = cross(dir0, dir1);
@@ -1258,86 +1230,70 @@ computeArea##T(const GA_Detail* const geo, const GA_Offset primoff)             
 
 
 
-    template<typename T>
-    static void
-        computeArea(
-            const GA_Detail* const geo,
-            const GA_RWHandleT<T>& area_h,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
+template<typename T>
+static void
+    computeArea(
+        const GA_Detail* const geo,
+        const GA_RWHandleT<T>& area_h,
+        const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
+        const exint subscribeRatio = 16,
+        const exint minGrainSize = 1024
+    )
+{
+    //GU_Measure::computeArea(*geo, area_h, geoPrimGroup);
+    const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
+    UTparallelFor(geoSplittableRange0, [geo, &area_h](const GA_SplittableRange& r)
     {
-        //GU_Measure::computeArea(*geo, area_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &area_h](const GA_SplittableRange& r)
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    const T area = computeArea<T>(geo, elemoff);
-                    area_h.set(elemoff, area);
-                }
+                const T area = computeArea<T>(geo, elemoff);
+                area_h.set(elemoff, area);
             }
-        }, subscribeRatio, minGrainSize);
-    }
-
-    SYS_FORCE_INLINE
-        static void
-        computeArea(
-            const GA_Detail* const geo,
-            GA_Attribute* const areaAttribPtr,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
-    {
-        switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
-        {
-        case GA_STORE_REAL16:
-            computeArea<fpreal16>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            computeArea<fpreal32>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            computeArea<fpreal64>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
         }
-    }
+    }, subscribeRatio, minGrainSize);
+}
 
-    SYS_FORCE_INLINE
-        static void
-        computeArea(
-            const GA_Detail* const geo,
-            GA_Attribute* const areaAttribPtr,
-            const GA_Attribute* const posAttribPtr,
-            const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
-            const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
-        )
+SYS_FORCE_INLINE
+    static void
+    computeArea(
+        const GA_Detail* const geo,
+        GA_Attribute* const areaAttribPtr,
+        const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
+        const exint subscribeRatio = 16,
+        const exint minGrainSize = 1024
+    )
+{
+    switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
     {
-        switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
-        {
-        case GA_STORE_REAL16:
-            computeArea<fpreal16, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL32:
-            computeArea<fpreal32, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            computeArea<fpreal64, fpreal64>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
-        }
+    case GA_STORE_REAL16: computeArea<fpreal16>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize); break;
+    case GA_STORE_REAL32: computeArea<fpreal32>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize); break;
+    case GA_STORE_REAL64: computeArea<fpreal64>(geo, areaAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize); break;
+    default: UT_ASSERT_MSG(0, "unhandled storage type"); break;
     }
+}
+
+SYS_FORCE_INLINE
+    static void
+    computeArea(
+        const GA_Detail* const geo,
+        GA_Attribute* const areaAttribPtr,
+        const GA_Attribute* const posAttribPtr,
+        const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
+        const exint subscribeRatio = 16,
+        const exint minGrainSize = 1024
+    )
+{
+    switch (areaAttribPtr->getAIFTuple()->getStorage(areaAttribPtr))
+    {
+    case GA_STORE_REAL16: computeArea<fpreal16, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize); break;
+    case GA_STORE_REAL32: computeArea<fpreal32, fpreal32>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize); break;
+    case GA_STORE_REAL64: computeArea<fpreal64, fpreal64>(geo, areaAttribPtr, posAttribPtr, geoPrimGroup, subscribeRatio, minGrainSize); break;
+    default: UT_ASSERT_MSG(0, "unhandled storage type"); break;
+    }
+}
 
 
 
@@ -1427,12 +1383,7 @@ public:
     /////////////////////////////////////// Area //////////////////////////////////////////////
 
     template<typename T>
-    static T
-        heronsFormula(
-            const UT_Vector3T<T>& pos0,
-            const UT_Vector3T<T>& pos1,
-            const UT_Vector3T<T>& pos2
-        )
+    static T heronsFormula(const UT_Vector3T<T>& pos0, const UT_Vector3T<T>& pos1, const UT_Vector3T<T>& pos2)
     {
         //Heron's formula
         const T length0 = pos0.distance(pos1);
@@ -1480,11 +1431,8 @@ public:
     template<typename T>
     static T
         bretschneidersFormula1(
-            const UT_Vector3T<T>& pos0,
-            const UT_Vector3T<T>& pos1,
-            const UT_Vector3T<T>& pos2,
-            const UT_Vector3T<T>& pos3
-        )
+            const UT_Vector3T<T>& pos0, const UT_Vector3T<T>& pos1,
+            const UT_Vector3T<T>& pos2, const UT_Vector3T<T>& pos3)
     {
         //Bretschneider's formula 1
         const T length0 = pos0.distance(pos1);
@@ -1591,9 +1539,7 @@ private:
         const GA_Detail* const myGeo;
         const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h;
     }; // End of Class ComputeArea
-
-
-
+    
     
     template<typename FLOAT_T>
     class ComputeVolume

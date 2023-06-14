@@ -448,4 +448,5 @@ FeE::groupReverseEdges
 FeE::groupReverseVertex
 FeE::extendCurveSetEnds_straight::1.0
 FeE::extendCurve_straight::1.0
-
+groupexpand_fee::3.0
+groupexpand_fee

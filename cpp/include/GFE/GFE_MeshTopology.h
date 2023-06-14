@@ -447,7 +447,6 @@ private:
 
 
 
-    //Get all vertices NextEquiv Vertex
     //template<typename T>
     void vertexPrimIndex()
     {
@@ -458,7 +457,6 @@ private:
         //const GA_Detail* const geo = this->geo;
         if (groupParser.isFull())
         {
-            //const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(nullptr));
             UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
@@ -466,11 +464,10 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
                         for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            int_wh.set(vertices[vtxpnum], vtxpnum);
+                            int_wh.set(geo->getPrimitiveVertexOffset(elemoff, vtxpnum), vtxpnum);
                         }
                     }
                 }
@@ -479,7 +476,6 @@ private:
         else
         {
             const GA_VertexGroup* const geoGroup = groupParser.getVertexGroup();
-            //const GA_SplittableRange geoSplittableRange0(groupParser.getPrimitiveRange());
             UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, geoGroup](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
@@ -487,13 +483,13 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
                         for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            if (!geoGroup->contains(vertices[vtxpnum]))
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            if (!geoGroup->contains(vtxoff))
                                 continue;
-                            int_wh.set(vertices[vtxpnum], vtxpnum);
+                            int_wh.set(vtxoff, vtxpnum);
                         }
                     }
                 }
@@ -554,27 +550,29 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size lastIndex = vertices.size() - 1;
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        const GA_Size lastIndex = numvtx - 1;
+                        const GA_Offset vtxoff0 = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        const GA_Offset vtxoff1 = geo->getPrimitiveVertexOffset(elemoff, lastIndex);
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
                             if (vertexVertexPrimPrevAttrib)
-                                int_wh.set(vertices[0], vertices[lastIndex]);
+                                int_wh.set(vtxoff0, vtxoff1);
                             if (vertexVertexPrimNextAttrib)
-                                int1_wh.set(vertices[lastIndex], vertices[0]);
+                                int1_wh.set(vtxoff1, vtxoff0);
                         }
                         else
                         {
                             if (vertexVertexPrimPrevAttrib)
-                                int_wh.set(vertices[0], GFE_INVALID_OFFSET);
+                                int_wh.set(vtxoff0, GFE_INVALID_OFFSET);
                             if (vertexVertexPrimNextAttrib)
-                                int1_wh.set(vertices[lastIndex], GFE_INVALID_OFFSET);
+                                int1_wh.set(vtxoff1, GFE_INVALID_OFFSET);
                         }
-                        GA_Offset vtxoff_prev = vertices[0];
+                        GA_Offset vtxoff_prev = vtxoff0;
                         GA_Offset vtxoff_next;
                         for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
-                            vtxoff_next = vertices[vtxpnum];
+                            vtxoff_next = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
                             if (vertexVertexPrimPrevAttrib)
                                 int_wh.set(vtxoff_next, vtxoff_prev);
                             if (vertexVertexPrimNextAttrib)
@@ -595,27 +593,29 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size lastIndex = vertices.size() - 1;
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        const GA_Size lastIndex = numvtx - 1;
+                        const GA_Offset vtxoff0 = geo->getPrimitiveVertexOffset(elemoff, 0);
+                        const GA_Offset vtxoff1 = geo->getPrimitiveVertexOffset(elemoff, lastIndex);
                         if (geo->getPrimitiveClosedFlag(elemoff))
                         {
                             if (vertexVertexPrimPrevAttrib)
-                                int_wh.set(vertices[0], vertices[lastIndex]);
+                                int_wh.set(vtxoff0, vtxoff1);
                             if (vertexVertexPrimNextAttrib)
-                                int1_wh.set(vertices[lastIndex], vertices[0]);
+                                int1_wh.set(vtxoff1, vtxoff0);
                         }
                         else
                         {
                             if (vertexVertexPrimPrevAttrib)
-                                int_wh.set(vertices[0], GFE_INVALID_OFFSET);
+                                int_wh.set(vtxoff0, GFE_INVALID_OFFSET);
                             if (vertexVertexPrimNextAttrib)
-                                int1_wh.set(vertices[lastIndex], GFE_INVALID_OFFSET);
+                                int1_wh.set(vtxoff1, GFE_INVALID_OFFSET);
                         }
-                        GA_Offset vtxoff_prev = vertices[0];
+                        GA_Offset vtxoff_prev = vtxoff0;
                         GA_Offset vtxoff_next;
                         for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
-                            vtxoff_next = vertices[vtxpnum];
+                            vtxoff_next = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
                             if (!geoGroup->contains(vtxoff_next))
                                 continue;
                             if (vertexVertexPrimPrevAttrib)
@@ -712,7 +712,7 @@ private:
         //topo.makeVertexRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
 
         UTparallelFor(groupParser.getVertexSplittableRange(),
             [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
@@ -724,7 +724,7 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     dstpt = int_oh.get(elemoff);
-                    if (dstpt == GFE_INVALID_OFFSET)
+                    if (GFE_Type::isInvalidOffset(dstpt))
                     {
                         if (vertexNextEquivAttrib)
                             int_wh.set(elemoff, GFE_INVALID_OFFSET);
@@ -741,7 +741,7 @@ private:
                         break;
                     }
 
-                    if (dstpt == GFE_INVALID_OFFSET)
+                    if (GFE_Type::isInvalidOffset(dstpt))
                         continue;
 
                     ptnum = vtxPointRef->getLink(elemoff);
@@ -795,7 +795,7 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     dstpt = int_oh.get(elemoff);
-                    if (dstpt == GFE_INVALID_OFFSET)
+                    if (GFE_Type::isInvalidOffset(dstpt))
                     {
                         if (vertexNextEquivNoLoopAttrib)
                             int_wh.set(elemoff, GFE_INVALID_OFFSET);
@@ -812,7 +812,7 @@ private:
                         break;
                     }
 
-                    if (dstpt == GFE_INVALID_OFFSET)
+                    if (GFE_Type::isInvalidOffset(dstpt))
                         continue;
 
                     ptnum = vtxPointRef->getLink(elemoff);
@@ -1039,8 +1039,7 @@ private:
     }
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        pointPointEdge2()
+    void pointPointEdge2()
     {
         if(!pointPointEdgeAttrib)
             setPointPointEdge(!outIntermediateAttrib);
@@ -1064,14 +1063,13 @@ private:
 
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        primPrimEdge()
+    void primPrimEdge()
     {
         if(!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(primPrimEdgeAttrib);
-        int_oh.bind(vertexNextEquivAttrib);
+        intArray_wh = primPrimEdgeAttrib;
+        int_oh      = vertexNextEquivAttrib;
         
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
         const GA_Topology& topo = geo->getTopology();
@@ -1082,62 +1080,29 @@ private:
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup, vtxPrimRef](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> adjElems;
-            GA_Offset vtxoff_next;
             GA_Offset start, end;
-            if (seamGroup)
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    adjElems.clear();
+                    const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                    for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                     {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        //for (GA_Offset vtxoff : vertices)
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Offset vtxoff_start = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                        if (seamGroup && !seamGroup->contains(vtxoff_start))
+                            continue;
+                        GA_Offset vtxoff_next = int_oh.get(vtxoff_start);
+                        if (GFE_Type::isInvalidOffset(vtxoff_next))
+                            continue;
+                        for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
                         {
-                            const GA_Offset vtxoff_start = vertices[i];
-                            if (!seamGroup->contains(vtxoff_start))
-                                continue;
-                            GA_Offset vtxoff_next = int_oh.get(vtxoff_start);
-                            if (vtxoff_next == GFE_INVALID_OFFSET)
-                                continue;
-                            for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
-                            {
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
+                            const GA_Offset primoff = vtxPrimRef->getLink(vtxoff_next);
+                            if (adjElems.find(primoff) == GFE_FIND_INVALID_INDEX)
                                 adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
-                            }
                         }
-                        intArray_wh.set(elemoff, adjElems);
                     }
-                }
-            }
-            else
-            {
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        //for (GA_Offset vtxoff : vertices)
-                        for (GA_Size i = 0; i < numvtx; ++i)
-                        {
-                            const GA_Offset vtxoff_start = vertices[i];
-                            GA_Offset vtxoff_next = int_oh.get(vtxoff_start);
-                            if (vtxoff_next == GFE_INVALID_OFFSET)
-                                continue;
-                            for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
-                            {
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
-                            }
-                        }
-                        intArray_wh.set(elemoff, adjElems);
-                    }
+                    intArray_wh.set(elemoff, adjElems);
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -1147,8 +1112,7 @@ private:
 
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        primPrimEdge1()
+    void primPrimEdge1()
     {
         if(!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
@@ -1170,32 +1134,30 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset dstpt = int_oh.get(vtxoff);
+                            if (GFE_Type::isInvalidOffset(dstpt))
                                 continue;
-                            const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
+                            const GA_Offset ptoff = geo->vertexPoint(vtxoff);
                             for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1209,32 +1171,30 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset dstpt = int_oh.get(vtxoff);
+                            if (GFE_Type::isInvalidOffset(dstpt))
                                 continue;
-                            const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
+                            const GA_Offset ptoff = geo->vertexPoint(vtxoff);
                             for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1246,8 +1206,7 @@ private:
 
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        primPrimEdge2()
+    void primPrimEdge2()
     {
         if(!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
@@ -1269,32 +1228,30 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset dstpt = int_oh.get(vtxoff);
+                            if (GFE_Type::isInvalidOffset(dstpt))
                                 continue;
-                            const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
+                            const GA_Offset ptoff = geo->vertexPoint(vtxoff);
                             for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1308,32 +1265,30 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset dstpt = int_oh.get(vtxoff);
+                            if (GFE_Type::isInvalidOffset(dstpt))
                                 continue;
-                            const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
+                            const GA_Offset ptoff = geo->vertexPoint(vtxoff);
                             for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1346,8 +1301,7 @@ private:
 
 
     //Get all prims neighbours prims with adjacent by edge
-    void
-        primPrimEdge3()
+    void primPrimEdge3()
     {
         if(!primPrimEdgeAttrib)
             setPrimPrimEdge(outTopoAttrib);
@@ -1370,32 +1324,30 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset dstpt = int_oh.get(vtxoff);
+                            if (GFE_Type::isInvalidOffset(dstpt))
                                 continue;
-                            const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
+                            const GA_Offset ptoff = geo->vertexPoint(vtxoff);
                             for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1409,32 +1361,30 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         UT_ValArray<GA_Offset> adjElems;
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset dstpt = int_oh.get(vertices[i]);
-                            if (dstpt == GFE_INVALID_OFFSET)
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset dstpt = int_oh.get(vtxoff);
+                            if (GFE_Type::isInvalidOffset(dstpt))
                                 continue;
-                            const GA_Offset ptoff = geo->vertexPoint(vertices[i]);
+                            const GA_Offset ptoff = geo->vertexPoint(vtxoff);
                             for (vtxoff_next = geo->pointVertex(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1523,20 +1473,19 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset ptoff = vtxPointRef->getLink(vtxoff);
                             if (seamGroup->contains(ptoff))
                                 continue;
                             for (vtxoff_next = pointVtxRef->getLink(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
+                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1550,18 +1499,17 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         adjElems.clear();
-                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
-                        for (GA_Size i = 0; i < numvtx; ++i)
+                        const GA_Size numvtx = geo->getPrimitiveVertexCount(elemoff);
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            const GA_Offset ptoff = vtxPointRef->getLink(vertices[i]);
+                            const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
+                            const GA_Offset ptoff = vtxPointRef->getLink(vtxoff);
                             for (vtxoff_next = pointVtxRef->getLink(ptoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
                             {
-                                if (vtxoff_next == vertices[i])
+                                if (vtxoff_next == vtxoff)
                                     continue;
-                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) != GFE_FIND_INVALID_INDEX)
-                                    continue;
-                                adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
+                                if (adjElems.find(vtxPrimRef->getLink(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
+                                    adjElems.emplace_back(vtxPrimRef->getLink(vtxoff_next));
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
