@@ -223,26 +223,17 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
     if (boss.wasInterrupted())
         return;
 
-    GFE_AttribDuplicate attribDuplicate(outGeo0, &cookparms);
+    GFE_AttribDuplicate attribDuplicate(outGeo0, cookparms);
 
     attribDuplicate.getInAttribArray().set(geo0AttribClass, sopparms.getDuplicateAttrib());
     attribDuplicate.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 
     
     if (sopparms.getRenameAttrib())
-    {
         attribDuplicate.newAttribNames = sopparms.getNewAttribName();
-    }
     if (sopparms.getRenameGroup())
-    {
         attribDuplicate.newGroupNames = sopparms.getNewGroupName();
-    }
     
     attribDuplicate.computeAndBumpDataId();
     attribDuplicate.visualizeOutGroup();
 }
-
-
-namespace SOP_FeE_AttribDuplicate_1_0_Namespace
-{
-} // End SOP_FeE_AttribDuplicate_1_0_Namespace namespace

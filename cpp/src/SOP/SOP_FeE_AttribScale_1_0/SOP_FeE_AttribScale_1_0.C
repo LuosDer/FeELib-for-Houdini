@@ -222,14 +222,14 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (!doNormalize && uniScale==1.0)
         return;
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
-    GFE_ScaleAttribElement scaleAttribElement(outGeo0, &cookparms);
+    GFE_ScaleAttribElement scaleAttribElement(outGeo0, cookparms);
     
     scaleAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
-    scaleAttribElement.getOutAttribArray().set(geo0AttribClass, sopparms.getAttribName());
+    scaleAttribElement.getOutAttribArray().appends(attribClass, sopparms.getAttribName());
     scaleAttribElement.setComputeParm(doNormalize, uniScale,
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     scaleAttribElement.computeAndBumpDataId();

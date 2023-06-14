@@ -4,9 +4,11 @@
 #ifndef __GFE_AttribDuplicate_h__
 #define __GFE_AttribDuplicate_h__
 
-//#include "GFE/GFE_AttributeDuplicate.h"
+#include "GFE/GFE_AttributeDuplicate.h"
 
 #include "GFE/GFE_GeoFilter.h"
+
+
 
 #include "UFE/UFE_SplittableString.h"
 

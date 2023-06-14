@@ -166,8 +166,10 @@ SOP_FeE_MatchAxis_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::edgeGroupMenu);
-        templ.setChoiceListPtr("matchAxisAttrib"_sh, &SOP_Node::pointAttribMenu);
-        
+        templ.setChoiceListPtr("primAttribToXform"_sh,   &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("pointAttribToXform"_sh,  &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("vertexAttribToXform"_sh, &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("detailAttribToXform"_sh, &SOP_Node::detailAttribMenu);
     }
     return templ.templates();
 }
