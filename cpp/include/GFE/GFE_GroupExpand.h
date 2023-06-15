@@ -84,23 +84,29 @@ virtual bool
     if (!baseGroup)
         return false;
     
-    if (numstep == 0)
+    if (expandGroup)
+        expandGroup->clear();
+    if (borderGroup)
+        borderGroup->clear();
+    
+    numstepAbs = abs(numstep);
+    switch (numstepAbs)
     {
+    case 0:
         if (expandGroup)
             expandGroup->combine(baseGroup);
         return true;
-    }   
-    else if (numstep == 1)
-    {
-        if (!expandGroup)
+    break;
+    case 1:
+        if (!expandGroup && !borderGroup)
             setExpandGroup(true);
-    }
-    else
-    {
+    break;
+    default:
         if (!expandGroup)
             setExpandGroup(true);
         if (!borderGroup)
             setExpandGroup(true);
+    break;
     }
     
     groupType = baseGroup->classType();
@@ -116,29 +122,45 @@ virtual bool
     return true;
 }
 
-
-
 SYS_FORCE_INLINE void edgeGroupExpandEdge()
 {
-    const GA_EdgeGroupUPtr prevBorderGroupUPtr = geo->createDetachedEdgeGroup();
-    GA_EdgeGroup* const prevBorderGroup = prevBorderGroupUPtr.get();
-    GA_EdgeGroup* const expandEdgeGroup = static_cast<GA_EdgeGroup*>(expandGroup);
-    GA_EdgeGroup* const borderEdgeGroup = static_cast<GA_EdgeGroup*>(borderGroup);
-    expandEdgeGroup->combine(baseGroup);
-    borderEdgeGroup->combine(baseGroup);
-    prevBorderGroup->combine(borderEdgeGroup);
+    const GA_PointGroupUPtr basePointGroupUPtr = geo->createDetachedPointGroup();
+    GA_PointGroup* const basePointGroup        = basePointGroupUPtr.get();
+    
+    GA_PointGroupUPtr expandPointGroupUPtr, borderPointGroupUPtr;
+    if (expandGroup)
+        expandPointGroupUPtr = geo->createDetachedPointGroup();
+    if (borderGroup)
+        borderPointGroupUPtr = geo->createDetachedPointGroup();
+    GA_PointGroup* const expandPointGroup = expandGroup ? expandPointGroupUPtr.get() : nullptr;
+    GA_PointGroup* const borderPointGroup = borderGroup ? borderPointGroupUPtr.get() : nullptr;
+    
+    basePointGroup->combine(baseGroup);
+    elementGroupExpand(basePointGroup, expandPointGroup, borderPointGroup);
+    
+    //GA_EdgeGroup* const expandEdgeGroup = static_cast<GA_EdgeGroup*>(expandGroup);
+    //GA_EdgeGroup* const borderEdgeGroup = static_cast<GA_EdgeGroup*>(borderGroup);
+    if (expandGroup)
+        static_cast<GA_EdgeGroup*>(expandGroup)->combine(expandPointGroup);
+    if (borderGroup)
+        static_cast<GA_EdgeGroup*>(borderGroup)->combine(borderPointGroup);
 }
 
 SYS_FORCE_INLINE void elementGroupExpand()
+{ elementGroupExpand(static_cast<const GA_ElementGroup*>(baseGroup), static_cast<GA_ElementGroup*>(expandGroup), static_cast<GA_ElementGroup*>(borderGroup)); }
+
+void elementGroupExpand(
+    const GA_ElementGroup* const baseElemGroup,
+    GA_ElementGroup* const expandElemGroup,
+    GA_ElementGroup* const borderElemGroup
+)
 {
-    GA_ElementGroup* const expandElemGroup = static_cast<GA_ElementGroup*>(expandGroup);
-    GA_ElementGroup* const borderElemGroup = static_cast<GA_ElementGroup*>(borderGroup);
+    UT_ASSERT_P(numstepAbs != 0);
+    
     if (expandElemGroup)
-        expandElemGroup->combine(baseGroup);
+        expandElemGroup->combine(baseElemGroup);
     
     GA_ElementGroup* const prevBorderGroup = getOutGroupArray().findOrCreateElement(true, groupType);
-    GA_SplittableRange geoSplittableRange;
-    
     
     GFE_MeshTopology meshTopology(geo, cookparms);
     //meshTopology.groupParser.setGroup(groupParser);
@@ -147,21 +169,14 @@ SYS_FORCE_INLINE void elementGroupExpand()
     const GA_ROHandleT<UT_ValArray<GA_Offset>> nebs_h(nebsAttrib);
     UT_ASSERT_P(nebsAttrib);
 
-    reverseExpand = numstep < 0;
-    if (reverseExpand)
-    {
-        numstepAbs = -numstep;
-    }
-    else
-    {
-        numstepAbs = numstep;
-    }
+    const bool reverseExpand = numstep < 0;
     
     if (numstepAbs == 1)
     {
-        prevBorderGroup->combine(baseGroup);
-        geoSplittableRange = GA_SplittableRange(GA_Range(*prevBorderGroup, reverseExpand));
-        UTparallelFor(geoSplittableRange, [prevBorderGroup, expandElemGroup, borderElemGroup, &nebs_h](const GA_SplittableRange& r)
+        UT_ASSERT_P(expandElemGroup || borderElemGroup);
+        prevBorderGroup->combine(baseElemGroup);
+        const GA_SplittableRange geoSplittableRange(GA_Range(*prevBorderGroup, reverseExpand));
+        UTparallelFor(geoSplittableRange, [reverseExpand, prevBorderGroup, expandElemGroup, borderElemGroup, &nebs_h](const GA_SplittableRange& r)
         {
             UT_ValArray<GA_Offset> adjElems(32);
             GA_Offset start, end;
@@ -186,13 +201,21 @@ SYS_FORCE_INLINE void elementGroupExpand()
     }
     else
     {
-        borderElemGroup->combine(baseGroup);
-
+        UT_ASSERT_P(expandElemGroup);
+        UT_ASSERT_P(borderElemGroup);
+        
+        borderElemGroup->combine(baseElemGroup);
         for (size_t iternum = 0; iternum < numstepAbs; iternum++)
         {
-            prevBorderGroup->combine(borderGroup);
-            geoSplittableRange = GA_SplittableRange(GA_Range(*prevBorderGroup, reverseExpand));
-            UTparallelFor(geoSplittableRange, [expandElemGroup, borderElemGroup, prevBorderGroup, &nebs_h](const GA_SplittableRange& r)
+            prevBorderGroup->combine(borderElemGroup);
+            
+            prevBorderGroup->invalidateGroupEntries();
+            if (prevBorderGroup->entries() == 0)
+                break;
+            
+            const GA_Range range(*prevBorderGroup, reverseExpand);
+            const GA_SplittableRange geoSplittableRange(range);
+            UTparallelFor(geoSplittableRange, [reverseExpand, expandElemGroup, borderElemGroup, prevBorderGroup, &nebs_h](const GA_SplittableRange& r)
             {
                 UT_ValArray<GA_Offset> adjElems(32);
                 GA_Offset start, end;
@@ -207,9 +230,9 @@ SYS_FORCE_INLINE void elementGroupExpand()
                         const GA_Size size = adjElems.size();
                         for (GA_Size i = 0; i < size; ++i)
                         {
-                            if (expandElemGroup->contains(adjElems[i]))
+                            if (expandElemGroup->contains(adjElems[i]) ^ reverseExpand)
                                 continue;
-                            expandElemGroup->setElement(adjElems[i], true);
+                            expandElemGroup->setElement(adjElems[i], !reverseExpand);
                             borderElemGroup->setElement(adjElems[i], true);
                         }
                     }
@@ -346,7 +369,6 @@ private:
     GA_GroupType groupType;
     const GA_Group* baseGroup = nullptr;
     size_t numstepAbs;
-    bool reverseExpand;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

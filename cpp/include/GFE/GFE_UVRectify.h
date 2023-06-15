@@ -6,20 +6,16 @@
 
 #include "GFE/GFE_UVRectify.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_NodeVerb.h"
 
+
+#include "GFE/GFE_NodeVerb.h"
 // #include "SOP/SOP_UVFlatten-3.0.h"
 #include "SOP/SOP_UVFlatten-3.0.proto.h"
 
 class GFE_UVRectify : public GFE_AttribFilter {
 
-#define __TEMP_GFE_UVRectify_VertexGroupName "__TEMP_GFE_UVRectify_GROUP"
-#define __TEMP_GFE_UVRectify_VertexRectifyGroupName "__TEMP_GFE_UVRectify_Rectify_GROUP"
-    
 public:
     //using GFE_AttribFilter::GFE_AttribFilter;
 
@@ -67,6 +63,9 @@ public:
 private:
 
     
+#define __TEMP_GFE_UVRectify_VertexGroupName "__TEMP_GFE_UVRectify_GROUP"
+#define __TEMP_GFE_UVRectify_VertexRectifyGroupName "__TEMP_GFE_UVRectify_Rectify_GROUP"
+    
     virtual bool
         computeCore() override
     {
@@ -97,9 +96,11 @@ private:
         inputgdh.clear();
         inputgdh.emplace_back(geoTmp_h);
         
+        destgdh.allocateAndSet(geo->asGU_Detail(), false);
         
         
-        GA_PrimitiveGroup* const inGroup = geoTmp->newPrimitiveGroup(__TEMP_GFE_UVRectify_VertexGroupName);
+        
+        GA_PrimitiveGroup* const inGroup   = geoTmp->newPrimitiveGroup(__TEMP_GFE_UVRectify_VertexGroupName);
         GA_VertexGroup* const rectifyGroup = geoTmp->newVertexGroup(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
         GFE_GroupUnion::groupUnion(inGroup, groupParser.getGroup());
         GFE_GroupUnion::groupUnion(rectifyGroup, groupParserRectify.getGroup());
@@ -107,8 +108,8 @@ private:
         
         uvRectify();
 
-        geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_UVRectify_VertexGroupName);
-        geo->getGroupTable(GA_GROUP_VERTEX)   ->destroy(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
+        //geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_UVRectify_VertexGroupName);
+        //geo->getGroupTable(GA_GROUP_VERTEX)   ->destroy(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
         return true;
     }
 
@@ -121,14 +122,13 @@ private:
         uvFlattenParms.setKeepExistingLayout(true);
         uvFlattenParms.setKeepExistingSeams(true);
         uvFlattenParms.setMethod(flattenMethod ? SOP_UVFlatten_3_0Enums::Method::ABF : SOP_UVFlatten_3_0Enums::Method::SCP);
-        
         //uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
         uvFlattenParms.setUVAttrib(uvAttribName);
-        
         uvFlattenParms.setManualLayout(manualLayout);
-        SOP_NodeCache* const nodeCache = uvFlattenVerb->allocCache();
-        const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nodeCache, nullptr, &inputgdh);
+
         
+        SOP_NodeCache* const nodeCache = uvFlattenVerb->allocCache();
+        const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nodeCache, &destgdh, &inputgdh);
         uvFlattenVerb->cook(uvFlattenCookparms);
     }
 
@@ -147,6 +147,7 @@ private:
 
     
 private:
+    GU_DetailHandle destgdh;
     UT_Array<GU_ConstDetailHandle> inputgdh;
     SOP_UVFlatten_3_0Parms uvFlattenParms;
     const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");

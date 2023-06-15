@@ -411,6 +411,7 @@ import os
 
 selectedNodes = hou.selectedNodes()
 for selectedNode in selectedNodes:
+    # print(selectedNode.userDataDict())
     print(selectedNode.userDataDict()['nodeshape'])
     ]]></script>
   </tool>

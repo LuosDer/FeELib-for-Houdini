@@ -289,12 +289,27 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
 
 
     
-static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib,
+static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const UT_StringRef& name,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    GA_Attribute* const outAttrib = geo.getAttributes().cloneAttribute(inAttrib.getOwner(), name, inAttrib, true);
+    clone(*outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    return outAttrib;
+}
+    
+// SYS_FORCE_INLINE static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const char* const name,
+//     const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+// { clone(geo, inAttrib, UT_StringRef(name), subscribeRatio, minGrainSize); }
+    
+    
+static GA_AttributeUPtr clone(GA_Detail& geo, const GA_Attribute& inAttrib,
     const exint subscribeRatio = 64, const exint minGrainSize = 1024)
 {
     GA_Attribute* const outAttrib = geo.getAttributes().cloneTempAttribute(inAttrib.getOwner(), inAttrib, true);
+    //GA_AttributeUPtr outAttribUPtr;
+    //outAttribUPtr.
     clone(*outAttrib, inAttrib, subscribeRatio, minGrainSize);
-    return outAttrib;
+    return GA_AttributeUPtr(outAttrib);
 }
 
 static GA_Attribute* clone(const GA_Attribute& inAttrib,

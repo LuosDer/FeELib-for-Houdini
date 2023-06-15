@@ -181,7 +181,7 @@ SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     if (boss.wasInterrupted())
         return;
 
-    const UT_StringHolder& groupName = sopparms.getReverseGroup();
+    const char* const groupName = sopparms.getReverseGroup().c_str();
     const GA_GroupType groupType = sopGroupType(sopparms.getReverseGroupType());
     //GFE_Group::groupToggle(outGeo0, groupType, sopparms.getGroup());
     
@@ -189,13 +189,26 @@ SOP_FeE_GroupReverse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     for (GA_GroupTable::iterator<GA_Group> it = outGeo0.getGroupTable(groupType)->beginTraverse(); !it.atEnd(); ++it)
     {
         GA_Group& group = *it.group();
-        if (group.isDetached() || group.isInternal())
-            continue;
-        if (!group.getName().multiMatch(groupName))
+        if (group.isDetached() || group.isInternal() || !group.getName().multiMatch(groupName))
             continue;
         
+#if 1
+        if (groupType == GA_GROUP_EDGE)
+        {
+            auto& elemGroup = static_cast<GA_ElementGroup&>(group);
+            GFE_Group::groupToggle(elemGroup);
+            elemGroup.bumpDataId();
+        }
+        else
+        {
+            auto& elemGroup = static_cast<GA_EdgeGroup&>(group);
+            GFE_Group::groupToggle(elemGroup);
+            elemGroup.bumpDataId();
+        }
+#else
         GFE_Group::groupToggle(group);
         GFE_Group::groupBumpDataId(group);
+#endif
 
         if (doHighlight)
         {

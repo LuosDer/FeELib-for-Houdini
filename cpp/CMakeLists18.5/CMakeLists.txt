@@ -100,6 +100,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_Connectivity_1_0
     SOP_FeE_ConvertLine_1_0
     SOP_FeE_ConvexPoly_1_0
+    SOP_FeE_Cook_1_0
     SOP_FeE_CornerPoint_1_0
     SOP_FeE_CurveExpand2d_3_0
     SOP_FeE_CurveSetExpand2d_3_0

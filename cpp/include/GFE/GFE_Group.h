@@ -202,10 +202,10 @@ SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group* const group)
 
 SYS_FORCE_INLINE static void groupBumpDataId(GA_Group& group)
 {
-    if (group.classType() == GA_GROUP_EDGE)
-        static_cast<GA_EdgeGroup&>(group).bumpDataId();
-    else
+    if (group.isElementGroup())
         static_cast<GA_ElementGroup&>(group).bumpDataId();
+    else
+        static_cast<GA_EdgeGroup&>(group).bumpDataId();
 }
 
 SYS_FORCE_INLINE static void groupBumpDataId(GA_Group* group)
@@ -233,7 +233,19 @@ static void groupBumpDataId(GA_GroupTable& groupTable, const char* groupPattern)
 
 
 
-
+#if 1
+static void groupToggle(GA_EdgeGroup& group)
+{
+    group.toggle();
+    for (GA_EdgeGroup::iterator it = group.begin(); !it.atEnd(); ++it)
+    {
+        //const GA_Edge& edge = *it;
+        const auto& edge = *it;
+        if (edge.p0() == edge.p1())
+            group.remove(edge);
+    }
+}
+#else
 static void groupToggle(GA_EdgeGroup& group)
 {
     group.toggle();
@@ -246,6 +258,8 @@ static void groupToggle(GA_EdgeGroup& group)
         }
     }
 }
+#endif
+    
 SYS_FORCE_INLINE static void groupToggle(GA_ElementGroup& group)
 { group.toggleAll(group.getIndexMap().indexSize()); }
 

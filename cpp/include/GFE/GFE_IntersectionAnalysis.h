@@ -6,24 +6,22 @@
 
 #include "GFE/GFE_IntersectionAnalysis.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
 
-class GFE_IntersectionAnalysis : public GFE_AttribFilter {
+#include "GFE/GFE_NodeVerb.h"
+#include "SOP/SOP_IntersectionAnalysis.proto.h"
+
+class GFE_IntersectionAnalysis : public GFE_AttribFilterWithRef {
 
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
 
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
@@ -43,6 +41,12 @@ private:
     virtual bool
         computeCore() override
     {
+        UT_ASSERT_MSG_P(interAnalysisVerb, "Does not have interAnalysis Verb");
+        
+        UT_ASSERT_MSG_P(cookparms, "Does not have cookparms");
+        if (!cookparms)
+            return false;
+        
         if (getOutAttribArray().isEmpty())
             return false;
 
@@ -67,12 +71,23 @@ private:
         return true;
     }
 
+    void intersectionAnalysis()
+    {
+        interAnalysisParms.setAgroup();
+        SOP_NodeCache* const nodeCache = interAnalysisVerb->allocCache();
+        const auto interCookparms = GFE_NodeVerb::newCookParms(cookparms, interAnalysisParms, nodeCache, nullptr, &inputgdh);
+        interAnalysisVerb->cook(interCookparms);
+    }
+    
 public:
     
 
 private:
     
-    GA_Attribute* attribPtr;
+    UT_Array<GU_ConstDetailHandle> inputgdh;
+    SOP_IntersectionAnalysisParms interAnalysisParms;
+    const SOP_NodeVerb* const interAnalysisVerb = SOP_NodeVerb::lookupVerb("intersectionanalysis");
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 

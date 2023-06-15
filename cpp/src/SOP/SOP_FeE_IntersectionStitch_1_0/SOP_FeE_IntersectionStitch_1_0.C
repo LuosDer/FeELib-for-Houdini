@@ -13,7 +13,7 @@
 
 
 
-#include "GFE/GFE_Enumerate.h"
+#include "GFE/GFE_IntersectionStitch.h"
 
 
 
@@ -49,143 +49,173 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "agroup"
-        label   "Group A"
+        name    "groupRef"
+        cppname "GroupRef"
+        label   "GroupRef"
         type    string
         default { "" }
-        menutoggle {
-            [ "opmenu -l -a intersectionanalysis_fee1 agroup" ]
-        }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupTypeRef')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "bgroup"
-        label   "Group B"
-        type    string
-        default { "" }
-        menutoggle {
-            [ "opmenu -l -a intersectionanalysis_fee1 bgroup" ]
+        name    "groupTypeRef"
+        cppname "GroupTypeRef"
+        label   "Group Type Ref"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
         }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "useproxtol"
-        label   "useproxtol"
+        name    "useTolerance"
+        cppname "UseTolerance"
+        label   "Use Tolerance"
         type    toggle
         nolabel
         joinnext
         default { "on" }
     }
     parm {
-        name    "proxtol"
+        name    "tolerance"
+        cppname "Tolerance"
         label   "Proximity Tolerance"
         type    log
         default { "1e-05" }
-        disablewhen "{ useproxtol == 0 }"
-        range   { 0.01 10 }
+        disablewhen "{ useTolerance == 0 }"
+        range   { 0.001 1 }
+    }
+
+    parm {
+        name    "insertPoint"
+        cppname "InsertPoint"
+        label   "Insert Point"
+        type    toggle
+        default { "1" }
     }
     parm {
-        name    "detectverts"
+        name    "outSecondInputGeo"
+        cppname "OutSecondInputGeo"
+        label   "Out Second Input Geo"
+        type    toggle
+        default { "0" }
+        disablewhen "{ insertPoint == 1 }"
+    }
+    parm {
+        name    "detectVertexIntersection"
+        cppname "DetectVertexIntersection"
         label   "Detect Vertex Intersections"
         type    toggle
         default { "off" }
     }
     parm {
-        name    "outputsegs"
-        label   "Output Intersection Segments"
+        name    "outIntersectionSegment"
+        cppname "OutIntersectionSegment"
+        label   "Output Intersection Segment"
         type    toggle
         default { "off" }
     }
+
     parm {
-        name    "splitcurves"
-        label   "Split Curves"
+        name    "splitCurve"
+        cppname "SplitCurve"
+        label   "Split Curve"
         type    toggle
         default { "on" }
     }
     parm {
-        name    "triangulatemesh"
-        label   "Triangulate Mesh"
+        name    "repairResult"
+        cppname "RepairResult"
+        label   "Repair Result"
         type    toggle
-        default { [ "ch(\"useprimnumattrib\")" hscript-expr ] }
+        default { "on" }
     }
     group {
         name    "stdswitcher"
         label   "Output Attributes"
+        disablewhen "{ insertPoint == 0 }"
 
         parm {
-            name    "useinputnumattrib"
-            label   "useinputnumattrib"
+            name    "useInputnumAttrib"
+            cppname "UseInputnumAttrib"
+            label   "Use Inputnum Attrib"
             type    toggle
             nolabel
             joinnext
-            default { "off" }
+            default { "1" }
         }
         parm {
-            name    "inputnumattrib"
+            name    "inputnumAttrib"
+            cppname "InputnumAttrib"
             label   "Input Number"
             type    string
-            default { "sourceinput" }
-            disablewhen "{ useinputnumattrib == 0 }"
+            default { "sourceInput" }
+            disablewhen "{ useInputnumAttrib == 0 }"
         }
         parm {
-            name    "useprimnumattrib"
-            label   "useprimnumattrib"
+            name    "usePrimnumAttrib"
+            cppname "UsePrimnumAttrib"
+            label   "Use Primnum Attrib"
             type    toggle
             nolabel
             joinnext
-            default { "off" }
+            default { "1" }
         }
         parm {
-            name    "primnumattrib"
+            name    "primnumAttrib"
+            cppname "PrimnumAttrib"
             label   "Primitive Number"
             type    string
-            default { "sourceprim" }
-            disablewhen "{ useprimnumattrib == 0 }"
+            default { "sourcePrim" }
+            disablewhen "{ usePrimnumAttrib == 0 }"
         }
         parm {
-            name    "useprimuvwattrib"
-            label   "useprimuvwattrib"
+            name    "usePrimuvwAttrib"
+            cppname "UsePrimuvwAttrib"
+            label   "Use Primuvw Attrib"
             type    toggle
             nolabel
             joinnext
-            default { "off" }
+            default { "1" }
         }
         parm {
-            name    "primuvwattrib"
+            name    "primuvwAttrib"
+            cppname "PrimuvwAttrib"
             label   "Primitive UVW"
             type    string
-            default { "sourceprimuv" }
-            disablewhen "{ useprimuvwattrib == 0 }"
+            default { "sourcePrimuv" }
+            disablewhen "{ usePrimuvwAttrib == 0 }"
         }
         parm {
-            name    "useptnumattrib"
-            label   "useptnumattrib"
+            name    "usePtnumAttrib"
+            cppname "UsePtnumAttrib"
+            label   "Use Ptnum Attrib"
             type    toggle
             nolabel
             joinnext
-            default { "off" }
+            default { "0" }
         }
         parm {
-            name    "ptnumattrib"
+            name    "ptnumAttrib"
+            cppname "PtnumAttrib"
             label   "Point Num"
             type    string
-            default { "sourceptnum" }
-            disablewhen "{ useptnumattrib == 0 }"
+            default { "sourcePtnum" }
+            disablewhen "{ usePtnumAttrib == 0 }"
+        }
+        parm {
+            name    "keepPointAttrib"
+            cppname "KeepPointAttrib"
+            label   "Keep Point Attrib"
+            type    toggle
+            default { "1" }
         }
     }
-
-    parm {
-        name    "tmpGroup_isClosed"
-        label   "Temp Group isClosed"
-        type    string
-        invisible
-        default { [ "'__isClosed_' + hou.node('.').type().nameComponents()[2]" python ] }
-    }
-
 
     parm {
         name    "subscribeRatio"
@@ -194,6 +224,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    integer
         default { 64 }
         range   { 0! 256 }
+        disablewhen "{ repairResult == 0 }"
     }
     parm {
         name    "minGrainSize"
@@ -202,6 +233,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    intlog
         default { 64 }
         range   { 0! 2048 }
+        disablewhen "{ repairResult == 0 }"
     }
 }
 )THEDSFILE";
@@ -212,9 +244,12 @@ SOP_FeE_IntersectionStitch_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_IntersectionStitch_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        
+        templ.setChoiceListPtr("group"_sh,    &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("groupRef"_sh, &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("inputnumAttrib"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("primnumAttrib"_sh,  &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("primuvwAttrib"_sh,  &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("ptnumAttrib"_sh,    &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -294,36 +329,22 @@ sopGroupType(SOP_FeE_IntersectionStitch_1_0Parms::GroupType parmGroupType)
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_IntersectionStitch_1_0Parms::Class parmAttribClass)
+
+static GA_GroupType
+sopGroupType(SOP_FeE_IntersectionStitch_1_0Parms::GroupTypeRef parmGroupType)
 {
     using namespace SOP_FeE_IntersectionStitch_1_0Enums;
-    switch (parmAttribClass)
+    switch (parmGroupType)
     {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case GroupTypeRef::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupTypeRef::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupTypeRef::POINT:     return GA_GROUP_POINT;      break;
+    case GroupTypeRef::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupTypeRef::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
-
-static GA_StorageClass
-sopStorageClass(SOP_FeE_IntersectionStitch_1_0Parms::StorageClass parmStorageClass)
-{
-    using namespace SOP_FeE_IntersectionStitch_1_0Enums;
-    switch (parmStorageClass)
-    {
-    case StorageClass::INT:       return GA_STORECLASS_INT;        break;
-    case StorageClass::FLOAT:     return GA_STORECLASS_FLOAT;      break;
-    case StorageClass::STRING:    return GA_STORECLASS_STRING;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Storage Class!");
-    return GA_STORECLASS_INVALID;
-}
-
-
-
 
 
 void
@@ -334,14 +355,13 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     //auto sopcache = (SOP_FeE_IntersectionStitch_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
 
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupTypeRef0 = sopGroupType(sopparms.getGroupTypeRef());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -349,22 +369,37 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
     
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_IntersectionStitch intersectionStitch(geo, cookparms);
+    intersectionStitch.compute();
 */
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    GFE_IntersectionStitch intersectionStitch(outGeo0, inGeo1, cookparms);
 
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    intersectionStitch.setComputeParm(sopparms.getSplitCurve(), sopparms.getRepairResult(), sopparms.getKeepPointAttrib(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-    enumerate.prefix = sopparms.getPrefix();
-    enumerate.sufix = sopparms.getSufix();
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-    enumerate.computeAndBumpDataId();
-
+    
+    if (sopparms.getInsertPoint())
+        intersectionStitch.setInsertPoint();
+    else
+        intersectionStitch.setInsertPoint(sopparms.getOutSecondInputGeo());
+    
+    if (sopparms.getUseTolerance())
+        intersectionStitch.setTolerance(sopparms.getTolerance());
+    
+    if (sopparms.getInsertPoint())
+    {
+        if (sopparms.getUseInputnumAttrib())
+            intersectionStitch.setInputnumAttrib(sopparms.getInputnumAttrib());
+        if (sopparms.getUsePrimnumAttrib())
+            intersectionStitch.setPrimnumAttrib(sopparms.getPrimnumAttrib());
+        if (sopparms.getUsePrimuvwAttrib())
+            intersectionStitch.setPrimuvwAttrib(sopparms.getPrimuvwAttrib());
+        //intersectionStitch.setpo(sopparms.getPtnumAttrib());
+    }
+    
+    intersectionStitch.groupParser.setGroup(groupType, sopparms.getGroup());
+    intersectionStitch.groupParserRef0.setGroup(groupTypeRef0, sopparms.getGroupRef());
+    intersectionStitch.computeAndBumpDataId();
     
 
 }

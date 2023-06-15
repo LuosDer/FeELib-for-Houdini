@@ -51,11 +51,11 @@ static const char *theDsFile = R"THEDSFILE(
             type    ordinal
             default { "guess" }
             menu {
-                "guess"     "Guess from Group"
-                "prim"      "Primitive"
-                "point"     "Point"
-                "vertex"    "Vertex"
-                "edge"      "Edge"
+                "guess"       "Guess from Group"
+                "prim"        "Primitive"
+                "point"       "Point"
+                "vertex"      "Vertex"
+                "edge"        "Edge"
             }
         }
     }
@@ -180,7 +180,31 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-    const GA_Group* const geo0Group = outGeo0.getGroupTable(groupType)->find(sopparms.getGroup());
+    const GA_Group* geo0Group = nullptr;
+    switch (groupType)
+    {
+    case GA_GROUP_INVALID:
+        geo0Group = outGeo0.getGroupTable(GA_GROUP_PRIMITIVE)->find(sopparms.getGroup());
+        if (!geo0Group)
+        {
+            geo0Group = outGeo0.getGroupTable(GA_GROUP_POINT)->find(sopparms.getGroup());
+            if (!geo0Group)
+            {
+                geo0Group = outGeo0.getGroupTable(GA_GROUP_VERTEX)->find(sopparms.getGroup());
+                if (!geo0Group)
+                {
+                    geo0Group = outGeo0.getGroupTable(GA_GROUP_EDGE)->find(sopparms.getGroup());
+                }
+            }
+        }
+        break;
+    case GA_GROUP_PRIMITIVE:
+    case GA_GROUP_POINT:
+    case GA_GROUP_VERTEX:
+    case GA_GROUP_EDGE:
+        outGeo0.getGroupTable(groupType)->find(sopparms.getGroup());
+        break;
+    }
 
     if (!geo0Group)
         return;
@@ -188,9 +212,3 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     cookparms.select(*geo0Group);
 
 }
-
-
-
-namespace SOP_FeE_GroupVis_2_0_Namespace {
-
-} // End SOP_FeE_GroupVis_2_0_Namespace namespace

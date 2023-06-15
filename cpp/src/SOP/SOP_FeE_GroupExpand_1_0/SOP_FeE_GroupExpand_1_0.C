@@ -389,7 +389,7 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     outGeo0.replaceWith(inGeo0);
 
-    if (sopparms.getNumsteps() == 0 || (!sopparms.getOutExpandGroup() && !sopparms.getOutBorderGroup()))
+    if (!sopparms.getOutExpandGroup() && !sopparms.getOutBorderGroup())
         return;
         
     
@@ -412,7 +412,7 @@ SOP_FeE_GroupExpand_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     
     groupExpand.outTopoAttrib = sopparms.getOutTopoAttrib();
 
-    if (sopparms.getNumsteps() == 1)
+    if (abs(sopparms.getNumsteps()) == 1)
     {
         if (sopparms.getOutExpandGroup())
             groupExpand.setExpandGroup(false, sopparms.getExpandGroupName());
