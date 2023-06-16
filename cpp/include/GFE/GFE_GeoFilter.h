@@ -583,7 +583,7 @@ public:
     {
         GFE_GeoFilter::reset(geo, cookparms);
         outAttribArray.reset(geo, cookparms);
-        outGroupArray.reset(geo, cookparms);
+        outGroupArray. reset(geo, cookparms);
     }
 
     SYS_FORCE_INLINE virtual void reset(GA_Detail* const geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override

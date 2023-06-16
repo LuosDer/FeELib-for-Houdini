@@ -172,14 +172,7 @@ private:
                             scale = dist1 + dist3;
 
                             scaleIdx = tmpScale > scale;
-                            if (scaleIdx)
-                            {
-                                scale /= tmpScale;
-                            }
-                            else
-                            {
-                                scale = tmpScale / scale;
-                            }
+                            scale = scaleIdx ? scale / tmpScale : tmpScale / scale;
                         }
                         else
                         {
@@ -194,7 +187,7 @@ private:
                         uv[0] = tmpI==0 ? 0 : fpreal(vtxpnum) / tmpI;
                         uv[1] = 1;
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
+                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                     for (; vtxpnum < rows + cols; vtxpnum++)
                     {
@@ -202,7 +195,7 @@ private:
                         uv[0] = 1;
                         uv[1] = tmpI==0 ? 1 : 1 - (float(vtxpnum - rows) / tmpI);
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
+                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                     const GA_Size numvtx_preCols = numvtx - cols;
                     for (; vtxpnum < numvtx_preCols; vtxpnum++)
@@ -211,7 +204,7 @@ private:
                         uv[0] = tmpI == 0 ? 1 : (1 - float(tmpI) / (numvtx - rows - cols - cols - 1));
                         uv[1] = 0;
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
+                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                     for (; vtxpnum < numvtx; vtxpnum++)
                     {
@@ -219,7 +212,7 @@ private:
                         uv[0] = 0;
                         uv[1] = tmpI==0 ? 1 : (1 - float(numvtx - vtxpnum - (rows == 0)) / tmpI);
 
-                        uvGridify(uv_h, pos_h, uv, primoff, vtxpnum, rows, cols, scale, scaleIdx, isPointAttrib);
+                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                 }
             }
@@ -229,39 +222,26 @@ private:
 
 
 
-    template<typename VECTOR_T, typename POS_VECTOR_T>
+    template<typename VECTOR_T>
     void uvGridify(
         const GA_RWHandleT<VECTOR_T>& uv_h,
-        const GA_ROHandleT<POS_VECTOR_T>& pos_h,
         VECTOR_T& uv,
         const GA_Offset primoff,
         const GA_Size vtxpnum,
-        const exint rows,
-        const exint cols,
-        const typename POS_VECTOR_T::value_type scale,
+        const typename VECTOR_T::value_type scale,
         const bool scaleIdx,
         const bool isPointAttrib
     )
     {
         if (reverseUVu)
-        {
             uv[0] = 1 - uv[0];
-        }
+        
         if (reverseUVv)
-        {
             uv[1] = 1 - uv[1];
-        }
+        
         if (!uniScale)
-        {
-            if (scaleIdx)
-            {
-                uv[1] *= scale;
-            }
-            else
-            {
-                uv[0] *= scale;
-            }
-        }
+            uv[scaleIdx] *= scale;
+        
         GA_Offset elemoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
         if (isPointAttrib)
             elemoff = geo->vertexPoint(elemoff);

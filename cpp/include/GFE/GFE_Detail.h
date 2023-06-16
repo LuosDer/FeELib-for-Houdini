@@ -13,6 +13,7 @@
 #include "GA/GA_PageHandle.h"
 #include "GA/GA_PageIterator.h"
 
+//#include "GEO/GEO_PrimPoly.h"
 
 
 
@@ -35,6 +36,39 @@ public:
 
     SYS_FORCE_INLINE bool hasVertex() const
     { return getNumVertices() >= 0; }
+
+
+
+
+    
+    SYS_FORCE_INLINE GEO_Primitive* getGEOPrimitive(const GA_Offset primoff)
+    {
+        UT_ASSERT_P(GAisValid(primoff));
+        // reinterpret_cast to avoid including header
+        return reinterpret_cast<GEO_Primitive*>(getPrimitive(primoff));
+    }
+    
+    SYS_FORCE_INLINE GEO_PrimPoly* getGEOPrimPoly(const GA_Offset primoff)
+    {
+        UT_ASSERT_P(GAisValid(primoff));
+        // reinterpret_cast to avoid including header
+        //return reinterpret_cast<GEO_PrimPoly*>(getPrimitive(primoff));
+        return static_cast<GEO_PrimPoly*>(getPrimitive(primoff));
+    }
+    
+    SYS_FORCE_INLINE GA_Size stealVertex(const GA_Offset primoff, const GA_Offset vtxoff, const GA_Offset insertBeforeVtx = GA_INVALID_OFFSET)
+    { return getGEOPrimPoly(primoff)->stealVertex(vtxoff, insertBeforeVtx); }
+
+    
+    /// Clear all the points/primitives out of this detail
+    SYS_FORCE_INLINE void clearAndDestroy()
+    {
+        clearCaches();
+        incrementMetaCacheCount();
+        clear();
+    }
+
+
 
     
     SYS_FORCE_INLINE bool isUsedPoint(const GA_Offset ptoff) const
@@ -188,14 +222,30 @@ public:
         return primpoint1 == getPrimitivePointOffset(primoff, 0);
     }
 
-    SYS_FORCE_INLINE GA_Range getPrimitiveRange(const GA_PrimitiveGroup* group = nullptr, const bool reverse = false) const
+    SYS_FORCE_INLINE GA_Range getRange(const GA_ElementGroup& group, const bool reverse = false) const
+    { return GA_Range(group, reverse); }
+
+    SYS_FORCE_INLINE GA_Range getPrimitiveRange(const GA_PrimitiveGroup* const group = nullptr, const bool reverse = false) const
     { return GA_Range(getPrimitiveMap(), group, reverse); }
 
-    SYS_FORCE_INLINE GA_Range getPointRange(const GA_PointGroup* group = nullptr, const bool reverse = false) const
+    SYS_FORCE_INLINE GA_Range getPointRange(const GA_PointGroup* const group = nullptr, const bool reverse = false) const
     { return GA_Range(getPointMap(), group, reverse); }
     
-    SYS_FORCE_INLINE GA_Range getVertexRange(const GA_VertexGroup* group = nullptr, const bool reverse = false) const
+    SYS_FORCE_INLINE GA_Range getVertexRange(const GA_VertexGroup* const group = nullptr, const bool reverse = false) const
     { return GA_Range(getVertexMap(), group, reverse); }
+
+    
+    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_ElementGroup& group, const bool reverse = false) const
+    { return GA_SplittableRange(getRange(group, reverse)); }
+
+    SYS_FORCE_INLINE GA_SplittableRange getPrimitiveSplittableRange(const GA_PrimitiveGroup* const group = nullptr, const bool reverse = false) const
+    { return GA_SplittableRange(getPrimitiveRange(group, reverse)); }
+
+    SYS_FORCE_INLINE GA_SplittableRange getPointSplittableRange(const GA_PointGroup* const group = nullptr, const bool reverse = false) const
+    { return GA_SplittableRange(getPointRange(group, reverse)); }
+    
+    SYS_FORCE_INLINE GA_SplittableRange getVertexSplittableRange(const GA_VertexGroup* const group = nullptr, const bool reverse = false) const
+    { return GA_SplittableRange(getVertexRange(group, reverse)); }
 
     
     SYS_FORCE_INLINE GA_Range getRange(const GA_PrimitiveGroup* group = nullptr, const bool reverse = false) const
@@ -210,7 +260,8 @@ public:
 
     
 private:
-    GA_Offset vertexFromEdge_sub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    
+    GA_Offset edgeVertexSub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
     {
         for (GA_Offset vtxoff = pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = vertexToNextVertex(vtxoff))
         {
@@ -225,10 +276,9 @@ private:
                 GA_Size vtxpnum_next = vtxpnum+1;
                 if (vtxpnum_next == numvtx)
                 {
-                    if (getPrimitiveClosedFlag(primoff))
-                        vtxpnum_next = 0;
-                    else
+                    if (!getPrimitiveClosedFlag(primoff))
                         break;
+                    vtxpnum_next = 0;
                 }
                 const GA_Offset primPoint_next = getPrimitivePointOffset(primoff, vtxpnum_next);
                 
@@ -236,24 +286,21 @@ private:
                     return getPrimitiveVertexOffset(primoff, vtxpnum_next);
             }
         }
-
         return GFE_INVALID_OFFSET;
     }
     
 public:
     
-    GA_Offset vertexFromEdge(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    GA_Offset edgeVertex(const GA_Offset ptoff0, const GA_Offset ptoff1) const
     {
-        GA_Offset result = vertexFromEdge_sub(ptoff0, ptoff1);
+        GA_Offset result = edgeVertexSub(ptoff0, ptoff1);
         if (GFE_Type::isInvalidOffset(result))
-            result = vertexFromEdge_sub(ptoff1, ptoff0);
-
+            result = edgeVertexSub(ptoff1, ptoff0);
         return result;
     }
     
-    
-    SYS_FORCE_INLINE GA_Offset vertexFromEdge(const GA_Edge& edge) const
-    { return vertexFromEdge(edge.p0(), edge.p1()); }
+    SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Edge& edge) const
+    { return edgeVertex(edge.p0(), edge.p1()); }
     
     
 
@@ -463,6 +510,13 @@ SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GA_Offset primoff, cons
 SYS_FORCE_INLINE GA_Offset primPoint(const GA_Offset primoff, const GA_Size vtxpnum = 0) const
 { return getPrimitivePointOffset(primoff, vtxpnum); }
 
+SYS_FORCE_INLINE GA_Index getPrimitivePointIndex(const GA_Offset primoff, const GA_Size vtxpnum = 0) const
+{ return pointIndex(getPrimitivePointOffset(primoff, vtxpnum)); }
+
+SYS_FORCE_INLINE GA_Index primPointIndex(const GA_Offset primoff, const GA_Size vtxpnum = 0) const
+{ return getPrimitivePointIndex(primoff, vtxpnum); }
+
+    
 SYS_FORCE_INLINE GA_Offset primVertex(const GA_Offset primoff, const GA_Size vtxpnum = 0) const
 { return getPrimitiveVertexOffset(primoff, vtxpnum); }
     

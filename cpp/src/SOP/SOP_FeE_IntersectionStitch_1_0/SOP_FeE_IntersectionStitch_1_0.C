@@ -99,12 +99,20 @@ static const char *theDsFile = R"THEDSFILE(
         default { "1" }
     }
     parm {
-        name    "outSecondInputGeo"
-        cppname "OutSecondInputGeo"
-        label   "Out Second Input Geo"
+        name    "outType"
+        cppname "OutType"
+        label   "Out Type"
         type    toggle
-        default { "0" }
-        disablewhen "{ insertPoint == 1 }"
+        type    ordinal
+        disablewhen "{ insertPoint == 0 }"
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "detectVertexIntersection"
@@ -117,6 +125,13 @@ static const char *theDsFile = R"THEDSFILE(
         name    "outIntersectionSegment"
         cppname "OutIntersectionSegment"
         label   "Output Intersection Segment"
+        type    toggle
+        default { "off" }
+    }
+    parm {
+        name    "triangulateMesh"
+        cppname "TriangulateMesh"
+        label   "Triangulate Mesh"
         type    toggle
         default { "off" }
     }
@@ -134,6 +149,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Repair Result"
         type    toggle
         default { "on" }
+        disablewhen "{ insertPoint == 0 outSecondInputGeo == 1 }"
     }
     group {
         name    "stdswitcher"
@@ -157,6 +173,7 @@ static const char *theDsFile = R"THEDSFILE(
             default { "sourceInput" }
             disablewhen "{ useInputnumAttrib == 0 }"
         }
+
         parm {
             name    "usePrimnumAttrib"
             cppname "UsePrimnumAttrib"
@@ -231,7 +248,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
         disablewhen "{ repairResult == 0 }"
     }
@@ -375,19 +392,16 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     
     GFE_IntersectionStitch intersectionStitch(outGeo0, inGeo1, cookparms);
 
-    intersectionStitch.setComputeParm(sopparms.getSplitCurve(), sopparms.getRepairResult(), sopparms.getKeepPointAttrib(),
+    intersectionStitch.setComputeParm(sopparms.getSplitCurve(), sopparms.getRepairResult(),
+        sopparms.getKeepPointAttrib(), sopparms.getTriangulateMesh(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    
-    if (sopparms.getInsertPoint())
-        intersectionStitch.setInsertPoint();
-    else
-        intersectionStitch.setInsertPoint(sopparms.getOutSecondInputGeo());
     
     if (sopparms.getUseTolerance())
         intersectionStitch.setTolerance(sopparms.getTolerance());
     
     if (sopparms.getInsertPoint())
     {
+        intersectionStitch.setInsertPoint();
         if (sopparms.getUseInputnumAttrib())
             intersectionStitch.setInputnumAttrib(sopparms.getInputnumAttrib());
         if (sopparms.getUsePrimnumAttrib())
@@ -396,10 +410,12 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
             intersectionStitch.setPrimuvwAttrib(sopparms.getPrimuvwAttrib());
         //intersectionStitch.setpo(sopparms.getPtnumAttrib());
     }
+    else
+        intersectionStitch.setInsertPoint(sopparms.getOutSecondInputGeo());
     
     intersectionStitch.groupParser.setGroup(groupType, sopparms.getGroup());
     intersectionStitch.groupParserRef0.setGroup(groupTypeRef0, sopparms.getGroupRef());
-    intersectionStitch.computeAndBumpDataId();
+    intersectionStitch.computeAndBumpDataIdsForAddOrRemove();
     
 
 }

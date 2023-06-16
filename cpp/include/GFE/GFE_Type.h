@@ -168,11 +168,29 @@ SYS_FORCE_INLINE static VECTOR_T getZeroVector()
 SYS_FORCE_INLINE static bool isPacked(const int i)
 { return i >= 25 && i <= 27; }
 
+
+
+    
+#if GFE_INVALID_OFFSET >= 0
+    
 SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
 { return v < GFE_INVALID_OFFSET && v >= 0; }
 
 SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
 { return v >= GFE_INVALID_OFFSET || v < 0; }
+
+#else
+    
+SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
+{ return v >= 0; }
+
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
+{ return v < 0; }
+    
+#endif
+
+
+
 
     
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)

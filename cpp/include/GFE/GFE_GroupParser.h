@@ -315,13 +315,13 @@ public:
         }
         
         geoGroup = gop->parseGroupDetached(groupName, groupType, geo, true, false, hasGroup);
-        // if (geoGroup->isElementGroup())
-        // {
-        //     GA_Size a = static_cast<const GA_ElementGroup*>(geoGroup)->computeGroupEntries();
-        //     GA_Size b = static_cast<const GA_ElementGroup*>(geoGroup)->entries();
-        //     GA_Size c = a + b;
-        //     
-        // }
+        if (geoGroup->isElementGroup())
+        {
+            GA_Size a = static_cast<const GA_ElementGroup*>(geoGroup)->computeGroupEntries();
+            GA_Size b = static_cast<const GA_ElementGroup*>(geoGroup)->entries();
+            GA_Size c = a + b;
+            
+        }
 
         //hasGroup &= bool(geoGroup);
 

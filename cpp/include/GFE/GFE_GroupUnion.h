@@ -182,8 +182,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         //     return;
         // }
         const GA_Detail& geo = group.getDetail();
-        const GA_SplittableRange splittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse));
-        UTparallelFor(splittableRange, [&geo, &group](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
