@@ -16,7 +16,7 @@
 #include "SOP/SOP_IntersectionStitch.proto.h"
 #include "SOP/SOP_IntersectionAnalysis.proto.h"
 
-class GFE_IntersectionStitch : public GFE_AttribFilterWithRef,  {
+class GFE_IntersectionStitch : public GFE_AttribFilterWithRef2 {
 
 public:
     enum OutType

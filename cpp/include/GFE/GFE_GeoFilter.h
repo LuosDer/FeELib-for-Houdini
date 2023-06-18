@@ -1051,89 +1051,181 @@ private:
 
 
 
-class GFE_GeoFilterWithRef : public GFE_GeoFilter, public GFE_GeoFilterRef0 {
+class GFE_GeoFilterWithRef0 : public GFE_GeoFilter, public GFE_GeoFilterRef0 {
 
 public:
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GFE_Detail* const geo,
-        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GFE_Detail& geo,
-        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GA_Detail& geo,
-        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GA_Detail* const geo,
-        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GA_Detail* const geo,
-        const GA_Detail& geoRef,
+        const GA_Detail& geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GA_Detail& geo,
-        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms& cookparms
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef(
+    GFE_GeoFilterWithRef0(
         GA_Detail& geo,
-        const GA_Detail& geoRef,
+        const GA_Detail& geoRef0,
         const SOP_NodeVerb::CookParms& cookparms
     )
         : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), &cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), &cookparms)
     {
     }
 
 
-    ~GFE_GeoFilterWithRef()
+    ~GFE_GeoFilterWithRef0()
     {
     }
 
 
 
-}; // End of class GFE_GeoFilterWithRef
+}; // End of class GFE_GeoFilterWithRef0
+
+
+
+
+class GFE_GeoFilterWithRef1 : public GFE_GeoFilterWithRef0, public GFE_GeoFilterRef1 {
+
+public:
+
+    GFE_GeoFilterWithRef1(
+        GFE_Detail* const geo,
+        const GA_Detail* const geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_GeoFilterWithRef1(
+        GFE_Detail& geo,
+        const GA_Detail* const geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_GeoFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
+    GFE_GeoFilterWithRef1(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_GeoFilterWithRef1(
+        GA_Detail* const geo,
+        const GA_Detail& geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_GeoFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_GeoFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
+    ~GFE_GeoFilterWithRef1()
+    {
+    }
+
+}; // End of class GFE_GeoFilterWithRef1
 
 
 
