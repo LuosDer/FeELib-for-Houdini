@@ -25,278 +25,787 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
     parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-    parm {
-        name    "vertexGroup"
-        cppname "VertexGroup"
-        label   "Vertex Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-    parm {
-        name    "edgeGroup"
-        cppname "EdgeGroup"
-        label   "Edge Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-
-
-    parm {
-        name    "promoteEdgeGroupToPrim"
-        cppname "PromoteEdgeGroupToPrim"
-        label   "Promote Edge Group to Prim"
-        type    string
-        default { "" }
-    }
-
-
-
-    parm {
-        name    "outSrcPrims"
-        cppname "OutSrcPrims"
-        label   "Source Prims"
-        type    toggle
-        default { 0 }
-        nolabel
-        joinnext
-    }
-    parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
-        type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
-    }
-
-
-
-    parm {
-        name    "primType"
-        cppname "PrimType"
-        label   "Prim Type"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
         type    ordinal
-        default { "polyline" }
+        default { "point" }
         menu {
-            "polyline"  "Polyline"
-            "poly"      "Poly"
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
         }
     }
 
     parm {
-        name    "excludeSharedEdge"
-        cppname "ExcludeSharedEdge"
-        label   "Exclude Shared Edge"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "close"
-        cppname "Close"
-        label   "Close"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "useEndGroup"
-        cppname "UseEndGroup"
-        label   "Use End Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "endGroup"
-        cppname "EndGroup"
-        label   "End Group"
+        name    "groupRef"
+        cppname "GroupRef"
+        label   "GroupRef"
         type    string
-        default { "end" }
-        disablewhen "{ useEndGroup == 0 }"
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupTypeRef')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+    }
+    parm {
+        name    "groupTypeRef"
+        cppname "GroupTypeRef"
+        label   "Group Type Ref"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "posAttrib"
+        cppname "PosAttrib"
+        label   "Pos Attrib"
+        type    string
+        default { "P" }
+    }
+    parm {
+        name    "posRefAttrib"
+        cppname "PosRefAttrib"
+        label   "Pos Ref Attrib"
+        type    string
+        default { "P" }
+    }
+
+    parm {
+        name    "primAttribToXform"
+        cppname "PrimAttribToXform"
+        label   "Prim Attrib to Transform"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "pointAttribToXform"
+        cppname "PointAttribToXform"
+        label   "Point Attrib to Transform"
+        type    string
+        default { "P" }
+    }
+    parm {
+        name    "vertexAttribToXform"
+        cppname "VertexAttribToXform"
+        label   "Vertex Attrib to Transform"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "detailAttribToXform"
+        cppname "DetailAttribToXform"
+        label   "Detail Attrib to Transform"
+        type    string
+        default { "" }
+    }
+
+
+    parm {
+        name    "ezMode"
+        cppname "EZMode"
+        label   "Eazy Mode"
+        type    toggle
+        default { "0" }
+    }
+
+
+    parm {
+        name    "useSelfAsRef"
+        cppname "UseSelfAsRef"
+        label   "Use Self as Ref"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "repairPrecision"
+        cppname "RepairPrecision"
+        label   "Repair Precision"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "repairPrecisionThreshold"
+        cppname "RepairPrecisionThreshold"
+        label   "Repair Precision Threshold"
+        type    log
+        default { "1e-07" }
+        disablewhen "{ repairPrecision == 0 }"
+        range   { 1e-07 0.0001 }
+    }
+    parm {
+        name    "ignoreHFHeight"
+        cppname "IgnoreHFHeight"
+        label   "Ignore HeightField Height"
+        type    toggle
+        default { "0" }
+    }
+
+
+
+    parm {
+        name    "xOrd"
+        cppname "XOrd"
+        label   "Transform Order"
+        type    ordinal
+        joinnext
+        default { "tsr" }
+        menu {
+            "srt"   "Scale Rot Trans"
+            "str"   "Scale Trans Rot"
+            "rst"   "Rot Scale Trans"
+            "rts"   "Rot Trans Scale"
+            "tsr"   "Trans Scale Rot"
+            "trs"   "Trans Rot Scale"
+        }
+    }
+    parm {
+        name    "rOrd"
+        cppname "ROrd"
+        label   "Rotate Order"
+        type    ordinal
+        nolabel
+        default { "xyz" }
+        menu {
+            "xyz"   "Rx Ry Rz"
+            "xzy"   "Rx Rz Ry"
+            "yxz"   "Ry Rx Rz"
+            "yzx"   "Ry Rz Rx"
+            "zxy"   "Rz Rx Ry"
+            "zyx"   "Rz Ry Rx"
+        }
+    }
+    parm {
+        name    "doTranslate"
+        cppname "DoTranslate"
+        label   "Translate"
+        type    toggle
+        default { "on" }
+        range   { 0 1 }
+    }
+    parm {
+        name    "doScale"
+        cppname "DoScale"
+        label   "Scale"
+        type    toggle
+        default { "off" }
+        range   { 0 1 }
     }
 
 )THEDSFILE"
-// ==== This is necessary because MSVC++ has a limit of 16380 character per
-// ==== string literal
 R"THEDSFILE(
 
-    parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "attribFromPrim"
-        cppname "AttribFromPrim"
-        label   "Attrib from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromPrim"
-        cppname "GroupFromPrim"
-        label   "Group from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromEdge"
-        cppname "GroupFromEdge"
-        label   "Group from Edge"
-        type    string
-        default { "" }
-    }
 
-    parm {
-        name    "mergeInput"
-        cppname "MergeInput"
-        label   "Merge Input"
-        type    toggle
-        default { "0" }
-        disablewhen "{ close == 1 }"
-    }
-
-
-    parm {
-        name    "correctGeoWinding"
-        cppname "CorrectGeoWinding"
-        label   "Correct Geo Winding"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "reverse"
-        cppname "Reverse"
-        label   "Reverse"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "meshCap"
-        cppname "MeshCap"
-        label   "Mesh Cap"
-        type    toggle
-        default { "0" }
-    }
-
-    parm {
-        name    "addUV"
-        cppname "AddUV"
-        label   "Add UV"
-        type    toggle
-        default { "0" }
-    }
-    groupsimple {
-        name    "uv_folder"
-        label   "UV"
-        disablewhen "{ addUV == 0 }"
+    group {
+        name    "matchingtranslate_2"
+        label   "Ref BBox"
+        hidewhentab "{ ezMode == 1 }"
 
         parm {
-            name    "posAttribName"
-            cppname "PosAttribName"
-            label   "UV Attribute Name"
-            type    string
-            default { "uv" }
+            name    "minpad_absx"
+            cppname "minpad_absx"
+            label   "Min Padding Abs X"
+            type    float
+            default { "0" }
+            range   { -1 1 }
         }
         parm {
-            name    "uvSize"
-            cppname "UVSize"
-            label   "UV Size"
-            type    integer
-            default { "3" }
-            range   { 1! 3! }
+            name    "minpad_absy"
+            cppname "minpad_absy"
+            label   "Min Padding Abs Y"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+        parm {
+            name    "minpad_absz"
+            cppname "minpad_absz"
+            label   "Min Padding Abs Z"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+        parm {
+            name    "maxpad_absx"
+            cppname "maxpad_absx"
+            label   "Max Padding Abs X"
+            type    float
+            default { [ "ch(\"minpad_absx\")" hscript-expr ] }
+            range   { -1 1 }
+        }
+        parm {
+            name    "maxpad_absy"
+            cppname "maxpad_absy"
+            label   "Max Padding Abs Y"
+            type    float
+            default { [ "ch(\"minpad_absy\")" hscript-expr ] }
+            range   { -1 1 }
+        }
+        parm {
+            name    "maxpad_absz"
+            cppname "maxpad_absz"
+            label   "Max Padding Abs Z"
+            type    float
+            default { [ "ch(\"minpad_absz\")" hscript-expr ] }
+            range   { -1 1 }
+        }
+    }
 
+    group {
+        name    "matchingtranslate_2_1"
+        label   "Matching Translate"
+        hidewhentab "{ dotranslate == 0 }"
+
+        parm {
+            name    "bboxtx"
+            cppname "bboxtx"
+            label   "BBox Translate X"
+            type    float
+            default { "0" }
+            range   { -1 1 }
         }
         parm {
-            name    "uvMethod"
-            cppname "UVMethod"
-            label   "UV Method"
-            type    ordinal
-            default { "uniform" }
-            menu {
-                "uniform"   "Uniform"
-                "length"    "Length"
-            }
+            name    "bboxty"
+            cppname "bboxty"
+            label   "BBox Translate Y"
+            type    float
+            default { "0" }
+            range   { -1 1 }
         }
         parm {
-            name    "seamGroup"
-            cppname "SeamGroup"
-            label   "Seam Group"
-            type    string
-            default { "seams" }
-            disablewhen "{ uvMethod != uniform }"
+            name    "bboxtz"
+            cppname "bboxtz"
+            label   "BBox Translate Z"
+            type    float
+            default { "0" }
+            range   { -1 1 }
         }
         parm {
-            name    "uvLayout"
-            cppname "UVLayout"
-            label   "UV Layout"
+            name    "invertTRef"
+            cppname "invertTRef"
+            label   "Invert T Ref"
             type    toggle
             default { "0" }
         }
+        parm {
+            name    "bbox_ref_tx"
+            cppname "bbox_ref_tx"
+            label   "BBox Ref Translate X"
+            type    float
+            default { [ "if(ch(\"invertTRef\"), -1, 1) * ch(\"bboxtx\")1" hscript-expr ] }
+            range   { -1 1 }
+        }
+        parm {
+            name    "bbox_ref_ty"
+            cppname "bbox_ref_ty"
+            label   "BBox Ref Translate Y"
+            type    float
+            default { [ "if(ch(\"invertTRef\"), -1, 1) * ch(\"bboxty\")1" hscript-expr ] }
+            range   { -1 1 }
+        }
+        parm {
+            name    "bbox_ref_tz"
+            cppname "bbox_ref_tz"
+            label   "BBox Ref Translate Z"
+            type    float
+            default { [ "if(ch(\"invertTRef\"), -1, 1) * ch(\"bboxtz\")1" hscript-expr ] }
+            range   { -1 1 }
+        }
+        parm {
+            name    "sepparm2"
+            label   "Separator"
+            type    separator
+            default { "" }
+        }
+        groupsimple {
+            name    "bboxcentert_folder"
+            label   "BBox Center Translate"
+            hidewhen "{ ezMode == 1 }"
+            grouptag { "group_type" "simple" }
+
+            parm {
+                name    "bboxcx"
+                cppname "bboxcx"
+                label   "BBox Center X"
+                type    float
+                default { "1" }
+                range   { 0 1 }
+            }
+            parm {
+                name    "bboxcy"
+                cppname "bboxcy"
+                label   "BBox Center Y"
+                type    float
+                default { "1" }
+                range   { 0 1 }
+            }
+            parm {
+                name    "bboxcz"
+                cppname "bboxcz"
+                label   "BBox Center Z"
+                type    float
+                default { "1" }
+                range   { 0 1 }
+            }
+            parm {
+                name    "bbox_ref_cx"
+                cppname "bbox_ref_cx"
+                label   "BBox Ref Center X"
+                type    float
+                default { "1" }
+                range   { 0 1 }
+            }
+            parm {
+                name    "bbox_ref_cy"
+                cppname "bbox_ref_cy"
+                label   "BBox Ref Center Y"
+                type    float
+                default { "1" }
+                range   { 0 1 }
+            }
+            parm {
+                name    "bbox_ref_cz"
+                cppname "bbox_ref_cz"
+                label   "BBox Ref Center Z"
+                type    float
+                default { "1" }
+                range   { 0 1 }
+            }
+        }
+
+        parm {
+            name    "tx"
+            cppname "tx"
+            label   "Translate X"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+        parm {
+            name    "ty"
+            cppname "ty"
+            label   "Translate Y"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+        parm {
+            name    "tz"
+            cppname "tz"
+            label   "Translate Z"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+    }
+
+    group {
+        name    "matchingtranslate_2_2"
+        label   "Center"
+
+        parm {
+            name    "autobindcenter"
+            cppname "autoBindCenter"
+            label   "Auto Bind Center"
+            type    toggle
+            default { "on" }
+            disablewhen "{ dotranslate == 0 }"
+        }
+        parm {
+            name    "bbox_ref_px"
+            cppname "bbox_ref_px"
+            label   "BBox Ref Translate X"
+            type    float
+            default { "0" }
+            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "bbox_ref_py"
+            cppname "bbox_ref_py"
+            label   "BBox Ref Translate Y"
+            type    float
+            default { "0" }
+            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "bbox_ref_pz"
+            cppname "bbox_ref_pz"
+            label   "BBox Ref Translate Z"
+            type    float
+            default { "0" }
+            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "bbox_ref_pcx"
+            cppname "bbox_ref_pcx"
+            label   "BBox Ref Center X"
+            type    float
+            default { "1" }
+            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bbox_ref_pcy"
+            cppname "bbox_ref_pcy"
+            label   "BBox Ref Center Y"
+            type    float
+            default { "1" }
+            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bbox_ref_pcz"
+            cppname "bbox_ref_pcz"
+            label   "BBox Ref Center Z"
+            type    float
+            default { "1" }
+            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "sepparm3"
+            label   "Separator"
+            type    separator
+            default { "" }
+        }
+        parm {
+            name    "px"
+            cppname "px"
+            label   "Pivot Translate X"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+        parm {
+            name    "py"
+            cppname "py"
+            label   "Pivot Translate Y"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
+        parm {
+            name    "pz"
+            cppname "pz"
+            label   "Pivot Translate Z"
+            type    float
+            default { "0" }
+            range   { -1 1 }
+        }
     }
 
 
 
+)THEDSFILE"
+R"THEDSFILE(
+
+
+    group {
+        name    "matchingtranslate_2_3"
+        label   "Matching Scale"
+        hidewhentab "{ doscale == 0 }"
+
+        parm {
+            name    "scaleVolume"
+            cppname "ScaleVolume"
+            label   "Scale Volume"
+            type    toggle
+            nolabel
+            joinnext
+            default { "0" }
+        }
+        parm {
+            name    "volumeName"
+            cppname "VolumeName"
+            label   "Volume Name"
+            type    string
+            default { "@name=height" }
+            disablewhen "{ scalevolume == 0 }"
+        }
+        parm {
+            name    "uniScale"
+            cppname "UniScale"
+            label   "Uniform Scale"
+            type    toggle
+            default { "off" }
+        }
+        parm {
+            name    "scaleAxis"
+            cppname "ScaleAxis"
+            label   "Scale Axis"
+            type    ordinal
+            default { "min" }
+            hidewhen "{ uniformscale == 0 }"
+            menu {
+                "x"         "X"
+                "y"         "Y"
+                "z"         "Z"
+                "xyzmin"    "XYZ Min"
+                "xyzmiddle" "XYZ Middle"
+                "xyzmax"    "XYZ Max"
+                "xymin"     "XY Min"
+                "yzmin"     "YZ Min"
+                "zxmin"     "ZX Min"
+                "xymax"     "XY Max"
+                "yzmax"     "YZ Max"
+                "zxmax"     "ZX Max"
+            }
+        }
+        parm {
+            name    "labelparm"
+            label   " "
+            type    label
+            default { "BBox Size 大部分時候设成1即可" }
+        }
+        parm {
+            name    "labelparm2"
+            label   " "
+            type    label
+            default { "BBox Size set to 1 most of time    " }
+        }
+        parm {
+            name    "bboxsx"
+            cppname "bboxsx"
+            label   "BBox Size X"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsx == 0 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bboxsy"
+            cppname "bboxsy"
+            label   "BBox Size Y"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsy == 0 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bboxsz"
+            cppname "bboxsz"
+            label   "BBox Size Z"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsz == 0 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bbox_ref_sx"
+            cppname "bbox_ref_sx"
+            label   "BBox Ref Scale X"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsx == 0 }"
+            hidewhen "{ uniformscale == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bbox_ref_sy"
+            cppname "bbox_ref_sy"
+            label   "BBox Ref Scale Y"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsy == 0 }"
+            hidewhen "{ uniformscale == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "bbox_ref_sz"
+            cppname "bbox_ref_sz"
+            label   "BBox Ref Scale Z"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsz == 0 }"
+            hidewhen "{ uniformscale == 1 }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "sepparm"
+            label   "Separator"
+            type    separator
+            default { "" }
+        }
+        parm {
+            name    "scale"
+            cppname "scale"
+            label   "Uniform Scale"
+            type    float
+            default { "1" }
+            hidewhen "{ ezMode == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "sx"
+            cppname "sx"
+            label   "Scale X"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsx == 0 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "sy"
+            cppname "sy"
+            label   "Scale Y"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsy == 0 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "sz"
+            cppname "sz"
+            label   "Scale Z"
+            type    float
+            default { "1" }
+            disablewhen "{ lerpsz == 0 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "padsx"
+            cppname "padsx"
+            label   "Padding Scale X"
+            type    float
+            default { "0" }
+            disablewhen "{ lerpsx == 0 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "padsy"
+            cppname "padsy"
+            label   "Padding Scale Y"
+            type    float
+            default { "0" }
+            disablewhen "{ lerpsy == 0 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "padsz"
+            cppname "padsz"
+            label   "Padding Scale Z"
+            type    float
+            default { "0" }
+            disablewhen "{ lerpsz == 0 }"
+            hidewhen "{ ezMode == 1 }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "lerpsx"
+            cppname "lerpsx"
+            label   "Lerp Scale X"
+            type    float
+            default { "1" }
+            range   { 0 1 }
+        }
+        parm {
+            name    "lerpsy"
+            cppname "lerpsy"
+            label   "Lerp Scale Y"
+            type    float
+            default { "1" }
+            range   { 0 1 }
+        }
+        parm {
+            name    "lerpsz"
+            cppname "lerpsz"
+            label   "Lerp Scale Z"
+            type    float
+            default { "1" }
+            range   { 0 1 }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
     parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
+        name    "outXformAttrib"
+        cppname "OutXformAttrib"
+        label   "Out Xform Attrib"
         type    toggle
         default { "0" }
+        joinnext
+        nolabel
+    }
+    parm {
+        name    "xformAttribName"
+        cppname "XformAttribName"
+        label   "Xform Attrib Name"
+        type    string
+        default { "xform" }
+        disablewhen "{ outXformAttrib == 0 }"
+    }
+    parm {
+        name    "xformMergeType"
+        cppname "XformMergeType"
+        label   "Xform Merge Type"
+        type    ordinal
+        nolabel
+        default { "replace" }
+        menu {
+            "replace"   "Replace Existing"
+            "pre"       "Pre-Multiply"
+            "post"      "Post-Multiply"
+        }
     }
 
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
+
+
+
+    // parm {
+    //     name    "subscribeRatio"
+    //     cppname "SubscribeRatio"
+    //     label   "Subscribe Ratio"
+    //     type    integer
+    //     default { 64 }
+    //     range   { 0! 256 }
+    // }
+    // parm {
+    //     name    "minGrainSize"
+    //     cppname "MinGrainSize"
+    //     label   "Min Grain Size"
+    //     type    intlog
+    //     default { 64 }
+    //     range   { 0! 2048 }
+    // }
 }
 )THEDSFILE";
 
@@ -306,9 +815,18 @@ SOP_FeE_MatchBBox_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_MatchBBox_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::allTextureCoordMenu);
+        templ.setChoiceListPtr("group"_sh,    &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("groupRef"_sh, &SOP_Node::allGroupMenu);
         
+        templ.setChoiceListPtr("primAttribToXform"_sh,   &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("pointAttribToXform"_sh,  &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("vertexAttribToXform"_sh, &SOP_Node::vertexAttribMenu);
+        templ.setChoiceListPtr("detailAttribToXform"_sh, &SOP_Node::detailAttribMenu);
+        
+        templ.setChoiceListPtr("posAttrib"_sh,    &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("posAttribRef"_sh, &SOP_Node::pointAttribReplaceMenu);
+        
+        templ.setChoiceListPtr("xformAttribName"_sh, &SOP_Node::detailAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -371,124 +889,38 @@ SOP_FeE_MatchBBox_2_0::cookVerb() const
 
 
 
-
-//// Calls functor on every active offset in this index map.
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachOffset(GA_IndexMap& idxmap, FUNCTOR&& functor)
-//{
-//    if (idxmap.isTrivialMap())
-//    {
-//        const GA_Offset end = GA_Offset(GA_Size(idxmap.indexSize()));
-//        for (GA_Offset off(0); off != end; ++off)
-//        {
-//            functor(off, off);
-//        }
-//    }
-//    else
-//    {
-//        const GA_Offset veryend(idxmap.myMaxOccupiedOffset + 1);
-//        GA_Size idx(0);
-//        GA_Offset off(0);
-//        while (true)
-//        {
-//            off = idxmap.findActiveOffset(off, veryend);
-//            GA_Offset end = idxmap.findInactiveOffset(off, veryend);
-//            if (off == end)
-//                break;
-//            do
-//            {
-//                functor(off, idx);
-//                ++off;
-//                ++idx;
-//            } while (off != end);
-//        }
-//    }
-//}
-
-
-
-
-/*
-template<typename FUNCTOR>
-static void forEachOffset(FUNCTOR&& functor, const GA_IndexMap& index_map, const GA_ElementGroup* group = nullptr, bool complement = false)
+static GA_GroupType
+sopGroupType(SOP_FeE_MatchBBox_2_0Parms::GroupType parmGroupType)
 {
-    // Fall back to regular case if no group.
-    //if (!group)
-    //{
-    //    if (!complement)
-    //        index_map.forEachOffset(functor);
-    //    return;
-    //}
-
-    // Group order is only relevant if not complemented.
-    if (!complement)
+    using namespace SOP_FeE_MatchBBox_2_0Enums;
+    switch (parmGroupType)
     {
-        const GA_ElementGroupOrder* order = group->getOrdered();
-        if (order)
-        {
-            GA_Size idx(0);
-            for (GA_ElementGroupOrderIndex i(0), n(order->entries()); i != n; ++i)
-            {
-                GA_Offset off = order->getElement(i);
-                functor(off, idx);
-                ++idx;
-            }
-            return;
-        }
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-
-    // We have a group, treated as unordered.
-    const GA_Offset veryend = index_map.offsetSize();
-    GA_Size idx(0);
-    GA_Offset off(0);
-    while (true)
-    {
-        bool value;
-        GA_Size span_size;
-        group->getConstantSpan(off, veryend, span_size, value);
-        if (span_size == 0)
-            break;
-        if (value == complement)
-        {
-            off += span_size;
-            continue;
-        }
-        const GA_Offset span_end = off + span_size;
-        while (true)
-        {
-            off = index_map.findActiveOffset(off, span_end);
-            GA_Offset end = index_map.findInactiveOffset(off, span_end);
-            if (off == end)
-                break;
-            do
-            {
-                functor(off, idx);
-                ++off;
-                ++idx;
-            } while (off != end);
-        }
-    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
 
-template<typename FUNCTOR>
-SYS_FORCE_INLINE
-void forEachPrimitive(GA_Detail* geo, const GA_PrimitiveGroup* group, bool complement, FUNCTOR&& functor)
+
+static GA_GroupType
+sopGroupType(SOP_FeE_MatchBBox_2_0Parms::GroupTypeRef parmGroupType)
 {
-    forEachOffset(functor, geo->getPrimitiveMap(), group, complement);
+    using namespace SOP_FeE_MatchBBox_2_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupTypeRef::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupTypeRef::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupTypeRef::POINT:     return GA_GROUP_POINT;      break;
+    case GroupTypeRef::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupTypeRef::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
-
-*/
-
-
-//template<typename FUNCTOR>
-//SYS_FORCE_INLINE
-//void forEachVertex(GA_Detail* geo, const GA_VertexGroup* group, bool complement, FUNCTOR&& functor)
-//{
-//    forEachOffset(functor, geo->getVertexMap(), group, complement);
-//}
-
-
 
 
 
@@ -497,34 +929,55 @@ void
 SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_MatchBBox_2_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_MatchBBox_2_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
     const GA_Detail* const inGeo2 = cookparms.inputGeo(2);
 
-    outGeo0->replaceWith(*inGeo0);
+    outGeo0.replaceWith(inGeo0);
 
+    if (!(sopparms.getDoTranslate() || sopparms.getDoScale() || sopparms.getOutXformAttrib()))
+        return;
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupTypeRef = sopGroupType(sopparms.getGroupTypeRef());
 
-
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-    const UT_StringHolder& seamGroupName = sopparms.getSeamGroup();
-    const UT_StringHolder& posAttribName = sopparms.getPosAttribName();
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GA_Attribute* posAttribPtr = GFE_MatchBBox::matchBBox(cookparms, outGeo0, inGeo1, inGeo2, "P", "P", "P");
+    
+    GFE_MatchBBox matchBBox(outGeo0, sopparms.getUseSelfAsRef() ? &outGeo0 : inGeo1, inGeo2, &cookparms);
+
+    matchBBox.setPositionAttrib(sopparms.getPosAttrib());
+    matchBBox.setPositionRef0Attrib(sopparms.getPosRefAttrib());
+    matchBBox.setComputeParm();
+
+    matchBBox.doTranslate    = sopparms.getDoTranslate();
+    matchBBox.doScale        = sopparms.getDoScale();
+    matchBBox.ignoreHFHeight = sopparms.getIgnoreHFHeight();
+    
+    if (sopparms.getRepairPrecision())
+        matchBBox.setRepairPrecision(sopparms.getRepairPrecisionThreshold());
+    
+    matchBBox.getOutAttribArray().appendPrimitives(sopparms.getPrimAttribToXform());
+    matchBBox.getOutAttribArray().appendPoints    (sopparms.getPointAttribToXform());
+    matchBBox.getOutAttribArray().appendVertices  (sopparms.getVertexAttribToXform());
+    matchBBox.getOutAttribArray().appendDetails   (sopparms.getDetailAttribToXform());
+
+    matchBBox.setXformVector(sopparms.getFromVec(), sopparms.getToVec(), sopparms.getUpVec(), sopparms.getCenter());
+
+    if (sopparms.getOutXformAttrib())
+        matchBBox.setXformAttrib(false, GA_STORE_INVALID, sopparms.getXformAttribName());
+
+
+    matchBBox.groupParser.setGroup(groupType, sopparms.getGroup());
+    matchBBox.groupParserRef0.setGroup(groupTypeRef, sopparms.getGroupRef());
+    matchBBox.computeAndBumpDataId();
+
 }
 
 
-
-namespace SOP_FeE_MatchBBox_2_0_Namespace {
-
-} // End SOP_FeE_MatchBBox_2_0_Namespace namespace

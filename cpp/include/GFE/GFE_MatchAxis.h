@@ -72,10 +72,11 @@ private:
         
         UT_Matrix3T<fpreal> xform3;
         xform3.lookat(fromVec, toVec, upVec);
-        
-        xform3.translate(-center);
+
+        xform.identity();
+        xform.translate(-center);
         xform *= xform3;
-        xform3.translate(center);
+        xform.translate(center);
         
         if (xformAttrib)
         {
@@ -108,7 +109,7 @@ public:
     
 private:
     UT_Matrix4T<fpreal> xform;
-    GA_Attribute* xformAttrib;
+    GA_Attribute* xformAttrib = nullptr;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

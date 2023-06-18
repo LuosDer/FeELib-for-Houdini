@@ -214,7 +214,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     else if (outAttrib.getAIFStringTuple())
         storage = GA_STORE_STRING;
     else if (outAttrib.getAIFNumericArray())
-        storage = outAttrib.getAIFNumericArray()->getStorage(outAttrib);
+        storage = outAttrib.getAIFNumericArray()->getStorage(&outAttrib);
     else
     {
         UT_ASSERT_MSG(0, "not correct storage");

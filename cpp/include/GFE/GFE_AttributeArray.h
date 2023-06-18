@@ -1845,7 +1845,11 @@ private:
     std::vector<GA_AttributeUPtr> attribUPtrArray;
     std::vector<const GA_Attribute*> attribArray;
 
-    friend class GFE_GeoFilterRef;
+    friend class GFE_GeoFilterRef0;
+    friend class GFE_GeoFilterRef1;
+    friend class GFE_GeoFilterRef2;
+    friend class GFE_GeoFilterRef3;
+    friend class GFE_GeoFilterRef4;
 
 }; // End of class GFE_RefAttribArray
 
@@ -2091,7 +2095,11 @@ private:
     ::std::vector<GA_GroupUPtr> groupUPtrArray;
     ::std::vector<const GA_Group*> groupArray;
 
-    friend class GFE_GeoFilterRef;
+    friend class GFE_GeoFilterRef0;
+    friend class GFE_GeoFilterRef1;
+    friend class GFE_GeoFilterRef2;
+    friend class GFE_GeoFilterRef3;
+    friend class GFE_GeoFilterRef4;
 
 }; // End of class GFE_RefGroupArray
 

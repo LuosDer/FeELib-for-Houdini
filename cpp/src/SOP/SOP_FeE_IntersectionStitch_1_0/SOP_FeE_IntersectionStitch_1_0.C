@@ -92,27 +92,24 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "outType"
+        cppname "OutType"
+        label   "Out Type"
+        type    ordinal
+        default { "point" }
+        menu {
+            "point"     "Point"
+            "firstGeo"  "FirstGeo"
+            "dualGeo"   "DualGeo"
+        }
+    }
+    parm {
         name    "insertPoint"
         cppname "InsertPoint"
         label   "Insert Point"
         type    toggle
         default { "1" }
-    }
-    parm {
-        name    "outType"
-        cppname "OutType"
-        label   "Out Type"
-        type    toggle
-        type    ordinal
-        disablewhen "{ insertPoint == 0 }"
-        default { "guess" }
-        menu {
-            "guess"     "Guess from Group"
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
-        }
+        disablewhen "{ outType == point }"
     }
     parm {
         name    "detectVertexIntersection"
@@ -149,17 +146,17 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Repair Result"
         type    toggle
         default { "on" }
-        disablewhen "{ insertPoint == 0 outSecondInputGeo == 1 }"
+        disablewhen "{ outType == point } { insertPoint == 0 }"
     }
     group {
         name    "stdswitcher"
         label   "Output Attributes"
-        disablewhen "{ insertPoint == 0 }"
+        disablewhen "{ outType != point insertPoint == 0 }"
 
         parm {
-            name    "useInputnumAttrib"
-            cppname "UseInputnumAttrib"
-            label   "Use Inputnum Attrib"
+            name    "outInputnumAttrib"
+            cppname "OutInputnumAttrib"
+            label   "Out Inputnum Attrib"
             type    toggle
             nolabel
             joinnext
@@ -171,13 +168,13 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Input Number"
             type    string
             default { "sourceInput" }
-            disablewhen "{ useInputnumAttrib == 0 }"
+            disablewhen "{ outInputnumAttrib == 0 }"
         }
 
         parm {
-            name    "usePrimnumAttrib"
-            cppname "UsePrimnumAttrib"
-            label   "Use Primnum Attrib"
+            name    "outPrimnumAttrib"
+            cppname "OutPrimnumAttrib"
+            label   "Out Primnum Attrib"
             type    toggle
             nolabel
             joinnext
@@ -189,12 +186,12 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Primitive Number"
             type    string
             default { "sourcePrim" }
-            disablewhen "{ usePrimnumAttrib == 0 }"
+            disablewhen "{ outPrimnumAttrib == 0 }"
         }
         parm {
-            name    "usePrimuvwAttrib"
-            cppname "UsePrimuvwAttrib"
-            label   "Use Primuvw Attrib"
+            name    "outPrimuvwAttrib"
+            cppname "OutPrimuvwAttrib"
+            label   "Out Primuvw Attrib"
             type    toggle
             nolabel
             joinnext
@@ -206,12 +203,12 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Primitive UVW"
             type    string
             default { "sourcePrimuv" }
-            disablewhen "{ usePrimuvwAttrib == 0 }"
+            disablewhen "{ outPrimuvwAttrib == 0 }"
         }
         parm {
-            name    "usePtnumAttrib"
-            cppname "UsePtnumAttrib"
-            label   "Use Ptnum Attrib"
+            name    "outPtnumAttrib"
+            cppname "OutPtnumAttrib"
+            label   "Out Ptnum Attrib"
             type    toggle
             nolabel
             joinnext
@@ -223,14 +220,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Point Num"
             type    string
             default { "sourcePtnum" }
-            disablewhen "{ usePtnumAttrib == 0 }"
-        }
-        parm {
-            name    "keepPointAttrib"
-            cppname "KeepPointAttrib"
-            label   "Keep Point Attrib"
-            type    toggle
-            default { "1" }
+            disablewhen "{ outPtnumAttrib == 0 }"
         }
     }
 
@@ -363,6 +353,20 @@ sopGroupType(SOP_FeE_IntersectionStitch_1_0Parms::GroupTypeRef parmGroupType)
     return GA_GROUP_INVALID;
 }
 
+static GFE_IntersectionStitch::OutType
+sopOutType(SOP_FeE_IntersectionStitch_1_0Parms::OutType parmOutType)
+{
+    using namespace SOP_FeE_IntersectionStitch_1_0Enums;
+    switch (parmOutType)
+    {
+    case OutType::POINT:     return GFE_IntersectionStitch::OutType::Point;      break;
+    case OutType::FIRSTGEO:  return GFE_IntersectionStitch::OutType::FirstGeo;   break;
+    case OutType::DUALGEO:   return GFE_IntersectionStitch::OutType::DualGeo;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled GFE_IntersectionStitch Out Type!");
+    return GFE_IntersectionStitch::OutType::Point;
+}
+
 
 void
 SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -371,15 +375,17 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_IntersectionStitch_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
+    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
+    const GA_Detail* const inGeo2 = cookparms.inputGeo(2);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupType     = sopGroupType(sopparms.getGroupType());
     const GA_GroupType groupTypeRef0 = sopGroupType(sopparms.getGroupTypeRef());
 
+    const GFE_IntersectionStitch::OutType outType = sopOutType(sopparms.getOutType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -390,11 +396,11 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     intersectionStitch.compute();
 */
     
-    GFE_IntersectionStitch intersectionStitch(outGeo0, inGeo1, cookparms);
-
-    intersectionStitch.setComputeParm(sopparms.getSplitCurve(), sopparms.getRepairResult(),
-        sopparms.getKeepPointAttrib(), sopparms.getTriangulateMesh(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    GFE_IntersectionStitch intersectionStitch(outGeo0, inGeo0, inGeo1, inGeo2, cookparms);
+    
+    intersectionStitch.setComputeParm(outType, sopparms.getInsertPoint(), sopparms.getTriangulateMesh());
+    intersectionStitch.setIntersectionStitchComputeParm(sopparms.getSplitCurve(), sopparms.getRepairResult(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    intersectionStitch.setIntersectionAnalysisComputeParm(sopparms.getDetectVertexIntersection(), sopparms.getOutIntersectionSegment());
     
     if (sopparms.getUseTolerance())
         intersectionStitch.setTolerance(sopparms.getTolerance());
@@ -402,12 +408,14 @@ SOP_FeE_IntersectionStitch_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     if (sopparms.getInsertPoint())
     {
         intersectionStitch.setInsertPoint();
-        if (sopparms.getUseInputnumAttrib())
+        if (sopparms.getOutInputnumAttrib())
             intersectionStitch.setInputnumAttrib(sopparms.getInputnumAttrib());
-        if (sopparms.getUsePrimnumAttrib())
+        if (sopparms.getOutPrimnumAttrib())
             intersectionStitch.setPrimnumAttrib(sopparms.getPrimnumAttrib());
-        if (sopparms.getUsePrimuvwAttrib())
+        if (sopparms.getOutPrimuvwAttrib())
             intersectionStitch.setPrimuvwAttrib(sopparms.getPrimuvwAttrib());
+        if (sopparms.getOutPtnumAttrib())
+            intersectionStitch.setPrimuvwAttrib(sopparms.getPtnumAttrib());
         //intersectionStitch.setpo(sopparms.getPtnumAttrib());
     }
     else

@@ -174,7 +174,7 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    //const UT_StringHolder& groupName = sopparms.getGroup();
+    const UT_StringHolder& groupName = sopparms.getGroup();
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -184,26 +184,26 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     switch (groupType)
     {
     case GA_GROUP_INVALID:
-        geo0Group = outGeo0.getGroupTable(GA_GROUP_PRIMITIVE)->find(sopparms.getGroup());
+        geo0Group = outGeo0.getGroupTable(GA_GROUP_PRIMITIVE)->find(groupName);
         if (!geo0Group)
         {
-            geo0Group = outGeo0.getGroupTable(GA_GROUP_POINT)->find(sopparms.getGroup());
+            geo0Group = outGeo0.getGroupTable(GA_GROUP_POINT)->find(groupName);
             if (!geo0Group)
             {
-                geo0Group = outGeo0.getGroupTable(GA_GROUP_VERTEX)->find(sopparms.getGroup());
+                geo0Group = outGeo0.getGroupTable(GA_GROUP_VERTEX)->find(groupName);
                 if (!geo0Group)
                 {
-                    geo0Group = outGeo0.getGroupTable(GA_GROUP_EDGE)->find(sopparms.getGroup());
+                    geo0Group = outGeo0.getGroupTable(GA_GROUP_EDGE)->find(groupName);
                 }
             }
         }
-        break;
+    break;
     case GA_GROUP_PRIMITIVE:
     case GA_GROUP_POINT:
     case GA_GROUP_VERTEX:
     case GA_GROUP_EDGE:
-        outGeo0.getGroupTable(groupType)->find(sopparms.getGroup());
-        break;
+        geo0Group = outGeo0.getGroupTable(groupType)->find(groupName);
+    break;
     }
 
     if (!geo0Group)

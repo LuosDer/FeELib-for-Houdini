@@ -286,7 +286,7 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
 
     
-    GFE_AttribCast attribCast(outGeo0, &cookparms);
+    GFE_AttribCast attribCast(outGeo0, cookparms);
     attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
     attribCast.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 
@@ -300,13 +300,10 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     }
 
     if (sopparms.getRenameAttrib())
-    {
         attribCast.newAttribNames = sopparms.getNewAttribName();
-    }
+    
     if (sopparms.getRenameGroup())
-    {
         attribCast.newGroupNames = sopparms.getNewGroupName();
-    }
 
     attribCast.setComputeParm(sopparms.getDelOriginAttrib(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     attribCast.computeAndBumpDataId();

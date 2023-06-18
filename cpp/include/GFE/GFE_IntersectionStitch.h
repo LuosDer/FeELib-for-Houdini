@@ -14,48 +14,87 @@
 #include "GFE/GFE_Enumerate.h"
 #include "GFE/GFE_NodeVerb.h"
 #include "SOP/SOP_IntersectionStitch.proto.h"
+#include "SOP/SOP_IntersectionAnalysis.proto.h"
 
 class GFE_IntersectionStitch : public GFE_AttribFilterWithRef {
 
 public:
-    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+    enum OutType
+    {
+        Point,
+        FirstGeo,
+        SecondGeo,
+        DualGeo,
+    };
+    //using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
     
+    GFE_AttribFilterWithRef(
+        GA_Detail& geo,
+        const GA_Detail* const geoSrc0 = nullptr,
+        const GA_Detail* const geoSrc1 = nullptr,
+        const GA_Detail* const geoRef  = nullptr,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilter(geo, cookparms)
+        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
     void
         setComputeParm(
             const OutType outType      = OutType::Point,
+            const bool outPoint     = false,
+            const bool triangulateMesh = false,
+        )
+    {
+        setHasComputed();
+        
+        this->outType         = outType;
+        this->outPoint     = outPoint;
+        this->triangulateMesh = triangulateMesh;
+    }
+    
+    void
+        setIntersectionAnalysisComputeParm(
+            const bool detectVertexIntersection = false,
+            const bool outIntersectionSegment   = false
+        )
+    {
+        setHasComputed();
+        
+        this->detectVertexIntersection = detectVertexIntersection;
+        this->outIntersectionSegment   = outIntersectionSegment;
+    }
+    
+    void
+        setIntersectionStitchComputeParm(
             const bool splitCurve      = false,
             const bool repairResult    = false,
-            const bool triangulateMesh = false,
-            const bool keepPointAttrib = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
         
-        this->outType         = outType;
         this->splitCurve      = splitCurve;
         this->repairResult    = repairResult;
-        this->triangulateMesh = triangulateMesh;
-        this->keepPointAttrib = keepPointAttrib;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
     
     SYS_FORCE_INLINE void setTolerance()
-    { useTol = false;  }
+    { useTol = false; }
     
     SYS_FORCE_INLINE void setTolerance(const bool tolerance)
-    { useTol = true; this->tolerance = outSecondInputGeo; }
+    { useTol = true; this->tolerance = tolerance; }
 
 
     
-    SYS_FORCE_INLINE void setInsertPoint(const bool outSecondInputGeo)
-    { insertPoint = false; this->outSecondInputGeo = outSecondInputGeo; }
+    //SYS_FORCE_INLINE void setInsertPoint(const bool outSecondInputGeo)
+    //{ insertPoint = false; this->outSecondInputGeo = outSecondInputGeo; }
     
     SYS_FORCE_INLINE void setInsertPoint()
     { insertPoint = true; }
-
 
     
     SYS_FORCE_INLINE void setInputnumAttrib(const GA_Attribute* const inAttrib)
@@ -88,9 +127,10 @@ private:
 #define __TEMP_GFE_IntersectionStitch_InGroupName  "__TEMP_GFE_IntersectionStitch_InGroup"
 #define __TEMP_GFE_IntersectionStitch_RefGroupName "__TEMP_GFE_IntersectionStitch_RefGroup"
     
-#define __TEMP_GFE_IntersectionStitch_inputnumAttribName  "__TEMP_GFE_IntersectionStitch_inputnumAttrib"
-#define __TEMP_GFE_IntersectionStitch_primnumAttribName   "__TEMP_GFE_IntersectionStitch_primnumAttrib"
-#define __TEMP_GFE_IntersectionStitch_primuvwAttribName   "__TEMP_GFE_IntersectionStitch_primuvwAttrib"
+#define __TEMP_GFE_IntersectionStitch_inputnumAttribName "__TEMP_GFE_IntersectionStitch_inputnumAttrib"
+#define __TEMP_GFE_IntersectionStitch_primnumAttribName  "__TEMP_GFE_IntersectionStitch_primnumAttrib"
+#define __TEMP_GFE_IntersectionStitch_primuvwAttribName  "__TEMP_GFE_IntersectionStitch_primuvwAttrib"
+#define __TEMP_GFE_IntersectionStitch_ptnumAttribName    "__TEMP_GFE_IntersectionStitch_ptnumAttrib"
     
     virtual bool
         computeCore() override
@@ -107,13 +147,13 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        const bool repairResultFinal = repairResult && (insertPoint || !outSecondInputGeo);
+        const bool repairResultFinal = repairResult && outType == OutType::FirstGeo;
         if (repairResultFinal)
         {
             ptnumNewLast = geo->getNumPoints();
             numprimInput = geo->getNumPrimitives();
         }
-        
+
         GU_DetailHandle geoTmp_h;
         geoTmp = new GU_Detail();
         geoTmp_h.allocateAndSet(geoTmp);
@@ -123,9 +163,16 @@ private:
         geoRefTmp = new GU_Detail();
         geoRefTmp_h.allocateAndSet(geoRefTmp);
         geoRefTmp->replaceWith(*geoRef0);
-
+        
+        
         GFE_Enumerate enumerate0(geoTmp, cookparms);
         GFE_Enumerate enumerate1(geoRefTmp, cookparms);
+        
+        if (outType == OutType::Point)
+        {
+            
+        }
+        
         if (triangulateMesh)
         {
             enumAttrib0 = enumerate0.findOrCreateTuple(true, GA_ATTRIB_PRIMITIVE);
@@ -146,28 +193,44 @@ private:
         // //GU_Detail* const geoEmpty = nullptr;
         // geoEmpty_h.allocateAndSet(geoEmpty);
         
-        inputgdh.clear();
-        inputgdh.emplace_back(geoTmp_h);
-        if (insertPoint)
+        
+        GU_DetailHandle geoPointTmp_h;
+        if (outType == OutType::Point || !(outType == OutType::DualGeo || insertPoint))
         {
-            //inputgdh.emplace_back(geoEmpty_h);
-            inputgdh.emplace_back(GU_DetailHandle());
+            inputgdh.clear();
+            inputgdh.emplace_back(geoTmp_h);
             inputgdh.emplace_back(geoRefTmp_h);
-        }
-        else
-        {
-            inputgdh.emplace_back(geoRefTmp_h);
-            inputgdh.emplace_back(GU_DetailHandle());
-            //inputgdh.emplace_back(geoEmpty_h);
+            intersectionAnalysis();
         }
         
-        intersectionStitch();
+        //geoPointTmp = new GU_Detail();
+        if (outType != OutType::Point)
+        {
+            inputgdh.clear();
+            inputgdh.emplace_back(geoTmp_h);
+            if (outType == OutType::DualGeo)
+            {
+                inputgdh.emplace_back(geoRefTmp_h);
+                inputgdh.emplace_back(GU_DetailHandle());
+            }
+            else
+            {
+                inputgdh.emplace_back(GU_DetailHandle());
+                if (insertPoint)
+                {
+                    inputgdh.emplace_back(geoRefTmp_h);
+                }
+                else
+                {
+                    geoPointTmp_h.allocateAndSet(geoPointTmp);
+                    inputgdh.emplace_back(geoPointTmp_h);
+                }
+            }
+            intersectionStitch();
+        }
 
         if (repairResultFinal)
             repair();
-        
-        //geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_IntersectionStitch_InGroupName);
-        //geo->getGroupTable(insertPoint ? GA_GROUP_POINT : GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_IntersectionStitch_RefGroupName);
         
         return true;
     }
@@ -177,9 +240,8 @@ private:
     {
         interAnalysisParms.setUseproxtol(useTol);
         interAnalysisParms.setProxtol(tolerance);
-        interAnalysisParms.setSplitcurves(splitCurve);
-        interAnalysisParms.setKeeppointattribs(keepPointAttrib);
-
+        interAnalysisParms.setDetectverts(detectVertexIntersection);
+        interAnalysisParms.setOutputsegs(outIntersectionSegment);
         
         if (groupParser.getHasGroup())
         {
@@ -202,21 +264,10 @@ private:
         
         if (groupParserRef0.getHasGroup())
         {
-            if (groupParserRef0.isDetached() || !(insertPoint ? groupParserRef0.isPointGroup() : groupParserRef0.isPrimitiveGroup()))
+            if (groupParserRef0.isDetached() || !groupParserRef0.isPrimitiveGroup())
             {
-                GA_Group* const refGroup = geoRefTmp->getGroupTable(insertPoint ? GA_GROUP_POINT : GA_GROUP_PRIMITIVE)->newGroup(__TEMP_GFE_IntersectionStitch_RefGroupName);
-                
-                if (insertPoint)
-                    GFE_GroupUnion::groupUnion(refGroup, groupParserRef0.getPointGroup());
-                    //refGroup->combine(groupParserRef0.getPointGroup());
-                else
-                    GFE_GroupUnion::groupUnion(refGroup, groupParserRef0.getPrimitiveGroup());
-                    //refGroup->combine(groupParserRef0.getPrimitiveGroup());
-                // if (insertPoint)
-                //     static_cast<GA_PointGroup&>(*refGroup) = *groupParser.getPointGroup();
-                // else
-                //     static_cast<GA_PrimitiveGroup&>(*refGroup) = *groupParser.getPrimitiveGroup();
-                
+                GA_Group* const refGroup = geoRefTmp->getGroupTable(GA_GROUP_PRIMITIVE)->newGroup(__TEMP_GFE_IntersectionStitch_RefGroupName);
+                GFE_GroupUnion::groupUnion(refGroup, groupParserRef0.getPrimitiveGroup());
                 interAnalysisParms.setBgroup(__TEMP_GFE_IntersectionStitch_RefGroupName);
             }
             else
@@ -229,36 +280,36 @@ private:
             interAnalysisParms.setAgroup("");
         }
         
-        
-        
-        if (insertPoint)
-        {
-            UT_ASSERT_P(inputnumAttrib);
-            UT_ASSERT_P(primnumAttrib);
-            UT_ASSERT_P(primuvwAttrib);
-            
-            const bool detachedInputnum = inputnumAttrib->isDetached();
-            const bool detachedPrimnum  = primnumAttrib->isDetached();
-            const bool detachedPrimuvw  = primuvwAttrib->isDetached();
+        interAnalysisParms.setUseinputnumattrib(outInputnumAttrib);
+        interAnalysisParms.setUseprimnumattrib(outPrimnumAttrib);
+        interAnalysisParms.setUseprimuvwattrib(outPrimuvwAttrib);
+        interAnalysisParms.setUseptnumattrib(outPtnumAttrib);
+        if (outInputnumAttrib)
+            interAnalysisParms.setInputnumattrib(__TEMP_GFE_IntersectionStitch_inputnumAttribName);
+        if (outPrimnumAttrib)
+            interAnalysisParms.setPrimnumattrib(__TEMP_GFE_IntersectionStitch_primnumAttribName);
+        if (outPrimuvwAttrib)
+            interAnalysisParms.setPrimuvwattrib(__TEMP_GFE_IntersectionStitch_primuvwAttribName);
+        if (outPtnumAttrib)
+            interAnalysisParms.setPtnumattrib(__TEMP_GFE_IntersectionStitch_ptnumAttribName);
 
-            if (detachedInputnum)
-                GFE_Attribute::clone(*geoRefTmp, *inputnumAttrib, __TEMP_GFE_IntersectionStitch_inputnumAttribName);
-            if (detachedPrimnum)
-                GFE_Attribute::clone(*geoRefTmp, *primnumAttrib,  __TEMP_GFE_IntersectionStitch_primnumAttribName);
-            if (detachedPrimuvw)
-                GFE_Attribute::clone(*geoRefTmp, *primuvwAttrib,  __TEMP_GFE_IntersectionStitch_primuvwAttribName);
+        const bool outMesh = outType != OutType::Point;
             
-            interAnalysisParms.setInputnumattrib(detachedInputnum ? UT_StringHolder(__TEMP_GFE_IntersectionStitch_inputnumAttribName) : inputnumAttrib->getName());
-            interAnalysisParms.setPrimnumattrib (detachedPrimnum  ? UT_StringHolder(__TEMP_GFE_IntersectionStitch_primnumAttribName)  : primnumAttrib->getName());
-            interAnalysisParms.setPrimuvwattrib (detachedPrimuvw  ? UT_StringHolder(__TEMP_GFE_IntersectionStitch_primuvwAttribName)  : primuvwAttrib->getName());
-        }
+        GU_Detail* const outGeo = outMesh ? geoPointTmp : geo->asGU_Detail();
+        if (outMesh)
+            geoPointTmp = new GU_Detail();
+        else
+            geo->clear();
         
-        geo->clear();
         GU_DetailHandle destgdh;
-        destgdh.allocateAndSet(geo->asGU_Detail(), false);
+        destgdh.allocateAndSet(outGeo, outMesh);
+        
         SOP_NodeCache* const nodeCache = interAnalysisVerb->allocCache();
         const auto interCookparms = GFE_NodeVerb::newCookParms(cookparms, interAnalysisParms, nodeCache, &destgdh, &inputgdh);
         interAnalysisVerb->cook(interCookparms);
+        
+        outGeo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_IntersectionStitch_InGroupName);
+        outGeo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_IntersectionStitch_RefGroupName);
         
     }
 
@@ -270,8 +321,7 @@ private:
         interStitchParms.setUseproxtol(useTol);
         interStitchParms.setProxtol(tolerance);
         interStitchParms.setSplitcurves(splitCurve);
-        interStitchParms.setKeeppointattribs(keepPointAttrib);
-
+        interStitchParms.setKeeppointattribs(outInputnumAttrib || outPrimnumAttrib || outPrimuvwAttrib);
         
         if (groupParser.getHasGroup())
         {
@@ -292,7 +342,8 @@ private:
             interStitchParms.setAgroup("");
         }
         
-        if (groupParserRef0.getHasGroup())
+        
+        if (outType == OutType::FirstGeo && groupParserRef0.getHasGroup())
         {
             if (groupParserRef0.isDetached() || !(insertPoint ? groupParserRef0.isPointGroup() : groupParserRef0.isPrimitiveGroup()))
             {
@@ -318,7 +369,7 @@ private:
         }
         else
         {
-            interStitchParms.setAgroup("");
+            interStitchParms.setBgroup("");
         }
         
         
@@ -351,6 +402,9 @@ private:
         SOP_NodeCache* const nodeCache = interStitchVerb->allocCache();
         const auto interStitchCookparms = GFE_NodeVerb::newCookParms(cookparms, interStitchParms, nodeCache, &destgdh, &inputgdh);
         interStitchVerb->cook(interStitchCookparms);
+        
+        geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_IntersectionStitch_InGroupName);
+        geo->getGroupTable(insertPoint ? GA_GROUP_POINT : GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_IntersectionStitch_RefGroupName);
     }
 
 
@@ -423,28 +477,32 @@ private:
     
     
 public:
+    bool triangulateMesh = false;
+
+public:
+    bool detectVertexIntersection = false;
+    bool outIntersectionSegment = false;
     
-    enum OutType
-    {
-        Point,
-        FirstGeo,
-        DualGeo,
-    };
-    
+public:
     bool splitCurve = false;
     bool repairResult = false;
-    bool triangulateMesh = false;
-    bool keepPointAttrib = true;
+    
+public:
+    bool outInputnumAttrib = true;
+    bool outPrimnumAttrib = true;
+    bool outPrimuvwAttrib = true;
+    bool outPtnumAttrib = true;
     
 private:
+    OutType outType = OutType::Point
     bool insertPoint = true;
-    bool outSecondInputGeo = false;
     bool useTol = true;
     fpreal64 tolerance = 1e-05;
     
 private:
-    GU_Detail* geoTmp = nullptr;
-    GU_Detail* geoRefTmp = nullptr;
+    GU_Detail* geoTmp      = nullptr;
+    GU_Detail* geoRefTmp   = nullptr;
+    GU_Detail* geoPointTmp = nullptr;
 
 private:
     GA_Index ptnumNewLast;
@@ -456,6 +514,7 @@ private:
     const GA_Attribute* inputnumAttrib = nullptr;
     const GA_Attribute* primnumAttrib  = nullptr;
     const GA_Attribute* primuvwAttrib  = nullptr;
+    const GA_Attribute* ptnumAttrib  = nullptr;
     
     UT_Array<GU_ConstDetailHandle> inputgdh;
     SOP_IntersectionStitchParms interStitchParms;
@@ -475,6 +534,8 @@ private:
 #undef __TEMP_GFE_IntersectionStitch_inputnumAttribName
 #undef __TEMP_GFE_IntersectionStitch_primnumAttribName
 #undef __TEMP_GFE_IntersectionStitch_primuvwAttribName
+#undef __TEMP_GFE_IntersectionStitch_ptnumAttribName
+    
     
 }; // End of class GFE_IntersectionStitch
 

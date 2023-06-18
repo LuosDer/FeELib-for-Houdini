@@ -13,7 +13,7 @@
 #include "GA/GA_PageHandle.h"
 #include "GA/GA_PageIterator.h"
 
-//#include "GEO/GEO_PrimPoly.h"
+#include "GEO/GEO_PrimPoly.h"
 
 
 

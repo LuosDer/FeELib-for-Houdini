@@ -146,10 +146,10 @@ SOP_FeE_GroupReverse_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupReverse_1_0Parms::ReverseGroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupReverse_1_0Parms::ReverseGroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupReverse_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case ReverseGroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case ReverseGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;

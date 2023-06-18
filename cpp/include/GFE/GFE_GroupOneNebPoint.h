@@ -127,10 +127,7 @@ private:
     }
 
     template<GA_GroupType GroupType_T>
-    SYS_FORCE_INLINE void groupOneNeb(
-        const GA_Offset primoff,
-        const GA_Size vtxpnum
-    )
+    SYS_FORCE_INLINE void groupOneNeb(const GA_Offset primoff, const GA_Size vtxpnum)
     {
         const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
         if constexpr (GroupType_T == GA_GROUP_VERTEX)
@@ -165,6 +162,7 @@ public:
 private:
     GU_Snap::PointSnapParms fuseParms;
     
+private:
     const GA_ATITopology* vtxPointRef;
     const GA_ATITopology* pointVtxRef;
     const GA_ATITopology* vtxNextRef;
