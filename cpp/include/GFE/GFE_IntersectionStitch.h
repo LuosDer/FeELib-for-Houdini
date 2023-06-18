@@ -16,7 +16,7 @@
 #include "SOP/SOP_IntersectionStitch.proto.h"
 #include "SOP/SOP_IntersectionAnalysis.proto.h"
 
-class GFE_IntersectionStitch : public GFE_AttribFilterWithRef {
+class GFE_IntersectionStitch : public GFE_AttribFilterWithRef,  {
 
 public:
     enum OutType
@@ -36,7 +36,7 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
