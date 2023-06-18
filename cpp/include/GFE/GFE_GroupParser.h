@@ -284,6 +284,12 @@ public:
 
     const GA_Group* setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
     {
+        if (!geo)
+        {
+            clear();
+            return nullptr;
+        }
+        
         if (!groupName.length())
         {
             setAllGroupFull();

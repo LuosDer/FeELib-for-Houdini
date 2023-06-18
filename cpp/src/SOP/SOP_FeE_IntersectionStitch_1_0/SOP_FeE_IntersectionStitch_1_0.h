@@ -62,7 +62,7 @@ protected:
     int isRefInput(unsigned i) const override
     {
         // First or second input both use dotted lines
-        return (i != 0);
+        return (i == 2);
     }
 
 

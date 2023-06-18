@@ -993,19 +993,15 @@ SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* 
 { return GFE_Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
 
     
-SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib,const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib, const UT_StringHolder& newName)
 {
     UT_ASSERT(!attrib.isDetached());
     return renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
 }
     
 SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib, const UT_StringHolder& newName)
-{
-    UT_ASSERT_P(attrib);
-    return renameAttrib(*attrib, newName);
-}
+{ return attrib ? renameAttrib(*attrib, newName) : false; }
     
-
 bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
 {
     GA_Attribute* const existAttrib = findAttribute(attrib.getOwner(), newName);
@@ -1015,16 +1011,16 @@ bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
 }
 
 SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib, const UT_StringHolder& newName)
-{
-    UT_ASSERT_P(attrib);
-    return forceRenameAttribute(*attrib, newName);
-}
+{ return attrib ? forceRenameAttribute(*attrib, newName) : false; }
+
+SYS_FORCE_INLINE bool forceRenameAttribute(const GA_AttributeOwner owner, const UT_StringRef& attribName, const UT_StringHolder& newName)
+{ return strcmp(attribName.c_str(), newName.c_str()) == 0 ? false : forceRenameAttribute(findAttribute(owner, attribName), newName); }
 
 
 
     
 SYS_FORCE_INLINE GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner) const
-{ return GFE_Type::attributeOwner_groupType(attribOwner); }
+{ return GFE_Type::attributeOwner_groupType(attribOwner); }  
 
 SYS_FORCE_INLINE GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType) const
 { return GFE_Type::attributeOwner_groupType(groupType); }

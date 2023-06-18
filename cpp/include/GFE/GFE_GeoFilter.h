@@ -51,7 +51,6 @@ public:
         , cookparms(cookparms)
         , groupParser(*geo, gop, cookparms)
     {
-        //UT_ASSERT_MSG(geo, "do not find geo");
     }
     
     GFE_GeoFilter(
@@ -63,7 +62,6 @@ public:
         , cookparms(&cookparms)
         , groupParser(geo, gop, cookparms)
     {
-        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
 
@@ -78,7 +76,6 @@ public:
         , cookparms(cookparms)
         , groupParser(geoSrc, gop, cookparms)
     {
-        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
     GFE_GeoFilter(
@@ -91,7 +88,6 @@ public:
         , cookparms(&cookparms)
         , groupParser(geoSrc, gop, cookparms)
     {
-        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
     GFE_GeoFilter(
@@ -104,7 +100,6 @@ public:
         , cookparms(cookparms)
         , groupParser(geoSrc, gop, cookparms)
     {
-        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
     GFE_GeoFilter(
@@ -117,7 +112,6 @@ public:
         , cookparms(cookparms)
         , groupParser(geoSrc, gop, cookparms)
     {
-        //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
     ~GFE_GeoFilter()
@@ -1127,6 +1121,19 @@ public:
     }
 
 
+    
+    GFE_GeoFilterWithRef0(
+        GA_Detail& geo,
+        const GA_Detail* const geoSrc,
+        const GA_Detail* const geoRef0,
+        const SOP_NodeVerb::CookParms* const cookparms
+    )
+        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
     ~GFE_GeoFilterWithRef0()
     {
     }
@@ -1221,6 +1228,22 @@ public:
     }
 
 
+
+    
+    GFE_GeoFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail* const geoSrc,
+        const GA_Detail* const geoRef0,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_GeoFilterWithRef0(geo, geoSrc, geoRef0, cookparms)
+        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
+    
     ~GFE_GeoFilterWithRef1()
     {
     }
@@ -1230,11 +1253,11 @@ public:
 
 
 
-class GFE_AttribFilterWithRef : public GFE_AttribFilter, public GFE_GeoFilterRef0 {
+class GFE_AttribFilterWithRef0 : public GFE_AttribFilter, public GFE_GeoFilterRef0 {
 
 public:
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GFE_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1244,7 +1267,7 @@ public:
     {
     }
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GFE_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1254,7 +1277,7 @@ public:
     {
     }
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1265,7 +1288,7 @@ public:
     }
 
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1275,7 +1298,7 @@ public:
     {
     }
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1285,7 +1308,7 @@ public:
     {
     }
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms& cookparms
@@ -1295,7 +1318,7 @@ public:
     {
     }
 
-    GFE_AttribFilterWithRef(
+    GFE_AttribFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms& cookparms
@@ -1306,13 +1329,13 @@ public:
     }
 
 
-    ~GFE_AttribFilterWithRef()
+    ~GFE_AttribFilterWithRef0()
     {
     }
 
 
 
-}; // End of class GFE_AttribFilterWithRef
+}; // End of class GFE_AttribFilterWithRef0
 
 
 
@@ -1406,7 +1429,7 @@ public:
 
 
 
-// class GFE_AttribFilterWithRefRest : public GFE_AttribFilterWithRef {
+// class GFE_AttribFilterWithRefRest : public GFE_AttribFilterWithRef0 {
 //
 // public:
 //

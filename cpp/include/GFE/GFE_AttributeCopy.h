@@ -4,18 +4,19 @@
 #ifndef __GFE_AttributeCopy_h__
 #define __GFE_AttributeCopy_h__
 
-//#include "GFE/GFE_AttributeCopy.h"
+#include "GFE/GFE_AttributeCopy.h"
 
 #include "GFE/GFE_GeoFilter.h"
+
+
 
 #include "UFE/UFE_SplittableString.h"
 #include "GFE/GFE_OffsetAttribute.h"
 
-
-class GFE_AttribCopy : public GFE_AttribFilterWithRef {
+class GFE_AttribCopy : public GFE_AttribFilterWithRef0 {
 
 public:
-    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 
 
     void
