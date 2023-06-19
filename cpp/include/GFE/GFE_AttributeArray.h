@@ -1143,6 +1143,12 @@ public:
         return static_cast<GA_ElementGroup*>(groupArray[i]);
     }
 
+    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup(const size_t i)
+    {
+        UT_ASSERT(groupArray[i]->isElementGroup());
+        return static_cast<GA_ElementGroup*>(groupArray[i]);
+    }
+
     SYS_FORCE_INLINE GA_PrimitiveGroup* getPrimitiveGroup(const size_t i) const
     {
         UT_ASSERT(groupArray[i]->classType() == GA_GROUP_PRIMITIVE);

@@ -56,6 +56,35 @@ static const char *theDsFile = R"THEDSFILE(
             "max"   "Maximum"
         }
     }
+    parm {
+        name    "useMeasureAttrib"
+        cppname "UseMeasureAttrib"
+        label   "Use Measure Attrib"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "measureType"
+        cppname "MeasureType"
+        label   "MeasureType"
+        type    ordinal
+        default { "perimeter" }
+        menu {
+            "perimeter"         "Perimeter"
+            "area"              "Area"
+            "volume"            "Volume"
+            "centroid"          "Centroid"
+            "curvature"         "Curvature"
+            "gradient"          "Gradient"
+            "laplacian"         "Laplacian"
+            "boundaryintegral"  "Boundary Integral"
+            "surfaceintegral"   "Surface Integral"
+        }
+        disablewhen "{ useMeasureAttrib == 1 }"
+    }
+
 
     parm {
         name    "extremeAttribClass"
@@ -69,6 +98,7 @@ static const char *theDsFile = R"THEDSFILE(
             "vertex"    "Vertex"
             "detail"    "Detail"
         }
+        disablewhen "{ useMeasureAttrib == 0 }"
     }
     parm {
         name    "extremeAttrib"
@@ -76,26 +106,8 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Extreme Attrib"
         type    string
         default { "" }
+        disablewhen "{ useMeasureAttrib == 0 }"
     }
-    // parm {
-    //     name    "measure"
-    //     cppname "Measure"
-    //     label   "Measure"
-    //     type    ordinal
-    //     default { "perimeter" }
-    //     menu {
-    //         "perimeter"         "Perimeter"
-    //         "area"              "Area"
-    //         "volume"            "Volume"
-    //         "centroid"          "Centroid"
-    //         "curvature"         "Curvature"
-    //         "gradient"          "Gradient"
-    //         "laplacian"         "Laplacian"
-    //         "boundaryintegral"  "Boundary Integral"
-    //         "surfaceintegral"   "Surface Integral"
-    //     }
-    // }
-
 
     parm {
         name    "outExtremeElemAttrib"
@@ -376,6 +388,24 @@ sopStatisticalFunction(SOP_FeE_ExtremeElem_1_0Parms::StatisticalFunction parmSta
 // }
 
 
+
+static GFE_MeasureType
+sopMeasureType(SOP_FeE_ExtremeElem_1_0Parms::MeasureType parmMeasureType)
+{
+    using namespace SOP_FeE_ExtremeElem_1_0Enums;
+    switch (parmMeasureType)
+    {
+    case MeasureType::PERIMETER:          return GFE_MeasureType::Perimeter;       break;
+    case MeasureType::AREA:               return GFE_MeasureType::Area;            break;
+    case MeasureType::VOLUME:             return GFE_MeasureType::Volume;          break;
+    //case MeasureType::MESHPERIMETER:      return GFE_MeasureType::MeshPerimeter;   break;
+    //case MeasureType::MESHAREA:           return GFE_MeasureType::MeshArea;        break;
+    //case MeasureType::MESHVOLUME:         return GFE_MeasureType::MeshVolume;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled GFE Measure Type!");
+    return GFE_MeasureType::Area;
+}
+
 void
 SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -394,6 +424,7 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GFE_StatisticalFunction statisticalFunction = sopStatisticalFunction(sopparms.getStatisticalFunction());
     const GA_AttributeOwner extremeAttribClass = sopAttribOwner(sopparms.getExtremeAttribClass());
     //const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
+    const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasureType());
     
 
     
@@ -421,8 +452,14 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     
     
     extremeElem.groupParser.setGroup(groupType, sopparms.getGroup());
-
-    extremeElem.getInAttribArray().set(extremeAttribClass, sopparms.getExtremeAttrib());
+    
+    if (sopparms.getUseMeasureAttrib())
+    {
+        extremeElem.setMeasureAttrib(true);
+        extremeElem.measure.measureType = measureType;
+    }
+    else
+        extremeElem.getInAttribArray().set(extremeAttribClass, sopparms.getExtremeAttrib());
     
     if (sopparms.getOutExtremeElemGroup())
         extremeElem.findOrCreateGroup(extremeAttribClass, sopparms.getExtremeElemGroupName());

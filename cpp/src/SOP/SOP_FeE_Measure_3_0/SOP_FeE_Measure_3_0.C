@@ -184,10 +184,10 @@ SOP_FeE_Measure_3_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Measure_3_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -201,10 +201,10 @@ sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmgrouptype)
 
 
 static GFE_MeasureType
-sopMeasureType(SOP_FeE_Measure_3_0Parms::MeasureType parmgrouptype)
+sopMeasureType(SOP_FeE_Measure_3_0Parms::MeasureType parmMeasureType)
 {
     using namespace SOP_FeE_Measure_3_0Enums;
-    switch (parmgrouptype)
+    switch (parmMeasureType)
     {
     case MeasureType::PERIMETER:          return GFE_MeasureType::Perimeter;       break;
     case MeasureType::AREA:               return GFE_MeasureType::Area;            break;
@@ -213,7 +213,7 @@ sopMeasureType(SOP_FeE_Measure_3_0Parms::MeasureType parmgrouptype)
     case MeasureType::MESHAREA:           return GFE_MeasureType::MeshArea;        break;
     case MeasureType::MESHVOLUME:         return GFE_MeasureType::MeshVolume;      break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled GFE Measure Type!");
     return GFE_MeasureType::Area;
 }
 
@@ -240,7 +240,13 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
+/*
+        GFE_Measure measure(geo, cookparms);
+        measure.measureType = measureType;
+        measure.groupParser.setGroup(groupParser);
+        measureAttrib = measure.findOrCreateTuple(false);
+        measure.compute();
+ */
     GFE_Measure measure(outGeo0, cookparms);
     measure.groupParser.setGroup(groupType, sopparms.getGroup());
     measure.setPositionAttrib(sopparms.getPosAttribName());
