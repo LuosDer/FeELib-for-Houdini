@@ -10,7 +10,7 @@ namespace SOP_FeE_BezierCurveInsertPoint_1_0_Namespace {
 class SOP_FeE_BezierCurveInsertPoint_1_0 : public SOP_Node
 {
 public:
-    static PRM_Template *buildTemplates(
+    static PRM_Template *buildTemplates();
     static OP_Node *myConstructor(OP_Network *net, const char *name, OP_Operator *op)
     {
         OP_Node* newOp = new SOP_FeE_BezierCurveInsertPoint_1_0(net, name, op);

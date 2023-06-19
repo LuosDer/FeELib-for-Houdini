@@ -27,19 +27,15 @@ public:
 
     void
         setComputeParm(
-            const fpreal threshold_inlineCosRadians = 1e-05,
-            const bool reverseOutGroup = false,
             const bool doDelGroupElement = false,
             const exint subscribeRatio  = 64,
             const exint minGrainSize    = 16
         )
     {
         setHasComputed();
-        this->threshold_inlineCosRadians     = threshold_inlineCosRadians;
-        this->reverseOutGroup                = reverseOutGroup;
-        this->doDelGroupElement              = doDelGroupElement;
-        this->subscribeRatio                 = subscribeRatio;
-        this->minGrainSize                   = minGrainSize;
+        this->doDelGroupElement = doDelGroupElement;
+        this->subscribeRatio    = subscribeRatio;
+        this->minGrainSize      = minGrainSize;
     }
 
 
@@ -120,6 +116,7 @@ private:
     void groupInlineVertex()
     {
         const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(geo->getP());
+        groupSetter = inlineVertexGroup;
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
@@ -156,7 +153,7 @@ private:
                         ptoff = geo->vertexPoint(vtxoff);
 
                         fpreal dotVal = dot(dir_prev, dir_next);
-                        inlineVertexGroup->setElement(vtxoff, (dotVal >= threshold_inlineCosRadians) ^ reverseOutGroup);
+                        groupSetter.set(vtxoff, dotVal >= threshold_inlineCosRadians);
 
                         pos = pos_next;
 
@@ -169,7 +166,7 @@ private:
                     }
                     vtxoff = geo->getPrimitiveVertexOffset(elemoff, lastLastIndex);
                     //ptoff = geo->vertexPoint(vtxoff);
-                    inlineVertexGroup->setElement(vtxoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseOutGroup);
+                    groupSetter.set(vtxoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     if (closed)
                     {
                         pos = pos_next;
@@ -184,7 +181,7 @@ private:
 
                         vtxoff = geo->getPrimitiveVertexOffset(elemoff, lastLastIndex+1);
                         //ptoff = geo->vertexPoint(vtxoff);
-                        inlineVertexGroup->setElement(vtxoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseOutGroup);
+                        groupSetter.set(vtxoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     }
                 }
             }
@@ -196,6 +193,7 @@ private:
     template<typename FLOAT_T>
     void groupInlinePoint()
     {
+        groupSetter = inlinePointGroup;
         const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(geo->getP());
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)
         {
@@ -232,7 +230,7 @@ private:
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum));
 
                         fpreal dotVal = dot(dir_prev, dir_next);
-                        inlinePointGroup->setElement(ptoff, (dotVal >= threshold_inlineCosRadians) ^ reverseOutGroup);
+                        groupSetter.set(ptoff, dotVal >= threshold_inlineCosRadians);
 
                         pos = pos_next;
 
@@ -244,7 +242,7 @@ private:
                         dir_next.normalize();
                     }
                     ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex));
-                    inlinePointGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseOutGroup);
+                    groupSetter.set(ptoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     if (closed)
                     {
                         pos = pos_next;
@@ -258,7 +256,7 @@ private:
 
 
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex + 1));
-                        inlinePointGroup->setElement(ptoff, (dot(dir_prev, dir_next) >= threshold_inlineCosRadians) ^ reverseOutGroup);
+                        groupSetter.set(ptoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     }
                 }
             }

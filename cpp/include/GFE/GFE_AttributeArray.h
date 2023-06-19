@@ -360,10 +360,7 @@ GA_Attribute* createDetachedArrayAttribute(
         attribArray.emplace_back(attribPtr);
     return attribPtr;
 }
-
-
-
-
+    
 GA_Attribute*
 findOrCreateTuple(
     const bool detached = false,
@@ -412,6 +409,37 @@ findOrCreateTuple(
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
     return attribPtr;
+}
+
+
+
+template<typename T>
+SYS_FORCE_INLINE GA_Attribute*
+findOrCreateTuple(
+    const bool detached = false,
+    const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+    const UT_StringRef& attribName = "",
+    const int tuple_size = 1,
+    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const bool emplaceBack = true,
+    const UT_Options* const create_args = nullptr,
+    const GA_AttributeOptions* const attribute_options = nullptr
+)
+{
+    if constexpr(std::is_same_v<T, fpreal16>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, GA_STORE_REAL16,  attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
+    else if constexpr(std::is_same_v<T, fpreal32>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, GA_STORE_REAL32,  attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
+    else if constexpr(std::is_same_v<T, fpreal64>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, GA_STORE_REAL64,  attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
+    else if constexpr(std::is_same_v<T, int16>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INT16,     attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
+    else if constexpr(std::is_same_v<T, int32>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INT32,     attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
+    else if constexpr(std::is_same_v<T, int64>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INT64,     attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
+    else if constexpr(std::is_same_v<T, UT_StringHolder>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_STRING, GA_STORE_STRING, attribName, tuple_size, defaults, emplaceBack, create_args, attribute_options);
 }
 
 // SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(

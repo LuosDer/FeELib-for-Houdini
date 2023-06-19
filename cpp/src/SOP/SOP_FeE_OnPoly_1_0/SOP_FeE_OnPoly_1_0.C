@@ -56,30 +56,30 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action_icon" "BUTTONS_reselect" }
         parmtag { "sop_input" "1" }
     }
-    parm {
-        name    "class"
-        cppname "Class"
-        label   "Piece Elements"
-        type    ordinal
-        default { "primitive" }
-        disablewhen "{ runOverPiece == 0 }"
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-        }
-    }
-    parm {
-        name    "classRef"
-        cppname "ClassRef"
-        label   "Piece Elements Ref"
-        type    ordinal
-        default { "primitive" }
-        disablewhen "{ runOverPiece == 0 }"
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-        }
-    }
+    //parm {
+    //    name    "class"
+    //    cppname "Class"
+    //    label   "Piece Elements"
+    //    type    ordinal
+    //    default { "primitive" }
+    //    disablewhen "{ runOverPiece == 0 }"
+    //    menu {
+    //        "prim"      "Primitive"
+    //        "point"     "Point"
+    //    }
+    //}
+    //parm {
+    //    name    "classRef"
+    //    cppname "ClassRef"
+    //    label   "Piece Elements Ref"
+    //    type    ordinal
+    //    default { "primitive" }
+    //    disablewhen "{ runOverPiece == 0 }"
+    //    menu {
+    //        "prim"      "Primitive"
+    //        "point"     "Point"
+    //    }
+    //}
     parm {
         name    "sepparm2"
         label   "Separator"
@@ -309,31 +309,31 @@ SOP_FeE_OnPoly_1_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_OnPoly_1_0Parms::Class parmgrouptype)
-{
-    using namespace SOP_FeE_OnPoly_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo Class type!");
-    return GA_ATTRIB_PRIMITIVE;
-}
-
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_OnPoly_1_0Parms::ClassRef parmgrouptype)
-{
-    using namespace SOP_FeE_OnPoly_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case ClassRef::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case ClassRef::POINT:     return GA_ATTRIB_POINT;      break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo Class Ref type!");
-    return GA_ATTRIB_PRIMITIVE;
-}
+// static GA_AttributeOwner
+// sopAttribOwner(SOP_FeE_OnPoly_1_0Parms::Class parmgrouptype)
+// {
+//     using namespace SOP_FeE_OnPoly_1_0Enums;
+//     switch (parmgrouptype)
+//     {
+//     case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+//     case Class::POINT:     return GA_ATTRIB_POINT;      break;
+//     }
+//     UT_ASSERT_MSG(0, "Unhandled geo Class type!");
+//     return GA_ATTRIB_PRIMITIVE;
+// }
+// 
+// static GA_AttributeOwner
+// sopAttribOwner(SOP_FeE_OnPoly_1_0Parms::ClassRef parmgrouptype)
+// {
+//     using namespace SOP_FeE_OnPoly_1_0Enums;
+//     switch (parmgrouptype)
+//     {
+//     case ClassRef::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+//     case ClassRef::POINT:     return GA_ATTRIB_POINT;      break;
+//     }
+//     UT_ASSERT_MSG(0, "Unhandled geo Class Ref type!");
+//     return GA_ATTRIB_PRIMITIVE;
+// }
 
 static GA_GroupType
 sopGroupType(SOP_FeE_OnPoly_1_0Parms::GroupType parmgrouptype)
@@ -380,8 +380,7 @@ SOP_FeE_OnPoly_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     
     GFE_OnPoly onPoly(outGeo0, cookparms);
-    onPoly.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
+    onPoly.findOrCreatePointGroup();
     onPoly.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 

@@ -22,84 +22,44 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "delElement"
-        cppname "DelElement"
-        label   "Delete Element"
-        type    toggle
-        default { "on" }
+        name    "group"
+        cppname "Group"
+        label   "Group"
+        type    string
+        default { "" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
-    groupsimple {
-        name    "delElement_folder"
-        label   "Delete Element"
-        disablewhen "{ delElement == 0 }"
-        grouptag { "group_type" "simple" }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
 
-        parm {
-            name    "delElementGroup"
-            cppname "DelElementGroup"
-            label   "Group Name"
-            type    string
-            default { "" }
-            parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('delElementGroupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-            parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-            parmtag { "script_action_icon" "BUTTONS_reselect" }
-            parmtag { "sop_input" "0" }
-        }
-        parm {
-            name    "delElementGroupType"
-            cppname "DelElementGroupType"
-            label   "Group Type"
-            type    ordinal
-            default { "guess" }
-            menu {
-                "guess"     "Guess from Group"
-                "prim"      "Primitive"
-                "point"     "Point"
-                "vertex"    "Vertex"
-                "edge"      "Edge"
-            }
-        }
-        parm {
-            name    "delElementReverseGroup"
-            cppname "DelElementReverseGroup"
-            label   "Delete Non Selected"
-            type    toggle
-            default { "off" }
-        }
-        parm {
-            name    "delElementInputGroup"
-            cppname "DelElementInputGroup"
-            label   "Delete Element Input Group"
-            type    toggle
-            default { "on" }
-        }
-
-        parm {
-            name    "delElementWithPoint"
-            cppname "DelElementWithPoint"
-            label   "Delete With Point"
-            type    toggle
-            default { 1 }
-        }
-        parm {
-            name    "delElementPointMode"
-            cppname "DelElementPointMode"
-            label   "Delete Point Mode"
-            type    ordinal
-            default { "delDegenerateIncompatible" }
-            menu {
-                "leavePrimitive"             "Leave Primitive"
-                "delDegenerate"              "Delete Degenerate"
-                "delDegenerateIncompatible"  "Delete Degenerate Incompatible"
-            }
-        }
-        parm {
-            name    "delElementGuaranteeNoVertexReference"
-            cppname "DelElementGuaranteeNoVertexReference"
-            label   "Guarantee No Vertex Reference"
-            type    toggle
-            default { 0 }
-        }
+    parm {
+        name    "extrudeBorder2DDist"
+        cppname "ExtrudeBorder2DDist"
+        label   "Distance"
+        type    log
+        default { "0.01" }
+        range   { 0.0001 1 }
+    }
+    parm {
+        name    "reverseMesh"
+        cppname "ReverseMesh"
+        label   "Reverse Mesh"
+        type    toggle
+        default { "0" }
     }
 }
 )THEDSFILE";
@@ -176,73 +136,44 @@ SOP_FeE_ExtrudeBorder2D_1_0::cookVerb() const
 
 
 
+
 static GA_GroupType
-sopGroupType(SOP_FeE_ExtrudeBorder2D_1_0Parms::DelElementGroupType parmgrouptype)
+sopGroupType(SOP_FeE_ExtrudeBorder2D_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_ExtrudeBorder2D_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
-    case DelElementGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case DelElementGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case DelElementGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case DelElementGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case DelElementGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
-}
-
-static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_ExtrudeBorder2D_1_0Parms::DelElementPointMode delPointMode)
-{
-    using namespace SOP_FeE_ExtrudeBorder2D_1_0Enums;
-    switch (delPointMode)
-    {
-    case DelElementPointMode::LEAVEPRIMITIVE:              return GA_Detail::GA_DestroyPointMode::GA_LEAVE_PRIMITIVES;                 break;
-    case DelElementPointMode::DELDEGENERATE:               return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE;               break;
-    case DelElementPointMode::DELDEGENERATEINCOMPATIBLE:   return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;  break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Delete Point Mode!");
-    return GA_Detail::GA_DestroyPointMode::GA_DESTROY_DEGENERATE_INCOMPATIBLE;
 }
 
 void
 SOP_FeE_ExtrudeBorder2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_ExtrudeBorder2D_1_0Parms>();
-    GA_Detail* const outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_ExtrudeBorder2D_1_0Cache*)cookparms.cache();
 
-    const GA_Detail* const inGeo0 = cookparms.inputGeo(0);
-    outGeo0->replaceWith(*inGeo0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    outGeo0.replaceWith(inGeo0);
 
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-
-
-
-    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
-    const UT_StringHolder& groupName = sopparms.getDelElementGroup();
-
-    const GA_Detail::GA_DestroyPointMode delPointMode = sopDelPointMode(sopparms.getDelElementPointMode());
-
-    GFE_DelAndUnpack::delAndUnpack(sopparms.getDelElement(), cookparms, outGeo0, groupType, groupName,
-        sopparms.getDelElementReverseGroup(), sopparms.getDelElementInputGroup(), sopparms.getDelElementWithPoint(),
-        delPointMode, sopparms.getDelElementGuaranteeNoVertexReference()
-    );
-
-    if (sopparms.getDelElement())
-    {
-        outGeo0->bumpDataIdsForAddOrRemove(1, 1, 1);
-    }
+    GFE_ExtrudeBorder2D extrudeBorder2D(outGeo0, cookparms);
+    extrudeBorder2D.groupParser.setGroup(groupType, sopparms.getGroup());
+    extrudeBorder2D.setComputeParm(sopparms.getExtrudeBorder2DDist(), sopparms.getReverseMesh());
+    extrudeBorder2D.computeAndBumpDataIdsForAddOrRemove()();
+    
 }
 
-
-
-namespace SOP_FeE_ExtrudeBorder2D_1_0_Namespace {
-
-} // End SOP_FeE_ExtrudeBorder2D_1_0_Namespace namespace

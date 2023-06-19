@@ -4,9 +4,7 @@
 #ifndef __GFE_DissolveEdge_h__
 #define __GFE_DissolveEdge_h__
 
-//#include "GFE/GFE_DissolveEdge.h"
-
-
+#include "GFE/GFE_DissolveEdge.h"
 
 #include "GFE/GFE_GeoFilter.h"
 

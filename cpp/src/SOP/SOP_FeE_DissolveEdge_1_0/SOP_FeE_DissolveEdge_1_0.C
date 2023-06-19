@@ -124,10 +124,10 @@ SOP_FeE_DissolveEdge_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_DissolveEdge_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_DissolveEdge_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_DissolveEdge_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -138,37 +138,6 @@ sopGroupType(SOP_FeE_DissolveEdge_1_0Parms::GroupType parmgrouptype)
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
 }
-
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_DissolveEdge_1_0Parms::Class attribClass)
-{
-    using namespace SOP_FeE_DissolveEdge_1_0Enums;
-    switch (attribClass)
-    {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-static GA_StorageClass
-sopStorageClass(SOP_FeE_DissolveEdge_1_0Parms::StorageClass storageClass)
-{
-    using namespace SOP_FeE_DissolveEdge_1_0Enums;
-    switch (storageClass)
-    {
-    case StorageClass::INT:       return GA_STORECLASS_INT;        break;
-    case StorageClass::FLOAT:     return GA_STORECLASS_FLOAT;      break;
-    case StorageClass::STRING:    return GA_STORECLASS_STRING;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Storage Class!");
-    return GA_STORECLASS_INVALID;
-}
-
-
-
 
 
 void
@@ -183,9 +152,6 @@ SOP_FeE_DissolveEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     outGeo0.replaceWith(inGeo0);
 
 
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
@@ -198,7 +164,8 @@ SOP_FeE_DissolveEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
     enumerate.compute();
 */
-    
+    GFE_Detail& geo = static_cast<GFE_Detail&>(outGeo0);
+    geo.dissolveVertexEdgeGroup()
     GFE_Enumerate enumerate(outGeo0, cookparms);
     enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 

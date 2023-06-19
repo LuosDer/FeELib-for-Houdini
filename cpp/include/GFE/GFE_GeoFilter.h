@@ -762,14 +762,19 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(
-        const bool detached, const GA_GroupType groupType, const UT_StringRef& name = ""
-    )
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached, const GA_GroupType groupType, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreate(detached, groupType, name); }
 
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_GroupType groupType, const UT_StringRef& groupName = "")
-    { return getOutGroupArray().findOrCreate(doDelGroupElement, groupType, groupName); }
+    { return findOrCreateGroup(doDelGroupElement, groupType, groupName); }
 
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached, const GA_AttributeOwner attribOwner, const UT_StringRef& name = "")
+    { return findOrCreateGroup(detached, GFE_Type::attributeOwner_groupType(attribOwner), name); }
+
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_AttributeOwner attribOwner, const UT_StringRef& groupName = "")
+    { return findOrCreateGroup(doDelGroupElement, attribOwner, groupName); }
+
+    
     SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached, const UT_StringRef& groupName = "")
     { return getOutGroupArray().findOrCreatePrimitive(detached, groupName); }
 
@@ -1341,11 +1346,11 @@ public:
 
 
 
-class GFE_AttribCreateFilterWithRef : public GFE_AttribCreateFilter, public GFE_GeoFilterRef0 {
+class GFE_AttribCreateFilterWithRef0 : public GFE_AttribCreateFilter, public GFE_GeoFilterRef0 {
 
 public:
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GFE_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1355,7 +1360,7 @@ public:
     {
     }
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GFE_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1365,7 +1370,7 @@ public:
     {
     }
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1376,7 +1381,7 @@ public:
     }
 
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1386,7 +1391,7 @@ public:
     {
     }
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -1396,7 +1401,7 @@ public:
     {
     }
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms& cookparms
@@ -1406,7 +1411,7 @@ public:
     {
     }
 
-    GFE_AttribCreateFilterWithRef(
+    GFE_AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms& cookparms
@@ -1417,23 +1422,23 @@ public:
     }
 
 
-    ~GFE_AttribCreateFilterWithRef()
+    ~GFE_AttribCreateFilterWithRef0()
     {
     }
 
 
 
-}; // End of class GFE_AttribCreateFilterWithRef
+}; // End of class GFE_AttribCreateFilterWithRef0
 
 
 
 
 
-// class GFE_AttribFilterWithRefRest : public GFE_AttribFilterWithRef0 {
+// class GFE_AttribFilterWithRef0Rest : public GFE_AttribFilterWithRef0 {
 //
 // public:
 //
-//     GFE_AttribFilterWithRefRest(
+//     GFE_AttribFilterWithRef0Rest(
 //         GFE_Detail* const geo,
 //         const GA_Detail* const geoRef  = nullptr,
 //         const GA_Detail* const geoRest = nullptr,
@@ -1450,7 +1455,7 @@ public:
 //     {
 //     }
 //
-//     GFE_AttribFilterWithRefRest(
+//     GFE_AttribFilterWithRef0Rest(
 //         GA_Detail& geo,
 //         const GA_Detail* const geoRef  = nullptr,
 //         const GA_Detail* const geoRest = nullptr,
@@ -1467,7 +1472,7 @@ public:
 //     {
 //     }
 //
-//     ~GFE_AttribFilterWithRefRest()
+//     ~GFE_AttribFilterWithRef0Rest()
 //     {
 //     }
 //
@@ -1475,7 +1480,7 @@ public:
 // private:
 //     GA_Detail* geoRest;
 //
-// }; // End of class GFE_AttribFilterWithRefRest
+// }; // End of class GFE_AttribFilterWithRef0Rest
 
 
 

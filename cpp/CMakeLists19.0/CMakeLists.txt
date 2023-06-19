@@ -134,8 +134,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupVis_2_0
     SOP_FeE_HasGroup_1_0
     SOP_FeE_InlinePoint_1_0
-    SOP_FeE_IntersectionAnalysis_1_0
-    SOP_FeE_IntersectionStitch_1_0
+    SOP_FeE_Intersection_1_0
     SOP_FeE_JoinCurve_2_0
     SOP_FeE_KuhnMunkres_2_0
     SOP_FeE_MatchAxis_1_0

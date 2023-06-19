@@ -71,14 +71,13 @@ static const char *theDsFile = R"THEDSFILE(
     }
     parm {
         name    "outDotValue"
-        name    "OutDotValue"
+        cppname "OutDotValue"
         label   "Output Dot Value"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
-
     parm {
         name    "dotAttribName"
         cppname "DotAttribName"

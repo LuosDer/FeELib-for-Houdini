@@ -26,9 +26,6 @@ public:
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }

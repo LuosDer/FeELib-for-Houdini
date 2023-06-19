@@ -14,7 +14,7 @@
 #include "GFE/GFE_Measure.h"
 
 
-class GFE_ExtremeElement : public GFE_AttribCreateFilterWithRef {
+class GFE_ExtremeElement : public GFE_AttribCreateFilterWithRef0 {
 
 #define __GFE_ExtremeElement_UseMeasureAttrib__ 0
 
@@ -32,7 +32,7 @@ public:
     {
     }
 #else
-    using GFE_AttribCreateFilterWithRef::GFE_AttribCreateFilterWithRef;
+    using GFE_AttribCreateFilterWithRef0::GFE_AttribCreateFilterWithRef0;
 #endif
     
     void
@@ -40,28 +40,36 @@ public:
             const GFE_StatisticalFunction statisticalFunction = GFE_StatisticalFunction::Min,
             const bool delExtremeAttrib = false,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
         this->statisticalFunction = statisticalFunction;
-        this->delExtremeAttrib = delExtremeAttrib;
+        this->delExtremeAttrib    = delExtremeAttrib;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
     
+    SYS_FORCE_INLINE GA_Attribute* setExtremeElemAttrib(const bool detached = false, const GA_Storage storage = GA_STORE_INVALID, const UT_StringRef& attribName = "")
+    { return extremeElemAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL, GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    
     SYS_FORCE_INLINE GA_Attribute* setExtremeElemAttrib(const bool detached = false, const UT_StringRef& attribName = "")
-    { return extremeElemAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL,
-                GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    { return setExtremeElemAttrib(detached, GA_STORE_INVALID, attribName); }
     
-    SYS_FORCE_INLINE GA_Attribute* setExtremeValueAttrib(const bool detached = false, const UT_StringRef& attribName = "")
-    { return extremeValueAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL,
-                GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    //SYS_FORCE_INLINE GA_Attribute* setExtremeValueAttrib(const bool detached = false, const GA_Storage storage = GA_STORE_INVALID, const UT_StringRef& attribName = "")
+    //{ return extremeValueAttrib = getOutAttribArray().findOrCreateTuple(detached, GA_ATTRIB_DETAIL, GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
+    //
+    //SYS_FORCE_INLINE GA_Attribute* setExtremeValueAttrib(const bool detached = false, const UT_StringRef& attribName = "")
+    //{ return setExtremeValueAttrib(detached, GA_STORE_INVALID, attribName); }
     
-
+    SYS_FORCE_INLINE void setExtremeValueAttrib()
+    { extremeValueAttribName = nullptr; }
     
-
+    SYS_FORCE_INLINE void setExtremeValueAttrib(const bool detached = false, const UT_StringRef& attribName)
+    { extremeValueAttribDetached = detached; extremeValueAttribName = &attribName; }
+    
+    
     SYS_FORCE_INLINE GA_Offset getExtremeElemoff() const
     { return extremeElemoff; }
     
@@ -107,17 +115,6 @@ private:
             return true;
         }
         
-
-        if (extremeElemAttrib)
-        {
-            
-        }
-        if (extremeValueAttrib)
-        {
-            
-        }
-        
-
         switch (extremeAttrib->getAIFTuple()->getStorage(extremeAttrib))
         {
         case GA_STORE_INT16:  computeExtremeElemoff<int16>();    break;
@@ -128,22 +125,26 @@ private:
         case GA_STORE_REAL64: computeExtremeElemoff<fpreal64>(); break;
         }
 
-        if (!getOutAttribArray().isEmpty())
+        //if (extremeValueAttrib)
+        //{
+        //    const GA_AIFTuple* const aIFTuple = extremeValueAttrib->getAIFTuple();
+        //    UT_ASSERT_P(aIFTuple);
+        //    aIFTuple->set(extremeValueAttrib, 0, extremeValueAttrib);
+        //}
+        
+        if (extremeElemAttrib)
         {
-            GA_Attribute* const outAttrib = getOutAttribArray()[0];
-            const GA_AIFTuple* const aIFTuple = outAttrib->getAIFTuple();
-            if (aIFTuple)
-            {
-                aIFTuple->set(outAttrib, 0, extremeElemoff);
-            }
+            const GA_AIFTuple* const aIFTuple = extremeElemAttrib->getAIFTuple();
+            UT_ASSERT_P(aIFTuple);
+            aIFTuple->set(extremeElemAttrib, 0, extremeElemoff);
         }
         
         if (!getOutGroupArray().isEmpty())
         {
             GA_ElementGroup* const outGroup = getOutGroupArray().getElementGroup(0);
-            if (getOutGroupArray()[0]->classType() == GA_GROUP_PRIMITIVE)
+            if (outGroup->getOwner() == extremeAttrib->getOwner())
             {
-                static_cast<GA_PrimitiveGroup*>(getOutGroupArray()[0])->setElement(extremeElemoff, true);
+                outGroup->setElement(extremeElemoff, true);
             }
         }
 
@@ -160,6 +161,15 @@ private:
     template<typename FLOAT_T>
     void computeExtremeElemoff()
     {
+        if (extremeValueAttribName)
+        {
+            GA_Attribute* const extremeValueAttrib = getOutAttribArray().findOrCreateTuple();
+            const GA_AIFTuple* const aIFTuple = extremeValueAttrib->getAIFTuple();
+            UT_ASSERT_P(aIFTuple);
+            aIFTuple->set(extremeValueAttrib, 0, extremeValueAttrib);
+        }
+        
+        
         ComputeExtremeElemoff<FLOAT_T> body(geo, extremeAttrib, statisticalFunction);
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(groupParser.getPrimitiveGroup()));
         UTparallelReduce(geoSplittableRange, body, subscribeRatio, minGrainSize);
@@ -239,15 +249,16 @@ public:
     GFE_StatisticalFunction statisticalFunction = GFE_StatisticalFunction::Min;
     bool delExtremeAttrib = false;
     
-    const UT_StringRef* extremeElemGroupName = nullptr;
-    
+    //const UT_StringRef* extremeElemGroupName = nullptr;
+    bool extremeValueAttribDetached = false;
+    const UT_StringRef* extremeValueAttribName = nullptr;
 private:
     GA_Offset extremeElemoff = GFE_INVALID_OFFSET;
     const GA_Attribute* extremeAttrib;
     GA_Attribute* extremeAttribNonConst;
     
     GA_Attribute* extremeElemAttrib = nullptr;
-    GA_Attribute* extremeValueAttrib = nullptr;
+    //GA_Attribute* extremeValueAttrib = nullptr;
 
     
     exint subscribeRatio = 64;

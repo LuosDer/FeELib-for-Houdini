@@ -19,17 +19,11 @@ public:
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }

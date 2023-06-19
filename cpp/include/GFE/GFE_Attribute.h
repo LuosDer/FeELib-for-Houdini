@@ -12,6 +12,9 @@
 #include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h" // SOP_FeE_HasGroup_1_0 can not compile without this header
 
+#include "GA/GA_PageHandle.h" 
+#include "GA/GA_PageIterator.h" // SOP_FeE_HasGroup_1_0 can not compile without this header
+
 
 #include "GA/GA_AttributeFilter.h"
 

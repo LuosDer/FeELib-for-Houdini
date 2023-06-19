@@ -85,7 +85,7 @@ GFE_GroupCurveEnds_SPECIALIZATION_SetAttrib(ends, Ends);
         }
     }
     
-    virtual SYS_FORCE_INLINE void visualizeOutGroup() override
+    virtual SYS_FORCE_INLINE void visualizeOutGroup() const override
     { GFE_AttribFilter::visualizeOutGroup(); }
     
     

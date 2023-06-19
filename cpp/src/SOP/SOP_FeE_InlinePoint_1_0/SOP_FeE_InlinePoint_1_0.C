@@ -241,9 +241,11 @@ SOP_FeE_InlinePoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) cons
 
     GFE_InlinePoint primInlinePoint(outGeo0, cookparms);
     
-    primInlinePoint.setComputeParm(1e-05,
-        sopparms.getReverseGroup(), sopparms.getDelElement(),
+    primInlinePoint.setComputeParm(sopparms.getDelElement(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    primInlinePoint.groupSetter.setParm(sopparms.getReverseGroup());
+    
     primInlinePoint.setThreshold_inlineCosRadians(sopparms.getThreshold_inlineAngle());
     
     primInlinePoint.findOrCreateGroup(inlineGroupType, sopparms.getInlineGroupName());

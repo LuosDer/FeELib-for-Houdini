@@ -7,17 +7,14 @@
 #include "GFE/GFE_GroupUnion.h"
 
 
-
 #include "GA/GA_Detail.h"
 #include "GA/GA_SplittableRange.h"
-
+#include "GA/GA_PageHandle.h"
+#include "GA/GA_PageIterator.h" // SOP_FeE_GroupPolyByWinding_1_0 can not compile with out this .h
 
 #include "GFE/GFE_Type.h"
 
-
 class GFE_GroupUnion {
-
-
 
 public:
     

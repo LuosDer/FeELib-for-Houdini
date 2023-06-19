@@ -4,17 +4,16 @@
 #ifndef __GFE_MatchDirectionOrient_h__
 #define __GFE_MatchDirectionOrient_h__
 
-//#include "GFE/GFE_MatchDirectionOrient.h"
-
-
+#include "GFE/GFE_MatchDirectionOrient.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
-class GFE_MatchDirOrient : public GFE_AttribFilterWithRef {
+
+class GFE_MatchDirOrient : public GFE_AttribFilterWithRef0 {
 
 public:
-    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 
     ~GFE_EdgeGroupTransfer()
     {

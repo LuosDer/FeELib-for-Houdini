@@ -152,8 +152,9 @@ private:
 
             *unsharedPointGroup &= *expandGroup;
             
-            const GA_PointGroupUPtr expandPointGroupUPtr = GFE_GroupPromote::groupPromotePointDetached(geo, unsharedVertexGroup);
+            const GA_PointGroupUPtr expandPointGroupUPtr = geo->createDetachedPointGroup();
             GA_PointGroup* const expandPointGroup = expandPointGroupUPtr.get();
+            expandPointGroup->combine(unsharedVertexGroup);
             geo->groupIntersect(*unsharedVertexGroup, expandPointGroup);
             //*unsharedVertexGroup &= expandPointGroup;
         }

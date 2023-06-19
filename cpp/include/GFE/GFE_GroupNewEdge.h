@@ -4,25 +4,22 @@
 #ifndef __GFE_GroupNewEdge_h__
 #define __GFE_GroupNewEdge_h__
 
-//#include "GFE/GFE_GroupNewEdge.h"
-
+#include "GFE/GFE_GroupNewEdge.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
-#include "GFE/GFE_MeshTopology.h"
 
+#include "GFE/GFE_MeshTopology.h"
 
 #include "GU/GU_Snap.h"
 
-
-
 // Ref GFE_EdgeGroupTransfer
-class GFE_GroupNewEdge : public GFE_AttribFilterWithRef {
+class GFE_GroupNewEdge : public GFE_AttribFilterWithRef0 {
 
 
 public:
-    using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 
 
     void

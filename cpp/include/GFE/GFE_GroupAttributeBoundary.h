@@ -95,8 +95,8 @@ private:
         const GA_PrimitiveGroup* const geoPrimGroup = groupParser.getPrimitiveGroup();
 
         //static_cast<GU_Detail*>(geo)->length
-        const bool isPointAttrib = uvAttribPtr->getOwner() == GA_ATTRIB_POINT;
-        const GA_AttributeOwner owner = uvAttribPtr->getOwner();
+        const bool isPointAttrib = attrib->getOwner() == GA_ATTRIB_POINT;
+        const GA_AttributeOwner owner = attrib->getOwner();
 
         //GA_Attribute* const pAttribPtr = GFE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
         //GA_ROHandleT<fpreal> p_h(pAttribPtr);

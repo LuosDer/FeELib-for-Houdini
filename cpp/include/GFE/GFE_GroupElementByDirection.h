@@ -22,17 +22,17 @@ enum class GFE_GroupElemByDirMethod
 
 
 
-class GFE_GroupElemByDir : public GFE_AttribFilterWithRef {
+class GFE_GroupElemByDir : public GFE_AttribFilterWithRef0 {
 
 public:
-	// using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+	// using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 	
 	GFE_GroupElemByDir(
 		GFE_Detail* const geo,
 		const GA_Detail* const geoRef,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr
 	)
-		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		: GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
 		, restDir2D(geo, cookparms)
 		, normal3D(geo, cookparms)
 	{
@@ -43,7 +43,7 @@ public:
 		const GA_Detail* const geoRef,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr
 	)
-		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		: GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
 		, restDir2D(geo, cookparms)
 		, normal3D(geo, cookparms)
 	{

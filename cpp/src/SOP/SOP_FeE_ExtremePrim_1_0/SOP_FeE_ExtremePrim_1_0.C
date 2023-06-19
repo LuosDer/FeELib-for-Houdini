@@ -336,23 +336,19 @@ SOP_FeE_ExtremePrim_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     if (sopparms.getUsePieceAttrib())
-    {
         extremePrim.setPieceAttrib(GA_ATTRIB_PRIMITIVE, sopparms.getPieceAttrib());
-    }
+    
     extremePrim.doDelGroupElement = sopparms.getDelOutGroupGeo();
-    extremePrim.setGroup.setComputeParm(sopparms.getReverseGroup());
+    extremePrim.groupSetter.setParm(sopparms.getReverseGroup());
 
 
     extremePrim.groupParser.setGroup(groupType, sopparms.getGroup());
 
     if (sopparms.getOutExtremePrimAttrib())
-    {
         extremePrim.findOrCreateTuple(false, sopparms.getExtremePrimAttribName());
-    }
+        
     if (sopparms.getOutExtremePrimGroup())
-    {
         extremePrim.findOrCreateGroup(false, sopparms.getExtremePrimGroupName());
-    }
 
     extremePrim.computeAndBumpDataId();
 

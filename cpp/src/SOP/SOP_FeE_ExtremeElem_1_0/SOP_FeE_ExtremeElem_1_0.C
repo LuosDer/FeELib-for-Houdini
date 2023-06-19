@@ -74,8 +74,8 @@ static const char *theDsFile = R"THEDSFILE(
         name    "extremeAttrib"
         cppname "ExtremeAttrib"
         label   "Extreme Attrib"
-        type    toggle
-        default { "0" }
+        type    string
+        default { "" }
     }
     // parm {
     //     name    "measure"
@@ -145,6 +145,8 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "OutExtremeElemGroup"
         label   "Out Extreme Elem Group Name"
         type    toggle
+        nolabel
+        joinnext
         default { "0" }
     }
     parm {
@@ -154,7 +156,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "extremeElem" }
         disablewhen "{ delElement == 1 } { outExtremeElemGroup == 0 }"
-        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Primitives kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils kwargs['geometrytype'] = kwargs['node'].parmTuple('extremeAttribClass') kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
@@ -235,7 +237,8 @@ SOP_FeE_ExtremeElem_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_ExtremeElem_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("group"_sh,       &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("extremeElemGroupName"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -351,8 +354,8 @@ sopStatisticalFunction(SOP_FeE_ExtremeElem_1_0Parms::StatisticalFunction parmSta
     using namespace SOP_FeE_ExtremeElem_1_0Enums;
     switch (parmStatisticalFunction)
     {
-    case StatisticalFunction::MIN:     return GFE_StatisticalFunction::Min;    break;
-    case StatisticalFunction::MAX:     return GFE_StatisticalFunction::Max;  break;
+    case StatisticalFunction::MIN:   return GFE_StatisticalFunction::Min;  break;
+    case StatisticalFunction::MAX:   return GFE_StatisticalFunction::Max;  break;
     }
     UT_ASSERT_MSG(0, "Unhandled Statistical Function!");
     return GFE_StatisticalFunction::Min;
@@ -389,11 +392,11 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     const GFE_StatisticalFunction statisticalFunction = sopStatisticalFunction(sopparms.getStatisticalFunction());
+    const GA_AttributeOwner extremeAttribClass = sopAttribOwner(sopparms.getExtremeAttribClass());
     //const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
-        
+    
 
-
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
@@ -406,6 +409,8 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     extremeElem.setComputeParm(
         statisticalFunction, sopparms.getDelExtremeAttrib(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    extremeElem.doDelGroupElement = sopparms.getDelElement();
+    extremeElem.groupSetter.setParm(sopparms.getReverseGroup());
     
     //extremeElem.measure.measureType = measureType;
     
@@ -414,23 +419,19 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //     extremeElem.setPieceAttrib(GA_ATTRIB_PRIMITIVE, sopparms.getPieceAttrib());
     // }
     
-    extremeElem.doDelGroupElement = sopparms.getDelElement();
-    extremeElem.setGroup.setComputeParm(sopparms.getReverseGroup());
     
     extremeElem.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    extremeElem.getInGroupArray().set(GA_ATTRIB_DETAIL, sopparms.getExtremeElemAttribName());
-
+    extremeElem.getInAttribArray().set(extremeAttribClass, sopparms.getExtremeAttrib());
     
     if (sopparms.getOutExtremeElemGroup())
-        extremeElem.extremeElemGroupName = &sopparms.getExtremeElemGroupName();
+        extremeElem.findOrCreateGroup(extremeAttribClass, sopparms.getExtremeElemGroupName());
     
     if (sopparms.getOutExtremeElemAttrib())
-        extremeElem.setExtremeElemAttrib(;
+        extremeElem.setExtremeElemAttrib(false, sopparms.getExtremeElemAttribName());
     
     if (sopparms.getOutExtremeValueAttrib())
-        extremeElem.getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_DETAIL,
-            GA_STORECLASS_INT, GA_STORE_INVALID, sopparms.getExtremeValueAttribName());
+        extremeElem.setExtremeValueAttrib(false, sopparms.getExtremeValueAttribName());
     
     extremeElem.computeAndBumpDataId();
 

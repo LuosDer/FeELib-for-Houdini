@@ -6,7 +6,6 @@
 
 #include "GFE/GFE_GroupConvexPoint.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
 
 

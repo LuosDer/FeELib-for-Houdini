@@ -6,7 +6,6 @@
 
 #include "GFE/GFE_OnPoly.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
 
 
@@ -175,11 +174,6 @@ private:
 }; // End of class GFE_OnPoly
 
 
-
-
-
-
-namespace GFE_OnPoly {
 
 
 #endif

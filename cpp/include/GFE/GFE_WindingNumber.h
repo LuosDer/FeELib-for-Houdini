@@ -531,10 +531,10 @@ public:
 
 
 
-class GFE_WindingNumber : public GFE_AttribFilterWithRef {
+class GFE_WindingNumber : public GFE_AttribFilterWithRef0 {
 
 public:
-    //using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+    //using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 
     GFE_WindingNumber(
         GA_Detail& geo,
@@ -542,7 +542,7 @@ public:
         GFE_WindingNumber_Cache* const sopcache = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef(geo, &geoRef0, cookparms)
+        : GFE_AttribFilterWithRef0(geo, &geoRef0, cookparms)
         , sopcache(sopcache)
     {
     }

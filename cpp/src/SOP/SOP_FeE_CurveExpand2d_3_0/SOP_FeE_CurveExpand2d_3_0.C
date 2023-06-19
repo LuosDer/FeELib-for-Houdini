@@ -162,35 +162,6 @@ SOP_FeE_CurveExpand2d_3_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_CurveExpand2d_3_0Parms::UVAttribClass attribClass)
-{
-    using namespace SOP_FeE_CurveExpand2d_3_0Enums;
-    switch (attribClass)
-    {
-    case UVAttribClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
-    case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case UVAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-
-static UVGridify_RowsOrColsNumMethod
-sopRowsOrColsNumMethod(SOP_FeE_CurveExpand2d_3_0Parms::RowsOrColsNumMethod parmgrouptype)
-{
-    using namespace SOP_FeE_CurveExpand2d_3_0Enums;
-    switch (parmgrouptype)
-    {
-    case RowsOrColsNumMethod::UNIFORM:     return UVGridifyMethod_Uniform;    break;
-    case RowsOrColsNumMethod::ROWS:        return UVGridifyMethod_Rows;       break;
-    case RowsOrColsNumMethod::COLS:        return UVGridifyMethod_Columns;    break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled UVGridify Rows Or Cols Num Method!");
-    return UVGridifyMethod_Uniform;
-}
-
 
 static GA_GroupType
 sopGroupType(SOP_FeE_CurveExpand2d_3_0Parms::GroupType parmgrouptype)

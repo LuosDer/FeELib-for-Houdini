@@ -12,19 +12,18 @@
 #include "GFE/GFE_RestVectorComponent.h"
 
 
-class GFE_SetVectorComponent : public GFE_AttribFilter, public GFE_GeoFilterRef {
+class GFE_SetVectorComponent : public GFE_AttribFilterWithRef0 {
 
 public:
 
-    //using GFE_AttribFilter::GFE_AttribFilter;
+    //using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 
     GFE_SetVectorComponent(
         GFE_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
         , restVectorComponent(geo, nullptr, cookparms)
     {
     }
@@ -34,8 +33,7 @@ public:
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef(geoRef, groupParser.getGOPRef(), cookparms)
+        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
         , restVectorComponent(geo, nullptr, cookparms)
     {
     }

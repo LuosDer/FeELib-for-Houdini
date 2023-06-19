@@ -6,24 +6,23 @@
 
 #include "GFE/GFE_PointInBBox.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
+
+
 
 #include "GFE/GFE_Bound.h"
 
-
-
-class GFE_PointInBBox : public GFE_AttribFilterWithRef {
+class GFE_PointInBBox : public GFE_AttribFilterWithRef0 {
 
 public:
-	//using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+	//using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 	
 	GFE_PointInBBox(
 		GA_Detail& geo,
 		const GA_Detail* const geoRef,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr
 	)
-		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		: GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
 		, groupParserBound(geoRef ? geoRef : &geo, groupParser.getGOPRef(), cookparms)
 	{
 	}
@@ -33,7 +32,7 @@ public:
 		const GA_Detail* const geoRef,
 		const SOP_NodeVerb::CookParms& cookparms
 	)
-		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		: GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
 		, groupParserBound(geoRef ? geoRef : &geo, groupParser.getGOPRef(), cookparms)
 	{
 	}

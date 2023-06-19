@@ -4,6 +4,9 @@
 #ifndef __GFE_PolyReduce2D_h__
 #define __GFE_PolyReduce2D_h__
 
+#include "GFE/GFE_PolyReduce2D.h"
+
+#include "GFE/GFE_GeoFilter.h"
 
 
 #define GFE_PolyReduce2D_ReverseROC 1
@@ -13,23 +16,12 @@
 #define GFE_PolyReduce2D_CoverSourcePoly 0
 
 
-enum class GFE_PolyReduce2D_GeoPropertyType
-{
-    ANGLE,
-    DIST,
-    ROC,
-};
-
-
-
-//#include "GFE/GFE_PolyReduce2D.h"
 
 
 //#include "GEO/GEO_SplitPoints.h"
 #include "GFE/GFE_InlinePoint.h"
 
 
-#include "GFE/GFE_GeoFilter.h"
 //#include "GFE/GFE_Array.h"
 #include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_Math.h"
@@ -39,6 +31,13 @@ enum class GFE_PolyReduce2D_GeoPropertyType
 class GFE_PolyReduce2D : public GFE_AttribFilter {
 
 public:
+    enum GeoPropertyType
+    {
+        ANGLE,
+        DIST,
+        ROC,
+    };
+
     //using GFE_AttribFilter::GFE_AttribFilter;
 
 
@@ -117,8 +116,7 @@ public:
     }
 
 
-    virtual void
-    visualizeOutGroup() override
+    SYS_FORCE_INLINE virtual void visualizeOutGroup() override
     {
         if (coverSourcePoly || delPoint)
             return;

@@ -236,24 +236,6 @@ SOP_FeE_GroupConvexPoint_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopCombineGroupType(SOP_FeE_GroupConvexPoint_1_0Parms::CombineGroupType parmgrouptype)
-{
-    using namespace SOP_FeE_GroupConvexPoint_1_0Enums;
-    switch (parmgrouptype)
-    {
-    case CombineGroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case CombineGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case CombineGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case CombineGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case CombineGroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
-
-
 
 static GA_GroupType
 sopGroupType(SOP_FeE_GroupConvexPoint_1_0Parms::GroupType parmgrouptype)
@@ -277,10 +259,10 @@ void
 SOP_FeE_GroupConvexPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_GroupConvexPoint_1_0Parms>();
-    GA_Detail& outGeo0 = cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupConvexPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
 
@@ -297,21 +279,16 @@ SOP_FeE_GroupConvexPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
     if (boss.wasInterrupted())
         return;
 
-    GFE_ConvexPoint convexPoint(outGeo0, &cookparms);
+    GFE_GroupConvexPoint groupConvexPoint(outGeo0, &cookparms);
 
-    convexPoint.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupConvexPoint.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    convexPoint.setComputeParm(combineGroup,
+    groupConvexPoint.setComputeParm(combineGroup,
                             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    convexPoint.computeAndBumpDataId();
-    convexPoint.vi
+    groupConvexPoint.computeAndBumpDataId();
+    groupConvexPoint.visualizeOutGroup();
 
 
 }
 
-
-
-namespace SOP_FeE_GroupConvexPoint_1_0_Namespace {
-
-} // End SOP_FeE_GroupConvexPoint_1_0_Namespace namespace

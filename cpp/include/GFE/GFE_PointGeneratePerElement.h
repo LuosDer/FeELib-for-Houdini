@@ -93,10 +93,19 @@ private:
             const GA_Range r(geoTmp->getIndexMap(elemOwner), static_cast<const GA_ElementGroup*>(geoGroup));
             geoSplittableRange = GA_SplittableRange(r);
         }
-        
+
+        GA_AttributeUPtr numPointAttribMidUPtr;
         if (isElementGroup && numPointAttrib)
         {
-            numPointAttribMid = numPointAttrib->isDetached() ? GFE_Attribute::clone(*geoTmp, *numPointAttrib) : geoTmp->findAttribute(elemOwner, numPointAttrib->getName());
+            if (numPointAttrib->isDetached())
+            {
+                numPointAttribMidUPtr = GFE_Attribute::clone(*geoTmp, *numPointAttrib);
+                numPointAttribMid = numPointAttribMidUPtr.get();
+            }
+            else
+            {
+                numPointAttribMid = geoTmp->findAttribute(elemOwner, numPointAttrib->getName());
+            }
             GFE_Attribute::accumulateT<exint>(*numPointAttribMid, geoSplittableRange);
         }
         
