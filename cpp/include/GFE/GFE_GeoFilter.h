@@ -1427,6 +1427,13 @@ public:
     }
 
 
+    SYS_FORCE_INLINE void appendInRef0Attribs(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
+    {
+        if (geoRef0)
+            getRef0AttribArray().appends(attribClass, attribPattern);
+        else
+            getInAttribArray().appends(attribClass, attribPattern);
+    }
 
 }; // End of class GFE_AttribCreateFilterWithRef0
 

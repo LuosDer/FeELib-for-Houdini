@@ -378,7 +378,8 @@ findOrCreateTuple(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack);
+    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+        return attribPtr;
 
     if (detached)
     {
@@ -476,7 +477,8 @@ findOrCreateTuple(
         const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-        checkArrayAttrib(attribPtr, finalStorage, tuple_size, emplaceBack);
+        if (checkArrayAttrib(attribPtr, finalStorage, tuple_size, emplaceBack))
+            return attribPtr;
         
 
         if (detached)
@@ -567,7 +569,8 @@ findOrCreateTuple(
         const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         GA_Attribute* attribPtr = findPieceAttrib(pieceAttribSearchOrder, attribName);
-        checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack);
+        if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+            return attribPtr;
 
         // if (attribPtr)
         // {
@@ -676,7 +679,8 @@ findOrCreateUV(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
     GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(*geo, owner, attribName);
-    checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack);
+    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+        return attribPtr;
         
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
     if (detached)
@@ -741,7 +745,9 @@ findOrCreateDir(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack);
+    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+        return attribPtr;
+
         
     if (detached)
     {
@@ -804,10 +810,10 @@ findOrCreateNormal3D(
 )
 {
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-
-
+        
     GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-    checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack);
+    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+        return attribPtr;
         
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
     if (detached)
@@ -900,7 +906,7 @@ protected:
     { geo = &inGeo; }
 
 
-void checkTupleAttrib(
+bool checkTupleAttrib(
     GA_Attribute* &attribPtr,
     const GA_Storage finalStorage = GA_STORE_INVALID,
     const int tuple_size = 3,
@@ -909,14 +915,14 @@ void checkTupleAttrib(
 )
 {
     if (!attribPtr)
-        return;
+        return false;
 
     //int a = attribPtr->getTupleSize();
     if (attribPtr->getTupleSize() != tuple_size)
     {
         geo->getAttributes().destroyAttribute(attribPtr);
         attribPtr = nullptr;
-        return;
+        return false;
     }
     const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
     if (aifTuple)
@@ -926,7 +932,7 @@ void checkTupleAttrib(
         {
             geo->getAttributes().destroyAttribute(attribPtr);
             attribPtr = nullptr;
-            return;
+            return false;
         }
     }
     else
@@ -935,15 +941,16 @@ void checkTupleAttrib(
         {
             geo->getAttributes().destroyAttribute(attribPtr);
             attribPtr = nullptr;
-            return;
+            return false;
         }
         //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
+    return true;
 }
 
-void checkArrayAttrib(
+bool checkArrayAttrib(
     GA_Attribute*& attribPtr,
     const GA_Storage finalStorage = GA_STORE_INVALID,
     const int tuple_size = 3,
@@ -951,13 +958,13 @@ void checkArrayAttrib(
 )
 {
     if (!attribPtr)
-        return;
+        return false;
     
     if (attribPtr->getTupleSize() != tuple_size)
     {
         geo->getAttributes().destroyAttribute(attribPtr);
         attribPtr = nullptr;
-        return;
+        return false;
     }
     const GA_AIFNumericArray* const aifNumericArray = attribPtr->getAIFNumericArray();
     if (aifNumericArray)
@@ -966,7 +973,7 @@ void checkArrayAttrib(
         {
             geo->getAttributes().destroyAttribute(attribPtr);
             attribPtr = nullptr;
-            return;
+            return false;
         }
     }
     else
@@ -975,12 +982,13 @@ void checkArrayAttrib(
         {
             geo->getAttributes().destroyAttribute(attribPtr);
             attribPtr = nullptr;
-            return;
+            return false;
         }
         //const GA_AIFSharedStringArray* const aifStrArray = attribPtr->getAIFSharedStringArray();
     }
     if (emplaceBack)
         attribArray.emplace_back(attribPtr);
+    return true;
 }
 
 
@@ -1548,9 +1556,7 @@ public:
     }
 
     SYS_FORCE_INLINE ::std::vector<GA_Attribute*>::size_type size() const
-    {
-        return attribArray.size();
-    }
+    { return attribArray.size(); }
 
     SYS_FORCE_INLINE void reset(
         const GA_Detail* const geo,
@@ -1562,97 +1568,118 @@ public:
         clear();
     }
 
-    SYS_FORCE_INLINE void set(const GA_Attribute* const attribPtr)
+    SYS_FORCE_INLINE void set(const GA_Attribute* const attrib)
     {
         clear();
-        if (!attribPtr)
-            return;
-        attribArray.emplace_back(attribPtr);
+        if (attrib)
+            attribArray.emplace_back(attrib);
     }
 
-    SYS_FORCE_INLINE void set(const GA_Attribute& attribPtr)
-    {
-        clear();
-        attribArray.emplace_back(&attribPtr);
-    }
+    SYS_FORCE_INLINE void set(const GA_Attribute& attrib)
+    { clear(); attribArray.emplace_back(&attrib); }
 
-    const GA_Attribute*
-        set(
-            const GA_AttributeOwner attribClass,
-            const UT_StringRef& attribPattern
-        )
+    const GA_Attribute* set(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
-
         const GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
         set(attribPtr);
         return attribPtr;
     }
 
-    SYS_FORCE_INLINE void append(const GA_Attribute* const attribPtr)
+    SYS_FORCE_INLINE void append(const GA_Attribute* const attrib)
     {
-        if (!attribPtr)
+        if (!attrib)
             return;
-        attribArray.emplace_back(attribPtr);
+        attribArray.emplace_back(attrib);
     }
 
-    SYS_FORCE_INLINE void append(const GA_Attribute& attribPtr)
-    {
-        attribArray.emplace_back(&attribPtr);
-    }
+    SYS_FORCE_INLINE void append(const GA_Attribute& attrib)
+    { attribArray.emplace_back(&attrib); }
 
-    const GA_Attribute*
-        append(
-            const GA_AttributeOwner attribClass,
-            const UT_StringRef& attribPattern
-        )
+    const GA_Attribute* append(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
-
         const GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
         append(attribPtr);
         return attribPtr;
     }
 
-    const GA_Attribute*
-        appendUV(
-            const UT_StringRef& attribPattern,
-            const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID
-        )
+    const GA_Attribute* appendUV(const UT_StringRef& attribPattern, const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
 
-        const GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
-        append(attribPtr);
-        return attribPtr;
+        const GA_Attribute* const attrib = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
+        append(attrib);
+        return attrib;
     }
 
 
 
 
-    void
-        appends(
-            const GA_AttributeOwner attribClass,
-            const UT_StringRef& attribPattern
-        )
+    void appends(const GA_AttributeOwner attribClass, const char* const attribPattern)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        UT_ASSERT_P(geo);
+        if (!attribPattern)
             return;
-
+            
         for (GA_AttributeDict::iterator it = geo->getAttributes().begin(attribClass); !it.atEnd(); ++it)
         {
-            GA_Attribute* const attribPtr = it.attrib();
-            if (attribPtr->getScope() != GA_SCOPE_PUBLIC)
+            GA_Attribute* const attrib = it.attrib();
+            if (attrib->getScope() != GA_SCOPE_PUBLIC)
                 continue;
+            if (!attrib->getName().multiMatch(attribPattern))
+                continue;
+            attribArray.emplace_back(attrib);
+        }
+    }
+
+    SYS_FORCE_INLINE void appends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
+    {
+        if (attribPattern.isstring() && attribPattern.length() != 0)
+            appends(attribClass, attribPattern.c_str());
+    }
+
+
+    
+    void oappends(const GA_AttributeOwner attribClass, const char* const attribPattern)
+    {
+        if (!attribPattern)
+            return;
+
+        for (GA_AttributeDict::ordered_iterator it = geo->getAttributes().getDict(attribClass).obegin(GA_SCOPE_PUBLIC); !it.atEnd(); ++it)
+        {
+            GA_Attribute* const attribPtr = *it;
             if (!attribPtr->getName().multiMatch(attribPattern))
                 continue;
             attribArray.emplace_back(attribPtr);
         }
     }
 
+    SYS_FORCE_INLINE void oappends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
+    {
+        if (!attribPattern.isstring() || attribPattern.length() == 0)
+            return;
+        oappends(attribClass, attribPattern.c_str());
+    }
+    
+    SYS_FORCE_INLINE void oappendPrims(const char* const attribPattern)
+    { return oappends(GA_ATTRIB_PRIMITIVE, attribPattern); }
+
+    SYS_FORCE_INLINE void oappendPoints(const char* const attribPattern)
+    { return oappends(GA_ATTRIB_POINT, attribPattern); }
+    
+    SYS_FORCE_INLINE void oappendVertices(const char* const attribPattern)
+    { return oappends(GA_ATTRIB_VERTEX, attribPattern); }
+    
+    SYS_FORCE_INLINE void oappendDetails(const char* const attribPattern)
+    { return oappends(GA_ATTRIB_DETAIL, attribPattern); }
+
+
+
+    
     SYS_FORCE_INLINE void appendPointVertexs(const UT_StringRef& attribPattern)
     {
         appends(GA_ATTRIB_POINT, attribPattern);

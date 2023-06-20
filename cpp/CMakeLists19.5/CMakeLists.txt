@@ -114,7 +114,6 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_Enumerate_1_0
     SOP_FeE_ExtendCurveStraight_1_0
     SOP_FeE_ExtremeElem_1_0
-    SOP_FeE_ExtremePrim_1_0
     SOP_FeE_ExtrudeBorder2D_1_0
     SOP_FeE_ExtractPoint_1_0
     SOP_FeE_FlatEdge_2_0

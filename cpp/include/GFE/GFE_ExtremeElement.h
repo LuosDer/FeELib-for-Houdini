@@ -82,14 +82,19 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getInAttribArray().isEmpty() && !useMeasureAttrib || getOutGroupArray().isEmpty())
+        if ( (getInAttribArray().isEmpty() && !useMeasureAttrib) || (getOutGroupArray().isEmpty() && !extremeValueAttribName && !extremeElemAttrib) )
             return false;
 
         if (groupParser.isEmpty())
             return true;
 
-        extremeAttrib = getInAttribArray().getElementGroup(0);
-        const GA_Size numElems = geo->getNumElements(extremeAttrib);
+        if (!useMeasureAttrib)
+        {
+            extremeAttribNonConst = getInAttribArray()[0];
+            extremeAttrib = extremeAttribNonConst;
+        }
+        
+        const GA_Size numElems = useMeasureAttrib ? geo->getNumPrimitives() : geo->getNumElements(extremeAttrib);
         
         if (numElems <= 1)
         {
@@ -107,6 +112,7 @@ private:
         {
             measure.groupParser.setGroup(groupParser);
             extremeAttrib = measure.findOrCreateTuple(true);
+            extremeAttribNonConst = nullptr;
             measure.compute();
         }
         
@@ -139,7 +145,9 @@ private:
             GA_ElementGroup* const outGroup = getOutGroupArray().getElementGroup(0);
             if (outGroup->getOwner() == extremeAttrib->getOwner())
             {
-                outGroup->setElement(extremeElemoff, true);
+                if (groupSetter.reverseGroup)
+                    outGroup->addAll();
+                outGroup->setElement(extremeElemoff, !groupSetter.reverseGroup);
             }
         }
 
@@ -147,10 +155,7 @@ private:
             geo->destroyAttrib(extremeAttribNonConst);
 
         if (useMeasureAttrib)
-        {
             measure.getOutAttribArray().clear();
-        }
-    
         
         return true;
     }
@@ -162,11 +167,11 @@ private:
     void computeExtremeElemoff()
     {
         ComputeExtremeElemoff<FLOAT_T> body(geo, extremeAttrib, statisticalFunction);
-        UTparallelReduce(groupParser.getSplittableRange(), body, subscribeRatio, minGrainSize);
+        UTparallelReduce(groupParser.getSplittableRange(extremeAttrib), body, subscribeRatio, minGrainSize);
         extremeElemoff = body.getExtremeElemoff();
         if (extremeValueAttribName)
         {
-            GA_Attribute* const extremeValueAttrib = getOutAttribArray().findOrCreateTuple();
+            GA_Attribute* const extremeValueAttrib = getOutAttribArray().findOrCreateTuple<FLOAT_T>(false, GA_ATTRIB_DETAIL, *extremeValueAttribName);
             const GA_AIFTuple* const aIFTuple = extremeValueAttrib->getAIFTuple();
             UT_ASSERT_P(aIFTuple);
             aIFTuple->set(extremeValueAttrib, 0, body.getExtremeValue());
@@ -178,18 +183,18 @@ private:
     class ComputeExtremeElemoff
     {
     public:
-        ComputeExtremeElemoff(const GFE_Detail* const a, const GA_Attribute* b, const GFE_StatisticalFunction c)
+        ComputeExtremeElemoff(const GFE_Detail* const a, const GA_Attribute* const b, const GFE_StatisticalFunction c)
             : myGeo(a)
             , myAttrib(b)
             , myStatisticalFunction(c)
-            , myExtremeElemoff(GA_INVALID_OFFSET)
+            , myExtremeElemoff(GFE_INVALID_OFFSET)
             , myExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
         {}
         ComputeExtremeElemoff(ComputeExtremeElemoff& src, UT_Split)
             : myGeo(src.myGeo)
             , myAttrib(src.myAttrib)
             , myStatisticalFunction(src.myStatisticalFunction)
-            , myExtremeElemoff(GA_INVALID_OFFSET)
+            , myExtremeElemoff(GFE_INVALID_OFFSET)
             , myExtremeValue(myStatisticalFunction == GFE_StatisticalFunction::Max ? SYS_FP64_MIN : SYS_FP64_MAX)
         {}
         void operator()(const GA_SplittableRange& r)
@@ -203,17 +208,17 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
+                        bool flag;
                         switch (myStatisticalFunction)
                         {
-                        case GFE_StatisticalFunction::Min:
-                            if (attrib_ph.value(elemoff) < myExtremeValue) 
-                                myExtremeValue = attrib_ph.value(elemoff);
-                            break;
-                        case GFE_StatisticalFunction::Max:
-                            if (attrib_ph.value(elemoff) > myExtremeValue)
-                                myExtremeValue = attrib_ph.value(elemoff);
-                            break;
-                        default: break;
+                        default:
+                        case GFE_StatisticalFunction::Min: flag = attrib_ph.value(elemoff) < myExtremeValue; break;
+                        case GFE_StatisticalFunction::Max: flag = attrib_ph.value(elemoff) > myExtremeValue; break;
+                        }
+                        if (flag)
+                        {
+                            myExtremeValue = attrib_ph.value(elemoff);
+                            myExtremeElemoff = elemoff;
                         }
                     }
                 }
@@ -222,7 +227,7 @@ private:
         void join(const ComputeExtremeElemoff& other)
         {
             myExtremeElemoff = other.myExtremeElemoff;
-            myExtremeValue = other.myExtremeValue;
+            myExtremeValue   = other.myExtremeValue;
         }
         SYS_FORCE_INLINE GA_Offset getExtremeElemoff() const
         { return myExtremeElemoff; }
@@ -230,7 +235,7 @@ private:
         { return myExtremeValue; }
     private:
         const GFE_Detail* const myGeo;
-        const GA_Attribute* myAttrib;
+        const GA_Attribute* const myAttrib;
         GFE_StatisticalFunction myStatisticalFunction;
         GA_Offset myExtremeElemoff;
         T myExtremeValue;

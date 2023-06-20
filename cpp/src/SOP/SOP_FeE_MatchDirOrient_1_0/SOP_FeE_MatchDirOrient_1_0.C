@@ -25,260 +25,130 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        range   { 0 1 }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
     }
     parm {
-        name    "pointGroup"
-        cppname "PointGroup"
-        label   "Point Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-    parm {
-        name    "vertexGroup"
-        cppname "VertexGroup"
-        label   "Vertex Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-    parm {
-        name    "edgeGroup"
-        cppname "EdgeGroup"
-        label   "Edge Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "0" }
-    }
-
-
-    parm {
-        name    "promoteEdgeGroupToPrim"
-        cppname "PromoteEdgeGroupToPrim"
-        label   "Promote Edge Group to Prim"
-        type    string
-        default { "" }
-    }
-
-
-
-    parm {
-        name    "outSrcPrims"
-        cppname "OutSrcPrims"
-        label   "Source Prims"
-        type    toggle
-        default { 0 }
-        nolabel
-        joinnext
-    }
-    parm {
-        name    "srcPrimsAttribName"
-        cppname "SrcPrimsAttribName"
-        label   "Source Prims Attrib Name"
-        type    string
-        default { "srcPrims" }
-        disablewhen "{ outSrcPrims == 0 }"
-    }
-
-
-
-    parm {
-        name    "primType"
-        cppname "PrimType"
-        label   "Prim Type"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
         type    ordinal
-        default { "polyline" }
+        default { "guess" }
         menu {
-            "polyline"  "Polyline"
-            "poly"      "Poly"
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
         }
     }
-
     parm {
-        name    "excludeSharedEdge"
-        cppname "ExcludeSharedEdge"
-        label   "Exclude Shared Edge"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "close"
-        cppname "Close"
-        label   "Close"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "useEndGroup"
-        cppname "UseEndGroup"
-        label   "Use End Group"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "endGroup"
-        cppname "EndGroup"
-        label   "End Group"
-        type    string
-        default { "end" }
-        disablewhen "{ useEndGroup == 0 }"
-    }
-
-)THEDSFILE"
-// ==== This is necessary because MSVC++ has a limit of 16380 character per
-// ==== string literal
-R"THEDSFILE(
-
-    parm {
-        name    "attribFromVertex"
-        cppname "AttribFromVertex"
-        label   "Attrib from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "attribFromPrim"
-        cppname "AttribFromPrim"
-        label   "Attrib from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromVertex"
-        cppname "GroupFromVertex"
-        label   "Group from Vertex"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromPrim"
-        cppname "GroupFromPrim"
-        label   "Group from Prim"
-        type    string
-        default { "" }
-    }
-    parm {
-        name    "groupFromEdge"
-        cppname "GroupFromEdge"
-        label   "Group from Edge"
-        type    string
-        default { "" }
-    }
-
-    parm {
-        name    "mergeInput"
-        cppname "MergeInput"
-        label   "Merge Input"
-        type    toggle
-        default { "0" }
-        disablewhen "{ close == 1 }"
-    }
-
-
-    parm {
-        name    "correctGeoWinding"
-        cppname "CorrectGeoWinding"
-        label   "Correct Geo Winding"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "reverse"
-        cppname "Reverse"
-        label   "Reverse"
-        type    toggle
-        default { "0" }
-    }
-    parm {
-        name    "meshCap"
-        cppname "MeshCap"
-        label   "Mesh Cap"
-        type    toggle
-        default { "0" }
-    }
-
-    parm {
-        name    "addUV"
-        cppname "AddUV"
-        label   "Add UV"
-        type    toggle
-        default { "0" }
-    }
-    groupsimple {
-        name    "uv_folder"
-        label   "UV"
-        disablewhen "{ addUV == 0 }"
-
-        parm {
-            name    "uvAttribName"
-            cppname "UVAttribName"
-            label   "UV Attribute Name"
-            type    string
-            default { "uv" }
-        }
-        parm {
-            name    "uvSize"
-            cppname "UVSize"
-            label   "UV Size"
-            type    integer
-            default { "3" }
-            range   { 1! 3! }
-
-        }
-        parm {
-            name    "uvMethod"
-            cppname "UVMethod"
-            label   "UV Method"
-            type    ordinal
-            default { "uniform" }
-            menu {
-                "uniform"   "Uniform"
-                "length"    "Length"
-            }
-        }
-        parm {
-            name    "seamGroup"
-            cppname "SeamGroup"
-            label   "Seam Group"
-            type    string
-            default { "seams" }
-            disablewhen "{ uvMethod != uniform }"
-        }
-        parm {
-            name    "uvLayout"
-            cppname "UVLayout"
-            label   "UV Layout"
-            type    toggle
-            default { "0" }
+        name    "dirAttribClass"
+        cppname "DirAttribClass"
+        label   "Dir Attrib Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Prim"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
         }
     }
-
-
-
     parm {
-        name    "outTopoAttrib"
-        cppname "OutTopoAttrib"
-        label   "Output Topo Attribute"
+        name    "dirAttrib"
+        cppname "DirAttrib"
+        label   "Dir Attrib"
+        type    string
+        default { "N" }
+    }
+    parm {
+        name    "useDirRefAttrib"
+        cppname "UseDirRefAttrib"
+        label   "Use Dir Ref Attrib"
         type    toggle
         default { "0" }
+    }
+    parm {
+        name    "dirRefAttrib"
+        cppname "DirRefAttrib"
+        label   "Dir Ref Attrib"
+        type    string
+        default { "`chs('dirAttrib')`" }
+        hidewhen "{ useDirRefAttrib == 0 }"
+    }
+    parm {
+        name    "constDir"
+        cppname "ConstDir"
+        label   "Const Dir"
+        type    vector
+        size    3
+        default { "0" "1" "0" }
+        range   { -1 1 }
+        hidewhen "{ useDirRefAttrib == 0 }"
+    }
+    parm {
+        name    "outDir"
+        cppname "OutDir"
+        label   "Out Direction"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "accurate"
+        cppname "Accurate"
+        label   "Accurate"
+        type    toggle
+        default { "0" }
+        disablewhen "{ outDir == 0 }"
+    }
+    parm {
+        name    "keepBearing"
+        cppname "KeepBearing"
+        label   "Keep Bearing"
+        type    toggle
+        default { "0" }
+        disablewhen "{ accurate == 0 }"
+    }
+    parm {
+        name    "reverseDir"
+        cppname "ReverseDir"
+        label   "Reverse Dir"
+        type    toggle
+        default { "0" }
+        disablewhen "{ outDir == 0 }"
+    }
+    parm {
+        name    "outDirReversedGroup"
+        cppname "OutDirReversedGroup"
+        label   "Out Dir Reversed Group"
+        type    toggle
+        joinnext
+        nolabel
+        default { "0" }
+    }
+    parm {
+        name    "dirReversedGroupName"
+        cppname "DirReversedGroupName"
+        label   "Dir Reversed Group Name"
+        type    string
+        default { "dirReversed" }
+        disablewhen "{ outDirReversedGroup == 0 }"
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+        disablewhen "{ outDirReversedGroup == 0 }"
     }
 
     parm {
@@ -306,22 +176,9 @@ SOP_FeE_MatchDirOrient_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_MatchDirOrient_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        //templ.setChoiceListPtr("pointGroup"_sh, &SOP_Node::pointGroupMenu);
-        //templ.setChoiceListPtr("vertexGroup"_sh, &SOP_Node::vertexNamedGroupMenu);
-        //templ.setChoiceListPtr("edgeGroup"_sh, &SOP_Node::edgeGroupMenu);
-
-        //templ.setChoiceListPtr("attribFromPrim"_sh, &SOP_Node::primAttribMenu);
-        //templ.setChoiceListPtr("attribFromVertex"_sh, &SOP_Node::vertexAttribMenu);
-
-        //templ.setChoiceListPtr("groupFromPrim"_sh, &SOP_Node::primGroupMenu);
-        //templ.setChoiceListPtr("groupFromVertex"_sh, &SOP_Node::vertexNamedGroupMenu);
-        //templ.setChoiceListPtr("groupFromEdge"_sh, &SOP_Node::edgeGroupMenu);
-        //templ.setChoiceListPtr("promoteEdgeGroupToPrim"_sh, &SOP_Node::edgeGroupMenu);
-        templ.setChoiceListPtr("seamGroup"_sh, &SOP_Node::edgeGroupMenu);
-        
-        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::allTextureCoordMenu);
-        
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("dirAttrib"_sh,    &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("dirRefAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -388,6 +245,39 @@ SOP_FeE_MatchDirOrient_1_0::cookVerb() const
 
 
 
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_MatchDirOrient_1_0Parms::DirAttribClass parmAttribClass)
+{
+    using namespace SOP_FeE_MatchDirOrient_1_0Enums;
+    switch (parmAttribClass)
+    {
+    case DirAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case DirAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case DirAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case DirAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_MatchDirOrient_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_MatchDirOrient_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
 void
 SOP_FeE_MatchDirOrient_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -396,11 +286,15 @@ SOP_FeE_MatchDirOrient_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     //auto sopcache = (SOP_FeE_MatchDirOrient_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
 
+
+
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_AttributeOwner attribOwner = sopAttribOwner(sopparms.getDirAttribClass());
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -408,25 +302,24 @@ SOP_FeE_MatchDirOrient_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
     
     GFE_MatchDirOrient matchDirOrient(outGeo0, inGeo1, cookparms);
-    
-    
     matchDirOrient.setComputeParm(
-        sopparms.getUseSnapDist(), sopparms.getSnapDist(),
-        sopparms.getOutAsVertexGroup(), sopparms.getReverseGroup(),
+        sopparms.getConstDir(),
+        sopparms.getOutDir(), sopparms.getAccurate(),
+        sopparms.getKeepBearing(), sopparms.getReverseDir(), 
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    matchDirOrient.groupSetter.setParm(sopparms.getReverseGroup());
 
     matchDirOrient.groupParser.setGroup(groupType, sopparms.getGroup());
-    matchDirOrient.getRef0AttribArray().appends(GA_ATTRIB_POINT, sopparms.getEdgeGroup());
-
     
+    matchDirOrient.getOutAttribArray(). appends(attribOwner, sopparms.getDirAttrib());
+    
+    if (sopparms.getUseDirRefAttrib())
+        matchDirOrient.appendInRef0Attribs(attribOwner, sopparms.getDirRefAttrib());
+    if (sopparms.getOutDirReversedGroup())
+        matchDirOrient.findOrCreateGroup(GFE_Type::attributeOwner_groupType(attribOwner), sopparms.getDirReversedGroupName());
+    
+
     matchDirOrient.computeAndBumpDataId();
-
-
-    
+    matchDirOrient.visualizeOutGroup();
 }
-
-
-
-namespace SOP_FeE_MatchDirOrient_1_0_Namespace {
-
-} // End SOP_FeE_MatchDirOrient_1_0_Namespace namespace

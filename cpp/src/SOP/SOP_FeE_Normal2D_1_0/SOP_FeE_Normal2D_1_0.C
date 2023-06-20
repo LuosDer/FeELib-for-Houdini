@@ -329,10 +329,10 @@ sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Normal2D_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_Normal2D_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Normal2D_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -340,7 +340,7 @@ sopGroupType(SOP_FeE_Normal2D_1_0Parms::GroupType parmgrouptype)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
     return GA_GROUP_INVALID;
 }
 
@@ -377,24 +377,22 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     normal2D.setPositionAttrib(sopparms.getPosAttrib());
     
-    normal2D.getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, sopparms.getNormal2DAttribName());
-
-    if (sopparms.getFindNormal3D() && sopparms.getAddNormal3DIfNoFind())
-        normal2D.normal3D.getOutAttribArray().findOrCreateNormal3D(true, geo0Normal3DSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
+    normal2D.setNormal2DAttrib(false, sopparms.getNormal2DAttribName());
 
     
     const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
     const bool copyOrigIfZero = false;
     normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
-    
+
+    normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
     if (sopparms.getUseConstantNormal3D())
-        normal2D.setUseConstantNormal3D(sopparms.getDefaultNormal3D());
-        
-    normal2D.setComputeParm(
-        sopparms.getScaleByTurns(), sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend(),
-        sopparms.getExtrapolateEnds(),
-        sopparms.getAddNormal3DIfNoFind(),
+        normal2D.setNormal3DAttrib();
+    else
+        normal2D.setNormal3DAttrib(geo0Normal3DSearchOrder, sopparms.getFindNormal3D() ? sopparms.getNormal3DAttrib() : UT_StringHolder(""), sopparms.getAddNormal3DIfNoFind());
+    
+    normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
+        sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     normal2D.computeAndBumpDataId();

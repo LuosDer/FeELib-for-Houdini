@@ -82,7 +82,7 @@ static const char *theDsFile = R"THEDSFILE(
             "boundaryintegral"  "Boundary Integral"
             "surfaceintegral"   "Surface Integral"
         }
-        disablewhen "{ useMeasureAttrib == 1 }"
+        disablewhen "{ useMeasureAttrib == 0 }"
     }
 
 
@@ -98,7 +98,7 @@ static const char *theDsFile = R"THEDSFILE(
             "vertex"    "Vertex"
             "detail"    "Detail"
         }
-        disablewhen "{ useMeasureAttrib == 0 }"
+        disablewhen "{ useMeasureAttrib == 1 }"
     }
     parm {
         name    "extremeAttrib"
@@ -106,7 +106,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Extreme Attrib"
         type    string
         default { "" }
-        disablewhen "{ useMeasureAttrib == 0 }"
+        disablewhen "{ useMeasureAttrib == 1 }"
     }
 
     parm {
@@ -125,9 +125,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "extremeElem" }
         disablewhen "{ outExtremeElemAttrib == 0 }"
-        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Details kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
 
     parm {
@@ -145,10 +142,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Extreme Value Attrib Name"
         type    string
         default { "extremeValue" }
-        disablewhen "{ outExtremeElemAttrib == 0 }"
-        parmtag { "script_action" "import soputils kwargs['geometrytype'] = hou.geometryType.Details kwargs['inputindex'] = 0 soputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        disablewhen "{ outExtremeValueAttrib == 0 }"
     }
 
 
@@ -160,6 +154,7 @@ static const char *theDsFile = R"THEDSFILE(
         nolabel
         joinnext
         default { "0" }
+        disablewhen "{ delElement == 1 }"
     }
     parm {
         name    "extremeElemGroupName"
@@ -178,6 +173,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Reverse Group"
         type    toggle
         default { "off" }
+        disablewhen "{ delElement == 0 outExtremeElemGroup == 0 }"
     }
 
     parm {
@@ -327,10 +323,10 @@ SOP_FeE_ExtremeElem_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_ExtremeElem_1_0Parms::ExtremeAttribClass attribClass)
+sopAttribOwner(SOP_FeE_ExtremeElem_1_0Parms::ExtremeAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_ExtremeElem_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case ExtremeAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case ExtremeAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -374,21 +370,6 @@ sopStatisticalFunction(SOP_FeE_ExtremeElem_1_0Parms::StatisticalFunction parmSta
 }
 
 
-// static GFE_MeasureType
-// sopMeasureType(SOP_FeE_ExtremeElem_1_0Parms::Measure parmMeasureType)
-// {
-//     using namespace SOP_FeE_ExtremeElem_1_0Enums;
-//     switch (parmMeasureType)
-//     {
-//     case Measure::PERIMETER:     return GFE_MeasureType::Perimeter;    break;
-//     case Measure::AREA:          return GFE_MeasureType::Area;         break;
-//     }
-//     //UT_ASSERT_MSG(0, "Unhandled GFE_MeasureType!");
-//     return GFE_MeasureType::Area;
-// }
-
-
-
 static GFE_MeasureType
 sopMeasureType(SOP_FeE_ExtremeElem_1_0Parms::MeasureType parmMeasureType)
 {
@@ -419,8 +400,8 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     outGeo0.replaceWith(inGeo0);
 
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_StatisticalFunction statisticalFunction = sopStatisticalFunction(sopparms.getStatisticalFunction());
     const GA_AttributeOwner extremeAttribClass = sopAttribOwner(sopparms.getExtremeAttribClass());
     //const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasure());
@@ -457,12 +438,13 @@ SOP_FeE_ExtremeElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     {
         extremeElem.setMeasureAttrib(true);
         extremeElem.measure.measureType = measureType;
+        //extremeElem.measure.setComputeParm(measureType, 1, 9999999);
     }
     else
         extremeElem.getInAttribArray().set(extremeAttribClass, sopparms.getExtremeAttrib());
     
-    if (sopparms.getOutExtremeElemGroup())
-        extremeElem.findOrCreateGroup(extremeAttribClass, sopparms.getExtremeElemGroupName());
+    if (sopparms.getOutExtremeElemGroup() || sopparms.getDelElement())
+        extremeElem.findOrCreateGroup(sopparms.getDelElement(), extremeAttribClass, sopparms.getExtremeElemGroupName());
     
     if (sopparms.getOutExtremeElemAttrib())
         extremeElem.setExtremeElemAttrib(false, sopparms.getExtremeElemAttribName());

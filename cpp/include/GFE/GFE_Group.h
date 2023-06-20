@@ -31,6 +31,29 @@ public:
 
     ~GFE_GroupSetter(){}
 
+
+    
+    SYS_FORCE_INLINE void clear()
+    { elementGroup = nullptr; edgeGroup = nullptr; }
+
+    SYS_FORCE_INLINE bool isElementValid() const
+    { return elementGroup; }
+
+    SYS_FORCE_INLINE bool isEdgeValid() const
+    { return elementGroup; }
+
+    SYS_FORCE_INLINE bool isValid() const
+    { return elementGroup || edgeGroup; }
+
+    SYS_FORCE_INLINE bool isElementInvalid() const
+    { return !elementGroup; }
+
+    SYS_FORCE_INLINE bool isEdgeInvalid() const
+    { return !edgeGroup; }
+
+    SYS_FORCE_INLINE bool isInvalid() const
+    { return !isValid(); }
+
 	
     SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
     { this->groupMergeType = groupMergeType; this->reverseGroup = reverseGroup; }
@@ -82,7 +105,7 @@ public:
     {  if (elementGroup) elementGroup->invalidateGroupEntries(); }
 
     
-    SYS_FORCE_INLINE GA_Group* getGroup()
+    SYS_FORCE_INLINE GA_Group* getGroup() const
     { 
          if (elementGroup)
              return static_cast<GA_Group*>(elementGroup);
@@ -90,10 +113,10 @@ public:
              return static_cast<GA_Group*>(edgeGroup);
     }
 
-    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup()
+    SYS_FORCE_INLINE GA_ElementGroup* getElementGroup() const
     { return elementGroup; }
     
-    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup()
+    SYS_FORCE_INLINE GA_EdgeGroup* getEdgeGroup() const
     { return edgeGroup; }
 
 

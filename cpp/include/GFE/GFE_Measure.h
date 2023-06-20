@@ -207,16 +207,18 @@ private:
 
     //GU_Detail::compute3DArea(const GA_Offset primoff)
 
-    template<typename T>
-    T computePerimeter(const GA_ROHandleT<UT_Vector3T<T>>& pos_h, const GA_Offset primoff)
+    template<typename FLOAT_T>
+    FLOAT_T computePerimeter(const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h, const GA_Offset primoff)
     {
-        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-        const GA_Size numvtx = vertices.size();
+        //const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+        //const GA_Size numvtx = vertices.size();
+        const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
         if (numvtx < 2)
             return 0.0;
 
-        const bool closed = vertices.getExtraFlag();
-        T pSum = 0.0;
+        //const bool closed = vertices.getExtraFlag();
+        const bool closed = geo->getPrimitiveClosedFlag(primoff);
+        FLOAT_T pSum = 0.0;
 
         switch (geo->getPrimitiveTypeId(primoff))
         {
@@ -227,36 +229,31 @@ private:
         default:
             return 0.0;
         }
-
-        const GA_AttributeOwner attribOwner = pos_h.getAttribute()->getOwner();
-
-        UT_Vector3T<T> pos0, pos1;
-        switch (attribOwner)
+        
+        UT_Vector3T<FLOAT_T> pos0, pos1, dir;
+        switch (pos_h->getOwner())
         {
         case GA_ATTRIB_VERTEX:
+            pos0 = pos_h.get(geo->primVertex(primoff, closed ? numvtx-1 : 0));
+            for (GA_Size vtxpnum = !closed; vtxpnum < numvtx; ++vtxpnum)
             {
-                pos0 = pos_h.get(vertices[closed ? numvtx - 1 : 0]);
-                for (GA_Size i(!closed); i < numvtx; ++i)
-                {
-                    pos1 = pos_h.get(vertices[i]);
-                    pSum += (pos1 - pos0).length();
-                    pos0 = pos1;
-                }
+                pos1 = pos_h.get(geo->getPrimitiveVertexOffset(primoff, vtxpnum));
+                pos0 = pos1 - pos0;
+                pSum += dir.length();
+                pos0 = pos1;
             }
             break;
         case GA_ATTRIB_POINT:
+            pos0 = pos_h.get(geo->primPoint(primoff, closed ? numvtx-1 : 0));
+            for (GA_Size vtxpnum = !closed; vtxpnum < numvtx; ++vtxpnum)
             {
-                pos0 = pos_h.get(geo->vertexPoint(vertices[closed ? numvtx - 1 : 0]));
-                for (GA_Size i(!closed); i < numvtx; ++i)
-                {
-                    pos1 = pos_h.get(geo->vertexPoint(vertices[i]));
-                    pSum += (pos1 - pos0).length();
-                    pos0 = pos1;
-                }
+                pos1 = pos_h.get(geo->primPoint(primoff, vtxpnum));
+                pos0 = pos1 - pos0;
+                pSum += pos0.length();
+                pos0 = pos1;
             }
             break;
-        default:
-            return 0.0;
+        default: return 0.0;
         }
 
         return pSum;
@@ -264,16 +261,17 @@ private:
 
     
 
-    template<typename T>
-    T computeArea(const GA_ROHandleT<UT_Vector3T<T>>& pos_h, const GA_Offset primoff)
+    template<typename FLOAT_T>
+    FLOAT_T computeArea(const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h, const GA_Offset primoff)
     {
-        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+        //const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
 
-        const bool closed = vertices.getExtraFlag();
+        const bool closed = geo->getPrimitiveClosedFlag(primoff);
         if (!closed)
             return 0.0;
 
-        const GA_Size numvtx = vertices.size();
+        //const GA_Size numvtx = vertices.size();
+        const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
         if (numvtx < 3)
             return 0.0;
 
@@ -290,112 +288,84 @@ private:
 
         const GA_AttributeOwner attribOwner = pos_h.getAttribute()->getOwner();
 
-        UT_Vector3T<T> pos0, pos1, pos2;
+        UT_Vector3T<FLOAT_T> pos0, pos1, pos2;
 
         switch (attribOwner)
         {
         case GA_ATTRIB_VERTEX:
-        {
-            pos0 = pos_h.get(vertices[0]);
-            pos1 = pos_h.get(vertices[1]);
-            pos2 = pos_h.get(vertices[2]);
-        }
+            pos0 = pos_h.get(geo->primVertex(primoff, 0));
+            pos1 = pos_h.get(geo->primVertex(primoff, 1));
+            pos2 = pos_h.get(geo->primVertex(primoff, 2));
         break;
         case GA_ATTRIB_POINT:
-        {
-            pos0 = pos_h.get(geo->vertexPoint(vertices[0]));
-            pos1 = pos_h.get(geo->vertexPoint(vertices[1]));
-            pos2 = pos_h.get(geo->vertexPoint(vertices[2]));
-        }
+            pos0 = pos_h.get(geo->primPoint(primoff, 0));
+            pos1 = pos_h.get(geo->primPoint(primoff, 1));
+            pos2 = pos_h.get(geo->primPoint(primoff, 2));
         break;
         default:
             return 0.0;
         }
-        //UT_Vector3T<T>& pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[0]));
-        //UT_Vector3T<T>& pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[1]));
-        //UT_Vector3T<T>& pos2 = geo->getPos3T<T>(geo->vertexPoint(vertices[2]));
+        //UT_Vector3T<FLOAT_T>& pos1 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[0]));
+        //UT_Vector3T<FLOAT_T>& pos1 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[1]));
+        //UT_Vector3T<FLOAT_T>& pos2 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[2]));
 
         //GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
 
         switch (numvtx)
         {
-        case 3:
-        {
-            return heronsFormula(pos0, pos1, pos2);
-        }
-        break;
+        case 3: return heronsFormula(pos0, pos1, pos2); break;
         case 4:
         {
-            //UT_Vector3T<T> pos3 = geo->getPos3T<T>(geo->vertexPoint(vertices[3]));
-            UT_Vector3T<T> pos3;
+            //UT_Vector3T<FLOAT_T> pos3 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[3]));
+            UT_Vector3T<FLOAT_T> pos3;
             switch (attribOwner)
             {
-            case GA_ATTRIB_VERTEX:
-            {
-                pos3 = pos_h.get(vertices[3]);
-            }
-            break;
-            case GA_ATTRIB_POINT:
-            {
-                pos3 = pos_h.get(geo->vertexPoint(vertices[3]));
-            }
-            break;
-            default:
-                return 0.0;
+            case GA_ATTRIB_VERTEX: pos3 = pos_h.get(geo->primVertex(primoff, 3)); break;
+            case GA_ATTRIB_POINT:  pos3 = pos_h.get(geo->primPoint(primoff, 3));  break;
+            default: return 0.0;
             }
             return bretschneidersFormula0(pos0, pos1, pos2, pos3);
         }
         break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled numvtx");
-            break;
+        default: UT_ASSERT_MSG(0, "unhandled numvtx"); break;
         }
 
-
-
-        const UT_Vector3T<T>& dir0 = pos1 - pos0;
-        const UT_Vector3T<T>& dir1 = pos2 - pos1;
-        const UT_Vector3T<T>& crossdir0B = cross(dir0, dir1);
-        T lengthdir0B = crossdir0B.length();
+        const UT_Vector3T<FLOAT_T>& dir0 = pos1 - pos0;
+        const UT_Vector3T<FLOAT_T>& dir1 = pos2 - pos1;
+        const UT_Vector3T<FLOAT_T>& crossdir0B = cross(dir0, dir1);
+        FLOAT_T lengthdir0B = crossdir0B.length();
         lengthdir0B = 1.0 / lengthdir0B;
-        const T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
-        const T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
-        const T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
+        const FLOAT_T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
+        const FLOAT_T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
+        const FLOAT_T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
-        T areaSum = 0.0;
-        //pos0 = geo->getPos3T<T>(geo->vertexPoint(vertices[numvtx - 1]));
+        FLOAT_T areaSum = 0.0;
+        //pos0 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[numvtx - 1]));
         switch (attribOwner)
         {
         case GA_ATTRIB_VERTEX:
-        {
-            pos0 = pos_h.get(vertices[numvtx - 1]);
-            for (GA_Size vtxpnum(0); vtxpnum < numvtx; ++vtxpnum)
+            pos0 = pos_h.get(geo->primVertex(numvtx-1));
+            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
             {
-                //pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[vtxpnum]));
-                pos1 = pos_h.get(vertices[vtxpnum]);
+                pos1 = pos_h.get(geo->primVertex(vtxpnum));
                 areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
-                    + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
-                    + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
+                         + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
+                         + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
                 pos0 = pos1;
             }
-        }
         break;
         case GA_ATTRIB_POINT:
-        {
-            pos0 = pos_h.get(geo->vertexPoint(vertices[numvtx - 1]));
-            for (GA_Size vtxpnum(0); vtxpnum < numvtx; ++vtxpnum)
+            pos0 = pos_h.get(geo->primPoint(primoff, numvtx-1));
+            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
             {
-                //pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[vtxpnum]));
-                pos1 = pos_h.get(geo->vertexPoint(vertices[vtxpnum]));
+                pos1 = pos_h.get(geo->primPoint(primoff, vtxpnum));
                 areaSum += cosnz * (pos0[0] * pos1[1] - pos1[0] * pos0[1])
-                    + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
-                    + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
+                         + cosnx * (pos0[1] * pos1[2] - pos1[1] * pos0[2])
+                         + cosny * (pos0[2] * pos1[0] - pos1[2] * pos0[0]);
                 pos0 = pos1;
             }
-        }
         break;
-        default:
-            return 0.0;
+        default: return 0.0;
         }
 
         return abs(0.5 * areaSum);
@@ -411,9 +381,6 @@ private:
     //     return prim->calcVolume(bboxCenter);
     // }
 
-
-
-    
 
 #define GFE_MEASUREPRIM_FUNC_SPECIALIZATION(FUNC_NAME);                                                                              \
         template<typename FLOAT_T, typename POS_FLOAT_T>                                                                             \
@@ -431,7 +398,7 @@ private:
                         measure_ph.setPage(start);                                                                                   \
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)                                                    \
                         {                                                                                                            \
-                            measure_ph.set(elemoff, FUNC_NAME<POS_FLOAT_T>(pos_h, elemoff));                                         \
+                            measure_ph.value(elemoff) = FUNC_NAME<POS_FLOAT_T>(pos_h, elemoff);                                      \
                         }                                                                                                            \
                     }                                                                                                                \
                 }                                                                                                                    \
@@ -464,8 +431,8 @@ void computeVolume()
                 {
                     const GEO_Hull* const prim = static_cast<const GEO_Hull*>(geo->getPrimitive(elemoff));
                     const FLOAT_T value = prim->calcVolume(bboxCenter);
-                    measure_ph.set(elemoff, value);
-                    //measure_ph.set(elemoff, computeVolume<FLOAT_T>(elemoff));
+                    measure_ph.value(elemoff) = value;
+                    //measure_ph.value(elemoff) = computeVolume<FLOAT_T>(elemoff);
                 }
             }
         }
@@ -1165,7 +1132,7 @@ computeArea##T(const GA_Detail* const geo, const GA_Offset primoff)             
         case GA_ATTRIB_VERTEX:
         {
             pos0 = pos_h.get(vertices[numvtx - 1]);
-            for (GA_Size vtxpnum(0); vtxpnum < numvtx; ++vtxpnum)
+            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
             {
                 //pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[vtxpnum]));
                 pos1 = pos_h.get(vertices[vtxpnum]);
@@ -1179,7 +1146,7 @@ computeArea##T(const GA_Detail* const geo, const GA_Offset primoff)             
         case GA_ATTRIB_POINT:
         {
             pos0 = pos_h.get(geo->vertexPoint(vertices[numvtx - 1]));
-            for (GA_Size vtxpnum(0); vtxpnum < numvtx; ++vtxpnum)
+            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
             {
                 //pos1 = geo->getPos3T<T>(geo->vertexPoint(vertices[vtxpnum]));
                 pos1 = pos_h.get(geo->vertexPoint(vertices[vtxpnum]));
