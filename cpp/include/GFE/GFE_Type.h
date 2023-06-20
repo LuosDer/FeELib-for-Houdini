@@ -145,7 +145,81 @@ SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
 { return axisDir<UT_Vector3T<fpreal16>>(axis); }
 
 
+SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
+
     
+
+static bool checkTupleAttrib(
+    const GA_Attribute* const attribPtr,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const int tupleSize = 1,
+    const GA_Defaults& defaults = GA_Defaults(0.0f)
+)
+{
+    if (!attribPtr)
+        return false;
+
+    //int a = attribPtr->getTupleSize();
+    if (attribPtr->getTupleSize() != tupleSize)
+    {
+        return false;
+    }
+    const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+    if (aifTuple)
+    {
+        if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attribPtr) != storage) ||
+            aifTuple->getDefaults(attribPtr) != defaults)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
+        {
+            return false;
+        }
+        //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
+    }
+    return true;
+}
+
+SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attribPtr, const GA_Storage storage = GA_STORE_INVALID)
+{ return checkTupleAttrib(attribPtr, storage, 3); }
+
+static bool checkArrayAttrib(
+    const GA_Attribute* const attribPtr,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const int tupleSize = 3
+)
+{
+    if (!attribPtr)
+        return false;
+    
+    if (attribPtr->getTupleSize() != tupleSize)
+    {
+        return false;
+    }
+    const GA_AIFNumericArray* const aifNumericArray = attribPtr->getAIFNumericArray();
+    if (aifNumericArray)
+    {
+        if (storage != GA_STORE_INVALID && aifNumericArray->getStorage(attribPtr) != storage)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
+        {
+            return false;
+        }
+        //const GA_AIFSharedStringArray* const aifStrArray = attribPtr->getAIFSharedStringArray();
+    }
+    return true;
+}
+
     
 SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute& posAttrib)
 { return posAttrib.getOwner() == GA_ATTRIB_POINT && posAttrib.getAIFTuple() && posAttrib.getTupleSize()==3; }

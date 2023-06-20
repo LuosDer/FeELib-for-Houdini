@@ -378,7 +378,7 @@ findOrCreateTuple(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
         return attribPtr;
 
     if (detached)
@@ -477,7 +477,7 @@ findOrCreateTuple(
         const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-        if (checkArrayAttrib(attribPtr, finalStorage, tuple_size, emplaceBack))
+        if (checkArrayAttrib(detached, attribPtr, finalStorage, tuple_size, emplaceBack))
             return attribPtr;
         
 
@@ -569,7 +569,7 @@ findOrCreateTuple(
         const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         GA_Attribute* attribPtr = findPieceAttrib(pieceAttribSearchOrder, attribName);
-        if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+        if (checkTupleAttrib(detached, attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
             return attribPtr;
 
         // if (attribPtr)
@@ -679,7 +679,7 @@ findOrCreateUV(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
     GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(*geo, owner, attribName);
-    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
         return attribPtr;
         
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
@@ -745,14 +745,14 @@ findOrCreateDir(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
         return attribPtr;
 
         
     if (detached)
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tuple_size, defaults, attribute_options));
-        attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
+        attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
         //attribPtr = attribUPtr.get();
     }
     else
@@ -812,14 +812,14 @@ findOrCreateNormal3D(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-    if (checkTupleAttrib(attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tuple_size, defaults, emplaceBack))
         return attribPtr;
         
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
     if (detached)
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tuple_size, defaults, attribute_options));
-        attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
+        attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
         //attribPtr = attribUPtr.get();
     }
     else
@@ -907,88 +907,54 @@ protected:
 
 
 bool checkTupleAttrib(
-    GA_Attribute* &attribPtr,
-    const GA_Storage finalStorage = GA_STORE_INVALID,
-    const int tuple_size = 3,
+    const bool detached,
+    GA_Attribute*& attrib,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const int tupleSize = 3,
     const GA_Defaults& defaults = GA_Defaults(0.0f),
     const bool emplaceBack = true
 )
 {
-    if (!attribPtr)
+    if (!attrib)
         return false;
-
-    //int a = attribPtr->getTupleSize();
-    if (attribPtr->getTupleSize() != tuple_size)
+    if (GFE_Type::checkTupleAttrib(attrib, storage, tupleSize, defaults))
     {
-        geo->getAttributes().destroyAttribute(attribPtr);
-        attribPtr = nullptr;
-        return false;
-    }
-    const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
-    if (aifTuple)
-    {
-        if (aifTuple->getStorage(attribPtr) != finalStorage ||
-            aifTuple->getDefaults(attribPtr) != defaults)
-        {
-            geo->getAttributes().destroyAttribute(attribPtr);
-            attribPtr = nullptr;
-            return false;
-        }
+        if (emplaceBack)
+            attribArray.emplace_back(attrib);
+        return true;
     }
     else
     {
-        if (finalStorage != GA_STORE_STRING)
-        {
-            geo->getAttributes().destroyAttribute(attribPtr);
-            attribPtr = nullptr;
-            return false;
-        }
-        //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
+        if (!detached)
+            geo->getAttributes().destroyAttribute(attrib);
+        attrib = nullptr;
+        return false;
     }
-    if (emplaceBack)
-        attribArray.emplace_back(attribPtr);
-    return true;
 }
 
 bool checkArrayAttrib(
-    GA_Attribute*& attribPtr,
-    const GA_Storage finalStorage = GA_STORE_INVALID,
-    const int tuple_size = 3,
+    const bool detached,
+    GA_Attribute*& attrib,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const int tupleSize = 3,
     const bool emplaceBack = true
 )
 {
-    if (!attribPtr)
+    if (!attrib)
         return false;
-    
-    if (attribPtr->getTupleSize() != tuple_size)
+    if (GFE_Type::checkArrayAttrib(attrib, storage, tupleSize))
     {
-        geo->getAttributes().destroyAttribute(attribPtr);
-        attribPtr = nullptr;
-        return false;
-    }
-    const GA_AIFNumericArray* const aifNumericArray = attribPtr->getAIFNumericArray();
-    if (aifNumericArray)
-    {
-        if (aifNumericArray->getStorage(attribPtr) != finalStorage)
-        {
-            geo->getAttributes().destroyAttribute(attribPtr);
-            attribPtr = nullptr;
-            return false;
-        }
+        if (emplaceBack)
+            attribArray.emplace_back(attrib);
+        return true;
     }
     else
     {
-        if (finalStorage != GA_STORE_STRING)
-        {
-            geo->getAttributes().destroyAttribute(attribPtr);
-            attribPtr = nullptr;
-            return false;
-        }
-        //const GA_AIFSharedStringArray* const aifStrArray = attribPtr->getAIFSharedStringArray();
+        if (!detached)
+            geo->getAttributes().destroyAttribute(attrib);
+        attrib = nullptr;
+        return false;
     }
-    if (emplaceBack)
-        attribArray.emplace_back(attribPtr);
-    return true;
 }
 
 

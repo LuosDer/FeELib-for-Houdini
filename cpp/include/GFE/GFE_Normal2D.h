@@ -76,33 +76,31 @@ public:
         }
     }
     
-#define __GFE_Normal2D_Temp_AttribName "__GFE_Normal2D_Temp_AttribName"
     
-    SYS_FORCE_INLINE GA_Attribute* setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
+    SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
+    { normal2DAttribName = detached ? nullptr: attribName; normal2DAttrib = nullptr }
+    
+    SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const UT_StringRef& attribName = "")
+    { setNormal2DAttrib(detached, attribName.c_str()); }
+    
+    SYS_FORCE_INLINE void setNormal2DAttrib(GA_Attribute* const attrib)
     {
-        if (!detached)
-            normal2DAttribName = attribName;
-        return getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, __GFE_Normal2D_Temp_AttribName);
+        normal2DAttribName = nullptr;
+        normal2DAttrib = GFE_Type::checkDirAttrib(attrib) ? attrib : nullptr;
     }
     
-    SYS_FORCE_INLINE GA_Attribute* setNormal2DAttrib(const bool detached = true, const UT_StringRef& attribName = "")
-    {
-        if (!detached)
-            normal2DAttribName = attribName.c_str();
-        return getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, __GFE_Normal2D_Temp_AttribName);
-    }
-    
-#undef __GFE_Normal2D_Temp_AttribName
 
 
     
 private:
 
+#define __GFE_Normal2D_Temp_AttribName "__GFE_Normal2D_Temp_AttribName"
+    
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
+        //if (getOutAttribArray().isEmpty())
+        //    return false;
 
         if (groupParser.isEmpty())
             return true;
@@ -120,20 +118,50 @@ private:
             storage_max = storage_max >= storage_normal3D ? storage_max : storage_normal3D;
         }
 
+        
+        isGroupFull = groupParser.isFull();
+        const bool shouldRenameAttrib = normal3DAttrib && !normal3DAttrib->isDetached() && strcmp(normal3DAttrib->getName().c_str(), normal2DAttribName)==0;
+        if (normal2DAttribName)
+        {
+            if (shouldRenameAttrib)
+                getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, __GFE_Normal2D_Temp_AttribName);
+            else
+            {
+                getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
+                if (isGroupFull)
+                {
+                    geo->destroyAttribute(GA_ATTRIB_POINT, normal2DAttribName);
+                    getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
+                }
+                else
+                {
+                    geo->destroyAttribute(GA_ATTRIB_POINT, normal2DAttribName);
+                    getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
+                }
+            }
+        }
+        else
+        {
+            if (!normal2DAttrib)
+                normal2DAttrib = getOutAttribArray().findOrCreateDir(true, GA_ATTRIB_POINT, GA_STORE_INVALID);
+        }
+        
         switch (storage_max)
         {
         case GA_STORE_REAL16: computeNormal2D<fpreal16>(); break;
         case GA_STORE_REAL32: computeNormal2D<fpreal32>(); break;
         case GA_STORE_REAL64: computeNormal2D<fpreal64>(); break;
-        default: UT_ASSERT_MSG(0, "unhandled storage_max"); break;
+        default: UT_ASSERT_MSG(0, "Unhandled Storage");    break;
         }
 
-        geo->forceRenameAttribute(getOutAttribArray()[0], normal2DAttribName);
+        if (shouldRenameAttrib)
+            geo->forceRenameAttribute(getOutAttribArray()[0], normal2DAttribName);
 
         return true;
     }
 
 
+#undef __GFE_Normal2D_Temp_AttribName
 
 
     template<typename FLOAT_T>
@@ -226,60 +254,65 @@ private:
 
 
         const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
-        UTparallelFor(geoPointSplittableRange, [this](const GA_SplittableRange& r)
+        
+        GA_Attribute* const outNormal2DAttrib = geo->findPointAttribute(normal2DAttribName);
+        if (outNormal2DAttrib && groupParser.getHasGroup())
         {
-            GA_Offset start, end;
-            //GA_PageHandleV<UT_Vector3T<typename FLOAT_T>>::RWType normal2D_ph(normal2DAttrib);
-            GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
-            //GA_PageHandleV<UT_Vector3T<fpreal>>::RWType normal2D_ph(normal2DAttrib);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            getOutAttribArray().append(outNormal2DAttrib);
+            UTparallelFor(geoPointSplittableRange, [this, outNormal2DAttrib](const GA_SplittableRange& r)
             {
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                GA_Offset start, end;
+                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(outNormal2DAttrib);
+                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    normal2D_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
-                        if (scaleByTurns)
+                        normal2D_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
-                            normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
-                        }
-                        else if (normalize)
-                        {
-                            normal2D_ph.value(elemoff).normalize();
-                            normal2D_ph.value(elemoff) *= uniScale;
+                            if (scaleByTurns)
+                            {
+                                normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
+                            }
+                            else if (normalize)
+                            {
+                                normal2D_ph.value(elemoff).normalize();
+                                normal2D_ph.value(elemoff) *= uniScale;
+                            }
+                            normal2D_ph.value(elemoff) = normal2DTemp_ph.value(elemoff);
                         }
                     }
                 }
-            }
-        }, subscribeRatio, minGrainSize);
-
-        //if ()
-        UTparallelFor(geoPointSplittableRange, [this](const GA_SplittableRange& r)
+            }, subscribeRatio, minGrainSize);
+        }
+        else
         {
-            GA_Offset start, end;
-            //GA_PageHandleV<UT_Vector3T<typename FLOAT_T>>::RWType normal2D_ph(normal2DAttrib);
-            GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
-            //GA_PageHandleV<UT_Vector3T<fpreal>>::RWType normal2D_ph(normal2DAttrib);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            UTparallelFor(geoPointSplittableRange, [this](const GA_SplittableRange& r)
             {
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                GA_Offset start, end;
+                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    normal2D_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
-                        if (scaleByTurns)
+                        normal2D_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
-                            normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
-                        }
-                        else if (normalize)
-                        {
-                            normal2D_ph.value(elemoff).normalize();
-                            normal2D_ph.value(elemoff) *= uniScale;
+                            if (scaleByTurns)
+                            {
+                                normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
+                            }
+                            else if (normalize)
+                            {
+                                normal2D_ph.value(elemoff).normalize();
+                                normal2D_ph.value(elemoff) *= uniScale;
+                            }
                         }
                     }
                 }
-            }
-        }, subscribeRatio, minGrainSize);
+            }, subscribeRatio, minGrainSize);
+        }
     }
 
 
@@ -305,7 +338,11 @@ public:
 private:
     UT_Vector3T<fpreal64> defaultNormal3DFinal;
     const GA_Attribute* normal3DAttrib = nullptr;
+    
+    GA_Attribute* normal2DAttrib = nullptr;
     const char* normal2DAttribName = nullptr;
+    
+    bool isGroupFull;
 
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
