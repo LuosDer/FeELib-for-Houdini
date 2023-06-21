@@ -1,10 +1,10 @@
 
 #pragma once
 
-#ifndef __GFE_GroupNewEdge_h__
-#define __GFE_GroupNewEdge_h__
+#ifndef __GFE_GroupOverlapEdge_h__
+#define __GFE_GroupOverlapEdge_h__
 
-#include "GFE/GFE_GroupNewEdge.h"
+#include "GFE/GFE_GroupOverlapEdge.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
@@ -15,7 +15,7 @@
 #include "GU/GU_Snap.h"
 
 // Ref GFE_EdgeGroupTransfer
-class GFE_GroupNewEdge : public GFE_AttribFilterWithRef0 {
+class GFE_GroupOverlapEdge : public GFE_AttribFilterWithRef0 {
 
 
 public:
@@ -262,7 +262,7 @@ private:
     exint minGrainSize = 1024;
 
 
-}; // End of class GFE_GroupNewEdge
+}; // End of class GFE_GroupOverlapEdge
 
 
 

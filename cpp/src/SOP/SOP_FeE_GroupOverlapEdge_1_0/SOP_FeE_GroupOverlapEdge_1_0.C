@@ -1,9 +1,9 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_GroupNewEdge_1_0.h"
+#include "SOP_FeE_GroupOverlapEdge_1_0.h"
 
 
-#include "SOP_FeE_GroupNewEdge_1_0.proto.h"
+#include "SOP_FeE_GroupOverlapEdge_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
@@ -11,10 +11,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_GroupNewEdge.h"
+#include "GFE/GFE_GroupOverlapEdge.h"
 
 
-using namespace SOP_FeE_GroupNewEdge_1_0_Namespace;
+using namespace SOP_FeE_GroupOverlapEdge_1_0_Namespace;
 
 
 
@@ -151,9 +151,9 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 PRM_Template*
-SOP_FeE_GroupNewEdge_1_0::buildTemplates()
+SOP_FeE_GroupOverlapEdge_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_GroupNewEdge_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_GroupOverlapEdge_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
@@ -164,16 +164,16 @@ SOP_FeE_GroupNewEdge_1_0::buildTemplates()
 }
 
 
-const UT_StringHolder SOP_FeE_GroupNewEdge_1_0::theSOPTypeName("FeE::groupNewEdge::1.0"_sh);
+const UT_StringHolder SOP_FeE_GroupOverlapEdge_1_0::theSOPTypeName("FeE::groupNewEdge::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_GroupNewEdge_1_0::theSOPTypeName,
+        SOP_FeE_GroupOverlapEdge_1_0::theSOPTypeName,
         "FeE Group New Edge",
-        SOP_FeE_GroupNewEdge_1_0::myConstructor,
-        SOP_FeE_GroupNewEdge_1_0::buildTemplates(),
+        SOP_FeE_GroupOverlapEdge_1_0::myConstructor,
+        SOP_FeE_GroupOverlapEdge_1_0::buildTemplates(),
         2,
         2,
         nullptr,
@@ -188,27 +188,27 @@ newSopOperator(OP_OperatorTable* table)
 }
 
 
-//class SOP_FeE_GroupNewEdge_1_0Cache : public SOP_NodeCache
+//class SOP_FeE_GroupOverlapEdge_1_0Cache : public SOP_NodeCache
 //{
 //public:
-//    SOP_FeE_GroupNewEdge_1_0Cache() : SOP_NodeCache(),
+//    SOP_FeE_GroupOverlapEdge_1_0Cache() : SOP_NodeCache(),
 //        myPrevOutputDetailID(-1)
 //    {}
-//    ~SOP_FeE_GroupNewEdge_1_0Cache() override {}
+//    ~SOP_FeE_GroupOverlapEdge_1_0Cache() override {}
 //
 //    int64 myPrevOutputDetailID;
 //};
 
 
-class SOP_FeE_GroupNewEdge_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_GroupOverlapEdge_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_GroupNewEdge_1_0Verb() {}
-    virtual ~SOP_FeE_GroupNewEdge_1_0Verb() {}
+    SOP_FeE_GroupOverlapEdge_1_0Verb() {}
+    virtual ~SOP_FeE_GroupOverlapEdge_1_0Verb() {}
 
-    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupNewEdge_1_0Parms(); }
-    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupNewEdge_1_0Cache(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_GroupNewEdge_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupOverlapEdge_1_0Parms(); }
+    //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupOverlapEdge_1_0Cache(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_GroupOverlapEdge_1_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
@@ -216,17 +216,17 @@ public:
 
     /// This static data member automatically registers
     /// this verb class at library ldir0d time.
-    static const SOP_NodeVerb::Register<SOP_FeE_GroupNewEdge_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_GroupOverlapEdge_1_0Verb> theVerb;
 };
 
 // The static member variable definition has to be outside the class definition.
 // The declaration is inside the class.
-const SOP_NodeVerb::Register<SOP_FeE_GroupNewEdge_1_0Verb> SOP_FeE_GroupNewEdge_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_GroupOverlapEdge_1_0Verb> SOP_FeE_GroupOverlapEdge_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
-SOP_FeE_GroupNewEdge_1_0::cookVerb() const 
+SOP_FeE_GroupOverlapEdge_1_0::cookVerb() const 
 { 
-    return SOP_FeE_GroupNewEdge_1_0Verb::theVerb.get();
+    return SOP_FeE_GroupOverlapEdge_1_0Verb::theVerb.get();
 }
 
 
@@ -237,9 +237,9 @@ SOP_FeE_GroupNewEdge_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupNewEdge_1_0Parms::GroupType parmGroupType)
+sopGroupType(SOP_FeE_GroupOverlapEdge_1_0Parms::GroupType parmGroupType)
 {
-    using namespace SOP_FeE_GroupNewEdge_1_0Enums;
+    using namespace SOP_FeE_GroupOverlapEdge_1_0Enums;
     switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
@@ -255,11 +255,11 @@ sopGroupType(SOP_FeE_GroupNewEdge_1_0Parms::GroupType parmGroupType)
 
 
 void
-SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_GroupOverlapEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_GroupNewEdge_1_0Parms>();
+    auto &&sopparms = cookparms.parms<SOP_FeE_GroupOverlapEdge_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_GroupNewEdge_1_0Cache*)cookparms.cache();
+    //auto sopcache = (SOP_FeE_GroupOverlapEdge_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
