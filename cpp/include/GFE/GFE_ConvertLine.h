@@ -66,7 +66,7 @@ public:
         )
     {
         setHasComputed();
-        primoff_first = GFE_INVALID_OFFSET;
+        primoffFirst = GFE_INVALID_OFFSET;
         
         this->isClosed       = isClosed;
         this->keepSourcePrim = keepSourcePrim;
@@ -87,8 +87,8 @@ public:
     virtual SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove() const override
     { geo->bumpDataIdsForAddOrRemove(false, true, true); }
     
-    SYS_FORCE_INLINE GA_Offset get_primoff_first() const
-    { return primoff_first; }
+    SYS_FORCE_INLINE GA_Offset getPrimoffFirst() const
+    { return primoffFirst; }
 
     
 
@@ -163,7 +163,7 @@ private:
         UT_ASSERT_P(dstpt_h.getAttribute());
 
         GA_Offset vtxoff_first;
-        primoff_first = geo->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
+        primoffFirst = geo->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
         //geo->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), entries, 2, vtxoff_first, isClosed);
 
         const bool createSrcPrimAttrib = copyPrimAttrib || outSrcPrimAttrib;
@@ -218,7 +218,7 @@ private:
 
         if (copyPrimAttrib || copyVertexAttrib)
         {
-            const GA_Offset primoff_last = primoff_first + entries;
+            const GA_Offset primoff_last = primoffFirst + entries;
 
             if (copyPrimAttrib)
             {
@@ -230,7 +230,7 @@ private:
 
                     if (keepSourcePrim)
                     {
-                        for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+                        for (GA_Offset primoff = primoffFirst; primoff < primoff_last; ++primoff)
                         {
                             //const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
                             attribPtr->copy(primoff, srcPrim_h.get(primoff));
@@ -239,7 +239,7 @@ private:
                     else
                     {
                         GA_Attribute& srcAttrib = *geoOriginTmp->findPrimitiveAttribute(attribPtr->getName());
-                        for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+                        for (GA_Offset primoff = primoffFirst; primoff < primoff_last; ++primoff)
                         {
                             //const GA_Offset srcPrimVal = srcPrim_h.get(primoff);
                             attribPtr->copy(primoff, srcAttrib, srcPrim_h.get(primoff));
@@ -260,7 +260,7 @@ private:
                         continue;
 
                     attribPtr = geoAttribSet.cloneAttribute(GA_ATTRIB_PRIMITIVE, srcAttrib.getName(), srcAttrib, true);
-                    for (GA_Offset primoff = primoff_first; primoff < primoff_last; ++primoff)
+                    for (GA_Offset primoff = primoffFirst; primoff < primoff_last; ++primoff)
                     {
                         //const GA_Offset srcVtxVal = srcVtx_h.get(primoff);
                         attribPtr->copy(primoff, srcAttrib, srcVtx_h.get(primoff));
@@ -295,7 +295,7 @@ private:
     UT_StringRef srcPrimAttribName;
     GA_Storage srcPrimAttribStorage = GA_STORE_INVALID;
 
-    GA_Offset primoff_first = GFE_INVALID_OFFSET;
+    GA_Offset primoffFirst = GFE_INVALID_OFFSET;
 
     GU_DetailHandle geoOrigin_h;
     const GA_Detail* geoOrigin;

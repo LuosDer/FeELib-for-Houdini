@@ -152,8 +152,8 @@ private:
                             endsGroup->setElement(endPtoff, true);
                     }
                     
-                    const GA_Size numEnds_forward  = SYSmin(numvtx, numEnds);
-                    const GA_Size numEnds_backward = SYSmax(GA_Size(0), numvtx-numEnds);
+                    const GA_Size numEnds_forward  = SYSmin(numvtx, GA_Size(numEnds));
+                    const GA_Size numEnds_backward = SYSmax(GA_Size(0), numvtx-GA_Size(numEnds));
                     if (endsGroup)
                     {
                         for (GA_Size vtxpnum = 0; vtxpnum < numEnds_forward; ++vtxpnum)

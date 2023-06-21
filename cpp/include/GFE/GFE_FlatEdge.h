@@ -4,19 +4,17 @@
 #ifndef __GFE_FlatEdge_h__
 #define __GFE_FlatEdge_h__
 
-//#include "GFE/GFE_FlatEdge.h"
-
+#include "GFE/GFE_FlatEdge.h"
 
 #include "GFE/GFE_GeoFilter.h"
-#include "GFE/GFE_Math.h"
 
+
+#include "GFE/GFE_Math.h"
 #include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_Normal3D.h"
 
 
 class GFE_FlatEdge : public GFE_AttribFilter {
-
-
 
 public:
     //using GFE_AttribFilter::GFE_AttribFilter;
@@ -94,24 +92,8 @@ private:
         }
 
 
-
-        switch (normalAttrib->getAIFTuple()->getStorage(normalAttrib))
-        {
-        case GA_STORE_REAL16: flatEdge<fpreal16>(); break;
-        case GA_STORE_REAL32: flatEdge<fpreal32>(); break;
-        case GA_STORE_REAL64: flatEdge<fpreal64>(); break;
-        default: break;
-        }
-
-
-        return true;
-    }
-
-
-    template<typename FLOAT_T>
-    void flatEdge()
-    {
-
+        groupSetter = getOutGroupArray()[0];
+        
         GFE_MeshTopology meshTopology(geo, cookparms);
         //const GA_Attribute* const vertexNextEquivNoLoopAttrib = adjacency.setVertexNextEquivNoLoop();
         const GA_Attribute* const vertexNextEquivAttrib = meshTopology.setVertexNextEquiv();
@@ -120,6 +102,25 @@ private:
         GA_VertexGroup* const outVertexGroup = getOutGroupArray()[0];
         GA_EdgeGroup*   const outEdgeGroup   = getOutGroupArray()[0];
 
+        
+        switch (normalAttrib->getAIFTuple()->getStorage(normalAttrib))
+        {
+        case GA_STORE_REAL16: flatEdge<fpreal16>(); break;
+        case GA_STORE_REAL32: flatEdge<fpreal32>(); break;
+        case GA_STORE_REAL64: flatEdge<fpreal64>(); break;
+        default: break;
+        }
+
+        if (doDelGroupElement)
+            delGroupElement();
+        
+        return true;
+    }
+
+
+    template<typename FLOAT_T>
+    void flatEdge()
+    {
         GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal_h(normalAttrib);
 
         flatEdgeThreshold = -cos(GFE_Math::radians(flatEdgeAngleThreshold));
@@ -261,7 +262,6 @@ public:
     bool outAsVertexGroup = true;
     fpreal flatEdgeAngleThreshold = 1e-05;
     bool absoluteDot = true;
-    bool reverseGroup = false;
     
 private:
     GA_Attribute* normalAttrib = nullptr;

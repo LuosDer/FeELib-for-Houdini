@@ -6,18 +6,19 @@
 
 #include "GFE/GFE_RestVectorComponent.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
+
+
+
 #include "UFE/UFE_SplittableString.h"
 
-
-class GFE_RestVectorComponent : public GFE_AttribCreateFilterWithRef {
+class GFE_RestVectorComponent : public GFE_AttribCreateFilterWithRef0 {
     
 #define __TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME "__TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME"
     
 public:
 
-    using GFE_AttribCreateFilterWithRef::GFE_AttribCreateFilterWithRef;
+    using GFE_AttribCreateFilterWithRef0::GFE_AttribCreateFilterWithRef0;
     
     // GFE_RestVectorComponent(
     //     GA_Detail& geo,

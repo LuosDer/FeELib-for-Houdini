@@ -450,7 +450,7 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     
     pointInBBox.findOrCreatePointGroup(false, sopparms.getGroupName());
     
-    pointInBBox.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
+    pointInBBox.groupSetter.setComputeParm(groupMergeType, sopparms.getReverseGroup());
 
     pointInBBox.computeAndBumpDataId();
     pointInBBox.delOrVisualizeGroup();

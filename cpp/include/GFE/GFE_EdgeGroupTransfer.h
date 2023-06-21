@@ -139,15 +139,15 @@ void edgeGroupTransfer()
             const GA_Edge& edge = *it;
             
             const GA_Offset snapDstPtoff0 = snapPtoff_h.get(edge.p0());
-            if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
+            if (GFE_Type::isInvalidOffset(snapDstPtoff0))
                 continue;
                     
             const GA_Offset snapDstPtoff1 = snapPtoff_h.get(edge.p1());
-            if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
+            if (GFE_Type::isInvalidOffset(snapDstPtoff1))
                 continue;
 
-            const GA_Offset vertexFromEdge = geo->vertexFromEdge(snapDstPtoff0, snapDstPtoff1);
-            UT_ASSERT_MSG(GFE_Type::OffsetIsValid(vertexFromEdge), "not valid");
+            const GA_Offset vertexFromEdge = geo->edgeVertex(snapDstPtoff0, snapDstPtoff1);
+            UT_ASSERT_MSG(GFE_Type::isInvalidOffset(vertexFromEdge), "not valid");
             newVertexEdgeGroup->setElement(vertexFromEdge, true);
         }
     }
@@ -161,11 +161,11 @@ void edgeGroupTransfer()
             const GA_Edge& edge = *it;
             
             const GA_Offset snapDstPtoff0 = snapPtoff_h.get(edge.p0());
-            if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
+            if (GFE_Type::isInvalidOffset(snapDstPtoff0))
                 continue;
                     
             const GA_Offset snapDstPtoff1 = snapPtoff_h.get(edge.p1());
-            if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
+            if (GFE_Type::isInvalidOffset(snapDstPtoff1))
                 continue;
                     
             newEdgeGroup->add(snapDstPtoff0, snapDstPtoff1);
@@ -201,17 +201,17 @@ void vertexEdgeGroupTransfer()
                         const GA_Offset ptoff = geoRef0->vertexPoint(elemoff);
                         
                         const GA_Offset snapDstPtoff0 = snapPtoff_h.get(ptoff);
-                        if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
+                        if (GFE_Type::isInvalidOffset(snapDstPtoff0))
                             continue;
                         
                         const GA_Offset snapDstPtoff1 = snapPtoff_h.get(dstptRef0_ph.value(elemoff));
-                        if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
+                        if (GFE_Type::isInvalidOffset(snapDstPtoff1))
                             continue;
                         
                         if (1)
                         {
-                            const GA_Offset vertexFromEdge = geo->vertexFromEdge(snapDstPtoff0, snapDstPtoff1);
-                            UT_ASSERT_MSG(GFE_Type::OffsetIsValid(vertexFromEdge), "not valid");
+                            const GA_Offset vertexFromEdge = geo->edgeVertex(snapDstPtoff0, snapDstPtoff1);
+                            UT_ASSERT_MSG(GFE_Type::isValidOffset(vertexFromEdge), "not valid");
                             newVertexEdgeGroup->setElement(vertexFromEdge, true);
                         }
                         else
@@ -249,11 +249,11 @@ void vertexEdgeGroupTransfer()
                     const GA_Offset ptoff = geoRef0->vertexPoint(elemoff);
                     
                     const GA_Offset snapDstPtoff0 = snapPtoff_h.get(ptoff);
-                    if (GFE_Type::OffsetIsInvalid(snapDstPtoff0))
+                    if (GFE_Type::isInvalidOffset(snapDstPtoff0))
                         continue;
                     
                     const GA_Offset snapDstPtoff1 = snapPtoff_h.get(dstptRef0_ph.value(elemoff));
-                    if (GFE_Type::OffsetIsInvalid(snapDstPtoff1))
+                    if (GFE_Type::isInvalidOffset(snapDstPtoff1))
                         continue;
 
                     newEdgeGroup->add(snapDstPtoff0, snapDstPtoff1);

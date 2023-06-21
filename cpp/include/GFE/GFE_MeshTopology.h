@@ -132,7 +132,7 @@ public:
 
     
     SYS_FORCE_INLINE void setVertexVertexPrim(
-        const bool detached = false,
+        const bool detached = true,
         const UT_StringRef& attribName0 = "__topo_vertexVertexPrimPrev",
         const UT_StringRef& attribName1 = "__topo_vertexVertexPrimNext",
         const GA_Storage storage = GA_STORE_INVALID
@@ -153,7 +153,7 @@ public:
 
 #define GFE_SETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)              \
     SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                             \
-        const bool detached = false,                                                                   \
+        const bool detached = true,                                                                    \
         const UT_StringRef& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                                 \
         const GA_Storage storage = GA_STORE_INVALID                                                    \
     )                                                                                                  \
@@ -204,7 +204,7 @@ public:
 
 #define GFE_SETGROUP_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)     \
     SYS_FORCE_INLINE GA_VertexGroup* set##ATTRIB_NAME_UPPER##Group(                          \
-        const bool detached = false,                                                         \
+        const bool detached = true,                                                          \
         const UT_StringRef& groupName = "__topo_"#ATTRIB_NAME_LOWNER                         \
     )                                                                                        \
     {                                                                                        \

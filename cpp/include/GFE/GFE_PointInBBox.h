@@ -117,7 +117,7 @@ private:
     	//bbox.enlargeBounds(enlargeBBox);
     	//bbox.enlargeFloats(enlargeBBox);
     	
-    	setGroup = getOutGroupArray()[0];
+    	groupSetter = getOutGroupArray()[0];
     	
         const GA_Storage storage = posAttrib->getAIFTuple()->getStorage(posAttrib);
     	switch (storage)
@@ -163,7 +163,7 @@ private:
 						if (zMax && pos_ph.value(elemoff)[2] <= bbox.zmax())
 							++numInLimit;
 						
-    					setGroup.set(elemoff, numInLimit >= numInBoundMin);
+    					groupSetter.set(elemoff, numInLimit >= numInBoundMin);
 					}
 				}
 			}
@@ -173,7 +173,6 @@ private:
 
 public:
 	GFE_GroupParser groupParserBound;
-	GFE_SetGroup setGroup;
 	
 	//UT_BoundingBoxT<float> enlargeBBox = UT_BoundingBoxT<float>(0, 0, 0, 0, 0, 0);
 	//

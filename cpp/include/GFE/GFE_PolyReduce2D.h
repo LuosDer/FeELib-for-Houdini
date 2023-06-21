@@ -68,7 +68,7 @@ public:
         const fpreal threshold_inlineCosRadians = 1e-05,
 
         const bool limitByGeoProperty = true,
-        const GFE_PolyReduce2D_GeoPropertyType geoPropertyType = GFE_PolyReduce2D_GeoPropertyType::ANGLE,
+        const GFE_PolyReduce2D::GeoPropertyType geoPropertyType = GFE_PolyReduce2D::GeoPropertyType::ANGLE,
         fpreal threshold_maxCosRadians = cos(GFE_Math::radians(150.0)),
         const fpreal threshold_maxDist = 1e-04,
 
@@ -229,30 +229,30 @@ private:
                     case 0:
                         ndir = 0;
 #if GFE_PolyReduce2D_ReverseROC
-                        weight = geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE ? 2 : SYS_FP32_MAX;
+                        weight = geoPropertyType == GFE_PolyReduce2D::GeoPropertyType::ANGLE ? 2 : SYS_FP32_MAX;
 #else
                         switch (geoPropertyType)
                         {
-                        case GFE_PolyReduce2D_GeoPropertyType::ANGLE: weight = 2;            break;
-                        case GFE_PolyReduce2D_GeoPropertyType::DIST:  weight = SYS_FP32_MAX; break;
-                        case GFE_PolyReduce2D_GeoPropertyType::ROC:   weight = 0;            break;
+                        case GFE_PolyReduce2D::GeoPropertyType::ANGLE: weight = 2;            break;
+                        case GFE_PolyReduce2D::GeoPropertyType::DIST:  weight = SYS_FP32_MAX; break;
+                        case GFE_PolyReduce2D::GeoPropertyType::ROC:   weight = 0;            break;
                         default:                 weight = 2;            break;
                         }
 #endif
                         break;
                     case 1:
                         ndir = pos_h.get(nebsArr[0]) - pos;
-                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE) {
+                        if (geoPropertyType == GFE_PolyReduce2D::GeoPropertyType::ANGLE) {
                             ndir.normalize();
                         }
 #if GFE_PolyReduce2D_ReverseROC
-                        weight = geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE ? 2 : SYS_FP32_MAX;
+                        weight = geoPropertyType == GFE_PolyReduce2D::GeoPropertyType::ANGLE ? 2 : SYS_FP32_MAX;
 #else
                         switch (geoPropertyType)
                         {
-                        case GFE_PolyReduce2D_GeoPropertyType::ANGLE: weight = 2;            break;
-                        case GFE_PolyReduce2D_GeoPropertyType::DIST:  weight = SYS_FP32_MAX; break;
-                        case GFE_PolyReduce2D_GeoPropertyType::ROC:   weight = 0;            break;
+                        case GFE_PolyReduce2D::GeoPropertyType::ANGLE: weight = 2;            break;
+                        case GFE_PolyReduce2D::GeoPropertyType::DIST:  weight = SYS_FP32_MAX; break;
+                        case GFE_PolyReduce2D::GeoPropertyType::ROC:   weight = 0;            break;
                         default:                 weight = 2;            break;
                         }
 #endif
@@ -262,7 +262,7 @@ private:
                         posneb1 = pos_h.get(nebsArr[1]);
                         switch (geoPropertyType)
                         {
-                        case GFE_PolyReduce2D_GeoPropertyType::ANGLE:
+                        case GFE_PolyReduce2D::GeoPropertyType::ANGLE:
                             ndir = posneb1 - pos;
                             ndir.normalize();
 
@@ -271,12 +271,12 @@ private:
 
                             weight = dot(ndir, ndir1);
                             break;
-                        case GFE_PolyReduce2D_GeoPropertyType::DIST:
+                        case GFE_PolyReduce2D::GeoPropertyType::DIST:
                             // weight = GFE_Math::distToLine(pos, posneb0, posneb1);
                             ndir = posneb0 - pos;
                             weight = GFE_Math::distToLine(ndir, posneb1 - pos, posneb0, posneb1);
                             break;
-                        case GFE_PolyReduce2D_GeoPropertyType::ROC:
+                        case GFE_PolyReduce2D::GeoPropertyType::ROC:
                             weight = GFE_Math::circleRadius3Point(posneb0, pos, posneb1);
                             ndir = 0;
                             // #if GFE_PolyReduce2D_ReverseROC
@@ -432,13 +432,13 @@ private:
                     if (geo->getPrimitiveClosedFlag(elemoff))
                     {
                         dirs[lastIndex] = poses[lastIndex_prev] - poses[lastIndex];
-                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE)
+                        if (geoPropertyType == GFE_PolyReduce2D::GeoPropertyType::ANGLE)
                             dirs[lastIndex].normalize();
                     }
                     else if (isClosed)
                     {
                         dirs[0] = poses[lastIndex] - poses[0];
-                        if (geoPropertyType == GFE_PolyReduce2D_GeoPropertyType::ANGLE)
+                        if (geoPropertyType == GFE_PolyReduce2D::GeoPropertyType::ANGLE)
                             dirs[0].normalize();
                     }
                     else
@@ -518,21 +518,21 @@ private:
                             //fpreal weight = weights[minidx];
                             switch (geoPropertyType)
                             {
-                            case GFE_PolyReduce2D_GeoPropertyType::ANGLE:
+                            case GFE_PolyReduce2D::GeoPropertyType::ANGLE:
                                 if (weights[minidx] >= threshold_maxCosRadians)
                                     {
                                     flag = true;
                                     break;
                                 }
                                 break;
-                            case GFE_PolyReduce2D_GeoPropertyType::DIST:
+                            case GFE_PolyReduce2D::GeoPropertyType::DIST:
                                 if (weights[minidx] >= threshold_maxDist)
                                 {
                                     flag = true;
                                     break;
                                 }
                                 break;
-                            case GFE_PolyReduce2D_GeoPropertyType::ROC:
+                            case GFE_PolyReduce2D::GeoPropertyType::ROC:
 #if GFE_PolyReduce2D_ReverseROC
                                 if (weights[minidx] >= threshold_maxDist)
                                 {
@@ -565,14 +565,14 @@ private:
 
                             switch (geoPropertyType)
                             {
-                            case GFE_PolyReduce2D_GeoPropertyType::ANGLE:
+                            case GFE_PolyReduce2D::GeoPropertyType::ANGLE:
                                 dirs[nextidx] = poses[previdx] - poses[nextidx];
                                 dirs[nextidx].normalize();
                                 break;
-                            case GFE_PolyReduce2D_GeoPropertyType::DIST:
+                            case GFE_PolyReduce2D::GeoPropertyType::DIST:
                                 dirs[nextidx] = poses[previdx] - poses[nextidx];
                                 break;
-                            case GFE_PolyReduce2D_GeoPropertyType::ROC:
+                            case GFE_PolyReduce2D::GeoPropertyType::ROC:
                                 break;
                             default:
                                 dirs[nextidx] = poses[previdx] - poses[nextidx];
@@ -587,9 +587,9 @@ private:
                                 FLOAT_T scale_min;
                                 switch (geoPropertyType)
                                 {
-                                case GFE_PolyReduce2D_GeoPropertyType::ANGLE: scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                      break;
-                                case GFE_PolyReduce2D_GeoPropertyType::DIST:  scale_min = GFE_Math::distToLine(dirs[nextidx], dirs[next_nextidx], poses[previdx], poses[next_nextidx]); break;
-                                case GFE_PolyReduce2D_GeoPropertyType::ROC:   scale_min = GFE_Math::circleRadius3Point(poses[previdx], poses[nextidx], poses[next_nextidx]);            break;
+                                case GFE_PolyReduce2D::GeoPropertyType::ANGLE: scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                      break;
+                                case GFE_PolyReduce2D::GeoPropertyType::DIST:  scale_min = GFE_Math::distToLine(dirs[nextidx], dirs[next_nextidx], poses[previdx], poses[next_nextidx]); break;
+                                case GFE_PolyReduce2D::GeoPropertyType::ROC:   scale_min = GFE_Math::circleRadius3Point(poses[previdx], poses[nextidx], poses[next_nextidx]);            break;
                                 default:                                      scale_min = -dot(dirs[nextidx], dirs[next_nextidx]);                                                      break;
                                 }
 
@@ -624,9 +624,9 @@ private:
 
                                 switch (geoPropertyType)
                                 {
-                                case GFE_PolyReduce2D_GeoPropertyType::ANGLE: scale_min = -dot(dirs[previdx], dirs[nextidx]);                                                         break;
-                                case GFE_PolyReduce2D_GeoPropertyType::DIST:  scale_min = GFE_Math::distToLine(dirs[previdx], dirs[nextidx], poses[next_nextidx], poses[nextidx]); break;
-                                case GFE_PolyReduce2D_GeoPropertyType::ROC:   scale_min = GFE_Math::circleRadius3Point(poses[next_nextidx], poses[previdx], poses[nextidx]);       break;
+                                case GFE_PolyReduce2D::GeoPropertyType::ANGLE: scale_min = -dot(dirs[previdx], dirs[nextidx]);                                                         break;
+                                case GFE_PolyReduce2D::GeoPropertyType::DIST:  scale_min = GFE_Math::distToLine(dirs[previdx], dirs[nextidx], poses[next_nextidx], poses[nextidx]); break;
+                                case GFE_PolyReduce2D::GeoPropertyType::ROC:   scale_min = GFE_Math::circleRadius3Point(poses[next_nextidx], poses[previdx], poses[nextidx]);       break;
                                 default:                 scale_min = -dot(dirs[previdx], dirs[nextidx]);                                                         break;
                                 }
 
@@ -677,15 +677,15 @@ private:
 
                             switch (geoPropertyType)
                             {
-                            case GFE_PolyReduce2D_GeoPropertyType::ANGLE:
+                            case GFE_PolyReduce2D::GeoPropertyType::ANGLE:
                                 ndir_h.set(primpoint, dirs[k]);
                                 break;
-                            case GFE_PolyReduce2D_GeoPropertyType::DIST:
+                            case GFE_PolyReduce2D::GeoPropertyType::DIST:
                                 ndir = dirs[k];
                                 ndir.normalize();
                                 ndir_h.set(primpoint, ndir);
                                 break;
-                            case GFE_PolyReduce2D_GeoPropertyType::ROC:
+                            case GFE_PolyReduce2D::GeoPropertyType::ROC:
                                 break;
                             default:
                                 ndir_h.set(primpoint, dirs[k]);
@@ -892,7 +892,7 @@ public:
     bool delInLinePoint = true;
 
     bool limitByGeoProperty = true;
-    GFE_PolyReduce2D_GeoPropertyType geoPropertyType = GFE_PolyReduce2D_GeoPropertyType::ANGLE;
+    GFE_PolyReduce2D::GeoPropertyType geoPropertyType = GFE_PolyReduce2D::GeoPropertyType::ANGLE;
     fpreal threshold_maxCosRadians = cos(GFE_Math::radians(150.0));
     fpreal threshold_maxDist = 1e-04;
 

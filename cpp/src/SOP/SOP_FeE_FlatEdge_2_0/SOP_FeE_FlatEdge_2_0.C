@@ -265,16 +265,16 @@ sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmGroupType)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
     return GA_GROUP_INVALID;
 }
 
 
 static GA_GroupType
-sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmgrouptype)
+sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmGroupType)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case ManifoldEdge::NONE:    return GA_GROUP_VERTEX;     break;
     case ManifoldEdge::ALL:     return GA_GROUP_INVALID;    break;
@@ -287,29 +287,29 @@ sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmgrouptype)
 
 
 static GA_AttributeOwner
-sopNormalAttribClass(SOP_FeE_FlatEdge_2_0Parms::NormalAttribClass parmgrouptype)
+sopNormalAttribClass(SOP_FeE_FlatEdge_2_0Parms::NormalAttribClass parmNormalAttribClass)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmgrouptype)
+    switch (parmNormalAttribClass)
     {
     case NormalAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;    break;
     case NormalAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE; break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Manifold Edge!");
+    UT_ASSERT_MSG(0, "Unhandled Normal Attrib Class!");
     return GA_ATTRIB_INVALID;
 }
 
 static GEO_NormalMethod
-sopWeightingMethod(SOP_FeE_FlatEdge_2_0Parms::WeightingMethod parmNormalMethod)
+sopWeightingMethod(SOP_FeE_FlatEdge_2_0Parms::WeightingMethod parmWeightingMethod)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmNormalMethod)
+    switch (parmWeightingMethod)
     {
     case WeightingMethod::VERTEX:    return GEO_NormalMethod::UNIFORM_WEIGHTED;    break;
     case WeightingMethod::PRIM:      return GEO_NormalMethod::ANGLE_WEIGHTED;      break;
     case WeightingMethod::PRIM:      return GEO_NormalMethod::AREA_WEIGHTED;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Manifold Edge!");
+    UT_ASSERT_MSG(0, "Unhandled Weighting Method!");
     return GEO_NormalMethod::ANGLE_WEIGHTED;
 }
 
@@ -347,13 +347,13 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         sopparms.getIncludeUnsharedEdge(), manifoldEdge,
         sopparms.getOutAsVertexGroup(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
+    flatEdge.groupSetter.setParm(sopparms.getReverseGroup());
+    flatEdge.doDelGroupElement = sopparms.getDelGroupElement();
     
 
     flatEdge.normal3D.normalMethod = sopWeightingMethod(sopparms.getWeightingMethod());
-    flatEdge.normal3D.getOutAttribArray().findOrCreateNormal3D(normalAttribClass, sopparms.getNormalAttrib());
+    flatEdge.normal3D.findOrCreateNormal3D(false, normalAttribClass, GA_STORE_INVALID, sopparms.getNormalAttrib());
 
-    flatEdge.reverseOutGroup = sopparms.getReverseGroup();
-    flatEdge.doDelGroupElement = sopparms.getDelGroupElement();
 
     
     flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());

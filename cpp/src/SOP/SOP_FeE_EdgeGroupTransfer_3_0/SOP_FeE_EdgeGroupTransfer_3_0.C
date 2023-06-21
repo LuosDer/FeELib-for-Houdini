@@ -315,7 +315,7 @@ SOP_FeE_EdgeGroupTransfer_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     edgeGroupTransfer.getRef0GroupArray().appends(GA_GROUP_EDGE, sopparms.getEdgeGroup());
     edgeGroupTransfer.getRef0GroupArray().appends(GA_GROUP_VERTEX, sopparms.getVertexEdgeGroup());
     
-    edgeGroupTransfer.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
+    edgeGroupTransfer.groupSetter.setComputeParm(groupMergeType, sopparms.getReverseGroup());
     
     edgeGroupTransfer.computeAndBumpDataId();
     edgeGroupTransfer.visualizeOutGroup();

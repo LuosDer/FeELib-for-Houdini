@@ -48,14 +48,14 @@ static const char *theDsFile = R"THEDSFILE(
     
     
     parm {
-        name    "newVertexEdgeGroupName"
-        cppname "NewVertexEdgeGroupName"
-        label   "New Vertex Edge Group Name"
-        type    string
-        default { "newEdge" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        name    "outEdgeGroup"
+        cppname "OutEdgeGroup"
+        label   "Out Edge Group"
+        type    toggle
+        default { "0" }
+        joinnext
+        nolabel
+        disablewhen "{ delGroupElem == 1 }"
     }
     parm {
         name    "newEdgeGroupName"
@@ -66,8 +66,68 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        disablewhen "{ outEdgeGroup == 0 } { delGroupElem == 1 }"
+    }
+    parm {
+        name    "outVertexEdgeGroup"
+        cppname "OutVertexEdgeGroup"
+        label   "Out Vertex Edge Group"
+        type    toggle
+        default { "0" }
+        joinnext
+        nolabel
+        disablewhen "{ delGroupElem == 1 }"
+    }
+    parm {
+        name    "newVertexEdgeGroupName"
+        cppname "NewVertexEdgeGroupName"
+        label   "New Vertex Edge Group Name"
+        type    string
+        default { "newEdge" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
+        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        disablewhen "{ outVertexEdgeGroup == 0 } { delGroupElem == 1 }"
+    }
+    
+    parm {
+        name    "useSnapDist"
+        cppname "UseSnapDist"
+        label   "Use Snap Dist"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "snapDist"
+        cppname "SnapDist"
+        label   "Snap Dist"
+        type    log
+        default { "0.001" }
+        range   { 0.00001 0.1 }
+        disablewhen "{ useSnapDist == 0 }"
+    }
+    parm {
+        name    "runOverGeoRef"
+        cppname "RunOverGeoRef"
+        label   "Run Over Geo Ref"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
     }
 
+    parm {
+        name    "delGroupElem"
+        cppname "DelGroupElem"
+        label   "Del Group Elem"
+        type    toggle
+        default { "0" }
+    }
     parm {
        name    "subscribeRatio"
        cppname "SubscribeRatio"
@@ -114,8 +174,8 @@ newSopOperator(OP_OperatorTable* table)
         "FeE Group New Edge",
         SOP_FeE_GroupNewEdge_1_0::myConstructor,
         SOP_FeE_GroupNewEdge_1_0::buildTemplates(),
-        1,
-        1,
+        2,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -227,17 +287,29 @@ SOP_FeE_GroupNewEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     
 
     GFE_GroupNewEdge groupNewEdge(outGeo0, inGeo1, cookparms);
+    groupNewEdge.groupSetter.setParm(sopparms.getReverseGroup());
     
-    groupNewEdge.setComputeParm(
+    groupNewEdge.setComputeParm(sopparms.getUseSnapDist(),sopparms.getSnapDist(),sopparms.getRunOverGeoRef(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    groupNewEdge.getOutGroupArray().findOrCreateVertex(false, sopparms.newVertexEdgeGroupName());
-    groupNewEdge.getOutGroupArray().findOrCreateEdge(false, sopparms.newEdgeGroupName());
+    groupNewEdge.doDelGroupElement = sopparms.getDelGroupElem();
+
+    if (sopparms.getDelGroupElem())
+    {
+        groupNewEdge.getOutGroupArray().findOrCreateEdge(true);
+    }
+    else
+    {
+        if (sopparms.getOutEdgeGroup())
+            groupNewEdge.getOutGroupArray().findOrCreateEdge(false, sopparms.getNewEdgeGroupName());
+        if (sopparms.getOutVertexEdgeGroup())
+            groupNewEdge.getOutGroupArray().findOrCreateVertex(false, sopparms.getNewVertexEdgeGroupName());
+    }
 
 
     groupNewEdge.groupParser.setGroup(groupType, sopparms.getGroup());
     groupNewEdge.computeAndBumpDataId();
-    groupNewEdge.visualizeOutGroup();
+    groupNewEdge.delOrVisualizeGroup();
 
 }
 

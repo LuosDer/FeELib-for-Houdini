@@ -51,7 +51,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "GroupElemByDirMethod"
         label   "Method"
         type    ordinal
-        default { "restDir2D_avgNormal" }
+        default { "input" }
         menu {
             "input"                "Input"
             "restDir2D_avgNormal"  "RestDir2D AvgNormal"
@@ -59,9 +59,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "outGroupType"
-        cppname "OutGroupType"
-        label   "Out Group Type"
+        name    "sameDirGroupType"
+        cppname "SameDirGroupType"
+        label   "Same Dir Group Type"
         type    ordinal
         default { "prim" }
         menu {
@@ -72,11 +72,11 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "outGroupName"
-        cppname "OutGroupName"
-        label   "OutGroup Name"
+        name    "sameDirGroupName"
+        cppname "SameDirGroupName"
+        label   "Same Dir Group Name"
         type    string
-        default { "reversed" }
+        default { "sameDir" }
     }
 
     parm {
@@ -85,6 +85,14 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Dir Attribute"
         type    string
         default { "N" }
+    }
+    parm {
+        name    "coneAngleThreshold"
+        cppname "ConeAngleThreshold"
+        label   "Cone Angle Threshold"
+        type    angle
+        default { "90" }
+        range   { 0! 180! }
     }
     parm {
         name    "up"
@@ -273,17 +281,17 @@ sopAttribSearchOrder(SOP_FeE_GroupElemByDir_1_0Parms::Normal3DAttribClass attrib
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupElemByDir_1_0Parms::OutGroupType parmGroupType)
+sopGroupType(SOP_FeE_GroupElemByDir_1_0Parms::SameDirGroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupElemByDir_1_0Enums;
     switch (parmGroupType)
     {
-    case OutGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case OutGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case OutGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    //case OutGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case SameDirGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case SameDirGroupType::POINT:     return GA_GROUP_POINT;      break;
+    case SameDirGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    //case SameDirGroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled SameDirGroupType!");
     return GA_GROUP_INVALID;
 }
 
@@ -336,7 +344,7 @@ SOP_FeE_GroupElemByDir_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) c
     const GFE_NormalSearchOrder normalSearchOrder = sopAttribSearchOrder(sopparms.getNormal3DAttribClass());
     const GFE_GroupElemByDirMethod method = sopMethod(sopparms.getGroupElemByDirMethod());
     
-    const GA_GroupType outGroupType = sopGroupType(sopparms.getOutGroupType());
+    const GA_GroupType outGroupType = sopGroupType(sopparms.getSameDirGroupType());
     
     
     UT_AutoInterrupt boss("Processing");
@@ -350,12 +358,13 @@ SOP_FeE_GroupElemByDir_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) c
     
     groupElemByDir.setComputeParm(method, sopparms.getUp(), sopparms.getReversePrim(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    groupElemByDir.setConeAngleThreshold(sopparms.getConeAngleThreshold());
     groupElemByDir.doDelGroupElement = sopparms.getDelElem();
     
-    groupElemByDir.setGroup.setComputeParm(sopparms.getReverseGroup());
+    groupElemByDir.groupSetter.setComputeParm(sopparms.getReverseGroup());
     
     groupElemByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
-    groupElemByDir.findOrCreateGroup(false, outGroupType, sopparms.getOutGroupName());
+    groupElemByDir.findOrCreateGroup(false, outGroupType, sopparms.getSameDirGroupName());
     
     if (method == GFE_GroupElemByDirMethod::RestDir2D_AvgNormal)
         groupElemByDir.restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());

@@ -294,10 +294,10 @@ SOP_FeE_ConvertLine_1_0::cookVerb() const
 
 
 static bool
-sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmgrouptype)
+sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmIsClosed)
 {
     using namespace SOP_FeE_ConvertLine_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmIsClosed)
     {
     case PrimType::POLYLINE:   return 0;    break;
     case PrimType::POLY:       return 1;    break;
@@ -467,7 +467,6 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     convertLine.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
 
     convertLine.computeAndBumpDataIdsForAddOrRemove();
-
-
+    
 }
 

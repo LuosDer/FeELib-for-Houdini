@@ -6,6 +6,9 @@
 
 #include "GFE/GFE_GroupMeshByWinding.h"
 
+#include "GFE/GFE_GeoFilter.h"
+
+
 
 
 
@@ -13,17 +16,10 @@
 #include "GU/GU_ConvexHull3D.h"
 #include "UT/UT_BoundingBox.h"
 
-
-#include "GFE/GFE_GeoFilter.h"
-
-
-
-//#include "GFE/GFE_Attribute.h"
+////#include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_Measure.h"
 #include "GFE/GFE_WindingNumber.h"
 //#include "GFE/GFE_MeshCap.h"
-
-
 
 enum class GFE_GroupMeshByWindingMethod
 {
@@ -34,10 +30,10 @@ enum class GFE_GroupMeshByWindingMethod
 
 
 
-class GFE_GroupMeshByWinding : public GFE_AttribFilterWithRef {
+class GFE_GroupMeshByWinding : public GFE_AttribFilterWithRef0 {
 
 public:
-	using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+	using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 
 
 	void
@@ -71,7 +67,7 @@ public:
 	{
 		getOutAttribArray().bumpDataId();
 		getOutGroupArray().bumpDataId();
-		if (reversePrim && !(meshWindingCorrect ^ setGroup.reverseGroup))
+		if (reversePrim && !(meshWindingCorrect ^ groupSetter.reverseGroup))
 			bumpDataIdsForAddOrRemove(false, true, false);
 	}
 
@@ -109,7 +105,7 @@ private:
 			default: break;
 		}
 
-		const bool meshWindingCorrect_reverse = meshWindingCorrect ^ setGroup.reverseGroup;
+		const bool meshWindingCorrect_reverse = meshWindingCorrect ^ groupSetter.reverseGroup;
 		if (!getOutAttribArray().isEmpty())
 		{
 			UT_ASSERT_P(getOutAttribArray()[0]->getAIFTuple());
@@ -199,7 +195,6 @@ private:
 	
 
 public:
-	GFE_SetGroup setGroup;
 	GFE_GroupMeshByWindingMethod method = GFE_GroupMeshByWindingMethod::VOLUME;
 	
 	//bool reverseGroup = false;

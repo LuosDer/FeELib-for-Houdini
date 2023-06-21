@@ -295,7 +295,7 @@ SOP_FeE_GroupPolyByWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     GFE_GroupPolyByWinding groupPolyByWinding(outGeo0, inGeo1, &cookparms);
     groupPolyByWinding.setComputeParm(method, sopparms.getMeshCap(), sopparms.getReversePrim());
 
-    groupPolyByWinding.setGroup.setParm(groupMergeType, sopparms.getReverseGroup());
+    groupPolyByWinding.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
     
     if (method == GFE_GroupPolyByWindingMethod::Ray)
         groupPolyByWinding.findOrCreateNormal3D(true, GA_STORE_INVALID, sopparms.getDirAttrib());

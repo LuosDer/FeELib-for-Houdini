@@ -62,25 +62,52 @@ static const char* theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "wnQueryPointGroup"
-        cppname "WNQueryPointGroup"
-        label   "Query Point Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-        name    "wnMeshPrimGroup"
-        cppname "WNMeshPrimGroup"
-        label   "Mesh Primitive Group"
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "groupRef"
+        cppname "GroupRef"
+        label   "GroupRef"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 1\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupTypeRef')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
-        parmtag { "sop_input" "1" }
+    }
+    parm {
+        name    "groupTypeRef"
+        cppname "GroupTypeRef"
+        label   "Group Type Ref"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "wnType"
@@ -171,24 +198,24 @@ static const char* theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "outPointInMeshGroup"
-        cppname "OutPointInMeshGroup"
-        label   "Output Point in Mesh Group"
+        name    "outInMeshGroup"
+        cppname "OutInMeshGroup"
+        label   "Output In Mesh Group"
         type    toggle
     //    nolabel
     //    joinnext
         default { "0" }
     }
     groupsimple {
-        name    "pointInMeshGroup_folder"
-        label   "Point in Mesh Group"
+        name    "inMeshGroup_folder"
+        label   "In Mesh Group"
         grouptag { "group_type" "simple" }
-        disablewhen "{ outPointInMeshGroup == 0 }"
+        disablewhen "{ outInMeshGroup == 0 }"
 
         parm {
-            name    "pointInMeshGroupType"
-            cppname "PointInMeshGroupType"
-            label   "Point in Mesh Group Type"
+            name    "inMeshGroupType"
+            cppname "InMeshGroupType"
+            label   "In Mesh Group Type"
             type    ordinal
             default { "point" }
             menu {
@@ -199,10 +226,10 @@ static const char* theDsFile = R"THEDSFILE(
             }
         }
         parm {
-            name    "pointInMeshGroupName"
-            cppname "PointInMeshGroupName"
-            label   "Point in Mesh Group Name"
-            type    string
+            name    "inMeshGroupName"
+            cppname "InMeshGroupName"
+            label   " in Mesh Group Name"
+            type    tring
             default { "inMesh" }
         }
         parm {
@@ -373,6 +400,42 @@ sopGroupType(SOP_FeE_WindingNumber_1_0Parms::PointInMeshGroupType parmGroupType)
 }
 
 
+static GA_GroupType
+sopGroupType(SOP_FeE_WindingNumber_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_WindingNumber_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
+static GA_GroupType
+sopGroupType(SOP_FeE_WindingNumber_1_0Parms::GroupTypeRef parmGroupType)
+{
+    using namespace SOP_FeE_WindingNumber_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupTypeRef::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupTypeRef::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupTypeRef::POINT:     return GA_GROUP_POINT;      break;
+    case GroupTypeRef::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupTypeRef::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
+
 
 static GFE_GroupMergeType
 sopGroupMergeType(SOP_FeE_WindingNumber_1_0Parms::GroupMergeType groupMergeType)
@@ -402,12 +465,18 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     const GA_Storage wnStorage = sopWNStorage(sopparms.getWNPrecision());
     const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType groupTypeRef = sopGroupType(sopparms.getGroupTypeRef());
 
 
     
     GFE_WindingNumber wn(geoPoint, geoRefMesh, sopcache, &cookparms);
-
-    wn.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    
+    wn.groupParser.setGroup(groupType, sopparms.getGroup());
+    wn.groupParserRef0.setGroup(groupTypeRef, sopparms.getGroupRef());
+    
+    //wn.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
     const GA_AttributeOwner attribOwner = sopAttribOwner(sopparms.getWNAttribClass());
             

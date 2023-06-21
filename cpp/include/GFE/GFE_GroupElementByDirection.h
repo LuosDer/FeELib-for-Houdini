@@ -4,6 +4,7 @@
 #ifndef __GFE_GroupElementByDirection_h__
 #define __GFE_GroupElementByDirection_h__
 
+#include "GFE_Math.h"
 #include "GFE/GFE_GroupElementByDirection.h"
 
 
@@ -71,13 +72,15 @@ public:
 		this->minGrainSize = minGrainSize;
 	}
 	
+	SYS_FORCE_INLINE fpreal setConeAngleThreshold(const fpreal angle)
+	{ return coneAngleThreshold = GFE_Math::radians(angle); }
 	
     
 	virtual void bumpDataId() const override
 	{
 		getOutAttribArray().bumpDataId();
 		getOutGroupArray().bumpDataId();
-		if (reversePrim && outElemGroup->classType() == GA_GROUP_PRIMITIVE && (!outElemGroup->isEmpty() ^ setGroup.reverseGroup))
+		if (reversePrim && outElemGroup->classType() == GA_GROUP_PRIMITIVE && (!outElemGroup->isEmpty() ^ groupSetter.reverseGroup))
 			bumpDataIdsForAddOrRemove(false, true, false);
 	}
 
@@ -110,7 +113,7 @@ private:
 
 		
 		outElemGroup = getOutGroupArray().getElementGroup(0);
-		setGroup = outElemGroup;
+		groupSetter = outElemGroup;
 		
 		if (!dirAttrib)
 		{
@@ -168,7 +171,9 @@ private:
 		else
 			restDirTmp = restDir;
 		
-		UTparallelFor(groupParser.getSplittableRange(dirAttrib), [this, &restDirTmp](const GA_SplittableRange& r)
+		const typename VECTOR_T::value_type cosConeAngleThreshold = cos(coneAngleThreshold);
+		
+		UTparallelFor(groupParser.getSplittableRange(dirAttrib), [this, &restDirTmp, cosConeAngleThreshold](const GA_SplittableRange& r)
 		{
 			GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dir_ph(dirAttrib);
 			for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
@@ -179,7 +184,7 @@ private:
 					dir_ph.setPage(start);
 					for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
 					{
-						setGroup.set(elemoff, dir_ph.value(elemoff).dot(restDirTmp) < 0);
+						groupSetter.set(elemoff, dir_ph.value(elemoff).dot(restDirTmp) > cosConeAngleThreshold);
 					}
 				}
 			}
@@ -190,7 +195,8 @@ private:
 public:
 	GFE_RestDir2D restDir2D;
 	GFE_Normal3D normal3D;
-	
+
+	fpreal coneAngleThreshold = PI * 0.5;
 	GFE_GroupElemByDirMethod method = GFE_GroupElemByDirMethod::Input;
 	//bool matchUpDir = true;
 	UT_Vector3R up = UT_Vector3R(0,1,0);

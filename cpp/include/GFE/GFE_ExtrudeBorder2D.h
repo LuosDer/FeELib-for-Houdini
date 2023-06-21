@@ -41,9 +41,10 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        GFE_Normal2D normal2D(geo, cookparms);
+        GFE_Normal2D normal2D(*geo, cookparms);
         normal2D.groupParser.setGroup(groupParser);
-        normal2D.findOrCreateGroup();
+        normal2D.setNormal2DAttrib();
+        normal2D.compute();
         
         GU_PolyExtrude2 polyExtrude(geo->asGU_Detail(), groupParser.getPrimitiveGroup());
         polyExtrude.setExtrusionMode(GU_PolyExtrude2::ExtrusionMode::POINT_NORMAL);

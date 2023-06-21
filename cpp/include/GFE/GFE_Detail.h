@@ -269,7 +269,8 @@ private:
             const GA_Size numvtx = getPrimitiveVertexCount(primoff);
             for (GA_Size vtxpnum = 0; vtxpnum <= numvtx; ++vtxpnum)
             {
-                const GA_Offset primPoint = getPrimitivePointOffset(primoff, vtxpnum);
+                const GA_Offset primVtx = getPrimitiveVertexOffset(primoff, vtxpnum);
+                const GA_Offset primPoint = vertexPoint(primVtx);
                 if (primPoint != ptoff0)
                     continue;
                 
@@ -283,7 +284,8 @@ private:
                 const GA_Offset primPoint_next = getPrimitivePointOffset(primoff, vtxpnum_next);
                 
                 if (primPoint_next == ptoff1)
-                    return getPrimitiveVertexOffset(primoff, vtxpnum_next);
+                    return primVtx;
+                    //return getPrimitiveVertexOffset(primoff, vtxpnum_next);
             }
         }
         return GFE_INVALID_OFFSET;

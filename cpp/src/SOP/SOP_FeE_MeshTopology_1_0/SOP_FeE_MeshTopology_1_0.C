@@ -629,7 +629,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     }
 
     meshTopology.computeAndBumpDataId();
-
+    meshTopology.visualizeOutGroup();
 #else
     
     const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);

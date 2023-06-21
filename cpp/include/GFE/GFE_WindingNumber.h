@@ -597,23 +597,23 @@ public:
     }
     
 
-    SYS_FORCE_INLINE void setInGroup(
-        const GA_PointGroup* const geoPointGroup = nullptr,
-        const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr
-    )
-    {
-        groupParser.setGroup(geoPointGroup);
-        groupParserRef0.setGroup(geoRefMeshGroup);
-    }
-    
-    SYS_FORCE_INLINE void setInGroup(
-        const UT_StringHolder& geoPoint_groupName,
-        const UT_StringHolder& geoRefMesh_groupName
-    )
-    {
-        groupParser.setPointGroup(geoPoint_groupName);
-        groupParserRef0.setPrimitiveGroup(geoRefMesh_groupName);
-    }
+    //SYS_FORCE_INLINE void setInGroup(
+    //    const GA_PointGroup* const geoPointGroup = nullptr,
+    //    const GA_PrimitiveGroup* const geoRefMeshGroup = nullptr
+    //)
+    //{
+    //    groupParser.setGroup(geoPointGroup);
+    //    groupParserRef0.setGroup(geoRefMeshGroup);
+    //}
+    //
+    //SYS_FORCE_INLINE void setInGroup(
+    //    const UT_StringHolder& geoPoint_groupName,
+    //    const UT_StringHolder& geoRefMesh_groupName
+    //)
+    //{
+    //    groupParser.setPointGroup(geoPoint_groupName);
+    //    groupParserRef0.setPrimitiveGroup(geoRefMesh_groupName);
+    //}
 
 
     SYS_FORCE_INLINE GA_Attribute*
@@ -645,23 +645,23 @@ private:
         if (getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
             return false;
 
-        GA_Attribute* outWNAttribPtr = nullptr;
+        GA_Attribute* outWNAttrib = nullptr;
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
-            outWNAttribPtr = getOutAttribArray()[i];
-            const GA_AIFTuple* const aifTuple = outWNAttribPtr->getAIFTuple();
+            outWNAttrib = getOutAttribArray()[i];
+            const GA_AIFTuple* const aifTuple = outWNAttrib->getAIFTuple();
             if (aifTuple)
                 break;
         }
         
-        if (!outWNAttribPtr && getOutGroupArray().isEmpty())
+        if (!outWNAttrib && getOutGroupArray().isEmpty())
             return false;
 
         if (groupParser.isEmpty())
             return true;
 
-        if (!outWNAttribPtr)
+        if (!outWNAttrib)
         {
             const GA_GroupType groupType = getOutGroupArray()[0]->classType();
         }
@@ -670,7 +670,7 @@ private:
         case GA_GROUP_PRIMITIVE:
             break;
         case GA_GROUP_POINT:
-            wnAttribPtr = outWNAttribPtr;
+            wnAttribPtr = outWNAttrib;
             break;
         case GA_GROUP_EDGE:
             
@@ -685,7 +685,7 @@ private:
         geoTmp_h.allocateAndSet(geoTmp);
         geoTmp->replaceWith(*geo);
         
-        if (outWNAttribPtr->getOwner() == GA_ATTRIB_PRIMITIVE)
+        if (outWNAttrib->getOwner() == GA_ATTRIB_PRIMITIVE)
         {
             GFE_PointGenPerElem pointGenPerElem(geoTmp, cookparms);
             pointGenPerElem.compute();
@@ -697,10 +697,10 @@ private:
         case GA_STORE_REAL64: computeWindingNumber<fpreal64>(); break;
         }
 
-        if (outWNAttribPtr->getOwner() == GA_ATTRIB_PRIMITIVE)
+        if (outWNAttrib->getOwner() == GA_ATTRIB_PRIMITIVE)
         {
             GFE_AttribCopy(geo, )
-            outWNAttribPtr
+            outWNAttrib
         }
         if (doDelGroupElement)
             delGroupElement();

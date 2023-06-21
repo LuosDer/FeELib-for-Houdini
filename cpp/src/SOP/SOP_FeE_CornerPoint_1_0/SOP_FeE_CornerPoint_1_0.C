@@ -52,7 +52,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "CornerPointGroupName"
         label   "Corner Point Group Name"
         type    string
-        default { "cornerPoint" }
+        default { "corner" }
     }
     parm {
         name    "threshold"
@@ -124,6 +124,8 @@ SOP_FeE_CornerPoint_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("cornerPointGroupName"_sh, &SOP_Node::pointNamedGroupMenu);
+        templ.setChoiceListPtr("dotAttribName"_sh,        &SOP_Node::pointAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -240,18 +242,13 @@ SOP_FeE_CornerPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     GFE_CornerPoint cornerPoint(outGeo0, &cookparms);
 
     cornerPoint.groupParser.setGroup(groupType, sopparms.getGroup());
-    cornerPoint.findOrCreateGroup(false, sopparms.getCornerPointGroupName());
-    cornerPoint.setComputeParm(,sopparms.getThreshold(), sopparms.getDelCornerPoint(), 
+    cornerPoint.findOrCreatePointGroup(false, sopparms.getCornerPointGroupName());
+    cornerPoint.setComputeParm(sopparms.getThreshold(),
                             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    
+    cornerPoint.doDelGroupElement = sopparms.getDelCornerPoint();
     cornerPoint.computeAndBumpDataId();
     cornerPoint.visualizeOutGroup();
 
 
 }
 
-
-
-namespace SOP_FeE_CornerPoint_1_0_Namespace {
-
-} // End SOP_FeE_CornerPoint_1_0_Namespace namespace

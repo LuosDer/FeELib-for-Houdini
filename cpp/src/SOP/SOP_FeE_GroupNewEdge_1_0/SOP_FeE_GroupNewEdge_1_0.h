@@ -45,6 +45,7 @@ protected:
         switch (idx)
         {
         case 0:     return "Geo";
+        case 1:     return "Geo Ref";
         default:    return "Invalid Source";
         }
     }

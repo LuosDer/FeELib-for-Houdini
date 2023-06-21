@@ -271,7 +271,7 @@ R"THEDSFILE(
     group {
         name    "matchingtranslate_2_1"
         label   "Matching Translate"
-        hidewhentab "{ dotranslate == 0 }"
+        hidewhentab "{ doTranslate == 0 }"
 
         parm {
             name    "bboxtx"
@@ -426,7 +426,7 @@ R"THEDSFILE(
             label   "Auto Bind Center"
             type    toggle
             default { "on" }
-            disablewhen "{ dotranslate == 0 }"
+            disablewhen "{ doTranslate == 0 }"
         }
         parm {
             name    "bbox_ref_px"

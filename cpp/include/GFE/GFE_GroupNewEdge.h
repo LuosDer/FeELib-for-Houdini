@@ -26,7 +26,8 @@ public:
         setComputeParm(
             const bool useSnapDist = true,
             const fpreal snapDist = 0.001,
-            const bool reverseGroup = false,
+            const bool runOverGeoRef = false,
+            
             const exint subscribeRatio = 64,
             const exint minGrainSize = 64
         )
@@ -34,7 +35,7 @@ public:
         setHasComputed();
         this->useSnapDist      = useSnapDist;
         this->snapDist         = snapDist;
-        this->reverseOutGroup  = reverseGroup;
+        this->runOverGeoRef    = runOverGeoRef;
         this->subscribeRatio   = subscribeRatio;
         this->minGrainSize     = minGrainSize;
     }
@@ -77,98 +78,158 @@ private:
 
         
 
-        geoRef0Tmp = new GU_Detail();
-        geoRef0_h.allocateAndSet(geoRef0Tmp);
-        geoRef0Tmp->replaceWith(*geoRef0->asGA_Detail());
-
-
     
-        const GA_ATINumericUPtr snapPtoffAttribUPtr = geoRef0->getAttributes().
+        const GA_ATINumericUPtr snapPtoffAttribUPtr = (runOverGeoRef ? geoRef0 : geo)->getAttributes().
             createDetachedTupleAttribute(GA_ATTRIB_POINT, GA_STORE_INT64, 1, GA_Defaults(GFE_INVALID_OFFSET));
-    
         snapPtoffAttrib = snapPtoffAttribUPtr.get();
-        //const GA_RWHandleID snapPtoff_h(snapPtoffAttribPtr);
-
-
+        snappt_h = snapPtoffAttrib;
+        
         GU_Snap::PointSnapParms pointSnapParms;
         pointSnapParms.myAlgorithm = GU_Snap::PointSnapParms::ALGORITHM_CLOSEST_POINT;
         pointSnapParms.myDistance = useSnapDist ? snapDist : SYS_FP64_MAX;
+        pointSnapParms.myTPosH = (runOverGeoRef ? geo : geoRef0)->getP();
         pointSnapParms.myOutputAttribH = snapPtoffAttrib;
-        snapPtoff_h = snapPtoffAttrib;
 
-        GU_Snap::snapPoints(*geoRef0Tmp, geo->asGU_Detail(), pointSnapParms);
-        //GU_Snap::snapPoints(*geo->asGU_Detail(), geoRef0, pointSnapParms);
-
-
-    
+        if (runOverGeoRef)
+        {
+            geoRef0Tmp = new GU_Detail();
+            geoRef0_h.allocateAndSet(geoRef0Tmp);
+            geoRef0Tmp->replaceWith(*geoRef0->asGA_Detail());
+        }
         GFE_MeshTopology meshTopology(geo, cookparms);
-        vertexPointDstAttrib = meshTopology.setVertexPointDst(true);
-        meshTopology.compute();
-        dstpt_h = vertexPointDstAttrib;
-    
         GFE_MeshTopology meshTopologyRef0(geoRef0Tmp);
-        vertexPointDstRef0Attrib = meshTopologyRef0.setVertexPointDst(true);
-        meshTopologyRef0.compute();
+        if (runOverGeoRef)
+        {
+            pointSnapParms.myQPosH = geoRef0Tmp->getP();
+            GU_Snap::snapPoints(*geoRef0Tmp, geo->asGU_Detail(), pointSnapParms);
+
+            creatingGroup = meshTopologyRef0.setVertexNextEquivNoLoopGroup();
+            vertexPointDstAttrib = meshTopologyRef0.setVertexPointDst();
+            meshTopologyRef0.compute();
+            
+            if (groupSetter.reverseGroup)
+            {
+                meshTopology.groupParser.setGroup(groupParser);
+                creatingGroupTemp = meshTopology.setVertexNextEquivNoLoopGroup();
+                meshTopology.compute();
+            }
+        }
+        else
+        {
+            pointSnapParms.myQPosH = geo->getP();
+            GU_Snap::snapPoints(*geo->asGU_Detail(), geoRef0->asGU_Detail(), pointSnapParms);
+            
+            meshTopology.groupParser.setGroup(groupParser);
+            creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup();
+            vertexPointDstAttrib = meshTopology.setVertexPointDst();
+            meshTopology.compute();
+            //dstpt_h = vertexPointDstAttrib;
+        }
 
     
         const size_t size = getOutGroupArray().size();
         for (size_t i = 0; i < size; ++i)
         {
-            
             switch (getOutGroupArray()[i]->classType())
             {
             //case GA_GROUP_PRIMITIVE:  groupNewEdge(getOutGroupArray().getPrimitiveGroup(i));  break;
             //case GA_GROUP_POINT:      groupNewEdge(getOutGroupArray().getPointGroup((i));     break;
-            case GA_GROUP_VERTEX:     groupNewEdge(getOutGroupArray().getVertexGroup(i));     break;
-            case GA_GROUP_EDGE:       groupNewEdge(getOutGroupArray().getEdgeGroup(i));       break;
+            case GA_GROUP_VERTEX:     groupNewEdge(*getOutGroupArray().getVertexGroup(i));     break;
+            case GA_GROUP_EDGE:       groupNewEdge(*getOutGroupArray().getEdgeGroup(i));       break;
             default: break;
             }
         }
-        
+
 
         return true;
     }
 
 
 
-    void groupNewEdge(GA_VertexGroup* const group)
+    void groupNewEdge(GA_VertexGroup& group)
     {
-        UTparallelFor(groupParser.getVertexSplittableRange(), [this, group](const GA_SplittableRange& r)
+        const GA_ATITopology& vtxPointRef = *(runOverGeoRef ? geoRef0 : geo)->getTopology().getPointRef();
+        UTparallelFor((runOverGeoRef ? geoRef0 : geo)->getVertexSplittableRange(creatingGroup), [this, &group, &vtxPointRef](const GA_SplittableRange& r)
         {
+            GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstpt_ph(vertexPointDstAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
+                    dstpt_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        group->setElement(elemoff, true);
+                        const GA_Offset ptoff0 = snappt_h.get(vtxPointRef.getLink(elemoff));
+                        if (GFE_Type::isInvalidOffset(ptoff0))
+                            continue;
+                        const GA_Offset ptoff1 = snappt_h.get(dstpt_ph.value(elemoff));
+                        if (GFE_Type::isInvalidOffset(ptoff1))
+                            continue;
+                        const GA_Offset vtxoff = (runOverGeoRef ? geo : geoRef0)->edgeVertex(ptoff0, ptoff1);
+                        if (GFE_Type::isValidOffset(vtxoff))
+                            group.setElement(runOverGeoRef ? vtxoff : elemoff, true);
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
+        group.invalidateGroupEntries();
+        
+        if (groupSetter.reverseGroup)
+        {
+            group.toggleEntries();
+            if (runOverGeoRef)
+            {
+                UT_ASSERT_P(creatingGroupTemp);
+                group &= *creatingGroupTemp;
+            }
+            else
+            {
+                group &= *creatingGroup;
+            }
+        }
     }
 
 
-    void groupNewEdge(GA_EdgeGroup* const group)
+    void groupNewEdge(GA_EdgeGroup& group)
     {
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
-        UTparallelFor(geoSplittableRange0, [this, group](const GA_SplittableRange& r)
+#if 1
+        const GA_VertexGroupUPtr vtxGroupUPtr = geo->createDetachedVertexGroup();
+        GA_VertexGroup& vtxGroup = *vtxGroupUPtr.get();
+        groupNewEdge(vtxGroup);
+        GFE_GroupUnion::groupUnion(group, vtxGroup);
+#else
+        const GA_ATITopology& vtxPointRef = *(runOverGeoRef ? geoRef0 : geo)->getTopology().getPointRef();
+        const GA_SplittableRange gepSplittableRange = (runOverGeoRef ? geoRef0 : geo)->getVertexSplittableRange(creatingGroup);
+    
+        GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstpt_ph(vertexPointDstAttrib);
+        for (GA_PageIterator pit = gepSplittableRange.beginPages(); !pit.atEnd(); ++pit)
         {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                dstpt_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    attrib_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attrib_ph.value(elemoff) = firstIndex + elemoff;
-                    }
+                    const GA_Offset ptoff0 = snappt_h.get(vtxPointRef.getLink(elemoff));
+                    if (GFE_Type::isInvalidOffset(ptoff0))
+                        continue;
+                    const GA_Offset ptoff1 = snappt_h.get(dstpt_ph.value(elemoff));
+                    if (GFE_Type::isInvalidOffset(ptoff1))
+                        continue;
+                    //const GA_Offset vtxoff = (runOverGeoRef ? geo : geoRef0)->edgeVertex(ptoff0, ptoff1);
+                    //if (GFE_Type::isValidOffset(vtxoff))
+                    if (runOverGeoRef)
+                        group.add(ptoff0, ptoff1);
+                    else
+                        group.add(vtxPointRef.getLink(elemoff), dstpt_ph.value(elemoff));
                 }
             }
-        }, subscribeRatio, minGrainSize);
+        }
+        
+        if (!groupSetter.reverseGroup)
+            group.toggleEntries();
+#endif
     }
 
     
@@ -177,10 +238,7 @@ private:
 public:
     bool useSnapDist = true;
     fpreal snapDist = 0.001;
-    
-    const char* prefix = "";
-    const char* sufix = "";
-    
+    bool runOverGeoRef = false;
 
 private:
     GU_DetailHandle geoRef0_h;
@@ -192,12 +250,13 @@ private:
 
     
     GA_Attribute* snapPtoffAttrib;
-    GA_RWHandleT<GA_Offset> snapPtoff_h;
+    //GA_ROHandleT<GA_Offset> snapPtoff_h;
+    GA_ROHandleT<GA_Offset> snappt_h;
 
-    GA_Attribute* vertexPointDstRef0Attrib;
-    
-    GA_Attribute* vertexPointDstAttrib;
-    GA_RWHandleT<GA_Offset> dstpt_h;
+    const GA_VertexGroup* creatingGroup;
+    const GA_VertexGroup* creatingGroupTemp;
+    const GA_Attribute* vertexPointDstAttrib;
+    //GA_ROHandleT<GA_Offset> dstpt_h;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

@@ -10,8 +10,6 @@
 
 #include "GFE/GFE_Normal3D.h"
 #include "GFE/GFE_MeshTopology.h"
-#include "GFE/GFE_GroupPromote.h"
-//#include "GFE/GFE_GroupBoolean.h"
 #include "GFE/GFE_GroupExpand.h"
 
 
@@ -78,7 +76,7 @@ public:
     
     
     SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
-    { normal2DAttribName = detached ? nullptr: attribName; normal2DAttrib = nullptr }
+    { normal2DAttribName = detached ? nullptr: attribName; normal2DAttrib = nullptr; }
     
     SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const UT_StringRef& attribName = "")
     { setNormal2DAttrib(detached, attribName.c_str()); }
@@ -119,65 +117,64 @@ private:
         }
 
         
+        hasAttrib   = normal3DAttrib && !normal3DAttrib->isDetached() && strcmp(normal3DAttrib->getName().c_str(), normal2DAttribName)==0;
         isGroupFull = groupParser.isFull();
-        const bool shouldRenameAttrib = normal3DAttrib && !normal3DAttrib->isDetached() && strcmp(normal3DAttrib->getName().c_str(), normal2DAttribName)==0;
+        
+
         if (normal2DAttribName)
         {
-            if (shouldRenameAttrib)
-                getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, __GFE_Normal2D_Temp_AttribName);
-            else
+            if (hasAttrib)
             {
-                getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
                 if (isGroupFull)
                 {
-                    geo->destroyAttribute(GA_ATTRIB_POINT, normal2DAttribName);
-                    getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
+                    normal2DAttrib = getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, __GFE_Normal2D_Temp_AttribName);
                 }
                 else
                 {
-                    geo->destroyAttribute(GA_ATTRIB_POINT, normal2DAttribName);
-                    getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
+                    GA_Attribute* const outNormal2DAttrib = geo->findPointAttribute(normal2DAttribName);
+                    getOutAttribArray().append(outNormal2DAttrib);
+                    normal2DAttrib = getOutAttribArray().findOrCreateDir(true, GA_ATTRIB_POINT, GA_STORE_INVALID);
                 }
+            }
+            else
+            {
+                normal2DAttrib = geo->findPointAttribute(normal2DAttribName);
+                if (GFE_Type::checkTupleAttrib(normal2DAttrib, GA_STORE_INVALID, 3))
+                {
+                    //onst fpreal64 constValue[] = {0.0, 0.0, 0.0};
+                    //normal2DAttrib->getAIFTuple()->setRange(normal2DAttrib, groupParser.getPointRange(), constValue, 0, 3);
+                    normal2DAttrib->getAIFTuple()->set(normal2DAttrib, groupParser.getPointRange(), 0.0);
+                    getOutAttribArray().append(normal2DAttrib);
+                }
+                else
+                    normal2DAttrib = getOutAttribArray().findOrCreateDir(false, GA_ATTRIB_POINT, GA_STORE_INVALID, normal2DAttribName);
             }
         }
         else
         {
-            if (!normal2DAttrib)
+            if (normal2DAttrib)
+            {
+                //const fpreal64 constValue(0.0);
+                //normal2DAttrib->getAIFTuple()->setRange(normal2DAttrib, groupParser.getPointRange(), &constValue, 0, 3);
+                normal2DAttrib->getAIFTuple()->set(normal2DAttrib, groupParser.getPointRange(), 0.0);
+            }
+            else
                 normal2DAttrib = getOutAttribArray().findOrCreateDir(true, GA_ATTRIB_POINT, GA_STORE_INVALID);
         }
+        //return true;
+
+
         
-        switch (storage_max)
-        {
-        case GA_STORE_REAL16: computeNormal2D<fpreal16>(); break;
-        case GA_STORE_REAL32: computeNormal2D<fpreal32>(); break;
-        case GA_STORE_REAL64: computeNormal2D<fpreal64>(); break;
-        default: UT_ASSERT_MSG(0, "Unhandled Storage");    break;
-        }
-
-        if (shouldRenameAttrib)
-            geo->forceRenameAttribute(getOutAttribArray()[0], normal2DAttribName);
-
-        return true;
-    }
-
-
-#undef __GFE_Normal2D_Temp_AttribName
-
-
-    template<typename FLOAT_T>
-    void computeNormal2D()
-    {
-        const GA_PointGroup* const geoPointGroup = groupParser.getPointGroup();
-
         GFE_MeshTopology meshTopology(geo, cookparms);
-        GA_VertexGroup* const unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(true);
-        const GA_Attribute* const dstptAttrib = meshTopology.setVertexPointDst(true);
+        unsharedVertexGroup = meshTopology.setVertexNextEquivGroup(true);
+        dstptAttrib_h = meshTopology.setVertexPointDst(true);
         meshTopology.compute();
 
         const GA_PointGroupUPtr unsharedPointGroupUPtr = geo->createDetachedPointGroup();
-        GA_PointGroup* const unsharedPointGroup = unsharedPointGroupUPtr.get();
+        unsharedPointGroup = unsharedPointGroupUPtr.get();
         unsharedPointGroup->combine(unsharedVertexGroup);
         
+        geoPointGroup = groupParser.getPointGroup();
         if (geoPointGroup)
         {
             //GA_PointGroupUPtr expandGroupUPtr = geo->createDetachedPointGroup();
@@ -197,27 +194,46 @@ private:
             //*unsharedVertexGroup &= *geoExpandPointGroup;
         }
 
-        const GA_ROHandleT<GA_Offset> dstptAttrib_h(dstptAttrib);
-
-        const GA_RWHandleT<UT_Vector3T<FLOAT_T>> normal2D_h(getOutAttribArray()[0]);
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal3D_h(normal3DAttrib);
-
         if (!normal3DAttrib)
             defaultNormal3DFinal = defaultNormal3D;
-        const GA_AttributeOwner normal3DOwner = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
+        normal3DOwner = normal3DAttrib ? normal3DAttrib->getOwner() : GA_ATTRIB_INVALID;
+
+        const GA_Topology& topo = geo->getTopology();
+        //topo.makePrimitiveRef();
+        vtxPointRef = topo.getPointRef();
+        vtxPrimRef  = topo.getPrimitiveRef();
+
+
+        
+        switch (storage_max)
+        {
+        case GA_STORE_REAL16: computeNormal2D<fpreal16>(); break;
+        case GA_STORE_REAL32: computeNormal2D<fpreal32>(); break;
+        case GA_STORE_REAL64: computeNormal2D<fpreal64>(); break;
+        default: UT_ASSERT_MSG(0, "Unhandled Storage");    break;
+        }
+
+        if (normal2DAttribName && hasAttrib && isGroupFull)
+            geo->forceRenameAttribute(normal2DAttrib, normal2DAttribName);
+
+        return true;
+    }
+
+
+#undef __GFE_Normal2D_Temp_AttribName
+
+
+    template<typename FLOAT_T>
+    void computeNormal2D()
+    {
+        const GA_RWHandleT<UT_Vector3T<FLOAT_T>> normal2D_h(normal2DAttrib);
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal3D_h(normal3DAttrib);
         if (normal3DOwner == GA_ATTRIB_GLOBAL)
             defaultNormal3DFinal = normal3D_h.get(0);
         
-        
-        
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makePrimitiveRef();
-        const GA_ATITopology& vtxPointRef = *topo.getPointRef();
-        const GA_ATITopology& vtxPrimRef  = *topo.getPrimitiveRef();
 
-        UTparallelFor(GA_SplittableRange(geo->getVertexRange(unsharedVertexGroup)), [this, &dstptAttrib_h, &normal2D_h, &pos_h, &normal3D_h,
-            &vtxPointRef, &vtxPrimRef, normal3DOwner](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(geo->getVertexRange(unsharedVertexGroup)), [this, &normal2D_h, &pos_h, &normal3D_h](const GA_SplittableRange& r)
         {
             UT_Vector3T<FLOAT_T> dir;
             GA_Offset start, end;
@@ -225,14 +241,14 @@ private:
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const GA_Offset ptoff = vtxPointRef.getLink(elemoff);
+                    const GA_Offset ptoff = vtxPointRef->getLink(elemoff);
                     const GA_Offset dstpt = dstptAttrib_h.get(elemoff);
 
                     dir = pos_h.get(ptoff) - pos_h.get(dstpt);
                     switch (normal3DOwner)
                     {
                     case GA_ATTRIB_PRIMITIVE:
-                        dir.cross(normal3D_h.get(vtxPrimRef.getLink(elemoff)));
+                        dir.cross(normal3D_h.get(vtxPrimRef->getLink(elemoff)));
                         break;
                     case GA_ATTRIB_POINT:
                         dir.cross(normal3D_h.get(ptoff));
@@ -245,32 +261,37 @@ private:
                         break;
                     }
                     dir.normalize();
-                    normal2D_h.add(ptoff, dir);
-                    normal2D_h.add(dstpt, dir);
+                    if (!geoPointGroup || geoPointGroup->contains(ptoff))
+                        normal2D_h.add(ptoff, dir);
+                    if (!geoPointGroup || geoPointGroup->contains(dstpt))
+                        normal2D_h.add(dstpt, dir);
                 }
             }
         }, subscribeRatio, minGrainSize);
 
 
-
+        if (geoPointGroup)
+            *unsharedPointGroup &= *geoPointGroup;
         const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
         
-        GA_Attribute* const outNormal2DAttrib = geo->findPointAttribute(normal2DAttribName);
-        if (outNormal2DAttrib && groupParser.getHasGroup())
+        if (normal2DAttribName && hasAttrib && !isGroupFull)
         {
-            getOutAttribArray().append(outNormal2DAttrib);
+            GA_Attribute* const outNormal2DAttrib = geo->findPointAttribute(normal2DAttribName);
+            UT_ASSERT_P(outNormal2DAttrib);
             UTparallelFor(geoPointSplittableRange, [this, outNormal2DAttrib](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(outNormal2DAttrib);
-                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
+                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> normal2DTmp_ph(normal2DAttrib);
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         normal2D_ph.setPage(start);
+                        normal2DTmp_ph.setPage(start);
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
+                            normal2D_ph.value(elemoff) = normal2DTmp_ph.value(elemoff);
                             if (scaleByTurns)
                             {
                                 normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
@@ -280,7 +301,6 @@ private:
                                 normal2D_ph.value(elemoff).normalize();
                                 normal2D_ph.value(elemoff) *= uniScale;
                             }
-                            normal2D_ph.value(elemoff) = normal2DTemp_ph.value(elemoff);
                         }
                     }
                 }
@@ -291,7 +311,7 @@ private:
             UTparallelFor(geoPointSplittableRange, [this](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
-                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(getOutAttribArray()[0]);
+                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(normal2DAttrib);
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
@@ -338,12 +358,21 @@ public:
 private:
     UT_Vector3T<fpreal64> defaultNormal3DFinal;
     const GA_Attribute* normal3DAttrib = nullptr;
+    GA_AttributeOwner normal3DOwner;
     
     GA_Attribute* normal2DAttrib = nullptr;
     const char* normal2DAttribName = nullptr;
     
+    bool hasAttrib;
     bool isGroupFull;
 
+    const GA_PointGroup* geoPointGroup;
+    GA_VertexGroup* unsharedVertexGroup;
+    GA_PointGroup*  unsharedPointGroup;
+    GA_ROHandleT<GA_Offset> dstptAttrib_h;
+    const GA_ATITopology* vtxPointRef;
+    const GA_ATITopology* vtxPrimRef;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
     

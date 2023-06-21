@@ -363,7 +363,7 @@ GA_Attribute* createDetachedArrayAttribute(
     
 GA_Attribute*
 findOrCreateTuple(
-    const bool detached = false,
+    const bool detached = true,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
     const GA_Storage storage = GA_STORE_INVALID,
@@ -417,7 +417,7 @@ findOrCreateTuple(
 template<typename T>
 SYS_FORCE_INLINE GA_Attribute*
 findOrCreateTuple(
-    const bool detached = false,
+    const bool detached = true,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const UT_StringRef& attribName = "",
     const int tuple_size = 1,
@@ -444,7 +444,7 @@ findOrCreateTuple(
 }
 
 // SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
-//     const bool detached = false,
+//     const bool detached = true,
 //     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
 //     const GA_Precision precision = GA_PRECISION_INVALID,
 //     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
@@ -463,7 +463,7 @@ findOrCreateTuple(
 
     GA_Attribute*
     findOrCreateArray(
-        const bool detached = false,
+        const bool detached = true,
         const GA_AttributeOwner owner = GA_ATTRIB_POINT,
         const GA_StorageClass storageClass = GA_STORECLASS_FLOAT,
         const GA_Storage storage = GA_STORE_INVALID,
@@ -553,7 +553,7 @@ findOrCreateTuple(
 
     GA_Attribute*
     findOrCreatePiece(
-        const bool detached = false,
+        const bool detached = true,
         const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = GFE_PieceAttribSearchOrder::PRIM,
         const GA_AttributeOwner owner = GA_ATTRIB_PRIMITIVE,
         const GA_StorageClass storageClass = GA_STORECLASS_INT,
@@ -664,7 +664,7 @@ findOrCreateTuple(
     
 GA_Attribute*
 findOrCreateUV(
-    const bool detached = false,
+    const bool detached = true,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringRef& attribName = "",
@@ -730,7 +730,7 @@ findOrCreateUV(
 
 GA_Attribute*
 findOrCreateDir(
-    const bool detached = false,
+    const bool detached = true,
     const GA_AttributeOwner owner = GA_ATTRIB_POINT,
     const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringRef& attribName = "",
@@ -797,7 +797,7 @@ findOrCreateDir(
 
 GA_Attribute*
 findOrCreateNormal3D(
-    const bool detached = false,
+    const bool detached = true,
     const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
     const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringRef& attribName = "",
@@ -1296,7 +1296,7 @@ public:
 
 
     GA_Group* findOrCreate(
-        const bool detached = false,
+        const bool detached = true,
         const GA_GroupType groupType = GA_GROUP_POINT,
         const UT_StringRef& groupName = "",
         const bool emplaceBack = true
@@ -1323,6 +1323,13 @@ public:
         }
         else
         {
+            if (!groupName.isstring() || groupName.length()==0)
+            {
+                if (cookparms)
+                    cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
+                return nullptr;
+            }
+            
             groupPtr = geo->getGroupTable(groupType)->find(groupName);
 
             if (!groupPtr)
@@ -1332,7 +1339,7 @@ public:
             {
                 if (cookparms)
                     cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
-                UT_ASSERT_MSG(groupPtr, "No Group");
+                //UT_ASSERT_MSG(groupPtr, "Invalid Group Name");
                 return nullptr;
             }
         }
@@ -1344,7 +1351,7 @@ public:
 
     SYS_FORCE_INLINE GA_Group*
         findOrCreate(
-            const bool detached = false,
+            const bool detached = true,
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
@@ -1353,7 +1360,7 @@ public:
 
     SYS_FORCE_INLINE GA_ElementGroup*
         findOrCreateElement(
-            const bool detached = false,
+            const bool detached = true,
             const GA_GroupType owner = GA_GROUP_POINT,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
@@ -1362,7 +1369,7 @@ public:
 
     SYS_FORCE_INLINE GA_ElementGroup*
         findOrCreateElement(
-            const bool detached = false,
+            const bool detached = true,
             const GA_AttributeOwner owner = GA_ATTRIB_POINT,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
@@ -1372,7 +1379,7 @@ public:
 
     SYS_FORCE_INLINE GA_PrimitiveGroup*
         findOrCreatePrimitive(
-            const bool detached = false,
+            const bool detached = true,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )
@@ -1380,7 +1387,7 @@ public:
 
     SYS_FORCE_INLINE GA_PointGroup*
         findOrCreatePoint(
-            const bool detached = false,
+            const bool detached = true,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )
@@ -1388,7 +1395,7 @@ public:
 
     SYS_FORCE_INLINE GA_VertexGroup*
         findOrCreateVertex(
-            const bool detached = false,
+            const bool detached = true,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )
@@ -1396,7 +1403,7 @@ public:
 
     SYS_FORCE_INLINE GA_EdgeGroup*
         findOrCreateEdge(
-            const bool detached = false,
+            const bool detached = true,
             const UT_StringRef& groupName = "",
             const bool emplaceBack = true
         )

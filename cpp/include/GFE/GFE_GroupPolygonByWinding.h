@@ -25,17 +25,17 @@ enum class GFE_GroupPolyByWindingMethod
 
 
 
-class GFE_GroupPolyByWinding : public GFE_AttribFilterWithRef {
+class GFE_GroupPolyByWinding : public GFE_AttribFilterWithRef0 {
 
 public:
-	//using GFE_AttribFilterWithRef::GFE_AttribFilterWithRef;
+	//using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
 	
 	GFE_GroupPolyByWinding(
 		GA_Detail& geo,
 		const GA_Detail* const geoRef,
 		const SOP_NodeVerb::CookParms* const cookparms = nullptr
 	)
-		: GFE_AttribFilterWithRef(geo, geoRef, cookparms)
+		: GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
 		, normal3D(geo, cookparms)
 	{
 	}
@@ -99,7 +99,7 @@ private:
 		GA_PrimitiveGroup* const outPrimGroup = getOutGroupArray().getPrimitiveGroup(0);
 		//GA_PointGroupUPtr outPointGroupUPtr = geo->createDetachedPointGroup();
 		//setGroup = outPointGroupUPtr.get();
-		setGroup = outPrimGroup;
+		groupSetter = outPrimGroup;
 		
 		if (meshCap)
 		{
@@ -212,7 +212,7 @@ private:
 							}
 						}
 						if (flag)
-							setGroup.set(elemoff, true);
+							groupSetter.set(elemoff, true);
 					}
 				}
 			}

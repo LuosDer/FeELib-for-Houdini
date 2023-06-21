@@ -135,19 +135,15 @@ static VECTOR_T axisDir(const GFE_Axis axis)
     return VECTOR_T(0,1,0);
 }
 
-SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
-{ return axisDir<UT_Vector3T<fpreal64>>(axis); }
-    
+SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
+
 SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
 { return axisDir<UT_Vector3T<fpreal32>>(axis); }
     
-SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
-{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
-
-
-SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
-{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
-
+SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal64>>(axis); }
+    
     
 
 static bool checkTupleAttrib(

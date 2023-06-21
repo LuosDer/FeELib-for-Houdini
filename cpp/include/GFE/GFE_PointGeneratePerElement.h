@@ -13,7 +13,7 @@
 #include "GFE/GFE_Math.h"
 #include "GFE/GFE_MeshTopology.h"
 
-#include "SOP/SOP_Scatter-2.0.proto.h"
+//#include "SOP/SOP_Scatter-2.0.proto.h"
 
 
 class GFE_PointGenPerElem : public GFE_AttribFilter {
@@ -303,17 +303,17 @@ private:
     }
     
 
-    void scatter()
-    {
-        scatterParms.setGroup(__TEMP_GFE_PointGenPerElem_GroupName);
-        //scatterParms.setPrimNumAttrib();
-        //scatterParms.setPrimNumAttrib();
-        
-        SOP_NodeCache* const nodeCache = scatterVerb->allocCache();
-        const auto scatterCookparms = GFE_NodeVerb::newCookParms(cookparms, scatterParms, nodeCache, nullptr, &inputgdh);
-        
-        scatterVerb->cook(scatterCookparms);
-    }
+    //void scatter()
+    //{
+    //    scatterParms.setGroup(__TEMP_GFE_PointGenPerElem_GroupName);
+    //    //scatterParms.setPrimNumAttrib();
+    //    //scatterParms.setPrimNumAttrib();
+    //    
+    //    SOP_NodeCache* const nodeCache = scatterVerb->allocCache();
+    //    const auto scatterCookparms = GFE_NodeVerb::newCookParms(cookparms, scatterParms, nodeCache, nullptr, &inputgdh);
+    //    
+    //    scatterVerb->cook(scatterCookparms);
+    //}
 
 public:
     GA_GroupType elemType = GA_GROUP_PRIMITIVE;
@@ -349,9 +349,9 @@ private:
 
 private:
     
-    UT_Array<GU_ConstDetailHandle> inputgdh;
-    SOP_Scatter_2_0Parms scatterParms;
-    const SOP_NodeVerb* const scatterVerb = SOP_NodeVerb::lookupVerb("scatter::2.0");
+    //UT_Array<GU_ConstDetailHandle> inputgdh;
+    //SOP_Scatter_2_0Parms scatterParms;
+    //const SOP_NodeVerb* const scatterVerb = SOP_NodeVerb::lookupVerb("scatter::2.0");
     
 #undef __TEMP_GFE_PointGenPerElem_GroupName
     
