@@ -17,6 +17,11 @@
 class GFE_FlatEdge : public GFE_AttribFilter {
 
 public:
+    enum ManifoldEdgeOp
+    {
+        Min,
+        Max,
+    };
     //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_FlatEdge(
@@ -44,11 +49,10 @@ public:
     void
         setComputeParm(
             const bool includeUnsharedEdge = true,
-            const ManifoldEdge manifoldEdge,
+            const ManifoldEdgeOp manifoldEdge,
             const bool outAsVertexGroup = true,
             const fpreal flatEdgeAngleThreshold = 1e-05,
             const bool absoluteDot = true,
-            const bool reverseGroup = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
@@ -59,7 +63,6 @@ public:
         this->outAsVertexGroup = outAsVertexGroup;
         this->flatEdgeAngleThreshold = flatEdgeAngleThreshold;
         this->absoluteDot = absoluteDot;
-        this->reverseGroup = reverseGroup;
         
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
@@ -258,7 +261,7 @@ public:
     GFE_Normal3D normal3D;
     
     bool includeUnsharedEdge = true;
-    ManifoldEdge manifoldEdge;
+    ManifoldEdgeOp manifoldEdge;
     bool outAsVertexGroup = true;
     fpreal flatEdgeAngleThreshold = 1e-05;
     bool absoluteDot = true;

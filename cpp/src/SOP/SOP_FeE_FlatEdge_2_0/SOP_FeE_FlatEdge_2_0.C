@@ -271,10 +271,10 @@ sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmGroupType)
 
 
 static GA_GroupType
-sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmGroupType)
+sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmManifoldEdge)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmGroupType)
+    switch (parmManifoldEdge)
     {
     case ManifoldEdge::NONE:    return GA_GROUP_VERTEX;     break;
     case ManifoldEdge::ALL:     return GA_GROUP_INVALID;    break;
@@ -358,7 +358,6 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());
     flatEdge.findOrCreateGroup(flatEdgeGroupName);
-    
     
     flatEdge.computeAndBumpDataId();
     flatEdge.delOrVisualizeGroup();
