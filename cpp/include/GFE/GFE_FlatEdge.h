@@ -49,7 +49,7 @@ public:
     void
         setComputeParm(
             const bool includeUnsharedEdge = true,
-            const ManifoldEdgeOp manifoldEdge,
+            const ManifoldEdgeOp manifoldEdgeOp,
             const bool outAsVertexGroup = true,
             const fpreal flatEdgeAngleThreshold = 1e-05,
             const bool absoluteDot = true,
@@ -59,7 +59,7 @@ public:
     {
         setHasComputed();
         this->includeUnsharedEdge = includeUnsharedEdge;
-        this->manifoldEdge = manifoldEdge;
+        this->manifoldEdgeOp = manifoldEdgeOp;
         this->outAsVertexGroup = outAsVertexGroup;
         this->flatEdgeAngleThreshold = flatEdgeAngleThreshold;
         this->absoluteDot = absoluteDot;
@@ -71,37 +71,51 @@ public:
 
     SYS_FORCE_INLINE void findOrCreateGroup(const UT_StringRef& groupName = "")
     { getOutGroupArray().findOrCreateEdge(doDelGroupElement, groupName); }
+
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
         if (getOutGroupArray().isEmpty())
-            return false;
+            return true;
 
         if (groupParser.isEmpty())
             return true;
 
-        if (!normalAttrib || (normalAttrib->getOwner() != GA_ATTRIB_VERTEX && normalAttrib->getOwner() != GA_ATTRIB_PRIMITIVE))
+        const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
+        
+        if (normal3DAttrib && normal3DAttrib->isDetached())
+            normal3D.compute();
+        
+        if (!normal3DAttrib || normal3DAttrib->getOwner() > GA_ATTRIB_PRIMITIVE || normal3DAttrib->getOwner() < 0)
         {
             if (normal3D.getOutAttribArray().isEmpty())
             {
                 normal3D.getOutAttribArray().findOrCreateNormal3D(true);
             }
             normal3D.compute();
-            normalAttrib = normal3D.getAttrib();
+            normal3DAttrib = normal3D.getAttrib();
         }
-
-
+        
         groupSetter = getOutGroupArray()[0];
         
         GFE_MeshTopology meshTopology(geo, cookparms);
-        //const GA_Attribute* const vertexNextEquivNoLoopAttrib = adjacency.setVertexNextEquivNoLoop();
-        const GA_Attribute* const vertexNextEquivAttrib = meshTopology.setVertexNextEquiv();
+        const GA_VertexGroup* const vertexNextEquivNoLoopGroup = meshTopology.setVertexNextEquivNoLoopGroup();
+        const GA_Attribute*   const vertexNextEquivAttrib      = meshTopology.setVertexNextEquiv();
         meshTopology.compute();
 
+        const size_t size = getOutGroupArray().size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            switch (getOutGroupArray()[i]->classType())
+            {
+            case GA_GROUP_VERTEX: flatEdge<fpreal16>(getOutGroupArray()[0]); break;
+            case GA_GROUP_EDGE:   flatEdge<fpreal32>(); break;
+            default: break;
+            }
+        }
         GA_VertexGroup* const outVertexGroup = getOutGroupArray()[0];
         GA_EdgeGroup*   const outEdgeGroup   = getOutGroupArray()[0];
 
@@ -208,17 +222,17 @@ private:
 
 
                         /*
-                        if ( chi("../manifoldEdge") < 2 )
+                        if ( chi("../manifoldEdgeOp") < 2 )
                         {
                             //none
                             //all
-                            i@outgrp = chi("../manifoldEdge");
+                            i@outgrp = chi("../manifoldEdgeOp");
                         }
-                        else if ( chi("../manifoldEdge") < 4 )
+                        else if ( chi("../manifoldEdgeOp") < 4 )
                         {
                             //min
                             //max
-                            float exdot = chi("../manifoldEdge")==3 ? -MAXF32 : MAXF32;
+                            float exdot = chi("../manifoldEdgeOp")==3 ? -MAXF32 : MAXF32;
 
                             vector Ns[];
                             resize(Ns, hedge_equivcount);
@@ -235,7 +249,7 @@ private:
                                 {
                                     float dot = dot(Ns[i], Ns[j]);
                                     dot = chi('../absoluteDot') ? abs(dot) : dot;
-                                    exdot = chi("../manifoldEdge")==3 ? max(exdot, dot) : min(exdot, dot);
+                                    exdot = chi("../manifoldEdgeOp")==3 ? max(exdot, dot) : min(exdot, dot);
                                 }
                             }
                             i@outgrp = (exdot < chf('../flatEdgeAngleThreshold')) ^ chi('../reverse');
@@ -261,13 +275,13 @@ public:
     GFE_Normal3D normal3D;
     
     bool includeUnsharedEdge = true;
-    ManifoldEdgeOp manifoldEdge;
+    ManifoldEdgeOp manifoldEdgeOp;
     bool outAsVertexGroup = true;
     fpreal flatEdgeAngleThreshold = 1e-05;
     bool absoluteDot = true;
     
 private:
-    GA_Attribute* normalAttrib = nullptr;
+    //GA_Attribute* normalAttrib = nullptr;
     fpreal flatEdgeThreshold;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

@@ -942,40 +942,38 @@ static GA_Attribute*
 findNormal3D(
     GA_Detail& geo,
     const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
-    const UT_StringRef& normal3DAttribName = "N"
+    const UT_StringRef& name = "N"
 )
 {
-    if (!normal3DAttribName.isstring() || normal3DAttribName.length() == 0)
+    if (!name.isstring() || name.length() == 0)
         return nullptr;
 
     GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::PRIMITIVE:   normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName); break;
-    case GFE_NormalSearchOrder::POINT:       normal3DAttrib = geo.findPointAttribute( normal3DAttribName);    break;
-    case GFE_NormalSearchOrder::VERTEX:      normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);    break;
-    case GFE_NormalSearchOrder::DETAIL:      normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);    break;
+    case GFE_NormalSearchOrder::PRIMITIVE:   normal3DAttrib = geo.findPrimitiveAttribute(name); break;
+    case GFE_NormalSearchOrder::POINT:       normal3DAttrib = geo.findPointAttribute    (name); break;
+    case GFE_NormalSearchOrder::VERTEX:      normal3DAttrib = geo.findVertexAttribute   (name); break;
+    case GFE_NormalSearchOrder::DETAIL:      normal3DAttrib = geo.findGlobalAttribute   (name); break;
     case GFE_NormalSearchOrder::POINTVERTEX:
-        normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPointAttribute(name);
         if (!normal3DAttrib)
-            normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
+            normal3DAttrib = geo.findVertexAttribute(name);
         break;
     case GFE_NormalSearchOrder::ALL:
-        normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
+        normal3DAttrib = geo.findPrimitiveAttribute(name);
         if (!normal3DAttrib)
         {
-            normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
+            normal3DAttrib = geo.findPointAttribute(name);
             if (!normal3DAttrib)
             {
-                normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
+                normal3DAttrib = geo.findVertexAttribute(name);
                 if (!normal3DAttrib)
-                    normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
+                    normal3DAttrib = geo.findGlobalAttribute(name);
             }
         }
         break;
-    default:
-        UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder");
-        break;
+    default: UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder"); break;
     }
     return normal3DAttrib;
 }

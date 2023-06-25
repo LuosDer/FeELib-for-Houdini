@@ -27,33 +27,72 @@ public:
             const bool copyOrigIfZero = false
         )
     {
-        setHasComputed();
         this->cuspAngleDegrees = cuspAngleDegrees;
         this->normalMethod = normalMethod;
         this->copyOrigIfZero = copyOrigIfZero;
     }
 
+    SYS_FORCE_INLINE void setNotComputed()
+    { setHasComputed(); }
+
     
-    SYS_FORCE_INLINE bool isEmpty() const
-    { return getOutAttribArray().isEmpty(); }
+    SYS_FORCE_INLINE void setNormal3DAttrib(const GA_Attribute* const inAttrib)
+    {
+        setHasComputed(true);
+        normal3DAttrib = inAttrib;
+    }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
-        const bool detached = false, 
-        const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::ALL,
+        const bool findNormal3D,
+        const GFE_NormalSearchOrder normal3DSearchOrder = GFE_NormalSearchOrder::ALL,
+        const UT_StringRef& attribName = "",
+        const bool addNormal3DIfNoFind = true
+    )
+    { return normal3DAttrib = getOutAttribArray().findOrCreateNormal3D(true,
+            findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::PRIMITIVE, GA_STORE_INVALID,
+            findNormal3D ? attribName : UT_StringHolder("")); }
+
+    
+    GA_Attribute*
+    findOrCreateNormal3D(
+        const bool findNormal3D = false,
+        const bool detached = true,
+        const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = "",
-        const int tuple_size = 3
-        )
-    { return getOutAttribArray().findOrCreateNormal3D(detached, normalSearchOrder, storage, attribName, tuple_size); }
-
+        const int tupleSize = 3,
+        const GA_Defaults& defaults = GA_Defaults(0.0f),
+        const bool emplaceBack = true,
+        const UT_Options* const create_args = nullptr,
+        const GA_AttributeOptions* const attribute_options = nullptr,
+        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+    )
+    {
+        if (findNormal3D)
+        {
+            const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
+        
+            GA_Attribute* const attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
+            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, defaults))
+            {
+                normal3DAttrib = attrib;
+                setHasComputed(true);
+                return attrib;
+            }
+        }
+        setHasComputed();
+        return findOrCreateNormal3D(detached, owner, storage, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass);
+    }
+    
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
-        const bool detached = false, 
+        const bool findNormal3D = false,
+        const bool detached = true, 
         const GA_GroupType groupType = GA_GROUP_N,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = "",
         const int tuple_size = 3
         )
-    { return findOrCreateNormal3D(detached, GFE_Attribute::toNormalSearchOrder(groupType), storage, attribName, tuple_size); }
+    { return findOrCreateNormal3D(findNormal3D, detached, GFE_Attribute::toNormalSearchOrder(groupType), storage, attribName, tuple_size); }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
         const bool detached, 
@@ -65,7 +104,7 @@ public:
     { return findOrCreateNormal3D(detached, group.classType(), storage, attribName, tuple_size); }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
-        const bool detached = false, 
+        const bool detached = true, 
         const GA_AttributeOwner owner = GA_ATTRIB_OWNER_N,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = "",
@@ -77,7 +116,8 @@ public:
     SYS_FORCE_INLINE GA_Attribute* getAttrib() const
     {
         //UT_ASSERT_MSG(!getOutAttribArray().isEmpty(), "no attrib found");
-        return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
+        //return getOutAttribArray().isEmpty() ? nullptr : getOutAttribArray()[0];
+        return normal3DAttrib;
     }
 
 
@@ -86,13 +126,16 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
+        if (getHasComputed())
+            return true;
+
+        //if (getOutAttribArray().isEmpty())
+        if (!normal3DAttrib)
             return false;
 
         if (groupParser.isEmpty())
             return true;
-
-
+        
         GEOcomputeNormals(*geo->asGEO_Detail(), getOutAttribArray()[0], groupParser.getGroup(getOutAttribArray()[0]),
             cuspAngleDegrees, normalMethod, copyOrigIfZero);
 
@@ -106,311 +149,9 @@ public:
     GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED;
     bool copyOrigIfZero = false;
 
+private:
+    const GA_Attribute* normal3DAttrib = nullptr;
+    
 }; // End of class GFE_Normal3D
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//namespace GFE_Normal3D_Namespace {
-//
-//    //#define GFE_Temp_Normal3DAttribName "__Normal3D_SOP_FeE_Normal"
-//    #define GFE_Temp_Normal2DAttribName "__Normal2D_SOP_FeE_Normal"
-//
-//    //constexpr UT_StringHolder& GFE_Temp_Normal3DAttribName = "__Normal3D_SOP_FeE_Normal";
-//
-//
-//    SYS_FORCE_INLINE
-//    static void
-//        computeNormal3D(
-//            GA_Detail* const geo,
-//            const GA_ROHandleT<UT_Vector3T<fpreal32>>& posAttrib_h,
-//            const GA_RWHandleT<UT_Vector3T<fpreal32>>& normal3DAttrib_h,
-//            const GA_Group* const geoGroup = nullptr,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        GEOcomputeNormals(*static_cast<GEO_Detail*>(geo), posAttrib_h, normal3DAttrib_h, geoGroup, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//    }
-//
-//#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-//    static void
-//        computeNormal3D(
-//            GA_Detail* const geo,
-//            const GA_ROHandleT<UT_Vector3T<fpreal64>>& posAttrib_h,
-//            const GA_RWHandleT<UT_Vector3T<fpreal64>>& normal3DAttrib_h,
-//            const GA_Group* const geoGroup = nullptr,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        GEOcomputeNormals(*static_cast<GEO_Detail*>(geo), posAttrib_h, normal3DAttrib_h, geoGroup, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//    }
-//#endif
-//
-//    SYS_FORCE_INLINE
-//    static void
-//        computeNormal3D(
-//            GA_Detail* const geo,
-//            const GA_Attribute* const posAttrib,
-//            GA_Attribute* const normal3DAttrib,
-//            const GA_Group* const geoGroup = nullptr,
-//            const GA_Storage storage = GA_STORE_INVALID,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        UT_ASSERT_P(posAttrib);
-//        UT_ASSERT_P(normal3DAttrib);
-//
-//#if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-//        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//        if (finalStorage == GA_STORE_REAL64)
-//        {
-//            computeNormal3D(geo, GA_ROHandleV3D(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//        }
-//        else
-//        {
-//            computeNormal3D(geo, GA_ROHandleV3(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//        }
-//#else
-//        computeNormal3D(geo, GA_ROHandleV3(posAttrib), normal3DAttrib, geoGroup, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//#endif
-//    }
-//
-//    //GFE_Normal3D::addAttribNormal3D(geo, nullptr, attribClass, GA_STORE_REAL32, "N", GEO_DEFAULT_ADJUSTED_CUSP_ANGLE, GEO_NormalMethod::ANGLE_WEIGHTED, false, nullptr);
-//    //GFE_Normal3D::addAttribNormal3D(geo, geoGroup, attribClass, storage, normal3DAttribName, cuspangledegrees, normalMethod, copy_orig_if_zero, posAttrib);
-//
-//    static GA_Attribute*
-//        addAttribNormal3D(
-//            GA_Detail* const geo,
-//            const GA_Attribute* posAttrib = nullptr,
-//            const GA_Group* const geoGroup = nullptr,
-//            const GA_Storage storage = GA_STORE_INVALID,
-//            const UT_StringHolder& normal3DAttribName = "N",
-//
-//            const GA_AttributeOwner attribClass = GA_ATTRIB_VERTEX,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        UT_ASSERT_P(attribClass != GA_ATTRIB_OWNER_N && attribClass != GA_ATTRIB_INVALID);
-//
-//        if (!posAttrib)
-//            posAttrib = geo->findPointAttribute("P");
-//
-//        UT_ASSERT_P(posAttrib);
-//        UT_ASSERT_P(posAttrib->getAIFTuple());
-//
-//        GA_Attribute* normal3DAttrib = geo->findAttribute(attribClass, normal3DAttribName);
-//        if (normal3DAttrib)
-//            geo->getAttributes().destroyAttribute(normal3DAttrib);
-//
-//        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//
-//        UT_ASSERT_P(
-//            finalStorage == GA_STORE_REAL16 ||
-//            finalStorage == GA_STORE_REAL32 ||
-//            finalStorage == GA_STORE_REAL64);
-//
-//        normal3DAttrib = geo->getAttributes().createTupleAttribute(attribClass, normal3DAttribName, finalStorage, 3, GA_Defaults(0.0));
-//
-//        computeNormal3D(geo, posAttrib, normal3DAttrib, geoGroup, finalStorage, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//
-//        return normal3DAttrib;
-//    }
-//
-//
-//    static GA_AttributeUPtr
-//        addDetachedAttribNormal3D(
-//            GA_Detail* const geo,
-//            const GA_Attribute* posAttrib = nullptr,
-//            const GA_Group* const geoGroup = nullptr,
-//            const GA_Storage storage = GA_STORE_INVALID,
-//
-//            const GA_AttributeOwner attribClass = GA_ATTRIB_VERTEX,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        UT_ASSERT_P(attribClass != GA_ATTRIB_OWNER_N && attribClass != GA_ATTRIB_INVALID);
-//
-//        if (!posAttrib)
-//            posAttrib = geo->findPointAttribute("P");
-//
-//        UT_ASSERT_P(posAttrib);
-//        UT_ASSERT_P(posAttrib->getAIFTuple());
-//
-//        const GA_Storage finalStorage = storage == GA_STORE_INVALID ? posAttrib->getAIFTuple()->getStorage(posAttrib) : storage;
-//
-//        UT_ASSERT_P(
-//            finalStorage == GA_STORE_REAL16 ||
-//            finalStorage == GA_STORE_REAL32 ||
-//            finalStorage == GA_STORE_REAL64);
-//
-//        GA_AttributeUPtr normal3DAttribUPtr = geo->getAttributes().createDetachedTupleAttribute(attribClass, finalStorage, 3, GA_Defaults(0.0));
-//        GA_Attribute* const normal3DAttrib = normal3DAttribUPtr.get();
-//
-//        computeNormal3D(geo, posAttrib, normal3DAttrib, geoGroup, finalStorage, cuspangledegrees, normalMethod, copy_orig_if_zero);
-//
-//        return normal3DAttribUPtr;
-//    }
-//
-//    //GFE_Normal3D::findAndAddAttribNormal3D();
-//
-//    //!!!!! WARNING !!!!! this func may return a detached attrib
-//    static GA_Attribute*
-//        findOrAddAttribNormal3D(
-//            GA_Detail* const geo,
-//            GA_AttributeUPtr& normal3DAttribUPtr,
-//            const GA_Attribute* const posAttrib = nullptr,
-//            const GA_Group* const geoGroup = nullptr,
-//            const GA_Storage storage = GA_STORE_INVALID,
-//            const UT_StringHolder& normal3DAttribName = "N",
-//
-//            const bool findNormal3D = false,
-//            const bool addNormal3DIfNoFind = true,
-//            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        GA_Attribute* normal3DAttrib = nullptr;
-//        if (findNormal3D)
-//        {
-//            normal3DAttrib = GFE_Attribute::findNormal3D(geo, normalSearchOrder, normal3DAttribName);
-//        }
-//
-//        if (!findNormal3D || (addNormal3DIfNoFind && !normal3DAttrib))
-//        {
-//            GA_AttributeOwner geoNormal3DAttribClass;
-//            switch (normalSearchOrder)
-//            {
-//            case GFE_NormalSearchOrder::PRIMITIVE:
-//                geoNormal3DAttribClass = GA_ATTRIB_PRIMITIVE;
-//                break;
-//            case GFE_NormalSearchOrder::POINT:
-//                geoNormal3DAttribClass = GA_ATTRIB_POINT;
-//                break;
-//            case GFE_NormalSearchOrder::VERTEX:
-//                geoNormal3DAttribClass = GA_ATTRIB_VERTEX;
-//                break;
-//            default:
-//                return nullptr;
-//                break;
-//            }
-//            //if (!findNormal3D)
-//            //{
-//            //    GA_Attribute* normal3DAttrib = geo->findAttribute(geoNormal3DAttribClass, normal3DAttribName);
-//            //    if (normal3DAttrib)
-//            //        return normal3DAttrib;
-//            //}
-//            normal3DAttribUPtr = addDetachedAttribNormal3D(geo, posAttrib, geoGroup, storage,
-//                geoNormal3DAttribClass,
-//                cuspangledegrees, normalMethod, copy_orig_if_zero);
-//            normal3DAttrib = normal3DAttribUPtr.get();
-//        }
-//
-//        //if (normal3DAttrib && normal3DAttrib->getOwner() == GA_ATTRIB_DETAIL)
-//        //{
-//        //    const GA_ROHandleT<UT_Vector3T<fpreal64>> normal3D_h(normal3DAttrib);
-//        //    defaultNormal3D = normal3D_h.get(0);
-//        //}
-//
-//        return normal3DAttrib;
-//    }
-//
-//
-//    static GA_Attribute*
-//        findOrAddAttribNormal3D(
-//            GA_Detail* const geo,
-//            const GA_Attribute* posAttrib = nullptr,
-//            const GA_Group* const geoGroup = nullptr,
-//            const GA_Storage storage = GA_STORE_INVALID,
-//            const UT_StringHolder& normal3DAttribName = "N",
-//
-//            const bool findNormal3D = false,
-//            const bool addNormal3DIfNoFind = true,
-//            const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
-//            const float cuspangledegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE,
-//            const GEO_NormalMethod normalMethod = GEO_NormalMethod::ANGLE_WEIGHTED,
-//            const bool copy_orig_if_zero = false
-//        )
-//    {
-//        GA_Attribute* normal3DAttrib = nullptr;
-//        if (findNormal3D)
-//        {
-//            normal3DAttrib = GFE_Attribute::findNormal3D(geo, normalSearchOrder, normal3DAttribName);
-//        }
-//
-//        if (!findNormal3D || (addNormal3DIfNoFind && !normal3DAttrib))
-//        {
-//            GA_AttributeOwner geoNormal3DAttribClass;
-//            switch (normalSearchOrder)
-//            {
-//            case GFE_NormalSearchOrder::PRIMITIVE:
-//                geoNormal3DAttribClass = GA_ATTRIB_PRIMITIVE;
-//                break;
-//            case GFE_NormalSearchOrder::POINT:
-//                geoNormal3DAttribClass = GA_ATTRIB_POINT;
-//                break;
-//            case GFE_NormalSearchOrder::VERTEX:
-//                geoNormal3DAttribClass = GA_ATTRIB_VERTEX;
-//                break;
-//            default:
-//                return nullptr;
-//                break;
-//            }
-//            //if (!findNormal3D)
-//            //{
-//            //    GA_Attribute* normal3DAttrib = geo->findAttribute(geoNormal3DAttribClass, normal3DAttribName);
-//            //    if (normal3DAttrib)
-//            //        return normal3DAttrib;
-//            //}
-//            normal3DAttrib = addAttribNormal3D(geo, posAttrib, geoGroup, storage, normal3DAttribName, geoNormal3DAttribClass,
-//                cuspangledegrees, normalMethod, copy_orig_if_zero);
-//        }
-//        //if (normal3DAttrib && normal3DAttrib->getOwner() == GA_ATTRIB_DETAIL)
-//        //{
-//        //    const GA_ROHandleT<UT_Vector3T<fpreal64>> normal3D_h(normal3DAttrib);
-//        //    defaultNormal3D = normal3D_h.get(0);
-//        //}
-//
-//        return normal3DAttrib;
-//    }
-//
-//
-//
-//
-//
-//
-//
-//} // End of namespace GFE_Normal3D
-//
-//
-
-
-
-
 
 #endif

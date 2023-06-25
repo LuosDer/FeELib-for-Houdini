@@ -60,19 +60,28 @@ public:
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
+
+
     
     SYS_FORCE_INLINE void setNormal3DAttrib()
-    { normal3DAttrib = nullptr; }
+    { normal3D.getOutAttribArray().clear(); }
     
-    SYS_FORCE_INLINE void setNormal3DAttrib(const GFE_NormalSearchOrder normal3DSearchOrder, const UT_StringRef& attribName = "", const bool addNormal3DIfNoFind = true)
+    void setNormal3DAttrib(
+        const bool findNormal3D,
+        const GFE_NormalSearchOrder normal3DSearchOrder = GFE_NormalSearchOrder::ALL,
+        const UT_StringRef& attribName = "",
+        const bool addNormal3DIfNoFind = true
+    )
     {
-        normal3DAttrib = normal3D.getOutAttribArray().findOrCreateNormal3D(true, normal3DSearchOrder, GA_STORE_INVALID, attribName);
-        if (!addNormal3DIfNoFind && normal3DAttrib->isDetached())
-        {
-            normal3DAttrib = nullptr;
+        const GA_Attribute* const normal3DAttrib = normal3D.getOutAttribArray().findOrCreateNormal3D(true,
+            findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::PRIMITIVE, GA_STORE_INVALID,
+            findNormal3D ? attribName : UT_StringHolder(""));
+        UT_ASSERT_P(normal3DAttrib);
+        if (findNormal3D && !addNormal3DIfNoFind && normal3DAttrib->isDetached())
             normal3D.getOutAttribArray().clear();
-        }
     }
+    
+
     
     
     SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
@@ -105,7 +114,9 @@ private:
 
         if (!posAttrib)
             posAttrib = geo->getP();
-
+        
+        const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
+        
         if (normal3DAttrib && normal3DAttrib->isDetached())
             normal3D.compute();
         
@@ -115,12 +126,10 @@ private:
             const GA_Storage storage_normal3D = normal3DAttrib->getAIFTuple()->getStorage(normal3DAttrib);
             storage_max = storage_max >= storage_normal3D ? storage_max : storage_normal3D;
         }
-
         
         hasAttrib   = normal3DAttrib && !normal3DAttrib->isDetached() && strcmp(normal3DAttrib->getName().c_str(), normal2DAttribName)==0;
         isGroupFull = groupParser.isFull();
         
-
         if (normal2DAttribName)
         {
             if (hasAttrib)
@@ -228,7 +237,7 @@ private:
     {
         const GA_RWHandleT<UT_Vector3T<FLOAT_T>> normal2D_h(normal2DAttrib);
         const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal3D_h(normal3DAttrib);
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal3D_h(normal3D.getAttrib());
         if (normal3DOwner == GA_ATTRIB_GLOBAL)
             defaultNormal3DFinal = normal3D_h.get(0);
         
@@ -357,7 +366,7 @@ public:
 
 private:
     UT_Vector3T<fpreal64> defaultNormal3DFinal;
-    const GA_Attribute* normal3DAttrib = nullptr;
+    //const GA_Attribute* normal3DAttrib = nullptr;
     GA_AttributeOwner normal3DOwner;
     
     GA_Attribute* normal2DAttrib = nullptr;

@@ -10,11 +10,11 @@
 
 
 
-class GFE_AttribBlend : public GFE_AttribFilter {
+class GFE_AttribBlend : public GFE_AttribCreateFilterWithRef0 {
 
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribCreateFilterWithRef0::GFE_AttribCreateFilterWithRef0;
 
 
     void
@@ -46,7 +46,7 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        
+        getRef0AttribArray()
         attribPtr = getOutAttribArray()[0];
         // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
         switch (attribPtr->getAIFTuple()->getStorage(attribPtr))

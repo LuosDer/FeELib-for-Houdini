@@ -179,22 +179,14 @@ public:
 
     
     
-    SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove(
-        const bool added_or_removed_points,
-        const bool added_or_removed_vertices,
-        const bool added_or_removed_primitives
-    ) const
-    { geo->bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives); }
+    SYS_FORCE_INLINE void bumpDataIdsForAddOrRemove(const bool point, const bool vertex, const bool prim) const
+    { geo->bumpDataIdsForAddOrRemove(point, vertex, prim); }
 
     virtual void bumpDataIdsForAddOrRemove() const
     { geo->bumpDataIdsForAddOrRemove(true, true, true); }
 
-    SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove(
-        const bool added_or_removed_points,
-        const bool added_or_removed_vertices,
-        const bool added_or_removed_primitives
-    )
-    { compute(); bumpDataIdsForAddOrRemove(added_or_removed_points, added_or_removed_vertices, added_or_removed_primitives); }
+    SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove(const bool point, const bool vertex, const bool prim) const
+    { compute(); bumpDataIdsForAddOrRemove(point, vertex, prim); }
 
     SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove()
     { compute(); bumpDataIdsForAddOrRemove(); }
@@ -210,27 +202,18 @@ public:
 
     SYS_FORCE_INLINE GFE_Detail* getDetail() const
     { return geo; }
-
-    
     
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group& group) const
     { if(cookparms && !group.isDetached()) cookparms->select(group); }
-
     
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group) const
     { if(group) visualizeGroup(*group); }
 
 
-
 private:
 
-    virtual bool
-        computeCore()
-    {
-        if (groupParser.getGroup() && groupParser.getGroup()->isEmpty())
-            return false;
-        return true;
-    }
+    virtual bool computeCore()
+    { return false; }
 
 
 private:
@@ -271,8 +254,8 @@ protected:
 #endif
     }
     
-    SYS_FORCE_INLINE void setHasComputed(const bool hasComputed = false)
-    { this->hasComputed = hasComputed; }
+    SYS_FORCE_INLINE void setHasComputed(const bool inHasComputed = false)
+    { hasComputed = inHasComputed; }
 
 
 public:

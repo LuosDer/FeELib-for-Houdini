@@ -148,10 +148,10 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "Normal3DAttribClass"
         label   "Normal 3D Attrib Class"
         type    ordinal
-        default { "point" }
-        disablewhen "{ useConstantNormal3D == 1 }"
+        default { "prim" }
+        disablewhen "{ useConstantNormal3D == 1 } { findNormal3D == 0 }"
         menu {
-            "prim"          "Prim"
+            "prim"          "Primitive"
             "point"         "Point"
             "vertex"        "Vertex"
             "detail"        "Detail"
@@ -383,13 +383,13 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
     const bool copyOrigIfZero = false;
+    
     normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
-
     normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
-    if (sopparms.getUseConstantNormal3D())
-        normal2D.setNormal3DAttrib();
-    else
-        normal2D.setNormal3DAttrib(geo0Normal3DSearchOrder, sopparms.getFindNormal3D() ? sopparms.getNormal3DAttrib() : UT_StringHolder(""), sopparms.getAddNormal3DIfNoFind());
+    if (!sopparms.getUseConstantNormal3D())
+        normal2D.setNormal3DAttrib(sopparms.getFindNormal3D(),
+            geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib(), sopparms.getAddNormal3DIfNoFind());
+    
     
     normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
         sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend(),

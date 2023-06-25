@@ -36,22 +36,22 @@ public:
     }
 
 
-    SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
-    { groupParser.setGroup(geoPrimGroup); }
+    //SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    //{ groupParser.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
-    { groupParser.setPrimitiveGroup(primGroupName); }
+    //SYS_FORCE_INLINE void setGroup(const UT_StringHolder& primGroupName = "")
+    //{ groupParser.setPrimitiveGroup(primGroupName); }
 
 
-    SYS_FORCE_INLINE GA_Attribute*
-        findOrCreateUV(
-            const bool detached = false,
-            const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
-            const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& name = "uv",
-            const int tuple_size = 3
-        )
-    { return getOutAttribArray().findOrCreateUV(detached, uvAttribClass, storage, name, tuple_size); }
+    //SYS_FORCE_INLINE GA_Attribute*
+    //    findOrCreateUV(
+    //        const bool detached = false,
+    //        const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
+    //        const GA_Storage storage = GA_STORE_INVALID,
+    //        const UT_StringHolder& name = "uv",
+    //        const int tuple_size = 3
+    //    )
+    //{ return getOutAttribArray().findOrCreateUV(detached, uvAttribClass, storage, name, tuple_size); }
 
     void
         setComputeParm(

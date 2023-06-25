@@ -13,25 +13,25 @@
 
 
 
-enum class GFE_MeshTopologyType {
-    VertexPrimIndex,
-    VertexVertexPrim,
-    VertexVertexPrimPrev,
-    VertexVertexPrimNext,
-    VertexNextEquiv,
-    VertexNextEquivNoLoop,
-    VertexPointDst,
-    PointPointEdge,
-    PointPointPrim,
-    PrimPrimEdge,
-    PrimPrimPoint,
-};
-
-
 
 class GFE_MeshTopology : public GFE_AttribFilter {
 
 public:
+    enum Type {
+        VertexPrimIndex,
+        VertexVertexPrim,
+        VertexVertexPrimPrev,
+        VertexVertexPrimNext,
+        VertexNextEquiv,
+        VertexNextEquivNoLoop,
+        VertexPointDst,
+        PointPointEdge,
+        PointPointPrim,
+        PrimPrimEdge,
+        PrimPrimPoint,
+    };
+
+
     //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_MeshTopology(
@@ -299,6 +299,11 @@ GFE_GETGROUP_SPECIALIZATION(VertexNextEquivNoLoop, vertexNextEquivNoLoop)
     
 private:
 
+
+    
+#define GFE_MeshTopology_VertexNextEquivDual 1
+
+    
     virtual bool
         computeCore() override
     {
@@ -332,14 +337,32 @@ private:
         //if (vertexEdgeSeamGroup)
         //    GFE_GroupUnion::groupUnion(vertexEdgeSeamGroup, edgeSeamGroup);
 
+        
+#if GFE_MeshTopology_VertexNextEquivDual
+        if (primPrimEdgeAttrib && !vertexNextEquivAttrib)
+            setVertexNextEquiv(!outIntermediateAttrib);
+        
+        const bool calVertexNextEquivDual =
+                   vertexNextEquivNoLoopAttrib ||
+                   vertexNextEquivNoLoopGroup ||
+                   vertexNextEquivAttrib ||
+                   vertexNextEquivGroup  ||
+                   primPrimEdgeAttrib;
+
+#else
         const bool calVertexNextEquivNoLoop =
                    vertexNextEquivNoLoopAttrib ||
                    vertexNextEquivNoLoopGroup;
-        
+
         const bool calVertexNextEquiv =
                    vertexNextEquivAttrib ||
                    vertexNextEquivGroup  ||
                    primPrimEdgeAttrib;
+        
+        const bool calVertexNextEquivDual =
+                   calVertexNextEquivNoLoop ||
+                   calVertexNextEquiv;
+#endif
         
         const bool calVertexVertexPrim =
                    vertexVertexPrimPrevAttrib  ||
@@ -348,8 +371,7 @@ private:
         
         const bool calVertexPointDst =
                    vertexPointDstAttrib        ||
-                   calVertexNextEquiv          ||
-                   calVertexNextEquivNoLoop;
+                   calVertexNextEquivDual;
         
         const bool calVertexPrimIndex =
                    vertexPrimIndexAttrib       ||
@@ -364,7 +386,7 @@ private:
         }
         if (calVertexPointDst)
         {
-            switch ((calVertexNextEquiv || calVertexNextEquivNoLoop) ? 0 : kernel)
+            switch (calVertexNextEquivDual ? 0 : kernel)
             {
             default:
             case 0: vertexPointDstByVtxpnum(); break;
@@ -380,6 +402,14 @@ private:
             case 1: vertexVertexPrim1(); break;
             }
         }
+
+        
+#if GFE_MeshTopology_VertexNextEquivDual
+        if (calVertexNextEquivDual)
+        {
+            vertexNextEquivDual();
+        }
+#else
         if (calVertexNextEquiv)
         {
             vertexNextEquiv();
@@ -388,6 +418,9 @@ private:
         {
             vertexNextEquivNoLoop();
         }
+#endif
+        
+        
         if (pointPointEdgeAttrib)
         {
             switch (kernel)
@@ -699,150 +732,236 @@ private:
 
 
 
+#if GFE_MeshTopology_VertexNextEquivDual
+
     
-    void vertexNextEquiv()
+void vertexNextEquivDual()
+{
+    if (!vertexNextEquivAttrib && !vertexNextEquivGroup && !vertexNextEquivNoLoopAttrib && !vertexNextEquivNoLoopGroup)
+        setVertexNextEquiv(!outIntermediateAttrib);
+
+    int_wh  = vertexNextEquivAttrib;
+    int1_wh = vertexNextEquivNoLoopAttrib;
+    int_oh  = vertexPointDstAttrib;
+    
+    const GA_Topology& topo = geo->getTopology();
+    //topo.makeVertexRef();
+    const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+    const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+    const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
+
+    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
     {
-        if (!vertexNextEquivAttrib && !vertexNextEquivGroup)
-            setVertexNextEquiv(!outIntermediateAttrib);
-        
-        int_wh.bind(vertexNextEquivAttrib);
-        int_oh.bind(vertexPointDstAttrib);
-        
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
-
-        UTparallelFor(groupParser.getVertexSplittableRange(),
-            [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
-            GA_Offset vtxoff_next, dstpt, ptnum;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                GA_Offset dstpt = int_oh.get(elemoff);
+                if (GFE_Type::isInvalidOffset(dstpt))
                 {
-                    dstpt = int_oh.get(elemoff);
-                    if (GFE_Type::isInvalidOffset(dstpt))
-                    {
-                        if (vertexNextEquivAttrib)
-                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                    if (vertexNextEquivAttrib)
+                        int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                    if (vertexNextEquivNoLoopAttrib)
+                        int1_wh.set(elemoff, GFE_INVALID_OFFSET);
+                    continue;
+                }
+                for (GA_Offset vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    if (int_oh.get(vtxoff_next) != dstpt)
                         continue;
-                    }
-
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        if (int_oh.get(vtxoff_next) != dstpt)
-                            continue;
-                        dstpt = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivAttrib)
-                            int_wh.set(elemoff, vtxoff_next);
-                        break;
-                    }
-
-                    if (GFE_Type::isInvalidOffset(dstpt))
-                        continue;
-
-                    ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        if (int_oh.get(vtxoff_next) != ptnum)
-                            continue;
-                        dstpt = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivAttrib)
-                            int_wh.set(elemoff, vtxoff_next);
-                        break;
-                    }
-                    if (GFE_Type::isValidOffset(dstpt))
+                    dstpt = GFE_INVALID_OFFSET;
+                    if (vertexNextEquivAttrib)
+                        int_wh.set(elemoff, vtxoff_next);
+                    if (vertexNextEquivNoLoopAttrib)
+                        int1_wh.set(elemoff, vtxoff_next);
+                    break;
+                }
+                if (GFE_Type::isInvalidOffset(dstpt))
+                    continue;
+                const GA_Offset ptoff = vtxPointRef->getLink(elemoff);
+                for (GA_Offset vtxoff_next = pointVtxRef->getLink(dstpt); ; vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    if (GFE_Type::isInvalidOffset(vtxoff_next))
                     {
                         if (vertexNextEquivGroup)
                             vertexNextEquivGroup->setElement(elemoff, true);
                         if (vertexNextEquivAttrib)
                             int_wh.set(elemoff, GFE_INVALID_OFFSET);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-        
-        if (vertexNextEquivGroup)
-            vertexNextEquivGroup->invalidateGroupEntries();
-    }
-
-
-    
-    void vertexNextEquivNoLoop()
-    {
-        if(!vertexNextEquivNoLoopAttrib && !vertexNextEquivNoLoopGroup)
-            setVertexNextEquivNoLoop(!outIntermediateAttrib);
-        
-        int_wh.bind(vertexNextEquivNoLoopAttrib);
-        int_oh.bind(vertexPointDstAttrib);
-        
-        const GA_Topology& topo = geo->getTopology();
-        //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
-        const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
-
-        UTparallelFor(groupParser.getVertexSplittableRange(),
-            [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
-        {
-            GA_Offset vtxoff_next, dstpt, ptnum;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
-            {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    dstpt = int_oh.get(elemoff);
-                    if (GFE_Type::isInvalidOffset(dstpt))
-                    {
-                        if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
-                        continue;
-                    }
-
-                    for (vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        if (int_oh.get(vtxoff_next) != dstpt)
-                            continue;
-                        dstpt = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, vtxoff_next);
-                        break;
-                    }
-
-                    if (GFE_Type::isInvalidOffset(dstpt))
-                        continue;
-
-                    ptnum = vtxPointRef->getLink(elemoff);
-                    for (vtxoff_next = pointVtxRef->getLink(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
-                    {
-                        if (int_oh.get(vtxoff_next) != ptnum)
-                            continue;
-                        if (dstpt > ptnum)
-                        {
-                            dstpt = GFE_INVALID_OFFSET;
-                            if (vertexNextEquivNoLoopAttrib)
-                                int_wh.set(elemoff, vtxoff_next);
-                        }
-                        break;
-                    }
-                    if (GFE_Type::isValidOffset(dstpt))
-                    {
+                        
                         if (vertexNextEquivNoLoopGroup)
                             vertexNextEquivNoLoopGroup->setElement(elemoff, true);
                         if (vertexNextEquivNoLoopAttrib)
-                            int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                            int1_wh.set(elemoff, GFE_INVALID_OFFSET);
+                        break;
+                    }
+                    if (int_oh.get(vtxoff_next) == ptoff)
+                    {
+                        if (vertexNextEquivAttrib)
+                            int_wh.set(elemoff, vtxoff_next);
+                        if (dstpt > ptoff)
+                        {
+                            if (vertexNextEquivNoLoopAttrib)
+                                int1_wh.set(elemoff, vtxoff_next);
+                        }
+                        else
+                        {
+                            if (vertexNextEquivNoLoopGroup)
+                                vertexNextEquivNoLoopGroup->setElement(elemoff, true);
+                            if (vertexNextEquivNoLoopAttrib)
+                                int1_wh.set(elemoff, GFE_INVALID_OFFSET);
+                        }
+                        break;
                     }
                 }
             }
-        }, subscribeRatio, minGrainSize);
-        
-        if (vertexNextEquivNoLoopGroup)
-            vertexNextEquivNoLoopGroup->invalidateGroupEntries();
-    }
+        }
+    }, subscribeRatio, minGrainSize);
+    
+    if (vertexNextEquivGroup)
+        vertexNextEquivGroup->invalidateGroupEntries();
+    if (vertexNextEquivNoLoopGroup)
+        vertexNextEquivNoLoopGroup->invalidateGroupEntries();
+}
 
+
+
+#else
+
+void vertexNextEquiv()
+{
+    if (!vertexNextEquivAttrib && !vertexNextEquivGroup)
+        setVertexNextEquiv(!outIntermediateAttrib);
+    
+    int_wh.bind(vertexNextEquivAttrib);
+    int_oh.bind(vertexPointDstAttrib);
+    
+    const GA_Topology& topo = geo->getTopology();
+    //topo.makeVertexRef();
+    const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+    const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+    const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
+
+    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+    {
+        GA_Offset vtxoff_next, dstpt, ptoff;
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                dstpt = int_oh.get(elemoff);
+                if (GFE_Type::isInvalidOffset(dstpt))
+                {
+                    if (vertexNextEquivAttrib)
+                        int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                    continue;
+                }
+                for (vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    if (int_oh.get(vtxoff_next) != dstpt)
+                        continue;
+                    dstpt = GFE_INVALID_OFFSET;
+                    if (vertexNextEquivAttrib)
+                        int_wh.set(elemoff, vtxoff_next);
+                    break;
+                }
+                if (GFE_Type::isInvalidOffset(dstpt))
+                    continue;
+                ptoff = vtxPointRef->getLink(elemoff);
+                for (vtxoff_next = pointVtxRef->getLink(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    if (int_oh.get(vtxoff_next) != ptoff)
+                        continue;
+                    dstpt = GFE_INVALID_OFFSET;
+                    if (vertexNextEquivAttrib)
+                        int_wh.set(elemoff, vtxoff_next);
+                    break;
+                }
+                if (GFE_Type::isInvalidOffset(dstpt))
+                    continue;
+                if (vertexNextEquivGroup)
+                    vertexNextEquivGroup->setElement(elemoff, true);
+                if (vertexNextEquivAttrib)
+                    int_wh.set(elemoff, GFE_INVALID_OFFSET);
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+    
+    if (vertexNextEquivGroup)
+        vertexNextEquivGroup->invalidateGroupEntries();
+}
+
+
+
+void vertexNextEquivNoLoop()
+{
+    if (!vertexNextEquivNoLoopAttrib && !vertexNextEquivNoLoopGroup)
+        setVertexNextEquivNoLoop(!outIntermediateAttrib);
+    
+    int_wh.bind(vertexNextEquivNoLoopAttrib);
+    int_oh.bind(vertexPointDstAttrib);
+    
+    const GA_Topology& topo = geo->getTopology();
+    //topo.makeVertexRef();
+    const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+    const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
+    const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
+
+    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+    {
+        GA_Offset vtxoff_next, dstpt, ptoff;
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        {
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                dstpt = int_oh.get(elemoff);
+                if (GFE_Type::isInvalidOffset(dstpt))
+                {
+                    if (vertexNextEquivNoLoopAttrib)
+                        int_wh.set(elemoff, GFE_INVALID_OFFSET);
+                    continue;
+                }
+                for (vtxoff_next = vtxNextRef->getLink(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    if (int_oh.get(vtxoff_next) != dstpt)
+                        continue;
+                    dstpt = GFE_INVALID_OFFSET;
+                    if (vertexNextEquivNoLoopAttrib)
+                        int_wh.set(elemoff, vtxoff_next);
+                    break;
+                }
+                if (GFE_Type::isInvalidOffset(dstpt))
+                    continue;
+                ptoff = vtxPointRef->getLink(elemoff);
+                for (vtxoff_next = pointVtxRef->getLink(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = vtxNextRef->getLink(vtxoff_next))
+                {
+                    if (int_oh.get(vtxoff_next) != ptoff)
+                        continue;
+                    if (dstpt > ptoff)
+                    {
+                        dstpt = GFE_INVALID_OFFSET;
+                        if (vertexNextEquivNoLoopAttrib)
+                            int_wh.set(elemoff, vtxoff_next);
+                    }
+                    break;
+                }
+                if (GFE_Type::isInvalidOffset(dstpt))
+                    continue;
+                if (vertexNextEquivNoLoopGroup)
+                    vertexNextEquivNoLoopGroup->setElement(elemoff, true);
+                if (vertexNextEquivNoLoopAttrib)
+                    int_wh.set(elemoff, GFE_INVALID_OFFSET);
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+    
+    if (vertexNextEquivNoLoopGroup)
+        vertexNextEquivNoLoopGroup->invalidateGroupEntries();
+}
+
+#endif
 
 
 
@@ -1065,7 +1184,7 @@ private:
     //Get all prims neighbours prims with adjacent by edge
     void primPrimEdge()
     {
-        if(!primPrimEdgeAttrib)
+        if (!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
         intArray_wh = primPrimEdgeAttrib;
@@ -1114,7 +1233,7 @@ private:
     //Get all prims neighbours prims with adjacent by edge
     void primPrimEdge1()
     {
-        if(!primPrimEdgeAttrib)
+        if (!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
         intArray_wh.bind(primPrimEdgeAttrib);
@@ -1208,7 +1327,7 @@ private:
     //Get all prims neighbours prims with adjacent by edge
     void primPrimEdge2()
     {
-        if(!primPrimEdgeAttrib)
+        if (!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
         intArray_wh.bind(primPrimEdgeAttrib);
@@ -1303,7 +1422,7 @@ private:
     //Get all prims neighbours prims with adjacent by edge
     void primPrimEdge3()
     {
-        if(!primPrimEdgeAttrib)
+        if (!primPrimEdgeAttrib)
             setPrimPrimEdge(outTopoAttrib);
         
         intArray_wh.bind(primPrimEdgeAttrib);
@@ -1455,10 +1574,10 @@ private:
         //topo.makeFull();
         //topo.makePrimitiveRef();
         //topo.makeVertexRef();
-        const GA_ATITopology* const vtxPrimRef = topo.getPrimitiveRef();
+        const GA_ATITopology* const vtxPrimRef  = topo.getPrimitiveRef();
         const GA_ATITopology* const vtxPointRef = topo.getPointRef();
         const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
-        const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
+        const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
         
         //const GA_Detail* const geo = this->geo;
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup, vtxNextRef, vtxPointRef, pointVtxRef, vtxPrimRef](const GA_SplittableRange& r)
@@ -1543,10 +1662,10 @@ private:
     //GA_EdgeGroup*   unsharedEdgeGroup           = nullptr;
     
         
-    GA_RWHandleT<GA_Size> int_wh;
-    GA_RWHandleT<GA_Size> int1_wh;
+    GA_RWHandleT<GA_Offset> int_wh;
+    GA_RWHandleT<GA_Offset> int1_wh;
         
-    GA_ROHandleT<GA_Size> int_oh;
+    GA_ROHandleT<GA_Offset> int_oh;
     GA_RWHandleT<UT_ValArray<GA_Offset>> intArray_wh;
 
         
@@ -1558,6 +1677,8 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize = 64;
 
+#undef GFE_MeshTopology_VertexNextEquivDual
+    
 }; // End of class GFE_MeshTopology
 
 

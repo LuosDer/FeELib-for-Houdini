@@ -25,14 +25,29 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "prim" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "curveUVMethod"
@@ -196,7 +211,21 @@ sopCurveUVMethod(SOP_FeE_CurveUV_1_0Parms::CurveUVMethod curveUVMethod)
     return GFE_CurveUVMethod::WorldArcLength;
 }
 
-
+static GA_GroupType
+sopGroupType(SOP_FeE_CurveUV_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_CurveUV_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
+    return GA_GROUP_INVALID;
+}
 
 void
 SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -208,48 +237,25 @@ SOP_FeE_CurveUV_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     outGeo0.replaceWith(inGeo0);
-
-
-    //const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVClass());
-    const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
-
     const GFE_CurveUVMethod curveUVMethod = sopCurveUVMethod(sopparms.getCurveUVMethod());
         
-    
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    //const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-
-
-
-
     GFE_CurveUV curveUV(outGeo0, cookparms);
 
-    curveUV.setComputeParm(curveUVMethod, subscribeRatio, minGrainSize);
+    curveUV.setComputeParm(curveUVMethod, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
 
-    curveUV.setGroup(sopparms.getPrimGroup());
-    curveUV.findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, uvAttribName, 3);
+    curveUV.groupParser.setGroup(groupType, sopparms.getGroup());
+    curveUV.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib(), 3);
 
     curveUV.computeAndBumpDataId();
 
-
-    //GFE_CurveUV_Namespace::curveUV(cookparms, outGeo0, primGroupName,
-    //    GA_STORE_INVALID, uvAttribClass, uvAttribName, curveUVMethod,
-    //    subscribeRatio, minGrainSize);
 }
 
-
-
-namespace SOP_FeE_CurveUV_1_0_Namespace {
-
-} // End SOP_FeE_CurveUV_1_0_Namespace namespace

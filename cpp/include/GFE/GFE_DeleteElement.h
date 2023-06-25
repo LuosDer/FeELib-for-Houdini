@@ -21,27 +21,27 @@ enum class GFE_DelElementMethod
 class GFE_DelElement : public GFE_GeoFilter {
 
 public:
-	//using GFE_GeoFilter::GFE_GeoFilter;
+	using GFE_GeoFilter::GFE_GeoFilter;
 	
-	GFE_DelElement(
-		GFE_Detail* const geo,
-		const GA_Detail* const geoSrc = nullptr,
-		const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	)
-		: GFE_GeoFilter(geo, geoSrc, cookparms)
-		, groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(geo), groupParser.getGOPRef(), cookparms)
-	{
-	}
-	
-	GFE_DelElement(
-		GA_Detail& geo,
-		const GA_Detail* const geoSrc = nullptr,
-		const SOP_NodeVerb::CookParms* const cookparms = nullptr
-	)
-		: GFE_GeoFilter(geo, geoSrc, cookparms)
-		, groupParserIn0(geoSrc ? geoSrc : &geo, groupParser.getGOPRef(), cookparms)
-	{
-	}
+	//GFE_DelElement(
+	//	GFE_Detail* const geo,
+	//	const GA_Detail* const geoSrc = nullptr,
+	//	const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	//)
+	//	: GFE_GeoFilter(geo, geoSrc, cookparms)
+	//	, groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(geo), groupParser.getGOPRef(), cookparms)
+	//{
+	//}
+	//
+	//GFE_DelElement(
+	//	GA_Detail& geo,
+	//	const GA_Detail* const geoSrc = nullptr,
+	//	const SOP_NodeVerb::CookParms* const cookparms = nullptr
+	//)
+	//	: GFE_GeoFilter(geo, geoSrc, cookparms)
+	//	, groupParserIn0(geoSrc ? geoSrc : &geo, groupParser.getGOPRef(), cookparms)
+	//{
+	//}
 	
 	
     void
@@ -63,8 +63,8 @@ public:
         this->guaranteeNoVertexReference = guaranteeNoVertexReference;
     }
 
-	SYS_FORCE_INLINE const GA_Group* setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
-    { return groupParserIn0.setGroup(groupType, groupName); }
+	//SYS_FORCE_INLINE const GA_Group* setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
+    //{ return groupParserIn0.setGroup(groupType, groupName); }
 
 
 
@@ -84,7 +84,7 @@ private:
     	case GFE_DelElementMethod::Delete: leaveElement = false; break;
     	case GFE_DelElementMethod::Leave : leaveElement = true;  break;
     	case GFE_DelElementMethod::Auto  :
-    		leaveElement = groupParserIn0.entries() > groupParserIn0.getNumElements() / 2;
+    		leaveElement = groupParser.entries() > groupParser.getNumElements() / 2;
     		break;
     	}
     	if (leaveElement)
@@ -93,12 +93,12 @@ private:
     	if (leaveElement && geoSrc)
     	{
     		geoGU = geo->asGU_Detail();
-    		switch (groupParserIn0.classType())
+    		switch (groupParser.classType())
     		{
-    		case GA_GROUP_PRIMITIVE: leaveElementFunc(groupParserIn0.getPrimitiveGroup()); break;
-    		case GA_GROUP_POINT:     leaveElementFunc(groupParserIn0.getPointGroup());     break;
-    		case GA_GROUP_VERTEX:    leaveElementFunc(groupParserIn0.getVertexGroup());    break;
-    		case GA_GROUP_EDGE:      leaveElementFunc(groupParserIn0.getEdgeGroup());      break;
+    		case GA_GROUP_PRIMITIVE: leaveElementFunc(groupParser.getPrimitiveGroup()); break;
+    		case GA_GROUP_POINT:     leaveElementFunc(groupParser.getPointGroup());     break;
+    		case GA_GROUP_VERTEX:    leaveElementFunc(groupParser.getVertexGroup());    break;
+    		case GA_GROUP_EDGE:      leaveElementFunc(groupParser.getEdgeGroup());      break;
     		default:                 leaveElementFunc();                                   break;
     		}
     	}
@@ -107,7 +107,7 @@ private:
     		//if (leaveElement)
 			//	reverseGroup = !reverseGroup;
 
-        	const GA_GroupType groupType = groupParserIn0.classType();
+        	const GA_GroupType groupType = groupParser.classType();
         	switch (groupType)
         	{
         	case GA_GROUP_PRIMITIVE:
@@ -123,11 +123,11 @@ private:
         	
         	switch (groupType)
         	{
-        	case GA_GROUP_PRIMITIVE: delElement(groupParserIn0.getPrimitiveGroup()); break;
-        	case GA_GROUP_POINT:     delElement(groupParserIn0.getPointGroup());     break;
-        	case GA_GROUP_VERTEX:    delElement(groupParserIn0.getVertexGroup());    break;
-        	case GA_GROUP_EDGE:      delElement(groupParserIn0.getEdgeGroup());      break;
-        	default:                 delElement();                                   break;
+        	case GA_GROUP_PRIMITIVE: delElement(groupParser.getPrimitiveGroup()); break;
+        	case GA_GROUP_POINT:     delElement(groupParser.getPointGroup());     break;
+        	case GA_GROUP_VERTEX:    delElement(groupParser.getVertexGroup());    break;
+        	case GA_GROUP_EDGE:      delElement(groupParser.getEdgeGroup());      break;
+        	default:                 delElement();                                break;
         	}
         	
         	//if (leaveElement)
@@ -135,7 +135,7 @@ private:
         }
     	
     	if (delGroup)
-    		groupParserIn0.delGroup();
+    		groupParser.delGroup();
     	
     	//if (method == GFE_DelElementMethod::Auto)
     	//	reverseGroup = !reverseGroup;
@@ -160,14 +160,15 @@ private:
 	
 	void leaveElementFunc(const GA_PointGroup* const group)
     {
-    	const GA_PrimitiveGroupUPtr primGroupUPtr = geo->createDetachedPrimitiveGroup();
-    	GA_PrimitiveGroup* const primGroup = primGroupUPtr.get();
-    	primGroup->combine(group);
-    	leaveElementFunc(primGroup);
-    	//geoGU->mergePoints(static_cast<const GEO_Detail&>(*geoSrc), group);
-    	reverseGroup = !reverseGroup;
-    	delElement(group);
-    	reverseGroup = !reverseGroup;
+    	geoGU->mergePoints(static_cast<const GEO_Detail&>(*geoSrc), GA_Range(group->getIndexMap(), groupParser.getPointGroup(), reverseGroup));
+    	//const GA_PrimitiveGroupUPtr primGroupUPtr = geo->createDetachedPrimitiveGroup();
+    	//GA_PrimitiveGroup* const primGroup = primGroupUPtr.get();
+    	//primGroup->combine(group);
+    	//leaveElementFunc(primGroup);
+    	////geoGU->mergePoints(static_cast<const GEO_Detail&>(*geoSrc), group);
+    	//reverseGroup = !reverseGroup;
+    	//delElement(group);
+    	//reverseGroup = !reverseGroup;
     }
 	
 	void leaveElementFunc(const GA_VertexGroup* const group)
@@ -403,7 +404,7 @@ public:
 private:
 	bool leaveElement = false;
 	
-	GFE_GroupParser groupParserIn0;
+	//GFE_GroupParser groupParserIn0;
 	
 	GU_Detail* geoGU;
 	

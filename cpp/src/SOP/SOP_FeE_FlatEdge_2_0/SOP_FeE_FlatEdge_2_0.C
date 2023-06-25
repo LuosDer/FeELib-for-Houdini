@@ -352,8 +352,11 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 
     flatEdge.normal3D.normalMethod = sopWeightingMethod(sopparms.getWeightingMethod());
-    flatEdge.normal3D.findOrCreateNormal3D(false, normalAttribClass, GA_STORE_INVALID, sopparms.getNormalAttrib());
+    flatEdge.normal3D.findOrCreateNormal3D(true, normalAttribClass, GA_STORE_INVALID, sopparms.getNormalAttrib());
 
+    const GA_Attribute* const normal3DAttrib = normal3D.getOutAttribArray().findOrCreateNormal3D(true, normal3DSearchOrder, GA_STORE_INVALID, attribName);
+    if (!addNormal3DIfNoFind && normal3DAttrib->isDetached())
+        normal3D.getOutAttribArray().clear();
 
     
     flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());

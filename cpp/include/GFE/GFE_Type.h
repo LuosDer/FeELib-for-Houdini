@@ -147,25 +147,25 @@ SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
     
 
 static bool checkTupleAttrib(
-    const GA_Attribute* const attribPtr,
+    const GA_Attribute* const attrib,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 1,
     const GA_Defaults& defaults = GA_Defaults(0.0f)
 )
 {
-    if (!attribPtr)
+    if (!attrib)
         return false;
 
     //int a = attribPtr->getTupleSize();
-    if (attribPtr->getTupleSize() != tupleSize)
+    if (attrib->getTupleSize() != tupleSize)
     {
         return false;
     }
-    const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+    const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
     if (aifTuple)
     {
-        if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attribPtr) != storage) ||
-            aifTuple->getDefaults(attribPtr) != defaults)
+        if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attrib) != storage) ||
+            aifTuple->getDefaults(attrib) != defaults)
         {
             return false;
         }
@@ -181,26 +181,26 @@ static bool checkTupleAttrib(
     return true;
 }
 
-SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attribPtr, const GA_Storage storage = GA_STORE_INVALID)
-{ return checkTupleAttrib(attribPtr, storage, 3); }
+SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attrib, const GA_Storage storage = GA_STORE_INVALID)
+{ return checkTupleAttrib(attrib, storage, 3); }
 
 static bool checkArrayAttrib(
-    const GA_Attribute* const attribPtr,
+    const GA_Attribute* const attrib,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 3
 )
 {
-    if (!attribPtr)
+    if (!attrib)
         return false;
     
-    if (attribPtr->getTupleSize() != tupleSize)
+    if (attrib->getTupleSize() != tupleSize)
     {
         return false;
     }
-    const GA_AIFNumericArray* const aifNumericArray = attribPtr->getAIFNumericArray();
+    const GA_AIFNumericArray* const aifNumericArray = attrib->getAIFNumericArray();
     if (aifNumericArray)
     {
-        if (storage != GA_STORE_INVALID && aifNumericArray->getStorage(attribPtr) != storage)
+        if (storage != GA_STORE_INVALID && aifNumericArray->getStorage(attrib) != storage)
         {
             return false;
         }

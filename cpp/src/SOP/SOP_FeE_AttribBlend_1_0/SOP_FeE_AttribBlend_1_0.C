@@ -197,36 +197,30 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //auto sopcache = (SOP_FeE_AttribBlend_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
-
-
+    const fpreal64 blend = sopparms.getBlend();
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
+    
     UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
-        return;
-    
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
-*/
-    
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    if (boss.wasInterrupted()) return;
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
 
+    //core
+    GFE_AttribBlend attribBlend(outGeo0, inGeo1, cookparms);
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
-    enumerate.computeAndBumpDataId();
+    attribBlend.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    attribBlend.getOutAttribArray().appends(attribClass, sopparms.getAttribTarget());
+    if (inGeo1)
+        attribBlend.getRef0AttribArray().appends(attribClass, sopparms.getAttribTarget());
+    else
+        attribBlend.getInAttribArray().appends(attribClass, sopparms.getAttribSource());
+    
+    attribBlend.setComputeParm(blend, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
 
 }
