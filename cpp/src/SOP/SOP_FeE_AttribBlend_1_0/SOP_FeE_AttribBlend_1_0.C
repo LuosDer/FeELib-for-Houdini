@@ -1,16 +1,11 @@
-
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribBlend_1_0.h"
-
-
 #include "SOP_FeE_AttribBlend_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
-
-
 
 
 #include "GFE/GFE_AttributeBlend.h"
@@ -61,11 +56,36 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
+        name    "attribSource"
+        cppname "AttribSource"
+        label   "Attrib Source"
         type    string
-        default { "index" }
+        default { "P" }
+    }
+    
+    parm {
+        name    "attribTarget"
+        cppname "AttribTarget"
+        label   "Attrib Target"
+        type    string
+        default { "uv" }
+    }
+
+    parm {
+        name    "destinationAttrib"
+        cppname "DestinationAttrib"
+        label   "Destination Attrib"
+        type    string
+        default { "P" }
+    }
+
+    parm {
+        name    "blend"
+        cppname "Blend"
+        label   "Blend"
+        type    float
+        default { 1 }
+        range { -1 1 } 
     }
 
 
@@ -197,11 +217,11 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     //auto sopcache = (SOP_FeE_AttribBlend_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
     const fpreal64 blend = sopparms.getBlend();
+    
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
@@ -210,19 +230,38 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     //core
-    GFE_AttribBlend attribBlend(outGeo0, inGeo1, cookparms);
+    GFE_AttribBlend attribBlend(outGeo0, cookparms);
     
+
+
+    /*
+    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
+    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+
+
+    UT_AutoInterrupt boss("Processing");
+    if (boss.wasInterrupted())
+        return;
+    */
+/*
+    GFE_Enumerate enumerate(geo, cookparms);
+    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    enumerate.compute();
+*/
+
+
+    /*
+    GFE_AttribBlend attribBlend(outGeo0, cookparms);
+    attribBlend.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
     attribBlend.groupParser.setGroup(groupType, sopparms.getGroup());
-    
-    attribBlend.getOutAttribArray().appends(attribClass, sopparms.getAttribTarget());
-    if (inGeo1)
-        attribBlend.getRef0AttribArray().appends(attribClass, sopparms.getAttribTarget());
-    else
-        attribBlend.getInAttribArray().appends(attribClass, sopparms.getAttribSource());
-    
-    attribBlend.setComputeParm(blend, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    
+
+    attribBlend.getOutAttribArray()
+    attribBlend.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+
+    attribBlend.computeAndBumpDataId();
+    */
 
 }
-
-
