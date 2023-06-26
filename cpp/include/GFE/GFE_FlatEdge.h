@@ -50,9 +50,8 @@ public:
         setComputeParm(
             const bool includeUnsharedEdge = true,
             const ManifoldEdgeOp manifoldEdgeOp,
-            const bool outAsVertexGroup = true,
-            const fpreal flatEdgeAngleThreshold = 1e-05,
             const bool absoluteDot = true,
+            
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
@@ -60,8 +59,6 @@ public:
         setHasComputed();
         this->includeUnsharedEdge = includeUnsharedEdge;
         this->manifoldEdgeOp = manifoldEdgeOp;
-        this->outAsVertexGroup = outAsVertexGroup;
-        this->flatEdgeAngleThreshold = flatEdgeAngleThreshold;
         this->absoluteDot = absoluteDot;
         
         this->subscribeRatio = subscribeRatio;
@@ -276,9 +273,9 @@ public:
     
     bool includeUnsharedEdge = true;
     ManifoldEdgeOp manifoldEdgeOp;
-    bool outAsVertexGroup = true;
-    fpreal flatEdgeAngleThreshold = 1e-05;
     bool absoluteDot = true;
+    
+    fpreal flatEdgeAngleThreshold = 1e-05;
     
 private:
     //GA_Attribute* normalAttrib = nullptr;

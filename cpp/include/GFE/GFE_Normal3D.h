@@ -36,12 +36,18 @@ public:
     { setHasComputed(); }
 
     
-    SYS_FORCE_INLINE void setNormal3DAttrib(const GA_Attribute* const inAttrib)
+    SYS_FORCE_INLINE void setComputedNormal3DAttrib(const GA_Attribute* const inAttrib)
     {
         setHasComputed(true);
         normal3DAttrib = inAttrib;
     }
 
+    SYS_FORCE_INLINE void setNormal3DAttrib(GA_Attribute* const inAttrib)
+    {
+        normal3DAttrib = inAttrib;
+        getOutAttribArray().set(inAttrib);
+    }
+    
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
         const bool findNormal3D,
         const GFE_NormalSearchOrder normal3DSearchOrder = GFE_NormalSearchOrder::ALL,
@@ -75,42 +81,80 @@ public:
             GA_Attribute* const attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
             if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, defaults))
             {
-                normal3DAttrib = attrib;
-                setHasComputed(true);
+                setComputedNormal3DAttrib(attrib);
                 return attrib;
             }
         }
         setHasComputed();
-        return findOrCreateNormal3D(detached, owner, storage, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass);
+        return getOutAttribArray().findOrCreateNormal3D(detached, owner, storage, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass);
     }
     
-    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
-        const bool findNormal3D = false,
-        const bool detached = true, 
-        const GA_GroupType groupType = GA_GROUP_N,
+    
+    GA_Attribute*
+    findOrCreateNormal3D(
+        const bool findNormal3D,
+        const bool addNormal3DIfNoFind,
+        const bool detached,
+        const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = "",
-        const int tuple_size = 3
+        const int tupleSize = 3,
+        const GA_Defaults& defaults = GA_Defaults(0.0f),
+        const bool emplaceBack = true,
+        const UT_Options* const create_args = nullptr,
+        const GA_AttributeOptions* const attribute_options = nullptr,
+        const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
+    )
+    {
+        if (findNormal3D)
+        {
+            const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
+        
+            GA_Attribute* const attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
+            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, defaults))
+            {
+                setComputedNormal3DAttrib(attrib);
+                return attrib;
+            }
+            else if (!addNormal3DIfNoFind)
+            {
+                return nullptr;
+            }
+        }
+        setHasComputed();
+        return getOutAttribArray().findOrCreateNormal3D(detached, owner, storage, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass);
+    }
+
+        
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
+        const bool findNormal3D,
+        const bool detached,
+        const GA_GroupType groupType,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const int tupleSize = 3
         )
-    { return findOrCreateNormal3D(findNormal3D, detached, GFE_Attribute::toNormalSearchOrder(groupType), storage, attribName, tuple_size); }
+    { return findOrCreateNormal3D(findNormal3D, detached, GFE_Attribute::toNormalSearchOrder(groupType), storage, attribName, tupleSize); }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
-        const bool detached, 
+        const bool findNormal3D,
+        const bool detached,
         const GA_Group& group,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = "",
-        const int tuple_size = 3
+        const int tupleSize = 3
         )
-    { return findOrCreateNormal3D(detached, group.classType(), storage, attribName, tuple_size); }
+    { return findOrCreateNormal3D(findNormal3D, detached, group.classType(), storage, attribName, tupleSize); }
 
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
-        const bool detached = true, 
-        const GA_AttributeOwner owner = GA_ATTRIB_OWNER_N,
+        const bool findNormal3D,
+        const bool detached,
+        const GA_AttributeOwner owner,
         const GA_Storage storage = GA_STORE_INVALID,
         const UT_StringRef& attribName = "",
-        const int tuple_size = 3
+        const int tupleSize = 3
         )
-    { return findOrCreateNormal3D(detached, GFE_Attribute::toNormalSearchOrder(owner), storage, attribName, tuple_size); }
+    { return findOrCreateNormal3D(findNormal3D, detached, GFE_Attribute::toNormalSearchOrder(owner), storage, attribName, tupleSize); }
 
     
     SYS_FORCE_INLINE GA_Attribute* getAttrib() const

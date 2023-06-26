@@ -327,7 +327,7 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const UT_StringHolder& flatEdgeGroupName = sopparms.getFlatEdgeGroupName();
     
-    if (!flatEdgeGroupName.isstring())
+    if (!flatEdgeGroupName.isstring() || flatEdgeGroupName.length()==0)
         return;
 
 
@@ -341,7 +341,6 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     GFE_FlatEdge flatEdge(outGeo0, &cookparms);
-
     
     flatEdge.setComputeParm(sopparms.getFlatEdgeAngleThreshold(), sopparms.getAbsoluteDot(),
         sopparms.getIncludeUnsharedEdge(), manifoldEdge,

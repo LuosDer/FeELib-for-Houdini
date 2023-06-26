@@ -68,17 +68,14 @@ public:
     
     void setNormal3DAttrib(
         const bool findNormal3D,
+        const bool addNormal3DIfNoFind = true,
         const GFE_NormalSearchOrder normal3DSearchOrder = GFE_NormalSearchOrder::ALL,
-        const UT_StringRef& attribName = "",
-        const bool addNormal3DIfNoFind = true
+        const UT_StringRef& attribName = ""
     )
     {
-        const GA_Attribute* const normal3DAttrib = normal3D.getOutAttribArray().findOrCreateNormal3D(true,
+        normal3D.findOrCreateNormal3D(findNormal3D, addNormal3DIfNoFind, true,
             findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::PRIMITIVE, GA_STORE_INVALID,
             findNormal3D ? attribName : UT_StringHolder(""));
-        UT_ASSERT_P(normal3DAttrib);
-        if (findNormal3D && !addNormal3DIfNoFind && normal3DAttrib->isDetached())
-            normal3D.getOutAttribArray().clear();
     }
     
 
