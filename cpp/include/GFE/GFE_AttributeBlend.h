@@ -10,69 +10,40 @@
 
 
 
-class GFE_AttribBlend : public GFE_AttribFilter {
-
-
+class GFE_AttribBlend : public GFE_AttribCreateFilterWithRef0 {
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
-
-
+    using GFE_AttribCreateFilterWithRef0::GFE_AttribCreateFilterWithRef0;
     void
-        setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
+    setComputeParm(
+            const fpreal64 blend = 1,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
+        this->blend = blend;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
-
 private:
 
     // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
-
-        if (groupParser.isEmpty())
-            return true;
-        
-        
-        attribPtr = getOutAttribArray()[0];
-        // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+        if(getInAttribArray().isEmpty())
         {
-        case GA_STORE_INT16:  enumerate<int16>();           break;
-        case GA_STORE_INT32:  enumerate<int32>();           break;
-        case GA_STORE_INT64:  enumerate<int64>();           break;
-        case GA_STORE_REAL16: enumerate<fpreal16>();        break;
-        case GA_STORE_REAL32: enumerate<fpreal32>();        break;
-        case GA_STORE_REAL64: enumerate<fpreal64>();        break;
-        case GA_STORE_STRING: enumerate<UT_StringHolder>(); break;
-        default: break;
+            return  false;
         }
 
-        return true;
-    }
-
-
-    template<typename T>
-    void enumerate()
-    {
-        UT_ASSERT_P(attribPtr);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
-        UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
+        const ::std::vector<GA_Attribute*>::size_type size = getInAttribArray().size();
+        for (size_t i = 0; i < size; i++){}
+        
+            //attribPtr = getInAttribArray()[i];
+            /*
+            UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GA_PageHandleT<UT_Vector3T, UT_Vector3T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -81,25 +52,26 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.value(elemoff) = firstIndex + elemoff;
+                        if (doNormalize)
+                            attrib_ph.value(elemoff).normalize();
+                        attrib_ph.value(elemoff) *= uniScale;
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
+            */
+        return  false;
     }
 
-
-
-
 public:
-    GA_Size firstIndex = 0;
-    bool outAsOffset = true;
-    bool negativeIndex = false;
+     
     
 
 private:
+    GA_Attribute* attribPtr;
     
-    GA_Attribute* attrib;
+    fpreal64 blend = 1;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
