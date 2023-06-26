@@ -17,11 +17,14 @@
 class GFE_FlatEdge : public GFE_AttribFilter {
 
 public:
-    enum ManifoldEdgeOp
+    enum NonManifoldEdgeOp
     {
+        None,
+        All,
         Min,
         Max,
     };
+    
     //using GFE_AttribFilter::GFE_AttribFilter;
 
     GFE_FlatEdge(
@@ -49,8 +52,8 @@ public:
     void
         setComputeParm(
             const bool includeUnsharedEdge = true,
-            const ManifoldEdgeOp manifoldEdgeOp,
-            const bool absoluteDot = true,
+            const NonManifoldEdgeOp nonManifoldEdgeOp = NonManifoldEdgeOp::None,
+            const bool absDot = true,
             
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
@@ -58,212 +61,180 @@ public:
     {
         setHasComputed();
         this->includeUnsharedEdge = includeUnsharedEdge;
-        this->manifoldEdgeOp = manifoldEdgeOp;
-        this->absoluteDot = absoluteDot;
+        this->nonManifoldEdgeOp   = nonManifoldEdgeOp;
+        this->absDot         = absDot;
         
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize = minGrainSize;
     }
 
+    SYS_FORCE_INLINE void setAngleThresholdByDegrees(const fpreal threshold)
+    { flatEdgeAngleThreshold = fmod(GFE_Math::radians(threshold), PI); }
 
-    SYS_FORCE_INLINE void findOrCreateGroup(const UT_StringRef& groupName = "")
-    { getOutGroupArray().findOrCreateEdge(doDelGroupElement, groupName); }
+    
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
+        const bool findNormal3D,
+        const bool detached,
+        const GFE_NormalSearchOrder searchOrder,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const int tupleSize = 3
+        )
+    { return normal3D.findOrCreateNormal3D(findNormal3D, detached,
+        findNormal3D ? searchOrder : GFE_NormalSearchOrder::Primitive, storage, attribName, tupleSize); }
 
+    
     
 private:
 
-    virtual bool
-        computeCore() override
+virtual bool
+    computeCore() override
+{
+    if (getOutGroupArray().isEmpty())
+        return true;
+
+    
+    outVertexGroup = nullptr;
+    outEdgeGroup   = nullptr;
+    const size_t size = getOutGroupArray().size();
+    for (size_t i = 0; i < size; ++i)
     {
-        if (getOutGroupArray().isEmpty())
-            return true;
-
-        if (groupParser.isEmpty())
-            return true;
-
-        const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
-        
-        if (normal3DAttrib && normal3DAttrib->isDetached())
-            normal3D.compute();
-        
-        if (!normal3DAttrib || normal3DAttrib->getOwner() > GA_ATTRIB_PRIMITIVE || normal3DAttrib->getOwner() < 0)
+        switch (getOutGroupArray()[i]->classType())
         {
-            if (normal3D.getOutAttribArray().isEmpty())
-            {
-                normal3D.getOutAttribArray().findOrCreateNormal3D(true);
-            }
-            normal3D.compute();
-            normal3DAttrib = normal3D.getAttrib();
-        }
-        
-        groupSetter = getOutGroupArray()[0];
-        
-        GFE_MeshTopology meshTopology(geo, cookparms);
-        const GA_VertexGroup* const vertexNextEquivNoLoopGroup = meshTopology.setVertexNextEquivNoLoopGroup();
-        const GA_Attribute*   const vertexNextEquivAttrib      = meshTopology.setVertexNextEquiv();
-        meshTopology.compute();
-
-        const size_t size = getOutGroupArray().size();
-        for (size_t i = 0; i < size; ++i)
-        {
-            switch (getOutGroupArray()[i]->classType())
-            {
-            case GA_GROUP_VERTEX: flatEdge<fpreal16>(getOutGroupArray()[0]); break;
-            case GA_GROUP_EDGE:   flatEdge<fpreal32>(); break;
-            default: break;
-            }
-        }
-        GA_VertexGroup* const outVertexGroup = getOutGroupArray()[0];
-        GA_EdgeGroup*   const outEdgeGroup   = getOutGroupArray()[0];
-
-        
-        switch (normalAttrib->getAIFTuple()->getStorage(normalAttrib))
-        {
-        case GA_STORE_REAL16: flatEdge<fpreal16>(); break;
-        case GA_STORE_REAL32: flatEdge<fpreal32>(); break;
-        case GA_STORE_REAL64: flatEdge<fpreal64>(); break;
+        case GA_GROUP_VERTEX: outVertexGroup = getOutGroupArray().getVertexGroup(i); break;
+        case GA_GROUP_EDGE:   outEdgeGroup   = getOutGroupArray().getEdgeGroup(i);   break;
         default: break;
         }
-
-        if (doDelGroupElement)
-            delGroupElement();
-        
-        return true;
+    }
+    
+    GA_VertexGroupUPtr vertexGroupUPtr;
+    if (!outVertexGroup)
+    {
+        if (outEdgeGroup)
+        {
+            vertexGroupUPtr = geo->createDetachedVertexGroup();
+            outVertexGroup = vertexGroupUPtr.get();
+        }
+        else
+        {
+            return false;
+        }
     }
 
+    if (groupParser.isEmpty())
+        return true;
 
-    template<typename FLOAT_T>
-    void flatEdge()
+    
+    flatEdgeAngleThreshold = abs(flatEdgeAngleThreshold);
+    
+    normal3DAttrib = normal3D.getAttrib();
+    if (!normal3DAttrib)
+        normal3DAttrib = normal3D.findOrCreateNormal3D(false, true, GA_GROUP_PRIMITIVE);
+    normal3D.compute();
+    
+    normal3DOwner = normal3DAttrib->getOwner();
+    if (!GFE_Type::isElementGroup(normal3DOwner))
+        return false;
+
+    
+    GFE_MeshTopology meshTopology(geo, cookparms);
+    vertexNextEquivNoLoopGroup = meshTopology.setVertexNextEquivNoLoopGroup();
+    vertexNextEquiv_h          = meshTopology.setVertexNextEquiv();
+    meshTopology.compute();
+
+    groupSetter = outVertexGroup;
+    switch (normal3DAttrib->getAIFTuple()->getStorage(normal3DAttrib))
     {
-        GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal_h(normalAttrib);
+    case GA_STORE_REAL16: flatEdge<fpreal16>(); break;
+    case GA_STORE_REAL32: flatEdge<fpreal32>(); break;
+    case GA_STORE_REAL64: flatEdge<fpreal64>(); break;
+    default: break;
+    }
 
-        flatEdgeThreshold = -cos(GFE_Math::radians(flatEdgeAngleThreshold));
+    if (outEdgeGroup)
+        GFE_GroupUnion::groupUnion(outEdgeGroup, outVertexGroup);
+        
+    if (doDelGroupElement && outEdgeGroup)
+        delGroupElement(outEdgeGroup);
+    
+    return true;
+}
 
-        UTparallelFor(groupParser.getVertexSplittableRange(), [this, outVertexGroup, outEdgeGroup, vertexNextEquivAttrib, &normal_h](const GA_SplittableRange& r)
+
+template<typename FLOAT_T>
+void flatEdge()
+{
+    const GA_ROHandleT<UT_Vector3T<FLOAT_T>> normal_h(normal3DAttrib);
+
+    const GA_Topology& topo = geo->getTopology();
+    const GA_ATITopology& vtxPrim  = *topo.getPrimitiveRef();
+    const GA_ATITopology& vtxPoint = *topo.getPointRef();
+
+    
+    const FLOAT_T flatEdgeThreshold = cos(flatEdgeAngleThreshold);
+    UTparallelFor(geo->getVertexSplittableRange(vertexNextEquivNoLoopGroup), [this, &normal_h, &vtxPrim, &vtxPoint, flatEdgeThreshold](const GA_SplittableRange& r)
+    {
+        // GA_PageHandleT<UT_Vector3T<FLOAT_T>, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal_ph(normalAttrib);
+        // GA_PageHandleT<GA_Offset, GA_Offset, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> vertexNextEquivNoLoop_ph(vertexNextEquivNoLoopAttrib);
+        //GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> vtxNextEquiv_ph(vertexNextEquivAttrib);
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            // GA_PageHandleT<UT_Vector3T<FLOAT_T>, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal_ph(normalAttrib);
-            // GA_PageHandleT<GA_Offset, GA_Offset, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> vertexNextEquivNoLoop_ph(vertexNextEquivNoLoopAttrib);
-            GA_PageHandleT<GA_Offset, GA_Offset, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> vertexNextEquiv_ph(vertexNextEquivAttrib);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                //vtxNextEquiv_ph.setPage(start);
+                for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
                 {
-                    //normal_ph.setPage(start);
-                    for (GA_Offset vtxoff = start; vtxoff < end; ++vtxoff)
+                    const GA_Offset vtxNextEquiv = vertexNextEquiv_h.get(vtxoff);
+                    if (GFE_Type::isInvalidOffset(vtxNextEquiv))
                     {
-                        if (includeUnsharedEdge)
-                        {
-                            normal_h.get(vtxoff);
-                            if (vtxoff < vertexNextEquiv_ph.value(vtxoff) || vertexNextEquiv_ph.value(vtxoff) != GFE_INVALID_OFFSET)
-                            {
-                                outVertexGroup->setElement(vtxoff, false);
-                                continue;//includeunshared
-                            }
-                        }
-                        else
-                        {
-                            if (vtxoff <= vertexNextEquiv_ph.value(vtxoff))
-                            {
-                                outVertexGroup->setElement(vtxoff, false);
-                                continue;//excludeunshared
-                            }
-                        }
-
-                        if (normalAttrib->getOwner() == GA_ATTRIB_VERTEX && !inedgegroup(0, chs("../group"), @ptnum, vertexpoint(0, hedge_nextequiv)))
-                        {
-                            outVertexGroup->setElement(vtxoff, false);
-                            return;//includeunshared
-                        }
-
-                        UT_Vector3T<FLOAT_T> N0, N1;
-                        if (normalAttrib->getOwner() == GA_ATTRIB_VERTEX)
-                        {
-                            N0 = v@opinput1_N;
-                            N1 = vertex(1, 'N', hedge_nextequiv);
-                        }
-                        else
-                        {
-                            N0 = prim(1, 'N', @primnum);
-                            N1 = prim(1, 'N', vertexprim(0, hedge_nextequiv));
-                        }
-                        FLOAT_T dot = N0.dot(N1);
-                        if (absoluteDot && dot < 0)
-                            dot *= -1;
-                        /*
-                        if ( @ptnum == 1 && vertexpoint(0, hedge_nextequiv)==13 ) cout(dot >= chf('../flatEdgeAngleThreshold'));
-                        if ( @ptnum == 13 && vertexpoint(0, hedge_nextequiv)==1 ) cout(dot >= chf('../flatEdgeAngleThreshold'));
-                        if ( @ptnum == 1 && vertexpoint(0, hedge_nextequiv)==13 ) cout(i@outgrp);
-                        if ( @ptnum == 13 && vertexpoint(0, hedge_nextequiv)==1 ) cout(i@outgrp);
-                        */
-                        /*
-                        if ( @ptnum == 15 && vertexpoint(0, hedge_nextequiv)==14 ) cout(dot);
-                        if ( @ptnum == 14 && vertexpoint(0, hedge_nextequiv)==15 ) cout(dot);
-                        */
-                        /*
-                        if ( @ptnum == 7 && vertexpoint(0, hedge_nextequiv)==14 ) cout(dot);
-                        if ( @ptnum == 14 && vertexpoint(0, hedge_nextequiv)==7 ) cout(dot);
-                        if ( @ptnum == 7 && vertexpoint(0, hedge_nextequiv)==14 ) cout(i@outgrp);
-                        if ( @ptnum == 14 && vertexpoint(0, hedge_nextequiv)==7 ) cout(i@outgrp);
-                        */
-
-                        const bool inGroup = (dot >= flatEdgeThreshold) ^ reverseGroup;
-                        if (outAsVertexGroup)
-                        {
-                            outVertexGroup->setElement(vtxoff, inGroup);
-                        }
-                        else if (inGroup)
-                        {
-                            outEdgeGroup->add(ptoff, vertexpoint(0, hedge_nextequiv));
-                        }
-
-
-                        /*
-                        if ( chi("../manifoldEdgeOp") < 2 )
-                        {
-                            //none
-                            //all
-                            i@outgrp = chi("../manifoldEdgeOp");
-                        }
-                        else if ( chi("../manifoldEdgeOp") < 4 )
-                        {
-                            //min
-                            //max
-                            float exdot = chi("../manifoldEdgeOp")==3 ? -MAXF32 : MAXF32;
-
-                            vector Ns[];
-                            resize(Ns, hedge_equivcount);
-                            hedge_nextequiv = vtxoff;
-                            for (int i = 0; i < hedge_equivcount; ++i)
-                            {
-                                Ns[i] = prim(1, 'N', vertexprim(0, hedge_nextequiv));
-                                hedge_nextequiv = hedge_nextequiv(0, hedge_nextequiv);
-                            }
-
-                            for (int j = 0; j < hedge_equivcount; ++j)
-                            {
-                                for (int i = j+1; i < hedge_equivcount; ++i)
-                                {
-                                    float dot = dot(Ns[i], Ns[j]);
-                                    dot = chi('../absoluteDot') ? abs(dot) : dot;
-                                    exdot = chi("../manifoldEdgeOp")==3 ? max(exdot, dot) : min(exdot, dot);
-                                }
-                            }
-                            i@outgrp = (exdot < chf('../flatEdgeAngleThreshold')) ^ chi('../reverse');
-                        }
-                        else
-                        {
-                            error('unsupport val');
-                            return;
-                        }
-                        */
-
-
+                        groupSetter.set(vtxoff, includeUnsharedEdge);
+                        continue;
                     }
+                    
+                    FLOAT_T dotVal;
+                    if (vertexNextEquiv_h.get(vtxNextEquiv) == vtxoff)
+                    {
+                        switch (normal3DOwner)
+                        {
+                        case GA_ATTRIB_PRIMITIVE: dotVal = normal_h.get(vtxPrim.getLink(vtxoff)) .dot(normal_h.get(vtxPrim.getLink(vtxNextEquiv)));  break;
+                        case GA_ATTRIB_POINT:     dotVal = normal_h.get(vtxPoint.getLink(vtxoff)).dot(normal_h.get(vtxPoint.getLink(vtxNextEquiv))); break;
+                        case GA_ATTRIB_VERTEX:    dotVal = normal_h.get(vtxoff)                  .dot(normal_h.get(vtxNextEquiv));                   break;
+                        default: break;
+                        }
+                    }
+                    else
+                    {
+                        if (nonManifoldEdgeOp == NonManifoldEdgeOp::None)
+                        {
+                            groupSetter.set(vtxoff, false);
+                            continue;
+                        }
+                        else if (nonManifoldEdgeOp == NonManifoldEdgeOp::All)
+                        {
+                            groupSetter.set(vtxoff, true);
+                            continue;
+                        }
+                        else
+                        {
+                            switch (nonManifoldEdgeOp)
+                            {
+                            case NonManifoldEdgeOp::Max:  break;
+                            case NonManifoldEdgeOp::Min:  break;
+                            default:                      break;
+                            }
+                        }
+                    }
+                    if (absDot)
+                        dotVal = abs(dotVal);
+
+                    groupSetter.set(vtxoff, dotVal > flatEdgeThreshold);
                 }
             }
-        }, subscribeRatio, minGrainSize);
-    }
+        }
+    }, subscribeRatio, minGrainSize);
+    groupSetter.invalidateGroupEntries();
+}
 
 
 
@@ -272,14 +243,21 @@ public:
     GFE_Normal3D normal3D;
     
     bool includeUnsharedEdge = true;
-    ManifoldEdgeOp manifoldEdgeOp;
-    bool absoluteDot = true;
+    NonManifoldEdgeOp nonManifoldEdgeOp;
+    bool absDot = true;
     
     fpreal flatEdgeAngleThreshold = 1e-05;
     
 private:
-    //GA_Attribute* normalAttrib = nullptr;
+    GA_VertexGroup* outVertexGroup;
+    GA_EdgeGroup*   outEdgeGroup;
+    const GA_Attribute* normal3DAttrib;
+    const GA_VertexGroup* vertexNextEquivNoLoopGroup;
+    GA_ROHandleT<GA_Offset> vertexNextEquiv_h;
+    
     fpreal flatEdgeThreshold;
+    GA_AttributeOwner normal3DOwner;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 

@@ -98,6 +98,21 @@ SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GroupType* co
         }
     }
     
+    template<>
+    SYS_FORCE_INLINE static void groupUnion<GA_EdgeGroup>(
+        GA_EdgeGroup& group, const GA_Group& groupRef,
+        const bool reverse,
+        const exint subscribeRatio, const exint minGrainSize)
+    {
+        switch (groupRef.classType())
+        {
+        case GA_GROUP_PRIMITIVE: groupUnion(group, static_cast<const GA_PrimitiveGroup&>(groupRef), reverse); break;
+        case GA_GROUP_POINT:     groupUnion(group, static_cast<const GA_PointGroup&    >(groupRef), reverse); break;
+        case GA_GROUP_VERTEX:    groupUnion(group, static_cast<const GA_VertexGroup&   >(groupRef), reverse); break;
+        case GA_GROUP_EDGE:      groupUnion(group, static_cast<const GA_EdgeGroup&     >(groupRef), reverse); break;
+        }
+    }
+    
     SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GA_Group& groupRef, const bool reverse = false)
     {
         switch (groupRef.classType())

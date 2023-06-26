@@ -22,14 +22,29 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "prim" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "carveStartPrimGroup"
@@ -522,6 +537,23 @@ SOP_FeE_Carve_1_0::cookVerb() const
 
  
 
+static GA_GroupType
+sopGroupType(SOP_FeE_Carve_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_Carve_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
 static GFE_CarveSpace
 sopCarveSpace(SOP_FeE_Carve_1_0Parms::CarveSpace parmgrouptype)
 {
@@ -554,6 +586,8 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     
     const UT_StringHolder& customCarveUVAttribName = sopparms.getCustomCarveUVAttribName();
 
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
@@ -572,7 +606,7 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     carve.setUVAttrib(customCarveUVAttribName);
 
     carve.setStartCarveUAttrib(sopparms.getStartCarveUAttrib(), sopparms.getDelStartCarveUAttrib());
-    carve.setEndCarveUAttrib( sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
+    carve.setEndCarveUAttrib(  sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
 
     carve.setCarveStartGroup(sopparms.getCarveStartPrimGroup());
     carve.setCarveEndGroup(sopparms.getCarveEndPrimGroup());

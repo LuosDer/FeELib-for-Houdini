@@ -66,16 +66,15 @@ public:
     SYS_FORCE_INLINE void setNormal3DAttrib()
     { normal3D.getOutAttribArray().clear(); }
     
-    void setNormal3DAttrib(
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
         const bool findNormal3D,
         const bool addNormal3DIfNoFind = true,
-        const GFE_NormalSearchOrder normal3DSearchOrder = GFE_NormalSearchOrder::ALL,
+        const GFE_NormalSearchOrder normal3DSearchOrder = GFE_NormalSearchOrder::All,
         const UT_StringRef& attribName = ""
     )
     {
-        normal3D.findOrCreateNormal3D(findNormal3D, addNormal3DIfNoFind, true,
-            findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::PRIMITIVE, GA_STORE_INVALID,
-            findNormal3D ? attribName : UT_StringHolder(""));
+        return normal3D.findOrCreateNormal3D(findNormal3D, addNormal3DIfNoFind, true,
+            findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::Primitive, GA_STORE_INVALID, attribName);
     }
     
 

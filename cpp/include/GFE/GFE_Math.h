@@ -4,19 +4,18 @@
 #ifndef __GFE_Math_h__
 #define __GFE_Math_h__
 
-//#include "GFE/GFE_Math.h"
-
-#include "GA/GA_Detail.h"
-//#include "GA/GA_SplittableRange.h"
+#include "GFE/GFE_Math.h"
 
 
 
 #include "GFE/GFE_Type.h"
 
+#include "GA/GA_Detail.h"
+
+
 
 namespace GFE_Math {
-
-
+    
 
 template<typename T>
 SYS_FORCE_INLINE static T radians(const T degrees)

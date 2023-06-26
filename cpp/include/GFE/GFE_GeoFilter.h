@@ -185,7 +185,7 @@ public:
     virtual void bumpDataIdsForAddOrRemove() const
     { geo->bumpDataIdsForAddOrRemove(true, true, true); }
 
-    SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove(const bool point, const bool vertex, const bool prim) const
+    SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove(const bool point, const bool vertex, const bool prim)
     { compute(); bumpDataIdsForAddOrRemove(point, vertex, prim); }
 
     SYS_FORCE_INLINE void computeAndBumpDataIdsForAddOrRemove()

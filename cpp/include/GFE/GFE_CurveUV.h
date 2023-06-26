@@ -76,6 +76,8 @@ private:
         if (groupParser.isEmpty())
             return true;
 
+        if (!posAttrib)
+            posAttrib = geo->getP();
 
         uvAttrib = getOutAttribArray()[0];
         const GA_Storage storage = uvAttrib->getAIFTuple()->getStorage(uvAttrib);
@@ -86,30 +88,29 @@ private:
             {
             case GA_STORE_REAL16: curveUV<UT_Vector2T<fpreal16>>(); break;
             case GA_STORE_REAL32: curveUV<UT_Vector2T<fpreal32>>(); break;
-            case GA_STORE_REAL64:
-            default:              curveUV<UT_Vector2T<fpreal64>>(); break;
+            default:
+            case GA_STORE_REAL64: curveUV<UT_Vector2T<fpreal64>>(); break;
             }
-            break;
+        break;
         case 3:
             switch (storage)
             {
             case GA_STORE_REAL16: curveUV<UT_Vector3T<fpreal16>>(); break;
             case GA_STORE_REAL32: curveUV<UT_Vector3T<fpreal32>>(); break;
-            case GA_STORE_REAL64:
-            default:              curveUV<UT_Vector3T<fpreal64>>(); break;
+            default:
+            case GA_STORE_REAL64: curveUV<UT_Vector3T<fpreal64>>(); break;
             }
-            break;
+        break;
         case 4:
             switch (storage)
             {
             case GA_STORE_REAL16: curveUV<UT_Vector4T<fpreal16>>(); break;
             case GA_STORE_REAL32: curveUV<UT_Vector4T<fpreal32>>(); break;
-            case GA_STORE_REAL64:
-            default:              curveUV<UT_Vector4T<fpreal64>>(); break;
+            default:
+            case GA_STORE_REAL64: curveUV<UT_Vector4T<fpreal64>>(); break;
             }
         break;
-        default:
-            break;
+        default: break;
         }
 
 
@@ -131,7 +132,7 @@ private:
         //GA_Attribute* const pAttribPtr = GFE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
         //GA_ROHandleT<fpreal> p_h(pAttribPtr);
         //GA_Attribute* const pAttribPtr = GFE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
-        GA_ROHandleT<UT_Vector3T<value_type>> pos_h(geo->getP());
+        const GA_ROHandleT<UT_Vector3T<value_type>> pos_h(posAttrib);
 
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
@@ -159,7 +160,7 @@ private:
                             uv[0] += dist;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
-                        break;
+                    break;
                     case GFE_CurveUVMethod::LocalArcLength:
                     {
                         uvs.setSize(numvtx);
@@ -205,7 +206,7 @@ private:
                             uv[0] += dist;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
-                        break;
+                    break;
                     case GFE_CurveUVMethod::WorldArcLength:
                         ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
                         pos_prev = pos_h.get(ptoff);
@@ -218,10 +219,8 @@ private:
                             uv_h.set(isPointAttrib ? ptoff : vtxoff, 0, uv);
                             pos_prev = pos;
                         }
-                        break;
-                    default:
-                        UT_ASSERT_MSG(0, "unhandled curveUVMethod");
-                        break;
+                    break;
+                    default: UT_ASSERT_MSG(0, "Unhandled curveUVMethod"); break;
                     }
 #else
                     GEO_Curve* GEO_Curve0 = static_cast<GEO_Curve*>(geo->getPrimitive(primoff));

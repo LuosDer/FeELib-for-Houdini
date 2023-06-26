@@ -427,18 +427,18 @@ findOrCreateTuple(
     const GA_AttributeOptions* const attribute_options = nullptr
 )
 {
-    if constexpr(std::is_same_v<T, fpreal16>)
-        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, GA_STORE_REAL16,  attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
+    if      constexpr(std::is_same_v<T, fpreal16>)
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT,  GA_STORE_REAL16, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
     else if constexpr(std::is_same_v<T, fpreal32>)
-        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, GA_STORE_REAL32,  attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT,  GA_STORE_REAL32, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
     else if constexpr(std::is_same_v<T, fpreal64>)
-        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT, GA_STORE_REAL64,  attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_FLOAT,  GA_STORE_REAL64, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
     else if constexpr(std::is_same_v<T, int16>)
-        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INT16,     attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT,    GA_STORE_INT16,  attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
     else if constexpr(std::is_same_v<T, int32>)
-        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INT32,     attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT,    GA_STORE_INT32,  attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
     else if constexpr(std::is_same_v<T, int64>)
-        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INT64,     attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
+        return findOrCreateTuple(detached, owner, GA_STORECLASS_INT,    GA_STORE_INT64,  attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
     else if constexpr(std::is_same_v<T, UT_StringHolder>)
         return findOrCreateTuple(detached, owner, GA_STORECLASS_STRING, GA_STORE_STRING, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
 }
@@ -554,7 +554,7 @@ findOrCreateTuple(
     GA_Attribute*
     findOrCreatePiece(
         const bool detached = true,
-        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = GFE_PieceAttribSearchOrder::PRIM,
+        const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = GFE_PieceAttribSearchOrder::Primitive,
         const GA_AttributeOwner owner = GA_ATTRIB_PRIMITIVE,
         const GA_StorageClass storageClass = GA_STORECLASS_INT,
         const GA_Storage storage = GA_STORE_INVALID,
@@ -629,22 +629,22 @@ findOrCreateTuple(
 
         switch (pieceAttribSearchOrder)
         {
-        case GFE_PieceAttribSearchOrder::PRIM:       attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
-        case GFE_PieceAttribSearchOrder::POINT:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
-        case GFE_PieceAttribSearchOrder::VERTEX:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
-        case GFE_PieceAttribSearchOrder::PRIMPOINT:
+        case GFE_PieceAttribSearchOrder::Primitive:  attribPtr = geo->findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+        case GFE_PieceAttribSearchOrder::Point:      attribPtr = geo->findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+        case GFE_PieceAttribSearchOrder::Vertex:     attribPtr = geo->findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+        case GFE_PieceAttribSearchOrder::PrimPoint:
             {
                 GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
                 attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
             }
             break;
-        case GFE_PieceAttribSearchOrder::POINTPRIM:
+        case GFE_PieceAttribSearchOrder::PointPrim:
             {
                 GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
                 attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 2);
             }
             break;
-        case GFE_PieceAttribSearchOrder::ALL:
+        case GFE_PieceAttribSearchOrder::All:
             {
                 GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
                 attribPtr = geo->findAttribute(pieceAttribName, searchOrder, 3);
@@ -797,7 +797,7 @@ findOrCreateDir(
 GA_Attribute*
 findOrCreateNormal3D(
     const bool detached = true,
-    const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
+    const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::All,
     const GA_Storage storage = GA_STORE_INVALID,
     const UT_StringRef& attribName = "",
     const int tupleSize = 3,
@@ -815,7 +815,7 @@ findOrCreateNormal3D(
         return attribPtr;
         
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
-    if (detached)
+    if (detached || !attribName.isstring() || attribName.length()==0)
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tupleSize, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
@@ -1795,7 +1795,7 @@ public:
 
     const GA_Attribute*
         findNormal3D(
-            const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::ALL,
+            const GFE_NormalSearchOrder owner = GFE_NormalSearchOrder::All,
             const GA_Storage storage = GA_STORE_INVALID,
             const UT_StringRef& attribName = "",
             const int tupleSize = 3,

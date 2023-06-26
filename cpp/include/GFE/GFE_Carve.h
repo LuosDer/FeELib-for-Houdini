@@ -4,11 +4,12 @@
 #ifndef __GFE_Carve_h__
 #define __GFE_Carve_h__
 
-
-
-//#include "GFE/GFE_Carve.h"
+#include "GFE/GFE_Carve.h"
 
 #include "GFE/GFE_GeoFilter.h"
+
+
+
 
 
 #include "GFE/GFE_Attribute.h"
@@ -44,24 +45,24 @@ public:
 
     GFE_CarveSpace carveSpace = GFE_CarveSpace::WorldArcLength;
     bool keepOutsideStart = false;
-    bool keepOutsideEnd = false;
-    bool keepInside = true;
+    bool keepOutsideEnd   = false;
+    bool keepInside       = true;
 
     fpreal startCarveU = 0.25;
-    fpreal endCarveU = 0.25;
+    fpreal endCarveU   = 0.25;
 
     bool absCarveUEnd = false;
     bool delReversedInsidePrim = false;
 
     bool delStartCarveUAttrib = false;
-    bool delEndCarveUAttrib = false;
+    bool delEndCarveUAttrib   = false;
 
 
 private:
 
     const GA_Attribute* uvAttrib = nullptr;
     //GA_Attribute* uvAttrib_nonConst = nullptr;
-    GA_ROHandleT<fpreal> uvAttrib_h;
+    GA_ROHandleT<fpreal> uv_h;
 
     const GA_Attribute* startCarveUAttrib = nullptr;
     const GA_Attribute* endCarveUAttrib = nullptr;
@@ -114,18 +115,6 @@ public:
 
         //    this->geoOrigin = geoOriginTmp;
         //}
-    }
-
-    ~GFE_Carve()
-    {
-        if (delStartCarveUAttrib && startCarveUAttrib_nonConst)
-        {
-            geo->getAttributes().destroyAttribute(startCarveUAttrib_nonConst);
-        }
-        if (delEndCarveUAttrib && endCarveUAttrib_nonConst)
-        {
-            geo->getAttributes().destroyAttribute(endCarveUAttrib_nonConst);
-        }
     }
 
     SYS_FORCE_INLINE void setGroup( const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
@@ -272,21 +261,19 @@ public:
         }
     }
 
-    
-    // SYS_FORCE_INLINE virtual void bumpDataIdsForAddOrRemove() const override
-    // { geo->bumpDataIdsForAddOrRemove(true, true, true); }
-
 
 
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
+        if (!(keepOutsideStart || keepOutsideEnd || keepInside))
+            return true;
+        
         if (groupParser.isEmpty())
             return true;
-
+        
         GFE_CurveUV curveUV(geo, cookparms);
         if (carveSpace != GFE_CarveSpace::CustomAttrib)
         {
@@ -298,26 +285,48 @@ private:
             case GFE_CarveSpace::WorldArcLength:
             default:                             curveUV.curveUVMethod = GFE_CurveUVMethod::WorldArcLength; break;
             }
-            curveUV.setGroup(groupParser.getPrimitiveGroup());
-            uvAttrib = curveUV.findOrCreateUV(true, GA_ATTRIB_VERTEX, GA_STORE_INVALID);
+            curveUV.groupParser.setGroup(groupParser.getPrimitiveGroup());
+            uvAttrib = curveUV.getOutAttribArray().findOrCreateUV(true, GA_ATTRIB_VERTEX, GA_STORE_INVALID);
             curveUV.compute();
         }
         if (!uvAttrib)
             return false;
 
-        uvAttrib_h = uvAttrib;
+        //uv_h = uvAttrib;
 
         carve();
 
+        if (delStartCarveUAttrib && startCarveUAttrib_nonConst)
+            geo->getAttributes().destroyAttribute(startCarveUAttrib_nonConst);
+        
+        if (delEndCarveUAttrib && endCarveUAttrib_nonConst)
+            geo->getAttributes().destroyAttribute(endCarveUAttrib_nonConst);
+        
         return true;
     }
 
 
-    void
-        carve()
+    void carve()
     {
-
-
+        if ((keepOutsideStart && keepOutsideEnd) || ((keepOutsideStart || keepOutsideEnd) && keepInside))
+        {
+            
+        }
+        else
+        {
+            if (keepOutsideStart)
+            {
+            
+            }
+            else if (keepOutsideEnd)
+            {
+        
+            }
+            else if (keepInside)
+            {
+        
+            }
+        }
     }
 
 
@@ -325,76 +334,76 @@ private:
     void
         setAttribVal(
             const GA_RWHandleT<T>& attrib_h,
-            const GA_Offset ptnum0,
-            const GA_Offset ptnum1,
+            const GA_Offset ptoff0,
+            const GA_Offset ptoff1,
             const fpreal bias
         )
     {
-        T attrib0 = attrib_h.get(ptnum0);
-        T attrib1 = attrib_h.get(ptnum1);
+        T attrib0 = attrib_h.get(ptoff0);
+        T attrib1 = attrib_h.get(ptoff1);
         attrib0 = GFE_Math::vlerp(attrib0, attrib1, bias);
-        attrib_h.set(ptnum0, attrib0);
+        attrib_h.set(ptoff0, attrib0);
     }
 
     //template<>
     //void
     //    setAttribVal<UT_Vector3T<fpreal>>(
     //        const GA_RWHandleT<UT_Vector3T<fpreal>>& attrib_h,
-    //        const GA_Offset ptnum0,
-    //        const GA_Offset ptnum1,
+    //        const GA_Offset ptoff0,
+    //        const GA_Offset ptoff1,
     //        const fpreal bias
     //        )
     //{
-    //    UT_Vector3T<fpreal> attrib0 = attrib_h.get(ptnum0);
-    //    const UT_Vector3T<fpreal> attrib1 = attrib_h.get(ptnum1);
+    //    UT_Vector3T<fpreal> attrib0 = attrib_h.get(ptoff0);
+    //    const UT_Vector3T<fpreal> attrib1 = attrib_h.get(ptoff1);
     //    attrib0 = GFE_Math::vlerp<UT_Vector3T<fpreal>, fpreal>(attrib0, attrib1, bias);
-    //    attrib_h.set(ptnum0, attrib0);
+    //    attrib_h.set(ptoff0, attrib0);
     //}
 
     //template<>
     //void
     //    setAttribVal<fpreal>(
     //        const GA_RWHandleT<fpreal>& attrib_h,
-    //        const GA_Offset ptnum0,
-    //        const GA_Offset ptnum1,
+    //        const GA_Offset ptoff0,
+    //        const GA_Offset ptoff1,
     //        const fpreal bias
     //    )
     //{
-    //    fpreal attrib0 = attrib_h.get(ptnum0);
-    //    const fpreal attrib1 = attrib_h.get(ptnum1);
+    //    fpreal attrib0 = attrib_h.get(ptoff0);
+    //    const fpreal attrib1 = attrib_h.get(ptoff1);
     //    attrib0 = GFE_Math::vlerp(attrib0, attrib1, bias);
-    //    attrib_h.set(ptnum0, attrib0);
+    //    attrib_h.set(ptoff0, attrib0);
     //}
 
     //template<>
     //void
     //    setAttribVal<int>(
     //        const GA_RWHandleT<int>& attrib_h,
-    //        const GA_Offset ptnum0,
-    //        const GA_Offset ptnum1,
+    //        const GA_Offset ptoff0,
+    //        const GA_Offset ptoff1,
     //        const fpreal bias
     //        )
     //{
-    //    int attrib0 = attrib_h.get(ptnum0);
-    //    const int attrib1 = attrib_h.get(ptnum1);
+    //    int attrib0 = attrib_h.get(ptoff0);
+    //    const int attrib1 = attrib_h.get(ptoff1);
     //    attrib0 = GFE_Math::vlerp(attrib0, attrib1, bias);
-    //    attrib_h.set(ptnum0, attrib0);
+    //    attrib_h.set(ptoff0, attrib0);
     //}
 
     //template<>
     //void
     //    setAttribVal<bool>(
     //        const GA_RWHandleT<bool>& attrib_h,
-    //        const GA_Offset ptnum0,
-    //        const GA_Offset ptnum1,
+    //        const GA_Offset ptoff0,
+    //        const GA_Offset ptoff1,
     //        const fpreal bias
     //        )
     //{
-    //    const bool attrib0 = attrib_h.get(ptnum0);
-    //    const bool attrib1 = attrib_h.get(ptnum1);
+    //    const bool attrib0 = attrib_h.get(ptoff0);
+    //    const bool attrib1 = attrib_h.get(ptoff1);
     //    if (attrib0 != attrib1)
     //    {
-    //        attrib_h.set(ptnum0, bias > 0.5 ? attrib1 : attrib0);
+    //        attrib_h.set(ptoff0, bias > 0.5 ? attrib1 : attrib0);
     //    }
     //}
 
@@ -403,13 +412,13 @@ private:
     void
         setAttribDir(
             const GA_RWHandleT<UT_Vector3T<FLOAT_T>>& attrib_h,
-            const GA_Offset ptnum0,
-            const GA_Offset ptnum1,
+            const GA_Offset ptoff0,
+            const GA_Offset ptoff1,
             const fpreal bias
         )
     {
-        UT_Vector3T<FLOAT_T> attrib0 = attrib_h.get(ptnum0);
-        UT_Vector3T<FLOAT_T> attrib1 = attrib_h.get(ptnum1);
+        UT_Vector3T<FLOAT_T> attrib0 = attrib_h.get(ptoff0);
+        UT_Vector3T<FLOAT_T> attrib1 = attrib_h.get(ptoff1);
 
         typename FLOAT_T length0 = length2(attrib0);
         const typename FLOAT_T length1 = length2(attrib1);
@@ -425,15 +434,15 @@ private:
         attrib0 = q.rotate(attrib0);
         attrib0 *= length0;
 
-        attrib_h.set(ptnum0, attrib0);
+        attrib_h.set(ptoff0, attrib0);
     }
 
 
     void
         interpAttribs(
             const std::vector<GA_Attribute*>& attribs,
-            const GA_Offset ptnum0,
-            const GA_Offset ptnum1,
+            const GA_Offset ptoff0,
+            const GA_Offset ptoff1,
             const fpreal bias
         )
     {
@@ -442,17 +451,17 @@ private:
 
         for (size_t i = 0; i < size; i++)
         {
-            GA_Attribute* const attribPtr = attribs[i];
+            GA_Attribute* const attrib = attribs[i];
 
-            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
             if (aifTuple)
             {
-                const int tupleSize = aifTuple->getTupleSize(attribPtr);
-                const GA_Storage storage = aifTuple->getStorage(attribPtr);
+                const int tupleSize = aifTuple->getTupleSize(attrib);
+                const GA_Storage storage = aifTuple->getStorage(attrib);
 
                 if (tupleSize == 3)
                 {
-                    const GA_TypeInfo typeInfo = attribPtr->getTypeInfo();
+                    const GA_TypeInfo typeInfo = attrib->getTypeInfo();
                     if (typeInfo == GA_TYPE_VECTOR || typeInfo == GA_TYPE_NORMAL)
                     {
                         switch (storage)
@@ -470,15 +479,15 @@ private:
                         case GA_STORE_INT64:
                             break;
                         case GA_STORE_REAL16:
-                            setAttribDir<fpreal16>(attribPtr, ptnum0, ptnum1, bias);
+                            setAttribDir<fpreal16>(attrib, ptoff0, ptoff1, bias);
                             continue;
                             break;
                         case GA_STORE_REAL32:
-                            setAttribDir<fpreal32>(attribPtr, ptnum0, ptnum1, bias);
+                            setAttribDir<fpreal32>(attrib, ptoff0, ptoff1, bias);
                             continue;
                             break;
                         case GA_STORE_REAL64:
-                            setAttribDir<fpreal64>(attribPtr, ptnum0, ptnum1, bias);
+                            setAttribDir<fpreal64>(attrib, ptoff0, ptoff1, bias);
                             continue;
                             break;
                         case GA_STORE_STRING:
@@ -496,39 +505,39 @@ private:
                 switch (storage)
                 {
                 case GA_STORE_BOOL:
-                    setAttribVal<bool>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<bool>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_UINT8:
-                    setAttribVal<uint8>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<uint8>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_INT8:
-                    setAttribVal<int8>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<int8>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_INT16:
-                    setAttribVal<int16>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<int16>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_INT32:
-                    setAttribVal<int32>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<int32>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_INT64:
-                    setAttribVal<int64>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<int64>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_REAL16:
-                    setAttribVal<fpreal16>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<fpreal16>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_REAL32:
-                    setAttribVal<fpreal32>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<fpreal32>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_REAL64:
-                    setAttribVal<fpreal64>(attribPtr, ptnum0, ptnum1, bias);
+                    setAttribVal<fpreal64>(attrib, ptoff0, ptoff1, bias);
                     continue;
                     break;
                 case GA_STORE_STRING:
@@ -543,7 +552,7 @@ private:
                     break;
                 }
             }
-            else if (attribPtr->getAIFNumericArray())
+            else if (attrib->getAIFNumericArray())
             {
             }
             else
@@ -605,8 +614,7 @@ private:
 
 
     template<GFE_CarveType CARVE_TYPE>
-    void
-        carve()
+    void carve()
     {
         const bool carveSpace_isWorld = carveSpace == GFE_CarveSpace::CustomAttrib  ||
                                         carveSpace == GFE_CarveSpace::WorldAverage  ||
@@ -675,8 +683,8 @@ private:
                             {
                                 switch (uvAttrib->getOwner())
                                 {
-                                case GA_ATTRIB_POINT:  uvmax = uvAttrib_h.get(primpt1);  break;
-                                case GA_ATTRIB_VERTEX: uvmax = uvAttrib_h.get(primvtx1); break;
+                                case GA_ATTRIB_POINT:  uvmax = uv_h.get(primpt1);  break;
+                                case GA_ATTRIB_VERTEX: uvmax = uv_h.get(primvtx1); break;
                                 default: UT_ASSERT_MSG(0, "unhandled uv class");         break;
                                 }
 
@@ -738,8 +746,8 @@ private:
                                 fpreal uvmax2;
                                 switch (uvAttrib->getOwner())
                                 {
-                                case GA_ATTRIB_POINT:  uvmax2 = uvAttrib_h.get(primpt1);  break;
-                                case GA_ATTRIB_VERTEX: uvmax2 = uvAttrib_h.get(primvtx1); break;
+                                case GA_ATTRIB_POINT:  uvmax2 = uv_h.get(primpt1);  break;
+                                case GA_ATTRIB_VERTEX: uvmax2 = uv_h.get(primvtx1); break;
                                 default: UT_ASSERT_MSG(0, "unhandled uv class"); break;
                                 }
                                 domainUMax = uvmax2 - domainUMax;
