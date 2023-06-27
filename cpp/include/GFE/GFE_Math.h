@@ -4,19 +4,18 @@
 #ifndef __GFE_Math_h__
 #define __GFE_Math_h__
 
-//#include "GFE/GFE_Math.h"
-
-#include "GA/GA_Detail.h"
-//#include "GA/GA_SplittableRange.h"
+#include "GFE/GFE_Math.h"
 
 
 
 #include "GFE/GFE_Type.h"
 
+#include "GA/GA_Detail.h"
+
+
 
 namespace GFE_Math {
-
-
+    
 
 template<typename T>
 SYS_FORCE_INLINE static T radians(const T degrees)
@@ -29,31 +28,31 @@ SYS_FORCE_INLINE static T degrees(const T radians)
 
 
 template<typename VECTOR_T, typename T_value_type>
-SYS_FORCE_INLINE VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
+SYS_FORCE_INLINE static VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
 { return lerp(a, b, t); }
 
 template<>
-SYS_FORCE_INLINE int16 vlerp<int16, fpreal16>(const int16 a, const int16 b, const fpreal16 t)
+SYS_FORCE_INLINE static int16 vlerp<int16, fpreal16>(const int16 a, const int16 b, const fpreal16 t)
 { return a + (b - a) * t; }
 
 template<>
-SYS_FORCE_INLINE int vlerp<int, fpreal32>(const int a, const int b, const fpreal32 t)
+SYS_FORCE_INLINE static int vlerp<int, fpreal32>(const int a, const int b, const fpreal32 t)
 { return a + (b - a) * t; }
 
 template<>
-SYS_FORCE_INLINE int64 vlerp<int64, fpreal64>(const int64 a, const int64 b, const fpreal64 t)
+SYS_FORCE_INLINE static int64 vlerp<int64, fpreal64>(const int64 a, const int64 b, const fpreal64 t)
 { return a + (b - a) * t; }
 
 template<>
-SYS_FORCE_INLINE fpreal16 vlerp<fpreal16, fpreal16>(const fpreal16 a, const fpreal16 b, const fpreal16 t)
+SYS_FORCE_INLINE static fpreal16 vlerp<fpreal16, fpreal16>(const fpreal16 a, const fpreal16 b, const fpreal16 t)
 { return a + (b - a) * t; }
 
 template<>
-SYS_FORCE_INLINE fpreal32 vlerp<fpreal32, fpreal32>(const fpreal32 a, const fpreal32 b, const fpreal32 t)
+SYS_FORCE_INLINE static fpreal32 vlerp<fpreal32, fpreal32>(const fpreal32 a, const fpreal32 b, const fpreal32 t)
 { return SYSlerp(a, b, t); }
 
 template<>
-SYS_FORCE_INLINE fpreal vlerp<fpreal, fpreal>(const fpreal a, const fpreal b, const fpreal t)
+SYS_FORCE_INLINE static fpreal vlerp<fpreal, fpreal>(const fpreal a, const fpreal b, const fpreal t)
 { return SYSlerp(a, b, t); }
 
 

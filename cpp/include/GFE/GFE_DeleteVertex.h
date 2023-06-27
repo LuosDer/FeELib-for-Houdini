@@ -21,10 +21,10 @@ public:
 
     void
         setComputeParm(
-            const bool delDegeneratePrims = false,
+            const bool delDegeneratePrims = true,
             const bool delUnusedPoints    = true,
             const bool reverseGroup       = false,
-			const bool delGroup           = false
+			const bool delGroup           = true
         )
     {
         setHasComputed();
@@ -281,7 +281,7 @@ private:
 
 public:
     bool delDegeneratePrims = true;
-    bool delUnusedPoints = true;
+    bool delUnusedPoints    = true;
 	
     bool reverseGroup = false;
     bool delGroup = true;

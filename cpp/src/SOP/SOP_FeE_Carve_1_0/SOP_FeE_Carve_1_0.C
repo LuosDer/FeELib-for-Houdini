@@ -22,14 +22,29 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name	parameters
     parm {
-        name    "primGroup"
-        cppname "PrimGroup"
-        label   "Prim Group"
+        name    "group"
+        cppname "Group"
+        label   "Group"
         type    string
         default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Primitives,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
+        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        parmtag { "sop_input" "0" }
+    }
+    parm {
+        name    "groupType"
+        cppname "GroupType"
+        label   "Group Type"
+        type    ordinal
+        default { "prim" }
+        menu {
+            "guess"     "Guess from Group"
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
     }
     parm {
         name    "carveStartPrimGroup"
@@ -440,7 +455,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 
@@ -454,7 +469,7 @@ SOP_FeE_Carve_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_Carve_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("primGroup"_sh,            &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::primGroupMenu);
         templ.setChoiceListPtr("carveStartPrimGroup"_sh,  &SOP_Node::primGroupMenu);
         templ.setChoiceListPtr("carveEndPrimGroup"_sh,    &SOP_Node::primGroupMenu);
 
@@ -522,6 +537,23 @@ SOP_FeE_Carve_1_0::cookVerb() const
 
  
 
+static GA_GroupType
+sopGroupType(SOP_FeE_Carve_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_Carve_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
+}
+
+
 static GFE_CarveSpace
 sopCarveSpace(SOP_FeE_Carve_1_0Parms::CarveSpace parmgrouptype)
 {
@@ -551,40 +583,43 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     outGeo0.replaceWith(inGeo0);
 
     const GFE_CarveSpace carveSpace = sopCarveSpace(sopparms.getCarveSpace());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
-    const UT_StringHolder& customCarveUVAttribName = sopparms.getCustomCarveUVAttribName();
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
     GFE_Carve carve(outGeo0, &cookparms);
     
-    carve.setGroup(sopparms.getPrimGroup());
+    carve.groupParser.setGroup(groupType, sopparms.getGroup());
 
     carve.setComputeParm(carveSpace,
         sopparms.getKeepOutsideStart(), sopparms.getKeepOutsideEnd(), sopparms.getKeepInside(),
-        sopparms.getAbsCarveUEnd());
-
+        sopparms.getAbsCarveUEnd(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
     carve.setCarveU<true>(sopparms.getEndCarveULocal(), sopparms.getEndCarveUWorld());
     carve.setCarveU<false>(sopparms.getStartCarveULocal(), sopparms.getStartCarveUWorld());
+    
+    carve.setUVAttrib(sopparms.getCustomCarveUVAttribName());
 
-    carve.setUVAttrib(customCarveUVAttribName);
-
-    carve.setStartCarveUAttrib(sopparms.getStartCarveUAttrib(), sopparms.getDelStartCarveUAttrib());
-    carve.setEndCarveUAttrib( sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
+    carve.setCarveUStartAttrib(sopparms.getStartCarveUAttrib(), sopparms.getDelStartCarveUAttrib());
+    carve.setCarveUEndAttrib(  sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
 
     carve.setCarveStartGroup(sopparms.getCarveStartPrimGroup());
     carve.setCarveEndGroup(sopparms.getCarveEndPrimGroup());
 
+    
     if (sopparms.getOutSrcPrimAttrib())
-        carve.createSrcPrimAttrib(sopparms.getSrcPrimAttribName());
+        carve.enumerate.findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, sopparms.getSrcPrimAttribName());
 
     if (sopparms.getOutSrcPointAttrib())
-        carve.createSrcPointAttrib(sopparms.getSrcPrimAttribName());
+        carve.enumerate.findOrCreateTuple(false, GA_ATTRIB_POINT, sopparms.getSrcPointAttribName());
 
-    carve.getOutAttribArray().appendPointVertexs(sopparms.getInterpAttrib());
-
+    //carve.getOutAttribArray().appendPointVertexs();
+    carve.interpAttribArray.appends(GA_ATTRIB_POINT, sopparms.getInterpAttrib());
+    carve.interpAttribArray.appends(GA_ATTRIB_VERTEX, sopparms.getInterpAttrib());
+    
     carve.computeAndBumpDataIdsForAddOrRemove();
 
     carve.visualizeOutGroup();

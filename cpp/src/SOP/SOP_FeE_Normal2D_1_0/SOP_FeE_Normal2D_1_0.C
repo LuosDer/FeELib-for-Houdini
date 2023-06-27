@@ -289,25 +289,6 @@ SOP_FeE_Normal2D_1_0::cookVerb() const
 
 
 
-
-static GFE_NormalSearchOrder
-sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass)
-{
-    using namespace SOP_FeE_Normal2D_1_0Enums;
-    switch (attribClass)
-    {
-    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::PRIMITIVE;   break;
-    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::POINT;       break;
-    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::VERTEX;      break;
-    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::DETAIL;      break;
-    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::POINTVERTEX; break;
-    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::ALL;           break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
-    return GFE_NormalSearchOrder::INVALID;
-}
-
-
 //static int
 //sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass, GA_AttributeOwner* searchOrder)
 //{
@@ -342,6 +323,25 @@ sopGroupType(SOP_FeE_Normal2D_1_0Parms::GroupType parmGroupType)
     }
     UT_ASSERT_MSG(0, "Unhandled Group type!");
     return GA_GROUP_INVALID;
+}
+
+
+
+static GFE_NormalSearchOrder
+sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass parmAttribClass)
+{
+    using namespace SOP_FeE_Normal2D_1_0Enums;
+    switch (parmAttribClass)
+    {
+    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::Primitive;   break;
+    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::Point;       break;
+    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::Vertex;      break;
+    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::Detail;      break;
+    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::PointVertex; break;
+    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::All;         break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
+    return GFE_NormalSearchOrder::Invalid;
 }
 
 
@@ -387,8 +387,8 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
     normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
     if (!sopparms.getUseConstantNormal3D())
-        normal2D.setNormal3DAttrib(sopparms.getFindNormal3D(),
-            geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib(), sopparms.getAddNormal3DIfNoFind());
+        normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
+            geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());
     
     
     normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
@@ -398,4 +398,3 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     normal2D.computeAndBumpDataId();
     normal2D.visualizeOutGroup();
 }
-

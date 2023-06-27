@@ -404,15 +404,15 @@ sopPieceAttribSearchOrder(SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder 
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmgrouptype)
     {
-    case PieceAttribSearchOrder::PRIM:       return GFE_PieceAttribSearchOrder::PRIM;         break;
-    case PieceAttribSearchOrder::POINT:      return GFE_PieceAttribSearchOrder::POINT;        break;
-    case PieceAttribSearchOrder::VERTEX:     return GFE_PieceAttribSearchOrder::VERTEX;       break;
-    case PieceAttribSearchOrder::PRIMPOINT:  return GFE_PieceAttribSearchOrder::PRIMPOINT;    break;
-    case PieceAttribSearchOrder::POINTPRIM:  return GFE_PieceAttribSearchOrder::POINTPRIM;    break;
-    case PieceAttribSearchOrder::ALL:        return GFE_PieceAttribSearchOrder::ALL;          break;
+    case PieceAttribSearchOrder::PRIM:       return GFE_PieceAttribSearchOrder::Primitive;    break;
+    case PieceAttribSearchOrder::POINT:      return GFE_PieceAttribSearchOrder::Point;        break;
+    case PieceAttribSearchOrder::VERTEX:     return GFE_PieceAttribSearchOrder::Vertex;       break;
+    case PieceAttribSearchOrder::PRIMPOINT:  return GFE_PieceAttribSearchOrder::PrimPoint;    break;
+    case PieceAttribSearchOrder::POINTPRIM:  return GFE_PieceAttribSearchOrder::PointPrim;    break;
+    case PieceAttribSearchOrder::ALL:        return GFE_PieceAttribSearchOrder::All;          break;
     }
     UT_ASSERT_MSG(0, "Unhandled Piece Attrib Search Order!");
-    return GFE_PieceAttribSearchOrder::INVALID;
+    return GFE_PieceAttribSearchOrder::Invalid;
 }
 
 

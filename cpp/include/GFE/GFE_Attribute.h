@@ -25,26 +25,27 @@
 
 enum class GFE_PieceAttribSearchOrder
 {
-    PRIM,
-    POINT,
-    VERTEX,
-    PRIMPOINT,
-    POINTPRIM,
-    ALL,
-    INVALID = -1,
+    Primitive,
+    Point,
+    Vertex,
+    PrimPoint,
+    PointPrim,
+    All,
+    Invalid = -1,
 };
 
 
 enum class GFE_NormalSearchOrder
 {
-    PRIMITIVE,
-    POINT,
-    VERTEX,
-    DETAIL,
-    POINTVERTEX,
-    ALL,
-    GLOBAL = DETAIL,
-    INVALID = -1,
+    Primitive,
+    Point,
+    Vertex,
+    Detail,
+    PointVertex,
+    PrimVertex,
+    All,
+    Global = Detail,
+    Invalid = -1,
 };
 
 
@@ -436,13 +437,13 @@ static GFE_NormalSearchOrder toNormalSearchOrder(const GA_GroupType groupType)
 {
     switch (groupType)
     {
-    case GA_GROUP_PRIMITIVE: return GFE_NormalSearchOrder::PRIMITIVE; break;
-    case GA_GROUP_POINT:     return GFE_NormalSearchOrder::POINT;     break;
-    case GA_GROUP_VERTEX:    return GFE_NormalSearchOrder::VERTEX;    break;
-    case GA_GROUP_N:         return GFE_NormalSearchOrder::ALL;       break;
-    case GA_GROUP_INVALID:   return GFE_NormalSearchOrder::INVALID;   break;
+    case GA_GROUP_PRIMITIVE: return GFE_NormalSearchOrder::Primitive; break;
+    case GA_GROUP_POINT:     return GFE_NormalSearchOrder::Point;     break;
+    case GA_GROUP_VERTEX:    return GFE_NormalSearchOrder::Vertex;    break;
+    case GA_GROUP_N:         return GFE_NormalSearchOrder::All;       break;
+    case GA_GROUP_INVALID:   return GFE_NormalSearchOrder::Invalid;   break;
     }
-    return GFE_NormalSearchOrder::INVALID;
+    return GFE_NormalSearchOrder::Invalid;
 }
 SYS_FORCE_INLINE static GFE_NormalSearchOrder toNormalSearchOrder(const GA_Group& group)
 { return toNormalSearchOrder(group.classType()); }
@@ -456,27 +457,27 @@ static GFE_NormalSearchOrder toNormalSearchOrder(const GA_AttributeOwner owner)
 {
     switch (owner)
     {
-    case GA_ATTRIB_PRIMITIVE: return GFE_NormalSearchOrder::PRIMITIVE; break;
-    case GA_ATTRIB_POINT:     return GFE_NormalSearchOrder::POINT;     break;
-    case GA_ATTRIB_VERTEX:    return GFE_NormalSearchOrder::VERTEX;    break;
-    case GA_ATTRIB_DETAIL:    return GFE_NormalSearchOrder::DETAIL;    break;
-    case GA_ATTRIB_OWNER_N:   return GFE_NormalSearchOrder::ALL;       break;
-    case GA_ATTRIB_INVALID:   return GFE_NormalSearchOrder::INVALID;   break;
+    case GA_ATTRIB_PRIMITIVE: return GFE_NormalSearchOrder::Primitive; break;
+    case GA_ATTRIB_POINT:     return GFE_NormalSearchOrder::Point;     break;
+    case GA_ATTRIB_VERTEX:    return GFE_NormalSearchOrder::Vertex;    break;
+    case GA_ATTRIB_DETAIL:    return GFE_NormalSearchOrder::Detail;    break;
+    case GA_ATTRIB_OWNER_N:   return GFE_NormalSearchOrder::All;       break;
+    case GA_ATTRIB_INVALID:   return GFE_NormalSearchOrder::Invalid;   break;
     }
-    return GFE_NormalSearchOrder::INVALID;
+    return GFE_NormalSearchOrder::Invalid;
 }
 
 static GA_AttributeOwner toOwner(const GFE_NormalSearchOrder normalSearchOrder)
 {
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::PRIMITIVE:   return GA_ATTRIB_PRIMITIVE; break;
-    case GFE_NormalSearchOrder::POINT:       return GA_ATTRIB_POINT;     break;
-    case GFE_NormalSearchOrder::VERTEX:      return GA_ATTRIB_VERTEX;    break;
-    case GFE_NormalSearchOrder::DETAIL:      return GA_ATTRIB_DETAIL;    break;
-    case GFE_NormalSearchOrder::POINTVERTEX: return GA_ATTRIB_VERTEX;    break;
-    case GFE_NormalSearchOrder::ALL:         return GA_ATTRIB_OWNER_N;   break;
-    case GFE_NormalSearchOrder::INVALID:     return GA_ATTRIB_INVALID;   break;
+    case GFE_NormalSearchOrder::Primitive:   return GA_ATTRIB_PRIMITIVE; break;
+    case GFE_NormalSearchOrder::Point:       return GA_ATTRIB_POINT;     break;
+    case GFE_NormalSearchOrder::Vertex:      return GA_ATTRIB_VERTEX;    break;
+    case GFE_NormalSearchOrder::Detail:      return GA_ATTRIB_DETAIL;    break;
+    case GFE_NormalSearchOrder::PointVertex: return GA_ATTRIB_VERTEX;    break;
+    case GFE_NormalSearchOrder::All:         return GA_ATTRIB_OWNER_N;   break;
+    case GFE_NormalSearchOrder::Invalid:     return GA_ATTRIB_INVALID;   break;
     }
     return GA_ATTRIB_INVALID;
 }
@@ -485,13 +486,13 @@ static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOr
 {
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::PRIMITIVE:   return GA_ATTRIB_PRIMITIVE;  break;
-    case GFE_NormalSearchOrder::POINT:       return GA_ATTRIB_POINT;      break;
-    case GFE_NormalSearchOrder::VERTEX:      return GA_ATTRIB_VERTEX;     break;
-    case GFE_NormalSearchOrder::DETAIL:      return GA_ATTRIB_DETAIL;     break;
-    case GFE_NormalSearchOrder::POINTVERTEX: return GA_ATTRIB_VERTEX;     break;
-    case GFE_NormalSearchOrder::ALL:         return GA_ATTRIB_VERTEX;     break;
-    case GFE_NormalSearchOrder::INVALID:     return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::Primitive:   return GA_ATTRIB_PRIMITIVE;  break;
+    case GFE_NormalSearchOrder::Point:       return GA_ATTRIB_POINT;      break;
+    case GFE_NormalSearchOrder::Vertex:      return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::Detail:      return GA_ATTRIB_DETAIL;     break;
+    case GFE_NormalSearchOrder::PointVertex: return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::All:         return GA_ATTRIB_VERTEX;     break;
+    case GFE_NormalSearchOrder::Invalid:     return GA_ATTRIB_VERTEX;     break;
     default:                                 return GA_ATTRIB_VERTEX;     break;
     }
 }
@@ -523,22 +524,22 @@ static GA_Attribute* findPieceAttrib(
 
     switch (pieceAttribSearchOrder)
     {
-    case GFE_PieceAttribSearchOrder::PRIM:       attribPtr = geo.findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::POINT:      attribPtr = geo.findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::VERTEX:     attribPtr = geo.findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::PRIMPOINT:
+    case GFE_PieceAttribSearchOrder::Primitive:  attribPtr = geo.findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::Point:      attribPtr = geo.findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::Vertex:     attribPtr = geo.findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+    case GFE_PieceAttribSearchOrder::PrimPoint:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
         attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
-    case GFE_PieceAttribSearchOrder::POINTPRIM:
+    case GFE_PieceAttribSearchOrder::PointPrim:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
         attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
-    case GFE_PieceAttribSearchOrder::ALL:
+    case GFE_PieceAttribSearchOrder::All:
     {
         GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
         attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 3);
@@ -886,7 +887,7 @@ findOrCreateUVAttributePointVertex(
 static const GA_Attribute*
 findNormal3D(
     const GA_Detail& geo,
-    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
+    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::Invalid,
     const UT_StringRef& normal3DAttribName = "N"
 )
 {
@@ -896,26 +897,26 @@ findNormal3D(
     const GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::PRIMITIVE:
+    case GFE_NormalSearchOrder::Primitive:
         normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::POINT:
+    case GFE_NormalSearchOrder::Point:
         normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::VERTEX:
+    case GFE_NormalSearchOrder::Vertex:
         normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::DETAIL:
+    case GFE_NormalSearchOrder::Detail:
         normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::POINTVERTEX:
+    case GFE_NormalSearchOrder::PointVertex:
         normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
             normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         }
         break;
-    case GFE_NormalSearchOrder::ALL:
+    case GFE_NormalSearchOrder::All:
         normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
@@ -941,7 +942,7 @@ findNormal3D(
 static GA_Attribute*
 findNormal3D(
     GA_Detail& geo,
-    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::INVALID,
+    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::Invalid,
     const UT_StringRef& name = "N"
 )
 {
@@ -951,16 +952,16 @@ findNormal3D(
     GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::PRIMITIVE:   normal3DAttrib = geo.findPrimitiveAttribute(name); break;
-    case GFE_NormalSearchOrder::POINT:       normal3DAttrib = geo.findPointAttribute    (name); break;
-    case GFE_NormalSearchOrder::VERTEX:      normal3DAttrib = geo.findVertexAttribute   (name); break;
-    case GFE_NormalSearchOrder::DETAIL:      normal3DAttrib = geo.findGlobalAttribute   (name); break;
-    case GFE_NormalSearchOrder::POINTVERTEX:
+    case GFE_NormalSearchOrder::Primitive:   normal3DAttrib = geo.findPrimitiveAttribute(name); break;
+    case GFE_NormalSearchOrder::Point:       normal3DAttrib = geo.findPointAttribute    (name); break;
+    case GFE_NormalSearchOrder::Vertex:      normal3DAttrib = geo.findVertexAttribute   (name); break;
+    case GFE_NormalSearchOrder::Detail:      normal3DAttrib = geo.findGlobalAttribute   (name); break;
+    case GFE_NormalSearchOrder::PointVertex:
         normal3DAttrib = geo.findPointAttribute(name);
         if (!normal3DAttrib)
             normal3DAttrib = geo.findVertexAttribute(name);
         break;
-    case GFE_NormalSearchOrder::ALL:
+    case GFE_NormalSearchOrder::All:
         normal3DAttrib = geo.findPrimitiveAttribute(name);
         if (!normal3DAttrib)
         {

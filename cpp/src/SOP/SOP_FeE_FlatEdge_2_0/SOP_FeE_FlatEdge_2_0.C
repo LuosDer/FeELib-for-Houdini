@@ -49,26 +49,48 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
+        name    "outFlatVertexEdgeGroup"
+        cppname "OutFlatVertexEdgeGroup"
+        label   "Out Flat Vertex Edge Group"
+        type    toggle
+        default { "flatEdge" }
+        joinnext
+        nolabel
+        disablewhen "{ delGroupElement == 1 }"
+    }
+    parm {
+        name    "flatVertexEdgeGroupName"
+        cppname "FlatVertexEdgeGroupName"
+        label   "Flat Vertex Edge Group Name"
+        type    string
+        default { "flatEdge" }
+        disablewhen "{ outFlatVertexEdgeGroup == 0 } { delGroupElement == 1 }"
+    }
+    parm {
+        name    "outFlatEdgeGroup"
+        cppname "OutFlatEdgeGroup"
+        label   "Out Flat Edge Group"
+        type    toggle
+        default { "flatEdge" }
+        joinnext
+        nolabel
+        disablewhen "{ delGroupElement == 1 }"
+    }
+    parm {
         name    "flatEdgeGroupName"
         cppname "FlatEdgeGroupName"
         label   "Flat Edge Group Name"
         type    string
         default { "flatEdge" }
+        disablewhen "{ outFlatEdgeGroup == 0 } { delGroupElement == 1 }"
     }
     parm {
         name    "flatEdgeAngleThreshold"
         cppname "FlatEdgeAngleThreshold"
         label   "Flat Edge Angle Threshold"
-        type    angle
-        default { "180" }
-        range   { 0! 180! }
-    }
-    parm {
-        name    "absoluteDot"
-        cppname "AbsoluteDot"
-        label   "Absolute Dot"
-        type    toggle
-        default { "0" }
+        type    log
+        default { "0.001" }
+        range   { 0.01 180! }
     }
     parm {
         name    "includeUnsharedEdge"
@@ -78,36 +100,51 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "manifoldEdge"
-        cppname "ManifoldEdge"
-        label   "Manifold Edge"
+        name    "nonManifoldEdgeOp"
+        cppname "NonManifoldEdgeOp"
+        label   "Non Manifold Edge Op"
         type    ordinal
         default { "none" }
         menu {
             "none"  "None"
-            "all"   "all"
+            "all"   "All"
             "min"   "Min"
             "max"   "Max"
         }
     }
+    parm {
+        name    "absoluteDot"
+        cppname "AbsoluteDot"
+        label   "Absolute Dot"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
-        name    "normalAttribClass"
-        cppname "NormalAttribClass"
-        label   "Normal Attrib Class"
+        name    "findNormal3D"
+        cppname "FindNormal3D"
+        label   "Find Normal 3D"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "normal3DSearchOrder"
+        cppname "Normal3DSearchOrder"
+        label   "Normal3D Search Order"
         type    ordinal
         default { "prim" }
         menu {
-            "prim"      "Primitive"
-            "vertex"    "Vertex"
+            "prim"       "Primitive"
+            "vertex"     "Vertex"
+            "primVertex" "PrimVertex"
         }
     }
     parm {
-        name    "normalAttrib"
-        cppname "NormalAttrib"
+        name    "normal3DAttrib"
+        cppname "Normal3DAttrib"
         label   "Normal Attrib"
         type    string
-        default { "" }
+        default { "N" }
     }
     parm {
         name    "weightingMethod"
@@ -121,14 +158,6 @@ static const char *theDsFile = R"THEDSFILE(
             "area"      "By Face Area"
         }
         range   { 0! 2! }
-    }
-
-    parm {
-        name    "outAsVertexGroup"
-        cppname "OutAsVertexGroup"
-        label   "Output as Vertex Group"
-        type    toggle
-        default { "0" }
     }
 
     parm {
@@ -176,7 +205,7 @@ SOP_FeE_FlatEdge_2_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("normalAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("normal3DAttrib"_sh, &SOP_Node::allAttribMenu);
     }
     return templ.templates();
 }
@@ -270,33 +299,34 @@ sopGroupType(SOP_FeE_FlatEdge_2_0Parms::GroupType parmGroupType)
 }
 
 
-static GA_GroupType
-sopManifoldEdge(SOP_FeE_FlatEdge_2_0Parms::ManifoldEdge parmManifoldEdge)
+static GFE_FlatEdge::NonManifoldEdgeOp
+sopNonManifoldEdgeOp(SOP_FeE_FlatEdge_2_0Parms::NonManifoldEdgeOp parmNonManifoldEdgeOp)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
-    switch (parmManifoldEdge)
+    switch (parmNonManifoldEdgeOp)
     {
-    case ManifoldEdge::NONE:    return GA_GROUP_VERTEX;     break;
-    case ManifoldEdge::ALL:     return GA_GROUP_INVALID;    break;
-    case ManifoldEdge::MIN:     return GA_GROUP_POINT;      break;
-    case ManifoldEdge::MAX:     return GA_GROUP_PRIMITIVE;  break;
+    case NonManifoldEdgeOp::NONE:    return GFE_FlatEdge::NonManifoldEdgeOp::None ; break;
+    case NonManifoldEdgeOp::ALL:     return GFE_FlatEdge::NonManifoldEdgeOp::All  ; break;
+    case NonManifoldEdgeOp::MIN:     return GFE_FlatEdge::NonManifoldEdgeOp::Min  ; break;
+    case NonManifoldEdgeOp::MAX:     return GFE_FlatEdge::NonManifoldEdgeOp::Max  ; break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Manifold Edge!");
-    return GA_GROUP_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled Manifold Edge OP!");
+    return GFE_FlatEdge::NonManifoldEdgeOp::None;
 }
 
 
-static GA_AttributeOwner
-sopNormalAttribClass(SOP_FeE_FlatEdge_2_0Parms::NormalAttribClass parmNormalAttribClass)
+static GFE_NormalSearchOrder
+sopNormal3DSearchOrder(SOP_FeE_FlatEdge_2_0Parms::Normal3DSearchOrder parmNormalAttribClass)
 {
     using namespace SOP_FeE_FlatEdge_2_0Enums;
     switch (parmNormalAttribClass)
     {
-    case NormalAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;    break;
-    case NormalAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE; break;
+    case Normal3DSearchOrder::PRIM:        return GFE_NormalSearchOrder::Primitive; break;
+    case Normal3DSearchOrder::VERTEX:      return GFE_NormalSearchOrder::Vertex;    break;
+    case Normal3DSearchOrder::PRIMVERTEX:  return GFE_NormalSearchOrder::PrimVertex;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Normal Attrib Class!");
-    return GA_ATTRIB_INVALID;
+    return GFE_NormalSearchOrder::Invalid;
 }
 
 static GEO_NormalMethod
@@ -305,9 +335,9 @@ sopWeightingMethod(SOP_FeE_FlatEdge_2_0Parms::WeightingMethod parmWeightingMetho
     using namespace SOP_FeE_FlatEdge_2_0Enums;
     switch (parmWeightingMethod)
     {
-    case WeightingMethod::VERTEX:    return GEO_NormalMethod::UNIFORM_WEIGHTED;    break;
-    case WeightingMethod::PRIM:      return GEO_NormalMethod::ANGLE_WEIGHTED;      break;
-    case WeightingMethod::PRIM:      return GEO_NormalMethod::AREA_WEIGHTED;       break;
+    case WeightingMethod::UNIFORM:    return GEO_NormalMethod::UNIFORM_WEIGHTED;    break;
+    case WeightingMethod::ANGLE:      return GEO_NormalMethod::ANGLE_WEIGHTED;      break;
+    case WeightingMethod::AREA:       return GEO_NormalMethod::AREA_WEIGHTED;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled Weighting Method!");
     return GEO_NormalMethod::ANGLE_WEIGHTED;
@@ -327,13 +357,13 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     const UT_StringHolder& flatEdgeGroupName = sopparms.getFlatEdgeGroupName();
     
-    if (!flatEdgeGroupName.isstring())
+    if (!flatEdgeGroupName.isstring() || flatEdgeGroupName.length()==0)
         return;
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GA_GroupType manifoldEdge = sopManifoldEdge(sopparms.getManifoldEdge());
-    const GA_AttributeOwner normalAttribClass = sopNormalAttribClass(sopparms.getNormalAttribClass());
+    const GFE_FlatEdge::NonManifoldEdgeOp nonManifoldEdgeOp = sopNonManifoldEdgeOp(sopparms.getNonManifoldEdgeOp());
+    const GFE_NormalSearchOrder normalSearchOrder = sopNormal3DSearchOrder(sopparms.getNormal3DSearchOrder());
         
     
     UT_AutoInterrupt boss("Processing");
@@ -341,26 +371,24 @@ SOP_FeE_FlatEdge_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     GFE_FlatEdge flatEdge(outGeo0, &cookparms);
-
     
-    flatEdge.setComputeParm(sopparms.getFlatEdgeAngleThreshold(), sopparms.getAbsoluteDot(),
-        sopparms.getIncludeUnsharedEdge(), manifoldEdge,
-        sopparms.getOutAsVertexGroup(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    flatEdge.setComputeParm(
+        sopparms.getIncludeUnsharedEdge(), nonManifoldEdgeOp, sopparms.getAbsoluteDot(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    flatEdge.setAngleThresholdByDegrees(sopparms.getFlatEdgeAngleThreshold());
+    
     flatEdge.groupSetter.setParm(sopparms.getReverseGroup());
     flatEdge.doDelGroupElement = sopparms.getDelGroupElement();
     
-
     flatEdge.normal3D.normalMethod = sopWeightingMethod(sopparms.getWeightingMethod());
-    flatEdge.normal3D.findOrCreateNormal3D(true, normalAttribClass, GA_STORE_INVALID, sopparms.getNormalAttrib());
-
-    const GA_Attribute* const normal3DAttrib = normal3D.getOutAttribArray().findOrCreateNormal3D(true, normal3DSearchOrder, GA_STORE_INVALID, attribName);
-    if (!addNormal3DIfNoFind && normal3DAttrib->isDetached())
-        normal3D.getOutAttribArray().clear();
-
+    flatEdge.findOrCreateNormal3D(sopparms.getFindNormal3D(), true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
     
     flatEdge.groupParser.setGroup(groupType, sopparms.getGroup());
-    flatEdge.findOrCreateGroup(flatEdgeGroupName);
+    
+    if (sopparms.getOutFlatEdgeGroup() || flatEdge.doDelGroupElement)
+        flatEdge.findOrCreateEdgeGroup(flatEdge.doDelGroupElement, sopparms.getFlatEdgeGroupName());
+    if (sopparms.getOutFlatVertexEdgeGroup())
+        flatEdge.findOrCreateVertexGroup(false, sopparms.getFlatVertexEdgeGroupName());
     
     flatEdge.computeAndBumpDataId();
     flatEdge.delOrVisualizeGroup();
