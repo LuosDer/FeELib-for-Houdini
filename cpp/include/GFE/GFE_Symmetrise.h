@@ -12,24 +12,25 @@
 
 class GFE_Symmetrise : public GFE_AttribFilter {
 
-
 public:
+    enum Method
+    {
+        Mirror,
+        Center,
+    };
+    
     using GFE_AttribFilter::GFE_AttribFilter;
 
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
+            const Method method = Method::Mirror,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
+        this->method = method;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
@@ -92,13 +93,11 @@ private:
 
 
 public:
-    GA_Size firstIndex = 0;
-    bool outAsOffset = true;
-    bool negativeIndex = false;
+    Method method = Method::Mirror;
+
     
 
 private:
-    
     GA_Attribute* attrib;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

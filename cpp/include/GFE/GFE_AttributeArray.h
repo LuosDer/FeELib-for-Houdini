@@ -100,7 +100,8 @@ public:
         geo->getAttributes().destroyAttribute(attribArray[i]);
         erase(i);
     }
-
+    
+    
     SYS_FORCE_INLINE void clear()
     { attribArray.clear(); attribUPtrArray.clear(); }
 
@@ -149,6 +150,37 @@ public:
 
 
 
+    void uappend(GA_Attribute* const attrib)
+    {
+        const size_t size = attribArray.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            if (attrib == attribArray[i])
+                return;
+        }
+        attribArray.emplace_back(attrib);
+        //attribArray.emplace_back();
+    }
+    
+    void unique()
+    {
+        const auto begin = attribArray.begin();
+        const size_t size = attribArray.size();
+        for (size_t i = size-1; ; --i)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                if (attribArray[i] == attribArray[j])
+                {
+                    attribArray.erase(begin+i);
+                    break;
+                }
+            }
+            if (i == 0)
+                break;
+        }
+    }
+    
     void append(const GFE_AttributeArray& inAttribArray)
     {
         const size_t size = inAttribArray.size();
@@ -1457,10 +1489,10 @@ private:
 
 
 
-class GFE_RefAttribArray {
+class GFE_RefAttributeArray {
 
 public:
-    GFE_RefAttribArray(
+    GFE_RefAttributeArray(
         const GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -1471,7 +1503,7 @@ public:
         attribArray.reserve(16);
     }
 
-    GFE_RefAttribArray(
+    GFE_RefAttributeArray(
         const GA_Detail* const geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
@@ -1482,7 +1514,7 @@ public:
         attribArray.reserve(16);
     }
 
-    GFE_RefAttribArray(
+    GFE_RefAttributeArray(
         const GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -1493,7 +1525,7 @@ public:
         attribArray.reserve(16);
     }
 
-    GFE_RefAttribArray(
+    GFE_RefAttributeArray(
         const GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
@@ -1504,7 +1536,7 @@ public:
         attribArray.reserve(16);
     }
     
-    ~GFE_RefAttribArray()
+    ~GFE_RefAttributeArray()
     {
     }
 
@@ -1873,7 +1905,7 @@ private:
     friend class GFE_GeoFilterRef3;
     friend class GFE_GeoFilterRef4;
 
-}; // End of class GFE_RefAttribArray
+}; // End of class GFE_RefAttributeArray
 
 
 

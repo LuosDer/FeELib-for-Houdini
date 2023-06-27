@@ -38,7 +38,7 @@ public:
 
     
     SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
-        const bool detached = false,
+        const bool detached = true,
         const GA_AttributeOwner owner = GA_ATTRIB_POINT,
         const GA_StorageClass storageClass = GA_STORECLASS_INT,
         const GA_Storage storage = GA_STORE_INVALID,
@@ -46,6 +46,14 @@ public:
     )
     { return getOutAttribArray().findOrCreateTuple(detached, owner,
             storageClass, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
+
+    SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
+        const bool detached,
+        const GA_AttributeOwner owner,
+        const UT_StringRef& attribName
+    )
+    { return getOutAttribArray().findOrCreateTuple(detached, owner,
+            GA_STORECLASS_INT, GA_STORE_INVALID, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); }
 
 private:
 
@@ -60,20 +68,23 @@ private:
             return true;
         
         
-        attribPtr = getOutAttribArray()[0];
-        // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+        const size_t size = getOutAttribArray().size();
+        for (size_t i = 0; i < size; i++)
         {
-        case GA_STORE_INT16:  enumerate<int16>();           break;
-        case GA_STORE_INT32:  enumerate<int32>();           break;
-        case GA_STORE_INT64:  enumerate<int64>();           break;
-        case GA_STORE_REAL16: enumerate<fpreal16>();        break;
-        case GA_STORE_REAL32: enumerate<fpreal32>();        break;
-        case GA_STORE_REAL64: enumerate<fpreal64>();        break;
-        case GA_STORE_STRING: enumerate<UT_StringHolder>(); break;
-        default: break;
+            attribPtr = getOutAttribArray()[i];
+            // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
+            switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+            {
+            case GA_STORE_INT16:  enumerate<int16>();           break;
+            case GA_STORE_INT32:  enumerate<int32>();           break;
+            case GA_STORE_INT64:  enumerate<int64>();           break;
+            case GA_STORE_REAL16: enumerate<fpreal16>();        break;
+            case GA_STORE_REAL32: enumerate<fpreal32>();        break;
+            case GA_STORE_REAL64: enumerate<fpreal64>();        break;
+            case GA_STORE_STRING: enumerate<UT_StringHolder>(); break;
+            default: break;
+            }
         }
-
         return true;
     }
 
@@ -82,7 +93,7 @@ private:
     void enumerate()
     {
         UT_ASSERT_P(attribPtr);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
+        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr));
         if(outAsOffset)
         {
             UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)

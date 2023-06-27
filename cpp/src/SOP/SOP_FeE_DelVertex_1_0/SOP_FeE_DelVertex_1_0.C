@@ -209,7 +209,13 @@ SOP_FeE_DelVertex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
+    
+/*
+    GFE_DelVertex delVertex(geo, cookparms);
+    delVertex.groupParser.setGroup(groupType, );
+    delVertex.compute();
+ */
+    
     GFE_DelVertex delVertex(outGeo0, cookparms);
 
     delVertex.groupParser.setGroup(groupType, sopparms.getGroup());

@@ -402,7 +402,7 @@ public:
     
     // SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
     // { return groupParserRef0; }
-    SYS_FORCE_INLINE GFE_RefAttribArray& getRef0AttribArray()
+    SYS_FORCE_INLINE GFE_RefAttributeArray& getRef0AttribArray()
     { return ref0AttribArray; }
     SYS_FORCE_INLINE GFE_RefGroupArray& getRef0GroupArray()
     { return ref0GroupArray; }
@@ -444,7 +444,7 @@ private:
     
     const GA_Attribute* posRef0Attrib = nullptr;
 
-    GFE_RefAttribArray ref0AttribArray;
+    GFE_RefAttributeArray ref0AttribArray;
     GFE_RefGroupArray ref0GroupArray;
 
 }; // End of class GFE_GeoFilterRef0
@@ -559,7 +559,7 @@ public:                                                                         
                                                                                                      \
                                                                                                      \
                                                                                                      \
-    SYS_FORCE_INLINE GFE_RefAttribArray& getRef##NUM##AttribArray()                                  \
+    SYS_FORCE_INLINE GFE_RefAttributeArray& getRef##NUM##AttribArray()                                  \
     { return ref##NUM##AttribArray; }                                                                \
     SYS_FORCE_INLINE GFE_RefGroupArray& getRef##NUM##GroupArray()                                    \
     { return ref##NUM##GroupArray; }                                                                 \
@@ -601,8 +601,8 @@ private:                                                                        
                                                                                                      \
     const GA_Attribute* posRef##NUM##Attrib = nullptr;                                               \
                                                                                                      \
-    GFE_RefAttribArray ref##NUM##AttribArray;                                                        \
-    GFE_RefGroupArray ref##NUM##GroupArray;                                                          \
+    GFE_RefAttributeArray ref##NUM##AttribArray;                                                     \
+    GFE_RefGroupArray     ref##NUM##GroupArray;                                                      \
                                                                                                      \
 }; // End of class GFE_GeoFilterRef
 
