@@ -10,6 +10,8 @@
 
 
 
+#include "SOP/SOP_Fuse-2.0.proto.h"
+
 class GFE_Fuse : public GFE_GeoFilter {
 
 
@@ -18,7 +20,7 @@ public:
 
 
     void
-    setComputeParm(
+        setComputeParm(
             const fpreal dist = 0,
             const bool extendStart       = true,
             const bool extendEnd         = true,

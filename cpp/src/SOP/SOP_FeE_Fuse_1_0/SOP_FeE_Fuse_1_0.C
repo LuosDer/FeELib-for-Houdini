@@ -48,26 +48,448 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+
     parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
-        type    ordinal
-        default { "prim" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
+        name    "keepEdgeGroup"
+        cppname "KeepEdgeGroup"
+        label   "Keep Edge Group"
+        type    string
+        default { "*" }
+    }
+    parm {
+        name    "queryGroup"
+        cppname "QueryGroup"
+        label   "Group"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "useTargetGroup"
+        cppname "UseTargetGroup"
+        label   "Target Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+        disablewhen "{ snapType != distance } { hasinput(1) == 1 }"
+    }
+    parm {
+        name    "targetGroup"
+        cppname "TargetGroup"
+        label   "Target Group"
+        type    string
+        default { "" }
+        disablewhen "{ snapType != distance } { hasinput(1) == 0 usetargetgroup == 0 } { hasinput(1) == 0 }"
+    }
+    parm {
+        name    "modifyTarget"
+        cppname "ModifyTarget"
+        label   "Modify Target"
+        type    toggle
+        default { "off" }
+        disablewhen "{ snapType != distance } { usetargetgroup == 0 }"
+    }
+    parm {
+        name    "posAttrib"
+        cppname "PosAttrib"
+        label   "Position Attribute"
+        type    string
+        default { "P" }
+        parmtag { "sop_input" "0" }
+    }
+    groupsimple {
+        name    "snapGroup"
+        label   "Snap"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "snapType"
+            cppname "SnapType"
+            label   "Snap Type"
+            type    ordinal
+            joinnext
+            default { "distance" }
+            menu {
+                "distance"    "Near Points"
+                "grid"        "Grid"
+                "specified"   "Specified Points"
+            }
+        }
+        parm {
+            name    "algorithm"
+            cppname "Algorithm"
+            label   "Algorithm"
+            type    ordinal
+            default { "lowest" }
+            hidewhen "{ snapType != distance }"
+            menu {
+                "lowest"    "Least Target Point Number (for cloud reduction)"
+                "closest"   "Closest Target Point (for disjoint pieces)"
+            }
+        }
+        parm {
+            name    "useSnapDist"
+            cppname "UseSnapDist"
+            label   "Use Snap Distance"
+            type    toggle
+            nolabel
+            joinnext
+            default { "on" }
+            hidewhen "{ snapType != distance }"
+        }
+        parm {
+            name    "snapDist"
+            cppname "SnapDist"
+            label   "Snap Distance"
+            type    log
+            default { "0" }
+            disablewhen "{ snapType != distance } { usetol3d == 0 }"
+            hidewhen "{ snapType != distance }"
+            range   { 0.001 10 }
+        }
+        parm {
+            name    "usePositionSnapMethod"
+            cppname "UsePositionSnapMethod"
+            label   "Snap Positions"
+            type    toggle
+            nolabel
+            joinnext
+            default { "off" }
+            hidewhen "{ snapType != distance }"
+        }
+        parm {
+            name    "positionSnapMethod"
+            cppname "PositionSnapMethod"
+            label   "Output Positions"
+            type    ordinal
+            default { "average" }
+            disablewhen "{ snapType != distance } { usePositionSnapMethod == 0 }"
+            hidewhen "{ snapType != distance }"
+            menu {
+                "average"   "Average Value"
+                "lowest"    "Least Point Number"
+                "highest"   "Greatest Point Number"
+                "max"       "Maximum Value"
+                "min"       "Minimum Value"
+                "mode"      "Mode"
+                "median"    "Median"
+                "sum"       "Sum"
+                "sumsquare" "Sum of Squares"
+                "rms"       "Root Mean Square"
+            }
+        }
+        parm {
+            name    "useRadiusAttrib"
+            cppname "UseRadiusAttrib"
+            label   "Radius Attribute"
+            type    toggle
+            nolabel
+            joinnext
+            default { "off" }
+            hidewhen "{ snapType != distance }"
+        }
+        parm {
+            name    "radiusAttrib"
+            cppname "RadiusAttrib"
+            label   "Radius Attribute"
+            type    string
+            default { "pscale" }
+            disablewhen "{ useradiusattrib == 0 }"
+            hidewhen "{ snapType != distance }"
+            parmtag { "sop_input" "1" }
+        }
+        parm {
+            name    "useMatchAttrib"
+            cppname "UseMatchAttrib"
+            label   "Match Attribute"
+            type    toggle
+            nolabel
+            joinnext
+            default { "off" }
+            hidewhen "{ snapType != distance }"
+        }
+        parm {
+            name    "matchAttrib"
+            cppname "MatchAttrib"
+            label   "Match Attribute"
+            type    string
+            default { "name" }
+            disablewhen "{ useMatchAttrib == 0 }"
+            hidewhen "{ snapType != distance }"
+            parmtag { "sop_input" "1" }
+        }
+        parm {
+            name    "matchType"
+            cppname "MatchType"
+            label   "Match Condition"
+            type    ordinal
+            default { "match" }
+            disablewhen "{ useMatchAttrib == 0 }"
+            hidewhen "{ snapType != distance }"
+            menu {
+                "match"     "Equal Attribute Values"
+                "mismatch"  "Unequal Attribute Values"
+            }
+        }
+        parm {
+            name    "matchTol"
+            cppname "MatchTol"
+            label   "Match Tolerance"
+            type    float
+            default { "0" }
+            disablewhen "{ useMatchAttrib == 0 }"
+            hidewhen "{ snapType != distance }"
+            range   { 0 1 }
+        }
+        parm {
+            name    "gridType"
+            cppname "Gridtype"
+            label   "Grid Type"
+            type    ordinal
+            default { "spacing" }
+            hidewhen "{ snapType != grid }"
+            menu {
+                "spacing"   "Grid Spacing"
+                "lines"     "Grid Lines"
+                "pow2"      "Power of 2 Grid Lines"
+            }
+        }
+        parm {
+            name    "gridSpacing"
+            cppname "GridSpacing"
+            label   "Grid Spacing"
+            type    vector
+            size    3
+            default { "0.1" "0.1" "0.1" }
+            disablewhen "{ gridType != spacing }"
+            hidewhen "{ snapType != grid }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "gridLines"
+            cppname "GridLines"
+            label   "Grid Lines"
+            type    vector
+            size    3
+            default { "10" "10" "10" }
+            disablewhen "{ gridType != lines }"
+            hidewhen "{ snapType != grid }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "gridPow"
+            cppname "GridPow"
+            label   "Grid Power 2"
+            type    integer
+            size    3
+            default { "3" "3" "3" }
+            disablewhen "{ gridType != pow2 }"
+            hidewhen "{ snapType != grid }"
+            range   { 0 10 }
+        }
+        parm {
+            name    "gridOffset"
+            cppname "GridOffset"
+            label   "Grid Offset"
+            type    vector
+            size    3
+            default { "0" "0" "0" }
+            hidewhen "{ snapType != grid }"
+            range   { -1 1 }
+        }
+        parm {
+            name    "gridRounding"
+            cppname "GridRounding"
+            label   "Grid Rounding"
+            type    ordinal
+            default { "nearest" }
+            hidewhen "{ snapType != grid }"
+            menu {
+                "nearest"   "Nearest"
+                "down"      "Down"
+                "up"        "Up"
+            }
+        }
+        parm {
+            name    "useGridTol"
+            cppname "UseGridTol"
+            label   "Use Grid Tolerance"
+            type    toggle
+            nolabel
+            joinnext
+            default { "on" }
+            hidewhen "{ snapType != grid }"
+        }
+        parm {
+            name    "gridTol"
+            cppname "GridTol"
+            label   "Grid Tolerance"
+            type    float
+            default { "10" }
+            disablewhen "{ snapType != grid } { useGridTol == 0 }"
+            hidewhen "{ snapType != grid }"
+            range   { 0.001 10 }
         }
     }
-    parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
-        type    string
-        default { "index" }
+
+    groupsimple {
+        name    "fuse_folder"
+        label   "Fuse"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "fuseSnappedPoint"
+            cppname "FuseSnappedPoint"
+            label   "Fuse Snapped Points"
+            type    toggle
+            default { "on" }
+        }
+        parm {
+            name    "keepFusedPoint"
+            cppname "KeepFusedPoint"
+            label   "Keep Fused Points"
+            type    toggle
+            default { "off" }
+            disablewhen "{ fuseSnappedPoint == 0 }"
+        }
+        parm {
+            name    "delDegenerate"
+            cppname "DelDegenerate"
+            label   "Remove Repeated Vertices and Degenerate Primitives"
+            type    toggle
+            default { "on" }
+            disablewhen "{ fuseSnappedPoint == 0 }"
+        }
+        parm {
+            name    "delDegenPoint"
+            cppname "DelDegenPoint"
+            label   "Remove Unused Points from Degenerate Primitives"
+            type    toggle
+            default { "on" }
+            disablewhen "{ fuseSnappedPoint == 0 } { delDegenerate == 0 }"
+        }
+        parm {
+            name    "delUnusedPoint"
+            cppname "DelUnusedPoint"
+            label   "Remove All Unused Point"
+            type    toggle
+            default { "off" }
+            disablewhen "{ fuseSnappedPoint == 0 }"
+        }
     }
 
+    groupsimple {
+        name    "outputGroup"
+        label   "Output Attributes and Groups"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "recomputeNormal"
+            cppname "RecomputeNormal"
+            label   "Recompute Affected Normals"
+            type    toggle
+            default { "off" }
+        }
+        parm {
+            name    "createSnappedGroup"
+            cppname "CreateSnappedGroup"
+            label   "Create Snapped Points Group"
+            type    toggle
+            nolabel
+            joinnext
+            default { "off" }
+        }
+        parm {
+            name    "snappedGroupName"
+            cppname "SnappedGroupName"
+            label   "Snapped Point Group"
+            type    string
+            default { "snapped" }
+            disablewhen "{ createSnappedGroup == 0 }"
+        }
+        parm {
+            name    "createSnappedAttrib"
+            cppname "CreateSnappedAttrib"
+            label   "Create Snapped Destination Attribute"
+            type    toggle
+            nolabel
+            joinnext
+            default { "off" }
+            disablewhen "{ snapType != distance }"
+        }
+        parm {
+            name    "snappedAttribName"
+            cppname "SnappedAttribName"
+            label   "Snapped Destination Attribute"
+            type    string
+            default { "snapTo" }
+            disablewhen "{ createSnappedAttrib == 0 } { snapType != distance }"
+        }
+        multiparm {
+            name    "numPointAttrib"
+            cppname "NumPointAttrib"
+            label   "Attributes to Snap"
+            default 0
+
+            parm {
+                name    "attribSnapMethod#"
+                cppname "AttribSnapMethod#"
+                label   "Output Values"
+                type    ordinal
+                default { "8" }
+                menu {
+                    "max"       "Maximum"
+                    "min"       "Minimum"
+                    "mean"      "Average"
+                    "mode"      "Mode"
+                    "median"    "Median"
+                    "sum"       "Sum"
+                    "sumsquare" "Sum of Squares"
+                    "rms"       "Root Mean Square"
+                    "first"     "First Match"
+                    "last"      "Last Match"
+                }
+            }
+            parm {
+                name    "pointAttribs#"
+                cppname "PointAttribs#"
+                label   "Point Attribute"
+                type    string
+                default { "" }
+                parmtag { "sop_input" "1" }
+            }
+        }
+
+        multiparm {
+            name    "numGroups"
+            cppname "NumGroups"
+            label   "Groups to Snap"
+            default 0
+
+            parm {
+                name    "groupPropagation#"
+                cppname "GroupPropagation#"
+                label   "Group Propagation"
+                type    ordinal
+                default { "0" }
+                menu {
+                    "leastPointNumber"      "Least Point Number"
+                    "greatestPointNumber"   "Greatest Point Number"
+                    "union"                 "Union"
+                    "intersect"             "Intersect"
+                    "mode"                  "Most Common"
+                }
+            }
+            parm {
+                name    "pointGroups#"
+                cppname "PointGroups#"
+                label   "Point Group"
+                type    string
+                default { "" }
+                parmtag { "sop_input" "1" }
+            }
+        }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -159,33 +581,19 @@ SOP_FeE_Fuse_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Fuse_1_0Parms::GroupType parmGroupType)
+sopPositionSnapMethod(SOP_FeE_Fuse_1_0Parms::PositionSnapMethod parmPositionSnapMethod)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
-    switch (parmGroupType)
+    switch (parmPositionSnapMethod)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case PositionSnapMethod::GUESS:     return GA_GROUP_INVALID;    break;
+    case PositionSnapMethod::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case PositionSnapMethod::POINT:     return GA_GROUP_POINT;      break;
+    case PositionSnapMethod::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case PositionSnapMethod::EDGE:      return GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
     return GA_GROUP_INVALID;
-}
-
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Fuse_1_0Parms::Class parmAttribClass)
-{
-    using namespace SOP_FeE_Fuse_1_0Enums;
-    switch (parmAttribClass)
-    {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
 }
 
 
@@ -203,8 +611,7 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GA_GroupType parmPositionSnapMethod = sopPositionSnapMethod(sopparms.getPositionSnapMethod());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -212,21 +619,21 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_Fuse fuse(geo, cookparms);
+    fuse.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    fuse.compute();
 */
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    GFE_Fuse fuse(outGeo0, cookparms);
+    fuse.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
+    fuse.groupParser.setGroup(groupType, sopparms.getGroup());
 
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    fuse.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
-    enumerate.computeAndBumpDataId();
+    fuse.computeAndBumpDataId();
     
 
 }
