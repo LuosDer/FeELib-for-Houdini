@@ -69,6 +69,13 @@ public:
     }
 
 
+    SYS_FORCE_INLINE void delVertex(const GA_Offset primoff, const GA_Offset vtxoff)
+    {
+        getPrimitive(primoff)->releaseVertex(vtxoff);
+        //getTopology().delVertex(vtxoff);
+        destroyVertexOffset(vtxoff);
+    }
+
 
     
     SYS_FORCE_INLINE bool isUsedPoint(const GA_Offset ptoff) const

@@ -57,13 +57,13 @@ public:
         setComputeParm(
             const GFE_CurveUVMethod curveUVMethod = GFE_CurveUVMethod::WorldArcLength,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->curveUVMethod = curveUVMethod;
+        this->curveUVMethod  = curveUVMethod;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
 
@@ -73,6 +73,9 @@ private:
     virtual bool
         computeCore() override
     {
+        if (getOutAttribArray().isEmpty())
+            return false;
+
         if (groupParser.isEmpty())
             return true;
 
@@ -137,9 +140,8 @@ private:
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
             UT_Array<value_type> uvs;
-            value_type dist = 0;
             //VECTOR_T uv(0.0);
-            VECTOR_T uv(GFE_Type::getZeroVector<VECTOR_T>());
+            VECTOR_T uv;
             UT_Vector3T<value_type> pos, pos_prev;
             GA_Offset ptoff, vtxoff;
             GA_Offset start, end;
@@ -147,6 +149,8 @@ private:
             {
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
+                    value_type dist = 0;
+                    uv = GFE_Type::getZeroVector<VECTOR_T>();
                     const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
                     if (numvtx < 2) return;
 #if 1
@@ -260,7 +264,7 @@ private:
 
     
     exint subscribeRatio = 64;
-    exint minGrainSize = 64;
+    exint minGrainSize   = 1024;
 
 
 }; // End of Class GFE_CurveUV

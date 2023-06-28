@@ -347,7 +347,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
             case 4: cloneVec<UT_Vector4T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             }
         break;
-        case GA_STORE_STRING: clone<UT_StringHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize);  break;
+        case GA_STORE_STRING: clone<UT_StringHolder >(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
         case GA_STORE_DICT:   clone<UT_OptionsHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
         default: UT_ASSERT_MSG(0, "not correct storage"); break;
         }
@@ -356,13 +356,20 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     
 
 
-    
 static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const UT_StringRef& name,
     const exint subscribeRatio = 64, const exint minGrainSize = 1024)
 {
     GA_Attribute* const outAttrib = geo.getAttributes().cloneAttribute(inAttrib.getOwner(), name, inAttrib, true);
     clone(*outAttrib, inAttrib, subscribeRatio, minGrainSize);
     return outAttrib;
+}
+    
+SYS_FORCE_INLINE static GA_Attribute* clone(GA_Detail* const geo, const GA_Attribute* const inAttrib, const UT_StringRef& name,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    UT_ASSERT_P(geo);
+    UT_ASSERT_P(inAttrib);
+    return clone(*geo, *inAttrib, name, subscribeRatio, minGrainSize);
 }
     
 // SYS_FORCE_INLINE static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const char* const name,

@@ -322,7 +322,12 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     GFE_Enumerate enumerate(outGeo0, cookparms);
     enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
+    
+    if (sopparms.getUsePieceAttrib())
+    {
+        enumerate.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
+        enumerate.
+    }
     enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 

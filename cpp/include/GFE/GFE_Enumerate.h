@@ -6,11 +6,10 @@
 
 #include "GFE/GFE_Enumerate.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "SOP/SOP_Enumerate.proto.h"
 
 class GFE_Enumerate : public GFE_AttribFilter {
 
@@ -57,7 +56,6 @@ public:
 
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -67,13 +65,19 @@ private:
         if (groupParser.isEmpty())
             return true;
         
+        if (pieceAttrib)
+        {
+            enumerateSideFX();
+            return true;
+        }
+        
         
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
-            attribPtr = getOutAttribArray()[i];
-            // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
-            switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+            enumAttrib = getOutAttribArray()[i];
+            // const GA_Storage storage = enumAttrib->getAIFTuple()->getStorage(enumAttrib);
+            switch (enumAttrib->getAIFTuple()->getStorage(enumAttrib))
             {
             case GA_STORE_INT16:  enumerate<int16>();           break;
             case GA_STORE_INT32:  enumerate<int32>();           break;
@@ -89,16 +93,96 @@ private:
     }
 
 
+#define __TEMP_GFE_Enumerate_GroupName       "__TEMP_GFE_Enumerate_Group"
+#define __TEMP_GFE_Enumerate_PieceAttribName "__TEMP_GFE_Enumerate_PieceAttrib"
+#define __TEMP_GFE_Enumerate_OutAttribName   "__TEMP_GFE_Enumerate_OutAttrib"
+    
+    void enumerateSideFX()
+    {
+        enumAttrib = getOutAttribArray()[0];
+        UT_ASSERT_P(pieceAttrib);
+        UT_ASSERT_P(enumAttrib);
+        UT_ASSERT_MSG(pieceAttrib->getOwner() == enumAttrib->getOwner(), "not same owner");
+
+        GA_ElementGroup* elemGroup = nullptr;
+        const GA_Group* const group = groupParser.getGroup(pieceAttrib);
+        if (group)
+        {
+            if (group->isDetached())
+            {
+                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_Enumerate_GroupName);
+                elemGroup->combine(group);
+                enumParms.setGroup(__TEMP_GFE_Enumerate_GroupName);
+            }
+            else
+            {
+                enumParms.setGroup(group->getName());
+            }
+        }
+        else
+        {
+            enumParms.setGroup();
+        }
+
+        GA_Attribute* namedPieceAttrib = nullptr;
+        if (pieceAttrib->isDetached())
+        {
+            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_Enumerate_PieceAttribName);
+            enumParms.setPieceAttrib(__TEMP_GFE_Enumerate_PieceAttribName);
+        }
+        else
+        {
+            enumParms.setPieceAttrib(pieceAttrib->getName());
+        }
+        
+        enumParms.setGroupType(GFE_Type::attributeOwner_groupType(enumAttrib->getOwner()));
+        enumParms.setUsePieceAttrib(true);
+        enumParms.setPieceMode(enumeratePieceElem ? SOP_EnumerateEnums::PieceMode::ELEMENTS : SOP_EnumerateEnums::PieceMode::PIECES);
+        
+        GA_Attribute* outAttrib = nullptr;
+        if (enumAttrib->isDetached() || enumAttrib->getName() == pieceAttrib->getName())
+        {
+            outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_Enumerate_OutAttribName);
+            enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        }
+        else
+        {
+            enumParms.setAttribname(outAttrib->getName());
+        }
+        //enumParms.setAttribType(SOP_EnumerateEnums::AttribType::INT);
+        //enumParms.setPrefix("");
+        
+        destgdh.allocateAndSet(geo, false);
+        
+        inputgdh.clear();
+        GU_DetailHandle input_h;
+        input_h.allocateAndSet(geoSrc ? geoSrc : geo, false);
+        inputgdh.emplace_back(input_h);
+        
+        SOP_NodeCache* const nodeCache = enumVerb->allocCache();
+        const auto enumCookparms = GFE_NodeVerb::newCookParms(cookparms, enumParms, nodeCache, &destgdh, &inputgdh);
+        enumVerb->cook(enumCookparms);
+        
+        
+        geo->destroyElementGroup(elemGroup);
+        geo->destroyAttrib(namedPieceAttrib);
+    }
+
+#undef __TEMP_GFE_Enumerate_GroupName
+#undef __TEMP_GFE_Enumerate_PieceAttribName
+#undef __TEMP_GFE_Enumerate_OutAttribName
+
+    
     template<typename T>
     void enumerate()
     {
-        UT_ASSERT_P(attribPtr);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr));
+        UT_ASSERT_P(enumAttrib);
+        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(enumAttrib));
         if(outAsOffset)
         {
             UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
             {
-                GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     GA_Offset start, end;
@@ -115,12 +199,12 @@ private:
         }
         else
         {
-            const GA_IndexMap& indexMap = attribPtr->getIndexMap();
+            const GA_IndexMap& indexMap = enumAttrib->getIndexMap();
             if (negativeIndex)
             {
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
-                    GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
                         GA_Offset start, end;
@@ -139,7 +223,7 @@ private:
             {
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
-                    GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
                         GA_Offset start, end;
@@ -161,10 +245,10 @@ private:
     template<>
     void enumerate<UT_StringHolder>()
     {
-        UT_ASSERT_P(attribPtr);
+        UT_ASSERT_P(enumAttrib);
 
-        const GA_RWHandleS attrib_h(attribPtr);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
+        const GA_RWHandleS attrib_h(enumAttrib);
+        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(enumAttrib->getOwner()));
         if(outAsOffset)
         {
             UTparallelFor(geoSplittableRange0, [this, &attrib_h](const GA_SplittableRange& r)
@@ -183,7 +267,7 @@ private:
         }
         else
         {
-            const GA_IndexMap& indexMap = attribPtr->getIndexMap();
+            const GA_IndexMap& indexMap = enumAttrib->getIndexMap();
             if(negativeIndex)
             {
                 UTparallelFor(geoSplittableRange0, [this, &attrib_h, &indexMap](const GA_SplittableRange& r)
@@ -230,13 +314,19 @@ public:
     const char* prefix = "";
     const char* sufix = "";
     
+    bool enumeratePieceElem = false;
 
 private:
     
-    GA_Attribute* attribPtr;
+    GA_Attribute* enumAttrib;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 
+private:
+    GU_DetailHandle destgdh;
+    UT_Array<GU_ConstDetailHandle> inputgdh;
+    SOP_EnumerateParms enumParms;
+    const SOP_NodeVerb* const enumVerb = SOP_NodeVerb::lookupVerb("enumerate");
 
 }; // End of class GFE_Enumerate
 
