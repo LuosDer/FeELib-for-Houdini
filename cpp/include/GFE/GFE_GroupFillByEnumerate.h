@@ -6,8 +6,6 @@
 
 #include "GFE/GFE_GroupFillByEnumerate.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
@@ -104,7 +102,7 @@ private:
     GA_Attribute* attrib;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
-
+    UT_Map<int, > dict;
 
 }; // End of class GFE_GroupFillByEnum
 

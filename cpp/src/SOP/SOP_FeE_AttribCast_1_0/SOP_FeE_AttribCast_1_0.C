@@ -284,7 +284,21 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
+/*
 
+        GFE_AttribCast attribCast(geo, cookparms);
+        attribCast.getInAttribArray().set(outAttrib);
+        attribCast.newStorageClass = enumAttrib->getStorageClass();
+        attribCast.newPrecision    = GFE_Attribute::getPrecision(enumAttrib);
+        if (attribCast.newStorageClass == GA_STORECLASS_STRING)
+        {
+            attribCast.prefix = prefix;
+            attribCast.sufix  = sufix;
+        }
+        attribCast.newAttribNames = sopparms.getNewAttribName();
+        attribCast.compute();
+ 
+ */
     
     GFE_AttribCast attribCast(outGeo0, cookparms);
     attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());

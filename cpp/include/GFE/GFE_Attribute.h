@@ -420,23 +420,15 @@ static GA_Storage getStorage(const GA_Attribute& attrib)
 }
     
 SYS_FORCE_INLINE static GA_Storage getStorage(const GA_Attribute* const attrib)
-{
-    UT_ASSERT_P(attrib);
-    return getStorage(*attrib);
-}
+{ UT_ASSERT_P(attrib); return getStorage(*attrib); }
 
 
 
 SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute& attrib)
-{
-    return GFE_Type::precisionFromStorage(getStorage(attrib));
-}
+{ return GFE_Type::precisionFromStorage(getStorage(attrib)); }
     
 SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute* const attrib)
-{
-    UT_ASSERT_P(attrib);
-    return getPrecision(*attrib);
-}
+{ UT_ASSERT_P(attrib); return getPrecision(*attrib); }
 
     
     

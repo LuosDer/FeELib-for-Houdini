@@ -229,33 +229,50 @@ def findFeENodeType(inputNodeTypeName, nodeTypeCategory = hou.sopNodeTypeCategor
     return None
     
 
+def readDeprecatedNodeSub2(deprecatedNodeList, pathLib, deprecatedFileName):
+    if pathLib is not None:
+        deprecatedSopDefinitionTXT = pathLib + '/scripts/deprecatedDefinition/' + ('deprecatedSopDefinition.txt' if deprecatedFileName is None else deprecatedFileName)
+        if os.path.exists(deprecatedSopDefinitionTXT):
+            with open(deprecatedSopDefinitionTXT, "r") as TXT:
+                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+
+def readDeprecatedNodeSub(deprecatedNodeList, env, deprecatedFileName):
+    readDeprecatedNodeSub2(deprecatedNodeList, hou.getenv(env), deprecatedFileName)
+
 
 
 def readDeprecatedNode():
     deprecatedNodeList = []
 
-    pathFeELib = hou.getenv('FeELib')
-    if pathFeELib is not None:
-        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
-        if os.path.exists(deprecatedSopDefinitionTXT):
-            with open(deprecatedSopDefinitionTXT, "r") as TXT:
-                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
-    else:
-        print('no found env FeELib which belongs to FeELib for Houdini')
+    readDeprecatedNodeSub(deprecatedNodeList, 'FeELib',            None)
+    readDeprecatedNodeSub(deprecatedNodeList, 'FeELib',            'deprecatedSopDefinitionHDK.txt')
+    readDeprecatedNodeSub(deprecatedNodeList, 'FeEProjectHoudini', None)
+    readDeprecatedNodeSub(deprecatedNodeList, 'FeEworkHoudini',    None)
 
-    pathFeELib = hou.getenv('FeEProjectHoudini')
-    if pathFeELib is not None:
-        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
-        if os.path.exists(deprecatedSopDefinitionTXT):
-            with open(deprecatedSopDefinitionTXT, "r") as TXT:
-                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+    # pathFeELib = hou.getenv('FeELib')
+    # if pathFeELib is not None:
+    #     deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
+    #     if os.path.exists(deprecatedSopDefinitionTXT):
+    #         with open(deprecatedSopDefinitionTXT, "r") as TXT:
+    #             fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+    # else:
+    #     print('no found env FeELib which belongs to FeELib for Houdini')
+
+    # pathFeELib = hou.getenv('FeEProjectHoudini')
+    # readDeprecatedNode(deprecatedNodeList, pathFeELib)
+    # if pathFeELib is not None:
+    #     deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
+    #     if os.path.exists(deprecatedSopDefinitionTXT):
+    #         with open(deprecatedSopDefinitionTXT, "r") as TXT:
+    #             fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
     
-    pathFeELib = hou.getenv('FeEworkHoudini')
-    if pathFeELib is not None:
-        deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
-        if os.path.exists(deprecatedSopDefinitionTXT):
-            with open(deprecatedSopDefinitionTXT, "r") as TXT:
-                fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
+    # pathFeELib = hou.getenv('FeEworkHoudini')
+    # readDeprecatedNode(deprecatedNodeList, pathFeELib)
+    # if pathFeELib is not None:
+    #     deprecatedSopDefinitionTXT = pathFeELib + '/scripts/deprecatedDefinition/deprecatedSopDefinition.txt'
+    #     if os.path.exists(deprecatedSopDefinitionTXT):
+    #         with open(deprecatedSopDefinitionTXT, "r") as TXT:
+    #             fee_Utils.readTXTAsList(deprecatedNodeList, TXT)
 
     deprecatedNodeList = tuple(set(deprecatedNodeList))
     return deprecatedNodeList
@@ -395,7 +412,7 @@ hou.HDADefinition.isSideFXDefinition = isSideFXDefinition
 
 
 def checkHideFeENode(keepHide = True, detectName = True, detectPath = False):
-    ############### keepHide is False 用于切换hide模式
+    ############### keepHide is False use for IsNodeHiding mode
     TEMP_path = hou.getenv('TEMP')
     isHidingTXT_path = TEMP_path + '/isHidingFeENode.txt'
 

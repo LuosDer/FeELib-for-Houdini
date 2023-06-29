@@ -148,6 +148,17 @@ public:
         return attribPtr;
     }
 
+    GA_Attribute* set(const GA_AttributeOwner attribClass, const char* const attribPattern)
+    {
+        if (!attribPattern)
+            return nullptr;
+
+        GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        set(attribPtr);
+        return attribPtr;
+    }
+
+
 
 
     void uappend(GA_Attribute* const attrib)
@@ -181,6 +192,7 @@ public:
         }
     }
     
+    
     void append(const GFE_AttributeArray& inAttribArray)
     {
         const size_t size = inAttribArray.size();
@@ -189,6 +201,9 @@ public:
             attribArray.emplace_back(inAttribArray[i]);
         }
     }
+    
+    SYS_FORCE_INLINE void set(const GFE_AttributeArray& inAttribArray)
+    { clear(); append(inAttribArray); }
 
     SYS_FORCE_INLINE void append(GA_Attribute* const attribPtr)
     { if (attribPtr) attribArray.emplace_back(attribPtr); }
@@ -410,7 +425,7 @@ findOrCreateTuple(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
 
     if (detached)
@@ -601,7 +616,7 @@ findOrCreateTuple(
         const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         GA_Attribute* attribPtr = findPieceAttrib(pieceAttribSearchOrder, attribName);
-        if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, defaults, emplaceBack))
+        if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
             return attribPtr;
 
         // if (attribPtr)
@@ -710,7 +725,7 @@ findOrCreateUV(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
     GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(*geo, owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
         
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
@@ -776,7 +791,7 @@ findOrCreateDir(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
 
         
@@ -843,7 +858,7 @@ findOrCreateNormal3D(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, defaults, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
         
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
@@ -942,7 +957,7 @@ bool checkTupleAttrib(
     GA_Attribute*& attrib,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 3,
-    const GA_Defaults& defaults = GA_Defaults(0.0f),
+    const GA_Defaults* const defaults = nullptr,
     const bool emplaceBack = true
 )
 {
@@ -1542,6 +1557,9 @@ public:
 
     SYS_FORCE_INLINE const GA_Attribute* &operator[](const size_t i)
     { return attribArray[i]; }
+
+    SYS_FORCE_INLINE bool isValid() const
+    { return bool(geo); }
 
     SYS_FORCE_INLINE bool isEmpty() const
     { return attribArray.size() == 0; }

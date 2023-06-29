@@ -10,6 +10,9 @@
 
 
 
+#include "GU/GU_Snap.h"
+
+
 #define GFE_MAX_LOOP_COUNT 1e10
 #define GFE_FIND_INVALID_INDEX -1
 
@@ -62,33 +65,63 @@ constexpr long GFE_INVALID_OFFSET = 9223372036854775807;
 #define PI 3.14159265358979323846
 #endif
 
-enum class GFE_GroupMergeType
+enum class GFE_AttribMergeMethod
 {
-    Replace,
-    Union,
-    Intersect,
-    Subtract,
-};
-
-enum class GFE_AttribMergeType
-{
-    Set = 0,
-    Add,
-    Sub,
-    Mult,
+    First,
+    Last,
     Min,
     Max,
-    Xor,
-    Toggle,
-    Append,
-    Intersect
+    Mode,
+    Mean,
+    Median,
+    Sum,
+    SumSquare,
+    RootMeanSquare,
 };
+
+enum class GFE_GroupMergeMethod
+{
+    First,
+    Last,
+    Min,
+    Max,
+    Mode,
+};
+
+
+// enum class GFE_GroupMergeType
+// {
+//     Replace,
+//     Union,
+//     Intersect,
+//     Subtract,
+// };
+// 
+// enum class GFE_AttribMergeType
+// {
+//     Set = 0,
+//     Add,
+//     Sub,
+//     Mult,
+//     Min,
+//     Max,
+//     Xor,
+//     Toggle,
+//     Append,
+//     Intersect
+// };
 
 
 enum class GFE_StatisticalFunction
 {
     Min,
     Max,
+    Mode,
+    Mean,
+    Median,
+    Sum,
+    SumSquare,
+    RootMeanSquare,
 };
 
 
@@ -122,6 +155,85 @@ namespace GFE_Type {
 #endif
 
 
+
+
+    static GFE_GroupMergeMethod
+    attribGroupMergeMethod(const GFE_AttribMergeMethod mergeMethod)
+    {
+        switch (mergeMethod)
+        {
+        case GFE_AttribMergeMethod::First:          return GFE_GroupMergeMethod::First;     break;
+        case GFE_AttribMergeMethod::Last:           return GFE_GroupMergeMethod::Last;      break;
+        case GFE_AttribMergeMethod::Min:            return GFE_GroupMergeMethod::Min;       break;
+        case GFE_AttribMergeMethod::Max:            return GFE_GroupMergeMethod::Max;       break;
+        case GFE_AttribMergeMethod::Mode:           return GFE_GroupMergeMethod::Mode;      break;
+        default:                                    return GFE_GroupMergeMethod::Max;       break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Attrib Merge Method!");
+        return GFE_GroupMergeMethod::First;
+    }
+
+    static GFE_AttribMergeMethod
+    attribGroupMergeMethod(const GFE_GroupMergeMethod mergeMethod)
+    {
+        switch (mergeMethod)
+        {
+        case GFE_GroupMergeMethod::First:          return GFE_AttribMergeMethod::First;     break;
+        case GFE_GroupMergeMethod::Last:           return GFE_AttribMergeMethod::Last;      break;
+        case GFE_GroupMergeMethod::Min:            return GFE_AttribMergeMethod::Min;       break;
+        case GFE_GroupMergeMethod::Max:            return GFE_AttribMergeMethod::Max;       break;
+        case GFE_GroupMergeMethod::Mode:           return GFE_AttribMergeMethod::Mode;      break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Group Merge Method!");
+        return GFE_AttribMergeMethod::First;
+    }
+
+    static GU_Snap::AttributeMergeMethod
+    snapMergeMethod(const GFE_AttribMergeMethod mergeMethod)
+    {
+        switch (mergeMethod)
+        {
+        case GFE_AttribMergeMethod::First:          return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;     break;
+        case GFE_AttribMergeMethod::Last:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_LAST;      break;
+        case GFE_AttribMergeMethod::Min:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MIN;       break;
+        case GFE_AttribMergeMethod::Max:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MAX;       break;
+        case GFE_AttribMergeMethod::Mode:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MODE;      break;
+        case GFE_AttribMergeMethod::Mean:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MEAN;      break;
+        case GFE_AttribMergeMethod::Median:         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MEDIAN;    break;
+        case GFE_AttribMergeMethod::Sum:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_SUM;       break;
+        case GFE_AttribMergeMethod::SumSquare:      return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_SUMSQUARE; break;
+        case GFE_AttribMergeMethod::RootMeanSquare: return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_RMS;       break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Attrib Merge Method!");
+        return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;
+    }
+
+    static GU_Snap::AttributeMergeMethod
+    snapMergeMethod(const GFE_GroupMergeMethod mergeMethod)
+    {
+        switch (mergeMethod)
+        {
+        case GFE_GroupMergeMethod::First:          return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;     break;
+        case GFE_GroupMergeMethod::Last:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_LAST;      break;
+        case GFE_GroupMergeMethod::Min:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MIN;       break;
+        case GFE_GroupMergeMethod::Max:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MAX;       break;
+        case GFE_GroupMergeMethod::Mode:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MODE;      break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Group Merge Method!");
+        return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 template<typename VECTOR_T>
 static VECTOR_T axisDir(const GFE_Axis axis)
 {
@@ -144,13 +256,16 @@ SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
 SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
 { return axisDir<UT_Vector3T<fpreal64>>(axis); }
     
+SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
+{ return strcmp(str0.c_str(), str1.c_str()) == 0; }
+    
     
 
 static bool checkTupleAttrib(
     const GA_Attribute* const attrib,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 1,
-    const GA_Defaults& defaults = GA_Defaults(0.0f)
+    const GA_Defaults* const defaults = nullptr
 )
 {
     if (!attrib)
@@ -165,7 +280,7 @@ static bool checkTupleAttrib(
     if (aifTuple)
     {
         if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attrib) != storage) ||
-            aifTuple->getDefaults(attrib) != defaults)
+            (defaults && aifTuple->getDefaults(attrib) != *defaults))
         {
             return false;
         }

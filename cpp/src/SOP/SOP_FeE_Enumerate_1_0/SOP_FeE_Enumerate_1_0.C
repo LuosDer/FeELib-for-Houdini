@@ -78,18 +78,25 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ usePieceAttrib == 0 }"
     }
     parm {
-        name    "pieceMode"
-        cppname "PieceMode"
-        label   "PieceMode"
-        type    ordinal
-        default { "elements" }
+        name    "enumPieceElem"
+        cppname "EnumPieceElem"
+        label   "Enum Piece Elem"
+        type    toggle
+        default { "1" }
         disablewhen "{ usePieceAttrib == 0 }"
-        hidewhen "{ usePieceAttrib == 0 }"
-        menu {
-            "elements"  "Enumerate Piece Elements"
-            "pieces"    "Enumerate Pieces"
-        }
     }
+    // parm {
+    //     name    "pieceMode"
+    //     cppname "PieceMode"
+    //     label   "PieceMode"
+    //     type    ordinal
+    //     default { "elements" }
+    //     disablewhen "{ usePieceAttrib == 0 }"
+    //     menu {
+    //         "elements"  "Enumerate Piece Elements"
+    //         "pieces"    "Enumerate Pieces"
+    //     }
+    // }
     parm {
         name    "attribName"
         cppname "AttribName"
@@ -321,18 +328,18 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 */
     
     GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    
     if (sopparms.getUsePieceAttrib())
     {
         enumerate.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
-        enumerate.
+        enumerate.enumeratePieceElem = sopparms.getEnumPieceElem();
     }
     enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     enumerate.prefix = sopparms.getPrefix();
     enumerate.sufix = sopparms.getSufix();
+    
+    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
     enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
     enumerate.computeAndBumpDataId();
 
