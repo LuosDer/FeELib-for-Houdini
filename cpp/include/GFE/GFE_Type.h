@@ -81,6 +81,7 @@ enum class GFE_AttribMergeMethod
 
 enum class GFE_GroupMergeMethod
 {
+    Replace,
     First,
     Last,
     Min,
@@ -89,27 +90,27 @@ enum class GFE_GroupMergeMethod
 };
 
 
-// enum class GFE_GroupMergeType
-// {
-//     Replace,
-//     Union,
-//     Intersect,
-//     Subtract,
-// };
-// 
-// enum class GFE_AttribMergeType
-// {
-//     Set = 0,
-//     Add,
-//     Sub,
-//     Mult,
-//     Min,
-//     Max,
-//     Xor,
-//     Toggle,
-//     Append,
-//     Intersect
-// };
+enum class GFE_GroupMergeType
+{
+    Replace,
+    Union,
+    Intersect,
+    Subtract,
+};
+
+enum class GFE_AttribMergeType
+{
+    Set,
+    Add,
+    Sub,
+    Mult,
+    Min,
+    Max,
+    Xor,
+    Toggle,
+    Append,
+    Intersect
+};
 
 
 enum class GFE_StatisticalFunction
@@ -331,12 +332,18 @@ static bool checkArrayAttrib(
     return true;
 }
 
-    
-SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute& posAttrib)
+
+SYS_FORCE_INLINE static bool isValidPosAttrib(const GA_Attribute& posAttrib)
 { return posAttrib.getOwner() == GA_ATTRIB_POINT && posAttrib.getAIFTuple() && posAttrib.getTupleSize()==3; }
+
+SYS_FORCE_INLINE static bool isValidPosAttrib(const GA_Attribute* const posAttrib)
+{ return posAttrib && isValidPosAttrib(*posAttrib); }
+
+SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute& posAttrib)
+{ return !isValidPosAttrib(posAttrib); }
     
 SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAttrib)
-{ return posAttrib && isInvalidPosAttrib(*posAttrib); }
+{ return !isValidPosAttrib(posAttrib); }
 
 
     

@@ -54,7 +54,7 @@ public:
     SYS_FORCE_INLINE bool isInvalid() const
     { return !isValid(); }
 
-	
+    
     SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
     { this->groupMergeType = groupMergeType; this->reverseGroup = reverseGroup; }
 

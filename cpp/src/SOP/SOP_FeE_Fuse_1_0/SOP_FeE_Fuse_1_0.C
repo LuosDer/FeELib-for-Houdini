@@ -71,7 +71,7 @@ static const char *theDsFile = R"THEDSFILE(
         nolabel
         joinnext
         default { "off" }
-        disablewhen "{ snapType != distance } { hasinput(1) == 1 }"
+        disablewhen "{ snapMethod != point } { hasinput(1) == 1 }"
     }
     parm {
         name    "targetGroup"
@@ -79,7 +79,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Target Group"
         type    string
         default { "" }
-        disablewhen "{ snapType != distance } { hasinput(1) == 0 useTargetGroup == 0 } { hasinput(1) == 0 }"
+        disablewhen "{ snapMethod != point } { hasinput(1) == 0 useTargetGroup == 0 } { hasinput(1) == 0 }"
     }
     parm {
         name    "modifyTarget"
@@ -87,7 +87,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Modify Target"
         type    toggle
         default { "off" }
-        disablewhen "{ snapType != distance } { useTargetGroup == 0 }"
+        disablewhen "{ snapMethod != point } { useTargetGroup == 0 }"
     }
     parm {
         name    "posAttrib"
@@ -103,16 +103,16 @@ static const char *theDsFile = R"THEDSFILE(
         grouptag { "group_type" "simple" }
 
         parm {
-            name    "snapType"
-            cppname "SnapType"
-            label   "Snap Type"
+            name    "snapMethod"
+            cppname "SnapMethod"
+            label   "Snap Method"
             type    ordinal
             joinnext
-            default { "distance" }
+            default { "point" }
             menu {
-                "distance"    "Near Points"
+                "point"       "Point"
                 "grid"        "Grid"
-                "specified"   "Specified Points"
+                "specified"   "Specified Point"
             }
         }
         parm {
@@ -120,8 +120,8 @@ static const char *theDsFile = R"THEDSFILE(
             cppname "SnapAlgorithm"
             label   "Snap Algorithm"
             type    ordinal
-            default { "lowest" }
-            hidewhen "{ snapType != distance }"
+            default { "closest" }
+            hidewhen "{ snapMethod != point }"
             menu {
                 "lowest"    "Least Target Point Number (for cloud reduction)"
                 "closest"   "Closest Target Point (for disjoint pieces)"
@@ -135,16 +135,16 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "on" }
-            hidewhen "{ snapType != distance }"
+            hidewhen "{ snapMethod != point }"
         }
         parm {
             name    "snapDist"
             cppname "SnapDist"
             label   "Snap Distance"
             type    log
-            default { "0" }
-            disablewhen "{ snapType != distance } { useSnapDist == 0 }"
-            hidewhen "{ snapType != distance }"
+            default { "0.00001" }
+            disablewhen "{ snapMethod != point } { useSnapDist == 0 }"
+            hidewhen "{ snapMethod != point }"
             range   { 0.001 10 }
         }
         parm {
@@ -155,23 +155,23 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            hidewhen "{ snapType != distance }"
+            hidewhen "{ snapMethod != point }"
         }
         parm {
             name    "positionSnapMethod"
             cppname "PositionSnapMethod"
-            label   "Output Positions"
+            label   "Position Snap Method"
             type    ordinal
-            default { "average" }
-            disablewhen "{ snapType != distance } { usePositionSnapMethod == 0 }"
-            hidewhen "{ snapType != distance }"
+            default { "mean" }
+            disablewhen "{ snapMethod != point } { usePositionSnapMethod == 0 }"
+            hidewhen "{ snapMethod != point }"
             menu {
-                "average"   "Average Value"
-                "lowest"    "Least Point Number"
-                "highest"   "Greatest Point Number"
-                "max"       "Maximum Value"
-                "min"       "Minimum Value"
+                "first"     "First Match"
+                "last"      "Last Match"
+                "min"       "Minimum"
+                "max"       "Maximum"
                 "mode"      "Mode"
+                "mean"      "Average"
                 "median"    "Median"
                 "sum"       "Sum"
                 "sumsquare" "Sum of Squares"
@@ -186,7 +186,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            hidewhen "{ snapType != distance }"
+            hidewhen "{ snapMethod != point }"
         }
         parm {
             name    "radiusAttrib"
@@ -195,7 +195,7 @@ static const char *theDsFile = R"THEDSFILE(
             type    string
             default { "pscale" }
             disablewhen "{ useRadiusAttrib == 0 }"
-            hidewhen "{ snapType != distance }"
+            hidewhen "{ snapMethod != point }"
             parmtag { "sop_input" "1" }
         }
         parm {
@@ -206,7 +206,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            hidewhen "{ snapType != distance }"
+            hidewhen "{ snapMethod != point }"
         }
         parm {
             name    "matchAttrib"
@@ -215,39 +215,35 @@ static const char *theDsFile = R"THEDSFILE(
             type    string
             default { "name" }
             disablewhen "{ useMatchAttrib == 0 }"
-            hidewhen "{ snapType != distance }"
+            hidewhen "{ snapMethod != point }"
             parmtag { "sop_input" "1" }
         }
         parm {
-            name    "matchType"
-            cppname "MatchType"
-            label   "Match Condition"
-            type    ordinal
-            default { "match" }
+            name    "mismatchAttrib"
+            cppname "MismatchAttrib"
+            label   "Mismatch Attribute"
+            type    toggle
+            default { "off" }
             disablewhen "{ useMatchAttrib == 0 }"
-            hidewhen "{ snapType != distance }"
-            menu {
-                "match"     "Equal Attribute Values"
-                "mismatch"  "Unequal Attribute Values"
-            }
+            hidewhen "{ snapMethod != point }"
         }
         parm {
             name    "matchTol"
             cppname "MatchTol"
             label   "Match Tolerance"
-            type    float
+            type    log
             default { "0" }
             disablewhen "{ useMatchAttrib == 0 }"
-            hidewhen "{ snapType != distance }"
-            range   { 0 1 }
+            hidewhen "{ snapMethod != point }"
+            range   { 0.001 1 }
         }
         parm {
             name    "gridType"
-            cppname "Gridtype"
+            cppname "GridType"
             label   "Grid Type"
             type    ordinal
             default { "spacing" }
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
             menu {
                 "spacing"   "Grid Spacing"
                 "lines"     "Grid Lines"
@@ -262,7 +258,7 @@ static const char *theDsFile = R"THEDSFILE(
             size    3
             default { "0.1" "0.1" "0.1" }
             disablewhen "{ gridType != spacing }"
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
             range   { -1 1 }
         }
         parm {
@@ -273,7 +269,7 @@ static const char *theDsFile = R"THEDSFILE(
             size    3
             default { "10" "10" "10" }
             disablewhen "{ gridType != lines }"
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
             range   { -1 1 }
         }
         parm {
@@ -284,7 +280,7 @@ static const char *theDsFile = R"THEDSFILE(
             size    3
             default { "3" "3" "3" }
             disablewhen "{ gridType != pow2 }"
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
             range   { 0 10 }
         }
         parm {
@@ -294,16 +290,16 @@ static const char *theDsFile = R"THEDSFILE(
             type    vector
             size    3
             default { "0" "0" "0" }
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
             range   { -1 1 }
         }
         parm {
-            name    "gridRounding"
-            cppname "GridRounding"
-            label   "Grid Rounding"
+            name    "gridSnapType"
+            cppname "GridSnapType"
+            label   "Grid Snap Type"
             type    ordinal
             default { "nearest" }
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
             menu {
                 "nearest"   "Nearest"
                 "down"      "Down"
@@ -318,7 +314,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "on" }
-            hidewhen "{ snapType != grid }"
+            hidewhen "{ snapMethod != grid }"
         }
         parm {
             name    "gridTol"
@@ -326,8 +322,8 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Grid Tolerance"
             type    float
             default { "10" }
-            disablewhen "{ snapType != grid } { useGridTol == 0 }"
-            hidewhen "{ snapType != grid }"
+            disablewhen "{ snapMethod != grid } { useGridTol == 0 }"
+            hidewhen "{ snapMethod != grid }"
             range   { 0.001 10 }
         }
     }
@@ -415,7 +411,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            disablewhen "{ snapType != distance }"
+            disablewhen "{ snapMethod != point }"
         }
         parm {
             name    "snappedAttribName"
@@ -423,7 +419,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Snapped Destination Attribute"
             type    string
             default { "snapTo" }
-            disablewhen "{ createSnappedAttrib == 0 } { snapType != distance }"
+            disablewhen "{ createSnappedAttrib == 0 } { snapMethod != point }"
         }
         multiparm {
             name    "numPointAttrib"
@@ -581,6 +577,27 @@ SOP_FeE_Fuse_1_0::cookVerb() const
 
 
 static GU_Snap::AttributeMergeMethod
+sopPosMergeMethod(const SOP_FeE_Fuse_1_0Parms::PositionSnapMethod parmPositionSnapMethod)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmPositionSnapMethod)
+    {
+    case PositionSnapMethod::FIRST:       return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;      break;
+    case PositionSnapMethod::LAST:        return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_LAST;       break;
+    case PositionSnapMethod::MIN:         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MIN;        break;
+    case PositionSnapMethod::MAX:         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MAX;        break;
+    case PositionSnapMethod::MODE:        return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MODE;       break;
+    case PositionSnapMethod::MEAN:        return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MEAN;       break;
+    case PositionSnapMethod::MEDIAN:      return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MEDIAN;     break;
+    case PositionSnapMethod::SUM:         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_SUM;        break;
+    case PositionSnapMethod::SUMSQUARE:   return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_SUMSQUARE;  break;
+    case PositionSnapMethod::RMS:         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_RMS;        break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Merge Method!");
+    return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;
+}
+
+static GU_Snap::AttributeMergeMethod
 sopAttribMergeMethod(const SOP_FeE_Fuse_1_0Parms::AttribMergeMethod parmAttribMergeMethod)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
@@ -642,6 +659,50 @@ sopSnapAlgorithm(SOP_FeE_Fuse_1_0Parms::SnapAlgorithm parmSnapAlgorithm)
 }
 
 
+static int
+sopGridSnapType(SOP_FeE_Fuse_1_0Parms::GridSnapType parmGridSnapType)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmGridSnapType)
+    {
+    case GridSnapType::NEAREST:    return 0; break;
+    case GridSnapType::DOWN:       return 1; break;
+    case GridSnapType::UP:         return 2; break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Snap Method!");
+    return 0;
+}
+
+static GFE_Fuse::Method
+sopMethod(SOP_FeE_Fuse_1_0Parms::SnapMethod parmMethod)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmMethod)
+    {
+    case SnapMethod::POINT:      return GFE_Fuse::Method::Point;     break;
+    case SnapMethod::GRID:       return GFE_Fuse::Method::Grid;      break;
+    case SnapMethod::SPECIFIED:  return GFE_Fuse::Method::Specified; break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Snap Method!");
+    return GFE_Fuse::Method::Point;
+}
+
+static GA_GroupType
+sopGroupType(SOP_FeE_Fuse_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmGroupType)
+    {
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
+    return GA_GROUP_INVALID;
+}
+
 
 void
 SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -655,10 +716,11 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     outGeo0.replaceWith(inGeo0);
 
-
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_GroupType parmPositionSnapMethod = 
+    
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
+    const GFE_Fuse::Method method = sopMethod(sopparms.getSnapMethod());
+    const int gridSnapType = sopGridSnapType(sopparms.getGridSnapType());
+    
 
 
     UT_AutoInterrupt boss("Processing");
@@ -667,144 +729,137 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 /*
     GFE_Fuse fuse(geo, cookparms);
-    fuse.findOrCreateTuple(true, GA_ATTRIB_POINT);
     fuse.compute();
 */
     
     GFE_Fuse fuse(outGeo0, inGeo1, &cookparms);
-    //fuse.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
-    //    sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+    fuse.setPositionAttrib(sopparms.getPosAttrib());
+    if (inGeo1)
+        fuse.setPositionRef0Attrib(sopparms.getPosAttrib());
     
-    GFE_GroupArray&    groupArray = fuse.getOutGroupArray();
-    GFE_RefGroupArray& refGroupArray = fuse.getRef0GroupArray();
-    GFE_AttributeArray&    attribArray = fuse.getOutAttribArray();
+    GFE_GroupArray&        groupArray     = fuse.getOutGroupArray();
+    GFE_RefGroupArray&     refGroupArray  = fuse.getRef0GroupArray();
+    GFE_AttributeArray&    attribArray    = fuse.getOutAttribArray();
     GFE_RefAttributeArray& refAttribArray = fuse.getRef0AttribArray();
+
+    fuse.setComputeParm(method, sopparms.getModifyTarget(), sopparms.getFuseSnappedPoint(), !sopparms.getKeepFusedPoint(), sopparms.getDelUnusedPoint());
     
-    fuse.comSnapParm.myModifyBothQueryAndTarget = sopparms.getModifyTarget();
-    fuse.comSnapParm.myConsolidate = sopparms.getFuseSnappedPoint();
-    fuse.comSnapParm.myDeleteConsolidated = sopparms.getDelDegenerate();
+    switch (method)
+    {
+    case GFE_Fuse::Method::Point:
+        fuse.setPointComputeParm(sopparms.getSnapDist(), sopSnapAlgorithm(sopparms.getSnapAlgorithm()), sopparms.getMismatchAttrib());
+        if (sopparms.getUseRadiusAttrib())
+            fuse.setRadiusAttrib(sopparms.getRadiusAttrib());
     
-    fuse.pointSnapParm.myAlgorithm = sopSnapAlgorithm(sopparms.getSnapAlgorithm());
-    
-    
+        if (sopparms.getUseMatchAttrib())
+        {
+            fuse.setMatchAttrib(sopparms.getMatchAttrib());
+            fuse.setMatchTol(sopparms.getMatchTol());
+        }
+        
+        if (sopparms.getUsePositionSnapMethod())
+            fuse.setPosMergeMethod(sopPosMergeMethod(sopparms.getPositionSnapMethod()));
+        
+        break;
+    case GFE_Fuse::Method::Grid:
+        fuse.setGridComputeParm(gridSnapType, sopparms.getGridSpacing(), sopparms.getGridOffset(), sopparms.getUseGridTol() ? sopparms.getGridTol() : SYS_FP64_MAX);
+    break;
+    case GFE_Fuse::Method::Specified:
+    break;
+    default: UT_ASSERT_MSG(0, "Unhandled Fuse Method"); break;
+    }
+
+    if (sopparms.getCreateSnappedGroup())
+        fuse.setSnappedGroup(false, sopparms.getSnappedGroupName());
+    if (sopparms.getCreateSnappedAttrib())
+        fuse.setSnapAttrib(false, sopparms.getSnappedGroupName());
+
     const UT_Array<SOP_FeE_Fuse_1_0Parms::NumPointAttrib>& numPointAttrib = sopparms.getNumPointAttrib();
     const size_t sizeAttrib = numPointAttrib.size();
-    for (size_t i = 0; i < sizeAttrib; ++i)
+    if (fuse.getRef0AttribArray().isValid())
     {
-        GU_Snap::AttributeMergeMethod attribMergeMethod = sopAttribMergeMethod()
-        const GA_Attribute *src_attrib, GA_Attribute *dest_attrib
-        GU_Snap::AttributeMergeData attribMergeData( );
-        fuse.comSnapParm.myMergeAttribs.emplace_back(attribMergeData);
-        numPointAttrib[i];
+        for (size_t i = 0; i < sizeAttrib; ++i)
+        {
+            const GU_Snap::AttributeMergeMethod mergeMethod = sopAttribMergeMethod(numPointAttrib[i].attribMergeMethod);
+
+            const size_t sizeStart = refAttribArray.size();
+            refAttribArray.appends(GA_ATTRIB_POINT, numPointAttrib[i].pointAttribs);
+            const size_t sizeEnd   = refAttribArray.size();
+            
+            for (size_t j = sizeStart; j < sizeEnd; ++j)
+            {
+                const GA_Attribute* const srcGroup = refAttribArray[j];
+                GA_Attribute* const dstGroup = attribArray.clone(*srcGroup);
+                fuse.emplaceMergeAttribs(GU_Snap::AttributeMergeData(mergeMethod, srcGroup, dstGroup));
+            }
+        }
     }
+    else
+    {
+        for (size_t i = 0; i < sizeAttrib; ++i)
+        {
+            const GU_Snap::AttributeMergeMethod mergeMethod = sopAttribMergeMethod(numPointAttrib[i].attribMergeMethod);
+
+            const size_t sizeStart = attribArray.size();
+            attribArray.appends(GA_ATTRIB_POINT, numPointAttrib[i].pointAttribs);
+            const size_t sizeEnd   = attribArray.size();
+            
+            for (size_t j = sizeStart; j < sizeEnd; ++j)
+            {
+                GA_Attribute* const dstGroup = attribArray[j];
+                fuse.emplaceMergeAttribs(GU_Snap::AttributeMergeData(mergeMethod, dstGroup, dstGroup));
+            }
+        }
+    }
+
+
     
     const UT_Array<SOP_FeE_Fuse_1_0Parms::NumPointGroups>& numGroupAttrib = sopparms.getNumPointGroups();
     const size_t sizeGroup = numGroupAttrib.size();
-    for (size_t i = 0; i < sizeGroup; ++i)
+    if (fuse.getRef0AttribArray().isValid())
     {
-        const GU_Snap::AttributeMergeMethod groupMergeMethod = sopGroupMergeMethod(numGroupAttrib[i].groupMergeMethod);
-        UT_StringHolder pointGroups;
-
-        const size_t sizeStart = fuse.getOutGroupArray().size();
-        const size_t sizeEnd   = fuse.getOutGroupArray().size();
-        
-        for (size_t j = sizeStart; j < sizeEnd; ++j)
+        for (size_t i = 0; i < sizeGroup; ++i)
         {
-            const GU_Snap::AttributeMergeMethod groupMergeMethod = sopGroupMergeMethod(numGroupAttrib[i].groupMergeMethod);
-            UT_StringHolder pointGroups;
-        
-            GA_ElementGroup* const dstGroup = .appends(GA_GROUP_POINT, );
-            GA_ElementGroup* const srcGroup = fuse.getRef0AttribArray().isValid() ? dstGroup : getOutGroupArray().appends(GA_GROUP_POINT, pointGroups);
-            GU_Snap::AttributeMergeData attribMergeData(groupMergeMethod, srcGroup, dstGroup);
-            fuse.comSnapParm.myMergeAttribs.emplace_back(attribMergeData);
-            numPointAttrib[i];
-        }
+            const GU_Snap::AttributeMergeMethod mergeMethod = sopGroupMergeMethod(numGroupAttrib[i].groupMergeMethod);
 
-        
-        GA_ElementGroup* const srcGroup = .appends(GA_GROUP_POINT, pointGroups);
-        GA_ElementGroup* const dstGroup = fuse.getOutGroupArray().appends(GA_GROUP_POINT, );
-        GU_Snap::AttributeMergeData attribMergeData(groupMergeMethod, srcGroup, dstGroup);
-        fuse.comSnapParm.myMergeAttribs.emplace_back(attribMergeData);
-        numPointAttrib[i];
+            const size_t sizeStart = refGroupArray.size();
+            refGroupArray.appends(GA_GROUP_POINT, numGroupAttrib[i].pointGroups);
+            const size_t sizeEnd   = refGroupArray.size();
+            
+            for (size_t j = sizeStart; j < sizeEnd; ++j)
+            {
+                const GA_ElementGroup* const srcGroup = refGroupArray.getElementGroup(j);
+                GA_ElementGroup* const dstGroup = groupArray.cloneElement(*srcGroup);
+                fuse.emplaceMergeAttribs(GU_Snap::AttributeMergeData(mergeMethod, srcGroup, dstGroup));
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < sizeGroup; ++i)
+        {
+            const GU_Snap::AttributeMergeMethod mergeMethod = sopGroupMergeMethod(numGroupAttrib[i].groupMergeMethod);
+
+            const size_t sizeStart = groupArray.size();
+            groupArray.appends(GA_GROUP_POINT, numGroupAttrib[i].pointGroups);
+            const size_t sizeEnd   = groupArray.size();
+            
+            for (size_t j = sizeStart; j < sizeEnd; ++j)
+            {
+                GA_ElementGroup* const dstGroup = groupArray.getElementGroup(j);
+                fuse.emplaceMergeAttribs(GU_Snap::AttributeMergeData(mergeMethod, dstGroup, dstGroup));
+            }
+        }
     }
     
-    fuse.comSnapParm.myMergeAttribs.emplace_back();
-    fuse.comSnapParm.myDeleteConsolidated = sopparms.getDelDegenerate();
-    fuse.comSnapParm.myDeleteConsolidated = sopparms.getDelDegenerate();
-
-    UT_Array<AttributeMergeData> myMergeAttribs;
-    AttributeMergeMethod myMergeMethod;
-    const GA_Attribute *mySrcAttrib;
-    GA_Attribute *myDestAttrib;
-    
-    bool myConsolidate;
-    bool myDeleteConsolidated;
-
-    GA_ElementGroup *myOutputGroup;
-    GA_RWHandleID myOutputAttribH;
-
-
-
-
-
-
-
-
-
-    
-    fuse.fuseParms.setPositionSnapMethod(sopPositionSnapMethod(sopparms.getPositionSnapMethod()));
-    fuse.fuseParms.setPositionSnapMethod(sopPositionSnapMethod(sopparms.getPositionSnapMethod()));
-
-    myQuerygroup = ""_sh;
-    myPosAttrib = "P"_sh;
-    mySnaptype = 0;
-    myAlgorithm = 0;
-    myUseTol3D = true;
-    myTol3d = 0.001;
-    myTargetPtAttrib = "snap_to"_sh;
-    myTargetClass = 0;
-    myUsePositionSnapMethod = true;
-    myPositionSnapMethod = 0;
-    myUseradiusattrib = false;
-    myRadiusattrib = "pscale"_sh;
-    myUsematchattrib = false;
-    myMatchattrib = "name"_sh;
-    myMatchtype = 0;
-    myMatchTol = 0;
-    myGridtype = 0;
-    myGridspacing = UT_Vector3D(0.1,0.1,0.1);
-    myGridlines = UT_Vector3D(10,10,10);
-    myGridpow2 = UT_Vector3I(3,3,3);
-    myGridoffset = UT_Vector3D(0,0,0);
-    myGridround = 0;
-    myUseGridTol = true;
-    myGridtol = 10;
-    myConsolidateSnappedPoints = true;
-    myKeepConsolidatedPoints = false;
-    myDelDegen = true;
-    myDelDegenPoints = true;
-    myDelUnusedPoints = false;
-    myRecomputenml = true;
-    myCreatesnappedgroup = false;
-    mySnappedgroupname = "snapped_points"_sh;
-    myCreatesnappedattrib = false;
-    mySnappedattribname = "snapped_to"_sh;
-    myNumpointattribs.setSize(0);
-    myNumgroups.setSize(0);
-    myUsetargetgroup = false;
-    myTargetgroup = ""_sh;
-    myModifyboth = false;
-
-
 
     
     fuse.groupParser.setGroup(groupType, sopparms.getGroup());
 
-    
-    fuse.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
     fuse.computeAndBumpDataId();
-    
+    fuse.visualizeOutGroup();
 
 }
 

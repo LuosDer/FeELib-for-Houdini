@@ -109,7 +109,7 @@ static void cloneVec(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     UTparallelFor(geoSplittableRange, [&outAttrib, &inAttrib](const GA_SplittableRange& r)
     {
         GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> out_ph(&outAttrib);
-        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&outAttrib);
+        GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&inAttrib);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
             GA_Offset start, end;
@@ -137,7 +137,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     UTparallelFor(geoSplittableRange, [&outAttrib, &inAttrib](const GA_SplittableRange& r)
     {
         GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> out_ph(&outAttrib);
-        GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&outAttrib);
+        GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&inAttrib);
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
             GA_Offset start, end;

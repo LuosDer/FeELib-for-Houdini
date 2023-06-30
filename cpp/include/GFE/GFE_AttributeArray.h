@@ -101,6 +101,34 @@ public:
         erase(i);
     }
     
+    SYS_FORCE_INLINE GA_Attribute* clone(
+        const GA_AttributeOwner owner,
+        const UT_StringHolder& name,
+        const GA_Attribute& attrib,
+        const bool cloneOption,
+        const GA_DataIdStrategy dataIdStrategy = GA_DATA_ID_BUMP,
+        const GA_ReuseStrategy& reuse = GA_ReuseStrategy()
+    )
+    {
+        GA_Attribute* outAttrib = geo->getAttributes().cloneAttribute(owner, name, attrib, cloneOption, dataIdStrategy, reuse);
+        append(outAttrib);
+        return outAttrib;
+    }
+    
+    //SYS_FORCE_INLINE GA_Attribute* clone(
+    //    const GA_AttributeOwner owner,
+    //    const GA_Attribute& attrib,
+    //    const bool cloneOption
+    //)
+    //{
+    //    GA_Attribute* outAttrib = geo->getAttributes().cloneTempAttribute(owner, attrib, cloneOption);
+    //    append(outAttrib);
+    //    return outAttrib;
+    //}
+    
+    SYS_FORCE_INLINE GA_Attribute* clone(const GA_Attribute& attrib)
+    { return clone(attrib.getOwner(), attrib.getName(), attrib, true); }
+    
     
     SYS_FORCE_INLINE void clear()
     { attribArray.clear(); attribUPtrArray.clear(); }
@@ -211,11 +239,10 @@ public:
     SYS_FORCE_INLINE void append(GA_Attribute& attribPtr)
     { attribArray.emplace_back(&attribPtr); }
 
-    GA_Attribute* append(const GA_AttributeOwner attribClass,const UT_StringRef& attribPattern)
+    GA_Attribute* append(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
-
         GA_Attribute* const attribPtr = geo->findAttribute(attribClass, attribPattern);
         append(attribPtr);
         return attribPtr;
@@ -1139,7 +1166,14 @@ public:
     SYS_FORCE_INLINE void eraseNonEdgeGroup()
     { eraseByGroupType(GA_GROUP_EDGE, true); }
 
-
+    
+    SYS_FORCE_INLINE GA_Group* clone(const GA_Group& group)
+    { return findOrCreate(false, group.classType(), group.getName()); }
+    
+    SYS_FORCE_INLINE GA_ElementGroup* cloneElement(const GA_ElementGroup& group)
+    { return findOrCreateElement(false, group.classType(), group.getName()); }
+    
+    
     
     SYS_FORCE_INLINE bool isElementGroup(const size_t i) const
     { return groupArray[i]->isElementGroup(); }

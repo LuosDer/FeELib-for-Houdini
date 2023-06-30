@@ -172,17 +172,17 @@ SOP_FeE_AttribScale_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribScale_1_0Parms::AttribClass attribClass)
+sopAttribOwner(SOP_FeE_AttribScale_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribScale_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
     case AttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
     case AttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    UT_ASSERT_MSG(0, "Unhandled Class type!");
     return GA_ATTRIB_INVALID;
 }
 
@@ -199,7 +199,7 @@ sopGroupType(SOP_FeE_AttribScale_1_0Parms::GroupType parmGroupType)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
 
