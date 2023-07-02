@@ -198,9 +198,9 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
-
+    
     outGeo0.replaceWith(inGeo0);
-
+    
     const fpreal64 blend = sopparms.getBlend();
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());

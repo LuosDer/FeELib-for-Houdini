@@ -190,33 +190,43 @@ public:
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
     SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff) const
     {
-        if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
+        if constexpr(TO == GA_ATTRIB_GLOBAL)
+        {
+            return 0;
+        }
+        if constexpr(FROM == GA_ATTRIB_GLOBAL)
+        {
+            return 0;
+        }
+        else if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
                 return elemoff;
-            if constexpr(TO == GA_ATTRIB_POINT)
+            else if constexpr(TO == GA_ATTRIB_POINT)
                 return getPrimitivePointOffset(elemoff, 0);
-            if constexpr(TO == GA_ATTRIB_VERTEX)
+            else if constexpr(TO == GA_ATTRIB_VERTEX)
                 return getPrimitiveVertexOffset(elemoff, 0);
         }
-        if constexpr(FROM == GA_ATTRIB_POINT)
+        else if constexpr(FROM == GA_ATTRIB_POINT)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
                 return pointPrim(elemoff);
-            if constexpr(TO == GA_ATTRIB_POINT)
+            else if constexpr(TO == GA_ATTRIB_POINT)
                 return elemoff;
-            if constexpr(TO == GA_ATTRIB_VERTEX)
+            else if constexpr(TO == GA_ATTRIB_VERTEX)
                 return pointVertex(elemoff);
         }
-        if constexpr(FROM == GA_ATTRIB_VERTEX)
+        else if constexpr(FROM == GA_ATTRIB_VERTEX)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
                 return vertexPrimitive(elemoff);
-            if constexpr(TO == GA_ATTRIB_POINT)
+            else if constexpr(TO == GA_ATTRIB_POINT)
                 return vertexPoint(elemoff);
-            if constexpr(TO == GA_ATTRIB_VERTEX)
+            else if constexpr(TO == GA_ATTRIB_VERTEX)
                 return elemoff;
         }
+        else
+            return GFE_INVALID_OFFSET;
     }
 
 
