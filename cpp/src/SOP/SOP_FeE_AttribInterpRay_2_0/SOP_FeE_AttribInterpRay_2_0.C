@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_AttributeInterpRay.h"
+#include "GFE/GFE_AttributeInterpolateRay.h"
 
 
 using namespace SOP_FeE_AttribInterpRay_2_0_Namespace;
@@ -46,31 +46,41 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribClass"
-        cppname "AttribClass"
-        label   "Attribute Class"
-        type    ordinal
-        default { "point" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "detail"    "Detail"
-        }
-    }
-    parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
-        type    string
-        default { "N" }
-    }
-    parm {
-        name    "normalize"
-        cppname "Normalize"
-        label   "Normalize"
+        name    "minimumDist"
+        cppname "MinimumDist"
+        label   "Minimum Distance"
         type    toggle
         default { "1" }
+    }
+    parm {
+        name    "maxDist"
+        cppname "MaxDist"
+        label   "Max Distance"
+        type    log
+        default { "1" }
+        range { 0.001 10 }
+    }
+
+    //parm {
+    //    name    "dirAttribClass"
+    //    cppname "DirAttribClass"
+    //    label   "Dir Attrib Class"
+    //    type    ordinal
+    //    default { "point" }
+    //    menu {
+    //        "prim"      "Primitive"
+    //        "point"     "Point"
+    //        "vertex"    "Vertex"
+    //        "detail"    "Detail"
+    //    }
+    //}
+    parm {
+        name    "dirAttrib"
+        cppname "DirAttrib"
+        label   "Dir Attrib"
+        type    string
+        default { "N" }
+        disablewhen "{ minimumDist == 1 }"
     }
     parm {
         name    "uniScale"
@@ -225,15 +235,15 @@ SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
 
 
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 
-    GFE_AttributeInterpRay attributeInterpRay(outGeo0, &inGeo1, &cookparms);
-    attributeInterpRay.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    attributeInterpRay.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    GFE_AttribInterpRay attribInterpRay(outGeo0, &inGeo1, &cookparms);
+    attribInterpRay.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    attribInterpRay.setComputeParm(sopparms.getMaxDist(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    attributeInterpRay.groupParser.setGroup(groupType, sopparms.getGroup());
-    attributeInterpRay.computeAndBumpDataId();
+    attribInterpRay.groupParser.setGroup(groupType, sopparms.getGroup());
+    attribInterpRay.computeAndBumpDataId();
 
 
 

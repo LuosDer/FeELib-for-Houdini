@@ -48,7 +48,7 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        if (!posAttrib)
+        if (GFE_Type::isInvalidPosAttrib(posAttrib))
             posAttrib = geo->getP();
         
         cornerPointGroup = getOutGroupArray()[0];

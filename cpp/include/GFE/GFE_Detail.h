@@ -39,6 +39,26 @@ public:
 
 
 
+    SYS_FORCE_INLINE void setValidPosAttrib(GA_Attribute*& attrib)
+    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
+    
+    SYS_FORCE_INLINE void setValidPosAttrib(const GA_Attribute*& attrib)
+    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
+
+    SYS_FORCE_INLINE void setValidPosAttrib(const GA_Attribute*& attrib) const
+    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
+
+     
+    SYS_FORCE_INLINE static void setValidPosAttrib(GA_Detail* const geo, GA_Attribute*& attrib)
+    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
+    
+    SYS_FORCE_INLINE static void setValidPosAttrib(GA_Detail* const geo, const GA_Attribute*& attrib)
+    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
+
+    SYS_FORCE_INLINE static void setValidPosAttrib(const GA_Detail* const geo, const GA_Attribute*& attrib)
+    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
+
+
 
     
     SYS_FORCE_INLINE GEO_Primitive* getGEOPrimitive(const GA_Offset primoff)
