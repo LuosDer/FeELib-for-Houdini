@@ -4,14 +4,13 @@
 #ifndef __GFE_AttributeCast_h__
 #define __GFE_AttributeCast_h__
 
-//#include "GFE/GFE_AttributeCast.h"
-
+#include "GFE/GFE_AttributeCast.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "UFE/UFE_SplittableString.h"
-    
 
+
+#include "UFE/UFE_SplittableString.h"
 
 class GFE_AttribCast : public GFE_AttribCreateFilter {
     
@@ -109,18 +108,26 @@ private:
 
     void attribCast(GA_Attribute& attrib)
     {
-        if (attrib.getStorageClass() == newStorageClass)
-        {
-            if (newStorageClass == GA_STORECLASS_INVALID || newStorageClass == GA_STORECLASS_OTHER)
-                return;
-            
-            if (GFE_Attribute::getPrecision(attrib) == newPrecision)
-                return;
-        }
-        
         const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
         const bool detached = !GFE_Type::isPublicAttribName(newName);
 
+        if (attrib.getStorageClass() == newStorageClass)
+        {
+            if (newStorageClass == GA_STORECLASS_INVALID || newStorageClass == GA_STORECLASS_OTHER)
+            {
+                if (!detached && !attrib.isDetached())
+                    geo->forceRenameAttribute(attrib, newName);
+                return;
+            }
+            
+            if (GFE_Attribute::getPrecision(attrib) == newPrecision)
+            {
+                if (!detached && !attrib.isDetached())
+                    geo->forceRenameAttribute(attrib, newName);
+                return;
+            }
+        }
+        
         if(newStorageClass == GA_STORECLASS_OTHER)
         {
             GA_Group& newAttrib = *getOutGroupArray().findOrCreate(detached, attrib.getOwner(), newName);

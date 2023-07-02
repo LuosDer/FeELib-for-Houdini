@@ -126,7 +126,6 @@ private:
         uvFlattenParms.setUVAttrib(uvAttribName);
         uvFlattenParms.setManualLayout(manualLayout);
 
-        
         SOP_NodeCache* const nodeCache = uvFlattenVerb->allocCache();
         const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nodeCache, &destgdh, &inputgdh);
         uvFlattenVerb->cook(uvFlattenCookparms);

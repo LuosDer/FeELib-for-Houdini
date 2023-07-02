@@ -559,7 +559,7 @@ public:                                                                         
                                                                                                      \
                                                                                                      \
                                                                                                      \
-    SYS_FORCE_INLINE GFE_RefAttributeArray& getRef##NUM##AttribArray()                                  \
+    SYS_FORCE_INLINE GFE_RefAttributeArray& getRef##NUM##AttribArray()                               \
     { return ref##NUM##AttribArray; }                                                                \
     SYS_FORCE_INLINE GFE_RefGroupArray& getRef##NUM##GroupArray()                                    \
     { return ref##NUM##GroupArray; }                                                                 \
@@ -591,6 +591,7 @@ private:                                                                        
                                                                                                      \
 public:                                                                                              \
     GFE_GroupParser groupParserRef##NUM;                                                             \
+    const GA_Attribute* posRef##NUM##Attrib = nullptr;                                               \
                                                                                                      \
 protected:                                                                                           \
     const GFE_Detail* geoRef##NUM;                                                                   \
@@ -599,7 +600,6 @@ private:                                                                        
     const SOP_NodeVerb::CookParms* cookparmsRef##NUM;                                                \
     GOP_Manager* gopRef##NUM;                                                                        \
                                                                                                      \
-    const GA_Attribute* posRef##NUM##Attrib = nullptr;                                               \
                                                                                                      \
     GFE_RefAttributeArray ref##NUM##AttribArray;                                                     \
     GFE_RefGroupArray     ref##NUM##GroupArray;                                                      \
@@ -754,21 +754,21 @@ public:
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached, const GA_AttributeOwner attribOwner, const UT_StringRef& name = "")
     { return findOrCreateGroup(detached, GFE_Type::attributeOwner_groupType(attribOwner), name); }
 
-    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_AttributeOwner attribOwner, const UT_StringRef& groupName = "")
-    { return findOrCreateGroup(doDelGroupElement, attribOwner, groupName); }
+    SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_AttributeOwner attribOwner, const UT_StringRef& name = "")
+    { return findOrCreateGroup(doDelGroupElement, attribOwner, name); }
 
     
-    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached, const UT_StringRef& groupName = "")
-    { return getOutGroupArray().findOrCreatePrimitive(detached, groupName); }
+    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached, const UT_StringRef& name = "")
+    { return getOutGroupArray().findOrCreatePrimitive(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_PointGroup* findOrCreatePointGroup(const bool detached, const UT_StringRef& groupName = "")
-    { return getOutGroupArray().findOrCreatePoint(detached, groupName); }
+    SYS_FORCE_INLINE virtual GA_PointGroup* findOrCreatePointGroup(const bool detached, const UT_StringRef& name = "")
+    { return getOutGroupArray().findOrCreatePoint(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached, const UT_StringRef& groupName = "")
-    { return getOutGroupArray().findOrCreateVertex(detached, groupName); }
+    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached, const UT_StringRef& name = "")
+    { return getOutGroupArray().findOrCreateVertex(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached, const UT_StringRef& groupName = "")
-    { return getOutGroupArray().findOrCreateEdge(detached, groupName); }
+    SYS_FORCE_INLINE virtual GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached, const UT_StringRef& name = "")
+    { return getOutGroupArray().findOrCreateEdge(detached, name); }
 
 
 

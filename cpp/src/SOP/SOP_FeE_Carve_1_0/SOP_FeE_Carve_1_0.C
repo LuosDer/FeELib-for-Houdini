@@ -82,9 +82,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "customCarveUVAttribName"
-        cppname "CustomCarveUVAttribName"
-        label   "Custom Carve UV Attrib Name"
+        name    "customCarveUVAttrib"
+        cppname "CustomCarveUVAttrib"
+        label   "Custom Carve UV Attrib"
         type    string
         default { "" }
         disablewhen "{ carveSpace != customAttrib }"
@@ -114,11 +114,21 @@ static const char *theDsFile = R"THEDSFILE(
         range   { 0.01 100 }
     }
     parm {
-        name    "startCarveUAttrib"
-        cppname "StartCarveUAttrib"
-        label   "Start CarveU Attrib"
+        name    "useCarveUStartAttrib"
+        cppname "UseCarveUStartAttrib"
+        label   "Use CarveU Start Attrib"
+        type    toggle
+        default { "0" }
+        joinnext
+        nolabel
+    }
+    parm {
+        name    "carveUStartAttrib"
+        cppname "CarveUStartAttrib"
+        label   "CarveU Start Attrib"
         type    string
         default { "startCarveU" }
+        disablewhen "{ useCarveUStartAttrib == 0 }"
     }
     parm {
         name    "absCarveUEnd"
@@ -146,19 +156,21 @@ static const char *theDsFile = R"THEDSFILE(
         range   { 0.01 100 }
     }
     parm {
-        name    "useEndCarveUAttrib"
-        cppname "UseEndCarveUAttrib"
-        label   "Use End CarveU Attrib"
+        name    "useCarveUEndAttrib"
+        cppname "UseCarveUEndAttrib"
+        label   "Use CarveU End Attrib"
         type    toggle
         default { "0" }
+        joinnext
+        nolabel
     }
     parm {
-        name    "endCarveUAttrib"
-        cppname "EndCarveUAttrib"
-        label   "End CarveU Attrib"
+        name    "carveUEndAttrib"
+        cppname "CarveUEndAttrib"
+        label   "CarveU End Attrib"
         type    string
-        hidewhen "{ useEndCarveUAttrib == 1 }"
         default { "endCarveU" }
+        disablewhen "{ useCarveUEndAttrib == 0 }"
     }
 
     parm {
@@ -186,38 +198,21 @@ static const char *theDsFile = R"THEDSFILE(
         grouptag { "group_type" "simple" }
 
         parm {
-            name    "outBreakPointGroupOutsideStart"
-            cppname "OutBreakPointGroupOutsideStart"
-            label   "Output Break Point Group Outside Start"
+            name    "outOutsideStartPrimGroup"
+            cppname "OutOutsideStartPrimGroup"
+            label   "Output Outside Start Prim Group"
             type    toggle
             nolabel
             joinnext
             default { "0" }
         }
         parm {
-            name    "breakPointGroupOutsideStart"
-            cppname "BreakPointGroupOutsideStart"
-            label   "Break Point Group Outside Start"
-            type    string
-            default { "breakpt" }
-            disablewhen "{ outBreakPointGroupOutsideStart == 0 }"
-        }
-        parm {
-            name    "outPrimGroupOutsideStart"
-            cppname "OutPrimGroupOutsideStart"
-            label   "Output Prim Group Outside Start"
-            type    toggle
-            nolabel
-            joinnext
-            default { "0" }
-        }
-        parm {
-            name    "primGroupOutsideStart"
-            cppname "PrimGroupOutsideStart"
-            label   "Prim Group Outside Start"
+            name    "outsideStartPrimGroup"
+            cppname "OutsideStartPrimGroup"
+            label   "Outside Start Prim Group"
             type    string
             default { "outside" }
-            disablewhen "{ outPrimGroupOutsideStart == 0 }"
+            disablewhen "{ outOutsideStartPrimGroup == 0 }"
         }
         parm {
             name    "reverseOutsideStart"
@@ -242,38 +237,21 @@ static const char *theDsFile = R"THEDSFILE(
         grouptag { "group_type" "simple" }
 
         parm {
-            name    "outBreakPointGroupOutsideEnd"
-            cppname "OutBreakPointGroupOutsideEnd"
-            label   "Output Break Point Group Outside End"
+            name    "outOutsideEndPrimGroup"
+            cppname "OutOutsideEndPrimGroup"
+            label   "Output Outside End Prim Group"
             type    toggle
             nolabel
             joinnext
-            default { "ch('outBreakPointGroupOutsideStart')" }
+            default { "0" }
         }
         parm {
-            name    "breakPointGroupOutsideEnd"
-            cppname "BreakPointGroupOutsideEnd"
-            label   "Break Point Group Outside End"
+            name    "outsideEndPrimGroup"
+            cppname "OutsideEndPrimGroup"
+            label   "Outside End Prim Group"
             type    string
-            default { "chs('outBreakPointGroupOutsideStart')" }
-            disablewhen "{ outBreakPointGroupOutsideEnd == 0 }"
-        }
-        parm {
-            name    "outPrimGroupOutsideEnd"
-            cppname "OutPrimGroupOutsideEnd"
-            label   "Output Prim Group Outside End"
-            type    toggle
-            nolabel
-            joinnext
-            default { "ch('outPrimGroupOutsideStart')" }
-        }
-        parm {
-            name    "primGroupOutsideEnd"
-            cppname "PrimGroupOutsideEnd"
-            label   "Prim Group Outside End"
-            type    string
-            default { "chs('primGroupOutsideStart')" }
-            disablewhen "{ outPrimGroupOutsideEnd == 0 }"
+            default { "outsideEnd" }
+            disablewhen "{ outOutsideEndPrimGroup == 0 }"
         }
         parm {
             name    "reverseOutsideEnd"
@@ -298,55 +276,21 @@ static const char *theDsFile = R"THEDSFILE(
         grouptag { "group_type" "simple" }
 
         parm {
-            name    "outBreakPointGroupInsideStart"
-            cppname "OutBreakPointGroupInsideStart"
-            label   "Output Break Point Group Inside Start"
+            name    "outInsidePrimGroup"
+            cppname "OutInsidePrimGroup"
+            label   "Output Inside Prim Group"
             type    toggle
             nolabel
             joinnext
-            default { "ch('outBreakPointGroupOutsideStart')" }
+            default { "0" }
         }
         parm {
-            name    "breakPointGroupInsideStart"
-            cppname "BreakPointGroupInsideStart"
-            label   "Break Point Group Inside Start"
-            type    string
-            default { "chs('breakPointGroupOutsideStart')" }
-            disablewhen "{ outBreakPointGroupInsideStart == 0 }"
-        }
-        parm {
-            name    "outBreakPointGroupInsideEnd"
-            cppname "OutBreakPointGroupInsideEnd"
-            label   "Output Break Point Group Inside End"
-            type    toggle
-            nolabel
-            joinnext
-            default { "ch('outBreakPointGroupInsideStart')" }
-        }
-        parm {
-            name    "breakPointGroupInsideEnd"
-            cppname "BreakPointGroupInsideEnd"
-            label   "Break Point Group Inside End"
-            type    string
-            default { "chs('breakPointGroupInsideStart')" }
-            disablewhen "{ outBreakPointGroupInsideEnd == 0 }"
-        }
-        parm {
-            name    "outPrimGroupInside"
-            cppname "OutPrimGroupInside"
-            label   "Output Prim Group Inside"
-            type    toggle
-            nolabel
-            joinnext
-            default { "ch('outPrimGroupOutsideStart')" }
-        }
-        parm {
-            name    "primGroupInside"
-            cppname "PrimGroupInside"
-            label   "Output Prim Group Inside"
+            name    "insidePrimGroup"
+            cppname "InsidePrimGroup"
+            label   "Inside Prim Group"
             type    string
             default { "inside" }
-            disablewhen "{ outPrimGroupInside == 0 }"
+            disablewhen "{ outInsidePrimGroup == 0 }"
         }
         parm {
             name    "delReversedInsidePrim"
@@ -354,10 +298,44 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Delete Reversed Inside Prim"
             type    toggle
             default { "0" }
-            disablewhen "{ keepInside == 0 }"
         }
     }
 
+
+    parm {
+        name    "outCarvedStartPrimGroup"
+        cppname "OutCarvedStartPrimGroup"
+        label   "Output Carved Start Prim Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "carvedStartPrimGroup"
+        cppname "CarvedStartPrimGroup"
+        label   "Carved Start Prim Group"
+        type    string
+        default { "carvedStart" }
+        disablewhen "{ outCarvedStartPrimGroup == 0 }"
+    }
+    parm {
+        name    "outCarvedEndPrimGroup"
+        cppname "OutCarvedEndPrimGroup"
+        label   "Output Carved End Prim Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "carvedEndPrimGroup"
+        cppname "CarvedEndPrimGroup"
+        label   "Carved End Prim Group"
+        type    string
+        default { "carvedEnd" }
+        disablewhen "{ outCarvedEndPrimGroup == 0 }"
+    }
 
 
     parm {
@@ -408,13 +386,6 @@ static const char *theDsFile = R"THEDSFILE(
 
 
     parm {
-        name    "sortPointOrder"
-        cppname "SortPointOrder"
-        label   "Sort Points Order"
-        type    toggle
-        default { "0" }
-    }
-    parm {
         name    "sortPrimOrder"
         cppname "SortPrimOrder"
         label   "Sort Primitive Order"
@@ -422,18 +393,25 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "delStartCarveUAttrib"
-        cppname "DelStartCarveUAttrib"
-        label   "Delete Start Carve U Attrib"
+        name    "sortPointOrder"
+        cppname "SortPointOrder"
+        label   "Sort Points Order"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "delCarveUStartAttrib"
+        cppname "DelCarveUStartAttrib"
+        label   "Delete CarveU Start Attrib"
         type    toggle
         default { "1" }
     }
     parm {
-        name    "delEndCarveUAttrib"
-        cppname "DelEndCarveUAttrib"
-        label   "Delete End CarveU Attrib"
+        name    "delCarveUEndAttrib"
+        cppname "DelCarveUEndAttrib"
+        label   "Delete CarveU End Attrib"
         type    toggle
-        default { "ch('del_startCarveU_attrib')" }
+        default { "ch('delCarveUStartAttrib')" }
     }
 
 
@@ -473,7 +451,8 @@ SOP_FeE_Carve_1_0::buildTemplates()
         templ.setChoiceListPtr("carveStartPrimGroup"_sh,  &SOP_Node::primGroupMenu);
         templ.setChoiceListPtr("carveEndPrimGroup"_sh,    &SOP_Node::primGroupMenu);
 
-        templ.setChoiceListPtr("interpAttrib"_sh,         &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("interpAttrib"_sh,         &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("customCarveUVAttrib"_sh,  &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -555,10 +534,10 @@ sopGroupType(SOP_FeE_Carve_1_0Parms::GroupType parmGroupType)
 
 
 static GFE_CarveSpace
-sopCarveSpace(SOP_FeE_Carve_1_0Parms::CarveSpace parmgrouptype)
+sopCarveSpace(SOP_FeE_Carve_1_0Parms::CarveSpace parmCarveSpace)
 {
     using namespace SOP_FeE_Carve_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmCarveSpace)
     {
     case CarveSpace::CUSTOMATTRIB:     return GFE_CarveSpace::CustomAttrib;    break;
     case CarveSpace::LOCALAVERAGE:     return GFE_CarveSpace::LocalAverage;    break;
@@ -591,24 +570,34 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     
     GFE_Carve carve(outGeo0, &cookparms);
     
-    carve.groupParser.setGroup(groupType, sopparms.getGroup());
 
     carve.setComputeParm(carveSpace,
         sopparms.getKeepOutsideStart(), sopparms.getKeepOutsideEnd(), sopparms.getKeepInside(),
-        sopparms.getAbsCarveUEnd(),
+        sopparms.getAbsCarveUEnd(), sopparms.getDelReversedInsidePrim(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    carve.setCarveU<true>(sopparms.getEndCarveULocal(), sopparms.getEndCarveUWorld());
+    carve.reverseOutsideStart = sopparms.getReverseOutsideStart();
+    carve.reverseOutsideEnd   = sopparms.getReverseOutsideEnd();
+
+    
+    carve.setCarveU<true> (sopparms.getEndCarveULocal(),   sopparms.getEndCarveUWorld());
     carve.setCarveU<false>(sopparms.getStartCarveULocal(), sopparms.getStartCarveUWorld());
     
-    carve.setUVAttrib(sopparms.getCustomCarveUVAttribName());
+    carve.setUVAttrib(sopparms.getCustomCarveUVAttrib());
 
-    carve.setCarveUStartAttrib(sopparms.getStartCarveUAttrib(), sopparms.getDelStartCarveUAttrib());
-    carve.setCarveUEndAttrib(  sopparms.getEndCarveUAttrib(), sopparms.getDelEndCarveUAttrib());
+    if (sopparms.getUseCarveUStartAttrib())
+        carve.setCarveUStartAttrib(sopparms.getCarveUStartAttrib(), sopparms.getDelCarveUStartAttrib());
+    if (sopparms.getUseCarveUEndAttrib())
+        carve.setCarveUEndAttrib(  sopparms.getCarveUEndAttrib(), sopparms.getDelCarveUEndAttrib());
 
-    carve.setCarveStartGroup(sopparms.getCarveStartPrimGroup());
-    carve.setCarveEndGroup(sopparms.getCarveEndPrimGroup());
-
+    //carve.setCarveStartGroup(sopparms.getCarveStartPrimGroup());
+    //carve.setCarveEndGroup(sopparms.getCarveEndPrimGroup());
+    carve.groupParser.setGroup(groupType, sopparms.getGroup());
+    carve.groupParser_carveStart.setGroup(GA_GROUP_PRIMITIVE, sopparms.getCarveStartPrimGroup());
+    carve.groupParser_carveEnd  .setGroup(GA_GROUP_PRIMITIVE, sopparms.getCarveEndPrimGroup());
+    
+    carve.setCarvedStartPrimGroup(false, sopparms.getCarvedStartPrimGroup());
+    carve.setCarvedEndPrimGroup  (false, sopparms.getCarvedEndPrimGroup());
     
     if (sopparms.getOutSrcPrimAttrib())
         carve.enumerate.findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, sopparms.getSrcPrimAttribName());

@@ -8,10 +8,10 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
+
+
 #include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_GroupUnion.h"
-
-
 #include "GU/GU_Snap.h"
 
 

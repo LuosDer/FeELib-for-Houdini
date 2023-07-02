@@ -9,6 +9,7 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "GFE/GFE_Intersection.h"
 
 class GFE_CurveSubtractMesh : public GFE_AttribFilter {
 
@@ -46,18 +47,18 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        
+        GFE_Intersection intersection
         attribPtr = getOutAttribArray()[0];
         // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
         switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
         {
-        case GA_STORE_INT16:  enumerate<int16>();           break;
-        case GA_STORE_INT32:  enumerate<int32>();           break;
-        case GA_STORE_INT64:  enumerate<int64>();           break;
-        case GA_STORE_REAL16: enumerate<fpreal16>();        break;
-        case GA_STORE_REAL32: enumerate<fpreal32>();        break;
-        case GA_STORE_REAL64: enumerate<fpreal64>();        break;
-        case GA_STORE_STRING: enumerate<UT_StringHolder>(); break;
+        case GA_STORE_INT16:  curveSubtractMesh<int16>();           break;
+        case GA_STORE_INT32:  curveSubtractMesh<int32>();           break;
+        case GA_STORE_INT64:  curveSubtractMesh<int64>();           break;
+        case GA_STORE_REAL16: curveSubtractMesh<fpreal16>();        break;
+        case GA_STORE_REAL32: curveSubtractMesh<fpreal32>();        break;
+        case GA_STORE_REAL64: curveSubtractMesh<fpreal64>();        break;
+        case GA_STORE_STRING: curveSubtractMesh<UT_StringHolder>(); break;
         default: break;
         }
 
@@ -66,7 +67,7 @@ private:
 
 
     template<typename T>
-    void enumerate()
+    void curveSubtractMesh()
     {
         UT_ASSERT_P(attribPtr);
         const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));

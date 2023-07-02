@@ -48,6 +48,31 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+    parm {
+        name    "delInlinePoint"
+        cppname "DelInlinePoint"
+        label   "Delete Inline Point"
+        type    toggle
+        default { "off" }
+        joinnext
+        nolabel
+    }
+    parm {
+        name    "inlinePointThreshold"
+        cppname "InlinePointThreshold"
+        label   "Inline Point Threshold"
+        type    log
+        default { "0.00001" }
+        range { 0.001 1 }
+        disablewhen "{ delInlinePoint == 0 }"
+    }
+    parm {
+        name    "delUnusedPoint"
+        cppname "DelUnusedPoint"
+        label   "Delete Unused Point"
+        type    toggle
+        default { "on" }
+    }
 }
 )THEDSFILE";
 
@@ -57,9 +82,7 @@ SOP_FeE_DissolveEdge_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_DissolveEdge_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
         templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        
     }
     return templ.templates();
 }
@@ -144,7 +167,7 @@ void
 SOP_FeE_DissolveEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_DissolveEdge_1_0Parms>();
-    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
+    GU_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DissolveEdge_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
@@ -159,26 +182,17 @@ SOP_FeE_DissolveEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     if (boss.wasInterrupted())
         return;
     
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
-*/
-    GFE_Detail& geo = static_cast<GFE_Detail&>(outGeo0);
-    geo.dissolveVertexEdgeGroup()
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-    enumerate.prefix = sopparms.getPrefix();
-    enumerate.sufix = sopparms.getSufix();
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-    enumerate.computeAndBumpDataId();
-
+    //GFE_Detail& geo = static_cast<GFE_Detail&>(outGeo0);
     
+    GOP_Manager gop;
+    GFE_GroupParser groupParser(outGeo0, gop, cookparms);
+    
+    groupParser.setGroup(groupType, sopparms.getGroup());
+    outGeo0.dissolveEdges(*groupParser.getEdgeGroup(),
+        sopparms.getDelInlinePoint(), sopparms.getInlinePointThreshold(), sopparms.getDelUnusedPoint(), GU_Detail::GU_BRIDGEMODE_BRIDGE, false, false);
 
+    outGeo0.bumpDataIdsForAddOrRemove(true, true, true);
+    
 }
 
 

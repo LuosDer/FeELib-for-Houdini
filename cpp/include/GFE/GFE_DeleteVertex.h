@@ -95,9 +95,9 @@ private:
 				for (GA_Size vtxpnum = numvtx-1; ; --vtxpnum)
 				{
     				const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-					geo->getPrimitive(primoff)->releaseVertex(vtxoff);
-					topo.delVertex(vtxoff);
-					//geo->destroyVertexOffset(vtxoff);
+					
+					geo->delVertex(primoff, vtxoff);
+					
 					if (vtxpnum == 0)
 						break;
 				}
@@ -140,8 +140,8 @@ private:
 					if (delUnusedPoints)
 						pointGroup->setElement(vtxPointRef->getLink(vtxoff), true);
 					
-					geo->getPrimitive(primoff)->releaseVertex(vtxoff);
-					topo.delVertex(vtxoff);
+					geo->delVertex(primoff, vtxoff);
+					
 					if (vtxpnum == 0)
 						break;
 				}
@@ -150,7 +150,6 @@ private:
 		if (delUnusedPoints)
 			geo->destroyUnusedPoints(pointGroup);
 	}
-
 
 	void delVertex(const GA_PointGroup* const group)
     {
@@ -185,8 +184,7 @@ private:
 				{
 					const GA_Offset primoff = vtxPrimRef->getLink(vtxoff_next);
 
-					geo->getPrimitive(primoff)->releaseVertex(vtxoff_next);
-					topo.delVertex(vtxoff_next);
+					geo->delVertex(primoff, vtxoff_next);
 
 					if (delDegeneratePrims)
 						primGroup->setElement(primoff, true);
@@ -230,9 +228,7 @@ private:
 			{
 				const GA_Offset primoff = vtxPrimRef->getLink(vtxoff);
 
-				geo->getPrimitive(primoff)->releaseVertex(vtxoff);
-				topo.delVertex(vtxoff);
-                //geo->destroyVertexOffset(vtxoff);
+				geo->delVertex(primoff, vtxoff);
 
 				if (delDegeneratePrims)
 					primGroup->setElement(primoff, true);

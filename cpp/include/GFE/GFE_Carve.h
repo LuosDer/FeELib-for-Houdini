@@ -4,8 +4,6 @@
 #ifndef __GFE_Carve_h__
 #define __GFE_Carve_h__
 
-#include "GFE_DeleteVertex.h"
-#include "GFE_Enumerate.h"
 #include "GFE/GFE_Carve.h"
 
 #include "GFE/GFE_GeoFilter.h"
@@ -16,6 +14,8 @@
 
 #include "GFE/GFE_Attribute.h"
 #include "GFE/GFE_CurveUV.h"
+#include "GFE/GFE_DeleteVertex.h"
+#include "GFE/GFE_Enumerate.h"
 #include "GFE/GFE_Math.h"
 
 enum class GFE_CarveSpace {
@@ -58,23 +58,23 @@ public:
     {
     }
 
-    SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
-    { groupParser.setGroup(geoPrimGroup); }
+    //SYS_FORCE_INLINE void setGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    //{ groupParser.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE void setGroup(const UT_StringRef& primGroupName = "")
-    { groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);}
+    //SYS_FORCE_INLINE void setGroup(const UT_StringRef& primGroupName = "")
+    //{ groupParser.setGroup(GA_GROUP_PRIMITIVE, primGroupName);}
 
-    SYS_FORCE_INLINE void setCarveStartGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
-    { groupParser_carveStart.setGroup(geoPrimGroup); }
+    //SYS_FORCE_INLINE void setCarveStartGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    //{ groupParser_carveStart.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE void setCarveEndGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
-    { groupParser_carveEnd.setGroup(geoPrimGroup); }
+    //SYS_FORCE_INLINE void setCarveEndGroup(const GA_PrimitiveGroup* const geoPrimGroup = nullptr)
+    //{ groupParser_carveEnd.setGroup(geoPrimGroup); }
 
-    SYS_FORCE_INLINE void setCarveStartGroup(const UT_StringRef& primGroupName = "")
-    { groupParser_carveStart.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
+    //SYS_FORCE_INLINE void setCarveStartGroup(const UT_StringRef& primGroupName = "")
+    //{ groupParser_carveStart.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
 
-    SYS_FORCE_INLINE void setCarveEndGroup(const UT_StringRef& primGroupName = "")
-    { groupParser_carveEnd.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
+    //SYS_FORCE_INLINE void setCarveEndGroup(const UT_StringRef& primGroupName = "")
+    //{ groupParser_carveEnd.setGroup(GA_GROUP_PRIMITIVE, primGroupName); }
 
     void
         setComputeParm(
@@ -83,6 +83,8 @@ public:
             const bool keepOutsideEnd = false,
             const bool keepInside = true,
             const bool absCarveUEnd = false,
+            const bool delReversedInsidePrim = false,
+            
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
@@ -90,14 +92,23 @@ public:
         setHasComputed();
         this->carveSpace = carveSpace;
         this->keepOutsideStart = keepOutsideStart;
-        this->keepOutsideEnd = keepOutsideEnd;
-        this->keepInside = keepInside;
+        this->keepOutsideEnd   = keepOutsideEnd;
+        this->keepInside       = keepInside;
         this->absCarveUEnd = absCarveUEnd;
+        this->delReversedInsidePrim = delReversedInsidePrim;
         
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
-
+    
+    
+   
+    SYS_FORCE_INLINE GA_PrimitiveGroup* setCarvedStartPrimGroup(const bool detached = true, const UT_StringRef& groupName = "")
+    { return hasCarveStartPrimGroup = getOutGroupArray().findOrCreatePrimitive(detached, groupName); }
+    
+    SYS_FORCE_INLINE GA_PrimitiveGroup* setCarvedEndPrimGroup(const bool detached = true, const UT_StringRef& groupName = "")
+    { return hasCarveEndPrimGroup = getOutGroupArray().findOrCreatePrimitive(detached, groupName); }
+    
     template<bool IsEnd>
     void setCarveU(const fpreal carveULocal, const fpreal carveUWorld)
     {
@@ -109,11 +120,11 @@ public:
             carveUStart = carveU;
     }
     
-    void setUVAttrib(const UT_StringRef& customCarveUVAttribName = "uv")
+    void setUVAttrib(const UT_StringRef& name = "uv")
     {
         setHasComputed();
         if (carveSpace == GFE_CarveSpace::CustomAttrib)
-            uvAttrib = GFE_Attribute::findUVAttributePointVertex(*geo, GA_ATTRIB_INVALID, customCarveUVAttribName);
+            uvAttrib = GFE_Attribute::findUVAttributePointVertex(*geo, GA_ATTRIB_INVALID, name);
         else
             uvAttrib = nullptr;
     }
@@ -162,7 +173,7 @@ public:
     void setCarveUEndAttrib(const GA_Attribute* const carveUAttrib, const bool delCarveUAttrib)
     {
         endCarveUAttrib = carveUAttrib;
-        delEndCarveUAttrib = delCarveUAttrib;
+        delCarveUEndAttrib = delCarveUAttrib;
         if (endCarveUAttrib)
         {
             endCarveU_h.bind(endCarveUAttrib);
@@ -173,29 +184,29 @@ public:
 
     SYS_FORCE_INLINE void setCarveUEndAttrib(GA_Attribute* const carveUAttrib, const bool delCarveUAttrib)
     {
-        endCarveUAttrib_nonConst = carveUAttrib;
+        carveUEndAttrib_nonConst = carveUAttrib;
         setCarveUEndAttrib(static_cast<const GA_Attribute*>(carveUAttrib), delCarveUAttrib);
     }
 
     
     void setCarveUEndAttrib(const UT_StringRef& carveUAttribName = "carveUEnd", const bool delCarveUAttrib = false)
     {
-        endCarveUAttrib_nonConst = geo->findPrimitiveAttribute(carveUAttribName);
-        if (!endCarveUAttrib_nonConst)
+        carveUEndAttrib_nonConst = geo->findPrimitiveAttribute(carveUAttribName);
+        if (!carveUEndAttrib_nonConst)
         {
-            endCarveUAttrib_nonConst = geo->findPointAttribute(carveUAttribName);
-            if (!endCarveUAttrib_nonConst)
+            carveUEndAttrib_nonConst = geo->findPointAttribute(carveUAttribName);
+            if (!carveUEndAttrib_nonConst)
             {
-                endCarveUAttrib_nonConst = geo->findVertexAttribute(carveUAttribName);
+                carveUEndAttrib_nonConst = geo->findVertexAttribute(carveUAttribName);
             }
         }
-        if (endCarveUAttrib_nonConst)
+        if (carveUEndAttrib_nonConst)
         {
-            setCarveUEndAttrib(endCarveUAttrib_nonConst, delCarveUAttrib);
+            setCarveUEndAttrib(carveUEndAttrib_nonConst, delCarveUAttrib);
         }
         else
         {
-            delEndCarveUAttrib = delCarveUAttrib;
+            delCarveUEndAttrib = delCarveUAttrib;
         }
     }
 
@@ -205,11 +216,14 @@ private:
 virtual bool
     computeCore() override
 {
-    if (!(keepOutsideStart || keepOutsideEnd || keepInside))
+    if (!(keepOutsideStart || keepOutsideEnd || keepInside) || groupParser.isEmpty() || (carveSpace == GFE_CarveSpace::CustomAttrib && !uvAttrib) )
+    {
+        geo->clear();
         return true;
+    }
     
-    if (groupParser.isEmpty())
-        return true;
+    if (geoSrc)
+        geo->replaceWith(*geoSrc);
     
     if (!posAttrib)
         posAttrib = geo->getP();
@@ -224,18 +238,17 @@ virtual bool
     {
         switch (carveSpace)
         {
+        default:
         case GFE_CarveSpace::LocalAverage:   curveUV.curveUVMethod = GFE_CurveUVMethod::LocalAverage;   break;
         case GFE_CarveSpace::LocalArcLength: curveUV.curveUVMethod = GFE_CurveUVMethod::LocalArcLength; break;
         case GFE_CarveSpace::WorldAverage:   curveUV.curveUVMethod = GFE_CurveUVMethod::WorldAverage;   break;
-        case GFE_CarveSpace::WorldArcLength:
-        default:                             curveUV.curveUVMethod = GFE_CurveUVMethod::WorldArcLength; break;
+        case GFE_CarveSpace::WorldArcLength: curveUV.curveUVMethod = GFE_CurveUVMethod::WorldArcLength; break;
         }
         curveUV.groupParser.setGroup(groupParser.getPrimitiveGroup());
         uvAttrib = curveUV.getOutAttribArray().findOrCreateUV(true, GA_ATTRIB_VERTEX, GA_STORE_INVALID);
+        uv_h = uvAttrib;
         curveUV.compute();
     }
-    if (carveSpace != GFE_CarveSpace::LocalAverage && !uvAttrib)
-        return false;
     UT_ASSERT_MSG(!uvAttrib || uvAttrib->getOwner() == GA_ATTRIB_POINT || uvAttrib->getOwner() == GA_ATTRIB_VERTEX, "Unhandled UV Attrib Owner");
 
     carveSpace_isWorld = carveSpace == GFE_CarveSpace::CustomAttrib   ||
@@ -246,7 +259,6 @@ virtual bool
         uvAIF = uvAttrib->getAIFTuple();
     isPointUV = uvAttrib && uvAttrib->getOwner() == GA_ATTRIB_POINT;
     //uvTupleSize = uvAttrib->getTupleSize();
-    //uv_h = uvAttrib;
 
 
     
@@ -255,298 +267,81 @@ virtual bool
     if (delCarveUAttribStart && carveUAttribStart_nonConst)
         geo->getAttributes().destroyAttribute(carveUAttribStart_nonConst);
     
-    if (delEndCarveUAttrib && endCarveUAttrib_nonConst)
-        geo->getAttributes().destroyAttribute(endCarveUAttrib_nonConst);
+    if (delCarveUEndAttrib && carveUEndAttrib_nonConst)
+        geo->getAttributes().destroyAttribute(carveUEndAttrib_nonConst);
     
     return true;
 }
 
-    
-SYS_FORCE_INLINE GA_Offset primPoint(const GA_Detail* const geo, const GA_Offset primoff, const GA_Offset vtxpnum)
-{ return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum)); }
 
-template<GFE_CarveType CARVE_TYPE, bool isEnd>
-void carveSingle(
-    GA_Detail* const geo,
-    const GA_Offset primoff,
-    fpreal uv,
-    const GA_Size numvtx,
-    const fpreal domainUStart,
-    const fpreal domainUEnd,
-    const fpreal uvMax,
-    const fpreal step
-)
+
+void carve()
 {
-    fpreal uv_rest = 0;
+    GU_DetailHandle geoSingle_h;
+        
+    GU_DetailHandle geoMerge_h;
+    geoMerge = new GU_Detail();
+    geoMerge_h.allocateAndSet(geoMerge);
     
-    if constexpr(!isEnd && CARVE_TYPE != GFE_CarveType::End)
+    if ((keepOutsideStart && keepOutsideEnd) || ((keepOutsideStart || keepOutsideEnd) && keepInside))
+    //if (1)
     {
-        if (carveStartPrimGroup && carveStartPrimGroup->contains(primoff))
-            return;
-    }
-    else if constexpr(isEnd && CARVE_TYPE != GFE_CarveType::Start)
-    {
-        if (carveEndPrimGroup && carveEndPrimGroup->contains(primoff))
-            return;
-    }
-        
-    if (carveSpace == GFE_CarveSpace::LocalAverage)
-        uv = isEnd;
-        
-#if 1
-    if constexpr(isEnd)
-    {
-        for (GA_Size vtxpnum = numvtx-1; vtxpnum >= 0; --vtxpnum)
+        geoSingle = new GU_Detail();
+        geoSingle_h.allocateAndSet(geoSingle);
+        if (keepOutsideStart)
         {
-            //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
-            GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-            GA_Offset ptoff  = geo->vertexPoint(vtxoff);
-
-            if (carveSpace != GFE_CarveSpace::LocalAverage)
-                uvAIF->get(uvAttrib, isPointUV ? ptoff : vtxoff, uv);
-
-            if (uv <= domainUEnd)
-            {
-                const GA_Size breakVtxpnum = vtxpnum + (uv != domainUEnd);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    //for (GA_Size vtxpnum_prev = numvtx-1; vtxpnum_prev > breakVtxpnum; --vtxpnum_prev)
-                    for (GA_Size vtxpnum_prev = breakVtxpnum+1; vtxpnum_prev < numvtx; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-                else
-                {
-                    //for (GA_Size vtxpnum_prev = breakVtxpnum-1; vtxpnum_prev >= 0; --vtxpnum_prev)
-                    for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < breakVtxpnum; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-
-                if (vtxpnum == numvtx-1 && uv == domainUEnd)
-                    break;
-                
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    if (hasCarveEndPrimGroup)
-                        hasCarveEndPrimGroup->setElement(primoff, true);
-                }
-                else
-                {
-                    if (hasCarveStartPrimGroup)
-                        hasCarveStartPrimGroup->setElement(primoff, true);
-                }
-                
-                if (uv == domainUEnd)
-                    break;
-
-                const GA_Offset ptoff0 = primPoint(geo, primoff, vtxpnum);
-                const GA_Offset ptoff1 = primPoint(geo, primoff, breakVtxpnum);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                    interpAttribs(geo, ptoff1, ptoff0,       (domainUEnd - uv_rest) / (uv - uv_rest));
-                else
-                    interpAttribs(geo, ptoff0, ptoff1, 1.0 - (domainUEnd - uv_rest) / (uv - uv_rest));
-                break;
-            }
-
-            uv_rest = uv;
-            if (carveSpace == GFE_CarveSpace::LocalAverage)
-                uv -= step;
+            geoSingle->merge(*geo->asGEO_Detail());
+            carve<GFE_CarveType::Start>();
+            geoMerge->baseMerge(*geoSingle);
         }
+        if (keepOutsideEnd)
+        {
+            geoSingle->clear();
+            geoSingle->merge(*geo->asGEO_Detail());
+            carve<GFE_CarveType::End>();
+            geoMerge->baseMerge(*geoSingle);
+        }
+        if (keepInside)
+        {
+            geoSingle->clear();
+            geoSingle->merge(*geo->asGEO_Detail());
+            carve<GFE_CarveType::Both>();
+            geoMerge->baseMerge(*geoSingle);
+        }
+        geo->replaceWith(*geoMerge);
     }
     else
     {
-        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+        if (keepOutsideStart)
         {
-            //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
-            GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-            GA_Offset ptoff  = geo->vertexPoint(vtxoff);
-
-            if (carveSpace != GFE_CarveSpace::LocalAverage)
-                uvAIF->get(uvAttrib, isPointUV ? ptoff : vtxoff, uv);
-
-            if (uv >= domainUStart)
-            {
-                const GA_Size breakVtxpnum = vtxpnum - (uv != domainUStart);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < breakVtxpnum; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-                else
-                {
-                    for (GA_Size vtxpnum_prev = breakVtxpnum+2; vtxpnum_prev < numvtx; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-
-                if (vtxpnum == 0 && uv == domainUStart)
-                    break;
-                
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    if (hasCarveStartPrimGroup)
-                        hasCarveStartPrimGroup->setElement(primoff, true);
-                }
-                else
-                {
-                    if (hasCarveEndPrimGroup)
-                        hasCarveEndPrimGroup->setElement(primoff, true);
-                }
-                
-                if (uv == domainUStart)
-                    break;
-                
-                const GA_Offset ptoff0 = primPoint(geo, primoff, vtxpnum);
-                const GA_Offset ptoff1 = primPoint(geo, primoff, breakVtxpnum);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                    interpAttribs(geo, ptoff1, ptoff0,     (domainUStart - uv_rest) / (uv - uv_rest));
-                else
-                    interpAttribs(geo, ptoff0, ptoff1, 1 - (domainUStart - uv_rest) / (uv - uv_rest));
-                break;
-            }
-            uv_rest = uv;
-            if (carveSpace == GFE_CarveSpace::LocalAverage)
-                uv += step;
+            geoSingle = geo->asGU_Detail();
+            carve<GFE_CarveType::Start>();
+        }
+        else if (keepOutsideEnd)
+        {
+            geoSingle = geo->asGU_Detail();
+            carve<GFE_CarveType::End>();
+        }
+        else// if (keepInside)
+        {
+            geoSingle = new GU_Detail();
+            geoSingle_h.allocateAndSet(geoSingle);
+            geoSingle->merge(*geo->asGEO_Detail());
+            carve<GFE_CarveType::Both>();
+            geo->replaceWith(*geoSingle);
         }
     }
-#else
-    
-    GA_Size vtxpnum;
-    bool flag;
-    if constexpr(isEnd)
-    {
-        vtxpnum = numvtx-1;
-        flag = vtxpnum >= 0;
-    }
-    else
-    {
-        ++vtxpnum;
-        flag = vtxpnum < numvtx;
-    }
-    while(flag)
-    {
-        //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
-        GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-        GA_Offset ptoff  = geo->vertexPoint(vtxoff);
-
-        if (carveSpace != GFE_CarveSpace::LocalAverage)
-            uvAIF->get(uvAttrib, isPointUV ? ptoff : vtxoff, uv);
-
-        if constexpr(isEnd)
-        {
-            if (uv <= domainUEnd)
-            {
-                const GA_Size breakVtxpnum = vtxpnum + (uv != domainUEnd);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    //for (GA_Size vtxpnum_prev = numvtx-1; vtxpnum_prev > breakVtxpnum; --vtxpnum_prev)
-                    for (GA_Size vtxpnum_prev = breakVtxpnum+1; vtxpnum_prev < numvtx; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-                else
-                {
-                    //for (GA_Size vtxpnum_prev = breakVtxpnum-1; vtxpnum_prev >= 0; --vtxpnum_prev)
-                    for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < breakVtxpnum; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-
-                if (vtxpnum == numvtx-1 && uv == domainUEnd)
-                    break;
-                
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    if (hasCarveEndPrimGroup)
-                        hasCarveEndPrimGroup->setElement(primoff, true);
-                }
-                else
-                {
-                    if (hasCarveStartPrimGroup)
-                        hasCarveStartPrimGroup->setElement(primoff, true);
-                }
-                
-                if (uv == domainUEnd)
-                    break;
-
-                const GA_Offset ptoff0 = primPoint(geo, primoff, vtxpnum);
-                const GA_Offset ptoff1 = primPoint(geo, primoff, breakVtxpnum);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                    interpAttribs(geo, ptoff1, ptoff0,       (domainUEnd - uv_rest) / (uv - uv_rest));
-                else
-                    interpAttribs(geo, ptoff0, ptoff1, 1.0 - (domainUEnd - uv_rest) / (uv - uv_rest));
-                break;
-            }
-        }
-        else
-        {
-            if (uv >= domainUStart)
-            {
-                const GA_Size breakVtxpnum = vtxpnum - (uv != domainUStart);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < breakVtxpnum; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-                else
-                {
-                    for (GA_Size vtxpnum_prev = breakVtxpnum+2; vtxpnum_prev < numvtx; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geo->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
-                }
-
-                if (vtxpnum == 0 && uv == domainUStart)
-                    break;
-                
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                {
-                    if (hasCarveStartPrimGroup)
-                        hasCarveStartPrimGroup->setElement(primoff, true);
-                }
-                else
-                {
-                    if (hasCarveEndPrimGroup)
-                        hasCarveEndPrimGroup->setElement(primoff, true);
-                }
-                
-                if (uv == domainUStart)
-                    break;
-                
-                const GA_Offset ptoff0 = primPoint(geo, primoff, vtxpnum);
-                const GA_Offset ptoff1 = primPoint(geo, primoff, breakVtxpnum);
-                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
-                    interpAttribs(geo, ptoff1, ptoff0,     (domainUStart - uv_rest) / (uv - uv_rest));
-                else
-                    interpAttribs(geo, ptoff0, ptoff1, 1 - (domainUStart - uv_rest) / (uv - uv_rest));
-                break;
-            }
-        }
-
-        uv_rest = uv;
-        if (carveSpace == GFE_CarveSpace::LocalAverage)
-        {
-            if constexpr(isEnd)
-                uv -= step;
-            else
-                uv += step;
-        }
-        
-        if constexpr(isEnd)
-        {
-            --vtxpnum;
-            flag = vtxpnum >= 0;
-        }
-        else
-        {
-            ++vtxpnum;
-            flag = vtxpnum < numvtx;
-        }
-    }
-#endif
 }
 
 
+
+    
 template<GFE_CarveType CARVE_TYPE>
-void carve(GA_Detail* const geo)
+void carve()
 {
-    GA_PrimitiveGroupUPtr delPrimGroupUPtr   = geo->createDetachedPrimitiveGroup();
-    //GA_PointGroupUPtr     delPointGroupUPtr  = geo->createDetachedPointGroup();
-    GA_VertexGroupUPtr    delVertexGroupUPtr = geo->createDetachedVertexGroup();
+    GA_PrimitiveGroupUPtr delPrimGroupUPtr   = geoSingle->createDetachedPrimitiveGroup();
+    //GA_PointGroupUPtr     delPointGroupUPtr  = geoSingle->createDetachedPointGroup();
+    GA_VertexGroupUPtr    delVertexGroupUPtr = geoSingle->createDetachedVertexGroup();
     delPrimGroup   = delPrimGroupUPtr.get();
     //delPointGroup  = delPointGroupUPtr.get();
     delVertexGroup = delVertexGroupUPtr.get();
@@ -554,9 +349,9 @@ void carve(GA_Detail* const geo)
     carveStartPrimGroup = groupParser_carveStart.getPrimitiveGroup();
     carveEndPrimGroup   = groupParser_carveEnd.getPrimitiveGroup();
 
-    UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, geo](const GA_SplittableRange& r)
+    UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this](const GA_SplittableRange& r)
     {
-        fpreal domainUStart = 0, domainUEnd = 0, uvMax = 0;
+        fpreal domainUStart = 0, domainUEnd = 0;
         GA_Offset primvtx0 = 0, primpt0 = 0, primvtx1 = 0, primpt1 = 0;
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -580,20 +375,19 @@ void carve(GA_Detail* const geo)
                     }
                 }
 
-                const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                const GA_Size numvtx = geoSingle->getPrimitiveVertexCount(primoff);
                 const GA_Size lastVtxpnum = numvtx-1;
                 
                 if constexpr(CARVE_TYPE != GFE_CarveType::End)
                 {
-                    primvtx0 = geo->getPrimitiveVertexOffset(primoff, 0);
-                    primpt0  = geo->vertexPoint(primvtx0);
+                    primvtx0 = geoSingle->getPrimitiveVertexOffset(primoff, 0);
+                    primpt0  = geoSingle->vertexPoint(primvtx0);
                 }
                 if constexpr(CARVE_TYPE != GFE_CarveType::Start)
                 {
-                    primvtx1 = geo->getPrimitiveVertexOffset(primoff, numvtx-1);
-                    primpt1  = geo->vertexPoint(primvtx1);
+                    primvtx1 = geoSingle->getPrimitiveVertexOffset(primoff, numvtx-1);
+                    primpt1  = geoSingle->vertexPoint(primvtx1);
                 }
-                
                 if constexpr(CARVE_TYPE != GFE_CarveType::End)
                 {
                     if (carveUAttribStart)
@@ -613,29 +407,25 @@ void carve(GA_Detail* const geo)
 
                     if constexpr(CARVE_TYPE == GFE_CarveType::Both)
                     {
+                        fpreal uvMax;
                         if (carveSpace_isWorld)
                         {
+                            UT_ASSERT_P(uvAttrib);
                             switch (uvAttrib->getOwner())
                             {
                             case GA_ATTRIB_POINT:  uvMax = uv_h.get(primpt1);  break;
                             case GA_ATTRIB_VERTEX: uvMax = uv_h.get(primvtx1); break;
                             default: UT_ASSERT_MSG(0, "unhandled uv class");   break;
                             }
-
-                            if (carveStartPrimGroup && carveStartPrimGroup->contains(primoff) && domainUStart >= uvMax)
-                            {
-                                delPrimGroup->setElement(primoff, true);
-                                continue;
-                            }
                         }
                         else
                         {
                             uvMax = 1;
-                            if (carveStartPrimGroup && carveStartPrimGroup->contains(primoff) && domainUStart >= 1)
-                            {
-                                delPrimGroup->setElement(primoff, true);
-                                continue;
-                            }
+                        }
+                        if (domainUStart >= uvMax && (!carveStartPrimGroup || carveStartPrimGroup->contains(primoff)))
+                        {
+                            delPrimGroup->setElement(primoff, true);
+                            continue;
                         }
                     }
                     else if (domainUStart <= 0)
@@ -676,25 +466,24 @@ void carve(GA_Detail* const geo)
                         }
                         if (carveSpace_isWorld)
                         {
-                            fpreal uvmax2;
+                            fpreal uvMax;
+                            UT_ASSERT_P(uvAttrib);
                             switch (uvAttrib->getOwner())
                             {
-                            case GA_ATTRIB_POINT:  uvmax2 = uv_h.get(primpt1);  break;
-                            case GA_ATTRIB_VERTEX: uvmax2 = uv_h.get(primvtx1); break;
+                            case GA_ATTRIB_POINT:  uvMax = uv_h.get(primpt1);  break;
+                            case GA_ATTRIB_VERTEX: uvMax = uv_h.get(primvtx1); break;
                             default: UT_ASSERT_MSG(0, "unhandled uv class");    break;
                             }
-                            domainUEnd = uvmax2 - domainUEnd;
+                            domainUEnd = uvMax - domainUEnd;
                         }
                         else
                         {
                             domainUEnd = 1.0 - domainUEnd;
                         }
                     }
-                    // cout(domainUEnd);
                     if constexpr(CARVE_TYPE == GFE_CarveType::Both)
                     {
-                        // if ( inpointgroup(0, chs("../secondptgroup"), primpt1) && domainUEnd <= domainUStart ) {
-                        if (carveEndPrimGroup && carveEndPrimGroup->contains(primoff) && domainUEnd <= 0)
+                        if (domainUEnd <= 0 && (!carveEndPrimGroup && carveEndPrimGroup->contains(primoff)) )
                         {
                             delPrimGroup->setElement(primoff, true);
                             continue;
@@ -704,28 +493,27 @@ void carve(GA_Detail* const geo)
                 
                 if constexpr(CARVE_TYPE == GFE_CarveType::Both)
                 {
-                    if (delReversedInsidePrim && domainUEnd < domainUStart)
+                    if (domainUEnd < domainUStart)
                     {
-                        delPrimGroup->setElement(primoff, true);
-                        continue;
+                        if (delReversedInsidePrim)
+                        {
+                            delPrimGroup->setElement(primoff, true);
+                            continue;
+                        }
+                        else
+                        {
+                            const fpreal tempFlt = domainUEnd;
+                            domainUEnd = domainUStart;
+                            domainUStart = tempFlt;
+                        }
                     }
                 }
 
-                fpreal uv_rest = 0;
-
-                fpreal uv;
-                fpreal step;
-                if (carveSpace == GFE_CarveSpace::LocalAverage)
-                {
-                    uv = static_cast<fpreal>(CARVE_TYPE);
-                    step = 1.0 / lastVtxpnum;
-                }
-                
                 if constexpr(CARVE_TYPE != GFE_CarveType::End)
-                    carveSingle<CARVE_TYPE, 0>(geo, primoff, uv, numvtx, domainUStart, domainUEnd, uvMax, step);
+                    carveSingle<CARVE_TYPE, 0>(primoff, numvtx, domainUStart);
                 
                 if constexpr(CARVE_TYPE != GFE_CarveType::Start)
-                    carveSingle<CARVE_TYPE, 1>(geo, primoff, uv, numvtx, domainUStart, domainUEnd, uvMax, step);
+                    carveSingle<CARVE_TYPE, 1>(primoff, numvtx, domainUEnd);
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -733,60 +521,188 @@ void carve(GA_Detail* const geo)
     delPrimGroup->invalidateGroupEntries();
     //delPointGroup->invalidateGroupEntries();
     delVertexGroup->invalidateGroupEntries();
+    
+    geoSingle->destroyPrimitiveOffsets(geoSingle->getPrimitiveRange(delPrimGroup), true);
+    //geoSingle->destroyPointOffsets(geoSingle->getPointRange(delPointGroup));
                     
-    geo->destroyPrimitiveOffsets(geo->getPrimitiveRange(delPrimGroup), true);
-    //geo->destroyPointOffsets(geo->getPointRange(delPointGroup));
-                    
-    GFE_DelVertex delVertex(geo, cookparms);
+    GFE_DelVertex delVertex(geoSingle, cookparms);
     delVertex.groupParser.setGroup(delVertexGroup);
     delVertex.compute();
+    
+    if constexpr(CARVE_TYPE == GFE_CarveType::Start)
+        if (reverseOutsideStart)
+            geoSingle->reversePolys();
+    
+    if constexpr(CARVE_TYPE == GFE_CarveType::End)
+        if (reverseOutsideEnd)
+            geoSingle->reversePolys();
 }
 
 
-void carve()
+template<GFE_CarveType CARVE_TYPE, bool isEnd>
+void carveSingle(
+    const GA_Offset primoff,
+    const GA_Size numvtx,
+    const fpreal domainU
+)
 {
-    if ((keepOutsideStart && keepOutsideEnd) || ((keepOutsideStart || keepOutsideEnd) && keepInside))
+    if constexpr(!isEnd && CARVE_TYPE != GFE_CarveType::End)
     {
-        GU_DetailHandle geoOrigin_h;
-        geoOrigin = new GU_Detail();
-        geoOrigin_h.allocateAndSet(geoOrigin);
-        geoOrigin->replaceWith(geoSrc ? *geoSrc : *geo);
+        if (carveStartPrimGroup && carveStartPrimGroup->contains(primoff))
+            return;
+    }
+    else if constexpr(isEnd && CARVE_TYPE != GFE_CarveType::Start)
+    {
+        if (carveEndPrimGroup && carveEndPrimGroup->contains(primoff))
+            return;
+    }
         
-        GU_DetailHandle geoTmp_h;
-        GU_Detail* const geoTmp = new GU_Detail();
-        geoTmp_h.allocateAndSet(geoTmp);
-        if (keepOutsideStart)
+    fpreal uv_rest = 0;
+    fpreal uv, step;
+    if (carveSpace == GFE_CarveSpace::LocalAverage)
+        uv = isEnd;
+        step = 1.0 / (numvtx-1);
+    
+    if constexpr(isEnd)
+    {
+        for (GA_Size vtxpnum = numvtx-1; ; --vtxpnum)
         {
-            geoTmp->replaceWith(*geoOrigin);
-            carve<GFE_CarveType::Start>(geoTmp);
-            geo->baseMerge(*geoTmp);
-        }
-        if (keepOutsideEnd)
-        {
-            geoTmp->replaceWith(*geoOrigin);
-            carve<GFE_CarveType::End>(geoTmp);
-            geo->baseMerge(*geoTmp);
-        }
-        if (keepInside)
-        {
-            geoTmp->replaceWith(*geoOrigin);
-            carve<GFE_CarveType::Both>(geoTmp);
-            geo->baseMerge(*geoTmp);
+            //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
+            GA_Offset vtxoff = geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum);
+            GA_Offset ptoff  = geoSingle->vertexPoint(vtxoff);
+
+            if (carveSpace != GFE_CarveSpace::LocalAverage)
+                uvAIF->get(uvAttrib, isPointUV ? ptoff : vtxoff, uv);
+
+            if (uv <= domainU)
+            {
+                const bool arriveBound = uv == domainU;
+                //const GA_Size breakVtxpnum = vtxpnum + (uv != domainUEnd);
+                //const GA_Size breakVtxpnum = vtxpnum + 1;
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                {
+                    for (GA_Size vtxpnum_prev = vtxpnum + (arriveBound ? 1 : 2); vtxpnum_prev < numvtx; ++vtxpnum_prev)
+                        delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                }
+                else
+                {
+                    if (arriveBound)
+                    {
+                        for (GA_Size vtxpnum_prev = 0; vtxpnum_prev <= vtxpnum; ++vtxpnum_prev)
+                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                    }
+                    else
+                    {
+                        for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < vtxpnum; ++vtxpnum_prev)
+                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                    }
+                }
+
+                if (vtxpnum == numvtx-1 && !arriveBound)
+                    break;
+                
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                {
+                    if (hasCarveEndPrimGroup)
+                        hasCarveEndPrimGroup->setElement(primoff, true);
+                }
+                else
+                {
+                    if (hasCarveStartPrimGroup)
+                        hasCarveStartPrimGroup->setElement(primoff, true);
+                }
+                
+                if (vtxpnum == numvtx-1)
+                    break;
+
+                const GA_Offset ptoff0 = primPoint(geoSingle, primoff, vtxpnum);
+                const GA_Offset ptoff1 = primPoint(geoSingle, primoff, vtxpnum+1);
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                    interpAttribs(ptoff1, ptoff0,       (domainU - uv_rest) / (uv - uv_rest));
+                else
+                    interpAttribs(ptoff0, ptoff1, 1.0 - (domainU - uv_rest) / (uv - uv_rest));
+                break;
+            }
+
+            uv_rest = uv;
+            if (carveSpace == GFE_CarveSpace::LocalAverage)
+                uv -= step;
+            
+            if (vtxpnum <= 0)
+                break;
         }
     }
     else
     {
-        if (geoSrc)
-            geo->replaceWith(*geoSrc);
-        if (keepOutsideStart)
-            carve<GFE_CarveType::Start>(geo);
-        else if (keepOutsideEnd)
-            carve<GFE_CarveType::End>(geo);
-        else if (keepInside)
-            carve<GFE_CarveType::Both>(geo);
+        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+        {
+            //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
+            GA_Offset vtxoff = geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum);
+            GA_Offset ptoff  = geoSingle->vertexPoint(vtxoff);
+
+            if (carveSpace != GFE_CarveSpace::LocalAverage)
+                uvAIF->get(uvAttrib, isPointUV ? ptoff : vtxoff, uv);
+
+            if (uv >= domainU)
+            {
+                const bool arriveBound = uv == domainU;
+                //const GA_Size breakVtxpnum = vtxpnum - (uv != domainUStart);
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                {
+                    if (arriveBound)
+                    {
+                        for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < vtxpnum; ++vtxpnum_prev)
+                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                    }
+                    else
+                    {
+                        for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < vtxpnum-1; ++vtxpnum_prev)
+                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                    }
+                }
+                else
+                {
+                    for (GA_Size vtxpnum_prev = vtxpnum+1; vtxpnum_prev < numvtx; ++vtxpnum_prev)
+                        delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                }
+
+                //if (vtxpnum == 0 && uv == domainUStart)
+                //    break;
+                if (!arriveBound && vtxpnum == 0)
+                    break;
+                
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                {
+                    if (hasCarveStartPrimGroup)
+                        hasCarveStartPrimGroup->setElement(primoff, true);
+                }
+                else
+                {
+                    if (hasCarveEndPrimGroup)
+                        hasCarveEndPrimGroup->setElement(primoff, true);
+                }
+                
+                if (vtxpnum == 0)
+                    break;
+                
+                const GA_Offset ptoff0 = primPoint(geoSingle, primoff, vtxpnum);
+                const GA_Offset ptoff1 = primPoint(geoSingle, primoff, vtxpnum-1);
+                if constexpr(CARVE_TYPE == GFE_CarveType::Both)
+                    interpAttribs(ptoff1, ptoff0,       (domainU - uv_rest) / (uv - uv_rest));
+                else
+                    interpAttribs(ptoff0, ptoff1, 1.0 - (domainU - uv_rest) / (uv - uv_rest));
+                break;
+            }
+            uv_rest = uv;
+            if (carveSpace == GFE_CarveSpace::LocalAverage)
+                uv += step;
+        }
     }
 }
 
+    
+SYS_FORCE_INLINE GA_Offset primPoint(const GA_Detail* const geo, const GA_Offset primoff, const GA_Offset vtxpnum)
+{ return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum)); }
 
 
 private:
@@ -795,13 +711,14 @@ private:
     void
         setAttribVal(
             const GA_RWHandleT<T>& attrib_h,
+            const GA_ROHandleT<T>& attribSrc_h,
             const GA_Offset ptoff0,
             const GA_Offset ptoff1,
             const T bias
         )
     {
-        T attrib0 = attrib_h.get(ptoff0);
-        const T attrib1 = attrib_h.get(ptoff1);
+        T attrib0 = attribSrc_h.get(ptoff0);
+        const T attrib1 = attribSrc_h.get(ptoff1);
         //attrib0 = GFE_Math::vlerp(attrib0, attrib1, bias);
         attrib0 = attrib0 + (attrib1 - attrib0) * bias;
         attrib_h.set(ptoff0, attrib0);
@@ -811,13 +728,14 @@ private:
     void
         setAttribVector(
             const GA_RWHandleT<VECTOR_T>& attrib_h,
+            const GA_ROHandleT<VECTOR_T>& attribSrc_h,
             const GA_Offset ptoff0,
             const GA_Offset ptoff1,
             const typename VECTOR_T::value_type bias
         )
     {
-        VECTOR_T attrib0 = attrib_h.get(ptoff0);
-        const VECTOR_T& attrib1 = attrib_h.get(ptoff1);
+        VECTOR_T attrib0 = attribSrc_h.get(ptoff0);
+        const VECTOR_T& attrib1 = attribSrc_h.get(ptoff1);
         //attrib0 = GFE_Math::vlerp(attrib0, attrib1, bias);
         attrib0 = attrib0 + (attrib1 - attrib0) * bias;
         attrib_h.set(ptoff0, attrib0);
@@ -842,13 +760,14 @@ private:
     void
         setAttribDir(
             const GA_RWHandleT<UT_Vector3T<FLOAT_T>>& attrib_h,
+            const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& attribSrc_h,
             const GA_Offset ptoff0,
             const GA_Offset ptoff1,
             const fpreal bias
         )
     {
-        UT_Vector3T<FLOAT_T> attrib0 = attrib_h.get(ptoff0);
-        UT_Vector3T<FLOAT_T> attrib1 = attrib_h.get(ptoff1);
+        UT_Vector3T<FLOAT_T> attrib0 = attribSrc_h.get(ptoff0);
+        UT_Vector3T<FLOAT_T> attrib1 = attribSrc_h.get(ptoff1);
         //aifTuple.set();
         FLOAT_T length0 = length2(attrib0);
         const FLOAT_T length1 = length2(attrib1);
@@ -868,7 +787,7 @@ private:
     }
 
 
-    void interpAttribs(GA_Detail* const geo, const GA_Offset ptoff0, const GA_Offset ptoff1, const fpreal bias)
+    void interpAttribs(const GA_Offset ptoff0, const GA_Offset ptoff1, const fpreal bias)
     {
         const size_t size = interpAttribArray.size();
         for (size_t i = 0; i < size; i++)
@@ -879,8 +798,8 @@ private:
             if (attribSrc->isDetached())
                 continue;
             
-            GA_Attribute* const attrib = geo->findAttribute(attribSrc->getOwner(), attribSrc->getName());
-
+            GA_Attribute* const attrib = geoSingle->findAttribute(attribSrc->getOwner(), attribSrc->getName());
+            UT_ASSERT_P(attrib);
             const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
             
             if (aifTuple)
@@ -892,15 +811,15 @@ private:
                 case 1:
                     switch (storage)
                     {
-                        //case GA_STORE_BOOL: setAttribVal<bool    >(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_UINT8:  setAttribVal<uint8   >(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT8:   setAttribVal<int8    >(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT16:  setAttribVal<int16   >(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT32:  setAttribVal<int32   >(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT64:  setAttribVal<int64   >(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL16: setAttribVal<fpreal16>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL32: setAttribVal<fpreal32>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL64: setAttribVal<fpreal64>(attrib, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_BOOL: setAttribVal<bool    >(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_UINT8:  setAttribVal<uint8   >(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT8:   setAttribVal<int8    >(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT16:  setAttribVal<int16   >(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT32:  setAttribVal<int32   >(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT64:  setAttribVal<int64   >(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL16: setAttribVal<fpreal16>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL32: setAttribVal<fpreal32>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL64: setAttribVal<fpreal64>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
                         case GA_STORE_STRING:  break;
                         case GA_STORE_DICT:    break;
                         case GA_STORE_INVALID: break;
@@ -910,15 +829,15 @@ private:
                 case 2:
                     switch (storage)
                     {
-                        //case GA_STORE_BOOL:  setAttribVector<UT_Vector2T<bool    >>(attrib, ptoff0, ptoff1, bias); break;
-                        //case GA_STORE_UINT8: setAttribVector<UT_Vector2T<uint8   >>(attrib, ptoff0, ptoff1, bias); break;
-                        //case GA_STORE_INT8:  setAttribVector<UT_Vector2T<int8    >>(attrib, ptoff0, ptoff1, bias); break;
-                        //case GA_STORE_INT16: setAttribVector<UT_Vector2T<int16   >>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT32:   setAttribVector<UT_Vector2T<int32   >>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT64:   setAttribVector<UT_Vector2T<int64   >>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL16:  setAttribVector<UT_Vector2T<fpreal16>>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL32:  setAttribVector<UT_Vector2T<fpreal32>>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL64:  setAttribVector<UT_Vector2T<fpreal64>>(attrib, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_BOOL:  setAttribVector<UT_Vector2T<bool    >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_UINT8: setAttribVector<UT_Vector2T<uint8   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_INT8:  setAttribVector<UT_Vector2T<int8    >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_INT16: setAttribVector<UT_Vector2T<int16   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT32:   setAttribVector<UT_Vector2T<int32   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT64:   setAttribVector<UT_Vector2T<int64   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL16:  setAttribVector<UT_Vector2T<fpreal16>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL32:  setAttribVector<UT_Vector2T<fpreal32>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL64:  setAttribVector<UT_Vector2T<fpreal64>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
                         case GA_STORE_STRING:  break;
                         case GA_STORE_DICT:    break;
                         case GA_STORE_INVALID: break;
@@ -936,9 +855,9 @@ private:
                         case GA_STORE_INT16:    break;
                         case GA_STORE_INT32:    break;
                         case GA_STORE_INT64:    break;
-                        case GA_STORE_REAL16:  setAttribDir<fpreal16>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL32:  setAttribDir<fpreal32>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL64:  setAttribDir<fpreal64>(attrib, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL16:  setAttribDir<fpreal16>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL32:  setAttribDir<fpreal32>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL64:  setAttribDir<fpreal64>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
                         case GA_STORE_STRING:   break;
                         case GA_STORE_DICT:     break;
                         case GA_STORE_INVALID:  break;
@@ -950,15 +869,15 @@ private:
                     {
                         switch (storage)
                         {
-                            //case GA_STORE_BOOL:  setAttribVector<UT_Vector3T<bool    >>(attrib, ptoff0, ptoff1, bias); break;
-                            //case GA_STORE_UINT8: setAttribVector<UT_Vector3T<uint8   >>(attrib, ptoff0, ptoff1, bias); break;
-                            //case GA_STORE_INT8:  setAttribVector<UT_Vector3T<int8    >>(attrib, ptoff0, ptoff1, bias); break;
-                            //case GA_STORE_INT16: setAttribVector<UT_Vector3T<int16   >>(attrib, ptoff0, ptoff1, bias); break;
-                            case GA_STORE_INT32:   setAttribVector<UT_Vector3T<int32   >>(attrib, ptoff0, ptoff1, bias); break;
-                            case GA_STORE_INT64:   setAttribVector<UT_Vector3T<int64   >>(attrib, ptoff0, ptoff1, bias); break;
-                            case GA_STORE_REAL16:  setAttribVector<UT_Vector3T<fpreal16>>(attrib, ptoff0, ptoff1, bias); break;
-                            case GA_STORE_REAL32:  setAttribVector<UT_Vector3T<fpreal32>>(attrib, ptoff0, ptoff1, bias); break;
-                            case GA_STORE_REAL64:  setAttribVector<UT_Vector3T<fpreal64>>(attrib, ptoff0, ptoff1, bias); break;
+                            //case GA_STORE_BOOL:  setAttribVector<UT_Vector3T<bool    >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            //case GA_STORE_UINT8: setAttribVector<UT_Vector3T<uint8   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            //case GA_STORE_INT8:  setAttribVector<UT_Vector3T<int8    >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            //case GA_STORE_INT16: setAttribVector<UT_Vector3T<int16   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            case GA_STORE_INT32:   setAttribVector<UT_Vector3T<int32   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            case GA_STORE_INT64:   setAttribVector<UT_Vector3T<int64   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            case GA_STORE_REAL16:  setAttribVector<UT_Vector3T<fpreal16>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            case GA_STORE_REAL32:  setAttribVector<UT_Vector3T<fpreal32>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                            case GA_STORE_REAL64:  setAttribVector<UT_Vector3T<fpreal64>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
                             case GA_STORE_STRING:  break;
                             case GA_STORE_DICT:    break;
                             case GA_STORE_INVALID: break;
@@ -971,15 +890,15 @@ private:
                 case 4:
                     switch (storage)
                     {
-                        //case GA_STORE_BOOL:  setAttribVector<UT_Vector4T<bool    >(attrib, ptoff0, ptoff1, bias); break;
-                        //case GA_STORE_UINT8: setAttribVector<UT_Vector4T<uint8   >(attrib, ptoff0, ptoff1, bias); break;
-                        //case GA_STORE_INT8:  setAttribVector<UT_Vector4T<int8    >>(attrib, ptoff0, ptoff1, bias); break;
-                        //case GA_STORE_INT16: setAttribVector<UT_Vector4T<int16   >>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT32:   setAttribVector<UT_Vector4T<int32   >>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_INT64:   setAttribVector<UT_Vector4T<int64   >>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL16:  setAttribVector<UT_Vector4T<fpreal16>>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL32:  setAttribVector<UT_Vector4T<fpreal32>>(attrib, ptoff0, ptoff1, bias); break;
-                        case GA_STORE_REAL64:  setAttribVector<UT_Vector4T<fpreal64>>(attrib, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_BOOL:  setAttribVector<UT_Vector4T<bool    >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_UINT8: setAttribVector<UT_Vector4T<uint8   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_INT8:  setAttribVector<UT_Vector4T<int8    >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        //case GA_STORE_INT16: setAttribVector<UT_Vector4T<int16   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT32:   setAttribVector<UT_Vector4T<int32   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_INT64:   setAttribVector<UT_Vector4T<int64   >>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL16:  setAttribVector<UT_Vector4T<fpreal16>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL32:  setAttribVector<UT_Vector4T<fpreal32>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
+                        case GA_STORE_REAL64:  setAttribVector<UT_Vector4T<fpreal64>>(attrib, attribSrc, ptoff0, ptoff1, bias); break;
                         case GA_STORE_STRING:  break;
                         case GA_STORE_DICT:    break;
                         case GA_STORE_INVALID: break;
@@ -1003,6 +922,7 @@ public:
     GFE_GroupParser groupParser_carveStart;
     GFE_GroupParser groupParser_carveEnd;
     
+    
     GFE_Enumerate enumerate;
     GFE_RefAttributeArray interpAttribArray;
 
@@ -1010,7 +930,10 @@ public:
     bool keepOutsideStart = false;
     bool keepOutsideEnd   = false;
     bool keepInside       = true;
-
+    
+    bool reverseOutsideStart = false;
+    bool reverseOutsideEnd   = false;
+    
     fpreal carveUStart = 0.25;
     fpreal carveUEnd   = 0.25;
 
@@ -1018,16 +941,22 @@ public:
     bool delReversedInsidePrim = false;
 
     bool delCarveUAttribStart = false;
-    bool delEndCarveUAttrib   = false;
+    bool delCarveUEndAttrib   = false;
 
-
-
-private:
     GA_PrimitiveGroup* hasCarveStartPrimGroup = nullptr;
     GA_PrimitiveGroup* hasCarveEndPrimGroup   = nullptr;
-        
+
+
 private:
 
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
+    
+private:// temp parm
+
+    const GA_PrimitiveGroup* carveStartPrimGroup;
+    const GA_PrimitiveGroup* carveEndPrimGroup;
+    
     const GA_Attribute* uvAttrib = nullptr;
     //GA_Attribute* uvAttrib_nonConst = nullptr;
     GA_ROHandleT<fpreal> uv_h;
@@ -1042,21 +971,18 @@ private:
         
         
     GA_Attribute* carveUAttribStart_nonConst = nullptr;
-    GA_Attribute* endCarveUAttrib_nonConst = nullptr;
+    GA_Attribute* carveUEndAttrib_nonConst = nullptr;
         
     bool carveSpace_isWorld;
     GA_PrimitiveGroup* delPrimGroup;
     //GA_PointGroup*     delPointGroup;
     GA_VertexGroup*    delVertexGroup;
-        
-    const GA_PrimitiveGroup* carveStartPrimGroup;
-    const GA_PrimitiveGroup* carveEndPrimGroup;
 
-    GU_Detail* geoOrigin;
+    //GU_Detail* geoOrigin;
+    GU_Detail* geoMerge;
+    GU_Detail* geoSingle;
     //GU_Detail* geoOriginGU;
 
-    exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
 
 
 }; // End of class GFE_Carve

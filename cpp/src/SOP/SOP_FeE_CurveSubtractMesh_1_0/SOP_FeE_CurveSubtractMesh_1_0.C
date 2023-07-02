@@ -212,21 +212,21 @@ SOP_FeE_CurveSubtractMesh_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
         return;
     
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_CurveSubtractMesh curveSubtractMesh(geo, cookparms);
+    curveSubtractMesh.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    curveSubtractMesh.compute();
 */
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    GFE_CurveSubtractMesh curveSubtractMesh(outGeo0, cookparms);
+    curveSubtractMesh.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
+    curveSubtractMesh.groupParser.setGroup(groupType, sopparms.getGroup());
 
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    curveSubtractMesh.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
-    enumerate.computeAndBumpDataId();
+    curveSubtractMesh.computeAndBumpDataId();
     
 
 }

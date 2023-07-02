@@ -116,9 +116,8 @@ SOP_FeE_CurveUV_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_CurveUV_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allTextureCoordMenu);
-        templ.setChoiceListPtr("primGroup"_sh, &SOP_Node::primGroupMenu);
-        
     }
     return templ.templates();
 }

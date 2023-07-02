@@ -4,10 +4,7 @@
 #ifndef __GFE_OffsetAttribToIndex_h__
 #define __GFE_OffsetAttribToIndex_h__
 
-//#include "GFE/GFE_OffsetAttributeToIndex.h"
-
-
-
+#include "GFE/GFE_OffsetAttributeToIndex.h"
 
 #include "GFE/GFE_GeoFilter.h"
 

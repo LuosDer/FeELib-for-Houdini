@@ -408,45 +408,9 @@ curvesubtract_fee::1.0
 
 
 
-polybounding_wn_fee
-polybounding_groupsop_fee
-polybounding_bbox_fee
-FeE::attribAdd::1.0
-
-FeE::groupEdgeWithPointOn::1.0
-extendcurve_fee
-FeE::bound2d
-groupunsharededge_fee
-FeE::groupUnsharedPoints::1.0
-attribduplicate_fee
-
-blastpoints_fee
-blastprim_fee
-
-FeE::blastMultiPiece::1.0
-pitchedroof_fee
-chineseTile_fee
-
-FeE::closedCurveExpand2d::2.0
-
-attribscale_fee::1.0
-FeE::uvScaletoWorldSize::1.0
-FeE::uvScaletoWorldSize::1.5
-FeE::uvScaletoWorldSize::2.0
-attribrescale_fee::2.0
-attribrescale_fee::1.0
+FeE::mergeWithEnum::2.5
+FeE::mergeWithEnum::2.0
+FeE::mergeWithEnum::1.0
+FeE::mergeWithEnum_fast::1.0
 
 
-
-
-
-
-
-reverse_fee
-attribreverse_elemnum_fee
-FeE::groupReverseEdges
-FeE::groupReverseVertex
-FeE::extendCurveSetEnds_straight::1.0
-FeE::extendCurve_straight::1.0
-groupexpand_fee::3.0
-groupexpand_fee

@@ -48,16 +48,18 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
+
     parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
+        name    "attribClass"
+        cppname "AttribClass"
+        label   "Attrib Class"
         type    ordinal
-        default { "prim" }
+        default { "point" }
         menu {
-            "prim"      "Primitive"
+            "prim"      "Prim"
             "point"     "Point"
             "vertex"    "Vertex"
+            "detail"    "Detail"
         }
     }
     parm {
@@ -65,7 +67,110 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "AttribName"
         label   "Attrib Name"
         type    string
-        default { "index" }
+        default { "N" }
+    }
+    //parm {
+    //    name    "renameAttrib"
+    //    cppname "RenameAttrib"
+    //    label   "Rename Attrib"
+    //    type    toggle
+    //    nolabel
+    //    joinnext
+    //    default { "0" }
+    //}
+    //parm {
+    //    name    "newAttribName"
+    //    cppname "NewAttribName"
+    //    label   "New Attrib Name"
+    //    type    string
+    //    default { "" }
+    //    disablewhen "{ renameAttrib == 0 }"
+    //}
+    parm {
+        name    "useUpAttrib"
+        cppname "UseUpAttrib"
+        label   "Use Up Attrib"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "inputUp"
+        cppname "InputUp"
+        label   "Input Up"
+        type    float
+        size    3
+        default { "0" "1" "0" }
+        hidewhen "{ useUpAttrib == 1 }"
+        range   { 0 1 }
+    }
+    parm {
+        name    "upAttribClass"
+        cppname "UpAttribClass"
+        label   "Up Attrib Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Prim"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
+        hidewhen "{ useUpAttrib == 0 }"
+    }
+    parm {
+        name    "upAttrib"
+        cppname "UpAttrib"
+        label   "Up Attrib"
+        type    string
+        default { "up" }
+        hidewhen "{ useUpAttrib == 0 }"
+    }
+    parm {
+        name    "double"
+        cppname "Double"
+        label   "Double"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "crossOrig"
+        cppname "CrossOrig"
+        label   "Cross Original Direction"
+        type    toggle
+        default { "1" }
+        disablewhen "{ double == 0 }"
+    }
+    parm {
+        name    "normalize"
+        cppname "Normalize"
+        label   "Normalize"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "keepLength"
+        cppname "KeepLength"
+        label   "Keep Length"
+        type    toggle
+        default { "0" }
+        disablewhen "{ normalize == 1 }"
+    }
+    parm {
+        name    "reverseDir"
+        cppname "ReverseDir"
+        label   "Reverse Dir"
+        type    toggle
+        default { "0" }
+    }
+
+
+    parm {
+        name    "delUpAttrib"
+        cppname "DelUpAttrib"
+        label   "Delete up Attrib"
+        type    toggle
+        default { "0" }
+        disablewhen "{ useUpAttrib == 1 }"
     }
 
 
@@ -95,11 +200,12 @@ SOP_FeE_DirCross_2_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("upAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_DirCross_2_0::theSOPTypeName("FeE::DirectionCross::2.0"_sh);
+const UT_StringHolder SOP_FeE_DirCross_2_0::theSOPTypeName("FeE::dirCross::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
@@ -175,14 +281,30 @@ sopGroupType(SOP_FeE_DirCross_2_0Parms::GroupType parmGroupType)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_DirCross_2_0Parms::Class parmAttribClass)
+sopAttribOwner(SOP_FeE_DirCross_2_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_DirCross_2_0Enums;
     switch (parmAttribClass)
     {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case AttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case AttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Class type!");
+    return GA_ATTRIB_INVALID;
+}
+
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_DirCross_2_0Parms::UpAttribClass parmAttribClass)
+{
+    using namespace SOP_FeE_DirCross_2_0Enums;
+    switch (parmAttribClass)
+    {
+    case UpAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case UpAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case UpAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case UpAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
     return GA_ATTRIB_INVALID;
@@ -202,8 +324,8 @@ SOP_FeE_DirCross_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
 
 
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
+    const GA_AttributeOwner upAttribClass = sopAttribOwner(sopparms.getUpAttribClass());
+    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
@@ -212,23 +334,29 @@ SOP_FeE_DirCross_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_DirCross dirCross(geo, cookparms);
+    dirCross.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    dirCross.compute();
 */
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    GFE_DirCross dirCross(outGeo0, cookparms);
+    dirCross.setComputeParm(sopparms.getInputUp(),
+        sopparms.getNormalize(),sopparms.getKeepLength(),sopparms.getReverseDir(),  sopparms.getDelUpAttrib(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-
+    if (sopparms.getUseUpAttrib())
+        dirCross.setUpAttrib(upAttribClass, sopparms.getUpAttrib());
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
-    enumerate.computeAndBumpDataId();
+    //if (sopparms.getRenameAttrib())
+    //    dirCross.newAttribNames = sopparms.getNewAttribName();
+        
+    dirCross.delUpAttrib = sopparms.getDelUpAttrib();
     
+    dirCross.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    dirCross.getOutAttribArray().appends(attribClass, sopparms.getAttribName());
 
+    dirCross.computeAndBumpDataId();
 }
 
 

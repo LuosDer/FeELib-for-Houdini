@@ -69,6 +69,13 @@ public:
     }
 
 
+    SYS_FORCE_INLINE void delVertex(const GA_Offset primoff, const GA_Offset vtxoff)
+    {
+        getPrimitive(primoff)->releaseVertex(vtxoff);
+        //getTopology().delVertex(vtxoff);
+        destroyVertexOffset(vtxoff);
+    }
+
 
     
     SYS_FORCE_INLINE bool isUsedPoint(const GA_Offset ptoff) const
@@ -183,33 +190,43 @@ public:
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
     SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff) const
     {
-        if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
+        if constexpr(TO == GA_ATTRIB_GLOBAL)
+        {
+            return 0;
+        }
+        if constexpr(FROM == GA_ATTRIB_GLOBAL)
+        {
+            return 0;
+        }
+        else if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
                 return elemoff;
-            if constexpr(TO == GA_ATTRIB_POINT)
+            else if constexpr(TO == GA_ATTRIB_POINT)
                 return getPrimitivePointOffset(elemoff, 0);
-            if constexpr(TO == GA_ATTRIB_VERTEX)
+            else if constexpr(TO == GA_ATTRIB_VERTEX)
                 return getPrimitiveVertexOffset(elemoff, 0);
         }
-        if constexpr(FROM == GA_ATTRIB_POINT)
+        else if constexpr(FROM == GA_ATTRIB_POINT)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
                 return pointPrim(elemoff);
-            if constexpr(TO == GA_ATTRIB_POINT)
+            else if constexpr(TO == GA_ATTRIB_POINT)
                 return elemoff;
-            if constexpr(TO == GA_ATTRIB_VERTEX)
+            else if constexpr(TO == GA_ATTRIB_VERTEX)
                 return pointVertex(elemoff);
         }
-        if constexpr(FROM == GA_ATTRIB_VERTEX)
+        else if constexpr(FROM == GA_ATTRIB_VERTEX)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
                 return vertexPrimitive(elemoff);
-            if constexpr(TO == GA_ATTRIB_POINT)
+            else if constexpr(TO == GA_ATTRIB_POINT)
                 return vertexPoint(elemoff);
-            if constexpr(TO == GA_ATTRIB_VERTEX)
+            else if constexpr(TO == GA_ATTRIB_VERTEX)
                 return elemoff;
         }
+        else
+            return GFE_INVALID_OFFSET;
     }
 
 
@@ -961,7 +978,7 @@ SYS_FORCE_INLINE bool destroyAttrib(GA_Attribute& attrib)
 { return getAttributes().destroyAttribute(&attrib); }
 
 SYS_FORCE_INLINE bool destroyAttrib(GA_Attribute* const attrib)
-{ return getAttributes().destroyAttribute(attrib); }
+{ return attrib ? getAttributes().destroyAttribute(attrib) : false; }
 
 SYS_FORCE_INLINE bool destroyNonDetachedAttrib(GA_Attribute& attrib)
 {
@@ -995,16 +1012,16 @@ SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* 
 { return GFE_Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
 
     
-SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib, const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib, const UT_StringRef& newName)
 {
     UT_ASSERT(!attrib.isDetached());
     return renameAttribute(attrib.getOwner(), attrib.getScope(), attrib.getName(), newName);
 }
     
-SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib, const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib, const UT_StringRef& newName)
 { return attrib ? renameAttrib(*attrib, newName) : false; }
     
-bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
+bool forceRenameAttribute(GA_Attribute& attrib, const UT_StringRef& newName)
 {
     if (attrib.isDetached())
         return false;
@@ -1014,10 +1031,10 @@ bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringHolder& newName)
     return renameAttrib(attrib, newName);
 }
 
-SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib, const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib, const UT_StringRef& newName)
 { return attrib ? forceRenameAttribute(*attrib, newName) : false; }
 
-SYS_FORCE_INLINE bool forceRenameAttribute(const GA_AttributeOwner owner, const UT_StringRef& attribName, const UT_StringHolder& newName)
+SYS_FORCE_INLINE bool forceRenameAttribute(const GA_AttributeOwner owner, const UT_StringRef& attribName, const UT_StringRef& newName)
 { return strcmp(attribName.c_str(), newName.c_str()) == 0 ? false : forceRenameAttribute(findAttribute(owner, attribName), newName); }
 
 
