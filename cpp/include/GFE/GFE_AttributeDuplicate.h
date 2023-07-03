@@ -12,10 +12,10 @@
 
 #include "UFE/UFE_SplittableString.h"
 
-class GFE_AttribDuplicate : public GFE_AttribCreateFilter {
+class GFE_AttribDuplicate : public GFE_AttribCreateFilterWithRef0 {
 
 public:
-    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
+    using GFE_AttribCreateFilterWithRef0::GFE_AttribCreateFilterWithRef0;
 
 
     void

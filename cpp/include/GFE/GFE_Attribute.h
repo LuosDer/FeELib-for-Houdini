@@ -94,8 +94,40 @@ static void accumulateT(GA_Attribute& attrib, const GA_SplittableRange& r)
 
 
 
-
-
+template<typename ARRAY_T>
+static void cloneArray(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{
+    UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
+    
+#if 1
+    outAttrib.replace(inAttrib);
+#else
+    const GA_RWHandleT<ARRAY_T> out_h(&outAttrib);
+    const GA_ROHandleT<ARRAY_T> in_h(&inAttrib);
+    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
+    UTparallelFor(geoSplittableRange, [&out_h, &in_h](const GA_SplittableRange& r)
+    {
+        ARRAY_T array;
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        {
+            GA_Offset start, end;
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+#if 1
+                    outAttrib.copy(elemoff, inAttrib, elemoff);
+#else
+                    in_h.get(elemoff, array);
+                    out_h.set(elemoff, array);
+#endif
+                }
+            }
+        }
+    }, subscribeRatio, minGrainSize);
+#endif
+}
 
 
 
@@ -248,6 +280,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
         //     case 3: cloneVec<UT_Vector3T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
         //     case 4: cloneVec<UT_Vector4T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
         //     }
+        break;
         case GA_STORE_INT32:
             switch (tupleSize)
             {
@@ -255,65 +288,8 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
             case 2: cloneVec<UT_Vector2T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             case 3: cloneVec<UT_Vector3T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             case 4: cloneVec<UT_Vector4T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            }
-        case GA_STORE_INT64:
-            switch (tupleSize)
-            {
-            case 1: clone               <int64> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 2: cloneVec<UT_Vector2T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 3: cloneVec<UT_Vector3T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 4: cloneVec<UT_Vector4T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            }
-        case GA_STORE_REAL16:
-            switch (tupleSize)
-            {
-            case 1: clone               <fpreal16> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 2: cloneVec<UT_Vector2T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 3: cloneVec<UT_Vector3T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 4: cloneVec<UT_Vector4T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            }
-        case GA_STORE_REAL32:
-            switch (tupleSize)
-            {
-            case 1: clone               <fpreal32> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 2: cloneVec<UT_Vector2T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 3: cloneVec<UT_Vector3T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 4: cloneVec<UT_Vector4T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            }
-        case GA_STORE_REAL64:
-            switch (tupleSize)
-            {
-            case 1: clone               <fpreal64> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 2: cloneVec<UT_Vector2T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 3: cloneVec<UT_Vector3T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 4: cloneVec<UT_Vector4T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             }
         break;
-        case GA_STORE_STRING: clone<UT_StringHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize);  break;
-        case GA_STORE_DICT:   clone<UT_OptionsHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-        default: UT_ASSERT_MSG(0, "not correct storage"); break;
-        }
-    }
-    else
-    {
-        switch (storage)
-        {
-        // case GA_STORE_INT16:
-        //     switch (tupleSize)
-        //     {
-        //     case 1: clone               <int16> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-        //     case 2: cloneVec<UT_Vector2T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-        //     case 3: cloneVec<UT_Vector3T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-        //     case 4: cloneVec<UT_Vector4T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-        //     }
-        case GA_STORE_INT32:
-            switch (tupleSize)
-            {
-            case 1: clone               <int32> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 2: cloneVec<UT_Vector2T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 3: cloneVec<UT_Vector3T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            case 4: cloneVec<UT_Vector4T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
-            }
         case GA_STORE_INT64:
             switch (tupleSize)
             {
@@ -322,6 +298,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
             case 3: cloneVec<UT_Vector3T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             case 4: cloneVec<UT_Vector4T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             }
+        break;
         case GA_STORE_REAL16:
             switch (tupleSize)
             {
@@ -330,6 +307,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
             case 3: cloneVec<UT_Vector3T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             case 4: cloneVec<UT_Vector4T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             }
+        break;
         case GA_STORE_REAL32:
             switch (tupleSize)
             {
@@ -338,6 +316,7 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
             case 3: cloneVec<UT_Vector3T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             case 4: cloneVec<UT_Vector4T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
             }
+        break;
         case GA_STORE_REAL64:
             switch (tupleSize)
             {
@@ -352,11 +331,91 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
         default: UT_ASSERT_MSG(0, "not correct storage"); break;
         }
     }
+    else
+    {
+        outAttrib.replace(inAttrib);
+    }
+    // else if (outAttrib.getAIFStringTuple())
+    // {
+    //     clone<UT_StringHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    // }
+    // else if (outAttrib.getAIFSharedDictTuple())
+    // {
+    //     clone<UT_OptionsHolder>(outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    // }
+    // else if (outAttrib.getAIFNumericArray())
+    // {
+    //     switch (storage)
+    //     {
+    //     // case GA_STORE_INT16:
+    //     //     switch (tupleSize)
+    //     //     {
+    //     //     case 1: clone               <int16> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     //     case 2: cloneVec<UT_Vector2T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     //     case 3: cloneVec<UT_Vector3T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     //     case 4: cloneVec<UT_Vector4T<int16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //     //     }
+    //     break;
+    //     case GA_STORE_INT32:
+    //         switch (tupleSize)
+    //         {
+    //         case 1: cloneArray               <int32> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 2: cloneArray<UT_Vector2T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 3: cloneArray<UT_Vector3T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 4: cloneArray<UT_Vector4T<int32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         }
+    //     break;
+    //     case GA_STORE_INT64:
+    //         switch (tupleSize)
+    //         {
+    //         case 1: cloneArray               <int64> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 2: cloneArray<UT_Vector2T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 3: cloneArray<UT_Vector3T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 4: cloneArray<UT_Vector4T<int64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         }
+    //     break;
+    //     case GA_STORE_REAL16:
+    //         switch (tupleSize)
+    //         {
+    //         case 1: cloneArray               <fpreal16> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 2: cloneArray<UT_Vector2T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 3: cloneArray<UT_Vector3T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 4: cloneArray<UT_Vector4T<fpreal16>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         }
+    //     break;
+    //     case GA_STORE_REAL32:
+    //         switch (tupleSize)
+    //         {
+    //         case 1: cloneArray               <fpreal32> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 2: cloneArray<UT_Vector2T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 3: cloneArray<UT_Vector3T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 4: cloneArray<UT_Vector4T<fpreal32>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         }
+    //     break;
+    //     case GA_STORE_REAL64:
+    //         switch (tupleSize)
+    //         {
+    //         case 1: cloneArray               <fpreal64> (outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 2: cloneArray<UT_Vector2T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 3: cloneArray<UT_Vector3T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         case 4: cloneArray<UT_Vector4T<fpreal64>>(outAttrib, inAttrib, subscribeRatio, minGrainSize); break;
+    //         }
+    //     break;
+    //     default: UT_ASSERT_MSG(0, "not correct storage"); break;
+    //     }
+    // }
+    // else if (outAttrib.getAIFSharedStringArray())
+    // {
+    //     cloneArray<UT_StringArray>(outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    // }
+    // else if (outAttrib.getAIFSharedDictArray())
+    // {
+    //     cloneArray<UT_Array<UT_OptionsHolder>>(outAttrib, inAttrib, subscribeRatio, minGrainSize);
+    // }
 }
     
 
-
-static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const UT_StringRef& name,
+SYS_FORCE_INLINE static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const UT_StringRef& name,
     const exint subscribeRatio = 64, const exint minGrainSize = 1024)
 {
     GA_Attribute* const outAttrib = geo.getAttributes().cloneAttribute(inAttrib.getOwner(), name, inAttrib, true);
@@ -372,6 +431,15 @@ SYS_FORCE_INLINE static GA_Attribute* clone(GA_Detail* const geo, const GA_Attri
     return clone(*geo, *inAttrib, name, subscribeRatio, minGrainSize);
 }
     
+SYS_FORCE_INLINE static GA_Attribute* clone(GA_Attribute& inAttrib, const UT_StringRef& name,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{ return clone(inAttrib.getDetail(), inAttrib, name, subscribeRatio, minGrainSize); }
+    
+SYS_FORCE_INLINE static GA_Attribute* clone(GA_Attribute* const inAttrib, const UT_StringRef& name,
+    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+{ UT_ASSERT_P(inAttrib); return clone(inAttrib->getDetail(), *inAttrib, name, subscribeRatio, minGrainSize); }
+    
+
 // SYS_FORCE_INLINE static GA_Attribute* clone(GA_Detail& geo, const GA_Attribute& inAttrib, const char* const name,
 //     const exint subscribeRatio = 64, const exint minGrainSize = 1024)
 // { clone(geo, inAttrib, UT_StringRef(name), subscribeRatio, minGrainSize); }
@@ -387,13 +455,11 @@ static GA_AttributeUPtr clone(GA_Detail& geo, const GA_Attribute& inAttrib,
     return GA_AttributeUPtr(outAttrib);
 }
 
-static GA_Attribute* clone(const GA_Attribute& inAttrib,
+    
+SYS_FORCE_INLINE static GA_AttributeUPtr clone(GA_Attribute& inAttrib,
     const exint subscribeRatio = 64, const exint minGrainSize = 1024)
-{
-    GA_Attribute* const outAttrib = inAttrib.clone(inAttrib.getIndexMap(), "", true);
-    clone(*outAttrib, inAttrib, subscribeRatio, minGrainSize);
-    return outAttrib;
-}
+{ return clone(inAttrib.getDetail(), inAttrib, subscribeRatio, minGrainSize); }
+
 
     
 

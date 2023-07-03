@@ -209,6 +209,23 @@ public:
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group) const
     { if(group) visualizeGroup(*group); }
 
+    SYS_FORCE_INLINE void setValidPosAttrib()
+    {
+        if (GFE_Type::isInvalidPosAttrib(posAttrib) || GFE_Type::isInvalidPosAttrib(posAttribNonConst))
+        {
+            posAttribNonConst = geo->getP();
+            posAttrib = posAttribNonConst;
+        }
+    }
+    
+    SYS_FORCE_INLINE void setValidConstPosAttrib()
+    {
+        if (GFE_Type::isInvalidPosAttrib(posAttrib))
+        {
+            posAttrib = geo->getP();
+        }
+    }
+
 
 private:
 
@@ -574,6 +591,16 @@ public:                                                                         
                                                                                                      \
     SYS_FORCE_INLINE void setPositionRef##NUM##Attrib(const UT_StringRef& attribName)                \
     { posRef##NUM##Attrib = geoRef##NUM->findPointAttribute(attribName); }                           \
+                                                                                                     \
+                                                                                                     \
+    SYS_FORCE_INLINE void setValidPosRef##NUM##Attrib()                                              \
+    {                                                                                                \
+        if (geoRef##NUM && GFE_Type::isInvalidPosAttrib(posRef##NUM##Attrib))                        \
+        {                                                                                            \
+            posRef##NUM##Attrib = geoRef##NUM->getP();                                               \
+        }                                                                                            \
+    }                                                                                                \
+                                                                                                     \
                                                                                                      \
                                                                                                      \
 private:                                                                                             \

@@ -50,20 +50,6 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
-        name    "keepEdgeGroup"
-        cppname "KeepEdgeGroup"
-        label   "Keep Edge Group"
-        type    string
-        default { "*" }
-    }
-    parm {
-        name    "queryGroup"
-        cppname "QueryGroup"
-        label   "Group"
-        type    string
-        default { "" }
-    }
-    parm {
         name    "useTargetGroup"
         cppname "UseTargetGroup"
         label   "Target Group"
@@ -71,7 +57,7 @@ static const char *theDsFile = R"THEDSFILE(
         nolabel
         joinnext
         default { "off" }
-        disablewhen "{ snapMethod != point } { hasinput(1) == 1 }"
+        disablewhen "{ snapMethod == grid } { hasinput(1) == 1 }"
     }
     parm {
         name    "targetGroup"
@@ -79,7 +65,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Target Group"
         type    string
         default { "" }
-        disablewhen "{ snapMethod != point } { hasinput(1) == 0 useTargetGroup == 0 } { hasinput(1) == 0 }"
+        disablewhen "{ snapMethod == grid } { hasinput(1) == 0 useTargetGroup == 0 } { hasinput(1) == 0 }"
     }
     parm {
         name    "modifyTarget"
@@ -87,7 +73,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Modify Target"
         type    toggle
         default { "off" }
-        disablewhen "{ snapMethod != point } { useTargetGroup == 0 }"
+        disablewhen "{ snapMethod == grid } { useTargetGroup == 0 }"
     }
     parm {
         name    "posAttrib"
@@ -148,6 +134,29 @@ static const char *theDsFile = R"THEDSFILE(
             range   { 0.001 10 }
         }
         parm {
+            name    "targetClass"
+            cppname "TargetClass"
+            label   "Target Class"
+            type    ordinal
+            default { "point" }
+            hidewhen "{ snapMethod != specified }"
+            menu {
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+                "detail"    "Detail"
+            }
+        }
+        parm {
+            name    "targetPointAttrib"
+            cppname "TargetPointAttrib"
+            label   "Target Point Attribute"
+            type    string
+            default { "snapTo" }
+            hidewhen "{ snapMethod != specified }"
+            parmtag { "sop_input" "0" }
+        }
+        parm {
             name    "usePositionSnapMethod"
             cppname "UsePositionSnapMethod"
             label   "Snap Positions"
@@ -155,7 +164,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            hidewhen "{ snapMethod != point }"
+            hidewhen "{ snapMethod == grid }"
         }
         parm {
             name    "positionSnapMethod"
@@ -163,8 +172,8 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Position Snap Method"
             type    ordinal
             default { "mean" }
-            disablewhen "{ snapMethod != point } { usePositionSnapMethod == 0 }"
-            hidewhen "{ snapMethod != point }"
+            disablewhen "{ snapMethod == grid } { usePositionSnapMethod == 0 }"
+            hidewhen "{ snapMethod == grid }"
             menu {
                 "first"     "First Match"
                 "last"      "Last Match"
@@ -273,8 +282,8 @@ static const char *theDsFile = R"THEDSFILE(
             range   { -1 1 }
         }
         parm {
-            name    "gridPow"
-            cppname "GridPow"
+            name    "gridPow2"
+            cppname "GridPow2"
             label   "Grid Power 2"
             type    integer
             size    3
@@ -294,9 +303,9 @@ static const char *theDsFile = R"THEDSFILE(
             range   { -1 1 }
         }
         parm {
-            name    "gridSnapType"
-            cppname "GridSnapType"
-            label   "Grid Snap Type"
+            name    "gridRound"
+            cppname "GridRound"
+            label   "Grid Round"
             type    ordinal
             default { "nearest" }
             hidewhen "{ snapMethod != grid }"
@@ -387,6 +396,13 @@ static const char *theDsFile = R"THEDSFILE(
             default { "off" }
         }
         parm {
+            name    "keepEdgeGroup"
+            cppname "KeepEdgeGroup"
+            label   "Keep Edge Group"
+            type    string
+            default { "*" }
+        }
+        parm {
             name    "createSnappedGroup"
             cppname "CreateSnappedGroup"
             label   "Create Snapped Points Group"
@@ -411,7 +427,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            disablewhen "{ snapMethod != point }"
+            disablewhen "{ snapMethod == grid }"
         }
         parm {
             name    "snappedAttribName"
@@ -419,7 +435,7 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Snapped Destination Attribute"
             type    string
             default { "snapTo" }
-            disablewhen "{ createSnappedAttrib == 0 } { snapMethod != point }"
+            disablewhen "{ createSnappedAttrib == 0 } { snapMethod == grid }"
         }
         multiparm {
             name    "numPointAttrib"
@@ -513,6 +529,10 @@ SOP_FeE_Fuse_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("posAttrib"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("pointAttribs#"_sh, &SOP_Node::pointAttribMenu);
+        templ.setChoiceListPtr("pointGroups#"_sh,  &SOP_Node::pointGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroup"_sh,  &SOP_Node::edgeGroupMenu);
     }
     return templ.templates();
 }
@@ -574,7 +594,7 @@ SOP_FeE_Fuse_1_0::cookVerb() const
 
 
 
-
+#if GFE_Fuse_UnderlyingAlgorithm_UseGU
 
 static GU_Snap::AttributeMergeMethod
 sopPosMergeMethod(const SOP_FeE_Fuse_1_0Parms::PositionSnapMethod parmPositionSnapMethod)
@@ -593,7 +613,7 @@ sopPosMergeMethod(const SOP_FeE_Fuse_1_0Parms::PositionSnapMethod parmPositionSn
     case PositionSnapMethod::SUMSQUARE:   return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_SUMSQUARE;  break;
     case PositionSnapMethod::RMS:         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_RMS;        break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Attrib Merge Method!");
+    UT_ASSERT_MSG(0, "Unhandled Position Merge Method!");
     return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;
 }
 
@@ -658,20 +678,159 @@ sopSnapAlgorithm(SOP_FeE_Fuse_1_0Parms::SnapAlgorithm parmSnapAlgorithm)
     return GU_Snap::PointSnapParms::SnapAlgorithm::ALGORITHM_CLOSEST_POINT;
 }
 
-
+    
 static int
-sopGridSnapType(SOP_FeE_Fuse_1_0Parms::GridSnapType parmGridSnapType)
+sopGridRound(SOP_FeE_Fuse_1_0Parms::GridRound parmGridRound)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
-    switch (parmGridSnapType)
+    switch (parmGridRound)
     {
-    case GridSnapType::NEAREST:    return 0; break;
-    case GridSnapType::DOWN:       return 1; break;
-    case GridSnapType::UP:         return 2; break;
+    case GridRound::NEAREST:    return 0; break;
+    case GridRound::DOWN:       return 1; break;
+    case GridRound::UP:         return 2; break;
     }
     UT_ASSERT_MSG(0, "Unhandled Snap Method!");
     return 0;
 }
+
+
+
+
+
+
+#else
+
+
+
+
+
+static SOP_Fuse_2_0Enums::PositionSnapMethod
+sopPosMergeMethod(const SOP_FeE_Fuse_1_0Parms::PositionSnapMethod parmPositionSnapMethod)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmPositionSnapMethod)
+    {
+    case PositionSnapMethod::FIRST:       return SOP_Fuse_2_0Enums::PositionSnapMethod::LOWEST;     break;
+    case PositionSnapMethod::LAST:        return SOP_Fuse_2_0Enums::PositionSnapMethod::HIGHEST;    break;
+    case PositionSnapMethod::MIN:         return SOP_Fuse_2_0Enums::PositionSnapMethod::MIN;        break;
+    case PositionSnapMethod::MAX:         return SOP_Fuse_2_0Enums::PositionSnapMethod::MAX;        break;
+    case PositionSnapMethod::MODE:        return SOP_Fuse_2_0Enums::PositionSnapMethod::MODE;       break;
+    case PositionSnapMethod::MEAN:        return SOP_Fuse_2_0Enums::PositionSnapMethod::AVERAGE;    break;
+    case PositionSnapMethod::MEDIAN:      return SOP_Fuse_2_0Enums::PositionSnapMethod::MEDIAN;     break;
+    case PositionSnapMethod::SUM:         return SOP_Fuse_2_0Enums::PositionSnapMethod::SUM;        break;
+    case PositionSnapMethod::SUMSQUARE:   return SOP_Fuse_2_0Enums::PositionSnapMethod::SUMSQUARE;  break;
+    case PositionSnapMethod::RMS:         return SOP_Fuse_2_0Enums::PositionSnapMethod::RMS;        break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Position Merge Method!");
+    return SOP_Fuse_2_0Enums::PositionSnapMethod::LOWEST;
+}
+
+static SOP_Fuse_2_0Enums::Attribsnapmethod
+sopAttribMergeMethod(const SOP_FeE_Fuse_1_0Parms::AttribMergeMethod parmAttribMergeMethod)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmAttribMergeMethod)
+    {
+    case AttribMergeMethod::FIRST:       return SOP_Fuse_2_0Enums::Attribsnapmethod::FIRST;      break;
+    case AttribMergeMethod::LAST:        return SOP_Fuse_2_0Enums::Attribsnapmethod::LAST;       break;
+    case AttribMergeMethod::MIN:         return SOP_Fuse_2_0Enums::Attribsnapmethod::MIN;        break;
+    case AttribMergeMethod::MAX:         return SOP_Fuse_2_0Enums::Attribsnapmethod::MAX;        break;
+    case AttribMergeMethod::MODE:        return SOP_Fuse_2_0Enums::Attribsnapmethod::MODE;       break;
+    case AttribMergeMethod::MEAN:        return SOP_Fuse_2_0Enums::Attribsnapmethod::MEAN;       break;
+    case AttribMergeMethod::MEDIAN:      return SOP_Fuse_2_0Enums::Attribsnapmethod::MEDIAN;     break;
+    case AttribMergeMethod::SUM:         return SOP_Fuse_2_0Enums::Attribsnapmethod::SUM;        break;
+    case AttribMergeMethod::SUMSQUARE:   return SOP_Fuse_2_0Enums::Attribsnapmethod::SUMSQUARE;  break;
+    case AttribMergeMethod::RMS:         return SOP_Fuse_2_0Enums::Attribsnapmethod::RMS;        break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Merge Method!");
+    return SOP_Fuse_2_0Enums::Attribsnapmethod::FIRST;
+}
+
+SYS_FORCE_INLINE static SOP_Fuse_2_0Enums::Attribsnapmethod
+sopAttribMergeMethod(const int64 parmAttribMergeMethod)
+{ return sopAttribMergeMethod(static_cast<SOP_FeE_Fuse_1_0Parms::AttribMergeMethod>(parmAttribMergeMethod)); }
+
+SYS_FORCE_INLINE static int64
+sopAttribMergeMethodInt64(const int64 parmAttribMergeMethod)
+{ return static_cast<int64>(sopAttribMergeMethod(parmAttribMergeMethod)); }
+
+
+    
+    
+static SOP_Fuse_2_0Enums::Grouppropagation
+sopGroupMergeMethod(const SOP_FeE_Fuse_1_0Parms::GroupMergeMethod parmGroupMergeMethod)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmGroupMergeMethod)
+    {
+    case GroupMergeMethod::FIRST:       return SOP_Fuse_2_0Enums::Grouppropagation::LEASTPOINTNUMBER;      break;
+    case GroupMergeMethod::LAST:        return SOP_Fuse_2_0Enums::Grouppropagation::GREATESTPOINTNUMBER;   break;
+    case GroupMergeMethod::MIN:         return SOP_Fuse_2_0Enums::Grouppropagation::INTERSECT;             break;
+    case GroupMergeMethod::MAX:         return SOP_Fuse_2_0Enums::Grouppropagation::UNION;                 break;
+    case GroupMergeMethod::MODE:        return SOP_Fuse_2_0Enums::Grouppropagation::MODE;                  break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Merge Method!");
+    return SOP_Fuse_2_0Enums::Grouppropagation::LEASTPOINTNUMBER;
+}
+
+SYS_FORCE_INLINE static SOP_Fuse_2_0Enums::Grouppropagation
+sopGroupMergeMethod(const int64 parmGroupMergeMethod)
+{ return sopGroupMergeMethod(static_cast<SOP_FeE_Fuse_1_0Parms::GroupMergeMethod>(parmGroupMergeMethod)); }
+
+SYS_FORCE_INLINE static int64
+sopGroupMergeMethodInt64(const int64 parmAttribMergeMethod)
+{ return static_cast<int64>(sopGroupMergeMethod(parmAttribMergeMethod)); }
+
+
+
+
+static SOP_Fuse_2_0Enums::Algorithm
+sopSnapAlgorithm(SOP_FeE_Fuse_1_0Parms::SnapAlgorithm parmSnapAlgorithm)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmSnapAlgorithm)
+    {
+    case SnapAlgorithm::CLOSEST:     return SOP_Fuse_2_0Enums::Algorithm::CLOSEST;    break;
+    case SnapAlgorithm::LOWEST:      return SOP_Fuse_2_0Enums::Algorithm::LOWEST;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Snap Algorithm!");
+    return SOP_Fuse_2_0Enums::Algorithm::CLOSEST;
+}
+
+    
+static SOP_Fuse_2_0Enums::Gridtype
+sopGridType(SOP_FeE_Fuse_1_0Parms::GridType parmGridType)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmGridType)
+    {
+    case GridType::SPACING: return SOP_Fuse_2_0Enums::Gridtype::SPACING;  break;
+    case GridType::LINES:   return SOP_Fuse_2_0Enums::Gridtype::LINES;    break;
+    case GridType::POW2:    return SOP_Fuse_2_0Enums::Gridtype::POW2;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Grid Type!");
+    return SOP_Fuse_2_0Enums::Gridtype::SPACING;
+}
+    
+static SOP_Fuse_2_0Enums::Gridround
+sopGridRound(SOP_FeE_Fuse_1_0Parms::GridRound parmGridRound)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmGridRound)
+    {
+    case GridRound::NEAREST:    return SOP_Fuse_2_0Enums::Gridround::NEAREST; break;
+    case GridRound::DOWN:       return SOP_Fuse_2_0Enums::Gridround::DOWN;    break;
+    case GridRound::UP:         return SOP_Fuse_2_0Enums::Gridround::UP;      break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Grid Round!");
+    return SOP_Fuse_2_0Enums::Gridround::NEAREST;
+}
+
+    
+#endif
+
+    
+
 
 static GFE_Fuse::Method
 sopMethod(SOP_FeE_Fuse_1_0Parms::SnapMethod parmMethod)
@@ -703,6 +862,21 @@ sopGroupType(SOP_FeE_Fuse_1_0Parms::GroupType parmGroupType)
     return GA_GROUP_INVALID;
 }
 
+static GA_AttributeOwner
+sopAttribOwner(SOP_FeE_Fuse_1_0Parms::TargetClass parmAttribOwner)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmAttribOwner)
+    {
+    case TargetClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case TargetClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case TargetClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case TargetClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Owner!");
+    return GA_ATTRIB_INVALID;
+}
+
 
 void
 SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -719,9 +893,9 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_Fuse::Method method = sopMethod(sopparms.getSnapMethod());
-    const int gridSnapType = sopGridSnapType(sopparms.getGridSnapType());
-    
+    const GA_AttributeOwner targetClass = sopAttribOwner(sopparms.getTargetClass());
 
+    
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -748,33 +922,67 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     switch (method)
     {
     case GFE_Fuse::Method::Point:
-        fuse.setPointComputeParm(sopparms.getSnapDist(), sopSnapAlgorithm(sopparms.getSnapAlgorithm()), sopparms.getMismatchAttrib());
+        fuse.setPointComputeParm(sopparms.getUseSnapDist(), sopparms.getSnapDist(), sopSnapAlgorithm(sopparms.getSnapAlgorithm()));
         if (sopparms.getUseRadiusAttrib())
             fuse.setRadiusAttrib(sopparms.getRadiusAttrib());
     
         if (sopparms.getUseMatchAttrib())
         {
             fuse.setMatchAttrib(sopparms.getMatchAttrib());
-            fuse.setMatchTol(sopparms.getMatchTol());
+            fuse.setPointMatchComputeParm(sopparms.getMatchTol(), sopparms.getMismatchAttrib());
         }
         
         if (sopparms.getUsePositionSnapMethod())
             fuse.setPosMergeMethod(sopPosMergeMethod(sopparms.getPositionSnapMethod()));
         
-        break;
+    break;
     case GFE_Fuse::Method::Grid:
-        fuse.setGridComputeParm(gridSnapType, sopparms.getGridSpacing(), sopparms.getGridOffset(), sopparms.getUseGridTol() ? sopparms.getGridTol() : SYS_FP64_MAX);
+        
+#if GFE_Fuse_UnderlyingAlgorithm_UseGU
+        fuse.setGridComputeParm(sopGridRound(sopparms.getGridRound()),
+            sopparms.getGridSpacing(), sopparms.getGridOffset(),
+            sopparms.getUseGridTol() ? sopparms.getGridTol() : SYS_FP64_MAX);
+#else
+        fuse.setGridComputeParm(sopGridType(sopparms.getGridType()), sopGridRound(sopparms.getGridRound()),
+            sopparms.getGridSpacing(), sopparms.getGridLines(), sopparms.getGridPow2(),
+            sopparms.getUseGridTol(), sopparms.getGridTol());
+#endif
+    
+        
     break;
     case GFE_Fuse::Method::Specified:
+        fuse.setSpecifiedComputeParm(targetClass, sopparms.getTargetPointAttrib());
+        
+        if (sopparms.getUsePositionSnapMethod())
+            fuse.setPosMergeMethod(sopPosMergeMethod(sopparms.getPositionSnapMethod()));
+        
     break;
     default: UT_ASSERT_MSG(0, "Unhandled Fuse Method"); break;
     }
 
+#if GFE_Fuse_UnderlyingAlgorithm_UseGU
     if (sopparms.getCreateSnappedGroup())
         fuse.setSnappedGroup(false, sopparms.getSnappedGroupName());
     if (sopparms.getCreateSnappedAttrib())
-        fuse.setSnapAttrib(false, sopparms.getSnappedGroupName());
+        fuse.setSnapAttrib(false, sopparms.getSnappedAttribName());
+#else
+    if (sopparms.getCreateSnappedGroup())
+        fuse.setSnappedGroup(sopparms.getSnappedGroupName());
+    if (sopparms.getCreateSnappedAttrib())
+        fuse.setSnapAttrib(sopparms.getSnappedAttribName());
+#endif
+    
 
+
+
+
+
+        
+
+#if GFE_Fuse_UnderlyingAlgorithm_UseGU
+
+
+        
     const UT_Array<SOP_FeE_Fuse_1_0Parms::NumPointAttrib>& numPointAttrib = sopparms.getNumPointAttrib();
     const size_t sizeAttrib = numPointAttrib.size();
     if (fuse.getRef0AttribArray().isValid())
@@ -807,8 +1015,11 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
             
             for (size_t j = sizeStart; j < sizeEnd; ++j)
             {
-                GA_Attribute* const dstGroup = attribArray[j];
-                fuse.emplaceMergeAttribs(GU_Snap::AttributeMergeData(mergeMethod, dstGroup, dstGroup));
+                GA_Attribute* const dstAttrib = attribArray[j];
+                // UT_StringHolder name = dstAttrib->getName();
+                // name += "__GFE_Temp_";
+                // const GA_Attribute* const srcAttrib = GFE_Attribute::clone(outGeo0, *dstAttrib, name);
+                fuse.emplaceMergeAttribs(GU_Snap::AttributeMergeData(mergeMethod, dstAttrib, dstAttrib));
             }
         }
     }
@@ -852,8 +1063,43 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
             }
         }
     }
+
+
+
+
+        
+#else
+
+
+        
+    const UT_Array<SOP_FeE_Fuse_1_0Parms::NumPointAttrib>& numPointAttrib = sopparms.getNumPointAttrib();
+    const size_t sizeAttrib = numPointAttrib.size();
+    for (size_t i = 0; i < sizeAttrib; ++i)
+    {
+        SOP_Fuse_2_0Parms::Numpointattribs numAttribs;
+        numAttribs.attribsnapmethod = sopAttribMergeMethodInt64(numPointAttrib[i].attribMergeMethod);
+        numAttribs.pointattribnames = numPointAttrib[i].pointAttribs;
+        fuse.emplaceMergeAttribs(numAttribs);
+    }
+
+    
+    const UT_Array<SOP_FeE_Fuse_1_0Parms::NumPointGroups>& numGroupAttrib = sopparms.getNumPointGroups();
+    const size_t sizeGroup = numGroupAttrib.size();
+    for (size_t i = 0; i < sizeGroup; ++i)
+    {
+        SOP_Fuse_2_0Parms::Numgroups numAttribs;
+        numAttribs.grouppropagation = sopGroupMergeMethodInt64(numGroupAttrib[i].groupMergeMethod);
+        numAttribs.pointgroupnames = numGroupAttrib[i].pointGroups;
+        fuse.emplaceMergeAttribs(numAttribs);
+    }
+
+
+    fuse.setRecomputeNormal(sopparms.getRecomputeNormal());
+    
+#endif
     
 
+    fuse.setKeepEdgeGroup(sopparms.getKeepEdgeGroup());
     
     fuse.groupParser.setGroup(groupType, sopparms.getGroup());
 
