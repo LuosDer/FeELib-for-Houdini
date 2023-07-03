@@ -69,8 +69,8 @@ static const char *theDsFile = R"THEDSFILE(
         default { "area" }
     }
     parm {
-        name    "posAttribName"
-        cppname "PosAttribName"
+        name    "posAttrib"
+        cppname "PosAttrib"
         label   "Position Attribute"
         type    string
         default { "P" }
@@ -109,7 +109,8 @@ SOP_FeE_Measure_3_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("posAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("posAttrib"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("measureAttribName"_sh, &SOP_Node::primAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -249,7 +250,7 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
  */
     GFE_Measure measure(outGeo0, cookparms);
     measure.groupParser.setGroup(groupType, sopparms.getGroup());
-    measure.setPositionAttrib(sopparms.getPosAttribName());
+    measure.setPositionAttrib(sopparms.getPosAttrib());
     measure.setComputeParm(measureType,
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     

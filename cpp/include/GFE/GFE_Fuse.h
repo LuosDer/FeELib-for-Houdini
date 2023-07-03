@@ -50,6 +50,7 @@ enum Method
 #if !GFE_Fuse_UnderlyingAlgorithm_UseGU
         fuseParms.setUsePositionSnapMethod(false);
         fuseParms.setRecomputenml(false);
+        fuseParms.setAlgorithm(SOP_Fuse_2_0Enums::Algorithm::CLOSEST);
 #endif
     }
 
@@ -777,6 +778,8 @@ void fuseKeepEdgeGroup()
     geoPreFuse->replaceWith(*geo);
 
     
+    ::std::vector<GA_Offset> flagArray(geo->getNumPoints(), GFE_INVALID_OFFSET);
+    
     GU_DetailHandle geo_h;
     geo_h.allocateAndSet(geo->asGU_Detail(), false);
     
@@ -794,10 +797,24 @@ void fuseKeepEdgeGroup()
     
     fuseVerb->cook(fuseCookparms2);
     
-    const GA_Attribute* const snapToAttrib = geo->findPointAttribute(__TEMP_GFE_Fuse_SnapAttribName);
+    const GA_Attribute* const snapToAttrib    = geo->findPointAttribute(__TEMP_GFE_Fuse_SnapAttribName);
     const GA_Attribute* const snapToAttribRef = geoPreFuse->findPointAttribute(__TEMP_GFE_Fuse_SnapAttribName);
     const GA_ROHandleT<GA_Offset> snapTo_h(snapToAttrib);
     const GA_ROHandleT<GA_Offset> snapToRef_h(snapToAttribRef);
+    
+    GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> snapTo_ph(snapToAttrib);
+    for (GA_PageIterator pit = geo->getPointSplittableRange().beginPages(); !pit.atEnd(); ++pit)
+    {
+        GA_Offset start, end;
+        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+        {
+            snapTo_ph.setPage(start);
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                flagArray[snapTo_ph.value(elemoff)] = elemoff;
+            }
+        }
+    }
     
     const size_t numEdgeGroups = keepEdgeGroupArray.size();
     for (size_t i = 0; i < numEdgeGroups; ++i)
@@ -814,11 +831,13 @@ void fuseKeepEdgeGroup()
             GA_Offset p0 = snapToRef_h.get(edge.p0());
             if (GFE_Type::isInvalidOffset(p0))
                 p0 = edge.p0();
+            UT_ASSERT_P(p0 < flagArray.size());
             
             GA_Offset p1 = snapToRef_h.get(edge.p1());
             if (GFE_Type::isInvalidOffset(p1))
                 p1 = edge.p1();
-            edgeGroup->add(p0, p1);
+            UT_ASSERT_P(p1 < flagArray.size());
+            edgeGroup->add(flagArray[p0], flagArray[p1]);
         }
     }
     geo->destroyAttrib(geo->findAttribute(GA_ATTRIB_POINT, __TEMP_GFE_Fuse_SnapAttribName));

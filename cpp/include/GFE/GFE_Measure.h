@@ -84,8 +84,7 @@ public:
 #define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);                       \
         fpreal64 FUNC_NAME()                                                  \
         {                                                                     \
-            if (!posAttrib)                                                   \
-                posAttrib = geo->getP();                                      \
+            setValidPosAttrib();                                              \
             switch (posAttrib->getAIFTuple()->getStorage(posAttrib))          \
             {                                                                 \
                 case GA_STORE_REAL32: return FUNC_NAME<fpreal32>();  break;   \
@@ -145,8 +144,7 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        if (!posAttrib)
-            posAttrib = geo->getP();
+        setValidPosAttrib();
 
         measureAttrib = getOutAttribArray().last();
 #if 1
