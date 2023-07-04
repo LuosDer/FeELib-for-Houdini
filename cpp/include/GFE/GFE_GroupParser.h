@@ -250,7 +250,7 @@ public:
     }
 
     SYS_FORCE_INLINE void setGroup(const GFE_GroupParser& groupParser)
-    { setGroup(groupParser.getGroup()); }
+    { groupParser.getHasGroup() ? setGroup(groupParser.getGroup()) : clear(); }
 
     
     void setGroup(const GA_PrimitiveGroup* const group)

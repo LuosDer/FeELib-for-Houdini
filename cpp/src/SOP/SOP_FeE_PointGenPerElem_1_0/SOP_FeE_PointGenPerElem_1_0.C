@@ -103,6 +103,14 @@ static const char *theDsFile = R"THEDSFILE(
         default { "index" }
         disablewhen "{ outSrcElemoffAttrib == 0 }"
     }
+    parm {
+        name    "outAsOffset"
+        cppname "OutAsOffset"
+        label   "Out as Offset"
+        type    toggle
+        default { "off" }
+        disablewhen "{ outSrcElemoffAttrib == 0 }"
+    }
 
     parm {
         name    "subscribeRatio"
@@ -246,8 +254,14 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
-    
+
+/*
+        GFE_PointGenPerElem pointGenPerElem(geo, geoSrc, cookparms);
+        pointGenPerElem.elementClass = ;
+        pointGenPerElem.srcElemoffAttribName = ;
+        pointGenPerElem.compute();
+ */
+
     GFE_PointGenPerElem pointGenPerElem(outGeo0, inGeo0, cookparms);
     
     pointGenPerElem.setComputeParm(elementClass, sopparms.getSetPositionOnElem(),
@@ -257,7 +271,11 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
         pointGenPerElem.setNumPointAttrib(sopparms.getNumPointAttrib());
     
     if (sopparms.getOutSrcElemoffAttrib())
-        pointGenPerElem.setSrcElemoffAttrib(sopparms.getSrcElemoffAttribName());
+    {
+        pointGenPerElem.srcElemoffAttribName = sopparms.getSrcElemoffAttribName();
+        pointGenPerElem.outAsOffset = sopparms.getOutAsOffset();
+        //pointGenPerElem.setSrcElemoffAttrib(sopparms.getSrcElemoffAttribName());
+    }
     
     pointGenPerElem.groupParser.setGroup(groupType, sopparms.getGroup());
     pointGenPerElem.computeAndBumpDataId();

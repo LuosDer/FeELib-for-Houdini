@@ -349,12 +349,93 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
     }
     
     SYS_FORCE_INLINE static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    { group.combine(&groupRef); }
+
+
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    static void groupUnionVertexEdge(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
-        group.combine(&groupRef);
+        const GA_Detail& geo = group.getDetail();
+        UT_ASSERT_P(&geo == &groupRef.getDetail());
+        
+        GA_EdgeGroupUPtr edgeGroupUPtr;
+        const GA_EdgeGroup* edgeGroupRef;
+        if (reverse)
+        {
+            edgeGroupUPtr = geo.createDetachedEdgeGroup();
+            GA_EdgeGroup* const edgeGroupTmp = edgeGroupUPtr.get();
+            edgeGroupTmp->combine(&groupRef);
+            edgeGroupTmp->toggleEntries();
+            edgeGroupRef = edgeGroupTmp;
+        }
+        else
+        {
+            edgeGroupRef = &groupRef;
+        }
+        for (GA_EdgeGroup::const_iterator it = edgeGroupRef->begin(); !it.atEnd(); ++it)
+        {
+            group.setElement(edgeVertex(geo, *it), true);
+        }
+    }
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+
+private:
+    
+    static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
+    {
+        GA_Offset result = edgeVertexSub(geo, ptoff0, ptoff1);
+        if (GFE_Type::isInvalidOffset(result))
+            result = edgeVertexSub(geo, ptoff1, ptoff0);
+        return result;
+    }
+    
+    SYS_FORCE_INLINE static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Edge& edge)
+    { return edgeVertex(geo, edge.p0(), edge.p1()); }
+    
+
+    static GA_Offset edgeVertexSub(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
+    {
+        for (GA_Offset vtxoff = geo.pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
+        {
+            const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
+            const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
+            for (GA_Size vtxpnum = 0; vtxpnum <= numvtx; ++vtxpnum)
+            {
+                const GA_Offset primVtx = geo.getPrimitiveVertexOffset(primoff, vtxpnum);
+                const GA_Offset primPoint = geo.vertexPoint(primVtx);
+                if (primPoint != ptoff0)
+                    continue;
+                
+                GA_Size vtxpnum_next = vtxpnum+1;
+                if (vtxpnum_next == numvtx)
+                {
+                    if (!geo.getPrimitiveClosedFlag(primoff))
+                        break;
+                    vtxpnum_next = 0;
+                }
+                const GA_Offset primPoint_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
+                
+                if (primPoint_next == ptoff1)
+                    return primVtx;
+                //return getPrimitiveVertexOffset(primoff, vtxpnum_next);
+            }
+        }
+        return GFE_INVALID_OFFSET;
     }
 
 
-
+    
+public:
     
     /////////////////////////// GA_EdgeGroup //////////////////////////
 

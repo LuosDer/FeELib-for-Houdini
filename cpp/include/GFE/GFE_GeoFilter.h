@@ -219,12 +219,7 @@ public:
     }
     
     SYS_FORCE_INLINE void setValidConstPosAttrib()
-    {
-        if (GFE_Type::isInvalidPosAttrib(posAttrib))
-        {
-            posAttrib = geo->getP();
-        }
-    }
+    { if (GFE_Type::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); }
 
 
 private:

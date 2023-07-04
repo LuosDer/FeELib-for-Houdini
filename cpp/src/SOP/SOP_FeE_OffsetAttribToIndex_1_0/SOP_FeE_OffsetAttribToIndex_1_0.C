@@ -209,12 +209,19 @@ SOP_FeE_OffsetAttribToIndex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
+/*
 
+    GFE_OffsetAttribToIndex offsetAttribToIndex(geo, cookparms);
+    offsetAttribToIndex.offsetToIndex = true;
+    offsetAttribToIndex.getOutAttribArray().appends(GA_ATTRIB_PRIMITIVE, );
+    offsetAttribToIndex.compute();
+ 
+ */
+    
     GFE_OffsetAttribToIndex offsetAttribToIndex(outGeo0, cookparms);
 
     offsetAttribToIndex.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    //offsetAttribToIndex.offsetToIndex = sopparms.getOffsetToIndex();
     offsetAttribToIndex.setComputeParm(sopparms.getOffsetToIndex(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     offsetAttribToIndex.getOutAttribArray().appends(GA_ATTRIB_PRIMITIVE, sopparms.getPrimAttribName());
     offsetAttribToIndex.getOutAttribArray().appends(GA_ATTRIB_POINT, sopparms.getPointAttribName());

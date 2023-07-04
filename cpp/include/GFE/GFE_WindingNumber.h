@@ -645,32 +645,149 @@ private:
         if (getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
             return false;
 
-        GA_Attribute* outWNAttrib = nullptr;
-        const size_t size = getOutAttribArray().size();
-        for (size_t i = 0; i < size; i++)
+        GA_PrimitiveGroup* outPrimGroup  = nullptr;
+        GA_PointGroup*     outPointGroup = nullptr;
+        GA_EdgeGroup*      outEdgeGroup  = nullptr;
+        GA_Attribute* outPrimAttrib  = nullptr;
+        GA_Attribute* outPointAttrib = nullptr;
+        
+        for (size_t i = getOutGroupArray().size()-1; ; --i)
         {
-            outWNAttrib = getOutAttribArray()[i];
-            const GA_AIFTuple* const aifTuple = outWNAttrib->getAIFTuple();
-            if (aifTuple)
+            switch (getOutGroupArray()[i]->classType())
+            {
+            case GA_GROUP_PRIMITIVE: UT_ASSERT_MSG(!outPrimGroup,  "already have prim  group"); outPrimGroup  = getOutGroupArray().getPrimitiveGroup(i); break;
+            case GA_GROUP_POINT:     UT_ASSERT_MSG(!outPointGroup, "already have point group"); outPointGroup = getOutGroupArray().getPointGroup(i);     break;
+            case GA_GROUP_EDGE:      UT_ASSERT_MSG(!outEdgeGroup,  "already have edge  group"); outEdgeGroup  = getOutGroupArray().getEdgeGroup(i);      break;
+            default: getOutAttribArray().erase(i); break;
+            }
+        }
+
+        for (size_t i = getOutAttribArray().size()-1; ; --i)
+        {
+            switch (getOutAttribArray()[i]->getOwner())
+            {
+            case GA_ATTRIB_PRIMITIVE: UT_ASSERT_MSG(!outPrimAttrib,  "already have prim  attrib"); outPrimAttrib  = getOutGroupArray().getPrimitiveGroup(i); break;
+            case GA_ATTRIB_POINT:     UT_ASSERT_MSG(!outPointAttrib, "already have point attrib"); outPointAttrib = getOutGroupArray().getPointGroup(i);     break;
+            default: getOutAttribArray().erase(i); break;
+            }
+        }
+
+        const GA_Storage storage = geo->getPreferredStorageF();
+        
+        if (outPrimGroup || outPrimAttrib)
+        {
+            GU_DetailHandle geoTmp_h;
+            geoTmp = new GU_Detail();
+            geoTmp_h.allocateAndSet(geoTmp)
+            geoPoint = static_cast<GA_Detail*>(geoTmp);
+            
+            GFE_PointGenPerElem pointGenPerElem(geoTmp, geo, cookparms);
+            pointGenPerElem.elemType = GA_GROUP_PRIMITIVE;
+            pointGenPerElem.srcElemoffAttribName = "";
+            pointGenPerElem.compute();
+            
+            GA_Attribute* const srcElemoffAttrib = pointGenPerElem.getSrcElemoffAttrib();
+            GA_ATINumericUPtr wnAttribUPtr = geoPoint->getAttributes().createDetachedTupleAttribute(GA_ATTRIB_POINT, storage, 1);
+            wnAttrib = wnAttribUPtr.get();
+            switch (storage)
+            {
+            case GA_STORE_REAL16:
+            case GA_STORE_REAL32: computeWindingNumber<fpreal32>(); break;
+            case GA_STORE_REAL64: computeWindingNumber<fpreal64>(); break;
+            }
+            
+            groupSetter = getOutGroupArray()[0];
+            UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
+            {
+                GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(wnAttrib);
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            FLOAT_T windingNumber = attrib_ph.value(elemoff);
+                            windingNumber = abs(windingNumber);
+
+                            if (asSolidAngle)
+                                windingNumber /= PI * 2.0;
+
+                            bool outval;
+                            if (groupInGeoPoint && groupOnGeoPoint)
+                            {
+                                outval = windingNumber > 0.5 - pointInMeshThreshold;
+                            }
+                            else
+                            {
+                                if (groupInGeoPoint)
+                                {
+                                    outval = windingNumber > 0.5 + pointInMeshThreshold;
+                                }
+                                if (groupOnGeoPoint)
+                                {
+                                    outval = windingNumber > (0.5 - pointInMeshThreshold) && windingNumber < (0.5 + pointInMeshThreshold);
+                                }
+                            }
+                        
+                            groupSetter.set(elemoff, outval);
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+            
+            
+        }
+        if (outPointAttrib || outPointGroup)
+        {
+            pointGenPerElem.elemType = GA_GROUP_PRIMITIVE;
+            pointGenPerElem.srcElemoffAttribName = ;
+            pointGenPerElem.compute();
+        }
+        
+        if (outEdgeGroup)
+        {
+            pointGenPerElem.elemType = GA_GROUP_PRIMITIVE;
+            pointGenPerElem.srcElemoffAttribName = ;
+            pointGenPerElem.compute();
+        }
+        
+        for (size_t i = getOutAttribArray().size()-1; ; --i)
+        {
+            wnAttrib = getOutAttribArray()[i];
+            if (wnAttrib->getAIFTuple())
+                break;
+            switch (wnAttrib->getOwner())
+            {
+            case GA_GROUP_PRIMITIVE: break;
+            case GA_GROUP_POINT:     break;
+            case GA_GROUP_EDGE:      break;
+            }
+            getOutAttribArray().erase(i);
+            if (i <= 0)
                 break;
         }
         
-        if (!outWNAttrib && getOutGroupArray().isEmpty())
+    
+        if (!wnAttrib && getOutGroupArray().isEmpty())
             return false;
 
         if (groupParser.isEmpty())
             return true;
 
-        if (!outWNAttrib)
+        if (!wnAttrib)
         {
             const GA_GroupType groupType = getOutGroupArray()[0]->classType();
         }
+
+        
         switch (groupType)
         {
         case GA_GROUP_PRIMITIVE:
             break;
         case GA_GROUP_POINT:
-            wnAttribPtr = outWNAttrib;
+            wnAttrib = outWNAttrib;
             break;
         case GA_GROUP_EDGE:
             
@@ -680,26 +797,22 @@ private:
             findOrCreateTuple(true, GFE_Type::attributeOwner_groupType(getOutGroupArray()[0]->classType()));
         
         
-        GU_DetailHandle geoTmp_h;
-        GU_Detail* geoTmp = new GU_Detail;
-        geoTmp_h.allocateAndSet(geoTmp);
-        geoTmp->replaceWith(*geo);
         
-        if (outWNAttrib->getOwner() == GA_ATTRIB_PRIMITIVE)
+        if (wnAttrib->getOwner() == GA_ATTRIB_PRIMITIVE)
         {
             GFE_PointGenPerElem pointGenPerElem(geoTmp, cookparms);
             pointGenPerElem.compute();
         }
-        switch (wnAttribPtr->getAIFTuple()->getStorage(wnAttribPtr))
+        switch (wnAttrib->getAIFTuple()->getStorage(wnAttrib))
         {
         case GA_STORE_REAL16:
         case GA_STORE_REAL32: computeWindingNumber<fpreal32>(); break;
         case GA_STORE_REAL64: computeWindingNumber<fpreal64>(); break;
         }
 
-        if (outWNAttrib->getOwner() == GA_ATTRIB_PRIMITIVE)
+        if (wnAttrib->getOwner() == GA_ATTRIB_PRIMITIVE)
         {
-            GFE_AttribCopy(geo, )
+            GFE_AttribCopy(geoPoint, )
             outWNAttrib
         }
         if (doDelGroupElement)
@@ -712,9 +825,9 @@ private:
     template<typename FLOAT_T>
     void computeWindingNumber()
     {
-        UT_ASSERT_P(wnAttribPtr);
+        UT_ASSERT_P(wnAttrib);
 
-        const GA_RWHandleT<FLOAT_T> wn_h(wnAttribPtr);
+        const GA_RWHandleT<FLOAT_T> wn_h(wnAttrib);
         
         const GA_SplittableRange geoPointRange = groupParser.getPointSplittableRange();
         const GA_PrimitiveGroup* const geoRefMeshGroup = groupParserRef0.getPrimitiveGroup();
@@ -1347,7 +1460,7 @@ private:
         template<typename FLOAT_T>
         void
             sop3DFullAccuracy(
-                const GA_SplittableRange & geoPointRange,
+                const GA_SplittableRange& geoPointRange,
                 const GA_PrimitiveGroup* const geoRefMeshGroup,
                 const GA_RWHandleT<FLOAT_T>&wn_h,
                 const bool asSolidAngle,
@@ -1381,7 +1494,7 @@ private:
                         if (boss.wasInterrupted())
                             return;
 
-                        const UT_Vector3T<FLOAT_T>& query_point = geo->getPos3D(ptoff);
+                        const UT_Vector3T<FLOAT_T>& query_point = geoPoint->getPos3D(ptoff);
 
                         // NOTE: We can't use UTparallelReduce, because that would have
                         //       nondeterministic roundoff error due to floating-point
@@ -1442,7 +1555,7 @@ private:
                         if (boss.wasInterrupted())
                             return;
 
-                        const UT_Vector3T<FLOAT_T>& query_point_3d = geo->getPos3T<FLOAT_T>(ptoff);
+                        const UT_Vector3T<FLOAT_T>& query_point_3d = geoPoint->getPos3T<FLOAT_T>(ptoff);
                         const UT_Vector2T<FLOAT_T> query_point(query_point_3d[axis0], query_point_3d[axis1]);
 
                         // NOTE: We can't use UTparallelReduce, because that would have
@@ -1488,7 +1601,7 @@ private:
 
                     for (GA_Offset ptoff = start; ptoff != end; ++ptoff)
                     {
-                        const UT_Vector3T<FLOAT_T>& query_point = geo->getPos3T<FLOAT_T>(ptoff);
+                        const UT_Vector3T<FLOAT_T>& query_point = geoPoint->getPos3T<FLOAT_T>(ptoff);
 
                         FLOAT_T sum = solid_angle_tree.computeSolidAngle(query_point, accuracyScale);
 
@@ -1505,7 +1618,7 @@ private:
 
         template<typename FLOAT_T>
         void sop2DApproximate(
-                const GA_SplittableRange & geoPointRange,
+                const GA_SplittableRange& geoPointRange,
                 const UT_SubtendedAngle<float, float>&subtended_angle_tree,
                 const fpreal accuracyScale,
                 const GA_RWHandleT<FLOAT_T>&wn_h,
@@ -1527,7 +1640,7 @@ private:
 
                     for (GA_Offset ptoff = start; ptoff != end; ++ptoff)
                     {
-                        const UT_Vector3T<FLOAT_T>& query_point_3d = geo->getPos3T<FLOAT_T>(ptoff);
+                        const UT_Vector3T<FLOAT_T>& query_point_3d = geoPoint->getPos3T<FLOAT_T>(ptoff);
                         const UT_Vector2T<FLOAT_T> query_point(query_point_3d[axis0], query_point_3d[axis1]);
 
                         FLOAT_T sum = subtended_angle_tree.computeAngle(query_point, accuracyScale);
@@ -1560,7 +1673,7 @@ private:
         groupSetter = getOutGroupArray()[0];
         UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(wnAttribPtr);
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(wnAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -1616,7 +1729,9 @@ public:
     fpreal pointInMeshThreshold = 1e-05;
 
 private:
-    GA_Attribute* wnAttribPtr;
+    GA_Attribute* wnAttrib;
+    GU_Detail* geoTmp;
+    GFE_Detail* geoPoint;
     
     GFE_WindingNumber_Cache* sopcache;
     

@@ -28,6 +28,7 @@ public:
         setComputeParm(
             const GA_GroupType elemType = GA_GROUP_PRIMITIVE,
             const bool setPositionOnElem = true,
+            const bool keepSrcElemAttrib = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
@@ -35,6 +36,7 @@ public:
         setHasComputed();
         this->elemType           = elemType;
         this->setPositionOnElem  = setPositionOnElem;
+        this->keepSrcElemAttrib  = keepSrcElemAttrib;
         this->subscribeRatio     = subscribeRatio;
         this->minGrainSize       = minGrainSize;
     }
@@ -46,25 +48,25 @@ public:
     {
         numPointAttrib = (geoSrc ? geoSrc : geo)->findAttribute(GFE_Type::attributeOwner_groupType(elemType), numPointAttribName);
         if (numPointAttrib && !(numPointAttrib->getAIFTuple() &&
-                               numPointAttrib->getTupleSize() == 1 &&
-                               numPointAttrib->getStorageClass() == GA_STORECLASS_INT))
+                                numPointAttrib->getTupleSize() == 1 &&
+                                numPointAttrib->getStorageClass() == GA_STORECLASS_INT))
             numPointAttrib = nullptr;
         return numPointAttrib;
     }
 
+    SYS_FORCE_INLINE GA_Attribute* getSrcElemoffAttrib() const
+    { return srcElemoffAttrib; }
 
-    
     //SYS_FORCE_INLINE GA_Attribute* setSrcElemoffAttrib(const GA_Attribute* const inAttrib = nullptr)
     //{ srcElemoffAttrib = inAttrib; }
 
-    const char* setSrcElemoffAttrib(const char* const inString)
-    { return srcElemoffAttribName = inString; }
+    //const char* setSrcElemoffAttrib(const char* const inString)
+    //{ return srcElemoffAttribName = inString; }
     
     
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -80,22 +82,22 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        const bool isElementGroup = GFE_Type::isElementGroup(elemOwner);
+        const bool isElement = GFE_Type::isElementGroup(elemOwner);
         
         GU_DetailHandle geoTmp_h;
         geoTmp = new GU_Detail();
         geoTmp_h.allocateAndSet(geoTmp);
         geoTmp->replaceWith(geoSrc ? *geoSrc : *geo);
 
-        geoGroup = groupParser.isDetached() ? groupParser.getGroup(elemType) : geoTmp->getGroupTable(elemType)->find(groupParser.getName());
-        if (isElementGroup)
+        isGeoGroupFull = groupParser.isFull();
+        if (isElement)
         {
-            const GA_Range r(geoTmp->getIndexMap(elemOwner), static_cast<const GA_ElementGroup*>(geoGroup));
-            geoSplittableRange = GA_SplittableRange(r);
+            geoElemGroup = groupParser.isDetached() ? groupParser.getElementGroup(elemType) : geoTmp->getElementGroupTable(elemOwner).find(groupParser.getName());
+            geoSplittableRange = GA_Range(geoTmp->getIndexMap(elemOwner), geoElemGroup);
         }
-
+        
         GA_AttributeUPtr numPointAttribMidUPtr;
-        if (isElementGroup && numPointAttrib)
+        if (isElement && numPointAttrib)
         {
             if (numPointAttrib->isDetached())
             {
@@ -108,47 +110,71 @@ private:
             }
             GFE_Attribute::accumulateT<exint>(*numPointAttribMid, geoSplittableRange);
         }
-        
-        GA_Size numpt;
-        if (isElementGroup)
+        else if (isElement && !isGeoGroupFull)
         {
-            numpt = geoGroup ? static_cast<const GA_ElementGroup*>(geoGroup)->entries() : geoTmp->getIndexMap(elemOwner).indexSize();
-            if (numPointAttribMid)
-                numPointAttribMid->getAIFTuple()->get(numPointAttribMid, numpt-1, numpt);
+            GA_SplittableRange srange = groupParser.getSplittableRange(elemOwner);
+            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, elemOwner, &srange);
+            numPointAttribMid = numPointAttribMidUPtr.get();
         }
         else
         {
-            if (geoGroup)
+            numPointAttribMid = nullptr;
+        }
+        
+        GA_Size numpt;
+        if (isElement)
+        {
+            if (numPointAttribMid)
             {
-                numpt = static_cast<const GA_EdgeGroup*>(geoGroup)->entries();
+                if (isGeoGroupFull)
+                {
+                    numpt = geoTmp->getIndexMap(elemOwner).indexSize();
+                }
+                else
+                {
+                    GA_Offset start, end;
+                    for (GA_Iterator it(GA_Range(*geoElemGroup).begin()); it.fullBlockAdvance(start, end); );
+                    numPointAttribMid->getAIFTuple()->get(numPointAttribMid, end-1, numpt);
+                }
             }
             else
             {
-                GFE_MeshTopology meshTopology(geoTmp, cookparms);
-                meshTopology.outIntermediateAttrib = false;
-                meshTopology.groupParser.setGroup(groupParser);
-                creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
-                dstptAttrib = meshTopology.setVertexPointDst(true);
-                meshTopology.compute();
-        
-                numpt = creatingGroup->entries();
+                UT_ASSERT_P(isGeoGroupFull);
+                numpt = geoTmp->getIndexMap(elemOwner).indexSize();
+                // numpt = geoElemGroup ? geoElemGroup->entries() : geoTmp->getIndexMap(elemOwner).indexSize();
             }
+        }
+        else
+        {
+            GFE_MeshTopology meshTopology(geoTmp, cookparms);
+            meshTopology.outIntermediateAttrib = false;
+            meshTopology.groupParser.setGroup(groupParser);
+            creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
+            dstptAttrib = meshTopology.setVertexPointDst(true);
+            meshTopology.compute();
+        
+            numpt = creatingGroup->entries();
+
+            const GA_SplittableRange srange = GA_Range(*creatingGroup);
+            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, GA_ATTRIB_VERTEX, &srange);
+            numPointAttribMid = numPointAttribMidUPtr.get();
         }
 
         geo->clear();
         geo->appendPointBlock(numpt);
-        
-        if (srcElemoffAttribName)
-            srcElemoffAttrib = getOutAttribArray().findOrCreateTuple(false, GA_ATTRIB_POINT, GA_STORECLASS_INT, GA_STORE_INVALID, srcElemoffAttribName, 1, GA_Defaults(-1));
 
+        
+        if (srcElemoffAttribName || keepSrcElemAttrib)
+            srcElemoffAttrib = getOutAttribArray().findOrCreateOffset(false, GA_ATTRIB_POINT, GA_STORE_INVALID, srcElemoffAttribName);
+    
+        if (!srcElemoffAttrib && !setPositionOnElem)
+            return true;
+    
         numPoint_h   = numPointAttribMid;
         srcElemoff_h = srcElemoffAttrib;
         pos_h        = geo->getP();
         posRef_h     = geoTmp->getP();
 
-        if (!srcElemoffAttrib && !setPositionOnElem)
-            return true;
-        
         switch (elemType)
         {
         case GA_GROUP_PRIMITIVE: pointGenPerPrim();   break;
@@ -157,7 +183,7 @@ private:
         case GA_GROUP_EDGE:      pointGenPerEdge();   break;
         default:                 return false;        break;
         }
-
+    
         return true;
     }
 
@@ -218,18 +244,16 @@ private:
                             switch (numvtx)
                             {
                             default:
-                            case 0: pos = 0;                                                         break;
-                            case 1: pos = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 0)); break;
-                            case 2: 
-                                pos0 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 0));
-                                pos1 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 1));
-                                pos = (pos0 + pos1) / 2.0;
+                            case 0: pos  = 0;                                                         break;
+                            case 1: pos  = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 0)); break;
+                            case 2: pos0 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 0));
+                                    pos1 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 1));
+                                    pos  = (pos0 + pos1) / 2.0;
                             break;
-                            case 3:
-                                pos0 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 0));
-                                pos1 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 1));
-                                pos2 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 2));
-                                pos = (pos0 + pos1 + pos2) / 3.0;
+                            case 3: pos0 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 0));
+                                    pos1 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 1));
+                                    pos2 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, 2));
+                                    pos  = (pos0 + pos1 + pos2) / 3.0;
                             break;
                             }
                         }
@@ -241,20 +265,53 @@ private:
                             if (setPositionOnElem)
                                 pos_h.set(ptoff, pos);
                             if (srcElemoffAttrib)
-                                srcElemoff_h.set(ptoff, elemoff);
+                            {
+                                if (outAsOffset || keepSrcElemAttrib)
+                                    srcElemoff_h.set(elemoff, elemoff);
+                                else
+                                    srcElemoff_h.set(elemoff, geoTmp->primitiveIndex(elemoff));
+                            }
                         }
                     }
                     else
                     {
+                        UT_ASSERT_P(isGeoGroupFull);
+                        GA_Index ptoff = geoTmp->primitiveIndex(elemoff);
                         if (setPositionOnElem)
-                            pos_h.set(elemoff, pos);
+                        {
+                            pos_h.set(ptoff, pos);
+                        }
                         if (srcElemoffAttrib)
-                            srcElemoff_h.set(elemoff, elemoff);
+                        {
+                            if (outAsOffset || keepSrcElemAttrib)
+                                srcElemoff_h.set(ptoff, elemoff);
+                            else
+                                srcElemoff_h.set(ptoff, geoTmp->primitiveIndex(elemoff));
+                        }
                     }
-                    
                 }
             }
         }, subscribeRatio, minGrainSize);
+
+        if (keepSrcElemAttrib)
+        {
+            GFE_AttribCopy attribCopy(geo, geoTmp, cookparms);
+            attribCopy.ownerSrc = GA_ATTRIB_PRIMITIVE;
+            attribCopy.ownerDst = GA_ATTRIB_POINT;
+            attribCopy.attribMergeType = GFE_AttribMergeType::Set;
+            attribCopy.iDAttribInput = false;
+            attribCopy.setOffsetAttrib(*srcElemoffAttrib, true);
+            attribCopy.appendGroups ("*");
+            attribCopy.appendAttribs("*");
+            attribCopy.compute();
+            if (!outAsOffset)
+            {
+                GFE_OffsetAttribToIndex offsetAttribToIndex(geo, cookparms);
+                offsetAttribToIndex.offsetToIndex = true;
+                offsetAttribToIndex.getOutAttribArray().append(srcElemoffAttrib);
+                offsetAttribToIndex.compute();
+            }
+        }
     }
 
     SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GA_Detail* const geo, const GA_Offset primoff, const GA_Size vtxpnum)
@@ -274,32 +331,63 @@ private:
     void pointGenPerEdge()
     {
         UT_ASSERT_P(dstptAttrib);
-        
-        UT_Vector3T<fpreal> pos0, pos1;
-        GA_Offset ptoff_first = 0;
-        GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstpt_ph(dstptAttrib);
-        const GA_SplittableRange geoSplittableRange(geoTmp->getVertexRange(creatingGroup));
-        for (GA_PageIterator pit = geoSplittableRange.beginPages(); !pit.atEnd(); ++pit)
+        UT_ASSERT_P(numPointAttribMid);
+
+        GFE_GroupArray edgeGroupArray(geoTmp, cookparms);
+        if (keepSrcElemAttrib)
         {
-            GA_Offset start, end;
-            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            edgeGroupArray.appends(GA_GROUP_EDGE, "*");
+        }
+        const bool flag = !edgeGroupArray.isEmpty();
+        const size_t sizeGroup = edgeGroupArray.size();
+        
+        for (size_t i = 0; i < sizeGroup; ++i)
+        {
+            getOutGroupArray().findOrCreatePoint(false, edgeGroupArray[i]->getName());
+        }
+        
+        const GA_ATITopology* const vtxPointRef = geoTmp->getTopology().getPointRef();
+        
+        UTparallelFor(GA_SplittableRange(geoTmp->getVertexRange(creatingGroup)), [this, vtxPointRef, &edgeGroupArray, flag, sizeGroup](const GA_SplittableRange& r)
+        {
+            UT_Vector3T<fpreal> pos0, pos1;
+            GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstpt_ph(dstptAttrib);
+            GA_PageHandleT<GA_Index,  GA_Index,  true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> ptnum_ph(numPointAttribMid);
+            for (GA_PageIterator pit = geoSplittableRange.beginPages(); !pit.atEnd(); ++pit)
             {
-                dstpt_ph.setPage(start);
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    if (srcElemoffAttrib)
-                        srcElemoff_h.set(ptoff_first, elemoff);
-                    
-                    if (setPositionOnElem)
+                    dstpt_ph.setPage(start);
+                    ptnum_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        pos0 = posRef_h.get(geoTmp->vertexPoint(elemoff));
-                        pos1 = posRef_h.get(dstpt_ph.value(elemoff));
-                        pos_h.set(ptoff_first, (pos0 + pos1) * 0.5);
+                        if (srcElemoffAttrib)
+                            srcElemoff_h.set(ptnum_ph.value(elemoff), elemoff);
+                        
+                        if (setPositionOnElem)
+                        {
+                            pos0 = posRef_h.get(vtxPointRef->getLink(elemoff));
+                            pos1 = posRef_h.get(dstpt_ph.value(elemoff));
+                            pos_h.set(ptnum_ph.value(elemoff), (pos0 + pos1) * 0.5);
+                        }
+                        
+                        if (flag)
+                        {
+                            const GA_Edge edge(vtxPointRef->getLink(elemoff), dstpt_ph.value(elemoff));
+                            for (size_t i = 0; i < sizeGroup; ++i)
+                            {
+                                if (edgeGroupArray.getEdgeGroup(i)->contains(edge))
+                                {
+                                    getOutGroupArray().getPointGroup(i)->setElement(ptnum_ph.value(elemoff), true);
+                                }
+                            }
+                        }
                     }
-                    ++ptoff_first;
                 }
             }
-        }
+        }, subscribeRatio, minGrainSize);
+        
     }
     
 
@@ -318,8 +406,9 @@ private:
 public:
     GA_GroupType elemType = GA_GROUP_PRIMITIVE;
     bool setPositionOnElem = true;
+    bool keepSrcElemAttrib = false;
     const char* srcElemoffAttribName = nullptr;
-    
+    bool outAsOffset = true;
     
 private:
     const GA_Attribute* numPointAttrib = nullptr;
@@ -328,7 +417,12 @@ private:
 
 
 private:
-    const GA_Group* geoGroup;
+    GA_Attribute* srcElemoffAttrib = nullptr;
+    
+private:
+    const GA_ElementGroup* geoElemGroup;
+    const GA_EdgeGroup* geoEdgeGroup;
+    bool isGeoGroupFull;
     GA_AttributeOwner elemOwner;
     
     GA_ROHandleT<exint> numPoint_h;
@@ -340,7 +434,6 @@ private:
     const GA_VertexGroup* creatingGroup;
     
     GA_Attribute* numPointAttribMid = nullptr;
-    GA_Attribute* srcElemoffAttrib = nullptr;
     
     GA_SplittableRange geoSplittableRange;
     

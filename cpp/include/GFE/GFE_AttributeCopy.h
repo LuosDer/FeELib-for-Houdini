@@ -22,24 +22,25 @@ public:
     void
         setComputeParm(
             const GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set,
-            const GA_Offset copyFromSingleOff = GA_INVALID_OFFSET,
             const bool iDAttribInput = false,
+            const GA_Offset copyFromSingleOff = GFE_INVALID_OFFSET,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
         this->attribMergeType = attribMergeType;
+        this->iDAttribInput   = iDAttribInput;
         this->copyFromSingleOff = copyFromSingleOff;
-        this->iDAttribInput = iDAttribInput;
+        
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
-    SYS_FORCE_INLINE void appendGroups(const UT_StringHolder& pattern)
+    SYS_FORCE_INLINE void appendGroups(const UT_StringRef& pattern)
     { getRef0GroupArray().appends(ownerSrc, pattern); }
 
-    SYS_FORCE_INLINE void appendAttribs(const UT_StringHolder& pattern)
+    SYS_FORCE_INLINE void appendAttribs(const UT_StringRef& pattern)
     { getRef0AttribArray().appends(ownerSrc, pattern); }
 
     void setOffsetAttrib(const GA_Attribute& attrib, const bool isOffset)
@@ -51,7 +52,7 @@ public:
             geo->getIndexMap(ownerDst));
     }
 
-    void setOffsetAttrib(const UT_StringHolder& iDAttribName, const bool isOffset)
+    void setOffsetAttrib(const UT_StringRef& iDAttribName, const bool isOffset)
     {
         if (iDAttribName.length() == 0)
         {
@@ -87,7 +88,7 @@ private:
         if (isAttribEmpty && getRef0GroupArray().isEmpty())
             return false;
 
-        doCcopyFromSingleOff = copyFromSingleOff >= 0;
+        doCcopyFromSingleOff = GFE_Type::isValidOffset(copyFromSingleOff);
         if (doCcopyFromSingleOff)
         {
             const GA_IndexMap& indexMapDst = geo->getIndexMap(ownerDst);
@@ -378,9 +379,9 @@ public:
     UFE_SplittableString newGroupNames;
     
     GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set;
-    bool iDAttribInput = false;//True means id attrib is on DESTINATION(geoRef0), While false means id attrib is on Source(geo)
+    bool iDAttribInput = false; //True means id attrib is on DESTINATION(geoRef0); While false means id attrib is on Source(geo)
 
-    GA_Offset copyFromSingleOff = GA_INVALID_OFFSET;
+    GA_Offset copyFromSingleOff = GFE_INVALID_OFFSET;
     //GA_GroupType owner;
     //GA_GroupType ownerRef;
     
