@@ -28,7 +28,8 @@ public:
         setComputeParm(
             const GA_GroupType elemType = GA_GROUP_PRIMITIVE,
             const bool setPositionOnElem = true,
-            const bool keepSrcElemAttrib = false,
+            const char* const keepSrcElemAttribName = nullptr,
+            const char* const keepSrcElemGroupName  = nullptr,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
         )
@@ -36,7 +37,8 @@ public:
         setHasComputed();
         this->elemType           = elemType;
         this->setPositionOnElem  = setPositionOnElem;
-        this->keepSrcElemAttrib  = keepSrcElemAttrib;
+        this->keepSrcElemAttribName = keepSrcElemAttribName;
+        this->keepSrcElemGroupName  = keepSrcElemGroupName;
         this->subscribeRatio     = subscribeRatio;
         this->minGrainSize       = minGrainSize;
     }
@@ -82,7 +84,15 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        const bool isElement = GFE_Type::isElementGroup(elemOwner);
+        if (keepSrcElemAttribName && std::strlen(keepSrcElemAttribName)==0)
+            keepSrcElemAttribName = nullptr;
+        
+        if (keepSrcElemGroupName  && std::strlen(keepSrcElemGroupName)==0 )
+            keepSrcElemGroupName  = nullptr;
+        
+        keepSrcElemAttrib = keepSrcElemAttribName || keepSrcElemGroupName;
+        
+        const bool isElement = GFE_Type::isElementGroup(elemType);
         
         GU_DetailHandle geoTmp_h;
         geoTmp = new GU_Detail();
@@ -113,7 +123,7 @@ private:
         else if (isElement && !isGeoGroupFull)
         {
             GA_SplittableRange srange = groupParser.getSplittableRange(elemOwner);
-            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, elemOwner, &srange);
+            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, elemOwner, 1, &srange);
             numPointAttribMid = numPointAttribMidUPtr.get();
         }
         else
@@ -126,16 +136,13 @@ private:
         {
             if (numPointAttribMid)
             {
-                if (isGeoGroupFull)
-                {
-                    numpt = geoTmp->getIndexMap(elemOwner).indexSize();
-                }
-                else
-                {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(GA_Range(*geoElemGroup).begin()); it.fullBlockAdvance(start, end); );
-                    numPointAttribMid->getAIFTuple()->get(numPointAttribMid, end-1, numpt);
-                }
+                GA_Offset start, end;
+                for (GA_Iterator it(geoSplittableRange.begin()); it.fullBlockAdvance(start, end); );
+                //{
+                //    int a = 0;
+                //    a = a;
+                //}
+                numPointAttribMid->getAIFTuple()->get(numPointAttribMid, end-1, numpt);
             }
             else
             {
@@ -156,7 +163,7 @@ private:
             numpt = creatingGroup->entries();
 
             const GA_SplittableRange srange = GA_Range(*creatingGroup);
-            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, GA_ATTRIB_VERTEX, &srange);
+            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, GA_ATTRIB_VERTEX, 1, &srange);
             numPointAttribMid = numPointAttribMidUPtr.get();
         }
 
@@ -260,7 +267,8 @@ private:
                     }
                     if (numPointAttribMid)
                     {
-                        for (GA_Size ptoff = elemoff ? numPoint_h.get(elemoff-1) : 0; ptoff < numPoint_h.get(elemoff); ++ptoff)
+                        const GA_Offset ptoffEnd = numPoint_h.get(elemoff);
+                        for (GA_Size ptoff = elemoff ? numPoint_h.get(elemoff-1) : 0; ptoff < ptoffEnd; ++ptoff)
                         {
                             if (setPositionOnElem)
                                 pos_h.set(ptoff, pos);
@@ -292,7 +300,7 @@ private:
                 }
             }
         }, subscribeRatio, minGrainSize);
-
+        
         if (keepSrcElemAttrib)
         {
             GFE_AttribCopy attribCopy(geo, geoTmp, cookparms);
@@ -301,8 +309,8 @@ private:
             attribCopy.attribMergeType = GFE_AttribMergeType::Set;
             attribCopy.iDAttribInput = false;
             attribCopy.setOffsetAttrib(*srcElemoffAttrib, true);
-            attribCopy.appendGroups ("*");
-            attribCopy.appendAttribs("*");
+            attribCopy.appendGroups (keepSrcElemGroupName);
+            attribCopy.appendAttribs(keepSrcElemAttribName);
             attribCopy.compute();
             if (!outAsOffset)
             {
@@ -334,10 +342,9 @@ private:
         UT_ASSERT_P(numPointAttribMid);
 
         GFE_GroupArray edgeGroupArray(geoTmp, cookparms);
-        if (keepSrcElemAttrib)
-        {
-            edgeGroupArray.appends(GA_GROUP_EDGE, "*");
-        }
+        if (keepSrcElemAttribName)
+            edgeGroupArray.appends(GA_GROUP_EDGE, keepSrcElemAttribName);
+        
         const bool flag = !edgeGroupArray.isEmpty();
         const size_t sizeGroup = edgeGroupArray.size();
         
@@ -406,8 +413,10 @@ private:
 public:
     GA_GroupType elemType = GA_GROUP_PRIMITIVE;
     bool setPositionOnElem = true;
-    bool keepSrcElemAttrib = false;
+    bool keepSrcElemAttrib;
     const char* srcElemoffAttribName = nullptr;
+    const char* keepSrcElemAttribName = nullptr;
+    const char* keepSrcElemGroupName = nullptr;
     bool outAsOffset = true;
     
 private:
@@ -425,10 +434,10 @@ private:
     bool isGeoGroupFull;
     GA_AttributeOwner elemOwner;
     
-    GA_ROHandleT<exint> numPoint_h;
-    GA_RWHandleT<exint> srcElemoff_h;
+    GA_RWHandleT<GA_Size> srcElemoff_h;
+    GA_ROHandleT<GA_Size> numPoint_h;
     GA_RWHandleT<UT_Vector3T<fpreal>> pos_h;
-    GA_RWHandleT<UT_Vector3T<fpreal>> posRef_h;
+    GA_ROHandleT<UT_Vector3T<fpreal>> posRef_h;
     
     const GA_Attribute* dstptAttrib;
     const GA_VertexGroup* creatingGroup;

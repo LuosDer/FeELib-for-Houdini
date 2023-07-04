@@ -82,12 +82,12 @@ static void accumulateT(GA_Attribute& attrib, const GA_SplittableRange& r)
 
 
 
-static void computeIndexAttrib(GA_Attribute& attrib, const GA_SplittableRange* const srange = nullptr)
+static void computeIndexAttrib(GA_Attribute& attrib, const GA_Index startIndex = 0, const GA_SplittableRange* const srange = nullptr)
 {
     UT_ASSERT_P(attrib.getAIFTuple());
     UT_ASSERT_P(attrib.getStorageClass() == GA_STORECLASS_INT);
-    const GA_SplittableRange r = srange ? *srange : GA_SplittableRange(GA_Range(attrib.getIndexMap()));
-    GA_Index index = 0;
+    const GA_SplittableRange& r = srange ? *srange : GA_SplittableRange(GA_Range(attrib.getIndexMap()));
+    GA_Index index = startIndex;
     GA_PageHandleT<GA_Index, GA_Index, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
     {
@@ -103,11 +103,11 @@ static void computeIndexAttrib(GA_Attribute& attrib, const GA_SplittableRange* c
     }
 }
     
-static GA_AttributeUPtr createDetachedIndexAttrib(GA_Detail& geo, const GA_AttributeOwner owner, const GA_SplittableRange* const srange = nullptr)
+static GA_AttributeUPtr createDetachedIndexAttrib(GA_Detail& geo, const GA_AttributeOwner owner, const GA_Index startIndex = 0, const GA_SplittableRange* const srange = nullptr)
 {
     //GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, GFE_Type::getPreferredStorageI(geo), 1, GA_Defaults(GFE_INVALID_OFFSET));
     GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, GA_STORE_INT64, 1, GA_Defaults(GFE_INVALID_OFFSET64));
-    computeIndexAttrib(*attribUPtr.get(), srange);
+    computeIndexAttrib(*attribUPtr.get(), startIndex, srange);
     return attribUPtr;
 }
 

@@ -111,6 +111,20 @@ static const char *theDsFile = R"THEDSFILE(
         default { "off" }
         disablewhen "{ outSrcElemoffAttrib == 0 }"
     }
+    parm {
+        name    "keepSrcElemAttrib"
+        cppname "KeepSrcElemAttrib"
+        label   "Keep Src Elem Attrib"
+        type    string
+        default { "*" }
+    }
+    parm {
+        name    "keepSrcElemGroup"
+        cppname "KeepSrcElemGroup"
+        label   "Keep Src Elem Group"
+        type    string
+        default { "*" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -140,6 +154,9 @@ SOP_FeE_PointGenPerElem_1_0::buildTemplates()
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("numPointAttrib"_sh,       &SOP_Node::allAttribReplaceMenu);
         templ.setChoiceListPtr("srcElemoffAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("keepSrcElemAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("keepSrcElemGroup"_sh, &SOP_Node::allGroupMenu);
+        
     }
     return templ.templates();
 }
@@ -264,7 +281,7 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     GFE_PointGenPerElem pointGenPerElem(outGeo0, inGeo0, cookparms);
     
-    pointGenPerElem.setComputeParm(elementClass, sopparms.getSetPositionOnElem(),
+    pointGenPerElem.setComputeParm(elementClass, sopparms.getSetPositionOnElem(), sopparms.getKeepSrcElemAttrib(), sopparms.getKeepSrcElemGroup(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     if (sopparms.getUseNumPointAttrib())

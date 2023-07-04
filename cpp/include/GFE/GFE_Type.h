@@ -401,10 +401,11 @@ static GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner
     case GA_ATTRIB_PRIMITIVE:       return GA_GROUP_PRIMITIVE;    break;
     case GA_ATTRIB_POINT:           return GA_GROUP_POINT;        break;
     case GA_ATTRIB_VERTEX:          return GA_GROUP_VERTEX;       break;
-    case GA_ATTRIB_DETAIL:          return GA_GROUP_N;            break;
+    case GA_ATTRIB_DETAIL:          return GA_GROUP_EDGE;         break;
     case GA_ATTRIB_OWNER_N:         return GA_GROUP_N;            break;
+    case GA_ATTRIB_INVALID:         return GA_GROUP_INVALID;      break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Group Type!");
+    UT_ASSERT_MSG(0, "Unhandled Attrib Owner!");
     return GA_GROUP_INVALID;
 }
 
@@ -415,13 +416,14 @@ static GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType)
     case GA_GROUP_PRIMITIVE:       return GA_ATTRIB_PRIMITIVE;   break;
     case GA_GROUP_POINT:           return GA_ATTRIB_POINT;       break;
     case GA_GROUP_VERTEX:          return GA_ATTRIB_VERTEX;      break;
-    case GA_GROUP_EDGE:            return GA_ATTRIB_VERTEX;      break;
+    case GA_GROUP_EDGE:            return GA_ATTRIB_DETAIL;      break;
+    case GA_GROUP_BREAKPOINT:      return GA_ATTRIB_INVALID;     break;
     case GA_GROUP_N:               return GA_ATTRIB_OWNER_N;     break;
+    case GA_GROUP_INVALID:         return GA_ATTRIB_INVALID;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_ATTRIB_INVALID;
 }
-
     
 static GA_Precision precisionFromStorage(const GA_Storage storage)
 {
