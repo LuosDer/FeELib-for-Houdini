@@ -44,15 +44,16 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
+        name    "sourceClass"
+        cppname "SourceClass"
+        label   "Source Class"
         type    ordinal
         default { "prim" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"
             "vertex"    "Vertex"
+            "detail"    "Detail"
         }
     }
     parm {
@@ -62,13 +63,19 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "P" }
     }
-    
-    parm {
-        name    "attribTarget"
-        cppname "AttribTarget"
-        label   "Attrib Target"
-        type    string
-        default { "uv" }
+    parm{
+        name    "destinationClass"
+        cppname "DestinationClass"
+        label   "Destination Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
+
     }
 
     parm {
@@ -76,7 +83,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "DestinationAttrib"
         label   "Destination Attrib"
         type    string
-        default { "P" }
+        default { "uv" }
     }
 
     parm {
@@ -222,25 +229,31 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     outGeo0.replaceWith(inGeo0);
     
     const fpreal64 blend = sopparms.getBlend();
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
+    
+    const GA_AttributeOwner destinationAttribClass = sopAttribOwner(sopparms.getDestinationClass());
+    const GA_AttributeOwner sourceAttribClass = sopAttribOwner(sopparms.getSourceClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted()) return;
 
-
-
     GFE_AttribBlend attribBlend(outGeo0, inGeo1, cookparms);
     attribBlend.groupParser.setGroup(groupType, sopparms.getGroup());
     
     if (inGeo1)
-        attribBlend.getRef0AttribArray().appends(attribClass, sopparms.getAttribTarget());
-    else
-        attribBlend.getInAttribArray().appends(attribClass, sopparms.getAttribSource());
+    {
+        attribBlend.getOutAttribArray().appends(destinationAttribClass, sopparms.getDestinationAttrib());
+        attribBlend.getRef0AttribArray().appends(sourceAttribClass, sopparms.getAttribSource());
+    }
 
+    else
+    {
+        attribBlend.getOutAttribArray().appends(destinationAttribClass, sopparms.getDestinationAttrib());
+        attribBlend.getInAttribArray().appends(sourceAttribClass, sopparms.getAttribSource());
+    }
     
     attribBlend.setComputeParm(blend, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    //attribBlend.computeAndBumpDataId();
 
 
 }
