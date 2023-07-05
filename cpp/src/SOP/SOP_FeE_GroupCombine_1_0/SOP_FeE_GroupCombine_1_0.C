@@ -242,10 +242,14 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     
     const GA_GroupType combineGroupType = sopCombineGroupType(sopparms.getCombineGroupType());
 
-    const GA_GroupTable* groupTable = outGeo0.getGroupTable(combineGroupType);
+    GA_GroupTable* groupTable = outGeo0.getGroupTable(combineGroupType);
     GA_Group* combineGroupPtr;
     if (groupTable)
+    {
         combineGroupPtr = groupTable->find(combineGroupName);
+        if (!combineGroupPtr)
+            combineGroupPtr = groupTable->newGroup(combineGroupName);
+    }
     else
     {
         combineGroupPtr = outGeo0.getGroupTable(GA_GROUP_PRIMITIVE)->find(combineGroupName);
@@ -258,12 +262,12 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
                 if (!combineGroupPtr)
                 {
                     combineGroupPtr = outGeo0.getGroupTable(GA_GROUP_EDGE)->find(combineGroupName);
+                    if (!combineGroupPtr)
+                        return;
                 }
             }
         }
     }
-    if (!combineGroupPtr)
-        return;
     GA_Group& combineGroup = *combineGroupPtr;
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());

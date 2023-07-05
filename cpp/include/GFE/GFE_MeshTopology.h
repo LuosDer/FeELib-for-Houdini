@@ -486,7 +486,7 @@ private:
         if (!vertexPrimIndexAttrib)
             setVertexPrimIndex(!outIntermediateAttrib);
         
-        int_wh.bind(vertexPrimIndexAttrib);
+        int_wh = vertexPrimIndexAttrib;
         //const GA_Detail* const geo = this->geo;
         if (groupParser.isFull())
         {
@@ -508,8 +508,8 @@ private:
         }
         else
         {
-            const GA_VertexGroup* const geoGroup = groupParser.getVertexGroup();
-            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, geoGroup](const GA_SplittableRange& r)
+            const GA_VertexGroup* const vtxGroup = groupParser.classType() == GA_GROUP_PRIMITIVE ? nullptr : groupParser.getVertexGroup();
+            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, vtxGroup](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -520,7 +520,7 @@ private:
                         for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
                             const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
-                            if (!geoGroup->contains(vtxoff))
+                            if (vtxGroup && !vtxGroup->contains(vtxoff))
                                 continue;
                             int_wh.set(vtxoff, vtxpnum);
                         }
@@ -541,8 +541,8 @@ private:
         if (!vertexPointDstAttrib)
             setVertexPointDst(!outIntermediateAttrib);
         
-        int_wh.bind(vertexPointDstAttrib);
-        int_oh.bind(vertexPrimIndexAttrib);
+        int_wh = vertexPointDstAttrib;
+        int_oh = vertexPrimIndexAttrib;
         
         const GA_Topology& topo = geo->getTopology();
         //topo.makePrimitiveRef();
@@ -569,8 +569,8 @@ private:
         if (!vertexVertexPrimPrevAttrib && !vertexVertexPrimNextAttrib)
             setVertexVertexPrim(!outIntermediateAttrib);
         
-        int_wh.bind(vertexVertexPrimPrevAttrib);
-        int1_wh.bind(vertexVertexPrimNextAttrib);
+        int_wh  = vertexVertexPrimPrevAttrib;
+        int1_wh = vertexVertexPrimNextAttrib;
         
         //const GA_Detail* const geo = this->geo;
         if (groupParser.isFull())
@@ -618,8 +618,8 @@ private:
         }
         else
         {
-            const GA_VertexGroup* const geoGroup = groupParser.getVertexGroup();
-            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, geoGroup](const GA_SplittableRange& r)
+            const GA_VertexGroup* const vtxGroup = groupParser.classType() == GA_GROUP_PRIMITIVE ? nullptr : groupParser.getVertexGroup();
+            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, vtxGroup](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -649,7 +649,7 @@ private:
                         for (GA_Size vtxpnum = 1; vtxpnum <= lastIndex; ++vtxpnum)
                         {
                             vtxoff_next = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
-                            if (!geoGroup->contains(vtxoff_next))
+                            if (vtxGroup && !vtxGroup->contains(vtxoff_next))
                                 continue;
                             if (vertexVertexPrimPrevAttrib)
                                 int_wh.set(vtxoff_next, vtxoff_prev);
@@ -668,8 +668,8 @@ private:
         if(!vertexVertexPrimPrevAttrib && !vertexVertexPrimNextAttrib)
             setVertexVertexPrim(!outIntermediateAttrib);
         
-        int_wh.bind(vertexVertexPrimPrevAttrib);
-        int1_wh.bind(vertexVertexPrimNextAttrib);
+        int_wh  = vertexVertexPrimPrevAttrib;
+        int1_wh = vertexVertexPrimNextAttrib;
         
         const GA_Topology& topo = geo->getTopology();
         UTparallelFor(groupParser.getVertexSplittableRange(), [&topo, this](const GA_SplittableRange& r)
@@ -716,13 +716,9 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         if (GFE_Type::isValidOffset(vtxPrimNext_ph.value(elemoff)))
-                        {
                             dstpt_ph.value(elemoff) = GFE_INVALID_OFFSET;
-                        }
                         else
-                        {
                             dstpt_ph.value(elemoff) = vtxPointRef->getLink(vtxPrimNext_ph.value(elemoff));
-                        }
                     }
                 }
             }
@@ -750,7 +746,10 @@ void vertexNextEquivDual()
     const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
     const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
 
-    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+    const GA_EdgeGroup* const edgeGroup = groupParser.classType() == GA_GROUP_EDGE ? groupParser.getEdgeGroup() : nullptr;
+    const GA_SplittableRange& srange = edgeGroup ? GA_SplittableRange(GA_Range(geo->getVertexMap())) : groupParser.getVertexSplittableRange();
+        
+    UTparallelFor(srange, [this, vtxPointRef, pointVtxRef, vtxNextRef, edgeGroup](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
         for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -758,6 +757,10 @@ void vertexNextEquivDual()
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 GA_Offset dstpt = int_oh.get(elemoff);
+                
+                if (edgeGroup && !edgeGroup->contains(GA_Edge(vtxPointRef->getLink(elemoff), dstpt)))
+                    continue;
+                
                 if (GFE_Type::isInvalidOffset(dstpt))
                 {
                     if (vertexNextEquivAttrib)
@@ -817,7 +820,7 @@ void vertexNextEquivDual()
             }
         }
     }, subscribeRatio, minGrainSize);
-    
+
     if (vertexNextEquivGroup)
         vertexNextEquivGroup->invalidateGroupEntries();
     if (vertexNextEquivNoLoopGroup)
@@ -833,8 +836,8 @@ void vertexNextEquiv()
     if (!vertexNextEquivAttrib && !vertexNextEquivGroup)
         setVertexNextEquiv(!outIntermediateAttrib);
     
-    int_wh.bind(vertexNextEquivAttrib);
-    int_oh.bind(vertexPointDstAttrib);
+    int_wh = vertexNextEquivAttrib;
+    int_oh = vertexPointDstAttrib;
     
     const GA_Topology& topo = geo->getTopology();
     //topo.makeVertexRef();
@@ -842,7 +845,10 @@ void vertexNextEquiv()
     const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
     const GA_ATITopology* const vtxNextRef  = topo.getVertexNextRef();
 
-    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+    const GA_EdgeGroup* const edgeGroup = groupParser.classType() == GA_GROUP_EDGE ? groupParser.getEdgeGroup() : nullptr;
+    const GA_SplittableRange& srange = edgeGroup ? GA_SplittableRange(GA_Range(geo->getVertexMap())) : groupParser.getVertexSplittableRange();
+    
+    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef, edgeGroup](const GA_SplittableRange& r)
     {
         GA_Offset vtxoff_next, dstpt, ptoff;
         GA_Offset start, end;
@@ -851,6 +857,9 @@ void vertexNextEquiv()
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 dstpt = int_oh.get(elemoff);
+                if (edgeGroup && !edgeGroup->contains(GA_Edge(vtxPointRef->getLink(elemoff), dstpt)))
+                    continue;
+                
                 if (GFE_Type::isInvalidOffset(dstpt))
                 {
                     if (vertexNextEquivAttrib)
@@ -899,8 +908,8 @@ void vertexNextEquivNoLoop()
     if (!vertexNextEquivNoLoopAttrib && !vertexNextEquivNoLoopGroup)
         setVertexNextEquivNoLoop(!outIntermediateAttrib);
     
-    int_wh.bind(vertexNextEquivNoLoopAttrib);
-    int_oh.bind(vertexPointDstAttrib);
+    int_wh = vertexNextEquivNoLoopAttrib;
+    int_oh = vertexPointDstAttrib;
     
     const GA_Topology& topo = geo->getTopology();
     //topo.makeVertexRef();
@@ -908,7 +917,10 @@ void vertexNextEquivNoLoop()
     const GA_ATITopology* const pointVtxRef = topo.getVertexRef();
     const GA_ATITopology* const vtxNextRef = topo.getVertexNextRef();
 
-    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef](const GA_SplittableRange& r)
+    const GA_EdgeGroup* const edgeGroup = groupParser.classType() == GA_GROUP_EDGE ? groupParser.getEdgeGroup() : nullptr;
+    const GA_SplittableRange& srange = edgeGroup ? GA_SplittableRange(GA_Range(geo->getVertexMap())) : groupParser.getVertexSplittableRange();
+
+    UTparallelFor(groupParser.getVertexSplittableRange(), [this, vtxPointRef, pointVtxRef, vtxNextRef, edgeGroup](const GA_SplittableRange& r)
     {
         GA_Offset vtxoff_next, dstpt, ptoff;
         GA_Offset start, end;
@@ -917,6 +929,10 @@ void vertexNextEquivNoLoop()
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 dstpt = int_oh.get(elemoff);
+                
+                if (edgeGroup && !edgeGroup->contains(GA_Edge(vtxPointRef->getLink(elemoff), dstpt)))
+                    continue;
+                
                 if (GFE_Type::isInvalidOffset(dstpt))
                 {
                     if (vertexNextEquivNoLoopAttrib)
@@ -984,8 +1000,8 @@ void vertexNextEquivNoLoop()
         if(!pointPointEdgeAttrib)
             setPointPointEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(pointPointEdgeAttrib);
-        int_oh.bind(vertexPrimIndexAttrib);
+        intArray_wh = pointPointEdgeAttrib;
+        int_oh = vertexPrimIndexAttrib;
         
         const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
         UTparallelFor(groupParser.getPointSplittableRange(), [seamGroup, this](const GA_SplittableRange& r)
@@ -1052,8 +1068,8 @@ void vertexNextEquivNoLoop()
         if(!pointPointEdgeAttrib)
             setPointPointEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(pointPointEdgeAttrib);
-        int_oh.bind(vertexVertexPrimPrevAttrib);
+        intArray_wh = pointPointEdgeAttrib;
+        int_oh = vertexVertexPrimPrevAttrib;
         const GA_ROHandleT<GA_Offset> vtxNext_h(vertexVertexPrimNextAttrib);
         
         const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
@@ -1163,7 +1179,7 @@ void vertexNextEquivNoLoop()
         if(!pointPointEdgeAttrib)
             setPointPointEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(pointPointEdgeAttrib);
+        intArray_wh = pointPointEdgeAttrib;
         
         UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
         {
@@ -1236,8 +1252,8 @@ void vertexNextEquivNoLoop()
         if (!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(primPrimEdgeAttrib);
-        int_oh.bind(vertexPointDstAttrib);
+        intArray_wh = primPrimEdgeAttrib;
+        int_oh = vertexPointDstAttrib;
         
         //const GA_Detail* const geo = this->geo;
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
@@ -1330,8 +1346,8 @@ void vertexNextEquivNoLoop()
         if (!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(primPrimEdgeAttrib);
-        int_oh.bind(vertexPointDstAttrib);
+        intArray_wh = primPrimEdgeAttrib;
+        int_oh = vertexPointDstAttrib;
 
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup](const GA_SplittableRange& r)
@@ -1425,8 +1441,8 @@ void vertexNextEquivNoLoop()
         if (!primPrimEdgeAttrib)
             setPrimPrimEdge(outTopoAttrib);
         
-        intArray_wh.bind(primPrimEdgeAttrib);
-        int_oh.bind(vertexPointDstAttrib);
+        intArray_wh = primPrimEdgeAttrib;
+        int_oh = vertexPointDstAttrib;
         
         //const GA_Detail* const geo = this->geo;
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
@@ -1520,7 +1536,7 @@ void vertexNextEquivNoLoop()
         if(!primPrimEdgeAttrib)
             setPrimPrimEdge(!outIntermediateAttrib);
         
-        intArray_wh.bind(primPrimEdgeAttrib);
+        intArray_wh = primPrimEdgeAttrib;
         
         const GEO_Detail* geo_GEO = static_cast<const GEO_Detail*>(static_cast<const GA_Detail*>(geo));
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
@@ -1566,7 +1582,7 @@ void vertexNextEquivNoLoop()
         if(!primPrimPointAttrib)
             setPrimPrimPoint(!outIntermediateAttrib);
             
-        intArray_wh.bind(primPrimPointAttrib);
+        intArray_wh = primPrimPointAttrib;
         
         const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
         

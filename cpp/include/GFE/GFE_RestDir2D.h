@@ -108,12 +108,12 @@ private:
 		}
 
 		if (matchUpDir && restDir.dot(up) < 0)
-			restDir = -restDir;
+			restDir *= -1;
 		
 		if (!getOutAttribArray().isEmpty())
 		{
 			GA_Attribute* const outAttrib = getOutAttribArray()[0];
-#if 0
+#if 1
 			outAttrib->getAIFTuple()->set(outAttrib, 0, restDir[0], 0);
 			outAttrib->getAIFTuple()->set(outAttrib, 0, restDir[1], 1);
 			outAttrib->getAIFTuple()->set(outAttrib, 0, restDir[2], 2);
@@ -121,20 +121,18 @@ private:
 			switch (outAttrib->getAIFTuple()->getStorage(outAttrib))
 			{
 			case GA_STORE_REAL32:
-				{
-					GA_RWHandleT<UT_Vector3T<fpreal32>> attrib_h(outAttrib);
-					attrib_h.set(0, restDir);
-				}
-				break;
+			{
+				const GA_RWHandleT<UT_Vector3T<fpreal32>> attrib_h(outAttrib);
+				attrib_h.set(0, restDir);
+			}
+			break;
 			case GA_STORE_REAL64:
-				{
-					GA_RWHandleT<UT_Vector3T<fpreal64>> attrib_h(outAttrib);
-					attrib_h.set(0, restDir);
-				}
-				break;
-			default:
-				UT_ASSERT_MSG(0, "unhandled storage");
-				break;
+			{
+				const GA_RWHandleT<UT_Vector3T<fpreal64>> attrib_h(outAttrib);
+				attrib_h.set(0, restDir);
+			}
+			break;
+			default: UT_ASSERT_MSG(0, "unhandled storage"); break;
 			}
 #endif
 		}
@@ -147,9 +145,9 @@ private:
 	{
 		normal3D.groupParser.setGroup(groupParser);
 
-		if (normal3D.isEmpty())
-			normal3D.findOrCreateNormal3D(true, GFE_NormalSearchOrder::ALL, GA_STORE_INVALID, "N");
-		
+		if (!normal3D.getAttrib())
+			normal3D.findOrCreateNormal3D();
+
 		normal3D.compute();
 		
 		const GA_Attribute* const normalAttrib = normal3D.getAttrib();

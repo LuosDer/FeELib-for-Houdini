@@ -293,10 +293,10 @@ SOP_FeE_ExtractPoint_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_ExtractPoint_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_ExtractPoint_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_ExtractPoint_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -304,7 +304,7 @@ sopGroupType(SOP_FeE_ExtractPoint_1_0Parms::GroupType parmgrouptype)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
 
@@ -336,11 +336,19 @@ SOP_FeE_ExtractPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
+/*
+    
+            GFE_ExtractPoint extractPoint(geo, geoSrc, cookparms);
+            extractPoint.groupParser.setGroup(groupParser);
+            extractPoint.keepPointAttrib  = keepSrcElemAttribName;
+            extractPoint.keepPointGroup   = keepSrcElemGroupName;
+            extractPoint.compute();
+    
+ */
 
     GFE_ExtractPoint extractPoint(outGeo0, &inGeo0, &cookparms);
 
-    extractPoint.setGroup(groupType, sopparms.getGroup());
+    extractPoint.groupParser.setGroup(groupType, sopparms.getGroup());
 
     extractPoint.keepPrimAttrib   = sopparms.getKeepPrimAttrib();
     extractPoint.keepPointAttrib  = sopparms.getKeepPointAttrib();

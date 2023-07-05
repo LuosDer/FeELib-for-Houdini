@@ -39,8 +39,9 @@ using GFE_INVALID_OFFSET = numeric_limits<GA_Offset>::max();
 
 #if 1
 
-//#define GFE_INVALID_OFFSET 9223372036854775807
-#define GFE_INVALID_OFFSET 2147483647
+#define GFE_INVALID_OFFSET32 2147483647
+#define GFE_INVALID_OFFSET64 9223372036854775807
+#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET32
 
 #else
 
@@ -388,7 +389,7 @@ SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)
 { return attribName.isstring() && attribName.length() > 0 && strcmp(attribName.c_str(), "P") != 0; }
 
-SYS_FORCE_INLINE static bool isPublicAttribName(const char* attribName)
+SYS_FORCE_INLINE static bool isPublicAttribName(const char* const attribName)
 { return attribName && strcmp(attribName, "P") != 0; }
 
 
@@ -400,10 +401,11 @@ static GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner
     case GA_ATTRIB_PRIMITIVE:       return GA_GROUP_PRIMITIVE;    break;
     case GA_ATTRIB_POINT:           return GA_GROUP_POINT;        break;
     case GA_ATTRIB_VERTEX:          return GA_GROUP_VERTEX;       break;
-    case GA_ATTRIB_DETAIL:          return GA_GROUP_N;            break;
+    case GA_ATTRIB_DETAIL:          return GA_GROUP_EDGE;         break;
     case GA_ATTRIB_OWNER_N:         return GA_GROUP_N;            break;
+    case GA_ATTRIB_INVALID:         return GA_GROUP_INVALID;      break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Group Type!");
+    UT_ASSERT_MSG(0, "Unhandled Attrib Owner!");
     return GA_GROUP_INVALID;
 }
 
@@ -414,13 +416,14 @@ static GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType)
     case GA_GROUP_PRIMITIVE:       return GA_ATTRIB_PRIMITIVE;   break;
     case GA_GROUP_POINT:           return GA_ATTRIB_POINT;       break;
     case GA_GROUP_VERTEX:          return GA_ATTRIB_VERTEX;      break;
-    case GA_GROUP_EDGE:            return GA_ATTRIB_VERTEX;      break;
+    case GA_GROUP_EDGE:            return GA_ATTRIB_DETAIL;      break;
+    case GA_GROUP_BREAKPOINT:      return GA_ATTRIB_INVALID;     break;
     case GA_GROUP_N:               return GA_ATTRIB_OWNER_N;     break;
+    case GA_GROUP_INVALID:         return GA_ATTRIB_INVALID;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_ATTRIB_INVALID;
 }
-
     
 static GA_Precision precisionFromStorage(const GA_Storage storage)
 {

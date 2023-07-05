@@ -123,34 +123,123 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "outWN"
-        cppname "OutWN"
-        label   "Output Winding Number"
+        name    "outPrimWNAttrib"
+        cppname "OutPrimWNAttrib"
+        label   "Output Prim Winding Number"
+        type    toggle
+        nolabel
+        joinnext
+        default { "1" }
+    }
+    parm {
+        name    "primWNAttribName"
+        cppname "PrimWNAttribName"
+        label   "Prim WN Attrib Name"
+        type    string
+        default { "windingNumber" }
+        disablewhen "{ outPrimWNAttrib == 0 }"
+    }
+    parm {
+        name    "outPointWNAttrib"
+        cppname "OutPointWNAttrib"
+        label   "Output Point Winding Number"
         type    toggle
         nolabel
         joinnext
         default { "0" }
     }
-
     parm {
-        name    "wnAttribClass"
-        cppname "WNAttribClass"
-        label   "Attribute Class"
-        type    ordinal
-        default { "point" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-        }
-    }
-    parm {
-        name    "wnAttribName"
-        cppname "WNAttribName"
-        label   "Attribute Name"
+        name    "pointWNAttribName"
+        cppname "PointWNAttribName"
+        label   "Point WN Attrib Name"
         type    string
         default { "windingNumber" }
-        disablewhen "{ outWN == 0 }"
+        disablewhen "{ outPointWNAttrib == 0 }"
+    }
+    parm {
+        name    "outVertexEdgeWNAttrib"
+        cppname "OutVertexEdgeWNAttrib"
+        label   "Output Vertex Edge Winding Number"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "vertexEdgeWNAttribName"
+        cppname "VertexEdgeWNAttribName"
+        label   "Vertex Edge WN Attrib Name"
+        type    string
+        default { "windingNumber" }
+        disablewhen "{ outVertexEdgeWNAttrib == 0 }"
+    }
+    parm {
+        name    "outPrimInMeshGroup"
+        cppname "OutPrimInMeshGroup"
+        label   "Output Prim Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "primInMeshGroupName"
+        cppname "PrimInMeshGroupName"
+        label   "Prim Group Name"
+        type    string
+        default { "inMesh" }
+        disablewhen "{ outPrimInMeshGroup == 0 }"
+    }
+    parm {
+        name    "outPointInMeshGroup"
+        cppname "OutPointInMeshGroup"
+        label   "Output Point Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "pointInMeshGroupName"
+        cppname "PointInMeshGroupName"
+        label   "Point Group Name"
+        type    string
+        default { "inMesh" }
+        disablewhen "{ outPointInMeshGroup == 0 }"
+    }
+    parm {
+        name    "outVertexEdgeInMeshGroup"
+        cppname "OutVertexEdgeInMeshGroup"
+        label   "Output Vertex Edge Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "vertexEdgeInMeshGroupName"
+        cppname "VertexEdgeInMeshGroupName"
+        label   "Vertex Edge Group Name"
+        type    string
+        default { "inMesh" }
+        disablewhen "{ outVertexEdgeInMeshGroup == 0 }"
+    }
+    parm {
+        name    "outEdgeInMeshGroup"
+        cppname "OutEdgeInMeshGroup"
+        label   "Output Edge Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "off" }
+    }
+    parm {
+        name    "edgeInMeshGroupName"
+        cppname "EdgeInMeshGroupName"
+        label   "Edge Group Name"
+        type    string
+        default { "inMesh" }
+        disablewhen "{ outEdgeInMeshGroup == 0 }"
     }
     parm {
         name    "wnAsSolidAngle"
@@ -197,41 +286,12 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
 
-    parm {
-        name    "outInMeshGroup"
-        cppname "OutInMeshGroup"
-        label   "Output In Mesh Group"
-        type    toggle
-    //    nolabel
-    //    joinnext
-        default { "0" }
-    }
     groupsimple {
         name    "inMeshGroup_folder"
         label   "In Mesh Group"
         grouptag { "group_type" "simple" }
-        disablewhen "{ outInMeshGroup == 0 }"
+        disablewhen "{ outPrimInMeshGroup == 0  outVertexEdgeInMeshGroup == 0  outPointInMeshGroup == 0  outEdgeInMeshGroup == 0 }"
 
-        parm {
-            name    "inMeshGroupType"
-            cppname "InMeshGroupType"
-            label   "In Mesh Group Type"
-            type    ordinal
-            default { "point" }
-            menu {
-                "prim"      "Primitive"
-                "point"     "Point"
-                "vertex"    "Vertex"
-                "edge"      "Edge"
-            }
-        }
-        parm {
-            name    "inMeshGroupName"
-            cppname "InMeshGroupName"
-            label   " in Mesh Group Name"
-            type    tring
-            default { "inMesh" }
-        }
         parm {
             name    "groupMergeType"
             cppname "GroupMergeType"
@@ -246,15 +306,15 @@ static const char* theDsFile = R"THEDSFILE(
             }
         }
         parm {
-            name    "groupInGeoPoint"
-            cppname "GroupInGeoPoint"
+            name    "groupInMesh"
+            cppname "GroupInMesh"
             label   "In Geo"
             type    toggle
             default { "on" }
         }
         parm {
-            name    "groupOnGeoPoint"
-            cppname "GroupOnGeoPoint"
+            name    "groupOnMesh"
+            cppname "GroupOnMesh"
             label   "On Geo"
             type    toggle
             default { "on" }
@@ -274,23 +334,30 @@ static const char* theDsFile = R"THEDSFILE(
             type    toggle
             default { "0" }
         }
+        parm {
+            name    "delGroupElem"
+            cppname "DelGroupElem"
+            label   "Delete Group Element"
+            type    toggle
+            default { "0" }
+        }
+    }
 
-        parm {
-            name    "subscribeRatio"
-            cppname "SubscribeRatio"
-            label   "Subscribe Ratio"
-            type    integer
-            default { 64 }
-            range   { 0! 256 }
-        }
-        parm {
-            name    "minGrainSize"
-            cppname "MinGrainSize"
-            label   "Min Grain Size"
-            type    intlog
-            default { 64 }
-            range   { 0! 2048 }
-        }
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 64 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 64 }
+        range   { 0! 2048 }
     }
 }
 )THEDSFILE";
@@ -301,9 +368,8 @@ SOP_FeE_WindingNumber_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_WindingNumber_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("wnQueryPointGroup"_sh, &SOP_Node::pointGroupMenu);
-        templ.setChoiceListPtr("wnMeshPrimGroup"_sh, &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("wnAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("group"_sh,    &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("groupRef"_sh, &SOP_Node::groupMenu);
     }
     return templ.templates();
 }
@@ -370,34 +436,34 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 }
 
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_WindingNumber_1_0Parms::WNAttribClass parmAttribClass)
-{
-    using namespace SOP_FeE_WindingNumber_1_0Enums;
-    switch (parmAttribClass)
-    {
-    case WNAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case WNAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case WNAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
+//static GA_AttributeOwner
+//sopAttribOwner(SOP_FeE_WindingNumber_1_0Parms::WNAttribClass parmAttribClass)
+//{
+//    using namespace SOP_FeE_WindingNumber_1_0Enums;
+//    switch (parmAttribClass)
+//    {
+//    case WNAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+//    case WNAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+//    case WNAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+//    }
+//    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+//    return GA_ATTRIB_INVALID;
+//}
 
-static GA_GroupType
-sopGroupType(SOP_FeE_WindingNumber_1_0Parms::PointInMeshGroupType parmGroupType)
-{
-    using namespace SOP_FeE_WindingNumber_1_0Enums;
-    switch (parmGroupType)
-    {
-    case PointInMeshGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case PointInMeshGroupType::POINT:     return GA_GROUP_POINT;      break;
-    case PointInMeshGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case PointInMeshGroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Point in Mesh Group Type!");
-    return GA_GROUP_INVALID;
-}
+//static GA_GroupType
+//sopGroupType(SOP_FeE_WindingNumber_1_0Parms::PointInMeshGroupType parmGroupType)
+//{
+//    using namespace SOP_FeE_WindingNumber_1_0Enums;
+//    switch (parmGroupType)
+//    {
+//    case PointInMeshGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+//    case PointInMeshGroupType::POINT:     return GA_GROUP_POINT;      break;
+//    case PointInMeshGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+//    case PointInMeshGroupType::EDGE:      return GA_GROUP_EDGE;       break;
+//    }
+//    UT_ASSERT_MSG(0, "Unhandled Point in Mesh Group Type!");
+//    return GA_GROUP_INVALID;
+//}
 
 
 static GA_GroupType
@@ -468,6 +534,8 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GA_GroupType groupTypeRef = sopGroupType(sopparms.getGroupTypeRef());
+    //const GA_AttributeOwner attribOwner = sopAttribOwner(sopparms.getWNAttribClass());
+            
 
 
     
@@ -478,28 +546,40 @@ void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     
     //wn.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
 
-    const GA_AttributeOwner attribOwner = sopAttribOwner(sopparms.getWNAttribClass());
-            
-    if (sopparms.getOutPointInMeshGroup() || sopparms.getOutWN())
-        wn.findOrCreateTuple(!sopparms.getOutWN(), attribOwner, wnStorage, sopparms.getWNAttribName());
-
+    wn.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
     if (sopparms.getOutPointInMeshGroup())
-    {
-        wn.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
-        wn.setPointInMeshComputeParm(
-            sopparms.getGroupInGeoPoint(),
-            sopparms.getGroupOnGeoPoint(),
-            sopparms.getPointInMeshThreshold());
-        
-        const GA_GroupType groupType = sopGroupType(sopparms.getPointInMeshGroupType());
-            
-        wn.findOrCreateGroup(false, groupType, sopparms.getPointInMeshGroupName());
-    }
+        wn.findOrCreatePointGroup(false, sopparms.getPointInMeshGroupName());
+    if (sopparms.getOutPrimInMeshGroup())
+        wn.findOrCreatePrimitiveGroup(false, sopparms.getPrimInMeshGroupName());
+    if (sopparms.getOutVertexEdgeInMeshGroup())
+        wn.findOrCreateVertexGroup(false, sopparms.getVertexEdgeInMeshGroupName());
+    if (sopparms.getOutEdgeInMeshGroup())
+        wn.findOrCreateEdgeGroup(false, sopparms.getEdgeInMeshGroupName());
+    
+    if (sopparms.getOutPrimWNAttrib())
+        wn.findOrCreateTuple(false, GA_ATTRIB_PRIMITIVE, wnStorage, sopparms.getPrimWNAttribName());
+    if (sopparms.getOutPointWNAttrib())
+        wn.findOrCreateTuple(false, GA_ATTRIB_POINT,     wnStorage, sopparms.getPointWNAttribName());
+    if (sopparms.getOutVertexEdgeWNAttrib())
+        wn.findOrCreateTuple(false, GA_ATTRIB_VERTEX,    wnStorage, sopparms.getVertexEdgeWNAttribName());
+
+    //if (sopparms.getOutPointInMeshGroup())
+    //{
+    //    wn.setPointInMeshComputeParm(
+    //        sopparms.getGroupInGeoPoint(),
+    //        sopparms.getGroupOnGeoPoint(),
+    //        sopparms.getPointInMeshThreshold());
+    //    
+    //    const GA_GroupType groupType = sopGroupType(sopparms.getPointInMeshGroupType());
+    //        
+    //    wn.findOrCreateGroup(false, groupType, sopparms.getPointInMeshGroupName());
+    //}
 
     wn.setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
-
+    wn.doDelGroupElement = sopparms.getDelGroupElem();
+    
     wn.computeAndBumpDataId();
     wn.visualizeOutGroup();
 

@@ -70,7 +70,7 @@ SOP_FeE_ExtrudeBorder2D_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_ExtrudeBorder2D_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("delElementGroup"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();
 }
@@ -164,7 +164,7 @@ SOP_FeE_ExtrudeBorder2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
     outGeo0.replaceWith(inGeo0);
 
 
-    const GA_GroupType groupType = sopGroupType(sopparms.getDelElementGroupType());
+    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -173,7 +173,7 @@ SOP_FeE_ExtrudeBorder2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
     GFE_ExtrudeBorder2D extrudeBorder2D(outGeo0, cookparms);
     extrudeBorder2D.groupParser.setGroup(groupType, sopparms.getGroup());
     extrudeBorder2D.setComputeParm(sopparms.getExtrudeBorder2DDist(), sopparms.getReverseMesh());
-    extrudeBorder2D.computeAndBumpDataIdsForAddOrRemove()();
+    extrudeBorder2D.computeAndBumpDataIdsForAddOrRemove();
     
 }
 

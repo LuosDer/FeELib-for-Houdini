@@ -83,7 +83,7 @@ public:
     SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
     { normal2DAttribName = detached ? nullptr: attribName; normal2DAttrib = nullptr; }
     
-    SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const UT_StringRef& attribName = "")
+    SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached, const UT_StringRef& attribName = "")
     { setNormal2DAttrib(detached, attribName.c_str()); }
     
     SYS_FORCE_INLINE void setNormal2DAttrib(GA_Attribute* const attrib)
@@ -107,14 +107,13 @@ private:
 
         if (groupParser.isEmpty())
             return true;
-
-        if (!posAttrib)
-            posAttrib = geo->getP();
+        
+        geo->setValidPosAttrib(posAttrib);
         
         const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
-        
-        if (normal3DAttrib && normal3DAttrib->isDetached())
-            normal3D.compute();
+        UT_ASSERT_MSG(normal3DAttrib, "no normal3d attrib");
+        normal3D.compute();
+    
         
         GA_Storage storage_max = posAttrib->getAIFTuple()->getStorage(posAttrib);
         if (normal3DAttrib)

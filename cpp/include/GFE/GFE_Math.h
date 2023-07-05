@@ -148,8 +148,39 @@ static T circleRadius3Point(
 
 
 
+
+    
 template<typename FLOAT_T>
 static bool pointInTriangleT(
+    const UT_Vector3T<FLOAT_T>& p,
+    const UT_Vector3T<FLOAT_T>& a,
+    const UT_Vector3T<FLOAT_T>& b,
+    const UT_Vector3T<FLOAT_T>& c
+)
+{
+    const UT_Vector3T<FLOAT_T> ba = b - a;
+    const UT_Vector3T<FLOAT_T> cb = c - b;
+    const UT_Vector3T<FLOAT_T> ac = a - c;
+    const UT_Vector3T<FLOAT_T> n = cross(ac, ba);  // Same as n = ba X ca
+
+    UT_Vector3T<FLOAT_T> px = p - a;
+    UT_Vector3T<FLOAT_T> nx = cross(ba, px);
+    if (nx.dot(n) < 0) return false;
+    
+    px = p - b;
+    nx = cross(cb, px);
+    if (nx.dot(n) < 0) return false;
+    
+    px = p - c;
+    nx = cross(ac, px);
+    if (nx.dot(n) < 0) return false;
+    
+    return true;
+}
+
+    
+template<typename FLOAT_T>
+static bool pointInTriangleT1(
     const UT_Vector3T<FLOAT_T>& pointPos,
     const UT_Vector3T<FLOAT_T>& triPosCenter,
     const UT_Vector3T<FLOAT_T>& triPosLeft,

@@ -16,49 +16,49 @@
 class GFE_ExtractPoint : public GFE_GeoFilter {
 
 public:
-    //using GFE_GeoFilter::GFE_GeoFilter;
+    using GFE_GeoFilter::GFE_GeoFilter;
     
-    GFE_ExtractPoint(
-        GFE_Detail* const inGeo,
-        const GA_Detail* const inGeoSrc = nullptr,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_GeoFilter(inGeo, inGeoSrc, cookparms)
-        , groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(inGeo), groupParser.getGOPRef(), cookparms)
-    {
-        if (geoSrc)
-        {
-            geoSrcGUTmp = new GU_Detail();
-            geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
-            geoSrcTmp = geoSrcGUTmp;
-            geoSrcTmp->replaceWithPoints(*geoSrc);
-        }
-        else
-        {
-            geoSrcTmp = geo;
-        }
-    }
-	
-    GFE_ExtractPoint(
-        GA_Detail& inGeo,
-        const GA_Detail* const inGeoSrc = nullptr,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_GeoFilter(inGeo, inGeoSrc, cookparms)
-        , groupParserIn0(geoSrc ? geoSrc : &inGeo, groupParser.getGOPRef(), cookparms)
-    {
-        if (geoSrc)
-        {
-            geoSrcGUTmp = new GU_Detail();
-            geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
-            geoSrcTmp = geoSrcGUTmp;
-            geoSrcTmp->replaceWithPoints(*geoSrc);
-        }
-        else
-        {
-            geoSrcTmp = geo;
-        }
-    }
+    //GFE_ExtractPoint(
+    //    GFE_Detail* const inGeo,
+    //    const GA_Detail* const inGeoSrc = nullptr,
+    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    //)
+    //    : GFE_GeoFilter(inGeo, inGeoSrc, cookparms)
+    //    //, groupParserIn0(geoSrc ? geoSrc : static_cast<const GA_Detail*>(inGeo), groupParser.getGOPRef(), cookparms)
+    //{
+    //    if (geoSrc)
+    //    {
+    //        geoSrcGUTmp = new GU_Detail();
+    //        geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
+    //        geoSrcTmp = geoSrcGUTmp;
+    //        geoSrcTmp->replaceWithPoints(*geoSrc);
+    //    }
+    //    else
+    //    {
+    //        geoSrcTmp = geo;
+    //    }
+    //}
+	//
+    //GFE_ExtractPoint(
+    //    GA_Detail& inGeo,
+    //    const GA_Detail* const inGeoSrc = nullptr,
+    //    const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    //)
+    //    : GFE_GeoFilter(inGeo, inGeoSrc, cookparms)
+    //    //, groupParserIn0(geoSrc ? geoSrc : &inGeo, groupParser.getGOPRef(), cookparms)
+    //{
+    //    if (geoSrc)
+    //    {
+    //        geoSrcGUTmp = new GU_Detail();
+    //        geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
+    //        geoSrcTmp = geoSrcGUTmp;
+    //        geoSrcTmp->replaceWithPoints(*geoSrc);
+    //    }
+    //    else
+    //    {
+    //        geoSrcTmp = geo;
+    //    }
+    //}
 	
 
     void
@@ -89,11 +89,11 @@ public:
     { this->kernel = kernel; }
     
 
-    SYS_FORCE_INLINE void setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
-    { groupParserIn0.setGroup(groupType, groupName); }
+    //SYS_FORCE_INLINE void setGroup(const GA_GroupType groupType, const UT_StringRef& groupName)
+    //{ groupParserIn0.setGroup(groupType, groupName); }
 
-    SYS_FORCE_INLINE void setGroup(const UT_StringRef& groupName)
-    { setGroup(GA_GROUP_POINT, groupName); }
+    //SYS_FORCE_INLINE void setGroup(const UT_StringRef& groupName)
+    //{ setGroup(GA_GROUP_POINT, groupName); }
 
 
     SYS_FORCE_INLINE virtual void bumpDataIdsForAddOrRemove() const override
@@ -102,7 +102,7 @@ public:
     
 private:
 
-    void keepStdGroup(const char* pattern)
+    void keepStdGroup(const char* const pattern)
     { 
         if (!pattern || pattern == "*")
             return;
@@ -124,10 +124,10 @@ private:
     { GFE_Group::keepStdGroup(*geoSrcTmp->getGroupTable(groupType), keepGroupPattern); }
 
     void keepStdGroup(
-        const char* primGroupPattern,
-        const char* pointGroupPattern,
-        const char* vertexGroupPattern,
-        const char* edgeGroupPattern
+        const char* const primGroupPattern,
+        const char* const pointGroupPattern,
+        const char* const vertexGroupPattern,
+        const char* const edgeGroupPattern
     )
     {
         keepStdGroup(GA_GROUP_PRIMITIVE, primGroupPattern);
@@ -142,7 +142,20 @@ private:
     virtual bool
         computeCore() override
     {
-        pointGroup = groupParserIn0.getPointGroup();
+        GU_DetailHandle geoSrcTmp_h;
+        if (geoSrc)
+        {
+            GU_Detail* const geoSrcGUTmp = new GU_Detail();
+            geoSrcTmp_h.allocateAndSet(geoSrcGUTmp);
+            geoSrcTmp = geoSrcGUTmp;
+            geoSrcTmp->replaceWithPoints(*geoSrc);
+        }
+        else
+        {
+            geoSrcTmp = geo;
+        }
+        
+        pointGroup = groupParser.isPointDetached() ? groupParser.getPointGroup() : geoSrcTmp->findPointGroup(groupParser.getName());
         
         GFE_AttributeDelete::keepStdAttribute(geoSrcTmp->getAttributes(), keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
         keepStdGroup(keepPrimAttrib, keepPointAttrib, keepVertexAttrib, keepDetailAttrib);
@@ -154,7 +167,6 @@ private:
         
         if (delInputGroup && pointGroup && !pointGroup->isDetached())
             geo->getGroupTable(GA_GROUP_POINT)->destroy(pointGroup->getName());
-            //groupParserIn0.delGroup();
         
         //if (delInputGroup && pointGroupNonConst)
         //    geo->destroyGroup(pointGroupNonConst);
@@ -341,10 +353,8 @@ public:
     const char* keepEdgeGroup    = nullptr;
         
 private:
-    GFE_GroupParser groupParserIn0;
+    //GFE_GroupParser groupParserIn0;
     
-    GU_DetailHandle geoSrcTmp_h;
-    GU_Detail* geoSrcGUTmp;
     GA_Detail* geoSrcTmp;
     
     const GA_PointGroup* pointGroup;

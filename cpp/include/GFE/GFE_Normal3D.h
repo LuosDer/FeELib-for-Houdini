@@ -86,7 +86,7 @@ public:
             const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
             attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, defaults))
+            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, nullptr))
             {
                 setComputedNormal3DAttrib(attrib);
                 return attrib;
@@ -122,7 +122,7 @@ public:
             const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
             attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, defaults))
+            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, nullptr))
             {
                 setComputedNormal3DAttrib(attrib);
                 return attrib;
@@ -190,17 +190,16 @@ private:
         //if (getOutAttribArray().isEmpty())
         if (!normal3DAttrib)
             return false;
-
         
-        if (!posAttrib)
-            posAttrib = geo->getP();
+        geo->setValidPosAttrib(posAttrib);
+        geo->setValidPosAttrib(posAttribNonConst);
         
         if (groupParser.isEmpty())
             return true;
 
-        GA_Attribute* const attrib = getOutAttribArray()[0];
-        const GA_AIFTuple* const AIFTuple = attrib->getAIFTuple();
-        switch (attrib->getAIFTuple()->getStorage(attrib))
+        //normal3DAttrib = getOutAttribArray()[0];
+        const GA_AIFTuple* const AIFTuple = normal3DAttrib->getAIFTuple();
+        switch (normal3DAttrib->getAIFTuple()->getStorage(normal3DAttrib))
         {
             default:
             case GA_STORE_REAL64: computeNormal<fpreal64>(); break;
@@ -213,8 +212,8 @@ private:
     void computeNormal()
     {
         const GA_ROHandleT<UT_Vector3T<fpreal64>> pos_h(posAttrib);
-        const GA_RWHandleT<UT_Vector3T<fpreal64>> normal3D_h(getOutAttribArray()[0]);
-        GEOcomputeNormals(*geo->asGEO_Detail(), pos_h, normal3D_h, groupParser.getGroup(getOutAttribArray()[0]),
+        const GA_RWHandleT<UT_Vector3T<fpreal64>> normal3D_h(attrib);
+        GEOcomputeNormals(*geo->asGEO_Detail(), pos_h, normal3D_h, groupParser.getGroup(attrib),
             cuspAngleDegrees, normalMethod, copyOrigIfZero);
     }
     
@@ -226,6 +225,7 @@ public:
 
 private:
     const GA_Attribute* normal3DAttrib = nullptr;
+    GA_Attribute* attrib;
     
 }; // End of class GFE_Normal3D
 

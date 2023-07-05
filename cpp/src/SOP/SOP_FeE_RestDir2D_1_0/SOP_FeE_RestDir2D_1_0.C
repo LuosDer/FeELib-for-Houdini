@@ -294,15 +294,15 @@ sopAttribSearchOrder(SOP_FeE_RestDir2D_1_0Parms::Normal3DAttribClass attribClass
     using namespace SOP_FeE_RestDir2D_1_0Enums;
     switch (attribClass)
     {
-    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::PRIMITIVE;   break;
-    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::POINT;       break;
-    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::VERTEX;      break;
-    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::DETAIL;      break;
-    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::POINTVERTEX; break;
-    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::ALL;         break;
+    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::Primitive;   break;
+    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::Point;       break;
+    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::Vertex;      break;
+    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::Detail;      break;
+    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::PointVertex; break;
+    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::All;         break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
-    return GFE_NormalSearchOrder::INVALID;
+    return GFE_NormalSearchOrder::Invalid;
 }
 
 
@@ -338,7 +338,7 @@ SOP_FeE_RestDir2D_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     restDir2D.findOrCreateDir(false, GA_STORE_INVALID, restDir2DAttribName);
 
     if (method == GFE_RestDir2DMethod::AvgNormal)
-        restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
+        restDir2D.normal3D.findOrCreateNormal3D(true, true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
 
     if (sopparms.getMatchUpDir())
         restDir2D.setMatchUpDir(sopparms.getUp());

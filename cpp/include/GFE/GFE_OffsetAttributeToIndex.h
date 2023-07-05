@@ -1,8 +1,8 @@
 
 #pragma once
 
-#ifndef __GFE_OffsetAttribToIndex_h__
-#define __GFE_OffsetAttribToIndex_h__
+#ifndef __GFE_OffsetAttributeToIndex_h__
+#define __GFE_OffsetAttributeToIndex_h__
 
 #include "GFE/GFE_OffsetAttributeToIndex.h"
 

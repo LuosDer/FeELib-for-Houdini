@@ -409,7 +409,19 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 /*
 
     
-    GFE_AttribCopy attribCopy(geo, &geoTmp, cookparms);
+    GFE_AttribCopy attribCopy(geo, geoTmp, cookparms);
+    attribCopy.ownerSrc = GA_ATTRIB_PRIMITIVE;
+    attribCopy.ownerDst = GA_ATTRIB_POINT;
+    attribCopy.attribMergeType = GFE_AttribMergeType::Set;
+    attribCopy.iDAttribInput = true;
+    attribCopy.setOffsetAttrib(*srcElemoffAttrib, true);
+    
+    attribCopy.getRef0GroupArray ().appends(attribCopy.ownerSrc, pattern);
+    attribCopy.getRef0AttribArray().appends(attribCopy.ownerSrc, pattern);
+    attribCopy.appendGroups ("*");
+    attribCopy.appendAttribs("*");
+    
+    attribCopy.compute();
  
  */
     
@@ -421,18 +433,12 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
     if (sopparms.getUseIDAttrib())
-    {
         attribCopy.setOffsetAttrib(sopparms.getIDAttrib(), sopparms.getIDAttribIsOffset());
-    }
     
     if (sopparms.getRenameAttrib())
-    {
         attribCopy.newAttribNames = sopparms.getNewAttribName();
-    }
     if (sopparms.getRenameGroup())
-    {
-        attribCopy.newGroupNames = sopparms.getNewGroupName();
-    }
+        attribCopy.newGroupNames  = sopparms.getNewGroupName();
     
     attribCopy.appendGroups(sopparms.getCopyGroup());
     attribCopy.appendAttribs(sopparms.getCopyAttrib());

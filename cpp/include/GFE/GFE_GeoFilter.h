@@ -74,7 +74,7 @@ public:
         : geo(geo)
         , geoSrc(geoSrc)
         , cookparms(cookparms)
-        , groupParser(geoSrc, gop, cookparms)
+        , groupParser(geoSrc ? geoSrc : geo, gop, cookparms)
     {
     }
 
@@ -110,7 +110,7 @@ public:
         : geo(static_cast<GFE_Detail*>(&geo))
         , geoSrc(geoSrc)
         , cookparms(cookparms)
-        , groupParser(geoSrc, gop, cookparms)
+        , groupParser(geoSrc ? *geoSrc : geo, gop, cookparms)
     {
     }
 
@@ -208,6 +208,18 @@ public:
     
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group) const
     { if(group) visualizeGroup(*group); }
+
+    SYS_FORCE_INLINE void setValidPosAttrib()
+    {
+        if (GFE_Type::isInvalidPosAttrib(posAttrib) || GFE_Type::isInvalidPosAttrib(posAttribNonConst))
+        {
+            posAttribNonConst = geo->getP();
+            posAttrib = posAttribNonConst;
+        }
+    }
+    
+    SYS_FORCE_INLINE void setValidConstPosAttrib()
+    { if (GFE_Type::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); }
 
 
 private:
@@ -576,6 +588,16 @@ public:                                                                         
     { posRef##NUM##Attrib = geoRef##NUM->findPointAttribute(attribName); }                           \
                                                                                                      \
                                                                                                      \
+    SYS_FORCE_INLINE void setValidPosRef##NUM##Attrib()                                              \
+    {                                                                                                \
+        if (geoRef##NUM && GFE_Type::isInvalidPosAttrib(posRef##NUM##Attrib))                        \
+        {                                                                                            \
+            posRef##NUM##Attrib = geoRef##NUM->getP();                                               \
+        }                                                                                            \
+    }                                                                                                \
+                                                                                                     \
+                                                                                                     \
+                                                                                                     \
 private:                                                                                             \
     SYS_FORCE_INLINE virtual void setRef##NUM##DetailBase(const GFE_Detail* const inGeo)             \
     {                                                                                                \
@@ -758,16 +780,16 @@ public:
     { return findOrCreateGroup(doDelGroupElement, attribOwner, name); }
 
     
-    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreatePrimitive(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_PointGroup* findOrCreatePointGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_PointGroup*  findOrCreatePointGroup (const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreatePoint(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreateVertex(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_EdgeGroup*   findOrCreateEdgeGroup  (const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreateEdge(detached, name); }
 
 

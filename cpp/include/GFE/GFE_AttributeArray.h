@@ -434,7 +434,8 @@ GA_Attribute* createDetachedArrayAttribute(
         attribArray.emplace_back(attribPtr);
     return attribPtr;
 }
-    
+
+        
 GA_Attribute*
 findOrCreateTuple(
     const bool detached = true,
@@ -450,12 +451,12 @@ findOrCreateTuple(
 )
 {
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-        
+
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
     if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
 
-    if (detached)
+    if (detached || !attribName.isstring() || attribName.length()==0)
     {
         if (finalStorage == GA_STORE_STRING)
             attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, "string", create_args, attribute_options));
@@ -487,7 +488,7 @@ findOrCreateTuple(
 }
 
 
-
+    
 template<typename T>
 SYS_FORCE_INLINE GA_Attribute*
 findOrCreateTuple(
@@ -534,6 +535,17 @@ findOrCreateTuple(
 //     return findOrCreateTuple(detached, owner, storageClass, storage, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
 // }
 
+SYS_FORCE_INLINE GA_Attribute*
+    findOrCreateOffset(
+        const bool detached = true,
+        const GA_AttributeOwner owner = GA_ATTRIB_POINT,
+        const GA_Storage storage = GA_STORE_INVALID,
+        const UT_StringRef& attribName = "",
+        const bool emplaceBack = true
+)
+{ return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET), emplaceBack); }
+
+
 
     GA_Attribute*
     findOrCreateArray(
@@ -555,7 +567,7 @@ findOrCreateTuple(
             return attribPtr;
         
 
-        if (detached)
+        if (detached || !attribName.isstring() || attribName.length()==0)
         {
 #if 0
             switch (finalStorage)
@@ -667,7 +679,7 @@ findOrCreateTuple(
         // }
         
 
-        if (detached)
+        if (detached || !attribName.isstring() || attribName.length()==0)
         {
             attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tupleSize, defaults, attribute_options));
             attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -756,7 +768,7 @@ findOrCreateUV(
         return attribPtr;
         
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
-    if (detached)
+    if (detached || !attribName.isstring() || attribName.length()==0)
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tupleSize, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -822,7 +834,7 @@ findOrCreateDir(
         return attribPtr;
 
         
-    if (detached)
+    if (detached || !attribName.isstring() || attribName.length()==0)
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tupleSize, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
@@ -1379,7 +1391,7 @@ public:
     )
     {
         GA_Group* groupPtr;
-        if (detached)
+        if (detached || !groupName.isstring() || groupName.length()==0)
         {
             switch (groupType)
             {

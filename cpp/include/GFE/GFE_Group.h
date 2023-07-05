@@ -20,14 +20,12 @@ class GFE_GroupSetter
 public:
     GFE_GroupSetter() {}
     
-    GFE_GroupSetter(GA_Group* inGroupPtr)
-    { operator=(inGroupPtr); }
-    
-    GFE_GroupSetter(GA_ElementGroup* groupPtr)   : elementGroup(groupPtr) {}
-    GFE_GroupSetter(GA_PrimitiveGroup* groupPtr) : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_GroupSetter(GA_PointGroup* groupPtr)     : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_GroupSetter(GA_VertexGroup* groupPtr)    : elementGroup(static_cast<GA_ElementGroup*>(groupPtr)) {}
-    GFE_GroupSetter(GA_EdgeGroup* groupPtr)      : edgeGroup(groupPtr) {}
+    GFE_GroupSetter(GA_Group*          const group) { operator=(group); }
+    GFE_GroupSetter(GA_ElementGroup*   const group) : elementGroup(group) {}
+    GFE_GroupSetter(GA_PrimitiveGroup* const group) : elementGroup(static_cast<GA_ElementGroup*>(group)) {}
+    GFE_GroupSetter(GA_PointGroup*     const group) : elementGroup(static_cast<GA_ElementGroup*>(group)) {}
+    GFE_GroupSetter(GA_VertexGroup*    const group) : elementGroup(static_cast<GA_ElementGroup*>(group)) {}
+    GFE_GroupSetter(GA_EdgeGroup*      const group) : edgeGroup(group) {}
 
     ~GFE_GroupSetter(){}
 

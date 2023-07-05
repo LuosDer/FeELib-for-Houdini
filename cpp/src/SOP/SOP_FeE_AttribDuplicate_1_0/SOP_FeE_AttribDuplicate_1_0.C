@@ -1,10 +1,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribDuplicate_1_0.h"
 
-
-// This is an automatically generated header file based on theDsFile, below,
-// to provide SOP_FeE_AttribDuplicate_1_0Parms, an easy way to access parameter values from
-// SOP_FeE_AttribDuplicate_1_0Verb::cook with the correct type.
 #include "SOP_FeE_AttribDuplicate_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
@@ -129,7 +125,7 @@ newSopOperator(OP_OperatorTable* table)
         SOP_FeE_AttribDuplicate_1_0::myConstructor,
         SOP_FeE_AttribDuplicate_1_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -212,21 +208,30 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
     //auto sopcache = (SOP_FeE_AttribDuplicate_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     outGeo0.replaceWith(inGeo0);
 
     
-    const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
+    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
 
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-    GFE_AttribDuplicate attribDuplicate(outGeo0, cookparms);
+    GFE_AttribDuplicate attribDuplicate(outGeo0, inGeo1, cookparms);
 
-    attribDuplicate.getInAttribArray().set(geo0AttribClass, sopparms.getDuplicateAttrib());
-    attribDuplicate.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
+    if (inGeo1)
+    {
+        attribDuplicate.getRef0AttribArray().set(attribClass, sopparms.getDuplicateAttrib());
+        attribDuplicate.getRef0GroupArray() .set(attribClass, sopparms.getGroupName());
+    }
+    else
+    {
+        attribDuplicate.getInAttribArray().set(attribClass, sopparms.getDuplicateAttrib());
+        attribDuplicate.getInGroupArray() .set(attribClass, sopparms.getGroupName());
+    }
 
     
     if (sopparms.getRenameAttrib())

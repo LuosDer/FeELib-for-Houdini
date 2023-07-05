@@ -175,7 +175,7 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.value(elemoff).cross(defaultUp);
+                        dirCrossBase(attrib_ph.value(elemoff), defaultUp);
                     }
                 }
             }
@@ -200,13 +200,38 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_Offset off = geo->offsetPromote<FROM, TO>(elemoff);
-                        attrib_ph.value(elemoff).cross(attribUp_h.get(off));
+                        dirCrossBase(attrib_ph.value(elemoff), attribUp_h.get(off));
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
 
+    template<typename VECTOR_T>
+    void dirCrossSameOwner()
+    {
+        UT_ASSERT_P(attrib);
+        UT_ASSERT_P(attribUp);
+        UTparallelFor(groupParser.getSplittableRange(owner), [this](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribUp_ph(attribUp);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    attribUp_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        dirCrossBase(attrib_ph.value(elemoff), attribUp_ph.value(elemoff));
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    
     template<typename VECTOR_T, GA_AttributeOwner FROM>
     SYS_FORCE_INLINE void dirCross()
     {
@@ -233,37 +258,13 @@ private:
         }
     }
 
-    template<typename VECTOR_T>
-    void dirCrossSameOwner()
-    {
-        UT_ASSERT_P(attrib);
-        UT_ASSERT_P(attribUp);
-        UTparallelFor(groupParser.getSplittableRange(owner), [this](const GA_SplittableRange& r)
-        {
-            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
-            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribUp_ph(attribUp);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    attrib_ph.setPage(start);
-                    attribUp_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attrib_ph.value(elemoff).cross(attribUp_ph.value(elemoff));
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
 
     template<typename VECTOR_T>
     SYS_FORCE_INLINE void dirCrossBase(VECTOR_T& dir, const VECTOR_T& up)
     {
         fpreal length;
         if (!normalize && keepLength)
-            length = dir.length();`
+            length = dir.length();
         dir.cross(up);
         
         if (normalize)

@@ -22,24 +22,25 @@ public:
     void
         setComputeParm(
             const GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set,
-            const GA_Offset copyFromSingleOff = GA_INVALID_OFFSET,
             const bool iDAttribInput = false,
+            const GA_Offset copyFromSingleOff = GFE_INVALID_OFFSET,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
         this->attribMergeType = attribMergeType;
+        this->iDAttribInput   = iDAttribInput;
         this->copyFromSingleOff = copyFromSingleOff;
-        this->iDAttribInput = iDAttribInput;
+        
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
-    SYS_FORCE_INLINE void appendGroups(const UT_StringHolder& pattern)
+    SYS_FORCE_INLINE void appendGroups(const UT_StringRef& pattern)
     { getRef0GroupArray().appends(ownerSrc, pattern); }
 
-    SYS_FORCE_INLINE void appendAttribs(const UT_StringHolder& pattern)
+    SYS_FORCE_INLINE void appendAttribs(const UT_StringRef& pattern)
     { getRef0AttribArray().appends(ownerSrc, pattern); }
 
     void setOffsetAttrib(const GA_Attribute& attrib, const bool isOffset)
@@ -51,20 +52,20 @@ public:
             geo->getIndexMap(ownerDst));
     }
 
-    void setOffsetAttrib(const UT_StringHolder& iDAttribName, const bool isOffset)
+    void setOffsetAttrib(const UT_StringRef& iDAttribName, const bool isOffset)
     {
-        if (iDAttribName.length() == 0)
+        if (!iDAttribName.isstring() || iDAttribName.length()==0)
         {
             iDAttrib.clear();
             return;
         }
 
-        if (iDAttribInput)//DESTINATION
+        if (iDAttribInput)//Destination
         {
             iDAttrib.bind(*geo, ownerDst, iDAttribName, isOffset);
             iDAttrib.bindIndexMap(geoRef0->getIndexMap(ownerSrc));
         }
-        else//Src
+        else//Source
         {
             iDAttrib.bind(*geoRef0, ownerSrc, iDAttribName, isOffset);
             iDAttrib.bindIndexMap(geo->getIndexMap(ownerDst));
@@ -87,7 +88,7 @@ private:
         if (isAttribEmpty && getRef0GroupArray().isEmpty())
             return false;
 
-        doCcopyFromSingleOff = copyFromSingleOff >= 0;
+        doCcopyFromSingleOff = GFE_Type::isValidOffset(copyFromSingleOff);
         if (doCcopyFromSingleOff)
         {
             const GA_IndexMap& indexMapDst = geo->getIndexMap(ownerDst);
@@ -113,8 +114,10 @@ private:
         {
             const GA_Group& groupRef = *getRef0GroupArray()[i];
 
-            const UT_StringHolder& newName = newGroupNames.getIsValid() ? newGroupNames.getNext<UT_StringHolder>() : groupRef.getName();
-            const bool detached = !newGroupNames.getIsValid() || !GFE_Type::isPublicAttribName(newName);
+            const UT_StringHolder& newName = newGroupNames.getIsValid() ?
+                                             newGroupNames.getNext<UT_StringHolder>() :
+                                             (groupRef.isDetached() ? UT_StringHolder("") : groupRef.getName());
+            const bool detached = !(newGroupNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
             
             GA_Group* newAttrib = detached ? nullptr : groupDst->find(newName);
             if (newAttrib)
@@ -138,8 +141,10 @@ private:
         {
             const GA_Attribute& attribRef = *getRef0AttribArray()[i];
 
-            const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attribRef.getName();
-            const bool detached = !newAttribNames.getIsValid() || !GFE_Type::isPublicAttribName(newName);
+            const UT_StringHolder& newName = newAttribNames.getIsValid() ?
+                                             newAttribNames.getNext<UT_StringHolder>() :
+                                             (attribRef.isDetached() ? UT_StringHolder("") : attribRef.getName());
+            const bool detached = !(newAttribNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
 
             GA_Attribute* newAttrib = attribDst.findAttribute(ownerDst, newName);
             if (newAttrib)
@@ -378,9 +383,9 @@ public:
     UFE_SplittableString newGroupNames;
     
     GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set;
-    bool iDAttribInput = false;//True means id attrib is on DESTINATION(geoRef0), While false means id attrib is on Source(geo)
+    bool iDAttribInput = false; //True means id attrib is on DESTINATION(geoRef0); While false means id attrib is on Source(geo)
 
-    GA_Offset copyFromSingleOff = GA_INVALID_OFFSET;
+    GA_Offset copyFromSingleOff = GFE_INVALID_OFFSET;
     //GA_GroupType owner;
     //GA_GroupType ownerRef;
     

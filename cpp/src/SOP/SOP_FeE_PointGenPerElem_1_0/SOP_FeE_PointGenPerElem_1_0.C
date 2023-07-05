@@ -77,6 +77,7 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
         nolabel
         joinnext
+        disablewhen "{ elementClass == edge }"
     }
     parm {
         name    "numPointAttrib"
@@ -84,7 +85,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Num Point Attrib"
         type    string
         default { "numpt" }
-        disablewhen "{ useNumPointAttrib == 0 }"
+        disablewhen "{ useNumPointAttrib == 0 } { elementClass == edge }"
     }
     parm {
         name    "outSrcElemoffAttrib"
@@ -102,6 +103,28 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "index" }
         disablewhen "{ outSrcElemoffAttrib == 0 }"
+    }
+    parm {
+        name    "outAsOffset"
+        cppname "OutAsOffset"
+        label   "Out as Offset"
+        type    toggle
+        default { "off" }
+        disablewhen "{ outSrcElemoffAttrib == 0 }"
+    }
+    parm {
+        name    "keepSrcElemAttrib"
+        cppname "KeepSrcElemAttrib"
+        label   "Keep Src Elem Attrib"
+        type    string
+        default { "*" }
+    }
+    parm {
+        name    "keepSrcElemGroup"
+        cppname "KeepSrcElemGroup"
+        label   "Keep Src Elem Group"
+        type    string
+        default { "*" }
     }
 
     parm {
@@ -132,6 +155,9 @@ SOP_FeE_PointGenPerElem_1_0::buildTemplates()
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
         templ.setChoiceListPtr("numPointAttrib"_sh,       &SOP_Node::allAttribReplaceMenu);
         templ.setChoiceListPtr("srcElemoffAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
+        templ.setChoiceListPtr("keepSrcElemAttrib"_sh, &SOP_Node::allAttribMenu);
+        templ.setChoiceListPtr("keepSrcElemGroup"_sh, &SOP_Node::allGroupMenu);
+        
     }
     return templ.templates();
 }
@@ -237,7 +263,7 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType elementClass = sopGroupType(sopparms.getElementClass());
@@ -246,18 +272,29 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
-    
+
+/*
+        GFE_PointGenPerElem pointGenPerElem(geoPoint, geo, cookparms);
+        pointGenPerElem.elementClass = GA_GROUP_PRIMITIVE;
+        pointGenPerElem.srcElemoffAttribName = "";
+        pointGenPerElem.groupParser.setGroup(groupParser);
+        pointGenPerElem.compute();
+ */
+
     GFE_PointGenPerElem pointGenPerElem(outGeo0, inGeo0, cookparms);
     
-    pointGenPerElem.setComputeParm(elementClass, sopparms.getSetPositionOnElem(),
+    pointGenPerElem.setComputeParm(elementClass, sopparms.getSetPositionOnElem(), sopparms.getKeepSrcElemAttrib(), sopparms.getKeepSrcElemGroup(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     if (sopparms.getUseNumPointAttrib())
         pointGenPerElem.setNumPointAttrib(sopparms.getNumPointAttrib());
     
     if (sopparms.getOutSrcElemoffAttrib())
-        pointGenPerElem.setSrcElemoffAttrib(sopparms.getSrcElemoffAttribName());
+    {
+        pointGenPerElem.srcElemoffAttribName = sopparms.getSrcElemoffAttribName();
+        pointGenPerElem.outAsOffset = sopparms.getOutAsOffset();
+        //pointGenPerElem.setSrcElemoffAttrib(sopparms.getSrcElemoffAttribName());
+    }
     
     pointGenPerElem.groupParser.setGroup(groupType, sopparms.getGroup());
     pointGenPerElem.computeAndBumpDataId();

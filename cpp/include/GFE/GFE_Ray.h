@@ -37,8 +37,7 @@ public:
     }
 
 private:
-
-    // can not use in parallel unless for each GA_Detail
+    
     virtual bool
         computeCore() override
     {
@@ -70,11 +69,11 @@ private:
     template<typename T>
     void enumerate()
     {
-        UT_ASSERT_P(attribPtr);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
+        UT_ASSERT_P(attrib);
+        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attrib->getOwner()));
         UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;

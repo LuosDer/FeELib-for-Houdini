@@ -244,39 +244,51 @@ public:
     
     void setGroup(const GA_Group* const group)
     {
-        hasGroup = true;
-        geoGroup = group;
-        clearElementGroup();
+        if (!group)
+        {
+            setAllGroupFull();
+            return;
+        }
+        setGroupBase(group);
+        
+        switch (group->classType())
+        {
+        case GA_GROUP_PRIMITIVE: hasPrimitiveGroup = true; geoPrimitiveGroup = static_cast<const GA_PrimitiveGroup*>(group); break;
+        case GA_GROUP_POINT:     hasPointGroup     = true; geoPointGroup     = static_cast<const GA_PointGroup*    >(group); break;
+        case GA_GROUP_VERTEX:    hasVertexGroup    = true; geoVertexGroup    = static_cast<const GA_VertexGroup*   >(group); break;
+        case GA_GROUP_EDGE:      hasEdgeGroup      = true; geoEdgeGroup      = static_cast<const GA_EdgeGroup*     >(group); break;
+        default: UT_ASSERT_MSG(0, "Unhandled Group Type"); break;
+        }
     }
 
     SYS_FORCE_INLINE void setGroup(const GFE_GroupParser& groupParser)
-    { setGroup(groupParser.getGroup()); }
+    { groupParser.getHasGroup() ? setGroup(groupParser.getGroup()) : clear(); }
 
     
     void setGroup(const GA_PrimitiveGroup* const group)
     {
-        setGroup(static_cast<const GA_Group*>(group));
+        setGroupBase(static_cast<const GA_Group*>(group));
         hasPrimitiveGroup = true;
         geoPrimitiveGroup = group;
     }
     
     void setGroup(const GA_PointGroup* const group)
     {
-        setGroup(static_cast<const GA_Group*>(group));
+        setGroupBase(static_cast<const GA_Group*>(group));
         hasPointGroup = true;
         geoPointGroup = group;
     }
     
     void setGroup(const GA_VertexGroup* const group)
     {
-        setGroup(static_cast<const GA_Group*>(group));
+        setGroupBase(static_cast<const GA_Group*>(group));
         hasVertexGroup = true;
         geoVertexGroup = group;
     }
     
     void setGroup(const GA_EdgeGroup* const group)
     {
-        setGroup(static_cast<const GA_Group*>(group));
+        setGroupBase(static_cast<const GA_Group*>(group));
         hasEdgeGroup = true;
         geoEdgeGroup = group;
     }
@@ -321,14 +333,16 @@ public:
         }
         
         geoGroup = gop->parseGroupDetached(groupName, groupType, geo, true, false, hasGroup);
-        if (geoGroup->isElementGroup())
-        {
-            GA_Size a = static_cast<const GA_ElementGroup*>(geoGroup)->computeGroupEntries();
-            GA_Size b = static_cast<const GA_ElementGroup*>(geoGroup)->entries();
-            GA_Size c = a + b;
-            
-        }
-
+        
+        setGroup(geoGroup);
+        
+        // if (geoGroup->isElementGroup())
+        // {
+        //     GA_Size a = static_cast<const GA_ElementGroup*>(geoGroup)->computeGroupEntries();
+        //     GA_Size b = static_cast<const GA_ElementGroup*>(geoGroup)->entries();
+        //     GA_Size c = a + b;
+        //     
+        // }
         //hasGroup &= bool(geoGroup);
 
         // const SOP_NodeVerb* const verb = cookparms->getNode()->cookVerb();
@@ -441,6 +455,29 @@ public:
     SYS_FORCE_INLINE bool isEdgeDetached() const
     { return hasEdgeGroup      && geoEdgeGroup      ? geoEdgeGroup->isDetached() : true; }
         
+    bool isDetached(const GA_GroupType owner) const
+    {
+        switch (owner)
+        {
+        case GA_GROUP_PRIMITIVE: return isPrimitiveDetached(); break;
+        case GA_GROUP_POINT:     return isPointDetached();     break;
+        case GA_GROUP_VERTEX:    return isVertexDetached();    break;
+        case GA_GROUP_EDGE:      return isEdgeDetached();      break;
+        default:                 return true;                  break;
+        }
+    }
+
+    bool isDetached(const GA_AttributeOwner owner) const
+    {
+        switch (owner)
+        {
+        case GA_ATTRIB_PRIMITIVE: return isPrimitiveDetached(); break;
+        case GA_ATTRIB_POINT:     return isPointDetached();     break;
+        case GA_ATTRIB_VERTEX:    return isVertexDetached();    break;
+        default:                  return true;                  break;
+        }
+    }
+
     SYS_FORCE_INLINE bool getHasGroup() const
     { return hasGroup; }
     
@@ -730,18 +767,18 @@ private:
     void clearElementGroup()
     {
         hasPrimitiveGroup = false;
-        hasPointGroup = false;
-        hasVertexGroup = false;
-        hasEdgeGroup = false;
+        hasPointGroup     = false;
+        hasVertexGroup    = false;
+        hasEdgeGroup      = false;
     }
 
     void setAllGroupFull()
     {
-        hasGroup = true;
+        hasGroup          = true;
         hasPrimitiveGroup = true;
-        hasPointGroup = true;
-        hasVertexGroup = true;
-        hasEdgeGroup = true;
+        hasPointGroup     = true;
+        hasVertexGroup    = true;
+        hasEdgeGroup      = true;
 
         gop->destroyAdhocGroup(geoGroup);
         gop->destroyAdhocGroup(geoPrimitiveGroup);
@@ -749,60 +786,11 @@ private:
         gop->destroyAdhocGroup(geoVertexGroup);
         gop->destroyAdhocGroup(geoEdgeGroup);
 
-        geoGroup = nullptr;
+        geoGroup          = nullptr;
         geoPrimitiveGroup = nullptr;
-        geoPointGroup = nullptr;
-        geoVertexGroup = nullptr;
-        geoEdgeGroup = nullptr;
-    }
-
-
-    void setPrimitiveGroup()
-    {
-        if (!hasGroup)
-            return;
-
-        hasPrimitiveGroup = true;
-        geoPrimitiveGroup = groupFindPromotePrimitiveDetached(geoGroup);
-        if (geoPrimitiveGroup && geoPrimitiveGroup->isDetached())
-            //geoPrimitiveGroupUPtr.reset(geoPrimitiveGroup);
-            gop->appendAdhocGroup(const_cast<GA_PrimitiveGroup*>(geoPrimitiveGroup), false);
-    }
-
-
-    void setPointGroup()
-    {
-        if (!hasGroup)
-            return;
-
-        hasPointGroup = true;
-        geoPointGroup = groupFindPromotePointDetached(geoGroup);
-        if (geoPointGroup && geoPointGroup->isDetached())
-            gop->appendAdhocGroup(const_cast<GA_PointGroup*>(geoPointGroup), false);
-    }
-
-
-    void setVertexGroup()
-    {
-        if (!hasGroup)
-            return;
-
-        hasVertexGroup = true;
-        geoVertexGroup = groupFindPromoteVertexDetached(geoGroup);
-        if (geoVertexGroup && geoVertexGroup->isDetached())
-            gop->appendAdhocGroup(const_cast<GA_VertexGroup*>(geoVertexGroup), false);
-    }
-
-
-    void setEdgeGroup()
-    {
-        if (!hasGroup)
-            return;
-
-        hasEdgeGroup = true;
-        geoEdgeGroup = groupFindPromoteEdgeDetached(geoGroup);
-        if (geoEdgeGroup && geoEdgeGroup->isDetached())
-            gop->appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), false);
+        geoPointGroup     = nullptr;
+        geoVertexGroup    = nullptr;
+        geoEdgeGroup      = nullptr;
     }
 
 
@@ -873,6 +861,63 @@ protected:
     {
         this->geo = geo;
         geoNonconst = geo;
+    }
+
+private:
+    
+    void setGroupBase(const GA_Group* const group)
+    {
+        hasGroup = true;
+        geoGroup = group;
+        clearElementGroup();
+    }
+
+    void setPrimitiveGroup()
+    {
+        if (!hasGroup)
+            return;
+
+        hasPrimitiveGroup = true;
+        geoPrimitiveGroup = groupFindPromotePrimitiveDetached(geoGroup);
+        if (geoPrimitiveGroup && geoPrimitiveGroup->isDetached())
+            //geoPrimitiveGroupUPtr.reset(geoPrimitiveGroup);
+            gop->appendAdhocGroup(const_cast<GA_PrimitiveGroup*>(geoPrimitiveGroup), false);
+    }
+
+
+    void setPointGroup()
+    {
+        if (!hasGroup)
+            return;
+
+        hasPointGroup = true;
+        geoPointGroup = groupFindPromotePointDetached(geoGroup);
+        if (geoPointGroup && geoPointGroup->isDetached())
+            gop->appendAdhocGroup(const_cast<GA_PointGroup*>(geoPointGroup), false);
+    }
+
+
+    void setVertexGroup()
+    {
+        if (!hasGroup)
+            return;
+
+        hasVertexGroup = true;
+        geoVertexGroup = groupFindPromoteVertexDetached(geoGroup);
+        if (geoVertexGroup && geoVertexGroup->isDetached())
+            gop->appendAdhocGroup(const_cast<GA_VertexGroup*>(geoVertexGroup), false);
+    }
+
+
+    void setEdgeGroup()
+    {
+        if (!hasGroup)
+            return;
+
+        hasEdgeGroup = true;
+        geoEdgeGroup = groupFindPromoteEdgeDetached(geoGroup);
+        if (geoEdgeGroup && geoEdgeGroup->isDetached())
+            gop->appendAdhocGroup(const_cast<GA_EdgeGroup*>(geoEdgeGroup), false);
     }
 
 
