@@ -54,18 +54,18 @@ public:
 
     void setOffsetAttrib(const UT_StringRef& iDAttribName, const bool isOffset)
     {
-        if (iDAttribName.length() == 0)
+        if (!iDAttribName.isstring() || iDAttribName.length()==0)
         {
             iDAttrib.clear();
             return;
         }
 
-        if (iDAttribInput)//DESTINATION
+        if (iDAttribInput)//Destination
         {
             iDAttrib.bind(*geo, ownerDst, iDAttribName, isOffset);
             iDAttrib.bindIndexMap(geoRef0->getIndexMap(ownerSrc));
         }
-        else//Src
+        else//Source
         {
             iDAttrib.bind(*geoRef0, ownerSrc, iDAttribName, isOffset);
             iDAttrib.bindIndexMap(geo->getIndexMap(ownerDst));
@@ -114,8 +114,10 @@ private:
         {
             const GA_Group& groupRef = *getRef0GroupArray()[i];
 
-            const UT_StringHolder& newName = newGroupNames.getIsValid() ? newGroupNames.getNext<UT_StringHolder>() : groupRef.getName();
-            const bool detached = !newGroupNames.getIsValid() || !GFE_Type::isPublicAttribName(newName);
+            const UT_StringHolder& newName = newGroupNames.getIsValid() ?
+                                             newGroupNames.getNext<UT_StringHolder>() :
+                                             (groupRef.isDetached() ? UT_StringHolder("") : groupRef.getName());
+            const bool detached = !(newGroupNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
             
             GA_Group* newAttrib = detached ? nullptr : groupDst->find(newName);
             if (newAttrib)
@@ -139,8 +141,10 @@ private:
         {
             const GA_Attribute& attribRef = *getRef0AttribArray()[i];
 
-            const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attribRef.getName();
-            const bool detached = !newAttribNames.getIsValid() || !GFE_Type::isPublicAttribName(newName);
+            const UT_StringHolder& newName = newAttribNames.getIsValid() ?
+                                             newAttribNames.getNext<UT_StringHolder>() :
+                                             (attribRef.isDetached() ? UT_StringHolder("") : attribRef.getName());
+            const bool detached = !(newAttribNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
 
             GA_Attribute* newAttrib = attribDst.findAttribute(ownerDst, newName);
             if (newAttrib)

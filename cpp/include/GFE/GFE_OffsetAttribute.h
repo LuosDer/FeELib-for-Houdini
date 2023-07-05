@@ -4,7 +4,7 @@
 #ifndef __GFE_OffsetAttribute_h__
 #define __GFE_OffsetAttribute_h__
 
-//#include "GFE/GFE_OffsetAttribute.h"
+#include "GFE/GFE_OffsetAttribute.h"
 
 #include "GA/GA_Detail.h"
 #include "GA/GA_PageHandle.h"

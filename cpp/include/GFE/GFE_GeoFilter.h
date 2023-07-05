@@ -74,7 +74,7 @@ public:
         : geo(geo)
         , geoSrc(geoSrc)
         , cookparms(cookparms)
-        , groupParser(geoSrc, gop, cookparms)
+        , groupParser(geoSrc ? geoSrc : geo, gop, cookparms)
     {
     }
 
@@ -110,7 +110,7 @@ public:
         : geo(static_cast<GFE_Detail*>(&geo))
         , geoSrc(geoSrc)
         , cookparms(cookparms)
-        , groupParser(geoSrc, gop, cookparms)
+        , groupParser(geoSrc ? *geoSrc : geo, gop, cookparms)
     {
     }
 
@@ -780,16 +780,16 @@ public:
     { return findOrCreateGroup(doDelGroupElement, attribOwner, name); }
 
     
-    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_PrimitiveGroup* findOrCreatePrimitiveGroup(const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreatePrimitive(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_PointGroup* findOrCreatePointGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_PointGroup*  findOrCreatePointGroup (const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreatePoint(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_VertexGroup* findOrCreateVertexGroup(const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreateVertex(detached, name); }
 
-    SYS_FORCE_INLINE virtual GA_EdgeGroup* findOrCreateEdgeGroup(const bool detached, const UT_StringRef& name = "")
+    SYS_FORCE_INLINE virtual GA_EdgeGroup*   findOrCreateEdgeGroup  (const bool detached = true, const UT_StringRef& name = "")
     { return getOutGroupArray().findOrCreateEdge(detached, name); }
 
 

@@ -77,6 +77,7 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
         nolabel
         joinnext
+        disablewhen "{ elementClass == edge }"
     }
     parm {
         name    "numPointAttrib"
@@ -84,7 +85,7 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Num Point Attrib"
         type    string
         default { "numpt" }
-        disablewhen "{ useNumPointAttrib == 0 }"
+        disablewhen "{ useNumPointAttrib == 0 } { elementClass == edge }"
     }
     parm {
         name    "outSrcElemoffAttrib"
@@ -262,7 +263,7 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType elementClass = sopGroupType(sopparms.getElementClass());
@@ -273,9 +274,10 @@ SOP_FeE_PointGenPerElem_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
         return;
 
 /*
-        GFE_PointGenPerElem pointGenPerElem(geo, geoSrc, cookparms);
-        pointGenPerElem.elementClass = ;
-        pointGenPerElem.srcElemoffAttribName = ;
+        GFE_PointGenPerElem pointGenPerElem(geoPoint, geo, cookparms);
+        pointGenPerElem.elementClass = GA_GROUP_PRIMITIVE;
+        pointGenPerElem.srcElemoffAttribName = "";
+        pointGenPerElem.groupParser.setGroup(groupParser);
         pointGenPerElem.compute();
  */
 

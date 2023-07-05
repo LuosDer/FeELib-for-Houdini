@@ -4,6 +4,7 @@
 #ifndef __GFE_PointGeneratePerElement_h__
 #define __GFE_PointGeneratePerElement_h__
 
+#include "GFE_ExtractPoint.h"
 #include "GFE/GFE_PointGeneratePerElement.h"
 
 #include "GFE/GFE_GeoFilter.h"
@@ -72,8 +73,16 @@ private:
     virtual bool
         computeCore() override
     {
-        elemOwner = GFE_Type::attributeOwner_groupType(elemType);
+        if (elemType == GA_GROUP_POINT)
+        {
+            if (groupParser.isEmpty())
+                return true;
+            pointGenPerPoint();
+            return true;
+        }
         
+        elemOwner = GFE_Type::attributeOwner_groupType(elemType);
+
         UT_ASSERT_MSG(!numPointAttrib || numPointAttrib->getOwner() == elemOwner, "not correct numPointAttrib owner");
         UT_ASSERT_MSG(!numPointAttrib ||
                       (numPointAttrib->getAIFTuple() &&
@@ -102,7 +111,7 @@ private:
         isGeoGroupFull = groupParser.isFull();
         if (isElement)
         {
-            geoElemGroup = groupParser.isDetached() ? groupParser.getElementGroup(elemType) : geoTmp->getElementGroupTable(elemOwner).find(groupParser.getName());
+            geoElemGroup = groupParser.isDetached(elemType) ? groupParser.getElementGroup(elemType) : geoTmp->getElementGroupTable(elemOwner).find(groupParser.getName());
             geoSplittableRange = GA_Range(geoTmp->getIndexMap(elemOwner), geoElemGroup);
         }
         
@@ -122,8 +131,8 @@ private:
         }
         else if (isElement && !isGeoGroupFull)
         {
-            GA_SplittableRange srange = groupParser.getSplittableRange(elemOwner);
-            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, elemOwner, 1, &srange);
+            //GA_SplittableRange srange = groupParser.getSplittableRange(elemOwner);
+            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, elemOwner, &geoSplittableRange, 1);
             numPointAttribMid = numPointAttribMidUPtr.get();
         }
         else
@@ -131,6 +140,7 @@ private:
             numPointAttribMid = nullptr;
         }
         
+        GFE_MeshTopology meshTopology(geoTmp, cookparms);
         GA_Size numpt;
         if (isElement)
         {
@@ -153,7 +163,6 @@ private:
         }
         else
         {
-            GFE_MeshTopology meshTopology(geoTmp, cookparms);
             meshTopology.outIntermediateAttrib = false;
             meshTopology.groupParser.setGroup(groupParser);
             creatingGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
@@ -161,9 +170,9 @@ private:
             meshTopology.compute();
         
             numpt = creatingGroup->entries();
-
-            const GA_SplittableRange srange = GA_Range(*creatingGroup);
-            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, GA_ATTRIB_VERTEX, 1, &srange);
+            geoSplittableRange = GA_Range(*creatingGroup);
+            ///const GA_SplittableRange srange = GA_Range(*creatingGroup);
+            numPointAttribMidUPtr = GFE_Attribute::createDetachedIndexAttrib(*geoTmp, GA_ATTRIB_VERTEX, &geoSplittableRange, 0);
             numPointAttribMid = numPointAttribMidUPtr.get();
         }
 
@@ -185,10 +194,8 @@ private:
         switch (elemType)
         {
         case GA_GROUP_PRIMITIVE: pointGenPerPrim();   break;
-        case GA_GROUP_POINT:     pointGenPerPoint();  break;
-        case GA_GROUP_VERTEX:    pointGenPerVertex(); break;
         case GA_GROUP_EDGE:      pointGenPerEdge();   break;
-        default:                 return false;        break;
+        default: UT_ASSERT_MSG(0, "Unhandled Elem Type"); return false;
         }
     
         return true;
@@ -200,9 +207,24 @@ private:
         {
             bool unCorrectVtxpnum;
             UT_Vector3T<fpreal> pos, pos0, pos1, pos2;
+            GA_Offset ptoffEnd_prev = GFE_INVALID_OFFSET;
+            
             GA_Offset start, end;
             for (GA_Iterator it(r.begin()); it.blockAdvance(start, end); )
             {
+                if (numPointAttribMid && GFE_Type::isInvalidOffset(ptoffEnd_prev))
+                {
+                    GA_Offset elemoff_prev = GFE_INVALID_OFFSET;
+                    GA_Offset start1, end1;
+                    for (GA_Iterator it1(geoSplittableRange.begin()); it1.blockAdvance(start1, end1); )
+                    {
+                        if (start1 == start)
+                            break;
+                        elemoff_prev = end1;
+                    }
+                    ptoffEnd_prev = GFE_Type::isInvalidOffset(elemoff_prev) ? 0 : numPoint_h.get(elemoff_prev);
+                }
+            
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     if (setPositionOnElem)
@@ -216,14 +238,14 @@ private:
                                 unCorrectVtxpnum = false;
                                 const bool isEndVtx = vtxpnum >= numvtx2;
                                 // const GA_Offset vtxoff = geoTmp->getPrimitiveVertexOffset(elemoff, vtxpnum);
-                                // const GA_Offset ptoff = geoTmp->vertexPoint(vtxoff);
+                                // const GA_Offset ptoff  = geoTmp->vertexPoint(vtxoff);
                                 pos0 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, vtxpnum));
                                 pos1 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, isEndVtx ? (vtxpnum == numvtx2 ? numvtx-1 : 0) : vtxpnum + 1));
                                 pos2 = posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, isEndVtx ? (vtxpnum == numvtx2 ? 0 : 1)        : vtxpnum + 2));
                                 
                                 for (GA_Size vtxpnum1 = isEndVtx ? (vtxpnum >= numvtx2 ? 2 : 1) : 0; vtxpnum1 < vtxpnum; ++vtxpnum1)
                                 {
-                                    if (!GFE_Math::pointInTriangleT<fpreal>(posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, vtxpnum1)), pos0, pos1, pos2))
+                                    if (GFE_Math::pointInTriangleT<fpreal>(posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, vtxpnum1)), pos0, pos1, pos2))
                                     {
                                         unCorrectVtxpnum = true;
                                         break;
@@ -231,9 +253,9 @@ private:
                                 }
                                 if (unCorrectVtxpnum)
                                     continue;
-                                for (GA_Size vtxpnum1 = vtxpnum+2; vtxpnum1 < numvtx; ++vtxpnum1)
+                                for (GA_Size vtxpnum1 = vtxpnum+3; vtxpnum1 < numvtx; ++vtxpnum1)
                                 {
-                                    if (!GFE_Math::pointInTriangleT<fpreal>(posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, vtxpnum1)), pos0, pos1, pos2))
+                                    if (GFE_Math::pointInTriangleT<fpreal>(posRef_h.get(getPrimitivePointOffset(geoTmp, elemoff, vtxpnum1)), pos0, pos1, pos2))
                                     {
                                         unCorrectVtxpnum = true;
                                         break;
@@ -268,18 +290,19 @@ private:
                     if (numPointAttribMid)
                     {
                         const GA_Offset ptoffEnd = numPoint_h.get(elemoff);
-                        for (GA_Size ptoff = elemoff ? numPoint_h.get(elemoff-1) : 0; ptoff < ptoffEnd; ++ptoff)
+                        for (GA_Size ptoff = ptoffEnd_prev; ptoff < ptoffEnd; ++ptoff)
                         {
                             if (setPositionOnElem)
                                 pos_h.set(ptoff, pos);
                             if (srcElemoffAttrib)
                             {
                                 if (outAsOffset || keepSrcElemAttrib)
-                                    srcElemoff_h.set(elemoff, elemoff);
+                                    srcElemoff_h.set(ptoff, elemoff);
                                 else
-                                    srcElemoff_h.set(elemoff, geoTmp->primitiveIndex(elemoff));
+                                    srcElemoff_h.set(ptoff, geoTmp->primitiveIndex(elemoff));
                             }
                         }
+                        ptoffEnd_prev = ptoffEnd;
                     }
                     else
                     {
@@ -309,6 +332,8 @@ private:
             attribCopy.attribMergeType = GFE_AttribMergeType::Set;
             attribCopy.iDAttribInput = false;
             attribCopy.setOffsetAttrib(*srcElemoffAttrib, true);
+            
+            attribCopy.getRef0GroupArray().appends(attribCopy.ownerSrc, keepSrcElemGroupName);
             attribCopy.appendGroups (keepSrcElemGroupName);
             attribCopy.appendAttribs(keepSrcElemAttribName);
             attribCopy.compute();
@@ -322,14 +347,18 @@ private:
         }
     }
 
-    SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GA_Detail* const geo, const GA_Offset primoff, const GA_Size vtxpnum)
+    SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GA_Detail* const geo, const GA_Offset primoff, const GA_Size vtxpnum) const
     { return geoTmp->vertexPoint(geoTmp->getPrimitiveVertexOffset(primoff, vtxpnum)); }
 
 
 
     void pointGenPerPoint()
     {
-        
+        GFE_ExtractPoint extractPoint(geo, geoSrc, cookparms);
+        extractPoint.groupParser.setGroup(groupParser);
+        extractPoint.keepPointAttrib  = keepSrcElemAttribName;
+        extractPoint.keepPointGroup   = keepSrcElemGroupName;
+        extractPoint.compute();
     }
     void pointGenPerVertex()
     {
@@ -355,12 +384,12 @@ private:
         
         const GA_ATITopology* const vtxPointRef = geoTmp->getTopology().getPointRef();
         
-        UTparallelFor(GA_SplittableRange(geoTmp->getVertexRange(creatingGroup)), [this, vtxPointRef, &edgeGroupArray, flag, sizeGroup](const GA_SplittableRange& r)
+        UTparallelFor(geoSplittableRange, [this, vtxPointRef, &edgeGroupArray, flag, sizeGroup](const GA_SplittableRange& r)
         {
             UT_Vector3T<fpreal> pos0, pos1;
             GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> dstpt_ph(dstptAttrib);
             GA_PageHandleT<GA_Index,  GA_Index,  true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> ptnum_ph(numPointAttribMid);
-            for (GA_PageIterator pit = geoSplittableRange.beginPages(); !pit.atEnd(); ++pit)
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )

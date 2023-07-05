@@ -389,7 +389,7 @@ SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)
 { return attribName.isstring() && attribName.length() > 0 && strcmp(attribName.c_str(), "P") != 0; }
 
-SYS_FORCE_INLINE static bool isPublicAttribName(const char* attribName)
+SYS_FORCE_INLINE static bool isPublicAttribName(const char* const attribName)
 { return attribName && strcmp(attribName, "P") != 0; }
 
 
