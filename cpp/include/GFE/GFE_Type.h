@@ -265,6 +265,7 @@ SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_Stri
 
 static bool checkTupleAttrib(
     const GA_Attribute* const attrib,
+    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 1,
     const GA_Defaults* const defaults = nullptr
@@ -275,6 +276,10 @@ static bool checkTupleAttrib(
 
     //int a = attribPtr->getTupleSize();
     if (attrib->getTupleSize() != tupleSize)
+    {
+        return false;
+    }
+    if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
     {
         return false;
     }
@@ -298,11 +303,12 @@ static bool checkTupleAttrib(
     return true;
 }
 
-SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attrib, const GA_Storage storage = GA_STORE_INVALID)
-{ return checkTupleAttrib(attrib, storage, 3); }
+SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attrib, const GA_StorageClass storageClass = GA_STORECLASS_INVALID, const GA_Storage storage = GA_STORE_INVALID)
+{ return checkTupleAttrib(attrib, storageClass, storage, 3); }
 
 static bool checkArrayAttrib(
     const GA_Attribute* const attrib,
+    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 3
 )
@@ -311,6 +317,10 @@ static bool checkArrayAttrib(
         return false;
     
     if (attrib->getTupleSize() != tupleSize)
+    {
+        return false;
+    }
+    if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
     {
         return false;
     }

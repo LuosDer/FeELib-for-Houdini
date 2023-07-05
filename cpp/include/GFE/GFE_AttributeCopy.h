@@ -146,18 +146,35 @@ private:
                                              (attribRef.isDetached() ? UT_StringHolder("") : attribRef.getName());
             const bool detached = !(newAttribNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
 
-            GA_Attribute* newAttrib = attribDst.findAttribute(ownerDst, newName);
+            GA_Attribute* newAttrib = detached ? nullptr : attribDst.findAttribute(ownerDst, newName);
+            if (newAttrib && !GFE_Type::checkTupleAttrib(newAttrib, attribRef.getStorageClass(), GA_STORE_INVALID, attribRef.getTupleSize()))
+            {
+                attribDst.destroyAttribute(newAttrib);
+                newAttrib = nullptr;
+            }
             if (newAttrib)
-                newAttrib->bumpDataId();
+            {
+                //newAttrib->bumpDataId();
+                getOutAttribArray().append(newAttrib);
+            }
             else
             {
                 if (detached)
-                    newAttrib = attribDst.cloneTempAttribute(ownerDst, attribRef, true);
+                {
+                    getOutAttribArray().cloneDetached(attribRef);
+                    //GA_AttributeUPtr attribUPtr;
+                    //GA_Attribute attrib(attribRef.getType(), attribRef.getIndexMap(), attribRef.getScope(), "");
+                    //attribUPtr.reset(&attrib);
+                    //getOutAttribArray().appendUPtr(attrib);
+                    
+                    //newAttrib = attribDst.cloneTempAttribute(ownerDst, attribRef, true);
+                }
                 else
+                {
                     newAttrib = attribDst.cloneAttribute(ownerDst, newName, attribRef, true);
+                }
             }
 
-            getOutAttribArray().append(newAttrib);
             
             copyAttrib(geoSplittableRange, *newAttrib, attribRef);
         }

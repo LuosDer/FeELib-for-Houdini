@@ -102,10 +102,10 @@ public:
     }
     
     SYS_FORCE_INLINE GA_Attribute* clone(
+        const GA_Attribute& attrib,
         const GA_AttributeOwner owner,
         const UT_StringHolder& name,
-        const GA_Attribute& attrib,
-        const bool cloneOption,
+        const bool cloneOption = true,
         const GA_DataIdStrategy dataIdStrategy = GA_DATA_ID_BUMP,
         const GA_ReuseStrategy& reuse = GA_ReuseStrategy()
     )
@@ -127,7 +127,25 @@ public:
     //}
     
     SYS_FORCE_INLINE GA_Attribute* clone(const GA_Attribute& attrib)
-    { return clone(attrib.getOwner(), attrib.getName(), attrib, true); }
+    { return clone(attrib, attrib.getOwner(), attrib.getName(), true); }
+    
+    GA_Attribute* cloneDetached(
+        const GA_Attribute& attrib,
+        const GA_AttributeOwner owner,
+        const bool cloneOption = true
+    )
+    {
+        GA_Attribute* outAttrib = geo->getAttributes().cloneTempAttribute(owner, attrib, cloneOption);
+        appendUPtr(outAttrib);
+        append(outAttrib);
+        return outAttrib;
+    }
+    
+    SYS_FORCE_INLINE GA_Attribute* cloneDetached(
+        const GA_Attribute& attrib,
+        const bool cloneOption = true
+    )
+    { return cloneDetached(attrib, attrib.getOwner(), cloneOption); }
     
     
     SYS_FORCE_INLINE void clear()
@@ -232,6 +250,9 @@ public:
     
     SYS_FORCE_INLINE void set(const GFE_AttributeArray& inAttribArray)
     { clear(); append(inAttribArray); }
+    
+    SYS_FORCE_INLINE void appendUPtr(GA_Attribute* attrib)
+    { attribUPtrArray.emplace_back(GA_AttributeUPtr(attrib)); }
 
     SYS_FORCE_INLINE void append(GA_Attribute* const attribPtr)
     { if (attribPtr) attribArray.emplace_back(attribPtr); }
@@ -450,12 +471,12 @@ findOrCreateTuple(
     const GA_AttributeOptions* const attribute_options = nullptr
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, storageClass, storage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
 
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
+        
     if (detached || !attribName.isstring() || attribName.length()==0)
     {
         if (finalStorage == GA_STORE_STRING)
@@ -560,12 +581,11 @@ SYS_FORCE_INLINE GA_Attribute*
         const GA_AttributeOptions* const attribute_options = nullptr
     )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-
         GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-        if (checkArrayAttrib(detached, attribPtr, finalStorage, tupleSize, emplaceBack))
+        if (checkArrayAttrib(detached, attribPtr, storageClass, storage, tupleSize, emplaceBack))
             return attribPtr;
         
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         if (detached || !attribName.isstring() || attribName.length()==0)
         {
@@ -652,12 +672,12 @@ SYS_FORCE_INLINE GA_Attribute*
         const GA_AttributeOptions* const attribute_options = nullptr
     )
     {
-        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
         GA_Attribute* attribPtr = findPieceAttrib(pieceAttribSearchOrder, attribName);
-        if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
+        if (checkTupleAttrib(detached, attribPtr, storageClass, storage, tupleSize, nullptr, emplaceBack))
             return attribPtr;
 
+        const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         // if (attribPtr)
         // {
         //     const bool promoteFromOtherClass = sopparms.getPromoteFromOtherClass();
@@ -761,11 +781,11 @@ findOrCreateUV(
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-
     GA_Attribute* attribPtr = GFE_Attribute::findAttributePointVertex(*geo, owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, storageClass, storage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
+        
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
     if (detached || !attribName.isstring() || attribName.length()==0)
@@ -827,12 +847,11 @@ findOrCreateDir(
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-
     GA_Attribute* attribPtr = geo->findAttribute(owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, storageClass, storage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
 
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     if (detached || !attribName.isstring() || attribName.length()==0)
     {
@@ -894,11 +913,11 @@ findOrCreateNormal3D(
     const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
 )
 {
-    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
-        
     GA_Attribute* attribPtr = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-    if (checkTupleAttrib(detached, attribPtr, finalStorage, tupleSize, nullptr, emplaceBack))
+    if (checkTupleAttrib(detached, attribPtr, storageClass, storage, tupleSize, nullptr, emplaceBack))
         return attribPtr;
+        
+    const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
     if (detached || !attribName.isstring() || attribName.length()==0)
@@ -994,6 +1013,7 @@ protected:
 bool checkTupleAttrib(
     const bool detached,
     GA_Attribute*& attrib,
+    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 3,
     const GA_Defaults* const defaults = nullptr,
@@ -1002,7 +1022,7 @@ bool checkTupleAttrib(
 {
     if (!attrib)
         return false;
-    if (GFE_Type::checkTupleAttrib(attrib, storage, tupleSize, defaults))
+    if (GFE_Type::checkTupleAttrib(attrib, storageClass, storage, tupleSize, defaults))
     {
         if (emplaceBack)
             attribArray.emplace_back(attrib);
@@ -1020,6 +1040,7 @@ bool checkTupleAttrib(
 bool checkArrayAttrib(
     const bool detached,
     GA_Attribute*& attrib,
+    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
     const GA_Storage storage = GA_STORE_INVALID,
     const int tupleSize = 3,
     const bool emplaceBack = true
@@ -1027,7 +1048,7 @@ bool checkArrayAttrib(
 {
     if (!attrib)
         return false;
-    if (GFE_Type::checkArrayAttrib(attrib, storage, tupleSize))
+    if (GFE_Type::checkArrayAttrib(attrib, storageClass, storage, tupleSize))
     {
         if (emplaceBack)
             attribArray.emplace_back(attrib);

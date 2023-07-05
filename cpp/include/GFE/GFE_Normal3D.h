@@ -83,10 +83,10 @@ public:
         GA_Attribute* attrib;
         if (findNormal3D)
         {
-            const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
+            //const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
             attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, nullptr))
+            if (GFE_Type::checkTupleAttrib(attrib, storageClass, storage, tupleSize, nullptr))
             {
                 setComputedNormal3DAttrib(attrib);
                 return attrib;
@@ -119,10 +119,10 @@ public:
         GA_Attribute* attrib;
         if (findNormal3D)
         {
-            const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
+            //const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
             attrib = GFE_Attribute::findNormal3D(*geo, owner, attribName);
-            if (GFE_Type::checkTupleAttrib(attrib, finalStorage, tupleSize, nullptr))
+            if (GFE_Type::checkTupleAttrib(attrib, storageClass, storage, tupleSize, nullptr))
             {
                 setComputedNormal3DAttrib(attrib);
                 return attrib;

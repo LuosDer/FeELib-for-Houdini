@@ -143,7 +143,7 @@ private:
             else
             {
                 normal2DAttrib = geo->findPointAttribute(normal2DAttribName);
-                if (GFE_Type::checkTupleAttrib(normal2DAttrib, GA_STORE_INVALID, 3))
+                if (GFE_Type::checkTupleAttrib(normal2DAttrib, GA_STORECLASS_FLOAT, GA_STORE_INVALID, 3))
                 {
                     //onst fpreal64 constValue[] = {0.0, 0.0, 0.0};
                     //normal2DAttrib->getAIFTuple()->setRange(normal2DAttrib, groupParser.getPointRange(), constValue, 0, 3);

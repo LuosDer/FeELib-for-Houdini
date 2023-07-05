@@ -680,8 +680,8 @@ private:
             {
                 switch (getOutAttribArray()[i]->getOwner())
                 {
-                case GA_ATTRIB_PRIMITIVE: UT_ASSERT_MSG(!outPrimAttrib,  "already have prim  attrib");   outPrimAttrib   = getOutAttribArray()[i]; break;
-                case GA_ATTRIB_POINT:     UT_ASSERT_MSG(!outPointAttrib, "already have point attrib");   outPointAttrib  = getOutAttribArray()[i]; break;
+                case GA_ATTRIB_PRIMITIVE: UT_ASSERT_MSG(!outPrimAttrib,   "already have prim  attrib");  outPrimAttrib   = getOutAttribArray()[i]; break;
+                case GA_ATTRIB_POINT:     UT_ASSERT_MSG(!outPointAttrib,  "already have point attrib");  outPointAttrib  = getOutAttribArray()[i]; break;
                 case GA_ATTRIB_VERTEX:    UT_ASSERT_MSG(!outVertexAttrib, "already have vertex attrib"); outVertexAttrib = getOutAttribArray()[i]; break;
                 default: getOutAttribArray().erase(i); break;
                 }
@@ -732,16 +732,17 @@ private:
             case GA_STORE_REAL64: computeWindingNumber<fpreal64>(geoPointRange); break;
             }
             
+            
             GFE_AttribCopy attribCopy(geo, geoPoint, cookparms);
             attribCopy.ownerSrc = GA_ATTRIB_POINT;
             attribCopy.ownerDst = GA_ATTRIB_PRIMITIVE;
             attribCopy.attribMergeType = GFE_AttribMergeType::Set;
             attribCopy.iDAttribInput = true;
             attribCopy.setOffsetAttrib(*pointGenPerElem.getSrcElemoffAttrib(), true);
-    
+            
             attribCopy.getRef0GroupArray ().append(outPrimGroup);
             attribCopy.getRef0AttribArray().append(wnAttrib);
-    
+            
             attribCopy.compute();
         }
         
