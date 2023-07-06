@@ -164,7 +164,7 @@ static const char *theDsFile = R"THEDSFILE(
             nolabel
             joinnext
             default { "off" }
-            hidewhen "{ snapMethod == grid }"
+            hidewhen "{ snapMethod != point }"
         }
         parm {
             name    "positionSnapMethod"
@@ -172,8 +172,8 @@ static const char *theDsFile = R"THEDSFILE(
             label   "Position Snap Method"
             type    ordinal
             default { "mean" }
-            disablewhen "{ snapMethod == grid } { usePositionSnapMethod == 0 }"
-            hidewhen "{ snapMethod == grid }"
+            disablewhen "{ snapMethod != point } { usePositionSnapMethod == 0 }"
+            hidewhen "{ snapMethod != point }"
             menu {
                 "first"     "First Match"
                 "last"      "Last Match"
