@@ -36,24 +36,27 @@ enum Method
     Specified,
 };
     
-    //using GFE_AttribFilter::GFE_AttribFilter;
-    
-    GFE_Fuse(
-        GA_Detail& geo,
-        const GA_Detail* const geoRef,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribCreateFilterWithRef0(geo, geoRef, cookparms)
-        , groupParserFuseRef(geoRef ? *geoRef : geo, groupParser.getGOPRef(), cookparms)
-        , keepEdgeGroupArray(geo, cookparms)
-    {
-#if !GFE_Fuse_UnderlyingAlgorithm_UseGU
-        fuseParms.setUsePositionSnapMethod(false);
-        fuseParms.setRecomputenml(false);
-        fuseParms.setAlgorithm(SOP_Fuse_2_0Enums::Algorithm::CLOSEST);
-#endif
-    }
+//using GFE_AttribFilter::GFE_AttribFilter;
 
+GFE_Fuse(
+    GA_Detail& geo,
+    const GA_Detail* const geoRef,
+    const SOP_NodeVerb::CookParms* const cookparms = nullptr
+)
+    : GFE_AttribCreateFilterWithRef0(geo, geoRef, cookparms)
+    , groupParserFuseRef(geoRef ? *geoRef : geo, groupParser.getGOPRef(), cookparms)
+    , keepEdgeGroupArray(geo, cookparms)
+{
+#if !GFE_Fuse_UnderlyingAlgorithm_UseGU
+    fuseParms.setUsePositionSnapMethod(false);
+    fuseParms.setRecomputenml(false);
+    fuseParms.setAlgorithm(SOP_Fuse_2_0Enums::Algorithm::CLOSEST);
+#endif
+}
+
+
+
+    
     void
         setComputeParm(
             const Method method = Method::Point,
@@ -771,7 +774,7 @@ void fuseKeepEdgeGroup()
     fuseParms1.setConsolidateSnappedPoints(false);
     fuseParms1.setCreatesnappedattrib(true);
     fuseParms1.setCreatesnappedgroup(false);
-    fuseParms1.setAlgorithm(SOP_Fuse_2_0Parms::Algorithm::LOWEST);
+    fuseParms1.setAlgorithm(geoRef0 && fuseParms.getAlgorithm() == SOP_Fuse_2_0Parms::Algorithm::CLOSEST ? SOP_Fuse_2_0Parms::Algorithm::CLOSEST : SOP_Fuse_2_0Parms::Algorithm::LOWEST);
     //fuseParms1.setSnappedgroupname();
     fuseParms1.setSnappedattribname(__TEMP_GFE_Fuse_SnapAttribName);
 
@@ -779,17 +782,11 @@ void fuseKeepEdgeGroup()
     fuseVerb->cook(fuseCookparms1);
 
 
-
-
-
-
     
     GU_DetailHandle geoPreFuse_h;
     geoPreFuse = new GU_Detail;
     geoPreFuse_h.allocateAndSet(geoPreFuse);
     geoPreFuse->replaceWith(*geo);
-    
-    ::std::vector<GA_Offset> flagArray(geo->getNumPoints(), GFE_INVALID_OFFSET);
     
     GU_DetailHandle geo_h;
     geo_h.allocateAndSet(geo->asGU_Detail(), false);
@@ -812,7 +809,9 @@ void fuseKeepEdgeGroup()
     const GA_Attribute* const snapToAttribRef = geoPreFuse->findPointAttribute(__TEMP_GFE_Fuse_SnapAttribName);
     const GA_ROHandleT<GA_Offset> snapTo_h(snapToAttrib);
     const GA_ROHandleT<GA_Offset> snapToRef_h(snapToAttribRef);
+
     
+    ::std::vector<GA_Index> flagArray((geoRef0 ? geoRef0 : geo)->getNumPoints(), GFE_INVALID_OFFSET);
     GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> snapTo_ph(snapToAttrib);
     for (GA_PageIterator pit = geo->getPointSplittableRange().beginPages(); !pit.atEnd(); ++pit)
     {
