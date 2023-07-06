@@ -194,7 +194,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         //     return;
         // }
         const GA_Detail& geo = group.getDetail();
-        UTparallelFor(GA_SplittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -216,8 +216,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
     {
         const GA_Detail& geo = group.getDetail();
-        const GA_SplittableRange splittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse));
-        UTparallelFor(splittableRange, [&geo, &group](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -247,8 +246,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         const GA_Detail& geo = group.getDetail();
         const GA_PrimitiveList& primList = geo.getPrimitiveList();
         
-        const GA_SplittableRange splittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse));
-        UTparallelFor(splittableRange, [&geo, &group, &primList](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group, &primList](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -271,8 +269,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
     {
         const GA_Detail& geo = group.getDetail();
-        const GA_SplittableRange splittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse));
-        UTparallelFor(splittableRange, [&geo, &group](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -307,8 +304,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         const GA_Detail& geo = group.getDetail();
         const GA_PrimitiveList& primList = geo.getPrimitiveList();
         
-        const GA_SplittableRange splittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse));
-        UTparallelFor(splittableRange, [&group, &primList](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&group, &primList](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -331,8 +327,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
     {
         const GA_Detail& geo = group.getDetail();
-        const GA_SplittableRange splittableRange(GA_Range(groupRef.getIndexMap(), &groupRef, reverse));
-        UTparallelFor(splittableRange, [&geo, &group](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -449,7 +444,7 @@ public:
         const GA_ATITopology& vtxPointRef = *topo.getPointRef();
 
         GA_Offset start, end;
-        for (GA_Iterator it(GA_Range(groupRef.getIndexMap(), &groupRef, reverse)); it.fullBlockAdvance(start, end); )
+        for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
@@ -482,7 +477,7 @@ public:
         const GA_ATITopology& vtxPointRef = *topo.getPointRef();
         
         GA_Offset start, end;
-        for (GA_Iterator it(GA_Range(groupRef.getIndexMap(), &groupRef, reverse)); it.fullBlockAdvance(start, end); )
+        for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
@@ -530,9 +525,10 @@ public:
     {
         const GA_Detail& geo = group.getDetail();
         const GA_ATITopology& vtxPointRef = *geo.getTopology().getPointRef();
-
+        GA_Size a = groupRef.computeGroupEntries();
+        a = a;
         GA_Offset start, end;
-        for (GA_Iterator it(GA_Range(groupRef.getIndexMap(), &groupRef, reverse)); it.fullBlockAdvance(start, end); )
+        for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {

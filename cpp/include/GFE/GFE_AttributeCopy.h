@@ -45,6 +45,7 @@ public:
 
     void setOffsetAttrib(const GA_Attribute& attrib, const bool isOffset)
     {
+        UT_ASSERT_P(iDAttribInput ? (geo == &attrib.getDetail()) : (geoRef0 == &attrib.getDetail()));
         iDAttrib.bind(attrib, isOffset);
         iDAttrib.bindIndexMap(
             iDAttribInput ?
@@ -109,72 +110,104 @@ private:
 
         GA_GroupTable* const groupDst = geo->getGroupTable(groupTypeDst);
 
+        const size_t sizeGroup    = getOutGroupArray().size();
         const size_t sizeRefGroup = getRef0GroupArray().size();
         for (size_t i = 0; i < sizeRefGroup; i++)
         {
+            UT_ASSERT_P(getRef0GroupArray()[i]);
             const GA_Group& groupRef = *getRef0GroupArray()[i];
 
-            const UT_StringHolder& newName = newGroupNames.getIsValid() ?
-                                             newGroupNames.getNext<UT_StringHolder>() :
-                                             (groupRef.isDetached() ? UT_StringHolder("") : groupRef.getName());
-            const bool detached = !(newGroupNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
+            GA_Group* newAttrib;
+            if (i >= sizeGroup)
+            {
+                const UT_StringHolder& newName = newGroupNames.getIsValid() ?
+                                                 newGroupNames.getNext<UT_StringHolder>() :
+                                                 (groupRef.isDetached() ? UT_StringHolder("") : groupRef.getName());
+                const bool detached = !(newGroupNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
             
-            GA_Group* newAttrib = detached ? nullptr : groupDst->find(newName);
-            if (newAttrib)
-                GFE_Group::groupBumpDataId(newAttrib);
+                newAttrib = detached ? nullptr : groupDst->find(newName);
+                if (newAttrib)
+                    getOutGroupArray().append(newAttrib);
+                else
+                {
+                    if (detached)
+                    {
+                        newAttrib = groupDst->newDetachedGroup();
+                        getOutGroupArray().appendDetached(newAttrib);
+                    }
+                    else
+                    {
+                        newAttrib = groupDst->newGroup(newName);
+                        getOutGroupArray().append(newAttrib);
+                    }
+                }
+            }
             else
             {
-                if (detached)
-                    newAttrib = groupDst->newDetachedGroup();
-                else
-                    newAttrib = groupDst->newGroup(newName);
+                newAttrib = getOutGroupArray()[i];
+                UT_ASSERT_P(&newAttrib->getDetail() == geo);
             }
-            getOutGroupArray().append(newAttrib);
             
             copyGroup(geoSplittableRange, *newAttrib, groupRef);
         }
 
         GA_AttributeSet& attribDst = geo->getAttributes();
 
+        const size_t sizeAttrib    = getOutAttribArray().size();
         const size_t sizeRefAttrib = getRef0AttribArray().size();
         for (size_t i = 0; i < sizeRefAttrib; i++)
         {
+            UT_ASSERT_P(getRef0AttribArray()[i]);
             const GA_Attribute& attribRef = *getRef0AttribArray()[i];
 
-            const UT_StringHolder& newName = newAttribNames.getIsValid() ?
-                                             newAttribNames.getNext<UT_StringHolder>() :
-                                             (attribRef.isDetached() ? UT_StringHolder("") : attribRef.getName());
-            const bool detached = !(newAttribNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
-
-            GA_Attribute* newAttrib = detached ? nullptr : attribDst.findAttribute(ownerDst, newName);
+            GA_Attribute* newAttrib = nullptr;
+            if (i < sizeAttrib)
+            {
+                newAttrib = getOutAttribArray()[i];
+                UT_ASSERT_P(&newAttrib->getDetail() == geo);
+            }
             if (newAttrib && !GFE_Type::checkTupleAttrib(newAttrib, attribRef.getStorageClass(), GA_STORE_INVALID, attribRef.getTupleSize()))
             {
                 attribDst.destroyAttribute(newAttrib);
                 newAttrib = nullptr;
             }
-            if (newAttrib)
+            
+            if (!newAttrib)
             {
-                //newAttrib->bumpDataId();
-                getOutAttribArray().append(newAttrib);
-            }
-            else
-            {
-                if (detached)
+                const UT_StringHolder& newName = newAttribNames.getIsValid() ?
+                                                 newAttribNames.getNext<UT_StringHolder>() :
+                                                 (attribRef.isDetached() ? UT_StringHolder("") : attribRef.getName());
+                const bool detached = !(newAttribNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
+
+                newAttrib = detached ? nullptr : attribDst.findAttribute(ownerDst, newName);
+                if (newAttrib && !GFE_Type::checkTupleAttrib(newAttrib, attribRef.getStorageClass(), GA_STORE_INVALID, attribRef.getTupleSize()))
                 {
-                    getOutAttribArray().cloneDetached(attribRef);
-                    //GA_AttributeUPtr attribUPtr;
-                    //GA_Attribute attrib(attribRef.getType(), attribRef.getIndexMap(), attribRef.getScope(), "");
-                    //attribUPtr.reset(&attrib);
-                    //getOutAttribArray().appendUPtr(attrib);
-                    
-                    //newAttrib = attribDst.cloneTempAttribute(ownerDst, attribRef, true);
+                    attribDst.destroyAttribute(newAttrib);
+                    newAttrib = nullptr;
+                }
+                if (newAttrib)
+                {
+                    //newAttrib->bumpDataId();
+                    getOutAttribArray().append(newAttrib);
                 }
                 else
                 {
-                    newAttrib = attribDst.cloneAttribute(ownerDst, newName, attribRef, true);
+                    if (detached)
+                    {
+                        newAttrib = getOutAttribArray().cloneDetached(attribRef);
+                        //GA_AttributeUPtr attribUPtr;
+                        //GA_Attribute attrib(attribRef.getType(), attribRef.getIndexMap(), attribRef.getScope(), "");
+                        //attribUPtr.reset(&attrib);
+                        //getOutAttribArray().appendUPtr(attrib);
+                    
+                        //newAttrib = attribDst.cloneTempAttribute(ownerDst, attribRef, true);
+                    }
+                    else
+                    {
+                        newAttrib = attribDst.cloneAttribute(ownerDst, newName, attribRef, true);
+                    }
                 }
             }
-
             
             copyAttrib(geoSplittableRange, *newAttrib, attribRef);
         }
@@ -400,7 +433,7 @@ public:
     UFE_SplittableString newGroupNames;
     
     GFE_AttribMergeType attribMergeType = GFE_AttribMergeType::Set;
-    bool iDAttribInput = false; //True means id attrib is on DESTINATION(geoRef0); While false means id attrib is on Source(geo)
+    bool iDAttribInput = false; //True means ** ID ATTRIB ** is on DESTINATION(geo); While false means id attrib is on Source(geoRef0)
 
     GA_Offset copyFromSingleOff = GFE_INVALID_OFFSET;
     //GA_GroupType owner;

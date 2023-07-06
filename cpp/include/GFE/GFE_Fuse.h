@@ -546,8 +546,15 @@ public:
 
 
 
-    virtual SYS_FORCE_INLINE void visualizeOutGroup() const override
-    { if (!doDelGroupElement && !keepEdgeGroupArray.isEmpty()) visualizeGroup(keepEdgeGroupArray[0]); }
+    virtual void visualizeOutGroup() const override
+    {
+        if (doDelGroupElement)
+            return;
+        if (!keepEdgeGroupArray.isEmpty())
+            visualizeGroup(keepEdgeGroupArray[0]);
+        else if (!getOutGroupArray().isEmpty())
+            visualizeGroup(getOutGroupArray()[0]);
+    }
 
 
 
@@ -755,28 +762,32 @@ virtual bool
 void fuseKeepEdgeGroup()
 {
     UT_ASSERT_P(fuseParms.getConsolidateSnappedPoints());
+    UT_ASSERT_P(!keepEdgeGroupArray.isEmpty());
     
     SOP_NodeCache* const nodeCache = fuseVerb->allocCache();
-    
-    
     
     SOP_Fuse_2_0Parms fuseParms1(fuseParms);
     fuseParms1.setRecomputenml(false);
     fuseParms1.setConsolidateSnappedPoints(false);
     fuseParms1.setCreatesnappedattrib(true);
     fuseParms1.setCreatesnappedgroup(false);
+    fuseParms1.setAlgorithm(SOP_Fuse_2_0Parms::Algorithm::LOWEST);
     //fuseParms1.setSnappedgroupname();
     fuseParms1.setSnappedattribname(__TEMP_GFE_Fuse_SnapAttribName);
 
     const auto fuseCookparms1 = GFE_NodeVerb::newCookParms(cookparms, fuseParms1, nodeCache, &destgdh, &inputgdh);
     fuseVerb->cook(fuseCookparms1);
 
+
+
+
+
+
     
     GU_DetailHandle geoPreFuse_h;
     geoPreFuse = new GU_Detail;
     geoPreFuse_h.allocateAndSet(geoPreFuse);
     geoPreFuse->replaceWith(*geo);
-
     
     ::std::vector<GA_Offset> flagArray(geo->getNumPoints(), GFE_INVALID_OFFSET);
     
