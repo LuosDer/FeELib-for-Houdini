@@ -146,10 +146,10 @@ SOP_FeE_GroupVis_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupVis_2_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_GroupVis_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupVis_2_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -208,6 +208,12 @@ SOP_FeE_GroupVis_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     if (!geo0Group)
         return;
+
+    //if (geo0Group->classType() == GA_GROUP_EDGE)
+    //{
+    //    const GA_EdgeGroup* geo0EdgeGroup = static_cast<const GA_EdgeGroup*>(geo0Group);
+    //    geo0EdgeGroup = geo0EdgeGroup;
+    //}
 
     cookparms.select(*geo0Group);
 

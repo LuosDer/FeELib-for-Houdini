@@ -257,10 +257,10 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
         return;
 
 /*
-            GFE_RestVectorComponent restVectorComponent(geo, cookparms);
-            restVectorComponent.comp = axis;
-            restVectorComponent.setRestAttrib(geo->getP());
-            restVectorComponent.newAttribNames = "height";
+            GFE_RestVectorComponent restVectorComponent(geo, nullptr, cookparms);
+            restVectorComponent.comp = comp;
+            restVectorComponent.setRestAttrib(posAttribNonConst);
+            restVectorComponent.newAttribNames = "";
             restVectorComponent.compute();
 */
     
@@ -271,9 +271,8 @@ SOP_FeE_RestVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
     restVectorComponent.setComputeParm(static_cast<int8>(sopparms.getComp()), sopparms.getDelOriginAttrib(),
                                       sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     if (sopparms.getRenameAttrib())
-    {
         restVectorComponent.newAttribNames = sopparms.getRestAttribName();
-    }
+    
     restVectorComponent.setRestAttrib(geo0AttribClass, sopparms.getAttrib());
     restVectorComponent.computeAndBumpDataId();
 

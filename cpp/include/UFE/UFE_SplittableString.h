@@ -192,10 +192,7 @@ private:
     }
     
     SYS_FORCE_INLINE void computeIsValidIfNeeded()
-    {
-        if (shouldComputeIsValid)
-            computeIsValid();
-    }
+    { if (shouldComputeIsValid) computeIsValid(); }
 
     
     void set(const char* const s)

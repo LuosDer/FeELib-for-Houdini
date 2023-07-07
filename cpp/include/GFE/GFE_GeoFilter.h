@@ -204,10 +204,10 @@ public:
     { return geo; }
     
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group& group) const
-    { if(cookparms && !group.isDetached()) cookparms->select(group); }
+    { if (cookparms && !group.isDetached()) cookparms->select(group); }
     
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group) const
-    { if(group) visualizeGroup(*group); }
+    { if (group) visualizeGroup(*group); }
 
     SYS_FORCE_INLINE void setValidPosAttrib()
     {

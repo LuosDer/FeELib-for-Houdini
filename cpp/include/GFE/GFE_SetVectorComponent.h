@@ -45,7 +45,7 @@ public:
             const fpreal attribValF = 0,
             const bool delRefAttrib = true,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
@@ -53,32 +53,37 @@ public:
         this->attribValF = attribValF;
         this->delRefAttrib = delRefAttrib;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
     
-    SYS_FORCE_INLINE void setRefAttrib(const GA_Attribute* const attribPtr)
+    SYS_FORCE_INLINE void setRefAttrib(const GA_Attribute* const attrib)
     {
-        if(getOutAttribArray().isEmpty() || attribRefPtr->getOwner() != getOutAttribArray()[0]->getOwner())
+        if (getOutAttribArray().isEmpty() || attrib->getOwner() != getOutAttribArray()[0]->getOwner())
         {
             if (cookparms)
                 cookparms->sopAddWarning(0, "must add out attrib before add ref attrib");
+            return;
         }
-        attribRefPtr = attribPtr;
+        attribRef = attrib;
         refAttribNames = "";
-        UT_ASSERT(getOutAttribArray().isEmpty() ? 1 : attribRefPtr->getOwner() == getOutAttribArray()[0]->getOwner());
+        UT_ASSERT(getOutAttribArray().isEmpty() ? 1 : attrib->getOwner() == getOutAttribArray()[0]->getOwner());
     }
     // SYS_FORCE_INLINE GA_Attribute* setRefAttrib(const UT_StringHolder& attribPattern)
     // {
     //     // if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //     //     attribRefPtr = nullptr;
+    //     //     attribRef = nullptr;
     //     if (getOutAttribArray().isEmpty())
     //         return nullptr;
     //     const GFE_Detail* const inGeo = geoRef0 ? geoRef0 : geo;
-    //     attribRefPtr = inGeo->findAttribute(getOutAttribArray()[0]->getOwner(), attribPattern);
-    //     return attribRefPtr;
+    //     attribRef = inGeo->findAttribute(getOutAttribArray()[0]->getOwner(), attribPattern);
+    //     return attribRef;
     // }
-    SYS_FORCE_INLINE void setRefAttrib(const UT_StringHolder& attribPattern)
+    
+    SYS_FORCE_INLINE void setRefAttrib(const char* const attribPattern)
     { refAttribNames = attribPattern; }
+
+    //SYS_FORCE_INLINE void setRefAttrib(const UT_StringRef& attribPattern)
+    //{ refAttribNames = attribPattern; }
 
 
     
@@ -90,7 +95,7 @@ public:
     // SYS_FORCE_INLINE GA_Attribute* setRestAttrib(const UT_StringHolder& attribPattern)
     // {
     //     // if (!attribPattern.isstring() || attribPattern.length() == 0)
-    //     //     attribRefPtr = nullptr;
+    //     //     attribRef = nullptr;
     //     
     //     // UT_ASSERT(!getOutAttribArray().isEmpty());
     //     
@@ -99,8 +104,24 @@ public:
     //     attribRestPtr = geo->findAttribute(getOutAttribArray()[0]->getOwner(), attribPattern);
     //     return attribRestPtr;
     // }
+    
+    SYS_FORCE_INLINE void clearRestAttrib()
+    { restVectorComponent.getOutAttribArray().clear(); }
+    
+    SYS_FORCE_INLINE void setRestAttrib()
+    { rest = false; }
+    
     SYS_FORCE_INLINE void setRestAttrib(const char* const attribPattern)
-    { restVectorComponent.newAttribNames = attribPattern; }
+    { rest = true; restVectorComponent.newAttribNames = attribPattern; }
+    
+    SYS_FORCE_INLINE const GFE_AttributeArray& getRestAttrib() const
+    { return restVectorComponent.getOutAttribArray(); }
+    
+    SYS_FORCE_INLINE virtual void bumpDataId() const override
+    {
+        GFE_AttribFilterWithRef0::bumpDataId();
+        restVectorComponent.bumpDataId();
+    }
     
 private:
 
@@ -109,15 +130,16 @@ private:
         computeCore() override
     {
         UT_ASSERT(comp >= 0);
-        if (comp < 0)
+        UT_ASSERT(comp <= 3);
+        if (comp < 0 || comp > 3)
             return false;
         
         if (groupParser.isEmpty())
             return true;
 
-        if(restVectorComponent.newAttribNames.getIsValid())
+        if (rest)
         {
-            restVectorComponent.groupParser.copy(groupParser);
+            restVectorComponent.groupParser.setGroup(groupParser);
             restVectorComponent.comp = comp;
         }
         
@@ -127,7 +149,7 @@ private:
             attribPtr = getOutAttribArray()[i];
             UT_ASSERT_P(attribPtr);
 
-            if(restVectorComponent.newAttribNames.getIsValid())
+            if (rest)
             {
                 restVectorComponent.setRestAttrib(attribPtr);
                 restVectorComponent.compute();
@@ -137,9 +159,9 @@ private:
             {
                 if (geoRef0)
                 {
-                    attribRefPtr = geoRef0->findAttribute(attribPtr->getOwner(), refAttribNames.getNext<UT_StringHolder>());
-                    if (attribRefPtr && !attribRefPtr->getAIFTuple())
-                        attribRefPtr = nullptr;
+                    attribRef = geoRef0->findAttribute(attribPtr->getOwner(), refAttribNames.getNext<UT_StringHolder>());
+                    if (attribRef && !attribRef->getAIFTuple())
+                        attribRef = nullptr;
                 }
                 else
                 {
@@ -147,7 +169,7 @@ private:
                     if (attribRefPtrNonConst && !attribRefPtrNonConst->getAIFTuple())
                         attribRefPtrNonConst = nullptr;
                     
-                    attribRefPtr = attribRefPtrNonConst;
+                    attribRef = attribRefPtrNonConst;
                 }
             }
             
@@ -170,7 +192,7 @@ private:
                 case GA_STORE_REAL64: setFloat<fpreal64>(); break;
                 default: break;
                 }
-                break;
+            break;
             case 2:
                 switch (storage)
                 {
@@ -179,7 +201,7 @@ private:
                 case GA_STORE_REAL64: setVectorComponent<UT_Vector2T<fpreal64>>(); break;
                 default: break;
                 }
-                break;
+            break;
             case 3:
                 switch (storage)
                 {
@@ -188,7 +210,7 @@ private:
                 case GA_STORE_REAL64: setVectorComponent<UT_Vector3T<fpreal64>>(); break;
                 default: break;
                 }
-                break;
+            break;
             case 4:
                 switch (storage)
                 {
@@ -197,9 +219,8 @@ private:
                 case GA_STORE_REAL64: setVectorComponent<UT_Vector4T<fpreal64>>(); break;
                 default: break;
                 }
-                break;
-            default:
-                break;
+            break;
+            default:break;
             }
         }
         
@@ -212,16 +233,16 @@ private:
     void setVectorComponent()
     {
         using value_type = typename T::value_type;
-        if (attribRefPtr)
+        if (attribRef)
         {
-            // const GA_AIFTuple* const aifTuple = attribRefPtr->getAIFTuple();
-            UT_ASSERT_P(attribRefPtr->getAIFTuple());
+            // const GA_AIFTuple* const aifTuple = attribRef->getAIFTuple();
+            UT_ASSERT_P(attribRef->getAIFTuple());
 
-            const int tupleSize = attribRefPtr->getTupleSize();
+            const int tupleSize = attribRef->getTupleSize();
             if (comp >= tupleSize && tupleSize >= 2)
                 return;
             
-            const GA_Storage storage = attribRefPtr->getAIFTuple()->getStorage(attribRefPtr);
+            const GA_Storage storage = attribRef->getAIFTuple()->getStorage(attribRef);
             switch (tupleSize)
             {
             case 1:
@@ -289,12 +310,12 @@ private:
     template<typename T, typename T_REF>
     void setVectorComponentByRefAttrib()
     {
-        UT_ASSERT_P(attribRefPtr);
-        UT_ASSERT(attribPtr->getOwner() == attribRefPtr->getOwner());
+        UT_ASSERT_P(attribRef);
+        UT_ASSERT(attribPtr->getOwner() == attribRef->getOwner());
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T,     typename T::value_type,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            GA_PageHandleT<T_REF, typename T_REF::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
+            GA_PageHandleT<T_REF, typename T_REF::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -315,12 +336,12 @@ private:
     template<typename T, typename T_REF>
     void setVectorComponentByRefAttrib_FLOAT()
     {
-        UT_ASSERT_P(attribRefPtr);
-        UT_ASSERT(attribPtr->getOwner() == attribRefPtr->getOwner());
+        UT_ASSERT_P(attribRef);
+        UT_ASSERT(attribPtr->getOwner() == attribRef->getOwner());
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            GA_PageHandleT<T_REF, T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
+            GA_PageHandleT<T_REF, T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -340,12 +361,12 @@ private:
     template<typename T>
     void setFloat()
     {
-        if (attribRefPtr)
+        if (attribRef)
         {
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-                GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
+                GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     GA_Offset start, end;
@@ -397,10 +418,11 @@ public:
 private:
 
     GA_Attribute* attribPtr;
-    const GA_Attribute* attribRefPtr = nullptr;
+    const GA_Attribute* attribRef = nullptr;
     GA_Attribute* attribRefPtrNonConst = nullptr;
     //GA_Attribute* attribRestPtr;
     
+    bool rest = false;
     GFE_RestVectorComponent restVectorComponent;
     
     

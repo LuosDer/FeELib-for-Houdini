@@ -994,17 +994,17 @@ void bumpDataId() const
     const size_t len = attribArray.size();
     for (size_t i = 0; i < len; i++)
     {
-        GA_Attribute* const ptr = attribArray[i];
-        if (ptr->isDetached())
+        GA_Attribute* const attrib = attribArray[i];
+        if (attrib->isDetached())
             continue;
-        ptr->bumpDataId();
+        attrib->bumpDataId();
     }
 }
 
-SYS_FORCE_INLINE std::vector<GA_Attribute*>& ref()
+SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& ref()
 { return attribArray; }
 
-SYS_FORCE_INLINE const std::vector<GA_Attribute*>& ref() const
+SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& ref() const
 { return attribArray; }
 
 
@@ -1572,20 +1572,20 @@ public:
         const size_t size = groupArray.size();
         for (size_t i = 0; i < size; i++)
         {
-            GA_Group* ptr = groupArray[i];
-            if (ptr->isDetached())
+            GA_Group* const group = groupArray[i];
+            if (group->isDetached())
                 continue;
-            if (ptr->classType() == GA_GROUP_EDGE)
-                static_cast<GA_EdgeGroup*>(ptr)->bumpDataId();
+            if (group->classType() == GA_GROUP_EDGE)
+                static_cast<GA_EdgeGroup*>(group)->bumpDataId();
             else
-                static_cast<GA_ElementGroup*>(ptr)->bumpDataId();
+                static_cast<GA_ElementGroup*>(group)->bumpDataId();
         }
     }
 
-    SYS_FORCE_INLINE std::vector<GA_Group*>& ref()
+    SYS_FORCE_INLINE ::std::vector<GA_Group*>& ref()
     { return groupArray; }
 
-    SYS_FORCE_INLINE const std::vector<GA_Group*>& ref() const
+    SYS_FORCE_INLINE const ::std::vector<GA_Group*>& ref() const
     { return groupArray; }
 
 

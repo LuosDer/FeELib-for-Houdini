@@ -33,7 +33,7 @@ public:
     
     void
         setComputeParm(
-            const int8 comp = 0,
+            const int8 comp = 1,
             const bool delOrigin = false,
             const exint subscribeRatio = 64,
             const exint minGrainSize = 1024
@@ -82,7 +82,8 @@ private:
         computeCore() override
     {
         UT_ASSERT(comp >= 0);
-        if (comp < 0)
+        UT_ASSERT(comp <= 3);
+        if (comp < 0 || comp > 3)
             return false;
         
         if (groupParser.isEmpty())
@@ -245,7 +246,7 @@ private:
 public:
     UFE_SplittableString newAttribNames;
     
-    int8 comp = 0;
+    int8 comp = 1;
     bool delOrigin = false;
 private:
 
