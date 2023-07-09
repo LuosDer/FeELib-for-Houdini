@@ -287,7 +287,7 @@ SOP_FeE_Triangulate2D_2_0::cookVerb() const
 
 
 static GFE_Axis
-sopAxis(SOP_FeE_Triangulate2D_2_0Parms::Axis parmAxis)
+sopAxis(const SOP_FeE_Triangulate2D_2_0Parms::Axis parmAxis)
 {
     using namespace SOP_FeE_Triangulate2D_2_0Enums;
     switch (parmAxis)

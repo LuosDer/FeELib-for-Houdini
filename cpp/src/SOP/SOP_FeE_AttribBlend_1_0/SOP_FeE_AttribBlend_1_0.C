@@ -159,7 +159,7 @@ SOP_FeE_AttribBlend_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmGroupType)
@@ -175,7 +175,7 @@ sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::Class parmAttribClass)
+sopAttribOwner(const SOP_FeE_AttribBlend_1_0Parms::Class parmAttribClass)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)

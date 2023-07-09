@@ -14,6 +14,11 @@
 // #include "SOP/SOP_UVFlatten-3.0.h"
 #include "SOP/SOP_UVFlatten-3.0.proto.h"
 
+
+
+
+#define GFE_UVRectify_UseUVFlatten_Verb 1
+
 class GFE_UVRectify : public GFE_AttribFilter {
 
 public:
@@ -28,16 +33,7 @@ public:
     {
     }
 
-    GFE_UVRectify(
-        GA_Detail& geo,
-        const GA_Detail& geoSrc,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilter(geo, geoSrc, cookparms)
-        , groupParserRectify(geoSrc, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
+    
     ~GFE_UVRectify()
     {
     }
@@ -75,28 +71,32 @@ private:
         if (!cookparms)
             return false;
         
-        //if (getOutAttribArray().isEmpty())
-        //    return false;
+#if GFE_UVRectify_UseUVFlatten_Verb
+#else
+        if (getOutAttribArray().isEmpty())
+            return false;
+        uvAttribName = getOutAttribArray()[0].getName();
+#endif
         
         if (groupParser.isEmpty())
             return true;
         
+#if GFE_UVRectify_UseUVFlatten_Verb
         GU_DetailHandle geoTmp_h;
         geoTmp = new GU_Detail();
         geoTmp_h.allocateAndSet(geoTmp);
         geoTmp->replaceWith(geoSrc ? *geoSrc : *geo);
         
-        // if (!getOutAttribArray().isEmpty())
-        // {
-        //     const GA_Attribute& attrib = *getOutAttribArray()[0];
-        //     if (!geoTmp->findAttribute(attrib.getOwner(), attrib.getName()))
-        //         geoTmp->getAttributes().cloneAttribute(attrib.getOwner(), attrib.getName(), attrib, true);
-        // }
-        
         inputgdh.clear();
         inputgdh.emplace_back(geoTmp_h);
-        
+
         destgdh.allocateAndSet(geo->asGU_Detail(), false);
+#else
+#endif
+
+
+        
+        const SOP_NodeVerb::CookMode cookMode = uvFlattenVerb->cookMode(&uvFlattenParms);
         
         
         
@@ -108,8 +108,10 @@ private:
         
         uvRectify();
 
-        //geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_UVRectify_VertexGroupName);
-        //geo->getGroupTable(GA_GROUP_VERTEX)   ->destroy(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
+        geo->getGroupTable(GA_GROUP_PRIMITIVE)->destroy(__TEMP_GFE_UVRectify_VertexGroupName);
+        geo->getGroupTable(GA_GROUP_VERTEX)   ->destroy(__TEMP_GFE_UVRectify_VertexRectifyGroupName);
+        
+        
         return true;
     }
 
@@ -122,13 +124,20 @@ private:
         uvFlattenParms.setKeepExistingLayout(true);
         uvFlattenParms.setKeepExistingSeams(true);
         uvFlattenParms.setMethod(flattenMethod ? SOP_UVFlatten_3_0Enums::Method::ABF : SOP_UVFlatten_3_0Enums::Method::SCP);
-        //uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
+#if GFE_UVRectify_UseUVFlatten_Verb
         uvFlattenParms.setUVAttrib(uvAttribName);
+#else
+        uvFlattenParms.setUVAttrib(getOutAttribArray()[0]->getName());
+#endif
+        
         uvFlattenParms.setManualLayout(manualLayout);
 
-        SOP_NodeCache* const nodeCache = uvFlattenVerb->allocCache();
+        SOP_NodeCache* nodeCache = uvFlattenVerb->allocCache();
         const auto uvFlattenCookparms = GFE_NodeVerb::newCookParms(cookparms, uvFlattenParms, nodeCache, &destgdh, &inputgdh);
         uvFlattenVerb->cook(uvFlattenCookparms);
+        
+        delete nodeCache;
+        nodeCache = nullptr;
     }
 
 
@@ -138,18 +147,24 @@ public:
     
     bool flattenMethod = true; // true means ABF  while  false means SCP
     bool manualLayout = true;
+
+
+    
+#if GFE_UVRectify_UseUVFlatten_Verb
     const char* uvAttribName = "uv";
+#endif
 
-    
-private:
-    GU_Detail* geoTmp = nullptr;
 
-    
+#if GFE_UVRectify_UseUVFlatten_Verb
 private:
+    GU_Detail* geoTmp;
+    
     GU_DetailHandle destgdh;
     UT_Array<GU_ConstDetailHandle> inputgdh;
     SOP_UVFlatten_3_0Parms uvFlattenParms;
     const SOP_NodeVerb* const uvFlattenVerb = SOP_NodeVerb::lookupVerb("uvflatten::3.0");
+#endif
+
     
     // exint subscribeRatio = 64;
     // exint minGrainSize = 256;
@@ -160,7 +175,7 @@ private:
 }; // End of class GFE_UVRectify
 
 
-
+#undef GFE_UVRectify_UseUVFlatten_Verb
 
 
 #endif

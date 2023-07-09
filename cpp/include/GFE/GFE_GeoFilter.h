@@ -209,6 +209,9 @@ public:
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group* const group) const
     { if (group) visualizeGroup(*group); }
 
+    SYS_FORCE_INLINE void visualizeGroup(const GA_GroupType groupType, const UT_StringRef& name) const
+    { visualizeGroup(geo->findGroup(groupType, name)); }
+
     SYS_FORCE_INLINE void setValidPosAttrib()
     {
         if (GFE_Type::isInvalidPosAttrib(posAttrib) || GFE_Type::isInvalidPosAttrib(posAttribNonConst))
