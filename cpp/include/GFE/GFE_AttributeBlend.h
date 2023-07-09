@@ -7,7 +7,7 @@
 #include "GFE/GFE_AttributeBlend.h"
 
 #include "GFE/GFE_GeoFilter.h"
-
+#include "GFE/GFE_GroupUnion.h"
 
 
 class GFE_AttribBlend : public GFE_AttribCreateFilterWithRef0
@@ -32,51 +32,62 @@ private:
     virtual bool
         computeCore() override
     {
-        if(getInAttribArray().isEmpty())
+        if(getOutAttribArray().isEmpty())
         {
-            return  false;
+            return false;
+        }
+        if(groupParser.isEmpty())
+        {
+            return true;
         }
 
-        const ::std::vector<GA_Attribute*>::size_type size = getInAttribArray().size();
+        GFE_AttributeArray destinationAttribArray = getOutAttribArray();
+        GFE_AttributeArray sourceAttribArray;
+        if(!getRef0AttribArray().isEmpty())
+        {
+            sourceAttribArray = getRef0AttribArray;
+        }
+        else if(!getInAttribArray().isEmpty())
+        {
+            sourceAttribArray = getInAttribArray();
+        }
+        else
+        {
+            return false;
+        }
+
+        
+        const ::std::vector<GA_Attribute*>::size_type size = destinationAttribArray.size();
         for (size_t i = 0; i < size; i++)
         {
+            this->attribPtr = destinationAttribArray[i];
+            this->refAttribPtr = sourceAttribArray[i];
+            
+            const GA_AIFTuple* const destinationAifTuple = attribPtr->getAIFTuple();
+            const GA_AIFTuple* const sourceAifTuple = refAttribPtr->getAIFTuple();
+            
+            const GA_Storage destinationStorage = destinationAifTuple->getStorage(attribPtr);
+            const GA_Storage sourceStorage = sourceAifTuple->getStorage(refAttribPtr);
             
             
-        }
-        
-        //attribPtr = getInAttribArray()[i];
-        /*
-        UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
-    {
-        GA_PageHandleT<UT_Vector3T, UT_Vector3T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-        {
-            GA_Offset start, end;
-            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            int destinationAifTupleSize = destinationAifTuple->getTupleSize(attribPtr);
+            int sourceAifTupleSize = sourceAifTuple->getTupleSize(refAttribPtr);
+            switch (destinationAifTupleSize)
             {
-                attrib_ph.setPage(start);
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    if (doNormalize)
-                        attrib_ph.value(elemoff).normalize();
-                    attrib_ph.value(elemoff) *= uniScale;
-                }
+                
             }
         }
-    }, subscribeRatio, minGrainSize);
-        */
+        
         return  false;
     }
 
     template<typename VECTOR_T, GA_AttributeOwner FROM, GA_AttributeOwner TO>
     void attribBlend()
     {
-        UT_ASSERT_P(attrib);
-        const GA_ROHandleT<VECTOR_T> attribOrigin_h(this->att)
-
-    }
+        //UT_ASSER
         
 
+    }
     
     template<typename VECTOR_T, GA_AttributeOwner FROM>
     SYS_FORCE_INLINE void attribBlend()
@@ -98,22 +109,14 @@ private:
     }
 
 public:
-     
-    
-
-private:
-    GA_Attribute* attribPtr
-
-
-    
+    fpreal64 blend = 1;
     GA_AttributeOwner sourceOwner;
     GA_AttributeOwner destinationOwner;
 
+private:
     
-    fpreal64 blend = 1;
-    
-
-    
+    GA_Attribute* attribPtr;
+    GA_Attribute* refAttribPtr;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 

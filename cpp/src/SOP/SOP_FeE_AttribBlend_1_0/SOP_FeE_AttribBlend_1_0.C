@@ -63,7 +63,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "P" }
     }
-    parm{
+    parm {
         name    "destinationClass"
         cppname "DestinationClass"
         label   "Destination Class"
@@ -75,9 +75,7 @@ static const char *theDsFile = R"THEDSFILE(
             "vertex"    "Vertex"
             "detail"    "Detail"
         }
-
     }
-
     parm {
         name    "destinationAttrib"
         cppname "DestinationAttrib"
@@ -85,7 +83,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "uv" }
     }
-
     parm {
         name    "blend"
         cppname "Blend"
@@ -94,8 +91,6 @@ static const char *theDsFile = R"THEDSFILE(
         default { 1 }
         range { -1 1 } 
     }
-
-
     parm {
         name    "subscribeRatio"
         cppname "SubscribeRatio"
@@ -181,10 +176,6 @@ SOP_FeE_AttribBlend_1_0::cookVerb() const
     return SOP_FeE_AttribBlend_1_0Verb::theVerb.get();
 }
 
-
-
-
-
 static GA_GroupType
 sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
 {
@@ -201,23 +192,35 @@ sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::Class parmAttribClass)
+static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms:: DestinationClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)
     {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case DestinationClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case DestinationClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case DestinationClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case DestinationClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
     return GA_ATTRIB_INVALID;
 }
 
+static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::SourceClass parmAttribClass)
+{
+    using namespace SOP_FeE_AttribBlend_1_0Enums;
+    switch (parmAttribClass)
+    {
+    case SourceClass::PRIM:           return GA_ATTRIB_PRIMITIVE;  break;
+    case SourceClass::POINT:          return GA_ATTRIB_POINT;      break;
+    case SourceClass::VERTEX:         return GA_ATTRIB_VERTEX;     break;
+    case SourceClass::DETAIL:         return GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Class type!");
+    return GA_ATTRIB_INVALID;
+}
 
-void
-SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+void SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_AttribBlend_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
@@ -245,7 +248,6 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
         attribBlend.getOutAttribArray().appends(destinationAttribClass, sopparms.getDestinationAttrib());
         attribBlend.getRef0AttribArray().appends(sourceAttribClass, sopparms.getAttribSource());
     }
-
     else
     {
         attribBlend.getOutAttribArray().appends(destinationAttribClass, sopparms.getDestinationAttrib());
@@ -253,7 +255,6 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     }
     
     attribBlend.setComputeParm(blend, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    //attribBlend.computeAndBumpDataId();
-
-
+    attribBlend.computeAndBumpDataId();
+    
 }

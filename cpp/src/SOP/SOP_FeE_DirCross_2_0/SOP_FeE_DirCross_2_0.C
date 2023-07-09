@@ -304,7 +304,7 @@ sopAttribOwner(SOP_FeE_DirCross_2_0Parms::UpAttribClass parmAttribClass)
     case UpAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case UpAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
     case UpAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case UpAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    case UpAttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;·
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
     return GA_ATTRIB_INVALID;
