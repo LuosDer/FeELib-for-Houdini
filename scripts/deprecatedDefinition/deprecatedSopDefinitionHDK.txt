@@ -61,14 +61,15 @@ FeE::enumeratePromote
 
 
 
+FeE::fuse_matchAtrrib
+fuse_keepedgegroup_fee::2.0
+fuse_keepedgegroup_fee
 
 
 
 
-
-
-
-
+FeE::groupUnsharedEdgeAfterFuse
+FeE::groupOneNebPointsFused::1.0
 
 
 

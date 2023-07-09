@@ -83,6 +83,29 @@ static const char *theDsFile = R"THEDSFILE(
         default { "P" }
         parmtag { "sop_input" "0" }
     }
+    parm {
+        name    "fuse2D"
+        cppname "Fuse2D"
+        label   "Fuse 2D"
+        type    toggle
+        joinnext
+        nolabel
+        default { "off" }
+    }
+    parm {
+        name    "axis"
+        cppname "Axis"
+        label   "Axis"
+        type    ordinal
+        default { "y" }
+        menu {
+            "x"         "X"
+            "y"         "Y"
+            "z"         "Z"
+        }
+        disablewhen "{ fuse2D == 0 }"
+    }
+
     groupsimple {
         name    "snapGroup"
         label   "Snap"
@@ -911,6 +934,9 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     fuse.setPositionAttrib(sopparms.getPosAttrib());
     if (inGeo1)
         fuse.setPositionRef0Attrib(sopparms.getPosAttrib());
+
+    if (sopparms.getFuse2D())
+        fuse.setFuse2D(static_cast<int8>(sopparms.getAxis()));
     
     GFE_GroupArray&        groupArray     = fuse.getOutGroupArray();
     GFE_RefGroupArray&     refGroupArray  = fuse.getRef0GroupArray();

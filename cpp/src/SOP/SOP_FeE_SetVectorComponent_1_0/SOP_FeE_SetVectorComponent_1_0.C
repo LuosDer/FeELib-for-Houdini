@@ -217,19 +217,15 @@ SOP_FeE_SetVectorComponent_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_SetVectorComponent_1_0Parms::AttribClass attribClass)
+sopAttribOwner(SOP_FeE_SetVectorComponent_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_SetVectorComponent_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
-    case AttribClass::PRIM: return GA_ATTRIB_PRIMITIVE;
-        break;
-    case AttribClass::POINT: return GA_ATTRIB_POINT;
-        break;
-    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;
-        break;
-    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;
-        break;
+    case AttribClass::PRIM:   return GA_ATTRIB_PRIMITIVE; break;
+    case AttribClass::POINT:  return GA_ATTRIB_POINT;     break;
+    case AttribClass::VERTEX: return GA_ATTRIB_VERTEX;    break;
+    case AttribClass::DETAIL: return GA_ATTRIB_DETAIL;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
     return GA_ATTRIB_INVALID;
@@ -237,23 +233,18 @@ sopAttribOwner(SOP_FeE_SetVectorComponent_1_0Parms::AttribClass attribClass)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_SetVectorComponent_1_0Parms::GroupType parmgrouptype)
+sopGroupType(SOP_FeE_SetVectorComponent_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_SetVectorComponent_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
-    case GroupType::GUESS: return GA_GROUP_INVALID;
-        break;
-    case GroupType::PRIM: return GA_GROUP_PRIMITIVE;
-        break;
-    case GroupType::POINT: return GA_GROUP_POINT;
-        break;
-    case GroupType::VERTEX: return GA_GROUP_VERTEX;
-        break;
-    case GroupType::EDGE: return GA_GROUP_EDGE;
-        break;
+    case GroupType::GUESS:  return GA_GROUP_INVALID;   break;
+    case GroupType::PRIM:   return GA_GROUP_PRIMITIVE; break;
+    case GroupType::POINT:  return GA_GROUP_POINT;     break;
+    case GroupType::VERTEX: return GA_GROUP_VERTEX;    break;
+    case GroupType::EDGE:   return GA_GROUP_EDGE;      break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
 
@@ -273,7 +264,18 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
+    
+/*
 
+            GFE_SetVectorComponent setVectorComponent(geo, nullptr, cookparms);
+            setVectorComponent.comp = comp;
+            setVectorComponent.getOutAttribArray().set(posAttribNonConst);
+            setVectorComponent.setRefAttrib();
+            //setVectorComponent.setRestAttrib("");
+            setVectorComponent.compute();
+            UT_ASSERT(!setVectorComponent.getRestAttrib().isEmpty());
+        
+ */
     
     GFE_SetVectorComponent setVectorComponent(outGeo0, inGeo1, &cookparms);
     
@@ -285,9 +287,9 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
 
     const GA_Attribute* const outAttrib = setVectorComponent.getOutAttribArray().set(geo0AttribClass, sopparms.getAttrib());
-
     if (!outAttrib)
         return;
+    
     if (sopparms.getUseRefAttrib())
         setVectorComponent.setRefAttrib(sopparms.getRefAttrib());
     if (sopparms.getRestAttrib())
