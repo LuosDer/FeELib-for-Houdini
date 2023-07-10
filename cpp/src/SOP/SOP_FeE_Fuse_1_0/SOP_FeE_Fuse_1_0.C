@@ -440,13 +440,6 @@ static const char *theDsFile = R"THEDSFILE(
             default { "off" }
         }
         parm {
-            name    "keepEdgeGroup"
-            cppname "KeepEdgeGroup"
-            label   "Keep Edge Group"
-            type    string
-            default { "*" }
-        }
-        parm {
             name    "createSnappedGroup"
             cppname "CreateSnappedGroup"
             label   "Create Snapped Points Group"
@@ -480,6 +473,13 @@ static const char *theDsFile = R"THEDSFILE(
             type    string
             default { "snapTo" }
             disablewhen "{ createSnappedAttrib == 0 } { snapMethod == grid }"
+        }
+        parm {
+            name    "keepEdgeGroup"
+            cppname "KeepEdgeGroup"
+            label   "Keep Edge Group"
+            type    string
+            default { "*" }
         }
         multiparm {
             name    "numPointAttrib"
@@ -959,7 +959,7 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 /*
-    GFE_Fuse fuse(geo, cookparms);
+    GFE_Fuse fuse(geo, nullptr, cookparms);
     fuse.compute();
 */
     

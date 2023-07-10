@@ -300,7 +300,7 @@ private:
 
 
 
-class GFE_PointInMeshWN : public GFE_AttribFilterWithRef {
+class GFE_PointInMeshWN : public GFE_AttribFilterWithRef0 {
 
 public:
 
@@ -310,7 +310,7 @@ public:
         GFE_WindingNumber_Cache* const sopcache = nullptr,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef(geo, &geoRef0, cookparms)
+        : GFE_AttribFilterWithRef0(geo, &geoRef0, cookparms)
         , gfeWN(geo, geoRef0, sopcache, cookparms)
     {
     }
@@ -405,7 +405,7 @@ private:
                                 outval = windingNumber > (0.5 - threshold) && windingNumber < (0.5 + threshold);
                             }
                         }
-                        setGroup.set(elemoff, outval);
+                        groupSetter.set(elemoff, outval);
                     }
                 }
             }

@@ -106,6 +106,11 @@ GFE_Fuse(
         
 #endif
     }
+
+    
+SYS_FORCE_INLINE void setConsolidate(const bool b = true)
+{ fuseParms.setConsolidateSnappedPoints(b); }
+
     
 #if GFE_Fuse_UnderlyingAlgorithm_UseGU
     SYS_FORCE_INLINE void setRecomputeNormal(bool b)
@@ -138,17 +143,20 @@ GFE_Fuse(
         setPointComputeParm(
             const bool useDistance = false,
             const fpreal distance = 1e-05,
-            const SOP_Fuse_2_0Enums::Algorithm algorithm = SOP_Fuse_2_0Enums::Algorithm::CLOSEST
+            const bool closest = true
         )
     {
         setHasComputed();
         
         fuseParms.setUseTol3D(useDistance);
         fuseParms.setTol3d(distance);
-        fuseParms.setAlgorithm(algorithm);
-#endif
+        setSnapToClosest(closest);
     }
+#endif
     
+SYS_FORCE_INLINE void setSnapToClosest(const bool closest = true)
+{ fuseParms.setAlgorithm(closest ? SOP_Fuse_2_0Enums::Algorithm::CLOSEST : SOP_Fuse_2_0Enums::Algorithm::LOWEST); }
+
     
 #if GFE_Fuse_UnderlyingAlgorithm_UseGU
     
@@ -682,6 +690,8 @@ virtual bool
 #else
     const bool keepEdgeGroup = fuseParms.getConsolidateSnappedPoints() && !keepEdgeGroupArray.isEmpty();
 
+    fuseParms.setSnaptype(FuseMethod_to_SnapType(method));
+    
     
     ///////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////  Duplicate Attrib   ////////////////////////////////
@@ -741,6 +751,9 @@ virtual bool
 
 
 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////  Copy Geo Ref0   ///////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
     
     GU_Detail* const geoRef0TmpGU = new GU_Detail();
     geoRef0Tmp = geoRef0TmpGU;
@@ -766,7 +779,7 @@ virtual bool
 
 
 
-
+    
     
     
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -776,17 +789,26 @@ virtual bool
     const char* origMatchAttribName = nullptr;
     if (fuseParms.getUsematchattrib() && matchAttribOwner != GA_ATTRIB_POINT)
     {
-        GFE_AttribPromote attribPromote(geo, cookparms);
-
         origMatchAttribName = fuseParms.getMatchattrib().c_str();
+        
+        GFE_AttribPromote attribPromote(geo, cookparms);
         attribPromote.getInAttribArray().set(matchAttribOwner, fuseParms.getMatchattrib());
         attribPromote.dstAttribClass = GA_ATTRIB_POINT;
         attribPromote.newAttribNames = __TEMP_GFE_Fuse_MatchAttribName;
-    
         attribPromote.compute();
+        
+        if (geoRef0)
+        {
+            GFE_AttribPromote attribPromote1(geoRef0Tmp, cookparms);
+            attribPromote1.getInAttribArray().set(matchAttribOwner, fuseParms.getMatchattrib());
+            attribPromote1.dstAttribClass = GA_ATTRIB_POINT;
+            attribPromote1.newAttribNames = __TEMP_GFE_Fuse_MatchAttribName;
+            attribPromote1.compute();
+        }
         
         fuseParms.setMatchattrib(__TEMP_GFE_Fuse_MatchAttribName);
     }
+    
     
 
 
@@ -856,7 +878,6 @@ virtual bool
     destgdh.allocateAndSet(geo->asGU_Detail(), false);
 
     nodeCache = fuseVerb->allocCache();
-    
     
     if (keepEdgeGroup)
         fuseKeepEdgeGroup();
@@ -964,7 +985,7 @@ void fuseKeepEdgeGroup()
     SOP_Fuse_2_0Parms fuseParms1(fuseParms);
     fuseParms1.setRecomputenml(false);
     fuseParms1.setConsolidateSnappedPoints(false);
-    fuseParms1.setAlgorithm(geoRef0 && fuseParms.getAlgorithm() == SOP_Fuse_2_0Parms::Algorithm::CLOSEST ? SOP_Fuse_2_0Parms::Algorithm::CLOSEST : SOP_Fuse_2_0Parms::Algorithm::LOWEST);
+    fuseParms1.setAlgorithm(geoRef0 && fuseParms.getAlgorithm() == SOP_Fuse_2_0Enums::Algorithm::CLOSEST ? SOP_Fuse_2_0Enums::Algorithm::CLOSEST : SOP_Fuse_2_0Enums::Algorithm::LOWEST);
 
     fuseParms1.setCreatesnappedattrib(true);
     fuseParms1.setCreatesnappedgroup(true);
@@ -1123,6 +1144,18 @@ rest2DAttribMergeMethodInt64()
 }
 
 
+static SOP_Fuse_2_0Enums::Snaptype FuseMethod_to_SnapType(const Method method)
+{
+    using namespace SOP_Fuse_2_0Enums;
+    switch (method)
+    {
+    case Method::Point:      return SOP_Fuse_2_0Enums::Snaptype::DISTANCESNAP;    break;
+    case Method::Grid:       return SOP_Fuse_2_0Enums::Snaptype::GRIDSNAP;        break;
+    case Method::Specified:  return SOP_Fuse_2_0Enums::Snaptype::SPECIFIED;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Fuse Method!");
+    return SOP_Fuse_2_0Enums::Snaptype::DISTANCESNAP;
+}
     
 #endif
 

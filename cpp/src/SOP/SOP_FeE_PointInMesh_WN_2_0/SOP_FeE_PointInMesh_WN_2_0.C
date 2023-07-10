@@ -390,17 +390,18 @@ SOP_FeE_PointInMesh_WN_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         
     GFE_PointInMeshWN pointInMeshWN(outGeo0, inGeo1, sopcache, &cookparms);
 
-    pointInMeshWN.gfeWN.setInGroup(sopparms.getWNQueryPointGroup(), sopparms.getWNMeshPrimGroup());
+    pointInMeshWN.gfeWN.groupParser.setPointGroup(sopparms.getWNQueryPointGroup());
+    pointInMeshWN.gfeWN.groupParserRef0.setPrimitiveGroup(sopparms.getWNMeshPrimGroup());
 
     if (sopparms.getOutWN() || sopparms.getOutGroup() || sopparms.getOutNumericAttrib())
-        pointInMeshWN.gfeWN.findOrCreateTuple(!sopparms.getOutWN(), wnStorage, sopparms.getWNAttribName());
+        pointInMeshWN.gfeWN.findOrCreateTuple(!sopparms.getOutWN(), GA_ATTRIB_POINT, wnStorage, sopparms.getWNAttribName());
 
     pointInMeshWN.gfeWN.setComputeParm(sopWNType(sopparms.getWNType()),
         sopparms.getWNFullAccuracy(), sopparms.getWNAccuracyScale(),
         sopparms.getWNAsSolidAngle(), sopparms.getWNNegate());
 
     
-    pointInMeshWN.setGroup.setParm(groupMergeType, sopparms.getReverseGroup());
+    pointInMeshWN.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
     //groupMergeType
     
     if (sopparms.getOutGroup())

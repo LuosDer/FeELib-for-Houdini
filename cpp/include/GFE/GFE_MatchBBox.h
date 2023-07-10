@@ -49,18 +49,21 @@ public:
 
 
 
-class GFE_MatchBBox : public GFE_AttribFilterWithRefRest {
+class GFE_MatchBBox : public GFE_AttribFilterWithRef0 {
 
 public:
-    using GFE_AttribFilterWithRefRest::GFE_AttribFilterWithRefRest;
+    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
     
 
     void
         setComputeParm(
+            const exint subscribeRatio = 64,
+            const exint minGrainSize = 1024
         )
     {
         setHasComputed();
         this->subscribeRatio = subscribeRatio;
+        this->minGrainSize   = minGrainSize;
     }
     
     SYS_FORCE_INLINE void setRepairPrecision()
@@ -144,6 +147,8 @@ private:
     GA_Attribute* xformAttrib = nullptr;
     
     
+    exint subscribeRatio = 64;
+    exint minGrainSize = 1024;
 
 
 }; // End of class GFE_MatchBBox

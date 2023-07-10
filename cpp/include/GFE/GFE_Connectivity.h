@@ -123,18 +123,18 @@ private:
             if (shouldPromote)
             {
                 //GA_Storage sto = GFE_Attribute::getStorage(connectivityAttrib);
-                attribPromote.setSourceAttribute(connectivityAttrib);
+                attribPromote.getInAttribArray().set(connectivityAttrib);
                 
                 if (shouldCast)
-                    attribPromote.setDetachedDestinationAttribute(outAttribPtr->getOwner());
+                    attribPromote.dstAttribClass = outAttribPtr->getOwner();
                 else
-                    attribPromote.setDestinationAttribute(outAttribPtr);
+                    attribPromote.getOutAttribArray().set(outAttribPtr);
                 
                 attribPromote.compute();
             }
             if (shouldCast)
             {
-                GA_Attribute* const inAttribPtr = shouldPromote ? attribPromote.getDestinationAttribute() : connectivityAttrib;
+                GA_Attribute* const inAttribPtr = shouldPromote ? attribPromote.getOutAttribArray()[0] : connectivityAttrib;
                 //GA_StorageClass storage537 = inAttribPtr->getStorageClass();
                 //GA_Storage storage124 = GFE_Attribute::getStorage(inAttribPtr);
                 GFE_AttribCast attribCast(geo);

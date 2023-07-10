@@ -148,7 +148,9 @@ private:
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    dstAttrib->copy(elemoff, srcAttribRef, geo->offsetPromote<SrcOwner, dstOwner>(elemoff));
+                    const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                    if (GFE_Type::isValidOffset(dstOff))
+                        dstAttrib->copy(elemoff, srcAttribRef, dstOff);
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -170,7 +172,7 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset dstOff = geo->offsetPromote<SrcOwner, dstOwner>(elemoff);
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
                         if (GFE_Type::isValidOffset(dstOff))
                             attrib_ph.value(elemoff) = srcAttrib_h.get(dstOff);
                     }

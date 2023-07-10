@@ -69,7 +69,7 @@ public:
 		this->reversePrim = reversePrim;
 		this->doDelGroupElement = delElem;
 		this->subscribeRatio = subscribeRatio;
-		this->minGrainSize = minGrainSize;
+		this->minGrainSize   = minGrainSize;
 	}
 	
 	SYS_FORCE_INLINE fpreal setConeAngleThreshold(const fpreal angle)
@@ -119,8 +119,8 @@ private:
 		{
 			normal3D.groupParser.setGroup(groupParser);
 
-			if (normal3D.isEmpty())
-				normal3D.findOrCreateNormal3D(true, *outElemGroup, GA_STORE_INVALID, "N");
+			if (!normal3D.getAttrib())
+				normal3D.findOrCreateNormal3D(false, true, *outElemGroup, GA_STORE_INVALID, "N");
 		
 			normal3D.compute();
 			
@@ -207,7 +207,7 @@ public:
 	
 private:
 	UT_Vector3R restDir;
-	GA_Attribute* dirAttrib = nullptr;
+	const GA_Attribute* dirAttrib = nullptr;
 	GA_ElementGroup* outElemGroup;
 	
 	exint subscribeRatio = 64;

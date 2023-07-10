@@ -286,30 +286,28 @@ SOP_FeE_GroupOverlapEdge_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
 
     
 
-    GFE_GroupNewEdge groupNewEdge(outGeo0, inGeo1, cookparms);
-    groupNewEdge.groupSetter.setParm(sopparms.getReverseGroup());
+    GFE_GroupOverlapEdge groupOverlapEdge(outGeo0, inGeo1, cookparms);
+    groupOverlapEdge.groupSetter.setParm(sopparms.getReverseGroup());
     
-    groupNewEdge.setComputeParm(sopparms.getUseSnapDist(),sopparms.getSnapDist(),sopparms.getRunOverGeoRef(),
+    groupOverlapEdge.setComputeParm(sopparms.getUseSnapDist(),sopparms.getSnapDist(),sopparms.getRunOverGeoRef(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    groupNewEdge.doDelGroupElement = sopparms.getDelGroupElem();
+    groupOverlapEdge.doDelGroupElement = sopparms.getDelGroupElem();
 
     if (sopparms.getDelGroupElem())
-    {
-        groupNewEdge.getOutGroupArray().findOrCreateEdge(true);
-    }
+        groupOverlapEdge.getOutGroupArray().findOrCreateEdge(true);
     else
     {
         if (sopparms.getOutEdgeGroup())
-            groupNewEdge.getOutGroupArray().findOrCreateEdge(false, sopparms.getNewEdgeGroupName());
+            groupOverlapEdge.getOutGroupArray().findOrCreateEdge(false, sopparms.getNewEdgeGroupName());
         if (sopparms.getOutVertexEdgeGroup())
-            groupNewEdge.getOutGroupArray().findOrCreateVertex(false, sopparms.getNewVertexEdgeGroupName());
+            groupOverlapEdge.getOutGroupArray().findOrCreateVertex(false, sopparms.getNewVertexEdgeGroupName());
     }
 
 
-    groupNewEdge.groupParser.setGroup(groupType, sopparms.getGroup());
-    groupNewEdge.computeAndBumpDataId();
-    groupNewEdge.delOrVisualizeGroup();
+    groupOverlapEdge.groupParser.setGroup(groupType, sopparms.getGroup());
+    groupOverlapEdge.computeAndBumpDataId();
+    groupOverlapEdge.delOrVisualizeGroup();
 
 }
 

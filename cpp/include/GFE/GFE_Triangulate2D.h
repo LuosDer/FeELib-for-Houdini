@@ -116,14 +116,12 @@ private:
         // if (groupParser.isEmpty())
         //     return true;
         
+        GFE_Fuse fuse(geo, nullptr, cookparms);
         if (preFuse || postFuse)
         {
-            GFE_Fuse
-            fuseParms.myAlgorithm = GU_Snap::PointSnapParms::SnapAlgorithm::ALGORITHM_CLOSEST_POINT;
-            fuseParms.myConsolidate = true;
-            fuseParms.myDeleteConsolidated = true;
-            fuseParms.myQPosH = geo->getP();
-            fuseParms.myTPosH = geo->getP();
+            fuse.method = GFE_Fuse::Method::Point;
+            //fuse.setSnapToClosest(true);
+            fuse.setConsolidate(true);
         }
         
         geo->keepStdAttribute("*", "", "", "");
@@ -141,8 +139,8 @@ private:
         
         if (preFuse)
         {
-            fuseParms.myDistance = preFuseDist;
-            GU_Snap::snapPoints(*geo->asGU_Detail(), nullptr, fuseParms);
+            fuse.setPointComputeParm(true, preFuseDist, true);
+            fuse.compute();
         }
         
         if (preDelSharedEdge)
@@ -194,8 +192,8 @@ private:
         
         if (postFuse)
         {
-            //fuseParms.myDistance = postFuseDist;
-            //GU_Snap::snapPoints(*geo->asGU_Detail(), nullptr, fuseParms);
+            fuse.setPointComputeParm(true, postFuseDist, true);
+            fuse.compute();
         }
         
         if (restAttrib)
