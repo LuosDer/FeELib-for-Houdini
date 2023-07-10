@@ -52,11 +52,6 @@ public:
 const UT_StringHolder SOP_FeE_WindingNumber_1_0Verb::theSOPTypeName("FeE::windingNumber::1.0"_sh);
 const SOP_NodeVerb::Register<SOP_FeE_WindingNumber_1_0Verb> SOP_FeE_WindingNumber_1_0Verb::theVerb;
 
-//******************************************************************************
-//*                 Parameters                                                 *
-//******************************************************************************
-
-/// This is a multi-line raw string specifying the parameter interface for this SOP.
 
 static const char* theDsFile = R"THEDSFILE(
 {
@@ -406,7 +401,7 @@ newSopOperator(OP_OperatorTable *table)
 
 
 static GA_Storage
-sopWNStorage(SOP_FeE_WindingNumber_1_0Parms::WNPrecision wnPrecision)
+sopWNStorage(const SOP_FeE_WindingNumber_1_0Parms::WNPrecision wnPrecision)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (wnPrecision)
@@ -421,7 +416,7 @@ sopWNStorage(SOP_FeE_WindingNumber_1_0Parms::WNPrecision wnPrecision)
 }
 
 static GFE_WNType
-sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
+sopWNType(const SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (wnType)
@@ -437,7 +432,7 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 
 
 //static GA_AttributeOwner
-//sopAttribOwner(SOP_FeE_WindingNumber_1_0Parms::WNAttribClass parmAttribClass)
+//sopAttribOwner(const SOP_FeE_WindingNumber_1_0Parms::WNAttribClass parmAttribClass)
 //{
 //    using namespace SOP_FeE_WindingNumber_1_0Enums;
 //    switch (parmAttribClass)
@@ -451,7 +446,7 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 //}
 
 //static GA_GroupType
-//sopGroupType(SOP_FeE_WindingNumber_1_0Parms::PointInMeshGroupType parmGroupType)
+//sopGroupType(const SOP_FeE_WindingNumber_1_0Parms::PointInMeshGroupType parmGroupType)
 //{
 //    using namespace SOP_FeE_WindingNumber_1_0Enums;
 //    switch (parmGroupType)
@@ -467,7 +462,7 @@ sopWNType(SOP_FeE_WindingNumber_1_0Parms::WNType wnType)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_WindingNumber_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_WindingNumber_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (parmGroupType)
@@ -485,7 +480,7 @@ sopGroupType(SOP_FeE_WindingNumber_1_0Parms::GroupType parmGroupType)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_WindingNumber_1_0Parms::GroupTypeRef parmGroupType)
+sopGroupType(const SOP_FeE_WindingNumber_1_0Parms::GroupTypeRef parmGroupType)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (parmGroupType)
@@ -504,7 +499,7 @@ sopGroupType(SOP_FeE_WindingNumber_1_0Parms::GroupTypeRef parmGroupType)
 
 
 static GFE_GroupMergeType
-sopGroupMergeType(SOP_FeE_WindingNumber_1_0Parms::GroupMergeType groupMergeType)
+sopGroupMergeType(const SOP_FeE_WindingNumber_1_0Parms::GroupMergeType groupMergeType)
 {
     using namespace SOP_FeE_WindingNumber_1_0Enums;
     switch (groupMergeType)
@@ -519,7 +514,6 @@ sopGroupMergeType(SOP_FeE_WindingNumber_1_0Parms::GroupMergeType groupMergeType)
 }
 
 
-/// This is the function that does the actual work.
 void SOP_FeE_WindingNumber_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 {
     auto &&sopparms = cookparms.parms<SOP_FeE_WindingNumber_1_0Parms>();

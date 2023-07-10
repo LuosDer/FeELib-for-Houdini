@@ -95,10 +95,24 @@ public:
     SYS_FORCE_INLINE void erase(const size_t i)
     { attribArray.erase(attribArray.begin()+i); }
 
-    SYS_FORCE_INLINE void destroy(const size_t i)
+    void destroy(const size_t i)
     {
-        geo->getAttributes().destroyAttribute(attribArray[i]);
+        UT_ASSERT_P(i < attribArray.size());
+        if (!attribArray[i]->isDetached())
+            geo->getAttributes().destroyAttribute(attribArray[i]);
         erase(i);
+    }
+    
+    void destroyAll()
+    {
+        const size_t sizeAttrib = attribArray.size();
+        for (size_t i = 0; i < sizeAttrib; ++i)
+        {
+            if (!attribArray[i]->isDetached() && !GFE_Type::stringEqual(attribArray[i]->getName().c_str(), "P"))
+                geo->getAttributes().destroyAttribute(attribArray[i]);
+        }
+        attribArray.clear();
+        attribUPtrArray.clear();
     }
     
     SYS_FORCE_INLINE GA_Attribute* clone(
@@ -126,8 +140,6 @@ public:
     //    return outAttrib;
     //}
     
-    SYS_FORCE_INLINE GA_Attribute* clone(const GA_Attribute& attrib)
-    { return clone(attrib, attrib.getOwner(), attrib.getName(), true); }
     
     GA_Attribute* cloneDetached(
         const GA_Attribute& attrib,
@@ -145,6 +157,21 @@ public:
         const bool cloneOption = true
     )
     { return cloneDetached(attrib, attrib.getOwner(), cloneOption); }
+    
+    
+    SYS_FORCE_INLINE GA_Attribute* clone(const GA_Attribute& attrib)
+    { return clone(attrib, attrib.getOwner(), attrib.getName(), true); }
+
+
+    
+    SYS_FORCE_INLINE GA_Attribute* clone(
+        const bool detached,
+        const GA_Attribute& attrib,
+        const GA_AttributeOwner owner,
+        const UT_StringHolder& name,
+        const bool cloneOption = true
+    )
+    { return detached ? cloneDetached(attrib, owner, cloneOption) : clone(attrib, owner, name, cloneOption); }
     
     
     SYS_FORCE_INLINE void clear()
@@ -1235,11 +1262,28 @@ public:
     { eraseByGroupType(GA_GROUP_EDGE, true); }
 
     
+    //SYS_FORCE_INLINE GA_Group* clone(const GA_Group& group, const GA_GroupType owner, const UT_StringRef& name)
+    //{ return findOrCreate(false, owner, name); }
+    //
+    //SYS_FORCE_INLINE GA_ElementGroup* cloneElement(const GA_ElementGroup& group, const GA_GroupType owner, const UT_StringRef& name)
+    //{ return findOrCreateElement(false, owner, name); }
+    
     SYS_FORCE_INLINE GA_Group* clone(const GA_Group& group)
     { return findOrCreate(false, group.classType(), group.getName()); }
     
     SYS_FORCE_INLINE GA_ElementGroup* cloneElement(const GA_ElementGroup& group)
     { return findOrCreateElement(false, group.classType(), group.getName()); }
+    
+    GA_Group* cloneDetached(const GA_Group& group)
+    {
+        UT_ASSERT_P(geo);
+        GA_Group* outGroup = geo->getGroupTable(group.classType())->newDetachedGroup();
+        appendDetached(outGroup);
+        return outGroup;
+    }
+    
+    SYS_FORCE_INLINE GA_Group* clone(const bool detached, const GA_Group& group)
+    { return detached ? cloneDetached(group) : clone(group); }
     
     
     
@@ -1307,6 +1351,26 @@ public:
         groupUPtrArray.clear();
     }
 
+    void destroy(const size_t i)
+    {
+        UT_ASSERT_P(i < groupArray.size());
+        if (!groupArray[i]->isDetached())
+            geo->destroyGroup(groupArray[i]);
+        erase(i);
+    }
+    
+    void destroyAll()
+    {
+        const size_t sizeGroup = groupArray.size();
+        for (size_t i = 0; i < sizeGroup; ++i)
+        {
+            if (!groupArray[i]->isDetached())
+                geo->destroyGroup(groupArray[i]);
+        }
+        groupArray.clear();
+        groupUPtrArray.clear();
+    }
+    
     SYS_FORCE_INLINE ::std::vector<GA_Group*>::size_type size() const
     { return groupArray.size(); }
 
@@ -1604,8 +1668,8 @@ protected:
     const SOP_NodeVerb::CookParms* cookparms;
 
 private:
-    std::vector<GA_GroupUPtr> groupUPtrArray;
-    std::vector<GA_Group*> groupArray;
+    ::std::vector<GA_GroupUPtr> groupUPtrArray;
+    ::std::vector<GA_Group*> groupArray;
 
     friend class GFE_AttribFilter;
     friend class GFE_AttribCreateFilter;

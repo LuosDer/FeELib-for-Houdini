@@ -105,6 +105,15 @@ static const char *theDsFile = R"THEDSFILE(
         }
         disablewhen "{ fuse2D == 0 }"
     }
+    parm {
+        name    "fuseRefGeo2D"
+        cppname "FuseRefGeo2D"
+        label   "Fuse Ref Geo 2D"
+        type    toggle
+        default { "off" }
+        disablewhen "{ fuse2D == 0 }"
+    }
+
 
     groupsimple {
         name    "snapGroup"
@@ -249,6 +258,18 @@ static const char *theDsFile = R"THEDSFILE(
             disablewhen "{ useMatchAttrib == 0 }"
             hidewhen "{ snapMethod != point }"
             parmtag { "sop_input" "1" }
+        }
+        parm {
+            name    "matchAttribClass"
+            cppname "MatchAttribClass"
+            label   "Match Attribute Class"
+            type    ordinal
+            default { "point" }
+            menu {
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+            }
         }
         parm {
             name    "mismatchAttrib"
@@ -419,13 +440,6 @@ static const char *theDsFile = R"THEDSFILE(
             default { "off" }
         }
         parm {
-            name    "keepEdgeGroup"
-            cppname "KeepEdgeGroup"
-            label   "Keep Edge Group"
-            type    string
-            default { "*" }
-        }
-        parm {
             name    "createSnappedGroup"
             cppname "CreateSnappedGroup"
             label   "Create Snapped Points Group"
@@ -459,6 +473,13 @@ static const char *theDsFile = R"THEDSFILE(
             type    string
             default { "snapTo" }
             disablewhen "{ createSnappedAttrib == 0 } { snapMethod == grid }"
+        }
+        parm {
+            name    "keepEdgeGroup"
+            cppname "KeepEdgeGroup"
+            label   "Keep Edge Group"
+            type    string
+            default { "*" }
         }
         multiparm {
             name    "numPointAttrib"
@@ -526,22 +547,22 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
 
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
-    }
+    // parm {
+    //     name    "subscribeRatio"
+    //     cppname "SubscribeRatio"
+    //     label   "Subscribe Ratio"
+    //     type    integer
+    //     default { 64 }
+    //     range   { 0! 256 }
+    // }
+    // parm {
+    //     name    "minGrainSize"
+    //     cppname "MinGrainSize"
+    //     label   "Min Grain Size"
+    //     type    intlog
+    //     default { 1024 }
+    //     range   { 0! 2048 }
+    // }
 }
 )THEDSFILE";
 
@@ -596,7 +617,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_Fuse_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_Fuse_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -808,7 +829,7 @@ sopGroupMergeMethodInt64(const int64 parmAttribMergeMethod)
 
 
 static SOP_Fuse_2_0Enums::Algorithm
-sopSnapAlgorithm(SOP_FeE_Fuse_1_0Parms::SnapAlgorithm parmSnapAlgorithm)
+sopSnapAlgorithm(const SOP_FeE_Fuse_1_0Parms::SnapAlgorithm parmSnapAlgorithm)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
     switch (parmSnapAlgorithm)
@@ -822,7 +843,7 @@ sopSnapAlgorithm(SOP_FeE_Fuse_1_0Parms::SnapAlgorithm parmSnapAlgorithm)
 
     
 static SOP_Fuse_2_0Enums::Gridtype
-sopGridType(SOP_FeE_Fuse_1_0Parms::GridType parmGridType)
+sopGridType(const SOP_FeE_Fuse_1_0Parms::GridType parmGridType)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
     switch (parmGridType)
@@ -836,7 +857,7 @@ sopGridType(SOP_FeE_Fuse_1_0Parms::GridType parmGridType)
 }
     
 static SOP_Fuse_2_0Enums::Gridround
-sopGridRound(SOP_FeE_Fuse_1_0Parms::GridRound parmGridRound)
+sopGridRound(const SOP_FeE_Fuse_1_0Parms::GridRound parmGridRound)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
     switch (parmGridRound)
@@ -856,7 +877,7 @@ sopGridRound(SOP_FeE_Fuse_1_0Parms::GridRound parmGridRound)
 
 
 static GFE_Fuse::Method
-sopMethod(SOP_FeE_Fuse_1_0Parms::SnapMethod parmMethod)
+sopMethod(const SOP_FeE_Fuse_1_0Parms::SnapMethod parmMethod)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
     switch (parmMethod)
@@ -870,7 +891,7 @@ sopMethod(SOP_FeE_Fuse_1_0Parms::SnapMethod parmMethod)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Fuse_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_Fuse_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
     switch (parmGroupType)
@@ -886,7 +907,7 @@ sopGroupType(SOP_FeE_Fuse_1_0Parms::GroupType parmGroupType)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Fuse_1_0Parms::TargetClass parmAttribOwner)
+sopAttribOwner(const SOP_FeE_Fuse_1_0Parms::TargetClass parmAttribOwner)
 {
     using namespace SOP_FeE_Fuse_1_0Enums;
     switch (parmAttribOwner)
@@ -900,7 +921,21 @@ sopAttribOwner(SOP_FeE_Fuse_1_0Parms::TargetClass parmAttribOwner)
     return GA_ATTRIB_INVALID;
 }
 
+static GA_AttributeOwner
+sopAttribOwner(const SOP_FeE_Fuse_1_0Parms::MatchAttribClass parmMatchAttribClass)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmMatchAttribClass)
+    {
+    case MatchAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case MatchAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case MatchAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Owner!");
+    return GA_ATTRIB_INVALID;
+}
 
+    
 void
 SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -908,16 +943,15 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Fuse_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
-    
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_Fuse::Method method = sopMethod(sopparms.getSnapMethod());
     const GA_AttributeOwner targetClass = sopAttribOwner(sopparms.getTargetClass());
-
+    const GA_AttributeOwner matchAttribClass = sopAttribOwner(sopparms.getMatchAttribClass());
     
 
     UT_AutoInterrupt boss("Processing");
@@ -925,23 +959,19 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 /*
-    GFE_Fuse fuse(geo, cookparms);
+    GFE_Fuse fuse(geo, nullptr, cookparms);
     fuse.compute();
 */
     
     GFE_Fuse fuse(outGeo0, inGeo1, &cookparms);
 
-    fuse.setPositionAttrib(sopparms.getPosAttrib());
+    fuse.setPositionAttrib(sopparms.getPosAttrib());    
     if (inGeo1)
         fuse.setPositionRef0Attrib(sopparms.getPosAttrib());
 
     if (sopparms.getFuse2D())
-        fuse.setFuse2D(static_cast<int8>(sopparms.getAxis()));
+        fuse.setFuse2D(static_cast<int8>(sopparms.getAxis()), sopparms.getFuseRefGeo2D());
     
-    GFE_GroupArray&        groupArray     = fuse.getOutGroupArray();
-    GFE_RefGroupArray&     refGroupArray  = fuse.getRef0GroupArray();
-    GFE_AttributeArray&    attribArray    = fuse.getOutAttribArray();
-    GFE_RefAttributeArray& refAttribArray = fuse.getRef0AttribArray();
 
     fuse.setComputeParm(method, sopparms.getModifyTarget(), sopparms.getFuseSnappedPoint(), !sopparms.getKeepFusedPoint(), sopparms.getDelUnusedPoint());
     
@@ -954,7 +984,7 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
         if (sopparms.getUseMatchAttrib())
         {
-            fuse.setMatchAttrib(sopparms.getMatchAttrib());
+            fuse.setMatchAttrib(matchAttribClass, sopparms.getMatchAttrib());
             fuse.setPointMatchComputeParm(sopparms.getMatchTol(), sopparms.getMismatchAttrib());
         }
         
@@ -1008,6 +1038,10 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 #if GFE_Fuse_UnderlyingAlgorithm_UseGU
 
 
+    GFE_GroupArray&        groupArray     = fuse.getOutGroupArray();
+    GFE_RefGroupArray&     refGroupArray  = fuse.getRef0GroupArray();
+    GFE_AttributeArray&    attribArray    = fuse.getOutAttribArray();
+    GFE_RefAttributeArray& refAttribArray = fuse.getRef0AttribArray();
         
     const UT_Array<SOP_FeE_Fuse_1_0Parms::NumPointAttrib>& numPointAttrib = sopparms.getNumPointAttrib();
     const size_t sizeAttrib = numPointAttrib.size();

@@ -258,9 +258,12 @@ SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
 SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
 { return axisDir<UT_Vector3T<fpreal64>>(axis); }
     
+SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const char* const str1)
+{ return strcmp(str0, str1) == 0; }
+
 SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
-{ return strcmp(str0.c_str(), str1.c_str()) == 0; }
-    
+{ return stringEqual(str0.c_str(), str1.c_str()); }
+
     
 
 static bool checkTupleAttrib(
@@ -396,8 +399,14 @@ SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
 
 
     
+SYS_FORCE_INLINE static bool isValid(const UT_StringRef& str)
+{ return str.isstring() && str.length() > 0; }
+
+SYS_FORCE_INLINE static bool isInvalid(const UT_StringRef& str)
+{ return !str.isstring() || str.length() <= 0; }
+
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)
-{ return attribName.isstring() && attribName.length() > 0 && strcmp(attribName.c_str(), "P") != 0; }
+{ return isValid(attribName) && strcmp(attribName.c_str(), "P") != 0; }
 
 SYS_FORCE_INLINE static bool isPublicAttribName(const char* const attribName)
 { return attribName && strcmp(attribName, "P") != 0; }

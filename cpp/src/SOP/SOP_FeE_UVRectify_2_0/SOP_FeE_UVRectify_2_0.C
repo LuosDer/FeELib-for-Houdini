@@ -190,7 +190,7 @@ public:
     virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_UVRectify_2_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_UVRectify_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
@@ -209,7 +209,7 @@ SOP_FeE_UVRectify_2_0::cookVerb() const
 
 
 static bool
-sopFlattenMethod(SOP_FeE_UVRectify_2_0Parms::FlattenMethod parmFlattenMethod)
+sopFlattenMethod(const SOP_FeE_UVRectify_2_0Parms::FlattenMethod parmFlattenMethod)
 {
     using namespace SOP_FeE_UVRectify_2_0Enums;
     switch (parmFlattenMethod)
@@ -217,17 +217,17 @@ sopFlattenMethod(SOP_FeE_UVRectify_2_0Parms::FlattenMethod parmFlattenMethod)
     case FlattenMethod::SCP:  return false;  break;
     case FlattenMethod::ABF:  return true;   break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    UT_ASSERT_MSG(0, "Unhandled Flatten Method!");
     return false;
 }
 
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_UVRectify_2_0Parms::UVAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_UVRectify_2_0Parms::UVAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_UVRectify_2_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case UVAttribClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
     case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -238,7 +238,7 @@ sopAttribOwner(SOP_FeE_UVRectify_2_0Parms::UVAttribClass attribClass)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_UVRectify_2_0Parms::RectifyGroupType parmGroupType)
+sopGroupType(const SOP_FeE_UVRectify_2_0Parms::RectifyGroupType parmGroupType)
 {
     using namespace SOP_FeE_UVRectify_2_0Enums;
     switch (parmGroupType)
@@ -249,13 +249,13 @@ sopGroupType(SOP_FeE_UVRectify_2_0Parms::RectifyGroupType parmGroupType)
     case RectifyGroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case RectifyGroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
     return GA_GROUP_INVALID;
 }
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_UVRectify_2_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_UVRectify_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_UVRectify_2_0Enums;
     switch (parmGroupType)
@@ -266,7 +266,7 @@ sopGroupType(SOP_FeE_UVRectify_2_0Parms::GroupType parmGroupType)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group type!");
     return GA_GROUP_INVALID;
 }
 
@@ -278,7 +278,7 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     auto &&sopparms = cookparms.parms<SOP_FeE_UVRectify_2_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     //outGeo0.replaceWith(inGeo0);
     
@@ -300,12 +300,12 @@ SOP_FeE_UVRectify_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 
-    GFE_UVRectify uvRectify(outGeo0, inGeo0, &cookparms);
+    GFE_UVRectify uvRectify(outGeo0, &cookparms);
 
     uvRectify.setComputeParm(flattenMethod, sopparms.getManualLayout());
     
     uvRectify.groupParser.setGroup(groupType, sopparms.getGroup());
-    uvRectify.groupParserRectify.setGroup(rectifyGroupType, sopparms.getRectifyGroup());
+    uvRectify.groupParser.setGroup(rectifyGroupType, sopparms.getRectifyGroup());
     
     //uvRectify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib());
     uvRectify.uvAttribName = sopparms.getUVAttrib();

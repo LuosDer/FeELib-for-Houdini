@@ -264,24 +264,24 @@ SOP_FeE_GroupElemByDir_1_0::cookVerb() const
 
 
 static GFE_NormalSearchOrder
-sopAttribSearchOrder(SOP_FeE_GroupElemByDir_1_0Parms::Normal3DAttribClass attribClass)
+sopAttribSearchOrder(const SOP_FeE_GroupElemByDir_1_0Parms::Normal3DAttribClass attribClass)
 {
     using namespace SOP_FeE_GroupElemByDir_1_0Enums;
     switch (attribClass)
     {
-    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::PRIMITIVE;   break;
-    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::POINT;       break;
-    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::VERTEX;      break;
-    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::DETAIL;      break;
-    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::POINTVERTEX; break;
-    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::ALL;         break;
+    case Normal3DAttribClass::PRIM:          return GFE_NormalSearchOrder::Primitive;   break;
+    case Normal3DAttribClass::POINT:         return GFE_NormalSearchOrder::Point;       break;
+    case Normal3DAttribClass::VERTEX:        return GFE_NormalSearchOrder::Vertex;      break;
+    case Normal3DAttribClass::DETAIL:        return GFE_NormalSearchOrder::Detail;      break;
+    case Normal3DAttribClass::POINTVERTEX:   return GFE_NormalSearchOrder::PointVertex; break;
+    case Normal3DAttribClass::ALL:           return GFE_NormalSearchOrder::All;         break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE Normal Search Order!");
-    return GFE_NormalSearchOrder::INVALID;
+    return GFE_NormalSearchOrder::Invalid;
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupElemByDir_1_0Parms::SameDirGroupType parmGroupType)
+sopGroupType(const SOP_FeE_GroupElemByDir_1_0Parms::SameDirGroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupElemByDir_1_0Enums;
     switch (parmGroupType)
@@ -296,7 +296,7 @@ sopGroupType(SOP_FeE_GroupElemByDir_1_0Parms::SameDirGroupType parmGroupType)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupElemByDir_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_GroupElemByDir_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupElemByDir_1_0Enums;
     switch (parmGroupType)
@@ -312,7 +312,7 @@ sopGroupType(SOP_FeE_GroupElemByDir_1_0Parms::GroupType parmGroupType)
 }
 
 static GFE_GroupElemByDirMethod
-sopMethod(SOP_FeE_GroupElemByDir_1_0Parms::GroupElemByDirMethod parmMethod)
+sopMethod(const SOP_FeE_GroupElemByDir_1_0Parms::GroupElemByDirMethod parmMethod)
 {
     using namespace SOP_FeE_GroupElemByDir_1_0Enums;
     switch (parmMethod)
@@ -363,11 +363,11 @@ SOP_FeE_GroupElemByDir_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) c
     
     groupElemByDir.groupSetter.setComputeParm(sopparms.getReverseGroup());
     
-    groupElemByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
+    groupElemByDir.normal3D.findOrCreateNormal3D(false, true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
     groupElemByDir.findOrCreateGroup(false, outGroupType, sopparms.getSameDirGroupName());
     
     if (method == GFE_GroupElemByDirMethod::RestDir2D_AvgNormal)
-        groupElemByDir.restDir2D.normal3D.findOrCreateNormal3D(true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
+        groupElemByDir.restDir2D.normal3D.findOrCreateNormal3D(false, true, normalSearchOrder, GA_STORE_INVALID, sopparms.getNormal3DAttrib());
 
     if (sopparms.getMatchUpDir())
         groupElemByDir.restDir2D.setMatchUpDir(sopparms.getUp());

@@ -54,7 +54,7 @@ public:
     SYS_FORCE_INLINE void setDestinationGroup(const GA_Group& inGroup)
     {
         newStorageClass = GA_STORECLASS_OTHER;
-        newPrecision = GA_PRECISION_1;
+        newPrecision    = GA_PRECISION_1;
         newGroupNames = inGroup;
     }
 
@@ -72,7 +72,7 @@ private:
             getInAttribArray().erase(i);
         }
         
-        if (getInAttribArray().isEmpty() && !getInGroupArray().size())
+        if (getInAttribArray().isEmpty() && getInGroupArray().isEmpty())
             return false;
 
         if (newStorageClass == GA_STORECLASS_INVALID)
@@ -81,14 +81,10 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        // newPrecision = geo->getPreferredPrecision(newPrecision);
         newPrecision = geo->getValidPrecision(newPrecision);
         
-        //::std::string newName;
-        
-        ::std::vector<GA_Attribute*>::size_type arrayLen;
-        arrayLen = getInAttribArray().size();
-        for (size_t i = 0; i < arrayLen; i++)
+        const size_t attribSize = getInAttribArray().size();
+        for (size_t i = 0; i < attribSize; ++i)
         {
             attribCast(*getInAttribArray()[i]);
         }
@@ -96,8 +92,8 @@ private:
         if (newStorageClass == GA_STORECLASS_OTHER)
             return true;
 
-        arrayLen = getInGroupArray().size();
-        for (size_t i = 0; i < arrayLen; i++)
+        const size_t groupSize = getInGroupArray().size();
+        for (size_t i = 0; i < groupSize; ++i)
         {
             attribCast(*getInGroupArray()[i]);
         }

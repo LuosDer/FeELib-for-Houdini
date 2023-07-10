@@ -22,6 +22,8 @@
 #include "GFE/GFE_WindingNumber.h"
 
 //#include "SOP/SOP_Triangulate2D-3.0.h"
+#include "GFE/GFE_Fuse.h"
+
 #include "SOP/SOP_Triangulate2D-3.0.proto.h"
 
 class GFE_Triangulate2D : public GFE_AttribFilter {
@@ -114,13 +116,12 @@ private:
         // if (groupParser.isEmpty())
         //     return true;
         
+        GFE_Fuse fuse(geo, nullptr, cookparms);
         if (preFuse || postFuse)
         {
-            fuseParms.myAlgorithm = GU_Snap::PointSnapParms::SnapAlgorithm::ALGORITHM_CLOSEST_POINT;
-            fuseParms.myConsolidate = true;
-            fuseParms.myDeleteConsolidated = true;
-            fuseParms.myQPosH = geo->getP();
-            fuseParms.myTPosH = geo->getP();
+            fuse.method = GFE_Fuse::Method::Point;
+            //fuse.setSnapToClosest(true);
+            fuse.setConsolidate(true);
         }
         
         geo->keepStdAttribute("*", "", "", "");
@@ -131,15 +132,15 @@ private:
             GFE_GroupElemByDir groupElemByDir(geo, nullptr, cookparms);
             groupElemByDir.up = dir;
             groupElemByDir.doDelGroupElement = true;
-            groupElemByDir.setGroup.setComputeParm(reverseSide);
+            groupElemByDir.groupSetter.setParm(reverseSide);
             groupElemByDir.findOrCreateGroup(true, GA_GROUP_PRIMITIVE);
             //groupElemByDir.normal3D.findOrCreateNormal3D(true, outGroupType, GA_STORE_INVALID, sopparms.getDirAttrib());
         }
         
         if (preFuse)
         {
-            fuseParms.myDistance = preFuseDist;
-            GU_Snap::snapPoints(*geo->asGU_Detail(), nullptr, fuseParms);
+            fuse.setPointComputeParm(true, preFuseDist, true);
+            fuse.compute();
         }
         
         if (preDelSharedEdge)
@@ -191,8 +192,8 @@ private:
         
         if (postFuse)
         {
-            fuseParms.myDistance = postFuseDist;
-            GU_Snap::snapPoints(*geo->asGU_Detail(), nullptr, fuseParms);
+            fuse.setPointComputeParm(true, postFuseDist, true);
+            fuse.compute();
         }
         
         if (restAttrib)
@@ -264,7 +265,7 @@ private:
     SOP_Triangulate2D_3_0Parms tri2DParms;
     const SOP_NodeVerb* const tri2dVerb = SOP_NodeVerb::lookupVerb("triangulate2d::3.0");
     
-    GU_Snap::PointSnapParms fuseParms;
+    //GU_Snap::PointSnapParms fuseParms;
     
     // exint subscribeRatio = 64;
     // exint minGrainSize = 256;

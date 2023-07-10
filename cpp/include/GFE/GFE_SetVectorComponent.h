@@ -56,7 +56,7 @@ public:
         this->minGrainSize   = minGrainSize;
     }
     
-    SYS_FORCE_INLINE void setRefAttrib(const GA_Attribute* const attrib)
+    void setRefAttrib(const GA_Attribute* const attrib)
     {
         if (getOutAttribArray().isEmpty() || attrib->getOwner() != getOutAttribArray()[0]->getOwner())
         {
@@ -68,6 +68,13 @@ public:
         refAttribNames = "";
         UT_ASSERT(getOutAttribArray().isEmpty() ? 1 : attrib->getOwner() == getOutAttribArray()[0]->getOwner());
     }
+    
+    SYS_FORCE_INLINE void setRefAttrib(GA_Attribute* const attrib)
+    {
+        attribRefPtrNonConst = attrib;
+        setRefAttrib(static_cast<const GA_Attribute*>(attrib));
+    }
+    
     // SYS_FORCE_INLINE GA_Attribute* setRefAttrib(const UT_StringHolder& attribPattern)
     // {
     //     // if (!attribPattern.isstring() || attribPattern.length() == 0)

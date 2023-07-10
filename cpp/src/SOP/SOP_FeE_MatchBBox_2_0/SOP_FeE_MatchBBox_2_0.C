@@ -955,7 +955,7 @@ SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     matchBBox.setPositionAttrib(sopparms.getPosAttrib());
     matchBBox.setPositionRef0Attrib(sopparms.getPosRefAttrib());
     matchBBox.setComputeParm();
-
+    matchBBox.SET
     matchBBox.doTranslate    = sopparms.getDoTranslate();
     matchBBox.doScale        = sopparms.getDoScale();
     matchBBox.ignoreHFHeight = sopparms.getIgnoreHFHeight();

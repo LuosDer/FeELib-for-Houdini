@@ -934,14 +934,6 @@ SYS_FORCE_INLINE GA_Storage getPreferredStorage(const GA_Storage storage,const G
 
 
 
-    SYS_FORCE_INLINE bool groupRename(const GA_Group& group, const UT_StringHolder& newName)
-    {
-        if (group.getName() == newName)
-            return false;
-        return getGroupTable(group.classType())->renameGroup(group.getName(), newName);
-    }
-
-
 
 
 
@@ -1056,6 +1048,35 @@ SYS_FORCE_INLINE bool forceRenameAttribute(GA_Attribute* const attrib, const UT_
 
 SYS_FORCE_INLINE bool forceRenameAttribute(const GA_AttributeOwner owner, const UT_StringRef& attribName, const UT_StringRef& newName)
 { return strcmp(attribName.c_str(), newName.c_str()) == 0 ? false : forceRenameAttribute(findAttribute(owner, attribName), newName); }
+
+
+
+
+    SYS_FORCE_INLINE bool renameGroup(const GA_Group& group, const UT_StringHolder& newName)
+    {
+        UT_ASSERT(!group.isDetached());
+        return getGroupTable(group.classType())->renameGroup(group.getName(), newName);
+    }
+
+    SYS_FORCE_INLINE bool renameGroup(const GA_Group* const group, const UT_StringHolder& newName)
+    { return group ? renameGroup(*group, newName) : false; }
+
+    bool forceRenameGroup(GA_Group& group, const UT_StringRef& newName)
+    {
+        if (group.isDetached())
+            return false;
+        GA_GroupTable* const groupTable = getGroupTable(group.classType());
+        GA_Group* const existAttrib = groupTable->find(newName);
+        if (existAttrib)
+            groupTable->destroy(existAttrib);
+        return renameGroup(group, newName);
+    }
+
+    SYS_FORCE_INLINE bool forceRenameGroup(GA_Group* const group, const UT_StringRef& newName)
+    { return group ? forceRenameGroup(*group, newName) : false; }
+
+    SYS_FORCE_INLINE bool forceRenameGroup(const GA_GroupType owner, const UT_StringRef& groupName, const UT_StringRef& newName)
+    { return strcmp(groupName.c_str(), newName.c_str()) == 0 ? false : forceRenameGroup(findGroup(owner, groupName), newName); }
 
 
 

@@ -158,13 +158,9 @@ public:
             }
         }
         if (carveUAttribStart_nonConst)
-        {
             setCarveUStartAttrib(carveUAttribStart_nonConst, delCarveUAttrib);
-        }
         else
-        {
             delCarveUAttribStart = delCarveUAttrib;
-        }
     }
 
 
@@ -175,9 +171,7 @@ public:
         endCarveUAttrib = carveUAttrib;
         delCarveUEndAttrib = delCarveUAttrib;
         if (endCarveUAttrib)
-        {
-            endCarveU_h.bind(endCarveUAttrib);
-        }
+            endCarveU_h = endCarveUAttrib;
 
         UT_ASSERT_MSG(endCarveUAttrib->getOwner() >= 3, "not correct attrib owner");
     }

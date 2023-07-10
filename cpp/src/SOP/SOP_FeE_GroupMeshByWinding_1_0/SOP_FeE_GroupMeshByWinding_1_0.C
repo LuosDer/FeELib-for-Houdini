@@ -324,7 +324,7 @@ SOP_FeE_GroupMeshByWinding_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     GFE_GroupMeshByWinding groupMeshByWinding(outGeo0, inGeo1, cookparms);
     groupMeshByWinding.setComputeParm(method, sopparms.getShrinkAmount(), sopparms.getMeshCap(), sopparms.getReversePrim());
     
-    groupMeshByWinding.setGroup.setComputeParm(groupMergeType, sopparms.getReverseGroup());
+    groupMeshByWinding.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
     
     if (sopparms.getOutGroup())
     {

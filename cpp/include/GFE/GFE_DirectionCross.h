@@ -68,18 +68,23 @@ private:
             return true;
 
         ownerUp = attribUp ? attribUp->getOwner() : GA_ATTRIB_INVALID;
+        bool flag = false;
         const size_t size = getOutAttribArray().size();
         for (size_t i = size-1; ; --i)
         {
+            if (flag)
+                break;
             attrib = getOutAttribArray()[i];
             // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
             const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
             if (!aifTuple || aifTuple->getTupleSize(attrib) != 3)
             {
                 getOutAttribArray().erase(i);
+                if (i <= 0)
+                    break;
                 continue;
             }
-            
+
             switch (aifTuple->getTupleSize(attrib))
             {
             case 3: break;
@@ -89,6 +94,8 @@ private:
             case 2:
             case 4:
                 getOutAttribArray().erase(i);
+                if (i <= 0)
+                    flag = true;
                 continue;
             }
             

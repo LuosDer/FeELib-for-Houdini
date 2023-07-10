@@ -78,8 +78,19 @@ static void accumulateT(GA_Attribute& attrib, const GA_SplittableRange& r)
 }
 
 
-
-
+static bool isSameType(const GA_Attribute& srcAttrib, const GA_Attribute& dstAttrib)
+{
+    return srcAttrib.getStorageClass() == dstAttrib.getStorageClass() &&
+           srcAttrib.getTupleSize() == dstAttrib.getTupleSize() &&
+           (
+               (srcAttrib.getAIFTuple()             && dstAttrib.getAIFTuple())             ||
+               (srcAttrib.getAIFStringTuple()       && dstAttrib.getAIFStringTuple())       ||
+               (srcAttrib.getAIFSharedDictTuple()   && dstAttrib.getAIFSharedDictTuple())   ||
+               (srcAttrib.getAIFNumericArray()      && dstAttrib.getAIFNumericArray())      ||
+               (srcAttrib.getAIFSharedStringArray() && dstAttrib.getAIFSharedStringArray()) ||
+               (srcAttrib.getAIFSharedDictArray()   && dstAttrib.getAIFSharedDictArray())   
+           );
+}
 
 
 static void computeIndexAttrib(GA_Attribute& attrib, const GA_SplittableRange* const srange = nullptr, const GA_Index startIndex = 0)

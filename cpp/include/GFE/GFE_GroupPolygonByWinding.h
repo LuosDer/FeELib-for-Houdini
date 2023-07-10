@@ -62,7 +62,7 @@ public:
 		const UT_StringRef& attribName = "",
 		const int tuple_size = 3
 		)
-	{ return normal3D.findOrCreateNormal3D(detached, GFE_NormalSearchOrder::PRIMITIVE, storage, attribName, tuple_size); }
+	{ return normal3D.findOrCreateNormal3D(detached, GFE_NormalSearchOrder::Primitive, storage, attribName, tuple_size); }
 
 	
 	
@@ -96,6 +96,8 @@ private:
 		if (groupParser.isEmpty())
 			return true;
 
+		setValidConstPosAttrib();
+
 		GA_PrimitiveGroup* const outPrimGroup = getOutGroupArray().getPrimitiveGroup(0);
 		//GA_PointGroupUPtr outPointGroupUPtr = geo->createDetachedPointGroup();
 		//setGroup = outPointGroupUPtr.get();
@@ -124,8 +126,8 @@ private:
 		{
 			normal3D.groupParser.setGroup(groupParser);
 
-			if (normal3D.isEmpty())
-				normal3D.findOrCreateNormal3D(true, GFE_NormalSearchOrder::PRIMITIVE, GA_STORE_INVALID, "N");
+			if (!normal3D.getAttrib())
+				normal3D.findOrCreateNormal3D(true, GFE_NormalSearchOrder::Primitive, GA_STORE_INVALID, "N");
 			
 			dirAttrib = normal3D.getAttrib();
 			
@@ -154,6 +156,7 @@ private:
 	
 	void groupPolyByWindingMethod_ray()
 	{
+		UT_ASSERT_P(dirAttrib->getAIFTuple());
         const GA_Storage storage = dirAttrib->getAIFTuple()->getStorage(dirAttrib);
 		switch (storage)
 		{
@@ -172,7 +175,7 @@ private:
 	{
 		const fpreal posTol = rayTolerance * 10.0;
 		
-		const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(geo->getP());
+		const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
 		//const GA_PrimitiveGroup* const geoPrimGroup = groupParser.getPrimitiveGroup();
 		const GA_PrimitiveGroup* const geoPrimGroup = nullptr;
 		
