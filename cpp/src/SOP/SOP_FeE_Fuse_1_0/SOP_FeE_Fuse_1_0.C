@@ -260,6 +260,18 @@ static const char *theDsFile = R"THEDSFILE(
             parmtag { "sop_input" "1" }
         }
         parm {
+            name    "matchAttribClass"
+            cppname "MatchAttribClass"
+            label   "Match Attribute Class"
+            type    ordinal
+            default { "point" }
+            menu {
+                "prim"      "Primitive"
+                "point"     "Point"
+                "vertex"    "Vertex"
+            }
+        }
+        parm {
             name    "mismatchAttrib"
             cppname "MismatchAttrib"
             label   "Mismatch Attribute"
@@ -909,7 +921,21 @@ sopAttribOwner(const SOP_FeE_Fuse_1_0Parms::TargetClass parmAttribOwner)
     return GA_ATTRIB_INVALID;
 }
 
+static GA_AttributeOwner
+sopAttribOwner(const SOP_FeE_Fuse_1_0Parms::MatchAttribClass parmMatchAttribClass)
+{
+    using namespace SOP_FeE_Fuse_1_0Enums;
+    switch (parmMatchAttribClass)
+    {
+    case MatchAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case MatchAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
+    case MatchAttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Owner!");
+    return GA_ATTRIB_INVALID;
+}
 
+    
 void
 SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -922,11 +948,10 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     //outGeo0.replaceWith(inGeo0);
 
-    
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_Fuse::Method method = sopMethod(sopparms.getSnapMethod());
     const GA_AttributeOwner targetClass = sopAttribOwner(sopparms.getTargetClass());
-
+    const GA_AttributeOwner matchAttribClass = sopAttribOwner(sopparms.getMatchAttribClass());
     
 
     UT_AutoInterrupt boss("Processing");
@@ -959,7 +984,7 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
         if (sopparms.getUseMatchAttrib())
         {
-            fuse.setMatchAttrib(sopparms.getMatchAttrib());
+            fuse.setMatchAttrib(matchAttribClass, sopparms.getMatchAttrib());
             fuse.setPointMatchComputeParm(sopparms.getMatchTol(), sopparms.getMismatchAttrib());
         }
         

@@ -4,6 +4,7 @@
 #ifndef __GFE_Fuse_h__
 #define __GFE_Fuse_h__
 
+#include "GFE_AttributePromote.h"
 #include "GFE/GFE_Fuse.h"
 
 #include "GFE/GFE_GeoFilter.h"
@@ -25,6 +26,7 @@
     #define __TEMP_GFE_Fuse_SnapGroupName  "__TEMP_GFE_Fuse_SnapGroup"
     #define __TEMP_GFE_Fuse_PosAttribName  "__TEMP_GFE_Fuse_P"
     #define __TEMP_GFE_Fuse_Rest2DAttribName "__TEMP_GFE_Fuse_Rest2D"
+    #define __TEMP_GFE_Fuse_MatchAttribName  "__TEMP_GFE_Fuse_Match"
     #define __TEMP_GFE_Fuse_SpecifiedAttribName "__TEMP_GFE_Fuse_SnapSpecified"
     #define __TEMP_GFE_Fuse_SnapAttribName   "__TEMP_GFE_Fuse_SnapTo"
     #define __TEMP_GFE_Fuse_SnappedGroupName "__TEMP_GFE_Fuse_Snapped"
@@ -502,6 +504,13 @@ public:
         pointSnapParm.myUseMatchAttrib &= bool(pointSnapParm.myQMatchStrH.getAttribute());
     }
     
+    SYS_FORCE_INLINE void setMatchAttrib(const GA_AttributeOwner owner, const UT_StringRef& name)
+    {
+        setQMatchAttrib(name);
+        setTMatchAttrib(name);
+        pointSnapParm.myUseMatchAttrib &= bool(pointSnapParm.myQMatchStrH.getAttribute());
+    }
+    
 #else
         
     SYS_FORCE_INLINE void setQMatchAttrib()
@@ -529,6 +538,14 @@ public:
     {
         fuseParms.setUsematchattrib(true);
         fuseParms.setMatchattrib(name);
+        matchAttribOwner = GA_ATTRIB_POINT;
+    }
+    
+    SYS_FORCE_INLINE void setMatchAttrib(const GA_AttributeOwner owner, const UT_StringRef& name)
+    {
+        fuseParms.setUsematchattrib(true);
+        fuseParms.setMatchattrib(name);
+        matchAttribOwner = owner;
     }
     
     
@@ -536,11 +553,7 @@ public:
 #endif
 
 
-    SYS_FORCE_INLINE void
-        setPointMatchComputeParm(
-            const fpreal tol = 0,
-            const bool mismatch = false
-        )
+    SYS_FORCE_INLINE void setPointMatchComputeParm(const fpreal tol = 0, const bool mismatch = false)
     {
         setHasComputed();
         
@@ -620,6 +633,8 @@ private:
 virtual bool
     computeCore() override
 {
+    UT_ASSERT_P(matchAttribOwner == GA_ATTRIB_PRIMITIVE || matchAttribOwner == GA_ATTRIB_POINT || matchAttribOwner == GA_ATTRIB_VERTEX);
+    
     if (groupParser.isEmpty())
         return true;
 
@@ -666,6 +681,11 @@ virtual bool
 
 #else
     const bool keepEdgeGroup = fuseParms.getConsolidateSnappedPoints() && !keepEdgeGroupArray.isEmpty();
+
+    
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////  Duplicate Attrib   ////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
     
     const GA_PointGroup* const geoGroup = groupParser.getPointGroup();
     GA_PointGroup* geoGroupRest = nullptr;
@@ -740,7 +760,43 @@ virtual bool
         //inputgdh.emplace_back(geoRef0Tmp_h);
     }
 
+
+
+
+
+
+
+
     
+    
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////  Promote Match Attrib   ////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
+    
+    const char* origMatchAttribName = nullptr;
+    if (fuseParms.getUsematchattrib() && matchAttribOwner != GA_ATTRIB_POINT)
+    {
+        GFE_AttribPromote attribPromote(geo, cookparms);
+
+        origMatchAttribName = fuseParms.getMatchattrib().c_str();
+        attribPromote.getInAttribArray().set(matchAttribOwner, fuseParms.getMatchattrib());
+        attribPromote.dstAttribClass = GA_ATTRIB_POINT;
+        attribPromote.newAttribNames = __TEMP_GFE_Fuse_MatchAttribName;
+    
+        attribPromote.compute();
+        
+        fuseParms.setMatchattrib(__TEMP_GFE_Fuse_MatchAttribName);
+    }
+    
+
+
+
+
+
+    
+    ///////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////  Fuse 2D   //////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
     
     GFE_SetVectorComponent setVectorComponent(geo, nullptr, cookparms);
     GFE_SetVectorComponent setVectorComponentRef(geoRef0 ? static_cast<GFE_Detail*>(geoRef0Tmp) : geo, nullptr, cookparms);
@@ -791,9 +847,9 @@ virtual bool
     }
     
     
-        
-
-    
+    ///////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////  Compute   //////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
     
     //geo->clear();
     //const SOP_NodeVerb::CookMode cookMode = fuseVerb->cookMode(&fuseParms);
@@ -815,6 +871,18 @@ virtual bool
     
     if (method == Method::Specified)
         geo->destroyAttrib(geo->findAttribute(targetClass, __TEMP_GFE_Fuse_SpecifiedAttribName));
+    
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////  Promote Match Attrib   ////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////
+    
+    if (origMatchAttribName)
+    {
+        UT_ASSERT_P(fuseParms.getUsematchattrib() && matchAttribOwner != GA_ATTRIB_POINT);
+        fuseParms.setMatchattrib(origMatchAttribName);
+        geo->destroyAttribute(GA_ATTRIB_POINT, __TEMP_GFE_Fuse_MatchAttribName);
+    }
+
     
 #endif
 
@@ -1066,18 +1134,17 @@ rest2DAttribMergeMethodInt64()
     
     
 public:
-    
     GFE_GroupParser groupParserFuseRef;
-
-    
-    Method method = Method::Point;
     
     bool fuse2D = false;
     bool fuseRefGeo = false;
     int8 comp = 1;
+    
+    Method method = Method::Point;
     bool mergePos = false;
     bool delUnusedPoint = false;
     
+    GA_AttributeOwner matchAttribOwner = GA_ATTRIB_POINT;
     #if GFE_Fuse_UnderlyingAlgorithm_UseGU
         bool recomputeNormal = false;
         GU_Snap::AttributeMergeMethod posMergeMethod = GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MEAN;
@@ -1123,6 +1190,7 @@ private:
     #undef __TEMP_GFE_Fuse_GroupName
     #undef __TEMP_GFE_Fuse_PosAttribName
     #undef __TEMP_GFE_Fuse_Rest2DAttribName
+    #undef __TEMP_GFE_Fuse_MatchAttribName
     #undef __TEMP_GFE_Fuse_SpecifiedAttribName
     #undef __TEMP_GFE_Fuse_SnapAttribName
     #undef __TEMP_GFE_Fuse_SnapGroupName

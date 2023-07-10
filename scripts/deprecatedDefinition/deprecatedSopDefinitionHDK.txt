@@ -70,8 +70,9 @@ fuse_keepedgegroup_fee
 
 FeE::groupUnsharedEdgeAfterFuse
 FeE::groupOneNebPointsFused::1.0
-
-
+FeE::groupCurveEnds::1.0
+FeE::groupCurveEnds
+FeE::delCurveEnds::1.0
 
 
 

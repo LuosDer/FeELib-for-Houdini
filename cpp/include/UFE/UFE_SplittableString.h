@@ -15,28 +15,19 @@ public:
     {
     }
     
-    UFE_SplittableString(
-        const char* const fullStr,
-        const char* const sep = " "
-    )
+    UFE_SplittableString(const char* const fullStr, const char* const sep = " ")
         : fullStr(fullStr)
         , sep(sep)
     {
     }
     
-    UFE_SplittableString(
-        const ::std::string&& fullStr,
-        const char* const sep = " "
-    )
-        : fullStr(std::move(fullStr))
+    UFE_SplittableString(const ::std::string&& fullStr, const char* const sep = " ")
+        : fullStr(::std::move(fullStr))
         , sep(sep)
     {
     }
     
-    UFE_SplittableString(
-        const ::std::string& fullStr,
-        const char* const sep = " "
-    )
+    UFE_SplittableString(const ::std::string& fullStr, const char* const sep = " ")
         : fullStr(fullStr)
         , sep(sep)
     {

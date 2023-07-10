@@ -34,7 +34,6 @@ static const char *theDsFile = R"THEDSFILE(
             "detail"    "Detail"
         }
     }
-
     parm {
         name    "srcAttrib"
         cppname "SrcAttrib"
@@ -42,7 +41,6 @@ static const char *theDsFile = R"THEDSFILE(
         type    string
         default { "" }
     }
-
     parm {
         name    "dstAttribClass"
         cppname "DstAttribClass"
@@ -56,7 +54,6 @@ static const char *theDsFile = R"THEDSFILE(
             "detail"    "Detail"
         }
     }
-
     parm {
         name    "renameAttrib"
         cppname "RenameAttrib"
@@ -77,23 +74,77 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 
-    // parm {
-    //     name    "renameGroup"
-    //     cppname "RenameGroup"
-    //     label   "Rename Group"
-    //     type    toggle
-    //     nolabel
-    //     joinnext
-    //     default { "0" }
-    // }
-    // parm {
-    //     name    "newGroupName"
-    //     cppname "NewGroupName"
-    //     label   "New Group Name"
-    //     type    string
-    //     default { "" }
-    //     disablewhen "{ renameGroup == 0 }"
-    // }
+
+
+    parm {
+        name    "srcGroupClass"
+        cppname "SrcGroupClass"
+        label   "Source Group Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "srcGroup"
+        cppname "SrcGroup"
+        label   "Source Group"
+        type    string
+        default { "" }
+    }
+    parm {
+        name    "dstGroupClass"
+        cppname "DstGroupClass"
+        label   "Destination Group Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "edge"      "Edge"
+        }
+    }
+    parm {
+        name    "renameGroup"
+        cppname "RenameGroup"
+        label   "Rename Group"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "newGroupName"
+        cppname "NewGroupName"
+        label   "New Group Name"
+        type    string
+        default { "" }
+        disablewhen "{ renameGroup == 0 }"
+    }
+
+
+
+    parm {
+        name    "delSrcAttrib"
+        cppname "DelSrcAttrib"
+        label   "Del Src Attrib"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "delSrcGroup"
+        cppname "DelSrcGroup"
+        label   "Del Src Group"
+        type    toggle
+        default { "ch('delSrcAttrib')" }
+    }
+
+
 
     parm {
        name    "subscribeRatio"
@@ -108,7 +159,7 @@ static const char *theDsFile = R"THEDSFILE(
        cppname "MinGrainSize"
        label   "Min Grain Size"
        type    intlog
-       default { 64 }
+       default { 1024 }
        range   { 0! 2048 }
     }
 }
@@ -170,7 +221,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_AttribPromote_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribPromote_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -193,7 +244,7 @@ SOP_FeE_AttribPromote_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribPromote_1_0Parms::SrcAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_AttribPromote_1_0Parms::SrcAttribClass attribClass)
 {
     using namespace SOP_FeE_AttribPromote_1_0Enums;
     switch (attribClass)
@@ -208,10 +259,10 @@ sopAttribOwner(SOP_FeE_AttribPromote_1_0Parms::SrcAttribClass attribClass)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribPromote_1_0Parms::DstAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_AttribPromote_1_0Parms::DstAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribPromote_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case DstAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case DstAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -222,6 +273,36 @@ sopAttribOwner(SOP_FeE_AttribPromote_1_0Parms::DstAttribClass attribClass)
     return GA_ATTRIB_INVALID;
 }
 
+static GA_GroupType
+sopGroupType(const SOP_FeE_AttribPromote_1_0Parms::SrcGroupClass parmGroupType)
+{
+    using namespace SOP_FeE_AttribPromote_1_0Enums;
+    switch (parmGroupType)
+    {
+    case SrcGroupClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case SrcGroupClass::POINT:     return GA_GROUP_POINT;      break;
+    case SrcGroupClass::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case SrcGroupClass::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_GROUP_INVALID;
+}
+
+static GA_GroupType
+sopGroupType(const SOP_FeE_AttribPromote_1_0Parms::DstGroupClass parmGroupType)
+{
+    using namespace SOP_FeE_AttribPromote_1_0Enums;
+    switch (parmGroupType)
+    {
+    case DstGroupClass::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case DstGroupClass::POINT:     return GA_GROUP_POINT;      break;
+    case DstGroupClass::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case DstGroupClass::EDGE:      return GA_GROUP_EDGE;       break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
+    return GA_GROUP_INVALID;
+}
+
 
 void
 SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
@@ -230,26 +311,59 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_AttribPromote_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
+    const GA_AttributeOwner srcAttribClass = sopAttribOwner(sopparms.getSrcAttribClass());
+    const GA_AttributeOwner dstAttribClass = sopAttribOwner(sopparms.getDstAttribClass());
+    const GA_GroupType srcGroupClass = sopGroupType(sopparms.getSrcGroupClass());
+    const GA_GroupType dstGroupClass = sopGroupType(sopparms.getDstGroupClass());
+    if (srcAttribClass == dstAttribClass && srcGroupClass == dstGroupClass)
+        return;
+    
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+/*
 
-    const GA_AttributeOwner srcAttribClass = sopAttribOwner(sopparms.getSrcAttribClass());
-    const GA_AttributeOwner dstAttribClass = sopAttribOwner(sopparms.getDstAttribClass());
+            GFE_AttribPromote attribPromote(geo, cookparms);
     
+            attribPromote.getInAttribArray().appends(, );
+            attribPromote.getInGroupArray ().appends(, );
+        
+            attribPromote.dstAttribClass = GA_ATTRIB_POINT;
+            attribPromote.dstGroupClass  = GA_ATTRIB_POINT;
+            attribPromote.newAttribNames = ;
+            attribPromote.newGroupNames  = ;
+        
+            attribPromote.computeAndBumpDataId();
+            
+ 
+*/
     GFE_AttribPromote attribPromote(outGeo0, cookparms);
 
-    attribPromote.setSourceAttribute(srcAttribClass, sopparms.getSrcAttrib());
-    attribPromote.setDestinationAttribute(dstAttribClass);
+    attribPromote.getInAttribArray().appends(srcAttribClass, sopparms.getSrcAttrib());
+    attribPromote.getInGroupArray ().appends(srcGroupClass, sopparms.getSrcAttrib());
+    
     attribPromote.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-    //GA_Attribute* const finalAttribPtr = attribPromote.getDestinationAttribute();
+    
+    attribPromote.dstAttribClass = dstAttribClass;
+    attribPromote.dstGroupClass  = dstGroupClass;
+    if (sopparms.getRenameAttrib())
+        attribPromote.newAttribNames = sopparms.getNewAttribName();
+    if (sopparms.getRenameGroup())
+        attribPromote.newGroupNames  = sopparms.getNewGroupName();
+    
     attribPromote.computeAndBumpDataId();
+    
+    if (sopparms.getDelSrcAttrib())
+        attribPromote.getInAttribArray().destroyAll();
+    if (sopparms.getDelSrcGroup())
+        attribPromote.getInGroupArray ().destroyAll();
+    
+    attribPromote.visualizeOutGroup();
 
     
 }

@@ -195,6 +195,13 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "delElement"
+        cppname "DelElement"
+        label   "Del Element"
+        type    toggle
+        default { "0" }
+    }
+    parm {
         name    "subscribeRatio"
         cppname "SubscribeRatio"
         label   "Subscribe Ratio"
@@ -226,14 +233,14 @@ SOP_FeE_GroupCurveEnds_2_0::buildTemplates()
 }
 
 
-const UT_StringHolder SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName("FeE::groupExpand::1.0"_sh);
+const UT_StringHolder SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName("FeE::groupCurveEnds::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName,
-        "FeE Group Expand",
+        "FeE Group Curve Ends",
         SOP_FeE_GroupCurveEnds_2_0::myConstructor,
         SOP_FeE_GroupCurveEnds_2_0::buildTemplates(),
         1,
@@ -242,9 +249,9 @@ newSopOperator(OP_OperatorTable* table)
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/Group");
+        "Five elements Elf/Data/Topology");
 
-    newOp->setIconName("SOP_groupexpand");
+    newOp->setIconName("SOP_ends");
     table->addOperator(newOp);
 
 }
@@ -271,7 +278,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupCurveEnds_2_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_GroupCurveEnds_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -298,7 +305,7 @@ SOP_FeE_GroupCurveEnds_2_0::cookVerb() const
 
 
 static GFE_GroupCurveEnds::Type
-sopVisualize(SOP_FeE_GroupCurveEnds_2_0Parms::Visualize parmVisualize)
+sopVisualize(const SOP_FeE_GroupCurveEnds_2_0Parms::Visualize parmVisualize)
 {
     using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
     switch (parmVisualize)
@@ -314,7 +321,7 @@ sopVisualize(SOP_FeE_GroupCurveEnds_2_0Parms::Visualize parmVisualize)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
     switch (parmGroupType)
@@ -332,7 +339,7 @@ sopGroupType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupType parmGroupType)
 
 
 static GFE_GroupMergeType
-sopGroupMergeType(SOP_FeE_GroupCurveEnds_2_0Parms::GroupMergeType groupMergeType)
+sopGroupMergeType(const SOP_FeE_GroupCurveEnds_2_0Parms::GroupMergeType groupMergeType)
 {
     using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
     switch (groupMergeType)
@@ -354,9 +361,9 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupCurveEnds_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -370,15 +377,18 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
     
     GFE_GroupCurveEnds groupCurveEnds(outGeo0, cookparms);
-    groupCurveEnds.setStartGroup(false, sopparms.getStartGroupName());
-    groupCurveEnds.setEndGroup(false, sopparms.getEndGroupName());
-    groupCurveEnds.setEndsGroup(false, sopparms.getEndsGroupName());
-    
-    groupCurveEnds.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
-    
     groupCurveEnds.setComputeParm(sopparms.getNumEnds(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    groupCurveEnds.doDelGroupElement = sopparms.getDelElement();
+    
+    groupCurveEnds.groupSetter.setParm(groupMergeType, sopparms.getReverseGroup());
 
+
+    
+    groupCurveEnds.setStartGroup(false, sopparms.getStartGroupName());
+    groupCurveEnds.setEndGroup  (false, sopparms.getEndGroupName());
+    groupCurveEnds.setEndsGroup (false, sopparms.getEndsGroupName());
+    
     groupCurveEnds.groupParser.setGroup(groupType, sopparms.getGroup());
     groupCurveEnds.computeAndBumpDataId();
     groupCurveEnds.visualizeOutGroup(visualizeType);

@@ -995,9 +995,22 @@ public:
     SYS_FORCE_INLINE ::std::vector<GA_Group*>& getInGroupArrayRef()
     { return inGroupArray.ref(); }
 
+    SYS_FORCE_INLINE const GFE_AttributeArray& getInAttribArray() const
+    { return inAttribArray; }
+    
+    SYS_FORCE_INLINE const GFE_GroupArray& getInGroupArray() const
+    { return inGroupArray; }
+    
+    SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getInAttribArrayRef() const
+    { return inAttribArray.ref(); }
+    
+    SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getInGroupArrayRef() const
+    { return inGroupArray.ref(); }
+
 
     SYS_FORCE_INLINE void setInAttribBumpDataId(bool val = true)
     { inAttribBumpDataId = val; }
+    
     SYS_FORCE_INLINE void setInGroupBumpDataId(bool val = true)
     { inGroupBumpDataId = val; }
 
