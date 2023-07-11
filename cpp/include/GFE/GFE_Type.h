@@ -13,6 +13,7 @@
 #include "GU/GU_Snap.h"
 
 
+#define GFE_DEBUG_MODE 1
 #define GFE_MAX_LOOP_COUNT 1e10
 #define GFE_FIND_INVALID_INDEX -1
 
@@ -398,7 +399,15 @@ SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset elemoff)
 
 
 SYS_FORCE_INLINE static bool isValidOffset(const GA_IndexMap& indexMap, const GA_Offset elemoff)
-{ return isValidOffset(elemoff) && indexMap.isOffsetActiveFast(elemoff); }
+#if GFE_DEBUG_MODE
+{
+    const GA_Index index = indexMap.indexFromOffset(elemoff);
+    const bool isOffsetActiveFast = indexMap.isOffsetActive(elemoff);
+    return indexMap.isOffsetActive(elemoff);
+}
+#else
+{ return indexMap.isOffsetActive(elemoff); }
+#endif
 
 SYS_FORCE_INLINE static bool isInvalidOffset(const GA_IndexMap& indexMap, const GA_Offset elemoff)
 { return isInvalidOffset(elemoff) || !indexMap.isOffsetActiveFast(elemoff); }

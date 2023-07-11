@@ -144,7 +144,7 @@ private:
 
         if (geoRef0)
         {
-            const GA_IndexMap& indexMapSrc = geoTmp->getIndexMap(SrcOwner);
+            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
             UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
@@ -152,7 +152,7 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset dstOff = geoTmp->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
                         if (GFE_Type::isValidOffset(indexMapSrc, dstOff))
                             dstAttrib->copy(elemoff, srcAttribRef, dstOff);
                     }
@@ -168,7 +168,7 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset dstOff = geoTmp->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
                         if (GFE_Type::isValidOffset(dstOff))
                             dstAttrib->copy(elemoff, srcAttribRef, dstOff);
                     }
@@ -193,7 +193,7 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset dstOff = geoTmp->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
                         if (GFE_Type::isValidOffset(dstOff))
                             attrib_ph.value(elemoff) = srcAttrib_h.get(dstOff);
                     }
