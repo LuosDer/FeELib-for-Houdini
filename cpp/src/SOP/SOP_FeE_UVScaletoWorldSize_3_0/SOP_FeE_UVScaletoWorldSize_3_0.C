@@ -68,9 +68,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "uvAttribNames"
-        cppname "UVAttribNames"
-        label   "UV Attribute Names"
+        name    "uvAttribName"
+        cppname "UVAttribName"
+        label   "UV Attribute Name"
         type    string
         default { "uv" }
     }
@@ -210,7 +210,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -224,7 +224,7 @@ SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("uvAttribNames"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -295,10 +295,10 @@ SOP_FeE_UVScaletoWorldSize_3_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_UVScaletoWorldSize_3_0Parms::UVAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_UVScaletoWorldSize_3_0Parms::UVAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_UVScaletoWorldSize_3_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case UVAttribClass::AUTO:      return GA_ATTRIB_DETAIL;     break;//not detail but means Auto
     case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -309,10 +309,10 @@ sopAttribOwner(SOP_FeE_UVScaletoWorldSize_3_0Parms::UVAttribClass attribClass)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_UVScaletoWorldSize_3_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_UVScaletoWorldSize_3_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_UVScaletoWorldSize_3_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -335,9 +335,9 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVScaletoWorldSize_3_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const bool doUVScalex = sopparms.getDoUVScalex();
@@ -376,16 +376,16 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     const fpreal uvSplitDistThreshold = sopparms.getUVSplitDistThreshold();
 
 
-    GFE_UVScaletoWorldSize gfeUVScaletoWorldSize(outGeo0, cookparms);
+    GFE_UVScaletoWorldSize uvScaletoWorldSize(outGeo0, cookparms);
 
-    gfeUVScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
-    gfeUVScaletoWorldSize.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);
-    gfeUVScaletoWorldSize.setComputeParm(computeUVAreaInPiece, uvScale,
+    uvScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
+    uvScaletoWorldSize.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);
+    uvScaletoWorldSize.setComputeParm(computeUVAreaInPiece, uvScale,
         doUVScalex, doUVScaley, doUVScalez,
         sopparms.getOutTopoAttrib(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    gfeUVScaletoWorldSize.computeAndBumpDataId();
+    uvScaletoWorldSize.computeAndBumpDataId();
 
 }
 

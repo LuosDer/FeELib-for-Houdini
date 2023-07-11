@@ -188,7 +188,7 @@ newSopOperator(OP_OperatorTable* table)
         SOP_FeE_AttribPromote_1_0::myConstructor,
         SOP_FeE_AttribPromote_1_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -312,6 +312,7 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     //auto sopcache = (SOP_FeE_AttribPromote_1_0Cache*)cookparms.cache();
 
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     //outGeo0.replaceWith(inGeo0);
 
@@ -328,7 +329,7 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
         return;
 /*
 
-            GFE_AttribPromote attribPromote(geo, cookparms);
+            GFE_AttribPromote attribPromote(geo, nullptr, cookparms);
     
             attribPromote.getInAttribArray().appends(, );
             attribPromote.getInGroupArray ().appends(, );
@@ -342,10 +343,18 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
             
  
 */
-    GFE_AttribPromote attribPromote(outGeo0, cookparms);
+    GFE_AttribPromote attribPromote(outGeo0, inGeo1, cookparms);
 
-    attribPromote.getInAttribArray().appends(srcAttribClass, sopparms.getSrcAttrib());
-    attribPromote.getInGroupArray ().appends(srcGroupClass, sopparms.getSrcAttrib());
+    if (inGeo1)
+    {
+        attribPromote.getRef0AttribArray().appends(srcAttribClass, sopparms.getSrcAttrib());
+        attribPromote.getRef0GroupArray ().appends(srcGroupClass, sopparms.getSrcAttrib());
+    }
+    else
+    {
+        attribPromote.getInAttribArray().appends(srcAttribClass, sopparms.getSrcAttrib());
+        attribPromote.getInGroupArray ().appends(srcGroupClass, sopparms.getSrcAttrib());
+    }
     
     attribPromote.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     

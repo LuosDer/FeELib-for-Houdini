@@ -379,23 +379,29 @@ SYS_FORCE_INLINE static bool isPacked(const int i)
     
 #if GFE_INVALID_OFFSET >= 0
     
-SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
-{ return v < GFE_INVALID_OFFSET && v >= 0; }
+SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset elemoff)
+{ return elemoff < GFE_INVALID_OFFSET && elemoff >= 0; }
 
-SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
-{ return v >= GFE_INVALID_OFFSET || v < 0; }
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset elemoff)
+{ return elemoff >= GFE_INVALID_OFFSET || elemoff < 0; }
 
 #else
     
-SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
-{ return v >= 0; }
+SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset elemoff)
+{ return elemoff >= 0; }
 
-SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
-{ return v < 0; }
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset elemoff)
+{ return elemoff < 0; }
     
 #endif
 
 
+
+SYS_FORCE_INLINE static bool isValidOffset(const GA_IndexMap& indexMap, const GA_Offset elemoff)
+{ return isValidOffset(elemoff) && indexMap.isOffsetActiveFast(elemoff); }
+
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_IndexMap& indexMap, const GA_Offset elemoff)
+{ return isInvalidOffset(elemoff) || !indexMap.isOffsetActiveFast(elemoff); }
 
 
     

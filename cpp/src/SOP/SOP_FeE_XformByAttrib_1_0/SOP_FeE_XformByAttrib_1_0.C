@@ -194,7 +194,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_XformByAttrib_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_XformByAttrib_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -220,10 +220,10 @@ SOP_FeE_XformByAttrib_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_XformByAttrib_1_0Parms::XformAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_XformByAttrib_1_0Parms::XformAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_XformByAttrib_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case XformAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case XformAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -236,10 +236,10 @@ sopAttribOwner(SOP_FeE_XformByAttrib_1_0Parms::XformAttribClass attribClass)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_XformByAttrib_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_XformByAttrib_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_XformByAttrib_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -261,10 +261,10 @@ SOP_FeE_XformByAttrib_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) co
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_XformByAttrib_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     

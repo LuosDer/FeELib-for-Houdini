@@ -45,9 +45,7 @@ private:
 
         if (isAttribEmpty && getInGroupArray().isEmpty())
             return false;
-
-
-
+        
 
         const size_t sizeRefGroup = getInGroupArray().size();
         for (size_t i = 0; i < sizeRefGroup; i++)
@@ -103,9 +101,7 @@ private:
 
         UT_ASSERT_MSG(!delSrcAttrib || srcAttribPtr_nonConst, "cant destory Src Attrib");
         if (delSrcAttrib && srcAttribPtr_nonConst)
-        {
             geo->destroyAttrib(srcAttribPtr_nonConst);
-        }
 
         return true;
     }
@@ -120,17 +116,12 @@ private:
     SYS_FORCE_INLINE void groupDuplicate(GA_Group& attribNew, const GA_Group& attribRef)
     {
         if (attribNew.classType() == GA_GROUP_EDGE)
-        {
             groupDuplicate(static_cast<GA_EdgeGroup&>(attribNew), static_cast<const GA_EdgeGroup&>(attribRef));
-        }
         else
-        {
             groupDuplicate(static_cast<GA_ElementGroup&>(attribNew), static_cast<const GA_ElementGroup&>(attribRef));
-        }
     }
 
-
-
+    
     void attribDuplicate(
         const GA_SplittableRange& geoSplittableRange,
         GA_Attribute& attribNew,

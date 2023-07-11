@@ -9,11 +9,9 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
-
+#include "GFE/GFE_Normal2D.h"
 
 class GFE_CornerPoint : public GFE_AttribFilter {
-
-
 
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
@@ -36,9 +34,10 @@ public:
         this->minGrainSize   = minGrainSize;
     }
 
+
+    
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -48,8 +47,26 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        if (GFE_Type::isInvalidPosAttrib(posAttrib))
-            posAttrib = geo->getP();
+        setValidConstPosAttrib();
+
+        
+        GFE_Normal2D normal2D(geo, cookparms);
+        normal2D.groupParser.setGroup(groupParser);
+        normal2D.setPositionAttrib(posAttrib);
+        normal2D.setNormal2DAttrib(true);
+        //const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+        //const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
+        //const bool copyOrigIfZero = false;
+        //normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
+        normal2D.defaultNormal3D = {0,1,0};
+        if (!sopparms.getUseConstantNormal3D())
+            normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
+                geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());
+        normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
+            sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend());
+        normal2D.compute();
+        
+        const GA_Attribute* normal2DAttrib = normal2D.getAttrib();
         
         cornerPointGroup = getOutGroupArray()[0];
         switch (posAttrib->getAIFTuple()->getStorage(posAttrib))

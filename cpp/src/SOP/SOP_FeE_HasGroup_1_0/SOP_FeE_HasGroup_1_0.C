@@ -118,7 +118,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_HasGroup_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_HasGroup_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -144,10 +144,10 @@ SOP_FeE_HasGroup_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopHasGroupType(SOP_FeE_HasGroup_1_0Parms::HasGroupType parmgrouptype)
+sopHasGroupType(const SOP_FeE_HasGroup_1_0Parms::HasGroupType parmGroupType)
 {
     using namespace SOP_FeE_HasGroup_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case HasGroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case HasGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -167,9 +167,9 @@ SOP_FeE_HasGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_HasGroup_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
     
     const GA_GroupType groupType = sopHasGroupType(sopparms.getHasGroupType());
 

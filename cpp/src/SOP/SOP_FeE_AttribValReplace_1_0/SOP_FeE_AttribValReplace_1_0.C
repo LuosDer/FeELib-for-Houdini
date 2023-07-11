@@ -382,10 +382,10 @@ SOP_FeE_AttribValReplace_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_AttribValReplace_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_AttribValReplace_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_AttribValReplace_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -398,7 +398,7 @@ sopGroupType(SOP_FeE_AttribValReplace_1_0Parms::GroupType parmgrouptype)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribValReplace_1_0Parms::AttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_AttribValReplace_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribValReplace_1_0Enums;
     switch (parmAttribClass)
@@ -415,7 +415,7 @@ sopAttribOwner(SOP_FeE_AttribValReplace_1_0Parms::AttribClass parmAttribClass)
 
 
 static GA_StorageClass
-sopStorageClass(SOP_FeE_AttribValReplace_1_0Parms::AttribType parmAttribType)
+sopStorageClass(const SOP_FeE_AttribValReplace_1_0Parms::AttribType parmAttribType)
 {
     using namespace SOP_FeE_AttribValReplace_1_0Enums;
     switch (parmAttribType)
@@ -431,7 +431,7 @@ sopStorageClass(SOP_FeE_AttribValReplace_1_0Parms::AttribType parmAttribType)
 
 
 static GA_Precision
-sopPrecision(SOP_FeE_AttribValReplace_1_0Parms::Precision parmPrecision)
+sopPrecision(const SOP_FeE_AttribValReplace_1_0Parms::Precision parmPrecision)
 {
     using namespace SOP_FeE_AttribValReplace_1_0Enums;
     switch (parmPrecision)
@@ -474,13 +474,9 @@ SOP_FeE_AttribValReplace_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
     GFE_AttribValReplace attribValReplace(outGeo0, cookparms);
     
     if (sopparms.getOutNewAttrib())
-    {
         attribValReplace.getInAttribArray().appends(attribClass, sopparms.getAttrib());
-    }
     else
-    {
         attribValReplace.getOutAttribArray().appends(attribClass, sopparms.getAttrib());
-    }
 
     attribValReplace.newStorageClass = sopStorageClass(sopparms.getAttribType());
     attribValReplace.newPrecision    = sopPrecision(sopparms.getPrecision());
@@ -492,7 +488,6 @@ SOP_FeE_AttribValReplace_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
     attribValReplace.computeAndBumpDataId();
 
     
-
 }
 
 
