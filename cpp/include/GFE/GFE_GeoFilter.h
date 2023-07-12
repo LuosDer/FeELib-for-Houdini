@@ -1373,6 +1373,34 @@ public:
 
     GFE_AttribCreateFilterWithRef0(
         GFE_Detail* const geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef0(reinterpret_cast<const GA_Detail*>(nullptr), groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef0(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef0(reinterpret_cast<const GA_Detail*>(nullptr), groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribCreateFilterWithRef0(
+        GA_Detail& geo,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribCreateFilter(geo, cookparms)
+        , GFE_GeoFilterRef0(nullptr, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    
+    GFE_AttribCreateFilterWithRef0(
+        GFE_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )

@@ -83,7 +83,6 @@ public:
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -98,7 +97,7 @@ private:
                         xformAttrib->getStorageClass() == GA_STORECLASS_REAL &&
                         xformAttrib->getAIFTuple()), "not correct xform attrib type");
         
-
+        geo->stdBoundingBox<>();
         
         GFE_MatchBBoxXform bboxXform;
         

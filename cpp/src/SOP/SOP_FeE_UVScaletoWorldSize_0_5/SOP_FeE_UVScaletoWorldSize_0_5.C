@@ -506,9 +506,3 @@ SOP_FeE_UVScaletoWorldSize_0_5Verb::cook(const SOP_NodeVerb::CookParms& cookparm
 
     attribPtr->bumpDataId();
 }
-
-
-
-namespace SOP_FeE_UVScaletoWorldSize_0_5_Namespace {
-
-} // End SOP_FeE_UVScaletoWorldSize_0_5_Namespace namespace

@@ -271,7 +271,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_Normal2D_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_Normal2D_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -310,7 +310,7 @@ SOP_FeE_Normal2D_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Normal2D_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_Normal2D_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Normal2D_1_0Enums;
     switch (parmGroupType)
@@ -328,7 +328,7 @@ sopGroupType(SOP_FeE_Normal2D_1_0Parms::GroupType parmGroupType)
 
 
 static GFE_NormalSearchOrder
-sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass parmAttribClass)
+sopAttribSearchOrder(const SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_Normal2D_1_0Enums;
     switch (parmAttribClass)
@@ -353,9 +353,9 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Normal2D_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& normal2DAttribName = sopparms.getNormal2DAttribName();
     if (!normal2DAttribName.isstring() || normal2DAttribName.length() == 0)
@@ -369,7 +369,26 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     
+/*
 
+            GFE_Normal2D normal2D(geo, cookparms);
+            normal2D.groupParser.setGroup(groupParser);
+            normal2D.setPositionAttrib(posAttrib);
+            normal2D.setNormal2DAttrib(true);
+            //const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+            //const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
+            //const bool copyOrigIfZero = false;
+            //normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
+            normal2D.defaultNormal3D = {0,1,0};
+            if (!sopparms.getUseConstantNormal3D())
+                normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
+                    geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());
+            normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
+                sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend());
+            normal2D.compute();
+            
+
+ */
     
 
     GFE_Normal2D normal2D(outGeo0, &cookparms);
@@ -380,12 +399,12 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     normal2D.setNormal2DAttrib(false, sopparms.getNormal2DAttribName());
 
     
-    const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
-    const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
-    const bool copyOrigIfZero = false;
+    //const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+    //const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
+    //const bool copyOrigIfZero = false;
+    //normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
+    //normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
     
-    normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
-    normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
     if (!sopparms.getUseConstantNormal3D())
         normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
             geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());

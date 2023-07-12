@@ -22,7 +22,13 @@
 #include "GFE/GFE_AttributeDelete.h"
 
 
+#define GFE_Detail_InheritedFrom_GU_Detail 1
+
+#if GFE_Detail_InheritedFrom_GU_Detail
+class GFE_Detail : public GU_Detail
+#else
 class GFE_Detail : public GA_Detail
+#endif
 {
 
 public:
@@ -109,6 +115,13 @@ public:
     SYS_FORCE_INLINE bool isPacked(const GA_Offset primoff) const
     { return GFE_Type::isPacked(getPrimitiveTypeId(primoff)); }
 
+
+
+
+
+    
+#if GFE_Detail_InheritedFrom_GU_Detail
+    
     SYS_FORCE_INLINE GA_Detail* asGA_Detail()
     { return reinterpret_cast<GA_Detail*>(this); }
     
@@ -116,17 +129,42 @@ public:
     { return reinterpret_cast<const GA_Detail*>(this); }
 
     SYS_FORCE_INLINE GEO_Detail* asGEO_Detail()
-    { return reinterpret_cast<GEO_Detail*>(asGA_Detail()); }
+    { return reinterpret_cast<GEO_Detail*>(this); }
 
     SYS_FORCE_INLINE const GEO_Detail* asGEO_Detail() const
-    { return reinterpret_cast<const GEO_Detail*>(asGA_Detail()); }
+    { return reinterpret_cast<const GEO_Detail*>(this); }
 
     SYS_FORCE_INLINE GU_Detail* asGU_Detail()
-    { return reinterpret_cast<GU_Detail*>(asGA_Detail()); }
+    { return reinterpret_cast<GU_Detail*>(this); }
 
     SYS_FORCE_INLINE const GU_Detail* asGU_Detail() const
-    { return reinterpret_cast<const GU_Detail*>(asGA_Detail()); }
+    { return reinterpret_cast<const GU_Detail*>(this); }
+    
+#else
+    
+    SYS_FORCE_INLINE GA_Detail* asGA_Detail()
+    { return reinterpret_cast<GA_Detail*>(this); }
+    
+        SYS_FORCE_INLINE const GA_Detail* asGA_Detail() const
+    { return reinterpret_cast<const GA_Detail*>(this); }
 
+        SYS_FORCE_INLINE GEO_Detail* asGEO_Detail()
+    { return reinterpret_cast<GEO_Detail*>(asGA_Detail()); }
+
+        SYS_FORCE_INLINE const GEO_Detail* asGEO_Detail() const
+    { return reinterpret_cast<const GEO_Detail*>(asGA_Detail()); }
+
+        SYS_FORCE_INLINE GU_Detail* asGU_Detail()
+    { return reinterpret_cast<GU_Detail*>(asGA_Detail()); }
+
+        SYS_FORCE_INLINE const GU_Detail* asGU_Detail() const
+    { return reinterpret_cast<const GU_Detail*>(asGA_Detail()); }
+        
+#endif
+
+
+
+        
     
     SYS_FORCE_INLINE const GA_AttributeDict	&getPrimitiveAttribDict() const
     { return getAttributes().getDict(GA_ATTRIB_PRIMITIVE); }
@@ -208,7 +246,7 @@ public:
     
     
     template<GA_AttributeOwner FROM, GA_AttributeOwner TO>
-    SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoff) const
+    SYS_FORCE_INLINE GA_Offset offsetPromote(const GA_Offset elemoffFrom) const
     {
         if constexpr(TO == GA_ATTRIB_GLOBAL)
         {
@@ -221,29 +259,29 @@ public:
         else if constexpr(FROM == GA_ATTRIB_PRIMITIVE)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
-                return elemoff;
+                return elemoffFrom;
             else if constexpr(TO == GA_ATTRIB_POINT)
-                return getPrimitivePointOffset(elemoff, 0);
+                return getPrimitivePointOffset(elemoffFrom, 0);
             else if constexpr(TO == GA_ATTRIB_VERTEX)
-                return getPrimitiveVertexOffset(elemoff, 0);
+                return getPrimitiveVertexOffset(elemoffFrom, 0);
         }
         else if constexpr(FROM == GA_ATTRIB_POINT)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
-                return pointPrim(elemoff);
+                return pointPrim(elemoffFrom);
             else if constexpr(TO == GA_ATTRIB_POINT)
-                return elemoff;
+                return elemoffFrom;
             else if constexpr(TO == GA_ATTRIB_VERTEX)
-                return pointVertex(elemoff);
+                return pointVertex(elemoffFrom);
         }
         else if constexpr(FROM == GA_ATTRIB_VERTEX)
         {
             if constexpr(TO == GA_ATTRIB_PRIMITIVE)
-                return vertexPrimitive(elemoff);
+                return vertexPrimitive(elemoffFrom);
             else if constexpr(TO == GA_ATTRIB_POINT)
-                return vertexPoint(elemoff);
+                return vertexPoint(elemoffFrom);
             else if constexpr(TO == GA_ATTRIB_VERTEX)
-                return elemoff;
+                return elemoffFrom;
         }
         else
             return GFE_INVALID_OFFSET;

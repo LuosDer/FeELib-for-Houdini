@@ -18,7 +18,7 @@ class GFE_Normal2D : public GFE_AttribFilter {
 
 public:
     GFE_Normal2D(
-        GFE_Detail& geo,
+        GFE_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilter(geo, cookparms)
@@ -83,16 +83,17 @@ public:
     SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
     { normal2DAttribName = detached ? nullptr: attribName; normal2DAttrib = nullptr; }
     
-    SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached, const UT_StringRef& attribName = "")
-    { setNormal2DAttrib(detached, attribName.c_str()); }
-    
     SYS_FORCE_INLINE void setNormal2DAttrib(GA_Attribute* const attrib)
     {
         normal2DAttribName = nullptr;
         normal2DAttrib = GFE_Type::checkDirAttrib(attrib) ? attrib : nullptr;
     }
     
-
+    
+    SYS_FORCE_INLINE GA_Attribute* getAttrib() const
+    { return normal2DAttrib; }
+    
+    
 
     
 private:
@@ -108,7 +109,7 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        geo->setValidPosAttrib(posAttrib);
+        setValidConstPosAttrib();
         
         const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
         UT_ASSERT_MSG(normal3DAttrib, "no normal3d attrib");

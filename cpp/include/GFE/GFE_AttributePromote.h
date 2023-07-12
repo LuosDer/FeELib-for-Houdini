@@ -14,10 +14,10 @@
 #include "UFE/UFE_SplittableString.h"
 
 
-class GFE_AttribPromote : public GFE_AttribCreateFilter {
+class GFE_AttribPromote : public GFE_AttribCreateFilterWithRef0 {
 
 public:
-    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
+    using GFE_AttribCreateFilterWithRef0::GFE_AttribCreateFilterWithRef0;
 
     void setComputeParm(
             const exint subscribeRatio = 64,
@@ -31,8 +31,6 @@ public:
     }
 
 
-    
-
 
 private:
 
@@ -40,20 +38,22 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getInAttribArray().isEmpty() && getInGroupArray().isEmpty())
+        if (geoRef0 ? getRef0AttribArray().isEmpty() && getRef0GroupArray().isEmpty() : getInAttribArray().isEmpty() && getInGroupArray().isEmpty())
             return true;
 
         if (groupParser.isEmpty())
             return true;
+        
+        geoTmp = geoRef0 ? geoRef0 : geo;
 
-        const size_t sizeInAttrib  = getInAttribArray().size();
+        const size_t sizeInAttrib  = geoRef0 ? getRef0AttribArray().size() : getInAttribArray().size();
         const size_t sizeOutAttrib = getOutAttribArray().size();
         if (sizeOutAttrib > 0)
         {
             const size_t attribSize = SYSmin(sizeInAttrib, sizeOutAttrib);
             for (size_t i = 0; i < attribSize; ++i)
             {
-                srcAttrib = getInAttribArray()[i];
+                srcAttrib = geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
                 dstAttrib = getOutAttribArray()[i];
                 
                 if (GFE_Attribute::isSameType(*srcAttrib, *dstAttrib))
@@ -64,7 +64,7 @@ private:
         {
             for (size_t i = 0; i < sizeInAttrib; ++i)
             {
-                srcAttrib = getInAttribArray()[i];
+                srcAttrib = geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
                 if (srcAttrib->getOwner() == dstAttribClass)
                     continue;
             
@@ -79,14 +79,14 @@ private:
         
             
         
-        const size_t sizeInGroup  = getInGroupArray ().size();
+        const size_t sizeInGroup  = geoRef0 ? getRef0GroupArray().size() : getInGroupArray().size();
         const size_t sizeOutGroup = getOutGroupArray().size();
         if (sizeOutGroup > 0)
         {
             const size_t groupSize = SYSmin(sizeInGroup, sizeOutGroup);
             for (size_t i = 0; i < groupSize; ++i)
             {
-                srcGroup = getInGroupArray()[i];
+                srcGroup = geoRef0 ? getRef0GroupArray()[i] : getInGroupArray()[i];
                 dstGroup = getOutGroupArray()[i];
                 
                 groupPromote();
@@ -96,7 +96,7 @@ private:
         {
             for (size_t i = 0; i < sizeInGroup; ++i)
             {
-                srcGroup = getInGroupArray()[i];
+                srcGroup = geoRef0 ? getRef0GroupArray()[i] : getInGroupArray()[i];
                 if (srcGroup->classType() == dstGroupClass)
                     continue;
             
@@ -130,7 +130,7 @@ private:
     //        {
     //            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     //            {
-    //                dstGroup->setElement(elemoff, srcGroup->contains(geo->offsetPromote<SrcOwner, dstOwner>(elemoff)));
+    //                dstGroup->setElement(elemoff, srcGroup->contains(geoTmp->offsetPromote<SrcOwner, dstOwner>(elemoff)));
     //            }
     //        }
     //    }, subscribeRatio, minGrainSize);
@@ -139,21 +139,42 @@ private:
     template<GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
     void attribPromote()
     {
+        UT_ASSERT_P(&srcAttrib->getDetail() == geoTmp);
         const GA_Attribute& srcAttribRef = *srcAttrib;
 
-        UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef](const GA_SplittableRange& r)
+        if (geoRef0)
         {
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
+            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
-                    const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
-                    if (GFE_Type::isValidOffset(dstOff))
-                        dstAttrib->copy(elemoff, srcAttribRef, dstOff);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        if (GFE_Type::isValidOffset(indexMapSrc, dstOff))
+                            dstAttrib->copy(elemoff, srcAttribRef, dstOff);
+                    }
                 }
-            }
-        }, subscribeRatio, minGrainSize);
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        if (GFE_Type::isValidOffset(dstOff))
+                            dstAttrib->copy(elemoff, srcAttribRef, dstOff);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
     }
     
     template<typename FLOAT_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
@@ -233,32 +254,32 @@ private:
 
     GA_Offset offsetPromote(const GA_Offset elemoff)
     {
-        //const GA_Topology& topo = geo->getTopology();
+        //const GA_Topology& topo = geoTmp->getTopology();
         switch (dstOwner)
         {
         case GA_ATTRIB_PRIMITIVE:
         switch (srcOwner)
         {
             case GA_ATTRIB_PRIMITIVE: return elemoff;                   break;
-            case GA_ATTRIB_POINT:     return geo->primPoint(elemoff);   break;
-            case GA_ATTRIB_VERTEX:    return geo->primVertex(elemoff);  break;
+            case GA_ATTRIB_POINT:     return geoTmp->primPoint(elemoff);   break;
+            case GA_ATTRIB_VERTEX:    return geoTmp->primVertex(elemoff);  break;
             default: UT_ASSERT_MSG(0, "Unhandled newClass!");           break;
         }
         break;
         case GA_ATTRIB_POINT:
         switch (srcOwner)
         {
-            case GA_ATTRIB_PRIMITIVE: return geo->pointPrim(elemoff);   break;
+            case GA_ATTRIB_PRIMITIVE: return geoTmp->pointPrim(elemoff);   break;
             case GA_ATTRIB_POINT:     return elemoff;                   break;
-            case GA_ATTRIB_VERTEX:    return geo->pointVertex(elemoff); break;
+            case GA_ATTRIB_VERTEX:    return geoTmp->pointVertex(elemoff); break;
             default: UT_ASSERT_MSG(0, "Unhandled newClass!");           break;
         }
         break;
         case GA_ATTRIB_VERTEX:
         switch (srcOwner)
         {
-            case GA_ATTRIB_PRIMITIVE: return geo->vertexPrimitive(elemoff); break;
-            case GA_ATTRIB_POINT:     return geo->vertexPoint(elemoff);     break;
+            case GA_ATTRIB_PRIMITIVE: return geoTmp->vertexPrimitive(elemoff); break;
+            case GA_ATTRIB_POINT:     return geoTmp->vertexPoint(elemoff);     break;
             case GA_ATTRIB_VERTEX:    return elemoff;                       break;
             default: UT_ASSERT_MSG(0, "Unhandled newClass!");               break;
         }
@@ -286,8 +307,10 @@ private:
     //GA_AttributeOwner dstAttribClassMid = GA_ATTRIB_INVALID;
     //GA_GroupType dstGroupClassMid = GA_GROUP_INVALID;
         
+    const GFE_Detail* geoTmp;
     const GA_Attribute* srcAttrib;
     const GA_Group* srcGroup;
+
         
     GA_Attribute* dstAttrib;
     GA_Group* dstGroup;

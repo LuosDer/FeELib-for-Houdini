@@ -296,7 +296,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_Connectivity_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_Connectivity_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -320,7 +320,7 @@ SOP_FeE_Connectivity_1_0::cookVerb() const
 
 
 static bool
-sopConnectivityConstraint(SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint parmConnectivityConstraint)
+sopConnectivityConstraint(const SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint parmConnectivityConstraint)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmConnectivityConstraint)
@@ -334,7 +334,7 @@ sopConnectivityConstraint(SOP_FeE_Connectivity_1_0Parms::ConnectivityConstraint 
 
 
 static GA_StorageClass
-sopStorageClass(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
+sopStorageClass(const SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (attribType)
@@ -350,7 +350,7 @@ sopStorageClass(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attribType
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attribClass)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (attribClass)
@@ -364,7 +364,7 @@ sopAttribOwner(SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attribClas
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmgrouptype)
@@ -380,7 +380,7 @@ sopGroupType(SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmgrouptype)
+sopGroupType(const SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmgrouptype)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmgrouptype)
@@ -399,7 +399,7 @@ sopGroupType(SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmgrouptype)
 
 
 static GFE_PieceAttribSearchOrder
-sopPieceAttribSearchOrder(SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder parmgrouptype)
+sopPieceAttribSearchOrder(const SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder parmgrouptype)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
     switch (parmgrouptype)
@@ -426,9 +426,9 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (GFE_Connectivity_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& geo0AttribNames = sopparms.getConnectivityAttribName();
     if (!geo0AttribNames.isstring())
@@ -446,7 +446,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (sopparms.getFindInputPieceAttrib())
     {
         const GFE_PieceAttribSearchOrder pieceAttribSearchOrder = sopPieceAttribSearchOrder(sopparms.getPieceAttribSearchOrder());
-        const GA_Attribute* attribPtr = GFE_Attribute::findPieceAttrib(outGeo0, pieceAttribSearchOrder, geo0AttribNames);
+        GA_Attribute* const attribPtr = GFE_Attribute::findPieceAttrib(outGeo0, pieceAttribSearchOrder, geo0AttribNames);
 
         if (attribPtr)
         {
@@ -454,12 +454,10 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
             {
                 if (geo0AttribClass != attribPtr->getOwner())
                 {
-                    GFE_AttribPromote attribPromote(outGeo0);
-                    attribPromote.setSourceAttribute(attribPtr);
-                    attribPromote.setDestinationAttribute(geo0AttribClass);
+                    GFE_AttribPromote attribPromote(outGeo0, cookparms);
+                    attribPromote.getInAttribArray().set(attribPtr);
+                    attribPromote.dstAttribClass = geo0AttribClass;
                     attribPromote.computeAndBumpDataId();
-                    //attribPtr = GFE_AttributePromote::attribPromote(outGeo0, attribPtr, geo0AttribClass);
-                    //attribPtr = GFE_AttribPromote::promote(*static_cast<GU_Detail*>(outGeo0), attribPtr, geo0AttribClass, sopparms.getDelOriginalAttrib(), GU_Promote::GU_PROMOTE_FIRST);
                 }
             }
 

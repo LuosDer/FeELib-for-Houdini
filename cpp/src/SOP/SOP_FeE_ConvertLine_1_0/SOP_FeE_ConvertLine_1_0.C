@@ -294,7 +294,7 @@ SOP_FeE_ConvertLine_1_0::cookVerb() const
 
 
 static bool
-sopPrimPolyIsClosed(SOP_FeE_ConvertLine_1_0Parms::PrimType parmIsClosed)
+sopPrimPolyIsClosed(const SOP_FeE_ConvertLine_1_0Parms::PrimType parmIsClosed)
 {
     using namespace SOP_FeE_ConvertLine_1_0Enums;
     switch (parmIsClosed)
@@ -442,10 +442,10 @@ SOP_FeE_ConvertLine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
     
-    const UT_StringHolder& primGroupName = sopparms.getPrimGroup();
-    const UT_StringHolder& pointGroupName = sopparms.getPointGroup();
+    const UT_StringHolder& primGroupName   = sopparms.getPrimGroup();
+    const UT_StringHolder& pointGroupName  = sopparms.getPointGroup();
     const UT_StringHolder& vertexGroupName = sopparms.getVertexGroup();
-    const UT_StringHolder& edgeGroupName = sopparms.getEdgeGroup();
+    const UT_StringHolder& edgeGroupName   = sopparms.getEdgeGroup();
 
     const bool isClosed = sopPrimPolyIsClosed(sopparms.getPrimType());
 

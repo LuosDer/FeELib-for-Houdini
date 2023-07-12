@@ -13,6 +13,7 @@
 #include "GU/GU_Snap.h"
 
 
+#define GFE_DEBUG_MODE 1
 #define GFE_MAX_LOOP_COUNT 1e10
 #define GFE_FIND_INVALID_INDEX -1
 
@@ -379,23 +380,37 @@ SYS_FORCE_INLINE static bool isPacked(const int i)
     
 #if GFE_INVALID_OFFSET >= 0
     
-SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
-{ return v < GFE_INVALID_OFFSET && v >= 0; }
+SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset elemoff)
+{ return elemoff < GFE_INVALID_OFFSET && elemoff >= 0; }
 
-SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
-{ return v >= GFE_INVALID_OFFSET || v < 0; }
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset elemoff)
+{ return elemoff >= GFE_INVALID_OFFSET || elemoff < 0; }
 
 #else
     
-SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset v)
-{ return v >= 0; }
+SYS_FORCE_INLINE static bool isValidOffset(const GA_Offset elemoff)
+{ return elemoff >= 0; }
 
-SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset v)
-{ return v < 0; }
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_Offset elemoff)
+{ return elemoff < 0; }
     
 #endif
 
 
+
+SYS_FORCE_INLINE static bool isValidOffset(const GA_IndexMap& indexMap, const GA_Offset elemoff)
+#if GFE_DEBUG_MODE
+{
+    const GA_Index index = indexMap.indexFromOffset(elemoff);
+    const bool isOffsetActiveFast = indexMap.isOffsetActive(elemoff);
+    return indexMap.isOffsetActive(elemoff);
+}
+#else
+{ return indexMap.isOffsetActive(elemoff); }
+#endif
+
+SYS_FORCE_INLINE static bool isInvalidOffset(const GA_IndexMap& indexMap, const GA_Offset elemoff)
+{ return isInvalidOffset(elemoff) || !indexMap.isOffsetActiveFast(elemoff); }
 
 
     
