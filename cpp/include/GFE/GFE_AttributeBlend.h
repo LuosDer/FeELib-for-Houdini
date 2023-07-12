@@ -32,20 +32,39 @@ private:
     virtual bool
         computeCore() override
     {
-        if(getOutAttribArray().isEmpty())
+        if(this->geoRef0 ? getRef0AttribArray().isEmpty() : getInAttribArray().isEmpty() )
         {
-            return false;
+            return true;
         }
         if(groupParser.isEmpty())
         {
             return true;
         }
+        
+        this->geoTemp = this->geoRef0 ? this->geoRef0 : this->geo;
+        
+        const size_t sizeInAttrib  = this->geoRef0 ? getRef0AttribArray().size() : getInAttribArray().size();
+        const size_t sizeOutAttrib = getOutAttribArray().size();
 
+        if(sizeOutAttrib > 0)
+        {
+            const size_t attribSize = SYSmin(sizeInAttrib, sizeOutAttrib);
+            for(size_t i = 0; i < attribSize; i++)
+            {
+                this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
+                this->dstAttribPtr = getOutAttribArray()[i];
+
+                attribBlend();
+            }
+                
+        }
+
+/*
         GFE_AttributeArray destinationAttribArray = getOutAttribArray();
-        GFE_AttributeArray sourceAttribArray;
+        GFE_AttributeArray sourceAttribArray = getOutAttribArray();
         if(!getRef0AttribArray().isEmpty())
         {
-            sourceAttribArray = getRef0AttribArray;
+            sourceAttribArray = getRef0AttribArray();
         }
         else if(!getInAttribArray().isEmpty())
         {
@@ -77,18 +96,16 @@ private:
                 
             }
         }
-        
+*/
         return  false;
     }
 
-    template<typename VECTOR_T, GA_AttributeOwner FROM, GA_AttributeOwner TO>
+    template<typename VECTOR_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner TO>
     void attribBlend()
     {
         //UT_ASSER
         
-
     }
-    
     template<typename VECTOR_T, GA_AttributeOwner FROM>
     SYS_FORCE_INLINE void attribBlend()
     {
@@ -101,7 +118,6 @@ private:
         default: UT_ASSERT_MSG(0, "Unhandled Owner"); break;
         }
     }
-    
     template<typename VECTOR_T>
     SYS_FORCE_INLINE void attribBlendBase(VECTOR_T& origin, VECTOR_T& target, fpreal64 blend)
     {
@@ -114,9 +130,10 @@ public:
     GA_AttributeOwner destinationOwner;
 
 private:
-    
-    GA_Attribute* attribPtr;
-    GA_Attribute* refAttribPtr;
+    const GFE_Detail* geoTemp;
+    GA_Attribute* srcAttribPtr;
+    GA_Attribute* dstAttribPtr;
+
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 

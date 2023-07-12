@@ -48,7 +48,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "SourceClass"
         label   "Source Class"
         type    ordinal
-        default { "prim" }
+        default { "point" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"
