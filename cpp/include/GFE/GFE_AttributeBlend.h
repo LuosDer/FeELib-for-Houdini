@@ -122,7 +122,8 @@ private:
         const GA_Attribute& srcAttribRef = *srcAttribPtr;
         if(this->geoRef0)
         {
-            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner)
+            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
+            GA_PageHandleT<>
             UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
             {
                GA_Offset start, end;
@@ -133,7 +134,7 @@ private:
                        const GA_Offset dstOff = this->geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
                        if (GFE_Type::isValidOffset(dstOff))
                        {
-                          
+                           
                        }
                         //const GA_Offset dstOff = this->geo                      
                    }
