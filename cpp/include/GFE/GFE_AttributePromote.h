@@ -77,7 +77,7 @@ private:
             }
         }
         
-            
+        
         
         const size_t sizeInGroup  = geoRef0 ? getRef0GroupArray().size() : getInGroupArray().size();
         const size_t sizeOutGroup = getOutGroupArray().size();
@@ -140,8 +140,63 @@ private:
     void attribPromote()
     {
         UT_ASSERT_P(&srcAttrib->getDetail() == geoTmp);
-        const GA_Attribute& srcAttribRef = *srcAttrib;
 
+        const GA_AIFTuple* const aifTuple = srcAttrib->getAIFTuple();
+        if (aifTuple)
+        {
+            const GA_Storage storage = aifTuple->getStorage(srcAttrib);
+            switch (srcAttrib->getTupleSize())
+            {
+            case 1:
+                switch (storage)
+                {
+                case GA_STORE_INT32:   attribPromote<int32,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_INT64:   attribPromote<int64,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL32:  attribPromote<fpreal32, SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL64:  attribPromote<fpreal64, SrcOwner, dstOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+                }
+            break;
+            case 2:
+                switch (storage)
+                {
+                case GA_STORE_INT32:   attribPromoteVector<UT_Vector2T<int32>,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_INT64:   attribPromoteVector<UT_Vector2T<int64>,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL32:  attribPromoteVector<UT_Vector2T<fpreal32>, SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL64:  attribPromoteVector<UT_Vector2T<fpreal64>, SrcOwner, dstOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+                }
+            break;
+            case 3:
+                switch (storage)
+                {
+                case GA_STORE_INT32:   attribPromoteVector<UT_Vector3T<int32>,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_INT64:   attribPromoteVector<UT_Vector3T<int64>,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL32:  attribPromoteVector<UT_Vector3T<fpreal32>, SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL64:  attribPromoteVector<UT_Vector3T<fpreal64>, SrcOwner, dstOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+                }
+            break;
+            case 4:
+                switch (storage)
+                {
+                case GA_STORE_INT32:   attribPromoteVector<UT_Vector4T<int32>,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_INT64:   attribPromoteVector<UT_Vector4T<int64>,    SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL32:  attribPromoteVector<UT_Vector4T<fpreal32>, SrcOwner, dstOwner>(); return; break;
+                case GA_STORE_REAL64:  attribPromoteVector<UT_Vector4T<fpreal64>, SrcOwner, dstOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+                }
+            break;
+            default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break;
+            }
+            return;
+        }
+
+
+
+        
+        const GA_Attribute& srcAttribRef = *srcAttrib;
+    
         if (geoRef0)
         {
             const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
@@ -181,10 +236,35 @@ private:
     void attribPromote()
     {
         const GA_ROHandleT<FLOAT_T> srcAttrib_h(srcAttrib);
-
+    
         UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
         {
             GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        if (GFE_Type::isValidOffset(dstOff))
+                            attrib_ph.value(elemoff) = srcAttrib_h.get(dstOff);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    
+    template<typename VECTOR_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
+    void attribPromoteVector()
+    {
+        const GA_ROHandleT<VECTOR_T> srcAttrib_h(srcAttrib);
+    
+        UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -260,19 +340,19 @@ private:
         case GA_ATTRIB_PRIMITIVE:
         switch (srcOwner)
         {
-            case GA_ATTRIB_PRIMITIVE: return elemoff;                   break;
+            case GA_ATTRIB_PRIMITIVE: return elemoff;                      break;
             case GA_ATTRIB_POINT:     return geoTmp->primPoint(elemoff);   break;
             case GA_ATTRIB_VERTEX:    return geoTmp->primVertex(elemoff);  break;
-            default: UT_ASSERT_MSG(0, "Unhandled newClass!");           break;
+            default: UT_ASSERT_MSG(0, "Unhandled newClass!");              break;
         }
         break;
         case GA_ATTRIB_POINT:
         switch (srcOwner)
         {
             case GA_ATTRIB_PRIMITIVE: return geoTmp->pointPrim(elemoff);   break;
-            case GA_ATTRIB_POINT:     return elemoff;                   break;
+            case GA_ATTRIB_POINT:     return elemoff;                      break;
             case GA_ATTRIB_VERTEX:    return geoTmp->pointVertex(elemoff); break;
-            default: UT_ASSERT_MSG(0, "Unhandled newClass!");           break;
+            default: UT_ASSERT_MSG(0, "Unhandled newClass!");              break;
         }
         break;
         case GA_ATTRIB_VERTEX:
@@ -280,8 +360,8 @@ private:
         {
             case GA_ATTRIB_PRIMITIVE: return geoTmp->vertexPrimitive(elemoff); break;
             case GA_ATTRIB_POINT:     return geoTmp->vertexPoint(elemoff);     break;
-            case GA_ATTRIB_VERTEX:    return elemoff;                       break;
-            default: UT_ASSERT_MSG(0, "Unhandled newClass!");               break;
+            case GA_ATTRIB_VERTEX:    return elemoff;                          break;
+            default: UT_ASSERT_MSG(0, "Unhandled newClass!");                  break;
         }
         break;
         default: UT_ASSERT_MSG(0, "Unhandled Owner!"); break;

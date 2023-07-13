@@ -11,6 +11,7 @@
 #include "GFE/GFE_Normal3D.h"
 #include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_GroupExpand.h"
+#include "GFE/GFE_Math.h"
 
 
 
@@ -37,29 +38,57 @@ public:
     
     void
         setComputeParm(
-            const bool extrapolateEnds = true,
-            const bool scaleByTurns = true,
-            const bool normalize = true,
+            const bool extrapolateEnds,
+            const bool scaleByTurns   ,
+            const bool normalize      ,
             
-            const fpreal64 uniScale = 1.0,
-            const fpreal64 blend = 1.0,
+            const fpreal64 uniScale,
+            const fpreal64 blend    = 0,
 
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
         
         this->extrapolateEnds = extrapolateEnds;
-        this->scaleByTurns = scaleByTurns;
+        this->scaleByTurns    = scaleByTurns;
+        this->normalize       = normalize;
         
-        this->normalize    = normalize;
-        this->uniScale     = uniScale;
-        this->blend        = blend;
+        this->uniScale = uniScale;
+        this->blend    = blend;
 
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
+
+    void
+        setComputeParm(
+            const bool extrapolateEnds,
+            const bool scaleByTurns    = true,
+            const bool normalize       = true
+        )
+    {
+        setHasComputed();
+        
+        this->extrapolateEnds = extrapolateEnds;
+        this->scaleByTurns    = scaleByTurns;
+        this->normalize       = normalize;
+    }
+
+    void
+        setComputeParm(
+            const fpreal64 uniScale,
+            const fpreal64 blend    = 0
+        )
+    {
+        setHasComputed();
+        
+        this->uniScale = uniScale;
+        this->blend    = blend;
+    }
+
+
 
 
     
@@ -77,7 +106,6 @@ public:
             findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::Primitive, GA_STORE_INVALID, attribName);
     }
     
-
     
     
     SYS_FORCE_INLINE void setNormal2DAttrib(const bool detached = true, const char* const attribName = "")
@@ -103,18 +131,27 @@ private:
     virtual bool
         computeCore() override
     {
-        //if (getOutAttribArray().isEmpty())
-        //    return false;
-
         if (groupParser.isEmpty())
             return true;
         
         setValidConstPosAttrib();
         
         const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
-        UT_ASSERT_MSG(normal3DAttrib, "no normal3d attrib");
-        normal3D.compute();
-    
+        //UT_ASSERT_MSG(normal3DAttrib, "no normal3d attrib");
+        if (normal3DAttrib)
+            normal3D.compute();
+
+#if GFE_DEBUG_MODE
+        const GA_ROHandleV3D normal3D_h(normal3DAttrib);
+        UT_Vector3D a[10];
+        if (normal3DAttrib)
+        {
+            for (size_t i = 0; i < SYSmin(normal3DAttrib->getIndexMap().indexSize(), 10); ++i)
+            {
+                a[i] = normal3D_h.get(normal3DAttrib->getIndexMap().indexFromOffset(i));
+            }
+        }
+#endif
         
         GA_Storage storage_max = posAttrib->getAIFTuple()->getStorage(posAttrib);
         if (normal3DAttrib)
@@ -128,6 +165,7 @@ private:
         
         if (normal2DAttribName)
         {
+            UT_ASSERT_P(!normal2DAttrib);
             if (hasAttrib)
             {
                 if (isGroupFull)
@@ -208,8 +246,6 @@ private:
         vtxPointRef = topo.getPointRef();
         vtxPrimRef  = topo.getPrimitiveRef();
 
-
-        
         switch (storage_max)
         {
         case GA_STORE_REAL16: computeNormal2D<fpreal16>(); break;
@@ -237,46 +273,69 @@ private:
         if (normal3DOwner == GA_ATTRIB_GLOBAL)
             defaultNormal3DFinal = normal3D_h.get(0);
         
-
-        UTparallelFor(GA_SplittableRange(geo->getVertexRange(unsharedVertexGroup)), [this, &normal2D_h, &pos_h, &normal3D_h](const GA_SplittableRange& r)
+        if (normal3DOwner == GA_ATTRIB_VERTEX)
         {
-            UT_Vector3T<FLOAT_T> dir;
-            GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            UTparallelFor(GA_SplittableRange(geo->getVertexRange(unsharedVertexGroup)), [this, &normal2D_h, &pos_h, &normal3D_h](const GA_SplittableRange& r)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                UT_Vector3T<FLOAT_T> dir;
+                GA_Offset start, end;
+                GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> normal3D_ph(normal3D.getAttrib());
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
-                    const GA_Offset ptoff = vtxPointRef->getLink(elemoff);
-                    const GA_Offset dstpt = dstptAttrib_h.get(elemoff);
-
-                    dir = pos_h.get(ptoff) - pos_h.get(dstpt);
-                    switch (normal3DOwner)
+                    normal3D_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                    case GA_ATTRIB_PRIMITIVE:
-                        dir.cross(normal3D_h.get(vtxPrimRef->getLink(elemoff)));
-                        break;
-                    case GA_ATTRIB_POINT:
-                        dir.cross(normal3D_h.get(ptoff));
-                        break;
-                    case GA_ATTRIB_VERTEX:
-                        dir.cross(normal3D_h.get(elemoff));
-                        break;
-                    default:
-                        dir.cross(defaultNormal3DFinal);
-                        break;
+                        const GA_Offset ptoff = vtxPointRef->getLink(elemoff);
+                        const GA_Offset dstpt = dstptAttrib_h.get(elemoff);
+
+                        dir = pos_h.get(ptoff) - pos_h.get(dstpt);
+                        //////
+                        dir.cross(normal3D_ph.value(elemoff));
+                        //////
+                        dir.normalize();
+                        if (!geoPointGroup || geoPointGroup->contains(ptoff))
+                            normal2D_h.add(ptoff, dir);
+                        if (!geoPointGroup || geoPointGroup->contains(dstpt))
+                            normal2D_h.add(dstpt, dir);
                     }
-                    dir.normalize();
-                    if (!geoPointGroup || geoPointGroup->contains(ptoff))
-                        normal2D_h.add(ptoff, dir);
-                    if (!geoPointGroup || geoPointGroup->contains(dstpt))
-                        normal2D_h.add(dstpt, dir);
                 }
-            }
-        }, subscribeRatio, minGrainSize);
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            UTparallelFor(GA_SplittableRange(geo->getVertexRange(unsharedVertexGroup)), [this, &normal2D_h, &pos_h, &normal3D_h](const GA_SplittableRange& r)
+            {
+                UT_Vector3T<FLOAT_T> dir;
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_Offset ptoff = vtxPointRef->getLink(elemoff);
+                        const GA_Offset dstpt = dstptAttrib_h.get(elemoff);
+
+                        dir = pos_h.get(ptoff) - pos_h.get(dstpt);
+                        switch (normal3DOwner)
+                        {
+                        case GA_ATTRIB_PRIMITIVE: dir.cross(normal3D_h.get(vtxPrimRef->getLink(elemoff))); break;
+                        case GA_ATTRIB_POINT:     dir.cross(normal3D_h.get(ptoff));                        break;
+                        default:                  dir.cross(defaultNormal3DFinal);                         break;
+                        case GA_ATTRIB_VERTEX:    dir.cross(normal3D_h.get(elemoff)); UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
+                        }
+                        dir.normalize();
+                        if (!geoPointGroup || geoPointGroup->contains(ptoff))
+                            normal2D_h.add(ptoff, dir);
+                        if (!geoPointGroup || geoPointGroup->contains(dstpt))
+                            normal2D_h.add(dstpt, dir);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
 
 
         if (geoPointGroup)
             *unsharedPointGroup &= *geoPointGroup;
+        
         const GA_SplittableRange geoPointSplittableRange(geo->getPointRange(unsharedPointGroup));
         
         if (normal2DAttribName && hasAttrib && !isGroupFull)
@@ -299,7 +358,7 @@ private:
                             normal2D_ph.value(elemoff) = normal2DTmp_ph.value(elemoff);
                             if (scaleByTurns)
                             {
-                                normal2D_ph.value(elemoff) *= 2 * uniScale / normal2D_ph.value(elemoff).length2();
+                                normal2D_ph.value(elemoff) *= 2.0 * uniScale / normal2D_ph.value(elemoff).length2();
                             }
                             else if (normalize)
                             {
@@ -338,10 +397,83 @@ private:
                 }
             }, subscribeRatio, minGrainSize);
         }
+
+        if (blend != 0)
+        {
+            const FLOAT_T blendVal = blend;
+            if (normal3D.getAttrib())
+            {
+                if (normal3DOwner == GA_ATTRIB_POINT)
+                {
+                    UTparallelFor(geoPointSplittableRange, [this, blendVal](const GA_SplittableRange& r)
+                    {
+                        GA_Offset start, end;
+                        GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(normal2DAttrib);
+                        GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> normal3D_ph(normal3D.getAttrib());
+                        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                        {
+                            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                            {
+                                normal2D_ph.setPage(start);
+                                normal3D_ph.setPage(start);
+                                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                                {
+                                    normal2D_ph.value(elemoff) = GFE_Math::blendDir<FLOAT_T>(normal2D_ph.value(elemoff), normal3D_ph.value(elemoff), blendVal);
+                                }
+                            }
+                        }
+                    }, subscribeRatio, minGrainSize);
+                }
+                else
+                {
+                    UTparallelFor(geoPointSplittableRange, [this, blendVal, &normal3D_h](const GA_SplittableRange& r)
+                    {
+                        UT_Vector3T<FLOAT_T> normal;
+                        GA_Offset start, end;
+                        GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(normal2DAttrib);
+                        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                        {
+                            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                            {
+                                normal2D_ph.setPage(start);
+                                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                                {
+                                    switch (normal3DOwner)
+                                    {
+                                    case GA_ATTRIB_PRIMITIVE: normal = normal3D_h.get(vtxPrimRef->getLink(elemoff)); break;
+                                    case GA_ATTRIB_VERTEX:    normal = normal3D_h.get(elemoff);                      break;
+                                    case GA_ATTRIB_POINT:
+                                    default: UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
+                                    }
+                                    normal2D_ph.value(elemoff) = GFE_Math::blendDir<FLOAT_T>(normal2D_ph.value(elemoff), normal, blendVal);
+                                }
+                            }
+                        }
+                    }, subscribeRatio, minGrainSize);
+                }
+            }
+            else
+            {
+                const UT_Vector3T<FLOAT_T> defaultNormal3DTemp = defaultNormal3D;
+                UTparallelFor(geoPointSplittableRange, [this, blendVal, &defaultNormal3DTemp](const GA_SplittableRange& r)
+                {
+                    GA_Offset start, end;
+                    GA_PageHandleT<UT_Vector3T<FLOAT_T>, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> normal2D_ph(normal2DAttrib);
+                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                    {
+                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                        {
+                            normal2D_ph.setPage(start);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                normal2D_ph.value(elemoff) = GFE_Math::blendDir<FLOAT_T>(normal2D_ph.value(elemoff), defaultNormal3DTemp, blendVal);
+                            }
+                        }
+                    }
+                }, subscribeRatio, minGrainSize);
+            }
+        }
     }
-
-
-
 
 
 
@@ -355,7 +487,7 @@ public:
     bool scaleByTurns    = true;
     bool normalize       = true;
     fpreal64 uniScale = 1.0;
-    fpreal64 blend = 1.0;
+    fpreal64 blend = 0;
     
     bool findNormal3D = false;
     bool addNormal3DIfNoFind = true;

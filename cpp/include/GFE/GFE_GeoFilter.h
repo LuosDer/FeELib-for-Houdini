@@ -1031,10 +1031,9 @@ public:
 
     void visualizeInGroup()
     {
-        if (!cookparms || inGroupArray.isEmpty() || !inGroupArray[0] || inGroupArray[0]->isDetached())
-            return;
+        if (cookparms && !inGroupArray.isEmpty() && inGroupArray[0] && !inGroupArray[0]->isDetached())
+            cookparms->select(*inGroupArray[0]);
         //cookparms->getNode()->setHighlight(true);
-        cookparms->select(*inGroupArray[0]);
     }
 
 

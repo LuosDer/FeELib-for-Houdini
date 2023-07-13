@@ -978,7 +978,8 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     switch (method)
     {
     case GFE_Fuse::Method::Point:
-        fuse.setPointComputeParm(sopparms.getUseSnapDist(), sopparms.getSnapDist(), sopSnapAlgorithm(sopparms.getSnapAlgorithm()));
+        //fuse.setPointComputeParm(sopparms.getUseSnapDist(), sopparms.getSnapDist(), sopSnapAlgorithm(sopparms.getSnapAlgorithm()));
+        fuse.setPointComputeParm(sopparms.getUseSnapDist(), sopparms.getSnapDist(), sopparms.getSnapAlgorithm());
         if (sopparms.getUseRadiusAttrib())
             fuse.setRadiusAttrib(sopparms.getRadiusAttrib());
     

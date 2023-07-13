@@ -266,6 +266,18 @@ SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_Stri
 { return stringEqual(str0.c_str(), str1.c_str()); }
 
     
+static bool isAttribTypeEqual(const GA_Attribute* const attrib0, const GA_Attribute* const attrib1)
+{
+        UT_ASSERT_P(attrib0);
+        UT_ASSERT_P(attrib1);
+        return &attrib0->getDetail() == &attrib1->getDetail() &&
+                attrib0->getTupleSize() == attrib1->getTupleSize() &&
+                attrib0->getStorageClass() == attrib1->getStorageClass() &&
+                (
+                    !attrib0->getAIFTuple() ||
+                    attrib0->getAIFTuple() && attrib1->getAIFTuple() && attrib0->getAIFTuple()->getStorage(attrib0) == attrib1->getAIFTuple()->getStorage(attrib1)
+                );
+}
 
 static bool checkTupleAttrib(
     const GA_Attribute* const attrib,

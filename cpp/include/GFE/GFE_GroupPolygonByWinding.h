@@ -49,7 +49,7 @@ public:
 		)
 	{
 		setHasComputed();
-		this->method = method;
+		this->method  = method;
 		this->meshCap = meshCap;
 		this->reversePrim = reversePrim;
 	}
@@ -60,16 +60,16 @@ public:
 		const bool detached = false, 
 		const GA_Storage storage = GA_STORE_INVALID,
 		const UT_StringRef& attribName = "",
-		const int tuple_size = 3
+		const int tupleSize = 3
 		)
-	{ return normal3D.findOrCreateNormal3D(detached, GFE_NormalSearchOrder::Primitive, storage, attribName, tuple_size); }
+	{ return normal3D.findOrCreateNormal3D(true, detached, GFE_NormalSearchOrder::Primitive, storage, attribName, tupleSize); }
 
 	
 	
 	virtual void bumpDataId() const override
 	{
 		//getOutAttribArray().bumpDataId();
-		//getOutGroupArray().bumpDataId();
+		getOutGroupArray().bumpDataId();
 		if (reversePrim)
 			bumpDataIdsForAddOrRemove(false, true, false);
 	}
@@ -127,7 +127,7 @@ private:
 			normal3D.groupParser.setGroup(groupParser);
 
 			if (!normal3D.getAttrib())
-				normal3D.findOrCreateNormal3D(true, GFE_NormalSearchOrder::Primitive, GA_STORE_INVALID, "N");
+				normal3D.findOrCreateNormal3D(false, true, GFE_NormalSearchOrder::Primitive, GA_STORE_INVALID, "N");
 			
 			dirAttrib = normal3D.getAttrib();
 			

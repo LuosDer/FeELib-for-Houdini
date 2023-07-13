@@ -215,7 +215,7 @@ public:
         if (!attribPattern.isstring() || attribPattern.length() == 0)
             return nullptr;
 
-        GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
+        GA_Attribute* const attribPtr = geo->findAttribute(attribClass, attribPattern);
         set(attribPtr);
         return attribPtr;
     }
@@ -254,9 +254,10 @@ public:
         const auto begin = attribArray.begin();
         for (size_t i = size-1; ; --i)
         {
+            const GA_Attribute* const attrib = attribArray[i];
             for (size_t j = 0; j < i; ++j)
             {
-                if (attribArray[i] == attribArray[j])
+                if (attrib == attribArray[j])
                 {
                     attribArray.erase(begin+i);
                     break;
