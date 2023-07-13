@@ -6,7 +6,6 @@
 
 #include "GFE/GFE_OffsetVertexOrder.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
 
 
@@ -77,7 +76,6 @@ public:
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -490,8 +488,10 @@ private:
                         int64 offsetFinal = offset + attrib_ph.value(primoff);
                         if (offsetFinal == 0)
                             continue;
+
                         
-                        const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+                        const GA_Size numvtx = vertices.size();
                         const GA_Size numvtx_delPrim = delSingleVertexPrim ? numvtx-1 : numvtx;
                         const bool isLooped = geo->getPrimitiveClosedFlag(primoff) ? true : (treatLoopedPrimAsClosed ? geo->isPrimitiveLooped(primoff) : false);
                         
@@ -515,15 +515,15 @@ private:
                                 const GA_Size vtxpnum_last = numvtx-offsetFinal;
                                 for (GA_Size vtxpnum = 0; vtxpnum < offsetFinal; ++vtxpnum)
                                 {
-                                    ptoffs_rest[vtxpnum] = geo->getPrimitivePointOffset(primoff, vtxpnum);
+                                    ptoffs_rest[vtxpnum] = geo->vertexPoint(vertices[vtxpnum]);
                                 }
                                 for (GA_Size vtxpnum = 0; vtxpnum < vtxpnum_last; ++vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     if (delUnusedPoint)
                                         ptoff_orig = geo->vertexPoint(vtxoff);
                                     
-                                    const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                    const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);
                                     topo.wireVertexPoint(vtxoff, ptoff_target);
                                     
                                     if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -532,7 +532,7 @@ private:
                                 }
                                 for (GA_Size vtxpnum = 0; vtxpnum < offsetFinal; ++vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum+offsetFinal);
+                                    const GA_Offset vtxoff = vertices[vtxpnum+offsetFinal];
                                     if (delUnusedPoint)
                                         ptoff_orig = geo->vertexPoint(vtxoff);
                                     
@@ -549,15 +549,15 @@ private:
                                 const GA_Size vtxpnum_last = numvtx + offsetFinal;
                                 for (GA_Size vtxpnum = 0; vtxpnum < offset_positive; ++vtxpnum)
                                 {
-                                    ptoffs_rest[vtxpnum] = geo->getPrimitivePointOffset(primoff, vtxpnum_last + vtxpnum);
+                                    ptoffs_rest[vtxpnum] = geo->vertexPoint(vertices[vtxpnum_last + vtxpnum]);
                                 }
                                 for (GA_Size vtxpnum = offset_positive; vtxpnum < numvtx; ++vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     if (delUnusedPoint)
                                         ptoff_orig = geo->vertexPoint(vtxoff);
                                     
-                                    const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                    const GA_Offset ptoff_target = geo->vertexPoint(vertices[offsetFinal + vtxpnum]);
                                     topo.wireVertexPoint(vtxoff, ptoff_target);
                                     
                                     if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -566,7 +566,7 @@ private:
                                 }
                                 for (GA_Size vtxpnum = 0; vtxpnum < offset_positive; ++vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     if (delUnusedPoint)
                                         ptoff_orig = geo->vertexPoint(vtxoff);
 
@@ -592,11 +592,11 @@ private:
                                     const GA_Size vtxpnum_last = numvtx-offsetFinal-1;
                                     for (GA_Size vtxpnum = 0; vtxpnum <= vtxpnum_last; ++vtxpnum)
                                     {
-                                        const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                        const GA_Offset vtxoff = vertices[vtxpnum];
                                         if (delUnusedPoint)
                                             ptoff_orig = geo->vertexPoint(vtxoff);
 
-                                        const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                        const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);
                                         topo.wireVertexPoint(vtxoff, ptoff_target);
                                     
                                         if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -605,7 +605,7 @@ private:
                                     }
                                     for (GA_Size vtxpnum = numvtx-1; vtxpnum > vtxpnum_last; --vtxpnum)
                                     {
-                                        const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                        const GA_Offset vtxoff = vertices[vtxpnum];
                                         geo->getPrimitive(primoff)->releaseVertex(vtxoff);
                                         topo.delVertex(vtxoff);
                                         //geo->destroyVertexOffset(vtxoff);
@@ -624,11 +624,11 @@ private:
                                 {
                                     for (GA_Size vtxpnum = numvtx-1; vtxpnum >= offset_positive; --vtxpnum)
                                     {
-                                        const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                        const GA_Offset vtxoff = vertices[vtxpnum];
                                         if (delUnusedPoint)
                                             ptoff_orig = geo->vertexPoint(vtxoff);
                                         
-                                        const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                        const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);
                                         topo.wireVertexPoint(vtxoff, ptoff_target);
                                     
                                         if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -637,7 +637,7 @@ private:
                                     }
                                     for (GA_Size vtxpnum = offset_positive-1; vtxpnum >= 0; --vtxpnum)
                                     {
-                                        const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                        const GA_Offset vtxoff = vertices[vtxpnum];
                                         geo->getPrimitive(primoff)->releaseVertex(vtxoff);
                                         topo.delVertex(vtxoff);
                                         //geo->destroyVertexOffset(vtxoff);
@@ -673,7 +673,8 @@ private:
                     if (offsetFinal == 0)
                         continue;
                     
-                    const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+                    const GA_Size numvtx = vertices.size();
                     const GA_Size numvtx_delPrim = delSingleVertexPrim ? numvtx-1 : numvtx;
                     
                     const bool isLooped = geo->getPrimitiveClosedFlag(primoff) ? true : (treatLoopedPrimAsClosed ? geo->isPrimitiveLooped(primoff) : false);
@@ -698,15 +699,15 @@ private:
                             const GA_Size vtxpnum_last = numvtx-offsetFinal;
                             for (GA_Size vtxpnum = 0; vtxpnum < offsetFinal; ++vtxpnum)
                             {
-                                ptoffs_rest[vtxpnum] = geo->getPrimitivePointOffset(primoff, vtxpnum);
+                                ptoffs_rest[vtxpnum] = geo->vertexPoint(vertices[vtxpnum]);
                             }
                             for (GA_Size vtxpnum = 0; vtxpnum < vtxpnum_last; ++vtxpnum)
                             {
-                                const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                const GA_Offset vtxoff = vertices[vtxpnum];
                                 if (delUnusedPoint)
                                     ptoff_orig = geo->vertexPoint(vtxoff);
                                 
-                                const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);;
                                 topo.wireVertexPoint(vtxoff, ptoff_target);
                                 
                                 if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -715,7 +716,7 @@ private:
                             }
                             for (GA_Size vtxpnum = 0; vtxpnum < offsetFinal; ++vtxpnum)
                             {
-                                const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum+offsetFinal);
+                                const GA_Offset vtxoff = vertices[vtxpnum+offsetFinal];
                                 if (delUnusedPoint)
                                     ptoff_orig = geo->vertexPoint(vtxoff);
                                 
@@ -732,15 +733,15 @@ private:
                             const GA_Size vtxpnum_last = numvtx + offsetFinal;
                             for (GA_Size vtxpnum = 0; vtxpnum < offset_positive; ++vtxpnum)
                             {
-                                ptoffs_rest[vtxpnum] = geo->getPrimitivePointOffset(primoff, vtxpnum_last + vtxpnum);
+                                ptoffs_rest[vtxpnum] = geo->vertexPoint(vertices[vtxpnum_last + vtxpnum]);
                             }
                             for (GA_Size vtxpnum = offset_positive; vtxpnum < numvtx; ++vtxpnum)
                             {
-                                const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                const GA_Offset vtxoff = vertices[vtxpnum];
                                 if (delUnusedPoint)
                                     ptoff_orig = geo->vertexPoint(vtxoff);
                                 
-                                const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);
                                 topo.wireVertexPoint(vtxoff, ptoff_target);
                                 
                                 if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -749,7 +750,7 @@ private:
                             }
                             for (GA_Size vtxpnum = 0; vtxpnum < offset_positive; ++vtxpnum)
                             {
-                                const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                const GA_Offset vtxoff = vertices[vtxpnum];
                                 if (delUnusedPoint)
                                     ptoff_orig = geo->vertexPoint(vtxoff);
 
@@ -775,11 +776,11 @@ private:
                                 const GA_Size vtxpnum_last = numvtx-offsetFinal-1;
                                 for (GA_Size vtxpnum = 0; vtxpnum <= vtxpnum_last; ++vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     if (delUnusedPoint)
                                         ptoff_orig = geo->vertexPoint(vtxoff);
 
-                                    const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                    const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);
                                     topo.wireVertexPoint(vtxoff, ptoff_target);
                                 
                                     if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -788,7 +789,7 @@ private:
                                 }
                                 for (GA_Size vtxpnum = numvtx-1; vtxpnum > vtxpnum_last; --vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     geo->getPrimitive(primoff)->releaseVertex(vtxoff);
                                     topo.delVertex(vtxoff);
                                     //geo->destroyVertexOffset(vtxoff);
@@ -807,11 +808,11 @@ private:
                             {
                                 for (GA_Size vtxpnum = numvtx-1; vtxpnum >= offset_positive; --vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     if (delUnusedPoint)
                                         ptoff_orig = geo->vertexPoint(vtxoff);
                                     
-                                    const GA_Offset ptoff_target = geo->getPrimitivePointOffset(primoff, vtxpnum+offsetFinal);
+                                    const GA_Offset ptoff_target = geo->vertexPoint(vertices[vtxpnum+offsetFinal]);
                                     topo.wireVertexPoint(vtxoff, ptoff_target);
                                 
                                     if (delUnusedPoint && geo->isUnusedPoint(ptoff_orig))
@@ -820,7 +821,7 @@ private:
                                 }
                                 for (GA_Size vtxpnum = offset_positive-1; vtxpnum >= 0; --vtxpnum)
                                 {
-                                    const GA_Offset vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                                    const GA_Offset vtxoff = vertices[vtxpnum];
                                     geo->getPrimitive(primoff)->releaseVertex(vtxoff);
                                     topo.delVertex(vtxoff);
                                     //geo->destroyVertexOffset(vtxoff);

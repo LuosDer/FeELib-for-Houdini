@@ -41,7 +41,6 @@ public:
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -51,9 +50,7 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        if (GFE_Type::isInvalidPosAttrib(posAttribNonConst))
-            posAttribNonConst = geo->getP();
-        UT_ASSERT_MSG_P(posAttribNonConst, "no posAttrib");
+        setValidConstPosAttrib();
 
         pointGroup = groupParser.classType() == GA_GROUP_PRIMITIVE ? nullptr : groupParser.getPointGroup();
         switch (posAttribNonConst->getAIFTuple()->getStorage(posAttribNonConst))

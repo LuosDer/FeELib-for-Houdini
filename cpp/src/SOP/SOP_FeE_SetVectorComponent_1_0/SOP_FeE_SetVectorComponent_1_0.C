@@ -200,7 +200,7 @@ public:
     virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_SetVectorComponent_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_SetVectorComponent_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
@@ -217,7 +217,7 @@ SOP_FeE_SetVectorComponent_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_SetVectorComponent_1_0Parms::AttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_SetVectorComponent_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_SetVectorComponent_1_0Enums;
     switch (parmAttribClass)
@@ -233,7 +233,7 @@ sopAttribOwner(SOP_FeE_SetVectorComponent_1_0Parms::AttribClass parmAttribClass)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_SetVectorComponent_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_SetVectorComponent_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_SetVectorComponent_1_0Enums;
     switch (parmGroupType)
@@ -255,10 +255,10 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     auto&& sopparms = cookparms.parms<SOP_FeE_SetVectorComponent_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());

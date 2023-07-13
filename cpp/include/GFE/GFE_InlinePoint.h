@@ -4,13 +4,12 @@
 #ifndef __GFE_InlinePoint_h__
 #define __GFE_InlinePoint_h__
 
-//#include "GFE/GFE_InlinePoint.h"
-
-
+#include "GFE/GFE_InlinePoint.h"
 
 #include "GFE/GFE_GeoFilter.h"
-#include "GFE/GFE_Math.h"
 
+
+#include "GFE/GFE_Math.h"
 
 
 class GFE_InlinePoint : public GFE_AttribFilter {
@@ -48,7 +47,9 @@ private:
     {
         if (groupParser.isEmpty())
             return true;
-        
+
+        setValidConstPosAttrib();
+        vtxPointRef = geo->getTopology().getPointRef();
         const size_t len = getOutGroupArray().size();
         for (size_t i = 0; i < len; i++)
         {
@@ -58,7 +59,7 @@ private:
                 UT_ASSERT_MSG(0, "not correct group type");
                 continue;
             }
-            const GA_Storage posStorage = geo->getPStorage();
+            const GA_Storage posStorage = posAttrib->getAIFTuple()->getStorage(posAttrib);
             switch (groupType)
             {
             case GA_GROUP_EDGE:
@@ -115,7 +116,7 @@ private:
     template<typename FLOAT_T>
     void groupInlineVertex()
     {
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(geo->getP());
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
         groupSetter = inlineVertexGroup;
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)
         {
@@ -124,54 +125,56 @@ private:
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(elemoff);
-                    if (vertices.size() <= 2)
+                    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+                    const GA_Size numvtx = vertices.size();
+                    const GA_Size lastVtxpnum = numvtx-1;
+                    const GA_Size lastLastIndex = numvtx-2;
+                    if (lastLastIndex <= 0)
                         continue;
-                    const GA_Size lastLastIndex = vertices.size()-2;
                     
                     UT_Vector3T<FLOAT_T> pos, pos_next, dir_prev, dir_next;
                     GA_Offset vtxoff, ptoff, ptoff_next;
 
                     const bool closed = geo->getPrimitiveClosedFlag(elemoff);
-                    ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 0 : 1));
+                    ptoff = vtxPointRef->getLink(vertices[closed ? 0 : 1]);
                     pos = pos_h.get(ptoff);
 
 
-                    ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? vertices.size() - 1 : 0));
+                    ptoff_next = vtxPointRef->getLink(vertices[closed ? lastVtxpnum : 0]);
                     pos_next = pos_h.get(ptoff_next);
                     dir_prev = pos - pos_next;
                     dir_prev.normalize();
 
-                    ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 1 : 2));
+                    ptoff_next = vtxPointRef->getLink(vertices[closed ? 1 : 2]);
                     pos_next = pos_h.get(ptoff_next);
                     dir_next = pos_next - pos;
                     dir_next.normalize();
 
                     for (GA_Size vtxpnum = !closed; vtxpnum < lastLastIndex; ++vtxpnum)
                     {
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, vtxpnum);
-                        ptoff = geo->vertexPoint(vtxoff);
+                        vtxoff = vertices[vtxpnum];
+                        ptoff = vtxPointRef->getLink(vtxoff);
 
                         fpreal dotVal = dot(dir_prev, dir_next);
                         groupSetter.set(vtxoff, dotVal >= threshold_inlineCosRadians);
 
                         pos = pos_next;
 
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum + 2));
+                        ptoff = vtxPointRef->getLink(vertices[vtxpnum + 2]);
                         pos_next = pos_h.get(ptoff);
 
                         dir_prev = dir_next;
                         dir_next = pos_next - pos;
                         dir_next.normalize();
                     }
-                    vtxoff = geo->getPrimitiveVertexOffset(elemoff, lastLastIndex);
-                    //ptoff = geo->vertexPoint(vtxoff);
+                    vtxoff = vertices[lastLastIndex];
+                    //ptoff = vtxPointRef->getLink(vtxoff);
                     groupSetter.set(vtxoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     if (closed)
                     {
                         pos = pos_next;
 
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, 0));
+                        ptoff = vtxPointRef->getLink(vertices[0]);
                         pos_next = pos_h.get(ptoff);
 
                         dir_prev = dir_next;
@@ -179,8 +182,8 @@ private:
                         dir_next.normalize();
 
 
-                        vtxoff = geo->getPrimitiveVertexOffset(elemoff, lastLastIndex+1);
-                        //ptoff = geo->vertexPoint(vtxoff);
+                        vtxoff = vertices[lastVtxpnum];
+                        //ptoff = vtxPointRef->getLink(vtxoff);
                         groupSetter.set(vtxoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     }
                 }
@@ -194,7 +197,7 @@ private:
     void groupInlinePoint()
     {
         groupSetter = inlinePointGroup;
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(geo->getP());
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttrib);
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
@@ -203,51 +206,53 @@ private:
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     const GA_OffsetListRef vertices = geo->getPrimitiveVertexList(elemoff);
-                    if (vertices.size() <= 2)
+                    const GA_Size numvtx = vertices.size();
+                    const GA_Size lastVtxpnum = numvtx-1;
+                    const GA_Size lastLastIndex = numvtx-2;
+                    if (lastLastIndex <= 0)
                         continue;
-                    const GA_Size lastLastIndex = vertices.size() - 2;
 
                     UT_Vector3T<FLOAT_T> pos, pos_next, dir_prev, dir_next;
                     GA_Offset ptoff, ptoff_next;
 
                     const bool closed = geo->getPrimitiveClosedFlag(elemoff);
-                    ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 0 : 1));
+                    ptoff = vtxPointRef->getLink(vertices[closed ? 0 : 1]);
                     pos = pos_h.get(ptoff);
 
 
-                    ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? vertices.size() - 1 : 0));
+                    ptoff_next = vtxPointRef->getLink(vertices[closed ? lastVtxpnum : 0]);
                     pos_next = pos_h.get(ptoff_next);
                     dir_prev = pos - pos_next;
                     dir_prev.normalize();
 
-                    ptoff_next = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, closed ? 1 : 2));
+                    ptoff_next = vtxPointRef->getLink(vertices[closed ? 1 : 2]);
                     pos_next = pos_h.get(ptoff_next);
                     dir_next = pos_next - pos;
                     dir_next.normalize();
 
                     for (GA_Size vtxpnum = !closed; vtxpnum < lastLastIndex; ++vtxpnum)
                     {
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum));
+                        ptoff = vtxPointRef->getLink(vertices[vtxpnum]);
 
                         fpreal dotVal = dot(dir_prev, dir_next);
                         groupSetter.set(ptoff, dotVal >= threshold_inlineCosRadians);
 
                         pos = pos_next;
 
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, vtxpnum + 2));
+                        ptoff = vtxPointRef->getLink(vertices[vtxpnum+2]);
                         pos_next = pos_h.get(ptoff);
 
                         dir_prev = dir_next;
                         dir_next = pos_next - pos;
                         dir_next.normalize();
                     }
-                    ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex));
+                    ptoff = vtxPointRef->getLink(vertices[lastLastIndex]);
                     groupSetter.set(ptoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     if (closed)
                     {
                         pos = pos_next;
 
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, 0));
+                        ptoff = vtxPointRef->getLink(vertices[0]);
                         pos_next = pos_h.get(ptoff);
 
                         dir_prev = dir_next;
@@ -255,7 +260,7 @@ private:
                         dir_next.normalize();
 
 
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(elemoff, lastLastIndex + 1));
+                        ptoff = vtxPointRef->getLink(vertices[lastVtxpnum]);
                         groupSetter.set(ptoff, dot(dir_prev, dir_next) >= threshold_inlineCosRadians);
                     }
                 }
@@ -274,7 +279,7 @@ public:
 
 private:
     
-    
+    const GA_ATITopology* vtxPointRef;
     GA_PointGroup* inlinePointGroup = nullptr;
     GA_VertexGroup* inlineVertexGroup = nullptr;
     GA_EdgeGroup* inlineEdgeGroup = nullptr;

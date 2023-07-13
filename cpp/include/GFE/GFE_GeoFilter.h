@@ -219,10 +219,12 @@ public:
             posAttribNonConst = geo->getP();
             posAttrib = posAttribNonConst;
         }
+        UT_ASSERT_P(posAttrib);
+        UT_ASSERT_P(posAttribNonConst);
     }
     
     SYS_FORCE_INLINE void setValidConstPosAttrib()
-    { if (GFE_Type::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); }
+    { if (GFE_Type::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); UT_ASSERT_P(posAttrib); }
 
 
 private:
@@ -297,13 +299,15 @@ private:
 }; // End of class GFE_GeoFilter
 
 
-
-
-
-
-
-
-
+#if 0
+const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+const GA_Size numvtx = vertices.size();
+const GA_Size lastVtxpnum = numvtx-1;
+for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+{
+    const GA_Offset ptoff = geo->vertexPoint(vertices[vtxpnum]);
+}
+#endif
 
 
 #if 0

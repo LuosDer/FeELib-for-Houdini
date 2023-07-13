@@ -162,7 +162,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_GroupCombine_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_GroupCombine_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -188,10 +188,10 @@ SOP_FeE_GroupCombine_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopCombineGroupType(SOP_FeE_GroupCombine_1_0Parms::CombineGroupType parmgrouptype)
+sopCombineGroupType(const SOP_FeE_GroupCombine_1_0Parms::CombineGroupType parmCombineGroupType)
 {
     using namespace SOP_FeE_GroupCombine_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmCombineGroupType)
     {
     case CombineGroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case CombineGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -207,10 +207,10 @@ sopCombineGroupType(SOP_FeE_GroupCombine_1_0Parms::CombineGroupType parmgrouptyp
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupCombine_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_GroupCombine_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupCombine_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -231,9 +231,9 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupCombine_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const UT_StringHolder& combineGroupName = sopparms.getCombineGroup();
