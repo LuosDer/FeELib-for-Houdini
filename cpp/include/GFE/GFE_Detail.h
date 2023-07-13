@@ -579,8 +579,32 @@ SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset vtxoff)
     return vertexPointDst(primoff, vertexPrimIndex(primoff, vtxoff));
 }
 
+        
 
-    
+        
+SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GA_OffsetListRef& vertices, const GA_Size vtxpnum = 0) const
+{ return vertexPoint(vertices[vtxpnum]); }
+
+SYS_FORCE_INLINE GA_Offset primPoint(const GA_OffsetListRef& vertices, const GA_Size vtxpnum = 0) const
+{ return getPrimitivePointOffset(vertices, vtxpnum); }
+
+SYS_FORCE_INLINE GA_Offset getPrimitivePointIndex(const GA_OffsetListRef& vertices, const GA_Size vtxpnum = 0) const
+{ return pointIndex(getPrimitivePointOffset(vertices, vtxpnum)); }
+
+SYS_FORCE_INLINE GA_Offset primPointIndex(const GA_OffsetListRef& vertices, const GA_Size vtxpnum = 0) const
+{ return getPrimitivePointIndex(vertices, vtxpnum); }
+
+template<typename T>
+SYS_FORCE_INLINE T primPointVal(const GA_ROHandleT<T>& pos_h, const GA_OffsetListRef& vertices, const GA_Size vtxpnum = 0) const
+{ return pos_h.get(primPoint(vertices, vtxpnum)); }
+
+        
+template<typename T>
+SYS_FORCE_INLINE T vertexPointVal(const GA_ROHandleT<T>& pos_h, const GA_Offset vtxoff) const
+{ return pos_h.get(vertexPoint(vtxoff)); }
+
+        
+        
 SYS_FORCE_INLINE GA_Offset getPrimitivePointOffset(const GA_Offset primoff, const GA_Size vtxpnum = 0) const
 { return vertexPoint(getPrimitiveVertexOffset(primoff, vtxpnum)); }
 

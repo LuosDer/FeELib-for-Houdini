@@ -799,7 +799,7 @@ virtual bool
         
         if (geoRef0)
         {
-            GFE_AttribPromote attribPromote1(geoRef0Tmp, cookparms);
+            GFE_AttribPromote attribPromote1(*geoRef0Tmp, cookparms);
             attribPromote1.getInAttribArray().set(matchAttribOwner, fuseParms.getMatchattrib());
             attribPromote1.dstAttribClass = GA_ATTRIB_POINT;
             attribPromote1.newAttribNames = __TEMP_GFE_Fuse_MatchAttribName;

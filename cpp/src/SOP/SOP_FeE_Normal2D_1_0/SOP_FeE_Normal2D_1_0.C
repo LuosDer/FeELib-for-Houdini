@@ -290,7 +290,7 @@ SOP_FeE_Normal2D_1_0::cookVerb() const
 
 
 //static int
-//sopAttribSearchOrder(SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass, GA_AttributeOwner* searchOrder)
+//sopAttribSearchOrder(const SOP_FeE_Normal2D_1_0Parms::Normal3DAttribClass attribClass, const GA_AttributeOwner* searchOrder)
 //{
 //    int size = 0;
 //    using namespace SOP_FeE_Normal2D_1_0Enums;
@@ -399,12 +399,11 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     normal2D.setNormal2DAttrib(false, sopparms.getNormal2DAttribName());
 
     
-    //const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
-    //const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
-    //const bool copyOrigIfZero = false;
-    //normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
-    //normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
-    
+    const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+    const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
+    const bool copyOrigIfZero = false;
+    normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
+    normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
     if (!sopparms.getUseConstantNormal3D())
         normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
             geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());

@@ -46,6 +46,65 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     
+    
+
+
+//#if GFE_CornerPoint_ConvexConcave
+//
+//    parm {
+//        name    "outConvexPointGroup"
+//        cppname "OutConvexPointGroup"
+//        label   "Out Convex Point Group"
+//        type    toggle
+//        joinnext
+//        nolabel
+//        default { "0" }
+//    }
+//    parm {
+//        name    "convexPointGroupName"
+//        cppname "ConvexPointGroupName"
+//        label   "Convex Point Group Name"
+//        type    string
+//        default { "convex" }
+//        disablewhen "{ outConvexPointGroup == 0 }"
+//    }
+//    parm {
+//        name    "thresholdConvexDegrees"
+//        cppname "ThresholdConvexDegrees"
+//        label   "Threshold Convex Degrees"
+//        type    angle
+//        default { "180" }
+//        range   { 0! 360! }
+//        disablewhen "{ outConvexPointGroup == 0 }"
+//    }
+//
+//    parm {
+//        name    "outConcavePointGroup"
+//        cppname "OutConcavePointGroup"
+//        label   "Out Concave Point Group"
+//        type    toggle
+//        joinnext
+//        nolabel
+//        default { "1" }
+//    }
+//    parm {
+//        name    "concavePointGroupName"
+//        cppname "ConcavePointGroupName"
+//        label   "Concave Point Group Name"
+//        type    string
+//        default { "concave" }
+//        disablewhen "{ outConcavePointGroup == 0 }"
+//    }
+//    parm {
+//        name    "thresholdConcaveDegrees"
+//        cppname "ThresholdConcaveDegrees"
+//        label   "Threshold Concave Degrees"
+//        type    angle
+//        default { "180" }
+//        range   { 0! 360! }
+//        disablewhen "{ outConcavePointGroup == 0 }"
+//    }
+//#else
 
     parm {
         name    "cornerPointGroupName"
@@ -55,16 +114,40 @@ static const char *theDsFile = R"THEDSFILE(
         default { "corner" }
     }
     parm {
-        name    "threshold"
-        cppname "Threshold"
-        label   "Threshold"
-        type    float
+        name    "thresholdDegrees"
+        cppname "ThresholdDegrees"
+        label   "Threshold Degrees"
+        type    angle
+        default { "180" }
+        range   { 0! 360! }
+    }
+
+    parm {
+        name    "outAsConvexPoint"
+        cppname "OutAsConvexPoint"
+        label   "Out as Convex Point"
+        type    toggle
         default { "0" }
-        range   { -1! 1! }
+    }
+
+
+//#endif
+        
+
+
+
+
+
+    parm {
+        name    "groupPrimCornerPoint"
+        cppname "GroupPrimCornerPoint"
+        label   "Group Prim Corner Point"
+        type    toggle
+        default { "1" }
     }
     parm {
         name    "reverseGroup"
-        name    "ReverseGroup"
+        cppname "ReverseGroup"
         label   "Reverse Group"
         type    toggle
         default { "0" }
@@ -124,8 +207,13 @@ SOP_FeE_CornerPoint_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("cornerPointGroupName"_sh, &SOP_Node::pointNamedGroupMenu);
         templ.setChoiceListPtr("dotAttribName"_sh,        &SOP_Node::pointAttribReplaceMenu);
+#if GFE_CornerPoint_ConvexConcave
+        templ.setChoiceListPtr("convexPointGroupName"_sh,  &SOP_Node::pointNamedGroupMenu);
+        templ.setChoiceListPtr("concavePointGroupName"_sh, &SOP_Node::pointNamedGroupMenu);
+#else
+        templ.setChoiceListPtr("cornerPointGroupName"_sh,  &SOP_Node::pointNamedGroupMenu);
+#endif
     }
     return templ.templates();
 }
@@ -241,11 +329,23 @@ SOP_FeE_CornerPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     GFE_CornerPoint cornerPoint(outGeo0, cookparms);
 
+    cornerPoint.setComputeParm(sopparms.getGroupPrimCornerPoint(), 
+                            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+
+#if GFE_CornerPoint_ConvexConcave
+    cornerPoint.setThresholdConvexDegrees(sopparms.getThresholdConvexDegrees());
+    cornerPoint.setThresholdConcaveDegrees(sopparms.getThresholdConcaveDegrees());
+#else
+    cornerPoint.setThresholdDegrees(sopparms.getThresholdDegrees());
+    cornerPoint.outAsConvexPoint = sopparms.getOutAsConvexPoint();
+#endif
+    
+    cornerPoint.doDelGroupElement = sopparms.getDelCornerPoint();
+    
+    cornerPoint.groupSetter.setParm(sopparms.getReverseGroup());
     cornerPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     cornerPoint.findOrCreatePointGroup(false, sopparms.getCornerPointGroupName());
-    cornerPoint.setComputeParm(sopparms.getThreshold(),
-                            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    cornerPoint.doDelGroupElement = sopparms.getDelCornerPoint();
+    
     cornerPoint.computeAndBumpDataId();
     cornerPoint.visualizeOutGroup();
 

@@ -45,10 +45,12 @@ public:
     SYS_FORCE_INLINE GA_Attribute* setNormal3DAttrib(GA_Attribute* const inAttrib)
     {
         setHasComputed();
+        attrib = inAttrib;
         normal3DAttrib = inAttrib;
         getOutAttribArray().set(inAttrib);
         return inAttrib;
     }
+    
     
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
         const bool findNormal3D,
@@ -57,11 +59,9 @@ public:
         const bool addNormal3DIfNoFind = true
     )
     {
-        GA_Attribute* const attrib = getOutAttribArray().findOrCreateNormal3D(true,
+        return setNormal3DAttribPrivate(getOutAttribArray().findOrCreateNormal3D(true,
             findNormal3D ? normal3DSearchOrder : GFE_NormalSearchOrder::Primitive, GA_STORE_INVALID,
-            findNormal3D ? attribName : UT_StringHolder(""));
-        normal3DAttrib = attrib;
-        return attrib;
+            findNormal3D ? attribName : UT_StringHolder("")));
     }
 
     
@@ -80,7 +80,6 @@ public:
         const GA_StorageClass storageClass = GA_STORECLASS_FLOAT
     )
     {
-        GA_Attribute* attrib;
         if (findNormal3D)
         {
             //const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
@@ -92,11 +91,9 @@ public:
                 return attrib;
             }
         }
-        attrib = getOutAttribArray().findOrCreateNormal3D(detached, owner, storage,
+        return setNormal3DAttribPrivate(getOutAttribArray().findOrCreateNormal3D(detached, owner, storage,
                 findNormal3D ? attribName : UT_StringHolder(""),
-                tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass);
-        normal3DAttrib = attrib;
-        return attrib;
+                tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass));
     }
     
     
@@ -129,14 +126,13 @@ public:
             }
             else if (!addNormal3DIfNoFind)
             {
+                attrib = nullptr;
                 return nullptr;
             }
         }
-        attrib = getOutAttribArray().findOrCreateNormal3D(detached, owner, storage,
+        return setNormal3DAttribPrivate(getOutAttribArray().findOrCreateNormal3D(detached, owner, storage,
                 findNormal3D ? attribName : UT_StringHolder(""),
-                tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass);
-        normal3DAttrib = attrib;
-        return attrib;
+                tupleSize, defaults, emplaceBack, create_args, attribute_options, storageClass));
     }
 
         
@@ -186,20 +182,25 @@ private:
     {
         if (getHasComputed())
             return true;
-
-        //if (getOutAttribArray().isEmpty())
-        if (!normal3DAttrib)
-            return false;
         
-        geo->setValidPosAttrib(posAttrib);
-        geo->setValidPosAttrib(posAttribNonConst);
+        if (getOutAttribArray().isEmpty())
+            return false;
         
         if (groupParser.isEmpty())
             return true;
+        
+        //attrib = getOutAttribArray()[0];
+        UT_ASSERT_P(attrib);
+        
+        if (normal3DAttrib)
+            UT_ASSERT_P(GFE_Type::isAttribTypeEqual(attrib, normal3DAttrib));
+        else
+            normal3DAttrib = attrib;
+        
+        setValidConstPosAttrib();
 
-        //normal3DAttrib = getOutAttribArray()[0];
-        const GA_AIFTuple* const AIFTuple = normal3DAttrib->getAIFTuple();
-        switch (normal3DAttrib->getAIFTuple()->getStorage(normal3DAttrib))
+        const GA_AIFTuple* const AIFTuple = attrib->getAIFTuple();
+        switch (attrib->getAIFTuple()->getStorage(attrib))
         {
             default:
             case GA_STORE_REAL64: computeNormal<fpreal64>(); break;
@@ -216,7 +217,16 @@ private:
         GEOcomputeNormals(*geo->asGEO_Detail(), pos_h, normal3D_h, groupParser.getGroup(attrib),
             cuspAngleDegrees, normalMethod, copyOrigIfZero);
     }
+
+
     
+    SYS_FORCE_INLINE GA_Attribute* setNormal3DAttribPrivate(GA_Attribute* const inAttrib)
+    {
+        setHasComputed();
+        attrib = inAttrib;
+        normal3DAttrib = inAttrib;
+        return inAttrib;
+    }
 
 public:
     fpreal cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
@@ -225,7 +235,7 @@ public:
 
 private:
     const GA_Attribute* normal3DAttrib = nullptr;
-    GA_Attribute* attrib;
+    GA_Attribute* attrib; // normal3DAttrib_nonConst
     
 }; // End of class GFE_Normal3D
 

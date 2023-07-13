@@ -27,6 +27,15 @@ SYS_FORCE_INLINE static T degrees(const T radians)
 
 
 
+template<typename FLOAT_T>
+static UT_Vector3T<FLOAT_T> blendDir(const UT_Vector3T<FLOAT_T>& dir0, const UT_Vector3T<FLOAT_T>& dir1, const FLOAT_T blend)
+{
+    UT_QuaternionT<FLOAT_T> q;
+    q.updateFromVectors(dir0, dir1);
+    q = UT_QuaternionT<FLOAT_T>(0,0,0,1).interpolate(q, blend);
+    return q.rotate(dir0);
+}
+
 template<typename VECTOR_T, typename T_value_type>
 SYS_FORCE_INLINE static VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
 { return lerp(a, b, t); }
@@ -103,9 +112,9 @@ static T circleRadius3Point(
             z2 = pos1[2],
             z3 = pos2[2];
 
-    const T a1 = (y1 * z2 - y2 * z1 - y1 * z3 + y3 * z1 + y2 * z3 - y3 * z2),
+    const T a1 =  (y1 * z2 - y2 * z1 - y1 * z3 + y3 * z1 + y2 * z3 - y3 * z2),
             b1 = -(x1 * z2 - x2 * z1 - x1 * z3 + x3 * z1 + x2 * z3 - x3 * z2),
-            c1 = (x1 * y2 - x2 * y1 - x1 * y3 + x3 * y1 + x2 * y3 - x3 * y2),
+            c1 =  (x1 * y2 - x2 * y1 - x1 * y3 + x3 * y1 + x2 * y3 - x3 * y2),
             d1 = -(x1 * y2 * z3 - x1 * y3 * z2 - x2 * y1 * z3 + x2 * y3 * z1 + x3 * y1 * z2 - x3 * y2 * z1);
 
     const T a2 = 2 * (x2 - x1),
@@ -178,7 +187,7 @@ static bool pointInTriangleT(
     return true;
 }
 
-    
+/*
 template<typename FLOAT_T>
 static bool pointInTriangleT1(
     const UT_Vector3T<FLOAT_T>& pointPos,
@@ -213,6 +222,7 @@ static bool pointInTriangleT1(
            dot(dir2, dir3) > 1e-05 &&
            dot(dir4, dir5) > 1e-05;
 }
+*/
 
 // typedef pointInTriangleT<fpreal16>   pointInTriangleH;
 // typedef pointInTriangleT<fpreal32>   pointInTriangleF;
