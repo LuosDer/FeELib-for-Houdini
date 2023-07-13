@@ -8,6 +8,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 #include "GFE/GFE_GroupUnion.h"
+#include "UFE/UFE_SplittableString.h"
 
 
 class GFE_AttribBlend : public GFE_AttribCreateFilterWithRef0
@@ -53,10 +54,24 @@ private:
             {
                 this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
                 this->dstAttribPtr = getOutAttribArray()[i];
-
+                //compute
                 attribBlend();
             }
+        }
+        //dstattrib empty
+        else
+        {
+            for(size_t i = 0; i < sizeInAttrib; i++)
+            {
+                this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
+
+                const UT_StringHolder& newName = this->srcAttribPtr->getName();
+                const bool detached = GFE_Type::isInvalid(newName);
+
+                dstAttribPtr = getOutAttribArray().clone(detached, this->*srcAttribPtr, this->destinationOwner, newName);
+                attribBlend();
                 
+            }
         }
 
 /*
@@ -97,37 +112,79 @@ private:
             }
         }
 */
-        return  false;
+        return  true;
     }
 
-    template<typename VECTOR_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner TO>
+    template<GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
     void attribBlend()
     {
-        //UT_ASSER
+        UT_ASSERT_P(this->&srcAttribPtr->getDetail() == this->geoTemp);
+        const GA_Attribute& srcAttribRef = *srcAttribPtr;
+        if(this->geoRef0)
+        {
+            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner)
+            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
+            {
+               GA_Offset start, end;
+               for(GA_Iterator it(r); it.blockAdvance(start, end); )
+               {
+                   for(GA_Offset elemoff = start; elemoff < end; elemoff++)
+                   {
+                       const GA_Offset dstOff = this->geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                       if (GFE_Type::isValidOffset(dstOff))
+                       {
+                          
+                       }
+                        //const GA_Offset dstOff = this->geo                      
+                   }
+               }
+            }, this->subscribeRatio, this->minGrainSize);
+        }
+
+
+
+
+
         
     }
-    template<typename VECTOR_T, GA_AttributeOwner FROM>
-    SYS_FORCE_INLINE void attribBlend()
+/*
+    template<typename VECTOR_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
+    void attribBlend()
+    {}
+*/
+    template<GA_AttributeOwner SrcOwner>
+    void attribBlend()
     {
-        switch (this->sourceOwner)
+        switch (this->dstAttribPtr->getOwner())
         {
-        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE: attribBlend<VECTOR_T, FROM, GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();break;
-        case GA_AttributeOwner::GA_ATTRIB_POINT: attribBlend<VECTOR_T, FROM, GA_AttributeOwner::GA_ATTRIB_POINT>();break;
-        case GA_AttributeOwner::GA_ATTRIB_VERTEX: attribBlend<VECTOR_T, FROM, GA_AttributeOwner::GA_ATTRIB_VERTEX>();break;
-        case GA_AttributeOwner::GA_ATTRIB_DETAIL: attribBlend<VECTOR_T, FROM, GA_AttributeOwner::GA_ATTRIB_DETAIL>();break;
-        default: UT_ASSERT_MSG(0, "Unhandled Owner"); break;
+        case GA_AttributeOwner::GA_ATTRIB_POINT:        attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_POINT>();      return; break;
+        case GA_AttributeOwner::GA_ATTRIB_VERTEX:       attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_VERTEX>();     return; break;
+        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE:    attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();  return; break;
+        case GA_AttributeOwner::GA_ATTRIB_DETAIL:       attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_DETAIL>();     return; break;
         }
+        UT_ASSERT_MSG(0, "dst AttribOwner Vaild"); 
     }
-    template<typename VECTOR_T>
-    SYS_FORCE_INLINE void attribBlendBase(VECTOR_T& origin, VECTOR_T& target, fpreal64 blend)
+    
+    void attribBlend()
     {
-        origin = (1 - blend) * origin + blend * target;
+        switch (this->srcAttribPtr->getOwner())
+        {
+        case GA_AttributeOwner::GA_ATTRIB_POINT:        attribBlend<GA_AttributeOwner::GA_ATTRIB_POINT>();      return; break;
+        case GA_AttributeOwner::GA_ATTRIB_VERTEX:       attribBlend<GA_AttributeOwner::GA_ATTRIB_VERTEX>();     return; break;
+        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE:    attribBlend<GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();  return; break;
+        case GA_AttributeOwner::GA_ATTRIB_DETAIL:       attribBlend<GA_AttributeOwner::GA_ATTRIB_DETAIL>();     return; break;
+        }
+        UT_ASSERT_MSG(0, "Src AttribOwner Vaild"); 
     }
 
+    
 public:
     fpreal64 blend = 1;
-    GA_AttributeOwner sourceOwner;
-    GA_AttributeOwner destinationOwner;
+    GA_AttributeOwner sourceOwner = GA_ATTRIB_INVALID;
+    GA_AttributeOwner destinationOwner = GA_ATTRIB_INVALID;
+
+
+    
 
 private:
     const GFE_Detail* geoTemp;
@@ -139,6 +196,7 @@ private:
 
 
 }; // End of class GFE_AttribBlend
+
 
 
 

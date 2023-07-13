@@ -182,14 +182,14 @@ sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmGroupType)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case GroupType::GUESS:     return GA_GroupType::GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GroupType::GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GroupType::GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GroupType::GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GroupType::GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
+    return GA_GroupType::GA_GROUP_INVALID;
 }
 
 static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms:: DestinationClass parmAttribClass)
@@ -197,13 +197,13 @@ static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms:: Destinati
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)
     {
-    case DestinationClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case DestinationClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case DestinationClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case DestinationClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
+    case DestinationClass::PRIM:      return GA_AttributeOwner::GA_ATTRIB_PRIMITIVE;  break;
+    case DestinationClass::POINT:     return GA_AttributeOwner::GA_ATTRIB_POINT;      break;
+    case DestinationClass::VERTEX:    return GA_AttributeOwner::GA_ATTRIB_VERTEX;     break;
+    case DestinationClass::DETAIL:    return GA_AttributeOwner::GA_ATTRIB_DETAIL;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
+    return GA_AttributeOwner::GA_ATTRIB_INVALID;
 }
 
 static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::SourceClass parmAttribClass)
@@ -211,13 +211,13 @@ static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::SourceClas
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)
     {
-    case SourceClass::PRIM:           return GA_ATTRIB_PRIMITIVE;  break;
-    case SourceClass::POINT:          return GA_ATTRIB_POINT;      break;
-    case SourceClass::VERTEX:         return GA_ATTRIB_VERTEX;     break;
-    case SourceClass::DETAIL:         return GA_ATTRIB_DETAIL;     break;
+    case SourceClass::PRIM:           return GA_AttributeOwner::GA_ATTRIB_PRIMITIVE;  break;
+    case SourceClass::POINT:          return GA_AttributeOwner::GA_ATTRIB_POINT;      break;
+    case SourceClass::VERTEX:         return GA_AttributeOwner::GA_ATTRIB_VERTEX;     break;
+    case SourceClass::DETAIL:         return GA_AttributeOwner::GA_ATTRIB_DETAIL;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
+    return GA_AttributeOwner::GA_ATTRIB_INVALID;
 }
 
 void SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
