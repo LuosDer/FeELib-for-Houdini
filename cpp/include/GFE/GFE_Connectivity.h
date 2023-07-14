@@ -4,16 +4,15 @@
 #ifndef __GFE_Connectivity_h__
 #define __GFE_Connectivity_h__
 
-//#include "GFE/GFE_Connectivity.h"
-
+#include "GFE/GFE_Connectivity.h"
 
 #include "GFE/GFE_GeoFilter.h"
+
+
 
 #include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_AttributePromote.h"
 #include "GFE/GFE_AttributeCast.h"
-
-
 
 
 class GFE_Connectivity : public GFE_AttribFilter

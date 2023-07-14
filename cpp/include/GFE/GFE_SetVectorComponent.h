@@ -24,7 +24,7 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , restVectorComponent(geo, nullptr, cookparms)
+        , restVecComp(geo, nullptr, cookparms)
     {
     }
 
@@ -34,14 +34,14 @@ public:
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , restVectorComponent(geo, nullptr, cookparms)
+        , restVecComp(geo, nullptr, cookparms)
     {
     }
 
     
     void
         setComputeParm(
-            const int8 comp = 0,
+            const int8 comp = 1,
             const fpreal attribValF = 0,
             const bool delRefAttrib = true,
             const exint subscribeRatio = 64,
@@ -55,6 +55,12 @@ public:
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
+    
+    SYS_FORCE_INLINE void setComp(const int8 v = 1)
+    { comp = v; }
+    
+    SYS_FORCE_INLINE void setComp(const GFE_Axis axis = GFE_Axis::Y)
+    { comp = GFE_Type::axisDir<>(); }
     
     void setRefAttrib(const GA_Attribute* const attrib)
     {
@@ -113,21 +119,21 @@ public:
     // }
     
     SYS_FORCE_INLINE void clearRestAttrib()
-    { restVectorComponent.getOutAttribArray().clear(); }
+    { restVecComp.getOutAttribArray().clear(); }
     
     SYS_FORCE_INLINE void setRestAttrib()
     { rest = false; }
     
     SYS_FORCE_INLINE void setRestAttrib(const char* const attribPattern)
-    { rest = true; restVectorComponent.newAttribNames = attribPattern; }
+    { rest = true; restVecComp.newAttribNames = attribPattern; }
     
     SYS_FORCE_INLINE const GFE_AttributeArray& getRestAttrib() const
-    { return restVectorComponent.getOutAttribArray(); }
+    { return restVecComp.getOutAttribArray(); }
     
     SYS_FORCE_INLINE virtual void bumpDataId() const override
     {
         GFE_AttribFilterWithRef0::bumpDataId();
-        restVectorComponent.bumpDataId();
+        restVecComp.bumpDataId();
     }
     
 private:
@@ -146,8 +152,8 @@ private:
 
         if (rest)
         {
-            restVectorComponent.groupParser.setGroup(groupParser);
-            restVectorComponent.comp = comp;
+            restVecComp.groupParser.setGroup(groupParser);
+            restVecComp.comp = comp;
         }
         
         const size_t len = getOutAttribArray().size();
@@ -158,8 +164,8 @@ private:
 
             if (rest)
             {
-                restVectorComponent.setRestAttrib(attribPtr);
-                restVectorComponent.compute();
+                restVecComp.setRestAttrib(attribPtr);
+                restVecComp.compute();
             }
             
             if (refAttribNames.getIsValid())
@@ -416,7 +422,7 @@ public:
     UFE_SplittableString refAttribNames;
     // UFE_SplittableString restAttribNames;
     
-    int8 comp = 0;
+    int8 comp = 1;
     fpreal attribValF = 0;
     
     bool delRefAttrib = false;
@@ -430,7 +436,7 @@ private:
     //GA_Attribute* attribRestPtr;
     
     bool rest = false;
-    GFE_RestVectorComponent restVectorComponent;
+    GFE_RestVectorComponent restVecComp;
     
     
     exint subscribeRatio = 64;

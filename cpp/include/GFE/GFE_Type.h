@@ -17,42 +17,33 @@
 #define GFE_MAX_LOOP_COUNT 1e10
 #define GFE_FIND_INVALID_INDEX -1
 
-#if 0
-
-//#define GFE_INVALID_OFFSET numeric_limits<GA_Offset>::max()
-using GFE_INVALID_OFFSET = numeric_limits<GA_Offset>::max();
-
-/*
-#if GA_Offset == int64
-
-#define GFE_INVALID_OFFSET 9223372036854775807
-
-#else
-
-#define GFE_INVALID_OFFSET 2147483647
-
-#endif
-*/
 
 
-#else
+
+
+#define GFE_INVALID_OFFSET32 2147483647
+#define GFE_INVALID_OFFSET64 9223372036854775807
 
 
 #if 1
 
-#define GFE_INVALID_OFFSET32 2147483647
-#define GFE_INVALID_OFFSET64 9223372036854775807
 #define GFE_INVALID_OFFSET GFE_INVALID_OFFSET32
 
 #else
 
-constexpr long GFE_INVALID_OFFSET = 9223372036854775807;
+//#define GFE_INVALID_OFFSET numeric_limits<GA_Offset>::max()
+using GFE_INVALID_OFFSET = numeric_limits<GA_Offset>::max();
+
+#if GA_Offset == int64
+#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET64
+#else
+#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET32
+#endif
 
 #endif
 
 
 
-#endif
 
 
 
@@ -236,7 +227,7 @@ namespace GFE_Type {
     
     
     
-    
+
 template<typename VECTOR_T>
 static VECTOR_T axisDir(const GFE_Axis axis)
 {

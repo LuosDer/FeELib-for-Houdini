@@ -70,10 +70,7 @@ GFE_Fuse(
     void
         setComputeParm(
             const Method method = Method::Point,
-            const bool modifyTarget = false,
-            const bool consolidate = false,
-            const bool deleteConsolidated = true,
-            const bool delUnusedPoint = false
+            const bool modifyTarget = false
         )
     {
         setHasComputed();
@@ -81,37 +78,44 @@ GFE_Fuse(
         this->method = method;
         
 #if GFE_Fuse_UnderlyingAlgorithm_UseGU
-        this->delUnusedPoint = delUnusedPoint;
-        
         comSnapParm.myModifyBothQueryAndTarget = modifyTarget;
-        comSnapParm.myConsolidate = consolidate;
-        comSnapParm.myDeleteConsolidated = deleteConsolidated;
-        
         pointSnapParm.myModifyBothQueryAndTarget = modifyTarget;
-        pointSnapParm.myConsolidate = consolidate;
-        pointSnapParm.myDeleteConsolidated = deleteConsolidated;
-        
         gridSnapParm.myModifyBothQueryAndTarget = modifyTarget;
-        gridSnapParm.myConsolidate = consolidate;
-        gridSnapParm.myDeleteConsolidated = deleteConsolidated;
-        
         specifiedSnapParm.myModifyBothQueryAndTarget = modifyTarget;
-        specifiedSnapParm.myConsolidate = consolidate;
-        specifiedSnapParm.myDeleteConsolidated = deleteConsolidated;
 #else
         fuseParms.setModifyboth(modifyTarget);
-        fuseParms.setConsolidateSnappedPoints(consolidate);
-        fuseParms.setKeepConsolidatedPoints(!deleteConsolidated);
-        fuseParms.setDelUnusedPoints(delUnusedPoint);
         
 #endif
     }
-
     
-SYS_FORCE_INLINE void setConsolidate(const bool b = true)
-{ fuseParms.setConsolidateSnappedPoints(b); }
-
     
+SYS_FORCE_INLINE void setConsolidate(
+    const bool consolidate = true,
+    const bool deleteConsolidated = true,
+    const bool delUnusedPoint = false
+)
+{
+#if GFE_Fuse_UnderlyingAlgorithm_UseGU
+    this->delUnusedPoint = delUnusedPoint;
+        
+    comSnapParm.myConsolidate = consolidate;
+    comSnapParm.myDeleteConsolidated = deleteConsolidated;
+        
+    pointSnapParm.myConsolidate = consolidate;
+    pointSnapParm.myDeleteConsolidated = deleteConsolidated;
+        
+    gridSnapParm.myConsolidate = consolidate;
+    gridSnapParm.myDeleteConsolidated = deleteConsolidated;
+        
+    specifiedSnapParm.myConsolidate = consolidate;
+    specifiedSnapParm.myDeleteConsolidated = deleteConsolidated;
+#else
+    fuseParms.setConsolidateSnappedPoints(consolidate);
+    fuseParms.setKeepConsolidatedPoints(!deleteConsolidated);
+    fuseParms.setDelUnusedPoints(delUnusedPoint);
+#endif
+}
+
 #if GFE_Fuse_UnderlyingAlgorithm_UseGU
     SYS_FORCE_INLINE void setRecomputeNormal(bool b)
     { recomputeNormal = b; }

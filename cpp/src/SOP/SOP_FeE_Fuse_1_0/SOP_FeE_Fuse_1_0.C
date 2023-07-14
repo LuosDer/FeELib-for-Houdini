@@ -960,6 +960,11 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
 /*
     GFE_Fuse fuse(geo, nullptr, cookparms);
+    GFE_Fuse fuse(geoOriginTmp, nullptr, cookparms);
+    fuse.method = GFE_Fuse::Method::Point;
+    fuse.setPointComputeParm(true, fuseDist, true);
+    fuse.setConsolidate();
+    //fuse.setPositionAttrib("P");
     fuse.compute();
 */
     
@@ -973,7 +978,8 @@ SOP_FeE_Fuse_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         fuse.setFuse2D(static_cast<int8>(sopparms.getAxis()), sopparms.getFuseRefGeo2D());
     
 
-    fuse.setComputeParm(method, sopparms.getModifyTarget(), sopparms.getFuseSnappedPoint(), !sopparms.getKeepFusedPoint(), sopparms.getDelUnusedPoint());
+    fuse.setComputeParm(method, sopparms.getModifyTarget());
+    fuse.setConsolidate(sopparms.getFuseSnappedPoint(), !sopparms.getKeepFusedPoint(), sopparms.getDelUnusedPoint());
     
     switch (method)
     {

@@ -6,17 +6,7 @@
 
 #include "GFE/GFE_UVGridify.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
-
-
-enum class GFE_UVGridify_RowColMethod
-{
-    Uniform,
-    Rows,
-    Columns,
-};
-
 
 
 
@@ -24,11 +14,20 @@ class GFE_UVGridify : public GFE_AttribFilter {
 
 public:
 
+    enum RowColMethod
+    {
+        Uniform,
+        Rows,
+        Columns,
+    };
+
+
+
     using GFE_AttribFilter::GFE_AttribFilter;
 
     void
         setComputeParm(
-            const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform,
+            const GFE_UVGridify::RowColMethod rowsOrColsNumMethod = GFE_UVGridify::RowColMethod::Uniform,
             const GA_Size rowsOrColsNum = 2,
             const bool reverseUVu = false,
             const bool reverseUVv = false,
@@ -60,7 +59,9 @@ private:
         
         if (groupParser.isEmpty())
             return true;
-
+        
+        setValidConstPosAttrib();
+        
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
@@ -76,7 +77,7 @@ private:
                 case GA_STORE_REAL64: uvGridify<UT_Vector2T<fpreal64>>(); break;
                 default: break;
                 }
-                break;
+            break;
             case 3:
                 switch (storage)
                 {
@@ -85,7 +86,7 @@ private:
                 case GA_STORE_REAL64: uvGridify<UT_Vector3T<fpreal64>>(); break;
                 default: break;
                 }
-                break;
+            break;
             case 4:
                 switch (storage)
                 {
@@ -94,7 +95,7 @@ private:
                 case GA_STORE_REAL64: uvGridify<UT_Vector4T<fpreal64>>(); break;
                 default: break;
                 }
-                break;
+            break;
             default: break;
             }
         }
@@ -110,9 +111,10 @@ private:
 
         
         const GA_RWHandleT<VECTOR_T> uv_h(uvAttrib);
-        const GA_ROHandleT<POS_VECTOR_T> pos_h(geo->getP());
+        const GA_ROHandleT<POS_VECTOR_T> pos_h(posAttrib);
         const bool isPointAttrib = uvAttrib->getOwner() == GA_ATTRIB_POINT;
         
+        vtxPointRef = geo->getTopology().getPointRef();
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
             value_type scale;
@@ -124,21 +126,22 @@ private:
             {
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
-                    const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+                    const GA_Size numvtx = vertices.size();
                     if (numvtx == 0)
                         continue;
                     GA_Size rows, cols;
                     switch (rowsOrColsNumMethod)
                     {
-                    case GFE_UVGridify_RowColMethod::Uniform:
+                    case GFE_UVGridify::RowColMethod::Uniform:
                         rows = (GA_Size)ceil(numvtx / 4.0);
                         cols = (numvtx - rows - rows) / 2;
                         break;
-                    case GFE_UVGridify_RowColMethod::Rows:
+                    case GFE_UVGridify::RowColMethod::Rows:
                         rows = rowsOrColsNum - 1;
                         cols = (numvtx - rows - rows) / 2;
                         break;
-                    case GFE_UVGridify_RowColMethod::Columns:
+                    case GFE_UVGridify::RowColMethod::Columns:
                         cols = rowsOrColsNum - 1;
                         rows = (numvtx - cols - cols) / 2;
                         break;
@@ -154,13 +157,13 @@ private:
                     {
                         if (numvtx > rows + rows + cols && numvtx > 2)
                         {
-                            const POS_VECTOR_T& pos0 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0)));
-                            const POS_VECTOR_T& pos1 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows)));
-                            const POS_VECTOR_T& pos2 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + cols)));
-                            //GA_Offset a = geo->getPrimitiveVertexOffset(primoff, rows + cols + rows);
+                            const POS_VECTOR_T& pos0 = pos_h.get(vtxPointRef->getLink(vertices[0]));
+                            const POS_VECTOR_T& pos1 = pos_h.get(vtxPointRef->getLink(vertices[rows]));
+                            const POS_VECTOR_T& pos2 = pos_h.get(vtxPointRef->getLink(vertices[rows + cols]));
+                            //GA_Offset a = vtxPointRef->getLink(vertices[rows + cols + rows]);
                             //GA_Offset b = geo->vertexPoint(a);
                             //const POS_VECTOR_T& pos3 = pos_h.get(b);
-                            const POS_VECTOR_T& pos3 = pos_h.get(geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, rows + rows + cols)));
+                            const POS_VECTOR_T& pos3 = pos_h.get(geo->vertexPoint(vtxPointRef->getLink(vertices[rows + cols + rows]));
                             const value_type dist0 = pos0.distance(pos1);
                             const value_type dist1 = pos1.distance(pos2);
                             const value_type dist2 = pos2.distance(pos3);
@@ -187,7 +190,7 @@ private:
                         uv[0] = tmpI==0 ? 0 : fpreal(vtxpnum) / tmpI;
                         uv[1] = 1;
 
-                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                     for (; vtxpnum < rows + cols; vtxpnum++)
                     {
@@ -195,7 +198,7 @@ private:
                         uv[0] = 1;
                         uv[1] = tmpI==0 ? 1 : 1 - (float(vtxpnum - rows) / tmpI);
 
-                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                     const GA_Size numvtx_preCols = numvtx - cols;
                     for (; vtxpnum < numvtx_preCols; vtxpnum++)
@@ -204,7 +207,7 @@ private:
                         uv[0] = tmpI == 0 ? 1 : (1 - float(tmpI) / (numvtx - rows - cols - cols - 1));
                         uv[1] = 0;
 
-                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                     for (; vtxpnum < numvtx; vtxpnum++)
                     {
@@ -212,7 +215,7 @@ private:
                         uv[0] = 0;
                         uv[1] = tmpI==0 ? 1 : (1 - float(numvtx - vtxpnum - (rows == 0)) / tmpI);
 
-                        uvGridify(uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
                     }
                 }
             }
@@ -223,7 +226,8 @@ private:
 
 
     template<typename VECTOR_T>
-    void uvGridify(
+    SYS_FORCE_INLINE void uvGridify(
+        const GA_OffsetListRef& vertices,
         const GA_RWHandleT<VECTOR_T>& uv_h,
         VECTOR_T& uv,
         const GA_Offset primoff,
@@ -242,9 +246,9 @@ private:
         if (!uniScale)
             uv[scaleIdx] *= scale;
         
-        GA_Offset elemoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+        GA_Offset elemoff = vertices[vtxpnum];
         if (isPointAttrib)
-            elemoff = geo->vertexPoint(elemoff);
+            elemoff = vtxPointRef->getLink(elemoff);
         uv_h.set(elemoff, uv);
     }
 
@@ -252,7 +256,7 @@ private:
 
     
 public:
-    GFE_UVGridify_RowColMethod rowsOrColsNumMethod = GFE_UVGridify_RowColMethod::Uniform;
+    GFE_UVGridify::RowColMethod rowsOrColsNumMethod = GFE_UVGridify::RowColMethod::Uniform;
     GA_Size rowsOrColsNum = 2;
     bool reverseUVu = false;
     bool reverseUVv = false;
@@ -260,6 +264,8 @@ public:
 
 private:
     GA_Attribute* uvAttrib = nullptr;
+    
+    const GA_ATITopology* vtxPointRef;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 64;

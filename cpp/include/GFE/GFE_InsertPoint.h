@@ -1,16 +1,19 @@
 
 #pragma once
 
-#ifndef __GFE_InsertPointEdge_h__
-#define __GFE_InsertPointEdge_h__
+#ifndef __GFE_InsertPoint_h__
+#define __GFE_InsertPoint_h__
 
-#include "GFE/GFE_InsertPointEdge.h"
+#include "GFE/GFE_InsertPoint.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
+#include "GFE/GFE_SetVectorComponent.h"
+
+#define __TEMP_GFE_InsertPoint_RestPosCompName "__TEMP_GFE_InsertPoint_RestPosCompName"
 
 
-class GFE_InsertPointEdge : public GFE_GeoFilter {
+class GFE_InsertPoint : public GFE_GeoFilter {
 
 
 public:
@@ -18,50 +21,68 @@ public:
 
 
     void
-    setComputeParm(
-            const fpreal dist = 0,
-            const bool extendStart       = true,
-            const bool extendEnd         = true,
-            const bool ignoreTwoNebPoint = false,
-            const bool tryFindNextPointIfOverlap = false,
+        setComputeParm(
+            const fpreal threshold = 1e-05,
+            const bool insert2D = false,
+            const GFE_Axis axis = GFE_Axis::Y,
+            
             const exint subscribeRatio = 64,
-            const exint minGrainSize   = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->dist = dist;
-        this->extendStart       = extendStart;
-        this->extendEnd         = extendEnd;
-        this->ignoreTwoNebPoint = ignoreTwoNebPoint;
-        this->tryFindNextPointIfOverlap = tryFindNextPointIfOverlap;
+        this->threshold = threshold;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
 
+    SYS_FORCE_INLINE void setInsert2D()
+    { insert2D = false; }
+
+    SYS_FORCE_INLINE void setInsert2D(const GFE_Axis a)
+    { insert2D = true; axis = a; }
+
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
-        if (!extendStart && !extendEnd || dist == 0)
-            return true;
-            
         if (groupParser.isEmpty())
             return true;
         
-        if (GFE_Type::isInvalidPosAttrib(posAttribNonConst))
-            posAttribNonConst = geo->getP();
-        UT_ASSERT_MSG_P(posAttribNonConst, "no posAttrib");
+        setValidPosAttrib();
+        
+        GFE_SetVectorComponent setVecComp(geo, nullptr, cookparms);
+        if (insert2D)
+        {
+            setVecComp.comp = axis;
+            setVecComp.getOutAttribArray().set(posAttribNonConst);
+            setVecComp.setRestAttrib(__TEMP_GFE_InsertPoint_RestPosCompName);
+            setVecComp.compute();
+            UT_ASSERT_P(!setVecComp.getRestAttrib().isEmpty());
+        }
 
+
+        
         pointGroup = groupParser.classType() == GA_GROUP_PRIMITIVE ? nullptr : groupParser.getPointGroup();
         switch (posAttribNonConst->getAIFTuple()->getStorage(posAttribNonConst))
         {
-        case GA_STORE_REAL16: extendCurveStraight<fpreal16>(); break;
-        case GA_STORE_REAL32: extendCurveStraight<fpreal32>(); break;
-        case GA_STORE_REAL64: extendCurveStraight<fpreal64>(); break;
-        default: UT_ASSERT_MSG(0, "not possible storage"); break;
+        case GA_STORE_REAL16: insertPoint<fpreal16>();  break;
+        case GA_STORE_REAL32: insertPoint<fpreal32>();  break;
+        case GA_STORE_REAL64: insertPoint<fpreal64>();  break;
+        default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+        }
+
+
+        
+        if (insert2D)
+        {
+            GA_Attribute* const restAttrib = geo->findPointAttrib(__TEMP_GFE_InsertPoint_RestPosCompName);
+            UT_ASSERT_P(restAttrib);
+            setVecComp.setRefAttrib(restAttrib);
+            setVecComp.compute();
+            geo->destroyAttrib(restAttrib);
         }
         
         return true;
@@ -69,10 +90,9 @@ private:
 
 
 template<typename FLOAT_T>
-void extendCurveStraight()
+void insertPoint()
 {
     const GA_RWHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttribNonConst);
-        
     UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
@@ -80,85 +100,36 @@ void extendCurveStraight()
         {
             for (GA_Offset primoff = start; primoff < end; ++primoff)
             {
-                const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-                if (numvtx < 2)
-                    continue;
-
-                if (extendStart)
-                    extendCurveStraight<FLOAT_T>(pos_h, primoff, numvtx, 0, 1);
-
-                if (extendEnd)
-                    extendCurveStraight<FLOAT_T>(pos_h, primoff, numvtx, numvtx-1, -1);
+                const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+                const GA_Size numvtx = vertices.size();
+                const GA_Size lastVtxpnum = numvtx-1;
+                for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                {
+                    const GA_Offset ptoff = geo->vertexPoint(vertices[vtxpnum]);
+                }
             }
         }
     }, subscribeRatio, minGrainSize);
 }
 
-template<typename FLOAT_T>
-SYS_FORCE_INLINE void
-extendCurveStraight(
-    const GA_RWHandleT<UT_Vector3T<FLOAT_T>>& pos_h,
-    const GA_Offset primoff,
-    const GA_Size numvtx,
-    const GA_Size vtxpnum,
-    const GA_Size intArg
-)
-{
-    const GA_Offset primvtx0 = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
-    const GA_Offset primpoint0 = geo->vertexPoint(primvtx0);
-
-    if (pointGroup && !pointGroup->containsOffset(primpoint0))
-        return;
-
-    if (ignoreTwoNebPoint)
-    {
-        if (geo->pointVertex(primpoint0) != primvtx0)
-            return;
-        const GA_Offset vtxoff_next = geo->vertexToNextVertex(primvtx0);
-        if (GFE_Type::isValidOffset(vtxoff_next) && vtxoff_next != primvtx0)
-            return;
-    }
-
-    const UT_Vector3T<FLOAT_T> pos = pos_h.get(primpoint0);
-    UT_Vector3T<FLOAT_T> nebpos;
-    if (tryFindNextPointIfOverlap)
-    {
-        GA_Size vtxpnum_neb = vtxpnum;
-        GA_Offset primpoint1;
-        do {
-            vtxpnum_neb += intArg;
-            primpoint1 = geo->getPrimitivePointOffset(primoff, vtxpnum_neb);
-            nebpos = pos_h.get(primpoint1);
-        } while (vtxpnum_neb > 0 && vtxpnum_neb < numvtx && (primpoint0 == primpoint1 || nebpos == pos));
-    }
-    else
-    {
-        const GA_Offset primpoint1 = geo->getPrimitivePointOffset(primoff, intArg);
-        nebpos = pos_h.get(primpoint1);
-    }
-
-    UT_Vector3T<FLOAT_T> dir(pos - nebpos);
-    dir.normalize();
-    dir = pos + dir * dist;
-    pos_h.set(primpoint0, dir);
-}
-
 
 public:
-    fpreal dist = 0;
-    bool extendStart = true;
-    bool extendEnd = true;
-    bool ignoreTwoNebPoint = false;
-    bool tryFindNextPointIfOverlap = false;
-
+    fpreal threshold = 1e-05;
+    
 private:
+    bool insert2D = false;
+    GFE_Axis axis = GFE_Axis::Y;
+    
+private:
+    
     const GA_PointGroup* pointGroup;
     
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;
 
+#undef __TEMP_GFE_InsertPoint_RestPosCompName
 
-}; // End of class GFE_InsertPointEdge
+}; // End of class GFE_InsertPoint
 
 
 

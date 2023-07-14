@@ -23,8 +23,8 @@ public:
     void
     setComputeParm(
             const fpreal dist = 0,
-            const bool extendStart       = true,
-            const bool extendEnd         = true,
+            const bool extendStart = true,
+            const bool extendEnd   = true,
             const bool ignoreTwoNebPoint = false,
             const bool tryFindNextPointIfOverlap = false,
             const exint subscribeRatio = 64,
@@ -33,8 +33,8 @@ public:
     {
         setHasComputed();
         this->dist = dist;
-        this->extendStart       = extendStart;
-        this->extendEnd         = extendEnd;
+        this->extendStart = extendStart;
+        this->extendEnd   = extendEnd;
         this->ignoreTwoNebPoint = ignoreTwoNebPoint;
         this->tryFindNextPointIfOverlap = tryFindNextPointIfOverlap;
         this->subscribeRatio = subscribeRatio;
@@ -44,7 +44,6 @@ public:
     
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -54,10 +53,9 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        if (GFE_Type::isInvalidPosAttrib(posAttribNonConst))
-            posAttribNonConst = geo->getP();
-        UT_ASSERT_MSG_P(posAttribNonConst, "no posAttrib");
-
+        setValidConstPosAttrib();
+        
+        vtxPointRef = geo->getTopology().getPointRef();
         pointGroup = groupParser.classType() == GA_GROUP_PRIMITIVE ? nullptr : groupParser.getPointGroup();
         switch (posAttribNonConst->getAIFTuple()->getStorage(posAttribNonConst))
         {
@@ -75,7 +73,6 @@ template<typename FLOAT_T>
 void extendCurveStraight()
 {
     const GA_RWHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttribNonConst);
-        
     UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)
     {
         GA_Offset start, end;
@@ -83,15 +80,16 @@ void extendCurveStraight()
         {
             for (GA_Offset primoff = start; primoff < end; ++primoff)
             {
-                const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
+                const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+                const GA_Size numvtx = vertices.size();
                 if (numvtx < 2)
                     continue;
 
                 if (extendStart)
-                    extendCurveStraight<FLOAT_T>(pos_h, primoff, numvtx, 0, 1);
+                    extendCurveStraight<FLOAT_T>(pos_h, vertices, numvtx, 0, 1);
 
                 if (extendEnd)
-                    extendCurveStraight<FLOAT_T>(pos_h, primoff, numvtx, numvtx-1, -1);
+                    extendCurveStraight<FLOAT_T>(pos_h, vertices, numvtx, numvtx-1, -1);
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -101,13 +99,13 @@ template<typename FLOAT_T>
 SYS_FORCE_INLINE void
 extendCurveStraight(
     const GA_RWHandleT<UT_Vector3T<FLOAT_T>>& pos_h,
-    const GA_Offset primoff,
+    const GA_OffsetListRef& vertices,
     const GA_Size numvtx,
     const GA_Size vtxpnum,
     const GA_Size intArg
 )
 {
-    const GA_Offset primvtx0 = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+    const GA_Offset primvtx0 = vertices[vtxpnum];
     const GA_Offset primpoint0 = geo->vertexPoint(primvtx0);
 
     if (pointGroup && !pointGroup->containsOffset(primpoint0))
@@ -130,13 +128,13 @@ extendCurveStraight(
         GA_Offset primpoint1;
         do {
             vtxpnum_neb += intArg;
-            primpoint1 = geo->getPrimitivePointOffset(primoff, vtxpnum_neb);
+            primpoint1 = vtxPointRef->getLink(vertices[vtxpnum_neb]);
             nebpos = pos_h.get(primpoint1);
         } while (vtxpnum_neb > 0 && vtxpnum_neb < numvtx && (primpoint0 == primpoint1 || nebpos == pos));
     }
     else
     {
-        const GA_Offset primpoint1 = geo->getPrimitivePointOffset(primoff, intArg);
+        const GA_Offset primpoint1 = vtxPointRef->getLink(vertices[intArg]);
         nebpos = pos_h.get(primpoint1);
     }
 
@@ -150,12 +148,14 @@ extendCurveStraight(
 public:
     fpreal dist = 0;
     bool extendStart = true;
-    bool extendEnd = true;
+    bool extendEnd   = true;
     bool ignoreTwoNebPoint = false;
     bool tryFindNextPointIfOverlap = false;
 
 private:
     const GA_PointGroup* pointGroup;
+    
+    const GA_ATITopology* vtxPointRef;
     
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;

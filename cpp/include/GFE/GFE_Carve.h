@@ -368,18 +368,17 @@ void carve()
                         continue;
                     }
                 }
-
-                const GA_Size numvtx = geoSingle->getPrimitiveVertexCount(primoff);
-                const GA_Size lastVtxpnum = numvtx-1;
+                const GA_OffsetListRef& vertices = geoSingle->getPrimitiveVertexList(primoff);
+                const GA_Size numvtx = vertices.size();
                 
                 if constexpr(CARVE_TYPE != GFE_CarveType::End)
                 {
-                    primvtx0 = geoSingle->getPrimitiveVertexOffset(primoff, 0);
+                    primvtx0 = vertices[0];
                     primpt0  = geoSingle->vertexPoint(primvtx0);
                 }
                 if constexpr(CARVE_TYPE != GFE_CarveType::Start)
                 {
-                    primvtx1 = geoSingle->getPrimitiveVertexOffset(primoff, numvtx-1);
+                    primvtx1 = vertices[numvtx-1];
                     primpt1  = geoSingle->vertexPoint(primvtx1);
                 }
                 if constexpr(CARVE_TYPE != GFE_CarveType::End)
@@ -504,10 +503,10 @@ void carve()
                 }
 
                 if constexpr(CARVE_TYPE != GFE_CarveType::End)
-                    carveSingle<CARVE_TYPE, 0>(primoff, numvtx, domainUStart);
+                    carveSingle<CARVE_TYPE, 0>(vertices, primoff, numvtx, domainUStart);
                 
                 if constexpr(CARVE_TYPE != GFE_CarveType::Start)
-                    carveSingle<CARVE_TYPE, 1>(primoff, numvtx, domainUEnd);
+                    carveSingle<CARVE_TYPE, 1>(vertices, primoff, numvtx, domainUEnd);
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -535,6 +534,7 @@ void carve()
 
 template<GFE_CarveType CARVE_TYPE, bool isEnd>
 void carveSingle(
+    const GA_OffsetListRef& vertices,
     const GA_Offset primoff,
     const GA_Size numvtx,
     const fpreal domainU
@@ -562,7 +562,7 @@ void carveSingle(
         for (GA_Size vtxpnum = numvtx-1; ; --vtxpnum)
         {
             //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
-            GA_Offset vtxoff = geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum);
+            GA_Offset vtxoff = vertices[vtxpnum];
             GA_Offset ptoff  = geoSingle->vertexPoint(vtxoff);
 
             if (carveSpace != GFE_CarveSpace::LocalAverage)
@@ -576,19 +576,19 @@ void carveSingle(
                 if constexpr(CARVE_TYPE == GFE_CarveType::Both)
                 {
                     for (GA_Size vtxpnum_prev = vtxpnum + (arriveBound ? 1 : 2); vtxpnum_prev < numvtx; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                        delVertexGroup->setElement(vertices[vtxpnum_prev], true);
                 }
                 else
                 {
                     if (arriveBound)
                     {
                         for (GA_Size vtxpnum_prev = 0; vtxpnum_prev <= vtxpnum; ++vtxpnum_prev)
-                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                            delVertexGroup->setElement(vertices[vtxpnum_prev], true);
                     }
                     else
                     {
                         for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < vtxpnum; ++vtxpnum_prev)
-                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                            delVertexGroup->setElement(vertices[vtxpnum_prev], true);
                     }
                 }
 
@@ -609,8 +609,8 @@ void carveSingle(
                 if (vtxpnum == numvtx-1)
                     break;
 
-                const GA_Offset ptoff0 = primPoint(geoSingle, primoff, vtxpnum);
-                const GA_Offset ptoff1 = primPoint(geoSingle, primoff, vtxpnum+1);
+                const GA_Offset ptoff0 = geoSingle->vertexPoint(vertices[vtxpnum]);
+                const GA_Offset ptoff1 = geoSingle->vertexPoint(vertices[vtxpnum+1]);
                 if constexpr(CARVE_TYPE == GFE_CarveType::Both)
                     interpAttribs(ptoff1, ptoff0,       (domainU - uv_rest) / (uv - uv_rest));
                 else
@@ -631,7 +631,7 @@ void carveSingle(
         for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
         {
             //flag = constexpr(isEnd) ? vtxpnum >= 0 : vtxpnum < numvtx;
-            GA_Offset vtxoff = geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum);
+            GA_Offset vtxoff = vertices[vtxpnum];
             GA_Offset ptoff  = geoSingle->vertexPoint(vtxoff);
 
             if (carveSpace != GFE_CarveSpace::LocalAverage)
@@ -646,18 +646,18 @@ void carveSingle(
                     if (arriveBound)
                     {
                         for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < vtxpnum; ++vtxpnum_prev)
-                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                            delVertexGroup->setElement(vertices[vtxpnum_prev], true);
                     }
                     else
                     {
                         for (GA_Size vtxpnum_prev = 0; vtxpnum_prev < vtxpnum-1; ++vtxpnum_prev)
-                            delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                            delVertexGroup->setElement(vertices[vtxpnum_prev], true);
                     }
                 }
                 else
                 {
                     for (GA_Size vtxpnum_prev = vtxpnum+1; vtxpnum_prev < numvtx; ++vtxpnum_prev)
-                        delVertexGroup->setElement(geoSingle->getPrimitiveVertexOffset(primoff, vtxpnum_prev), true);
+                        delVertexGroup->setElement(vertices[vtxpnum_prev], true);
                 }
 
                 //if (vtxpnum == 0 && uv == domainUStart)
@@ -679,8 +679,8 @@ void carveSingle(
                 if (vtxpnum == 0)
                     break;
                 
-                const GA_Offset ptoff0 = primPoint(geoSingle, primoff, vtxpnum);
-                const GA_Offset ptoff1 = primPoint(geoSingle, primoff, vtxpnum-1);
+                const GA_Offset ptoff0 = geoSingle->vertexPoint(vertices[vtxpnum]);
+                const GA_Offset ptoff1 = geoSingle->vertexPoint(vertices[vtxpnum-1]);
                 if constexpr(CARVE_TYPE == GFE_CarveType::Both)
                     interpAttribs(ptoff1, ptoff0,       (domainU - uv_rest) / (uv - uv_rest));
                 else
@@ -693,10 +693,6 @@ void carveSingle(
         }
     }
 }
-
-    
-SYS_FORCE_INLINE GA_Offset primPoint(const GA_Detail* const geo, const GA_Offset primoff, const GA_Offset vtxpnum)
-{ return geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, vtxpnum)); }
 
 
 private:
