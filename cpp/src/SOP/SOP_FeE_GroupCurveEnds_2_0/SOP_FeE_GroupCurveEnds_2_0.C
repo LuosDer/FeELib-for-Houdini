@@ -304,18 +304,18 @@ SOP_FeE_GroupCurveEnds_2_0::cookVerb() const
 
 
 
-static GFE_GroupCurveEnds::Type
+static GFE_CurveEndsType
 sopVisualize(const SOP_FeE_GroupCurveEnds_2_0Parms::Visualize parmVisualize)
 {
     using namespace SOP_FeE_GroupCurveEnds_2_0Enums;
     switch (parmVisualize)
     {
-    case Visualize::ENDS:    return GFE_GroupCurveEnds::Type::Ends;    break;
-    case Visualize::START:   return GFE_GroupCurveEnds::Type::Start;   break;
-    case Visualize::END:     return GFE_GroupCurveEnds::Type::End;     break;
+    case Visualize::ENDS:    return GFE_CurveEndsType::Ends;    break;
+    case Visualize::START:   return GFE_CurveEndsType::Start;   break;
+    case Visualize::END:     return GFE_CurveEndsType::End;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Visualize type!");
-    return GFE_GroupCurveEnds::Type::Ends;
+    return GFE_CurveEndsType::Ends;
 }
 
 
@@ -368,7 +368,7 @@ SOP_FeE_GroupCurveEnds_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
-    const GFE_GroupCurveEnds::Type visualizeType = sopVisualize(sopparms.getVisualize());
+    const GFE_CurveEndsType visualizeType = sopVisualize(sopparms.getVisualize());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())

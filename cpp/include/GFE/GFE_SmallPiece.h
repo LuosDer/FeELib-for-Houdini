@@ -34,7 +34,6 @@ public:
 
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {

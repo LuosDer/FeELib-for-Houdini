@@ -6,29 +6,14 @@
 
 #include "GFE/GFE_GroupCurveEnds.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
 
 class GFE_GroupCurveEnds : public GFE_AttribFilter {
 
+
 public:
-    
-/*
-
-GFE_GroupCurveEnds::Type::Ends
-
-*/
-    enum Type
-    {
-        Ends,
-        Start,
-        End,
-    };
-
-
     
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
@@ -75,13 +60,13 @@ GFE_GroupCurveEnds_SPECIALIZATION_SetAttrib(ends, Ends);
 
     
 
-    virtual void visualizeOutGroup(const GFE_GroupCurveEnds::Type type)
+    virtual void visualizeOutGroup(const GFE_CurveEndsType type)
     {
         switch (type)
         {
-        case GFE_GroupCurveEnds::Type::Ends:  visualizeGroup(endsGroup);  break;
-        case GFE_GroupCurveEnds::Type::Start: visualizeGroup(startGroup); break;
-        case GFE_GroupCurveEnds::Type::End:   visualizeGroup(endGroup);   break;
+        case GFE_CurveEndsType::Ends:  visualizeGroup(endsGroup);  break;
+        case GFE_CurveEndsType::Start: visualizeGroup(startGroup); break;
+        case GFE_CurveEndsType::End:   visualizeGroup(endGroup);   break;
         }
     }
     

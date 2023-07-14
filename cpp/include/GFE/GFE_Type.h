@@ -131,8 +131,33 @@ enum class GFE_Axis
     X,
     Y,
     Z,
-    Invalid,
+    Invalid = -1,
 };
+
+enum class GFE_CurveEndsType
+{
+    Ends,
+    Start,
+    End,
+};
+
+#if 0
+
+switch (curveEndsType)
+{
+case GFE_CurveEndsType::Ends:  break;
+case GFE_CurveEndsType::Start: break;
+case GFE_CurveEndsType::End:   break;
+default: UT_ASSERT_MSG(0, "Unhandled GFE_CurveEndsType"); break;
+}
+
+#endif
+
+
+
+
+
+
 
 namespace GFE_Type {
 
@@ -207,11 +232,11 @@ namespace GFE_Type {
     {
         switch (mergeMethod)
         {
-        case GFE_GroupMergeMethod::First:          return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;     break;
-        case GFE_GroupMergeMethod::Last:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_LAST;      break;
-        case GFE_GroupMergeMethod::Min:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MIN;       break;
-        case GFE_GroupMergeMethod::Max:            return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MAX;       break;
-        case GFE_GroupMergeMethod::Mode:           return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MODE;      break;
+        case GFE_GroupMergeMethod::First: return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;     break;
+        case GFE_GroupMergeMethod::Last:  return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_LAST;      break;
+        case GFE_GroupMergeMethod::Min:   return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MIN;       break;
+        case GFE_GroupMergeMethod::Max:   return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MAX;       break;
+        case GFE_GroupMergeMethod::Mode:  return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_MODE;      break;
         }
         UT_ASSERT_MSG(0, "Unhandled Group Merge Method!");
         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;
@@ -237,7 +262,7 @@ static VECTOR_T axisDir(const GFE_Axis axis)
     case GFE_Axis::Y: return VECTOR_T(0,1,0); break;
     case GFE_Axis::Z: return VECTOR_T(0,0,1); break;
     }
-    UT_ASSERT_MSG(0, "cant handled axis");
+    UT_ASSERT_MSG(0, "Unhandled Axis");
     return VECTOR_T(0,1,0);
 }
 
@@ -259,15 +284,17 @@ SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_Stri
     
 static bool isAttribTypeEqual(const GA_Attribute* const attrib0, const GA_Attribute* const attrib1)
 {
-        UT_ASSERT_P(attrib0);
-        UT_ASSERT_P(attrib1);
-        return &attrib0->getDetail() == &attrib1->getDetail() &&
-                attrib0->getTupleSize() == attrib1->getTupleSize() &&
-                attrib0->getStorageClass() == attrib1->getStorageClass() &&
-                (
-                    !attrib0->getAIFTuple() ||
-                    attrib0->getAIFTuple() && attrib1->getAIFTuple() && attrib0->getAIFTuple()->getStorage(attrib0) == attrib1->getAIFTuple()->getStorage(attrib1)
-                );
+    UT_ASSERT_P(attrib0);
+    UT_ASSERT_P(attrib1);
+    return &attrib0->getDetail()       == &attrib1->getDetail()       &&
+            attrib0->getTupleSize()    ==  attrib1->getTupleSize()    &&
+            attrib0->getStorageClass() ==  attrib1->getStorageClass() &&
+            (
+                !attrib0->getAIFTuple() ||
+                 attrib0->getAIFTuple() &&
+                 attrib1->getAIFTuple() &&
+                 attrib0->getAIFTuple()->getStorage(attrib0) == attrib1->getAIFTuple()->getStorage(attrib1)
+            );
 }
 
 static bool checkTupleAttrib(
@@ -280,31 +307,22 @@ static bool checkTupleAttrib(
 {
     if (!attrib)
         return false;
-
-    //int a = attribPtr->getTupleSize();
     if (attrib->getTupleSize() != tupleSize)
-    {
         return false;
-    }
     if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
-    {
         return false;
-    }
+        
     const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
     if (aifTuple)
     {
         if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attrib) != storage) ||
             (defaults && aifTuple->getDefaults(attrib) != *defaults))
-        {
             return false;
-        }
     }
     else
     {
         if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
-        {
             return false;
-        }
         //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
     }
     return true;
@@ -322,29 +340,20 @@ static bool checkArrayAttrib(
 {
     if (!attrib)
         return false;
-    
     if (attrib->getTupleSize() != tupleSize)
-    {
         return false;
-    }
     if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
-    {
         return false;
-    }
     const GA_AIFNumericArray* const aifNumericArray = attrib->getAIFNumericArray();
     if (aifNumericArray)
     {
         if (storage != GA_STORE_INVALID && aifNumericArray->getStorage(attrib) != storage)
-        {
             return false;
-        }
     }
     else
     {
         if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
-        {
             return false;
-        }
         //const GA_AIFSharedStringArray* const aifStrArray = attribPtr->getAIFSharedStringArray();
     }
     return true;

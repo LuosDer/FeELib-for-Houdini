@@ -61,13 +61,30 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
+        name    "threshold"
+        cppname "Threshold"
+        label   "Threshold"
+        type    log
+        default { "1e-07" }
+        range { 0.001 1 }
+    }
+    parm {
         name    "attrib"
         cppname "Attrib"
         label   "Attrib"
         type    string
         default { "" }
+        joinnext
+        nolabel
     }
 
+    parm {
+        name    "outVertexEdgeGroup"
+        cppname "OutVertexEdgeGroup"
+        label   "Out Vertex Edge Group"
+        type    toggle
+        default { "0" }
+    }
     parm {
         name    "vertexEdgeGroupName"
         cppname "VertexEdgeGroupName"
@@ -77,6 +94,17 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Vertices,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        disablewhen "{ outVertexEdgeGroup == 0 }"
+    }
+
+    parm {
+        name    "outEdgeGroup"
+        cppname "OutEdgeGroup"
+        label   "Out Edge Group"
+        type    toggle
+        default { "1" }
+        joinnext
+        nolabel
     }
     parm {
         name    "edgeGroupName"
@@ -87,6 +115,7 @@ static const char *theDsFile = R"THEDSFILE(
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Edges,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
+        disablewhen "{ outEdgeGroup == 0 }"
     }
 
 
@@ -168,7 +197,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_GroupAttribBoundary_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_GroupAttribBoundary_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -191,7 +220,7 @@ SOP_FeE_GroupAttribBoundary_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_GroupAttribBoundary_1_0Parms::AttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_GroupAttribBoundary_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_GroupAttribBoundary_1_0Enums;
     switch (parmAttribClass)
@@ -206,7 +235,7 @@ sopAttribOwner(SOP_FeE_GroupAttribBoundary_1_0Parms::AttribClass parmAttribClass
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_GroupAttribBoundary_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_GroupAttribBoundary_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_GroupAttribBoundary_1_0Enums;
     switch (parmGroupType)
@@ -217,7 +246,7 @@ sopGroupType(SOP_FeE_GroupAttribBoundary_1_0Parms::GroupType parmGroupType)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
 
@@ -229,21 +258,11 @@ SOP_FeE_GroupAttribBoundary_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookpar
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_GroupAttribBoundary_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
-    const UT_StringHolder& newVertexEdgeGroupName = sopparms.getNewVertexEdgeGroupName();
-    const UT_StringHolder& newEdgeGroupName = sopparms.getNewEdgeGroupName();
-
-    if (!newVertexEdgeGroupName.isstring() &&
-        newVertexEdgeGroupName.length() == 0 &&
-        !newEdgeGroupName.isstring() &&
-        newEdgeGroupName.length() == 0)
-    {
-        return;
-    }
     
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -256,14 +275,16 @@ SOP_FeE_GroupAttribBoundary_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookpar
     
     GFE_GroupAttribBoundary groupAttribBoundary(outGeo0, cookparms);
     
-    groupAttribBoundary.setComputeParm(
+    groupAttribBoundary.setComputeParm(sopparms.getThreshold(), sopparms.getIncludeUnsharedEdge(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    
+
     groupAttribBoundary.getOutAttribArray().set(attribClass, sopparms.getAttrib());
-    groupAttribBoundary.getOutGroupArray().findOrCreateEdge(false, sopparms.edgeGroupName());
-    groupAttribBoundary.getOutGroupArray().findOrCreateVertex(false, sopparms.vertexEdgeGroupName());
-
-
+    
+    if (sopparms.getThreshold())
+        groupAttribBoundary.getOutGroupArray().findOrCreateEdge(false, sopparms.getEdgeGroupName());
+    if (sopparms.getThreshold())
+        groupAttribBoundary.getOutGroupArray().findOrCreateVertex(false, sopparms.getVertexEdgeGroupName());
+    
     groupAttribBoundary.groupParser.setGroup(groupType, sopparms.getGroup());
     groupAttribBoundary.computeAndBumpDataId();
     groupAttribBoundary.visualizeOutGroup();

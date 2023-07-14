@@ -156,10 +156,10 @@ SOP_FeE_CurveExtendedLine_3_0::cookVerb() const
 
 
 
-
+sopCurveEndsType(sopparms.getCurveEndsType());
 
 static GA_GroupType
-sopGroupType(SOP_FeE_CurveExtendedLine_3_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_CurveExtendedLine_3_0Parms::CurveEndsType parmGroupType)
 {
     using namespace SOP_FeE_CurveExtendedLine_3_0Enums;
     switch (parmGroupType)
@@ -174,20 +174,21 @@ sopGroupType(SOP_FeE_CurveExtendedLine_3_0Parms::GroupType parmGroupType)
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_CurveExtendedLine_3_0Parms::Class parmAttribClass)
+static GA_GroupType
+sopGroupType(const SOP_FeE_CurveExtendedLine_3_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_CurveExtendedLine_3_0Enums;
-    switch (parmAttribClass)
+    switch (parmGroupType)
     {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
+    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    return GA_GROUP_INVALID;
 }
-
 
 void
 SOP_FeE_CurveExtendedLine_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -198,14 +199,13 @@ SOP_FeE_CurveExtendedLine_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
+    const GFE_CurveEndsType curveEndsType = sopCurveEndsType(sopparms.getCurveEndsType());
+    
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
@@ -217,16 +217,17 @@ SOP_FeE_CurveExtendedLine_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     enumerate.compute();
 */
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    GFE_CurveExtendedLine curveExtendedLine(outGeo0, inGeo0, cookparms);
+    curveExtendedLine.setComputeParm(
+        sopparms.getExtendDist(), , sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
+    curveExtendedLine.groupParser.setGroup(groupType, sopparms.getGroup());
 
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    curveExtendedLine.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
-    enumerate.computeAndBumpDataId();
+    curveExtendedLine.computeAndBumpDataId();
     
 
 }
