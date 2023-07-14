@@ -52,10 +52,26 @@ private:
             const size_t attribSize = SYSmin(sizeInAttrib, sizeOutAttrib);
             for(size_t i = 0; i < attribSize; i++)
             {
-                this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
                 this->dstAttribPtr = getOutAttribArray()[i];
-                //compute
-                attribBlend();
+                this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
+                
+
+                const GA_Storage dstStorage = this->dstAttribPtr->getAIFTuple()->getStorage(this->dstAttribPtr);
+                const GA_Storage srcStorage = this->srcAttribPtr->getAIFTuple()->getStorage(this->srcAttribPtr);
+        
+                if(dstStorage == srcStorage)
+                {
+                        switch (dstStorage)
+                        {
+                            case GA_Storage::GA_STORE_INT8:   attribBlend<int8>();     break;
+                            case GA_Storage::GA_STORE_INT16:  attribBlend<int16>();     break;
+                            case GA_Storage::GA_STORE_INT32:  attribBlend<int32>();     break;
+                            case GA_Storage::GA_STORE_INT64:  attribBlend<int64>();     break;
+                            case GA_Storage::GA_STORE_REAL16: attribBlend<fpreal16>();     break;
+                            case GA_Storage::GA_STORE_REAL32: attribBlend<fpreal32>();     break;
+                            case GA_Storage::GA_STORE_REAL64: attribBlend<fpreal64>();     break;
+                        }
+                }
             }
         }
         //dstattrib empty
@@ -64,13 +80,10 @@ private:
             for(size_t i = 0; i < sizeInAttrib; i++)
             {
                 this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
-
                 const UT_StringHolder& newName = this->srcAttribPtr->getName();
                 const bool detached = GFE_Type::isInvalid(newName);
-
                 dstAttribPtr = getOutAttribArray().clone(detached, this->*srcAttribPtr, this->destinationOwner, newName);
                 attribBlend();
-                
             }
         }
 
@@ -115,31 +128,35 @@ private:
         return  true;
     }
 
-    template<GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
+    template<typename T, GA_AttributeOwner dstOwner>
     void attribBlend()
     {
-        UT_ASSERT_P(this->&srcAttribPtr->getDetail() == this->geoTemp);
+        //UT_ASSERT_P(this->&srcAttribPtr->getDetail() == this->geoTemp);
         const GA_Attribute& srcAttribRef = *srcAttribPtr;
+        const GA_Attribute& dstAttribRef = *dstAttribPtr;
+
+
         if(this->geoRef0)
         {
-            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
-            GA_PageHandleT<>
-            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
+            const GA_ROHandleT<T> srcAttrib_h(this->srcAttribPtr);
+            //const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
+            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
             {
-               GA_Offset start, end;
-               for(GA_Iterator it(r); it.blockAdvance(start, end); )
-               {
-                   for(GA_Offset elemoff = start; elemoff < end; elemoff++)
-                   {
-                       const GA_Offset dstOff = this->geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
-                       if (GFE_Type::isValidOffset(dstOff))
-                       {
-                           
-                       }
-                        //const GA_Offset dstOff = this->geo                      
-                   }
-               }
+                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> dstAttrib_ph(this->dstAttribPtr);
+                for(GA_PageIterator pit = r.beginPages(); !pit.atEnd(); pit++)
+                {
+                    GA_Offset start, end;
+                    for(GA_Iterator it(pit.begin()); it.blockAdvance(start, end);)
+                    {
+                        dstAttrib_ph.setPage(start);
+                        for(GA_Offset elemoff = start; elemoff < end; elemoff++)
+                        {
+                            dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1 - this->blend) + srcAttrib_h.value(elemoff) * this->blend;
+                        }
+                    }
+                }
             }, this->subscribeRatio, this->minGrainSize);
+            //GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttribPtr);
         }
 
 
@@ -153,27 +170,15 @@ private:
     void attribBlend()
     {}
 */
-    template<GA_AttributeOwner SrcOwner>
-    void attribBlend()
-    {
-        switch (this->dstAttribPtr->getOwner())
-        {
-        case GA_AttributeOwner::GA_ATTRIB_POINT:        attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_POINT>();      return; break;
-        case GA_AttributeOwner::GA_ATTRIB_VERTEX:       attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_VERTEX>();     return; break;
-        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE:    attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();  return; break;
-        case GA_AttributeOwner::GA_ATTRIB_DETAIL:       attribBlend<SrcOwner, GA_AttributeOwner::GA_ATTRIB_DETAIL>();     return; break;
-        }
-        UT_ASSERT_MSG(0, "dst AttribOwner Vaild"); 
-    }
-    
+    template<typename T>
     void attribBlend()
     {
         switch (this->srcAttribPtr->getOwner())
         {
-        case GA_AttributeOwner::GA_ATTRIB_POINT:        attribBlend<GA_AttributeOwner::GA_ATTRIB_POINT>();      return; break;
-        case GA_AttributeOwner::GA_ATTRIB_VERTEX:       attribBlend<GA_AttributeOwner::GA_ATTRIB_VERTEX>();     return; break;
-        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE:    attribBlend<GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();  return; break;
-        case GA_AttributeOwner::GA_ATTRIB_DETAIL:       attribBlend<GA_AttributeOwner::GA_ATTRIB_DETAIL>();     return; break;
+        case GA_AttributeOwner::GA_ATTRIB_POINT:        attribBlend<T, GA_AttributeOwner::GA_ATTRIB_POINT>();      return; break;
+        case GA_AttributeOwner::GA_ATTRIB_VERTEX:       attribBlend<T, GA_AttributeOwner::GA_ATTRIB_VERTEX>();     return; break;
+        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE:    attribBlend<T, GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();  return; break;
+        case GA_AttributeOwner::GA_ATTRIB_DETAIL:       attribBlend<T, GA_AttributeOwner::GA_ATTRIB_DETAIL>();     return; break;
         }
         UT_ASSERT_MSG(0, "Src AttribOwner Vaild"); 
     }
@@ -185,7 +190,6 @@ public:
     GA_AttributeOwner destinationOwner = GA_ATTRIB_INVALID;
 
 
-    
 
 private:
     const GFE_Detail* geoTemp;
