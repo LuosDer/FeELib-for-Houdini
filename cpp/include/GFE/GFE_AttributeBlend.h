@@ -33,7 +33,7 @@ private:
     virtual bool
         computeCore() override
     {
-        if(this->geoRef0 ? getRef0AttribArray().isEmpty() : getInAttribArray().isEmpty() )
+        if(geoRef0 ? getRef0AttribArray().isEmpty() : getInAttribArray().isEmpty() )
         {
             return true;
         }
@@ -42,9 +42,9 @@ private:
             return true;
         }
         
-        this->geoTemp = this->geoRef0 ? this->geoRef0 : this->geo;
+        geoTemp = geoRef0 ? geoRef0 : geo;
         
-        const size_t sizeInAttrib  = this->geoRef0 ? getRef0AttribArray().size() : getInAttribArray().size();
+        const size_t sizeInAttrib  = geoRef0 ? getRef0AttribArray().size() : getInAttribArray().size();
         const size_t sizeOutAttrib = getOutAttribArray().size();
 
         if(sizeOutAttrib > 0)
@@ -52,140 +52,149 @@ private:
             const size_t attribSize = SYSmin(sizeInAttrib, sizeOutAttrib);
             for(size_t i = 0; i < attribSize; i++)
             {
-                this->dstAttribPtr = getOutAttribArray()[i];
-                this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
+                dstAttribPtr = getOutAttribArray()[i];
+                srcAttribPtr = geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
                 
-
-                const GA_Storage dstStorage = this->dstAttribPtr->getAIFTuple()->getStorage(this->dstAttribPtr);
-                const GA_Storage srcStorage = this->srcAttribPtr->getAIFTuple()->getStorage(this->srcAttribPtr);
+                if(!dstAttribPtr->getAIFTuple() || !srcAttribPtr->getAIFTuple()) continue;
+                
+                const GA_Storage dstStorage = dstAttribPtr->getAIFTuple()->getStorage(dstAttribPtr);
+                const GA_Storage srcStorage = srcAttribPtr->getAIFTuple()->getStorage(srcAttribPtr);
         
                 if(dstStorage == srcStorage)
                 {
-                        switch (dstStorage)
-                        {
-                            case GA_Storage::GA_STORE_INT8:   attribBlend<int8>();     break;
-                            case GA_Storage::GA_STORE_INT16:  attribBlend<int16>();     break;
-                            case GA_Storage::GA_STORE_INT32:  attribBlend<int32>();     break;
-                            case GA_Storage::GA_STORE_INT64:  attribBlend<int64>();     break;
-                            case GA_Storage::GA_STORE_REAL16: attribBlend<fpreal16>();     break;
-                            case GA_Storage::GA_STORE_REAL32: attribBlend<fpreal32>();     break;
-                            case GA_Storage::GA_STORE_REAL64: attribBlend<fpreal64>();     break;
-                        }
+                    attribBlend();
                 }
             }
         }
-        //dstattrib empty
-        else
-        {
-            for(size_t i = 0; i < sizeInAttrib; i++)
-            {
-                this->srcAttribPtr = this->geoRef0 ? getRef0AttribArray()[i] : getInAttribArray()[i];
-                const UT_StringHolder& newName = this->srcAttribPtr->getName();
-                const bool detached = GFE_Type::isInvalid(newName);
-                dstAttribPtr = getOutAttribArray().clone(detached, this->*srcAttribPtr, this->destinationOwner, newName);
-                attribBlend();
-            }
-        }
-
-/*
-        GFE_AttributeArray destinationAttribArray = getOutAttribArray();
-        GFE_AttributeArray sourceAttribArray = getOutAttribArray();
-        if(!getRef0AttribArray().isEmpty())
-        {
-            sourceAttribArray = getRef0AttribArray();
-        }
-        else if(!getInAttribArray().isEmpty())
-        {
-            sourceAttribArray = getInAttribArray();
-        }
-        else
-        {
-            return false;
-        }
-
         
-        const ::std::vector<GA_Attribute*>::size_type size = destinationAttribArray.size();
-        for (size_t i = 0; i < size; i++)
-        {
-            this->attribPtr = destinationAttribArray[i];
-            this->refAttribPtr = sourceAttribArray[i];
-            
-            const GA_AIFTuple* const destinationAifTuple = attribPtr->getAIFTuple();
-            const GA_AIFTuple* const sourceAifTuple = refAttribPtr->getAIFTuple();
-            
-            const GA_Storage destinationStorage = destinationAifTuple->getStorage(attribPtr);
-            const GA_Storage sourceStorage = sourceAifTuple->getStorage(refAttribPtr);
-            
-            
-            int destinationAifTupleSize = destinationAifTuple->getTupleSize(attribPtr);
-            int sourceAifTupleSize = sourceAifTuple->getTupleSize(refAttribPtr);
-            switch (destinationAifTupleSize)
-            {
-                
-            }
-        }
-*/
         return  true;
     }
 
-    template<typename T, GA_AttributeOwner dstOwner>
-    void attribBlend()
+    template<typename VECTOR_T, GA_AttributeOwner dstOwner, GA_AttributeOwner srcOwner>
+    void attribBlendVector()
     {
-        //UT_ASSERT_P(this->&srcAttribPtr->getDetail() == this->geoTemp);
-        const GA_Attribute& srcAttribRef = *srcAttribPtr;
-        const GA_Attribute& dstAttribRef = *dstAttribPtr;
+        const GA_ROHandleT<VECTOR_T> srcAttrib_h(srcAttribPtr);
+        //const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
 
-
-        if(this->geoRef0)
+        UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
         {
-            const GA_ROHandleT<T> srcAttrib_h(this->srcAttribPtr);
-            //const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
-            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> dstAttrib_ph(dstAttribPtr);
+            for(GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> dstAttrib_ph(this->dstAttribPtr);
-                for(GA_PageIterator pit = r.beginPages(); !pit.atEnd(); pit++)
+                GA_Offset start, end;
+                for(GA_Iterator it(pit.begin()); it.blockAdvance(start, end);)
                 {
-                    GA_Offset start, end;
-                    for(GA_Iterator it(pit.begin()); it.blockAdvance(start, end);)
+                    dstAttrib_ph.setPage(start);
+                    for(GA_Offset elemoff = start; elemoff < end; elemoff++)
                     {
-                        dstAttrib_ph.setPage(start);
-                        for(GA_Offset elemoff = start; elemoff < end; elemoff++)
-                        {
-                            dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1 - this->blend) + srcAttrib_h.value(elemoff) * this->blend;
-                        }
+                        dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1.0 - blend) + srcAttrib_h.get(elemoff) * blend;
                     }
                 }
-            }, this->subscribeRatio, this->minGrainSize);
-            //GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttribPtr);
-        }
-
-
-
-
-
-        
+            }
+        }, subscribeRatio, minGrainSize);
     }
-/*
-    template<typename VECTOR_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
-    void attribBlend()
-    {}
-*/
-    template<typename T>
+
+    
+    template<typename FLOAT_T, GA_AttributeOwner dstOwner, GA_AttributeOwner srcOwner>
+    void attribBlendScalar()
+    {
+        const GA_ROHandleT<FLOAT_T> srcAttrib_h(srcAttribPtr);
+        //const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
+
+        UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> dstAttrib_ph(dstAttribPtr);
+            for(GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                GA_Offset start, end;
+                for(GA_Iterator it(pit.begin()); it.blockAdvance(start, end);)
+                {
+                    dstAttrib_ph.setPage(start);
+                    for(GA_Offset elemoff = start; elemoff < end; elemoff++)
+                    {
+                        dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1.0 - blend) + srcAttrib_h.get(elemoff) * blend;
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+    
+    template<GA_AttributeOwner dstOwner, GA_AttributeOwner srcOwner>
     void attribBlend()
     {
-        switch (this->srcAttribPtr->getOwner())
+        const GA_Storage storage = dstAttribPtr->getAIFTuple()->getStorage(dstAttribPtr);
+        switch (srcAttribPtr->getTupleSize())
         {
-        case GA_AttributeOwner::GA_ATTRIB_POINT:        attribBlend<T, GA_AttributeOwner::GA_ATTRIB_POINT>();      return; break;
-        case GA_AttributeOwner::GA_ATTRIB_VERTEX:       attribBlend<T, GA_AttributeOwner::GA_ATTRIB_VERTEX>();     return; break;
-        case GA_AttributeOwner::GA_ATTRIB_PRIMITIVE:    attribBlend<T, GA_AttributeOwner::GA_ATTRIB_PRIMITIVE>();  return; break;
-        case GA_AttributeOwner::GA_ATTRIB_DETAIL:       attribBlend<T, GA_AttributeOwner::GA_ATTRIB_DETAIL>();     return; break;
+        case 1:
+            switch (storage)
+            {
+                case GA_STORE_INT32:   attribBlendScalar<int32,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_INT64:   attribBlendScalar<int64,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL32:  attribBlendScalar<fpreal32, dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL64:  attribBlendScalar<fpreal64, dstOwner, srcOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+            }
+        case 2:
+            switch (storage)
+            {
+                case GA_STORE_INT32:   attribBlendVector<UT_Vector2T<int32>,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_INT64:   attribBlendVector<UT_Vector2T<int64>,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL32:  attribBlendVector<UT_Vector2T<fpreal32>, dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL64:  attribBlendVector<UT_Vector2T<fpreal64>, dstOwner, srcOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+            }
+        case 3:
+            switch (storage)
+            {
+                case GA_STORE_INT32:   attribBlendVector<UT_Vector3T<int32>,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_INT64:   attribBlendVector<UT_Vector3T<int64>,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL32:  attribBlendVector<UT_Vector3T<fpreal32>, dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL64:  attribBlendVector<UT_Vector3T<fpreal64>, dstOwner, srcOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+            }
+        case 4:
+            switch (storage)
+            {
+                case GA_STORE_INT32:   attribBlendVector<UT_Vector4T<int32>,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_INT64:   attribBlendVector<UT_Vector4T<int64>,    dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL32:  attribBlendVector<UT_Vector4T<fpreal32>, dstOwner, srcOwner>(); return; break;
+                case GA_STORE_REAL64:  attribBlendVector<UT_Vector4T<fpreal64>, dstOwner, srcOwner>(); return; break;
+                default: UT_ASSERT_MSG(0, "Unhandled Storage"); break;
+            }
+            
         }
-        UT_ASSERT_MSG(0, "Src AttribOwner Vaild"); 
+    } 
+    
+    template<GA_AttributeOwner dstOwner>
+    void attribBlend()
+    {
+        switch (srcAttribPtr->getOwner())
+        {
+        case GA_ATTRIB_POINT:        attribBlend<dstOwner, GA_ATTRIB_POINT>();      return; break;
+        case GA_ATTRIB_VERTEX:       attribBlend<dstOwner, GA_ATTRIB_VERTEX>();     return; break;
+        case GA_ATTRIB_PRIMITIVE:    attribBlend<dstOwner, GA_ATTRIB_PRIMITIVE>();  return; break;
+        case GA_ATTRIB_DETAIL:       attribBlend<dstOwner, GA_ATTRIB_DETAIL>();     return; break;
+        default: break;
+        }
+    }
+
+    
+    void attribBlend()
+    {
+        switch (dstAttribPtr->getOwner())
+        {
+        case GA_ATTRIB_POINT:        attribBlend<GA_ATTRIB_POINT>();      return; break;
+        case GA_ATTRIB_VERTEX:       attribBlend<GA_ATTRIB_VERTEX>();     return; break;
+        case GA_ATTRIB_PRIMITIVE:    attribBlend<GA_ATTRIB_PRIMITIVE>();  return; break;
+        case GA_ATTRIB_DETAIL:       attribBlend<GA_ATTRIB_DETAIL>();     return; break;
+        default: break;
+        }
     }
 
     
 public:
-    fpreal64 blend = 1;
+    fpreal blend = 1.0;
     GA_AttributeOwner sourceOwner = GA_ATTRIB_INVALID;
     GA_AttributeOwner destinationOwner = GA_ATTRIB_INVALID;
 
@@ -193,7 +202,7 @@ public:
 
 private:
     const GFE_Detail* geoTemp;
-    GA_Attribute* srcAttribPtr;
+    const GA_Attribute* srcAttribPtr;
     GA_Attribute* dstAttribPtr;
 
     exint subscribeRatio = 64;
