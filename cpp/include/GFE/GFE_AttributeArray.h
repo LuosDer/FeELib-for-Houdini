@@ -212,7 +212,7 @@ public:
 
     GA_Attribute* set(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isInvalid(attribPattern))
             return nullptr;
 
         GA_Attribute* const attribPtr = geo->findAttribute(attribClass, attribPattern);
@@ -301,7 +301,7 @@ public:
 
     GA_Attribute* append(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isInvalid(attribPattern))
             return nullptr;
         GA_Attribute* const attribPtr = geo->findAttribute(attribClass, attribPattern);
         append(attribPtr);
@@ -310,7 +310,7 @@ public:
 
     GA_Attribute* appendUV(const UT_StringRef& attribPattern, const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isInvalid(attribPattern))
             return nullptr;
 
         GA_Attribute* const attribPtr = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
@@ -371,9 +371,8 @@ public:
 
     SYS_FORCE_INLINE void oappends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
-            return;
-        oappends(attribClass, attribPattern.c_str());
+        if (GFE_Type::isValid(attribPattern))
+            oappends(attribClass, attribPattern.c_str());
     }
     
     SYS_FORCE_INLINE void oappendPrims(const char* const attribPattern)
@@ -517,7 +516,7 @@ findOrCreateTuple(
 
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
-    if (detached || !attribName.isstring() || attribName.length()==0)
+    if (detached || GFE_Type::isInvalid(attribName))
     {
         if (finalStorage == GA_STORE_STRING)
             attribUPtrArray.emplace_back(geo->createDetachedAttribute(owner, "string", create_args, attribute_options));
@@ -628,7 +627,7 @@ SYS_FORCE_INLINE GA_Attribute*
         
         const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
 
-        if (detached || !attribName.isstring() || attribName.length()==0)
+        if (detached || GFE_Type::isInvalid(attribName))
         {
 #if 0
             switch (finalStorage)
@@ -741,7 +740,7 @@ SYS_FORCE_INLINE GA_Attribute*
         // }
         
 
-        if (detached || !attribName.isstring() || attribName.length()==0)
+        if (detached || GFE_Type::isInvalid(attribName))
         {
             attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tupleSize, defaults, attribute_options));
             attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -831,7 +830,7 @@ findOrCreateUV(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     const GA_AttributeOwner validOwner = owner == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX;
-    if (detached || !attribName.isstring() || attribName.length()==0)
+    if (detached || GFE_Type::isInvalid(attribName))
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tupleSize, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size() - 1].get();
@@ -896,7 +895,7 @@ findOrCreateDir(
 
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
-    if (detached || !attribName.isstring() || attribName.length()==0)
+    if (detached || GFE_Type::isInvalid(attribName))
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(owner, finalStorage, tupleSize, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
@@ -962,7 +961,7 @@ findOrCreateNormal3D(
     const GA_Storage finalStorage = GFE_Type::getPreferredStorage(geo, storageClass, storage);
         
     const GA_AttributeOwner validOwner = GFE_Attribute::toValidOwner(owner);
-    if (detached || !attribName.isstring() || attribName.length()==0)
+    if (detached || GFE_Type::isInvalid(attribName))
     {
         attribUPtrArray.emplace_back(geo->createDetachedTupleAttribute(validOwner, finalStorage, tupleSize, defaults, attribute_options));
         attribPtr = attribUPtrArray[attribUPtrArray.size()-1].get();
@@ -1407,7 +1406,7 @@ public:
 
     GA_Group* set(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (!groupPattern.isstring() || groupPattern.length() == 0)
+        if (GFE_Type::isInvalid(groupPattern))
             return nullptr;
 
         GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
@@ -1435,11 +1434,11 @@ public:
 
     void append(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (!groupPattern.isstring() || groupPattern.length() == 0)
-            return;
-
-        GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
-        append(groupPtr);
+        if (GFE_Type::isValid(groupPattern))
+        {
+            GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
+            append(groupPtr);
+        }
     }
     
     void appends(const GA_GroupType groupClass, const char* groupPattern)
@@ -1457,7 +1456,7 @@ public:
     }
     SYS_FORCE_INLINE void appends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (groupPattern.isstring() && groupPattern.length() != 0)
+        if (GFE_Type::isValid(groupPattern))
             appends(groupClass, groupPattern.c_str());
     }
 
@@ -1476,7 +1475,7 @@ public:
     }
     SYS_FORCE_INLINE void oappends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (groupPattern.isstring() && groupPattern.length() != 0)
+        if (GFE_Type::isValid(groupPattern))
             appends(groupClass, groupPattern.c_str());
     }
 
@@ -1524,7 +1523,7 @@ public:
     )
     {
         GA_Group* groupPtr;
-        if (detached || !groupName.isstring() || groupName.length()==0)
+        if (detached || GFE_Type::isInvalid(groupName))
         {
             switch (groupType)
             {
@@ -1544,7 +1543,7 @@ public:
         }
         else
         {
-            if (!groupName.isstring() || groupName.length()==0)
+            if (GFE_Type::isInvalid(groupName))
             {
                 if (cookparms)
                     cookparms->sopAddError(SOP_ERR_BADGROUP, groupName);
@@ -1777,7 +1776,7 @@ public:
 
     const GA_Attribute* set(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isInvalid(attribPattern))
             return nullptr;
         const GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
         set(attribPtr);
@@ -1792,7 +1791,7 @@ public:
 
     const GA_Attribute* append(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isInvalid(attribPattern))
             return nullptr;
         const GA_Attribute* attribPtr = geo->findAttribute(attribClass, attribPattern);
         append(attribPtr);
@@ -1801,7 +1800,7 @@ public:
 
     const GA_Attribute* appendUV(const UT_StringRef& attribPattern, const GA_AttributeOwner attribClass = GA_ATTRIB_INVALID)
     {
-        if (!attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isInvalid(attribPattern))
             return nullptr;
 
         const GA_Attribute* const attrib = GFE_Attribute::findUVAttributePointVertex(*geo, attribClass, attribPattern);
@@ -1831,7 +1830,7 @@ public:
 
     SYS_FORCE_INLINE void appends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (attribPattern.isstring() && attribPattern.length() != 0)
+        if (GFE_Type::isValid(attribPattern))
             appends(attribClass, attribPattern.c_str());
     }
 
@@ -1853,7 +1852,7 @@ public:
 
     SYS_FORCE_INLINE void oappends(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     {
-        if (attribPattern.isstring() || attribPattern.length() == 0)
+        if (GFE_Type::isValid(attribPattern))
             oappends(attribClass, attribPattern.c_str());
     }
     
@@ -2247,11 +2246,11 @@ public:
 
     void set(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (!groupPattern.isstring() || groupPattern.length() == 0)
-            return;
-
-        GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
-        set(groupPtr);
+        if (GFE_Type::isValid(groupPattern))
+        {
+            GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
+            set(groupPtr);
+        }
     }
 
     SYS_FORCE_INLINE void append(GA_Group* const groupPtr)
@@ -2262,11 +2261,11 @@ public:
 
     void append(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (!groupPattern.isstring() || groupPattern.length() == 0)
-            return;
-
-        GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
-        append(groupPtr);
+        if (GFE_Type::isValid(groupPattern))
+        {
+            GA_Group* groupPtr = geo->getGroupTable(groupClass)->find(groupPattern);
+            append(groupPtr);
+        }
     }
 
     void appends(const GA_GroupType groupClass, const char* groupPattern)
@@ -2285,7 +2284,7 @@ public:
 
     SYS_FORCE_INLINE void appends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
     {
-        if (groupPattern.isstring() || groupPattern.length() == 0)
+        if (GFE_Type::isValid(groupPattern))
             appends(groupClass, groupPattern.c_str());
     }
 

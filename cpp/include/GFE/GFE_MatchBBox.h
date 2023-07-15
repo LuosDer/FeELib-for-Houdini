@@ -49,10 +49,10 @@ public:
 
 
 
-class GFE_MatchBBox : public GFE_AttribFilterWithRef0 {
+class GFE_MatchBBox : public GFE_AttribFilterWithRef1 {
 
 public:
-    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
+    using GFE_AttribFilterWithRef1::GFE_AttribFilterWithRef1;
     
 
     void
@@ -89,43 +89,54 @@ private:
         if (getOutAttribArray().isEmpty())
             return false;
 
-        if (groupParser.isEmpty())
-            return true;
-
         UT_ASSERT_MSG_P(!xformAttrib ||
                        (xformAttrib->getTupleSize() == 16 &&
                         xformAttrib->getStorageClass() == GA_STORECLASS_REAL &&
                         xformAttrib->getAIFTuple()), "not correct xform attrib type");
         
-        geo->stdBoundingBox<>();
+        if (groupParser.isEmpty())
+            return true;
+
+        geoRest = geoRef1 ? geoRef1 : geo;
         
         GFE_MatchBBoxXform bboxXform;
+        GFE_XformByAttrib xformByAttrib(geo, nullptr, cookparms);
+        xformByAttrib.groupParser.setGroup(groupParser);
         
-        GFE_Bound::setStd(bboxXform.restBBox);
-        (geoRest ? geoRest : geo)->enlargeBoundingBox(bboxXform.restBBox, groupParser.getPointRange(), posAttrib);
-        
-        if (geoRef0)
+        const size_t sizeAttrib = getOutAttribArray().size();
+        for (size_t i = 0; i < sizeAttrib; ++i)
         {
-            GFE_Bound::setStd(bboxXform.refBBox);
-            geoRef0.enlargeBoundingBox(bboxXform.refBBox, groupParserRef0.getPointRange(), posRef0Attrib);
-        }
-        else
-            bboxXform.refBBox.setBounds(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
+            attrib = getOutAttribArray()[i];
+
+            
+            geo->stdBoundingBox<>();
+        
+            GFE_Bound::setStd(bboxXform.restBBox);
+            geoRest->enlargeBoundingBox(bboxXform.restBBox, groupParser.getPointRange(), posAttrib);
 
         
-        if (xformAttrib)
-        {
-            const GA_RWHandleT<UT_Matrix4T<fpreal>> xform_h(xformAttrib);
-            xform_h.set(0, xform);
-        }
         
-        GFE_XformByAttrib xformByAttrib(geo, nullptr, cookparms);
-        xformByAttrib.getOutAttribArray().append(getOutAttribArray());
-        xformByAttrib.setXformAttrib();
-        xformByAttrib.setXform4(xform);
-        //xformByAttrib.setComputeParm(false, false, false);
-        xformByAttrib.groupParser.setGroup(groupParser);
-        xformByAttrib.compute();
+            if (geoRef0)
+            {
+                GFE_Bound::setStd(bboxXform.refBBox);
+                geoRef0.enlargeBoundingBox(bboxXform.refBBox, groupParserRef0.getPointRange(), posRef0Attrib);
+            }
+            else
+                bboxXform.refBBox.setBounds(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
+
+        
+            if (xformAttrib && i == 0)
+            {
+                const GA_RWHandleT<UT_Matrix4T<fpreal>> xform_h(xformAttrib);
+                xform_h.set(0, xform);
+            }
+        
+            xformByAttrib.getOutAttribArray().set(attrib);
+            xformByAttrib.setXformAttrib();
+            xformByAttrib.setXform4(xform);
+            //xformByAttrib.setComputeParm(false, false, false);
+            xformByAttrib.compute();
+        }
 
         return true;
     }
@@ -144,7 +155,8 @@ private:
 private:
     UT_Matrix4T<fpreal> xform;
     GA_Attribute* xformAttrib = nullptr;
-    
+    GA_Attribute* attrib;
+    const GFE_Detail* geoRest;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;

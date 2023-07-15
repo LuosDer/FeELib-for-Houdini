@@ -150,8 +150,6 @@ SYS_FORCE_INLINE void setConsolidate(
             const bool closest = true
         )
     {
-        setHasComputed();
-        
         fuseParms.setUseTol3D(useDistance);
         fuseParms.setTol3d(distance);
         setSnapToClosest(closest);
@@ -176,8 +174,6 @@ SYS_FORCE_INLINE void setSnapToClosest(const bool closest = true)
             const float tol
         )
     {
-        setHasComputed();
-        
         gridSnapParm.myGridSnapType = gridSnapType;
         gridSnapParm.myXLines = linex;
         gridSnapParm.myYLines = liney;
@@ -195,9 +191,7 @@ SYS_FORCE_INLINE void setSnapToClosest(const bool closest = true)
             const UT_Vector3D offset,
             const float tol
         )
-    {
-        setGridComputeParm(gridSnapType, line[0], line[1], line[2], offset[0], offset[1], offset[2], tol);
-    }
+    { setGridComputeParm(gridSnapType, line[0], line[1], line[2], offset[0], offset[1], offset[2], tol); }
 
 #else
 

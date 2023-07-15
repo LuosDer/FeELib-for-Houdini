@@ -12,6 +12,13 @@
 #include "GFE/GFE_OffsetAttributeToIndex.h"
 
 
+/*
+    GFE_MeshTopology meshTopology(geo, cookparms);
+    meshTopology.groupParser.setGroup(groupParser);
+    meshTopology.setVertexPrimIndex(false, vertexPrimIndexAttribName);
+    const GA_VertexGroup* const vtxNextEquivNoLoopGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
+    meshTopology.compute();
+*/
 
 
 class GFE_MeshTopology : public GFE_AttribFilter {

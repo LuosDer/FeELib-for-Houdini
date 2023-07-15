@@ -14,8 +14,9 @@
 
 
 
-namespace GFE_Math {
-    
+class GFE_Math {
+
+public:
 
 template<typename T>
 SYS_FORCE_INLINE static T radians(const T degrees)
@@ -26,7 +27,51 @@ SYS_FORCE_INLINE static T degrees(const T radians)
 { return radians * 180 / PI; }
 
 
+template<typename T>
+SYS_FORCE_INLINE static typename T::value_type tupleDistance2(const T& val0, const T& val1)
+{
+    if constexpr(::std::is_same_v<T, int8> ||
+                 ::std::is_same_v<T, int16> ||
+                 ::std::is_same_v<T, int32> ||
+                 ::std::is_same_v<T, int64> ||
+                 ::std::is_same_v<T, fpreal16> ||
+                 ::std::is_same_v<T, fpreal32> ||
+                 ::std::is_same_v<T, fpreal64> )
+    {
+        return numDistance2(val0, val1);
+    }
+    else
+        return vectorDistance2(val0, val1);
+}
+    
+#define __GFE_Math_FUNC_tupleDistance2(TYPE)                                   \
+SYS_FORCE_INLINE static TYPE tupleDistance2(const TYPE val0, const TYPE val1)  \
+{ return numDistance2(val0, val1); }                                           \
 
+__GFE_Math_FUNC_tupleDistance2(int8);
+__GFE_Math_FUNC_tupleDistance2(int16);
+__GFE_Math_FUNC_tupleDistance2(int32);
+__GFE_Math_FUNC_tupleDistance2(int64);
+__GFE_Math_FUNC_tupleDistance2(fpreal16);
+__GFE_Math_FUNC_tupleDistance2(fpreal32);
+__GFE_Math_FUNC_tupleDistance2(fpreal64);
+    
+#undef __GFE_Math_FUNC_tupleDistance2
+    
+private:
+    
+
+    template<typename FLOAT_T>
+    SYS_FORCE_INLINE static FLOAT_T numDistance2(const FLOAT_T val0, const FLOAT_T val1)
+    { return pow(val0 > val1 ? val0 - val1 : val1 - val0, 2); }
+
+    template<typename VECTOR_T>
+    SYS_FORCE_INLINE static typename VECTOR_T::value_type vectorDistance2(const VECTOR_T& val0, const VECTOR_T& val1)
+    { return val0.distance(val1); }
+
+public:
+
+    
 template<typename FLOAT_T>
 static UT_Vector3T<FLOAT_T> blendDir(const UT_Vector3T<FLOAT_T>& dir0, const UT_Vector3T<FLOAT_T>& dir1, const FLOAT_T blend)
 {
@@ -234,7 +279,7 @@ static bool pointInTriangleT1(
 #define pointInTriangleD pointInTriangleT<fpreal64>
 #define pointInTriangleR pointInTriangleT<fpreal>
     
-} // End of namespace GFE_Math
+}; // End of class GFE_Math
 
 
 

@@ -6,8 +6,6 @@
 
 #include "GFE/GFE_CurveExtendedLine.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
@@ -16,50 +14,61 @@ class GFE_CurveExtendedLine : public GFE_AttribFilter {
 
 
 public:
+
     using GFE_AttribFilter::GFE_AttribFilter;
 
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
+            const fpreal extendDist = 1.0,
+            const GFE_CurveEndsType curveEndsType = GFE_CurveEndsType::Ends,
+            const GFE_Axis flattenAxis = GFE_Axis::Invalid,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 64
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
+        this->extendDist = extendDist;
+        this->curveEndsType = curveEndsType;
+        this->flattenAxis = flattenAxis;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
 
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
-
         if (groupParser.isEmpty())
             return true;
         
-        
-        attribPtr = getOutAttribArray()[0];
-        // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
-        switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
+        const GA_PrimitiveGroup* const geoPrimitiveGroup = groupParser.getPrimitiveGroup();
+        GU_DetailHandle geoTmp_h;
+        if (geoSrc)
         {
-        case GA_STORE_INT16:  enumerate<int16>();           break;
-        case GA_STORE_INT32:  enumerate<int32>();           break;
-        case GA_STORE_INT64:  enumerate<int64>();           break;
-        case GA_STORE_REAL16: enumerate<fpreal16>();        break;
-        case GA_STORE_REAL32: enumerate<fpreal32>();        break;
-        case GA_STORE_REAL64: enumerate<fpreal64>();        break;
-        case GA_STORE_STRING: enumerate<UT_StringHolder>(); break;
+            geoTmp = geoSrc;
+        }
+        else
+        {
+            GU_Detail* const geoTmpGU = new GU_Detail;
+            geoTmpGU->replaceWith(*geo);
+            geoTmp_h.allocateAndSet(geoTmpGU);
+            geoTmp = geoTmpGU;
+        }
+        
+        geo->clear();
+        
+        GA_Offset vtxoffStart;
+        geo->appendPrimitivesAndVertices(GA_PrimitiveTypeId(1), geoPrimitiveGroup->entries(), curveEndsType == GFE_CurveEndsType::Ends ? 2 : 1, vtxoffStart, false);
+        
+        setValidPosAttrib();
+        UT_ASSERT_P(posAttrib->getAIFTuple());
+        switch (posAttrib->getAIFTuple()->getStorage(posAttrib))
+        {
+        case GA_STORE_REAL16: curveExtendedLine<fpreal16>();        break;
+        case GA_STORE_REAL32: curveExtendedLine<fpreal32>();        break;
+        case GA_STORE_REAL64: curveExtendedLine<fpreal64>();        break;
         default: break;
         }
 
@@ -67,40 +76,83 @@ private:
     }
 
 
-    template<typename T>
-    void enumerate()
+    template<typename FLOAT_T>
+    void curveExtendedLine()
     {
-        UT_ASSERT_P(attribPtr);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
-        UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
+
+        UT_ASSERT_P(posAttribNonConst);
+        
+        const GA_RWHandleT<UT_Vector3T<FLOAT_T>> pos_h(posAttribNonConst);
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>> posRef_h(geoTmp->getP());
+        
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h, &posRef_h](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
+            //for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            //{
                 GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                for (GA_Iterator it(r.begin()); it.blockAdvance(start, end); )
                 {
-                    attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.value(elemoff) = firstIndex + elemoff;
+                        const GA_OffsetListRef& vertices = geoTmp->getPrimitiveVertexList(elemoff);
+                        const GA_Size numvtx = vertices.size();
+                        if (numvtx < 2)
+                            continue;
+
+                        GA_Offset ptoff = geoTmp->primitiveIndex(elemoff);
+                        switch (curveEndsType)
+                        {
+                        case GFE_CurveEndsType::Ends:
+                            ptoff *= 2;
+                            extendCurve<FLOAT_T, false>(vertices, pos_h, posRef_h, ptoff, 0);
+                            extendCurve<FLOAT_T, true> (vertices, pos_h, posRef_h, ptoff+2, 0);
+                        break;
+                        case GFE_CurveEndsType::Start: extendCurve<FLOAT_T, false>(vertices, pos_h, posRef_h, ptoff, 0       ); break;
+                        case GFE_CurveEndsType::End:   extendCurve<FLOAT_T, true> (vertices, pos_h, posRef_h, ptoff, numvtx-1); break;
+                        default: UT_ASSERT_MSG(0, "Unhandled GFE_CurveEndsType"); break;
+                        }
                     }
                 }
-            }
+            //}
         }, subscribeRatio, minGrainSize);
     }
 
 
 
+    template<typename FLOAT_T, bool IsEnd>
+    void extendCurve(
+        const GA_OffsetListRef& vertices,
+        const GA_RWHandleT<UT_Vector3T<FLOAT_T>>& pos_h,
+        const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& posRef_h,
+        const GA_Offset ptoff,
+        const GA_Size vtxpnum
+    )
+    {
+        const GA_Size vtxpnum_neb = IsEnd ? vtxpnum-1 : vtxpnum+1;
+        const GA_Offset ptoff0 = geoTmp->vertexPoint(vertices[vtxpnum]);
+        const GA_Offset ptoff1 = geoTmp->vertexPoint(vertices[vtxpnum_neb]);
+        const UT_Vector3T<FLOAT_T> pos0 = posRef_h.get(ptoff0);
+        const UT_Vector3T<FLOAT_T> pos1 = posRef_h.get(ptoff1);
+        
+        const UT_Vector3T<FLOAT_T> dir = pos0 - pos1;
+        if (flattenAxis != GFE_Axis::Invalid)
+        {
+            dir[flattenAxis] = 0;
+        }
+        dir.normalize();
+        pos_h.set(ptoff,   pos0);
+        pos_h.set(ptoff+1, pos0 + dir * extendDist);
+    }
+
 
 public:
-    GA_Size firstIndex = 0;
-    bool outAsOffset = true;
-    bool negativeIndex = false;
+    fpreal extendDist = 1.0;
+    GFE_CurveEndsType curveEndsType = GFE_CurveEndsType::Ends;
     
+    GFE_Axis flattenAxis = GFE_Axis::Invalid;
 
 private:
-    
+    const GA_Detail* geoTmp;
     GA_Attribute* attrib;
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
