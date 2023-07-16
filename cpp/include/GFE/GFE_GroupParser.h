@@ -690,6 +690,19 @@ public:
     SYS_FORCE_INLINE GA_SplittableRange getVertexSplittableRange()
     { return GA_SplittableRange(getVertexRange()); }
 
+    template<const GA_AttributeOwner AttribOwner>
+    SYS_FORCE_INLINE GA_SplittableRange getSplittableRange()
+    {
+        if constexpr(AttribOwner == GA_ATTRIB_PRIMITIVE)
+            return getPrimitiveSplittableRange();
+        else if constexpr(AttribOwner == GA_ATTRIB_POINT)
+            return getPointSplittableRange();
+        else if constexpr(AttribOwner == GA_ATTRIB_VERTEX)
+            return getVertexSplittableRange();
+        else
+            return GA_SplittableRange();
+    }
+
     SYS_FORCE_INLINE GA_SplittableRange getSplittableRange(const GA_AttributeOwner attribOwner)
     {
         switch (attribOwner)

@@ -82,14 +82,6 @@ static const char* theDsFile = R"THEDSFILE(
         default { "N" }
         disablewhen "{ minimumDist == 1 }"
     }
-    parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
-        type    float
-        default { 1 }
-        range   { -100 100 }
-    }
 
 
     parm {
@@ -163,7 +155,7 @@ public:
     virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_AttribInterpRay_2_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribInterpRay_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
@@ -182,10 +174,10 @@ SOP_FeE_AttribInterpRay_2_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribInterpRay_2_0Parms::AttribClass attribClass)
+sopAttribOwner(const SOP_FeE_AttribInterpRay_2_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribInterpRay_2_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -198,10 +190,10 @@ sopAttribOwner(SOP_FeE_AttribInterpRay_2_0Parms::AttribClass attribClass)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_AttribInterpRay_2_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_AttribInterpRay_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_AttribInterpRay_2_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -222,10 +214,10 @@ SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     auto &&sopparms = cookparms.parms<SOP_FeE_AttribInterpRay_2_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 
@@ -234,7 +226,8 @@ SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
 
 
-
+std::vector<int> a(10);
+    a.reserve(100);
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
 

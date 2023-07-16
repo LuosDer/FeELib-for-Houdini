@@ -135,17 +135,13 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_Ray_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_Ray_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
-    /// This static data member automatically registers
-    /// this verb class at library load time.
     static const SOP_NodeVerb::Register<SOP_FeE_Ray_1_0Verb> theVerb;
 };
 
-// The static member variable definition has to be outside the class definition.
-// The declaration is inside the class.
 const SOP_NodeVerb::Register<SOP_FeE_Ray_1_0Verb> SOP_FeE_Ray_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
@@ -159,7 +155,7 @@ SOP_FeE_Ray_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Ray_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_Ray_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Ray_1_0Enums;
     switch (parmGroupType)
@@ -170,12 +166,12 @@ sopGroupType(SOP_FeE_Ray_1_0Parms::GroupType parmGroupType)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_Ray_1_0Parms::Class parmAttribClass)
+sopAttribOwner(const SOP_FeE_Ray_1_0Parms::Class parmAttribClass)
 {
     using namespace SOP_FeE_Ray_1_0Enums;
     switch (parmAttribClass)
@@ -196,9 +192,9 @@ SOP_FeE_Ray_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Ray_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 
@@ -210,23 +206,18 @@ SOP_FeE_Ray_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
+
     
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
-*/
-    
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    GFE_Ray ray(outGeo0, cookparms);
+    ray.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
+    ray.groupParser.setGroup(groupType, sopparms.getGroup());
 
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    ray.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
-    enumerate.computeAndBumpDataId();
+    ray.computeAndBumpDataId();
     
 
 }
