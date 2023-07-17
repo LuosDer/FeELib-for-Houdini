@@ -200,7 +200,7 @@ private:
         if (geoRef0)
         {
             const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
-            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -216,7 +216,7 @@ private:
         }
         else
         {
-            UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttribRef](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttribRef](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -233,13 +233,18 @@ private:
     }
     
     template<typename FLOAT_T, GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
-    void attribPromote()
+    void attribPromote()           
     {
         const GA_ROHandleT<FLOAT_T> srcAttrib_h(srcAttrib);
-    
-        UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
+
+        using value_type = FLOAT_T;
+        //if constexpr(GFE_Type::isScalar<FLOAT_T>)
+        //    using value_type = FLOAT_T;
+        //else
+        //    using value_type = typename FLOAT_T::value_type;
+        UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttrib_h](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
+            GA_PageHandleT<FLOAT_T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -262,7 +267,7 @@ private:
     {
         const GA_ROHandleT<VECTOR_T> srcAttrib_h(srcAttrib);
     
-        UTparallelFor(groupParser.getSplittableRange(dstOwner), [this, &srcAttrib_h](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttrib_h](const GA_SplittableRange& r)
         {
             GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)

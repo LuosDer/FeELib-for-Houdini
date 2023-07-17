@@ -162,6 +162,10 @@ default: UT_ASSERT_MSG(0, "Unhandled GFE_CurveEndsType"); break;
 namespace GFE_Type {
 
 
+template <class _Ty>
+_INLINE_VAR constexpr bool isScalar = std::is_same_v<_Ty, float> || std::is_same_v<_Ty, int>;
+
+    
 #ifndef GFE_TOPO_SCOPE
 
 #if 0

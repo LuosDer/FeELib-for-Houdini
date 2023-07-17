@@ -4,7 +4,7 @@
 #ifndef __GFE_CurveSubtractMesh_h__
 #define __GFE_CurveSubtractMesh_h__
 
-#include "GFE/GFE_CurveSubtractMesh.h"
+#include <GU/GU_RayIntersect.h>#include "GFE/GFE_CurveSubtractMesh.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
@@ -13,11 +13,9 @@
 
 class GFE_CurveSubtractMesh : public GFE_AttribFilter {
 
-
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
-
-
+    
     void
         setComputeParm(
             const GA_Size firstIndex   = 0,
@@ -37,7 +35,6 @@ public:
 
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -46,6 +43,8 @@ private:
 
         if (groupParser.isEmpty())
             return true;
+
+
         
         GFE_Intersection intersection
         attribPtr = getOutAttribArray()[0];
@@ -69,6 +68,8 @@ private:
     template<typename T>
     void curveSubtractMesh()
     {
+
+        GU_RayInfo
         UT_ASSERT_P(attribPtr);
         const GA_SplittableRange geoSplittableRange0(groupParser.getRange(attribPtr->getOwner()));
         UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
