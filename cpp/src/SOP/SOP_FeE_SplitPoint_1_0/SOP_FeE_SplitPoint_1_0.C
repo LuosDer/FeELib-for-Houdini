@@ -2,21 +2,17 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_SplitPoint_1_0.h"
 
-
 #include "SOP_FeE_SplitPoint_1_0.proto.h"
+
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
 
-#include <PRM/PRM_Include.h>
-//#include <PRM/PRM_TemplateBuilder.h>
-
-
+#include "PRM/PRM_ChoiceList.h"
 
 #include "GFE/GFE_SplitPoint.h"
-
 
 using namespace SOP_FeE_SplitPoint_1_0_Namespace;
 
@@ -91,6 +87,20 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
 
+    parm {
+        name    "keepEdgeGroup"
+        cppname "KeepEdgeGroup"
+        label   "Keep Edge Group"
+        type    string
+        default { "*" }
+    }
+    parm {
+        name    "outEdgeGroupAsVertex"
+        cppname "OutEdgeGroupAsVertex"
+        label   "Out Edge Group as Vertex"
+        type    toggle
+        default { "0" }
+    }
 
 
     // parm {
@@ -115,10 +125,10 @@ static const char *theDsFile = R"THEDSFILE(
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_SplitPoint_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_SplitPoint_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_SplitPoint_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:      return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:       return GA_GROUP_PRIMITIVE;  break;
@@ -197,10 +207,11 @@ SOP_FeE_SplitPoint_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group", &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("primSplitAttrib", &SOP_Node::primAttribMenu);
+        templ.setChoiceListPtr("primSplitAttrib",   &SOP_Node::primAttribMenu);
         templ.setChoiceListPtr("vertexSplitAttrib", &SOP_Node::vertexAttribMenu);
-        templ.setChoiceListPtr("primSplitGroup", &SOP_Node::primGroupMenu);
-        templ.setChoiceListPtr("vertexSplitGroup", &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("primSplitGroup",    &SOP_Node::primGroupMenu);
+        templ.setChoiceListPtr("vertexSplitGroup",  &SOP_Node::vertexNamedGroupMenu);
+        templ.setChoiceListPtr("keepEdgeGroup",     &SOP_Node::edgeNamedGroupMenu);
         
         //templ.setChoiceListPtr("vertexSplitAttrib", &splitPointAttribMenu);
     }
@@ -245,7 +256,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_SplitPoint_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_SplitPoint_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -272,8 +283,8 @@ SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_SplitPoint_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    outGeo0.replaceWith(inGeo0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //outGeo0.replaceWith(inGeo0);
 
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -291,18 +302,24 @@ SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     
     //if (sopparms.getSplitByAttrib())
     //{
-        splitPoint.getOutAttribArray().oappendPrims(sopparms.getPrimSplitAttrib());
-        splitPoint.getOutAttribArray().oappendVertices(sopparms.getVertexSplitAttrib());
-        splitPoint.getOutGroupArray().oappendPrims(sopparms.getPrimSplitGroup());
-        splitPoint.getOutGroupArray().oappendVertices(sopparms.getVertexSplitGroup());
+        splitPoint.getInAttribArray().oappendPrims(sopparms.getPrimSplitAttrib());
+        splitPoint.getInAttribArray().oappendVertices(sopparms.getVertexSplitAttrib());
+        splitPoint.getInGroupArray().oappendPrims(sopparms.getPrimSplitGroup());
+        splitPoint.getInGroupArray().oappendVertices(sopparms.getVertexSplitGroup());
     
-        splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
-        splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();
+        //splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
+        //splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();
     //}
     
-    //splitPoint.setComputeParm(sopparms.getSplitByAttribTol(), sopparms.getPromoteSplitAttrib(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    splitPoint.getOutGroupArray().appendEdges(sopparms.getKeepEdgeGroup());
+    
+    splitPoint.setComputeParm(sopparms.getSplitByAttribTol(), sopparms.getPromoteSplitAttrib()
+        //, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize()
+        );
+    splitPoint.outEdgeGroupAsVertex = sopparms.getOutEdgeGroupAsVertex();
+    
     splitPoint.computeAndBumpDataId();
-
+    splitPoint.visualizeOutGroup();
+    
 }
 
