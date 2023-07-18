@@ -57,6 +57,7 @@ namespace GFE_DetailBase {
 
     static GA_Offset edgeVertexSub(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
     {
+        GA_Offset primPoint_next;
         for (GA_Offset vtxoff = geo.pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
         {
             const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
@@ -68,17 +69,22 @@ namespace GFE_DetailBase {
                     continue;
                 
                 GA_Size vtxpnum_next = vtxpnum+1;
-                if (vtxpnum_next == numvtx)
+                if (vtxpnum_next != numvtx || vertices.isClosed())
                 {
-                    if (!vertices.isClosed())
-                        break;
-                    vtxpnum_next = 0;
+                    if (vtxpnum_next == numvtx)
+                        vtxpnum_next = 0;
+                    primPoint_next = geo.vertexPoint(vertices[vtxpnum_next]);
+                    if (primPoint_next == ptoff1)
+                        return vtxoff;
                 }
-                const GA_Offset primPoint_next = geo.vertexPoint(vertices[vtxpnum_next]);
                 
-                if (primPoint_next == ptoff1)
-                    return vertices[vtxpnum];
-                //return vertices[vtxpnum_next];
+                if (vtxpnum != 0 || vertices.isClosed())
+                {
+                    vtxpnum_next = vtxpnum==0 ? numvtx-1 : vtxpnum-1;
+                    primPoint_next = geo.vertexPoint(vertices[vtxpnum_next]);
+                    if (primPoint_next == ptoff1)
+                        return vertices[vtxpnum_next];
+                }
             }
         }
         return GFE_INVALID_OFFSET;

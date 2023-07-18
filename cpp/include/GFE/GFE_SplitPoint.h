@@ -173,7 +173,7 @@ private:
                     name.sprintf(__GFE_TEMP_SplitPoint_VertexEdgeGroupName, i);
                     vertexEdgeGroupArray.findOrCreateVertex(false, name);
                 }
-                GFE_GroupUnion::groupUnion<GA_ATTRIB_VERTEX>(*vertexEdgeGroupArray.getVertexGroup(len), *edgeGroupArray.getEdgeGroup(len));
+                GFE_GroupUnion::groupUnion<GA_ATTRIB_OWNER_N>(*vertexEdgeGroupArray.getVertexGroup(len), *edgeGroupArray.getEdgeGroup(len));
             }
             break;
             default: UT_ASSERT_MSG(0, "Unhandled Group Type"); break;
@@ -190,58 +190,39 @@ private:
         if (getInAttribArray().isEmpty() && getInGroupArray().isEmpty())
         {
             splitPoint();
-            return true;
         }
-        
-        const size_t sizeAttrib = getOutAttribArray().size();
-        for (size_t i = 0; i < sizeAttrib; ++i)
+        else
         {
-            switch (getOutAttribArray()[i]->getOwner())
-            {
-            case GA_ATTRIB_PRIMITIVE: break;
-            case GA_ATTRIB_VERTEX:    break;
-            case GA_ATTRIB_POINT:     break;
-            case GA_ATTRIB_DETAIL:    break;
-            default: UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
-            }
-        }
-        
-        const auto attribSize = getInAttribArray().size();
-        for (size_t i = 0; i < attribSize; ++i)
-        {
-            splitAttrib = getInAttribArray()[i];
-            splitPointByAttrib();
-        }
-        if (promoteAttrib)
-        {
+            const auto attribSize = getInAttribArray().size();
             for (size_t i = 0; i < attribSize; ++i)
             {
-                GA_Attribute* const attrib = getInAttribArray()[i];
-                GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+                splitAttrib = getInAttribArray()[i];
+                splitPointByAttrib();
             }
-        }
+            if (promoteAttrib)
+            {
+                for (size_t i = 0; i < attribSize; ++i)
+                {
+                    GA_Attribute* const attrib = getInAttribArray()[i];
+                    GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+                }
+            }
             
-        const auto groupSize = getInGroupArray().size();
-        for (size_t i = 0; i < groupSize; ++i)
-        {
-            splitPointByAttrib(getInGroupArray()[i]);
-            // const GA_Group* const group = getOutGroupArray()[i];
-            // if (!group->isElementGroup())
-            //     continue;
-            // splitAttrib = static_cast<const GA_Attribute*>(static_cast<const GA_ElementGroup*>(group));
-            // splitPointByAttrib();
-        }
-        if (promoteAttrib)
-        {
+            const auto groupSize = getInGroupArray().size();
             for (size_t i = 0; i < groupSize; ++i)
             {
-                GA_ElementGroup* const attrib = getInGroupArray().getElementGroup(i);
-                GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+                splitPointByAttrib(getInGroupArray()[i]);
+            }
+            if (promoteAttrib)
+            {
+                for (size_t i = 0; i < groupSize; ++i)
+                {
+                    GA_ElementGroup* const attrib = getInGroupArray().getElementGroup(i);
+                    GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
+                }
             }
         }
 
-
-        
         UT_ASSERT_P(edgeGroupArray.size() == vertexEdgeGroupArray.size());
         const size_t sizeEdgeGroup = vertexEdgeGroupArray.size();
         for (size_t i = 0; i < sizeEdgeGroup; ++i)
