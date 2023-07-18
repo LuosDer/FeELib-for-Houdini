@@ -336,48 +336,16 @@ public:
     
 private:
     
-    GA_Offset edgeVertexSub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
-    {
-        for (GA_Offset vtxoff = pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = vertexToNextVertex(vtxoff))
-        {
-            const GA_Offset primoff = vertexPrimitive(vtxoff);
-            const GA_Size numvtx = getPrimitiveVertexCount(primoff);
-            for (GA_Size vtxpnum = 0; vtxpnum <= numvtx; ++vtxpnum)
-            {
-                const GA_Offset primVtx = getPrimitiveVertexOffset(primoff, vtxpnum);
-                const GA_Offset primPoint = vertexPoint(primVtx);
-                if (primPoint != ptoff0)
-                    continue;
-                
-                GA_Size vtxpnum_next = vtxpnum+1;
-                if (vtxpnum_next == numvtx)
-                {
-                    if (!getPrimitiveClosedFlag(primoff))
-                        break;
-                    vtxpnum_next = 0;
-                }
-                const GA_Offset primPoint_next = getPrimitivePointOffset(primoff, vtxpnum_next);
-                
-                if (primPoint_next == ptoff1)
-                    return primVtx;
-                    //return getPrimitiveVertexOffset(primoff, vtxpnum_next);
-            }
-        }
-        return GFE_INVALID_OFFSET;
-    }
+    SYS_FORCE_INLINE GA_Offset edgeVertexSub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    { return GFE_DetailBase::edgeVertexSub(*this, ptoff0, ptoff1); }
     
 public:
     
-    GA_Offset edgeVertex(const GA_Offset ptoff0, const GA_Offset ptoff1) const
-    {
-        GA_Offset result = edgeVertexSub(ptoff0, ptoff1);
-        if (GFE_Type::isInvalidOffset(result))
-            result = edgeVertexSub(ptoff1, ptoff0);
-        return result;
-    }
+    SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    { return GFE_DetailBase::edgeVertex(*this, ptoff0, ptoff1); }
     
     SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Edge& edge) const
-    { return edgeVertex(edge.p0(), edge.p1()); }
+    { return GFE_DetailBase::edgeVertex(*this, edge); }
     
     
 

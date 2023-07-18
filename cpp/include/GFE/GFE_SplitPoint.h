@@ -18,22 +18,21 @@
 #if 0
 
 GFE_SplitPoint splitPoint(geo, cookparms);
-splitPoint.groupParser.setGroup(groupType, sopparms.getGroup());
+splitPoint.groupParser.setGroup(groupParser);
     
-splitPoint.getInAttribArray().oappendPrims(sopparms.getPrimSplitAttrib());
-splitPoint.getInAttribArray().oappendVertices(sopparms.getVertexSplitAttrib());
-splitPoint.getInGroupArray().oappendPrims(sopparms.getPrimSplitGroup());
-splitPoint.getInGroupArray().oappendVertices(sopparms.getVertexSplitGroup());
+splitPoint.getInAttribArray().oappendPrims(   );
+splitPoint.getInAttribArray().oappendVertices();
+splitPoint.getInGroupArray() .oappendPrims(   );
+splitPoint.getInGroupArray() .oappendVertices();
     
-splitPoint.getOutGroupArray().appendEdges(sopparms.getKeepEdgeGroup());
+splitPoint.getOutGroupArray().appendEdges();
     
-splitPoint.setComputeParm(sopparms.getSplitByAttribTol(), sopparms.getPromoteSplitAttrib());
-//splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
-//splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();
-splitPoint.outEdgeGroupAsVertex = sopparms.getOutEdgeGroupAsVertex();
+splitPoint.setComputeParm(, );
+//splitPoint.splitAttribTol = 1e-05;
+//splitPoint.promoteAttrib  = true;
+splitPoint.outEdgeGroupAsVertex = true;
     
-splitPoint.computeAndBumpDataId();
-splitPoint.visualizeOutGroup();
+splitPoint.compute();
 
 #endif
 
@@ -163,6 +162,8 @@ private:
             case GA_GROUP_POINT:     break;
             case GA_GROUP_VERTEX:    break;
             case GA_GROUP_EDGE:
+            {
+                const size_t len = edgeGroupArray.size();
                 edgeGroupArray.append(getOutGroupArray()[i]);
                 if (outEdgeGroupAsVertex)
                     vertexEdgeGroupArray.findOrCreateVertex(false, getOutGroupArray()[i]->getName());
@@ -172,6 +173,8 @@ private:
                     name.sprintf(__GFE_TEMP_SplitPoint_VertexEdgeGroupName, i);
                     vertexEdgeGroupArray.findOrCreateVertex(false, name);
                 }
+                GFE_GroupUnion::groupUnion<GA_ATTRIB_VERTEX>(*vertexEdgeGroupArray.getVertexGroup(len), *edgeGroupArray.getEdgeGroup(len));
+            }
             break;
             default: UT_ASSERT_MSG(0, "Unhandled Group Type"); break;
             }
@@ -245,9 +248,9 @@ private:
         {
             UT_ASSERT_MSG(edgeGroupArray.isEdgeGroup(i),         "Unhandled Group Type");
             UT_ASSERT_MSG(vertexEdgeGroupArray.isVertexGroup(i), "Unhandled Group Type");
-            GFE_GroupUnion::groupUnion(edgeGroupArray[i], vertexEdgeGroupArray[i]);
-            //vertexEdgeGroupArray.destroyAll();
+            GFE_GroupUnion::groupUnion(*edgeGroupArray.getEdgeGroup(i), *vertexEdgeGroupArray.getVertexGroup(i));
         }
+        vertexEdgeGroupArray.destroyAll();
         
         return true;
     }
@@ -328,9 +331,8 @@ private:
 #else
                 vtxoffs.stdsort(std::less<GA_Offset>());
 #endif
-                bool skip_first = !hasOther;
                 GA_Offset newptoff = geo->appendPointBlock(points_to_add);
-                for (exint j = exint(skip_first); j < nvtx; ++j, ++newptoff)
+                for (exint j = static_cast<exint>(!hasOther); j < nvtx; ++j, ++newptoff)
                 {
                     if (!bcnt++ && boss.wasInterrupted())
                         return;
@@ -550,8 +552,6 @@ private:
                 } while (splitfound);
             }
         }
-
-        
     }
 
 public:

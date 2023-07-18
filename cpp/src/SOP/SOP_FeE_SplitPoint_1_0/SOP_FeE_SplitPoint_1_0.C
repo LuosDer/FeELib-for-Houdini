@@ -304,8 +304,8 @@ SOP_FeE_SplitPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     //{
         splitPoint.getInAttribArray().oappendPrims(sopparms.getPrimSplitAttrib());
         splitPoint.getInAttribArray().oappendVertices(sopparms.getVertexSplitAttrib());
-        splitPoint.getInGroupArray().oappendPrims(sopparms.getPrimSplitGroup());
-        splitPoint.getInGroupArray().oappendVertices(sopparms.getVertexSplitGroup());
+        splitPoint.getInGroupArray() .oappendPrims(sopparms.getPrimSplitGroup());
+        splitPoint.getInGroupArray() .oappendVertices(sopparms.getVertexSplitGroup());
     
         //splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
         //splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();

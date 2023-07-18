@@ -7,13 +7,17 @@
 #include "GFE/GFE_Type.h"
 
 #include "GA/GA_Detail.h"
-
+//#include <assert.h>
 
 
 #include "GU/GU_Snap.h"
 
+#ifdef NDEBUG
+#define GFE_DEBUG_MODE false
+#else
+#define GFE_DEBUG_MODE true
+#endif
 
-#define GFE_DEBUG_MODE 1
 #define GFE_MAX_LOOP_COUNT 1e10
 #define GFE_FIND_INVALID_INDEX -1
 
