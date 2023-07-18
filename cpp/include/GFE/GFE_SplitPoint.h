@@ -4,10 +4,9 @@
 #ifndef __GFE_SplitPoint_h__
 #define __GFE_SplitPoint_h__
 
-
-
 #include "GFE/GFE_SplitPoint.h"
 
+#include "GFE/GFE_GeoFilter.h"
 
 
 
@@ -16,20 +15,36 @@
 #include "GU/GU_Promote.h"
 
 
+#if 0
 
-#include "GFE/GFE_GeoFilter.h"
+GFE_SplitPoint splitPoint(geo, cookparms);
+splitPoint.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+splitPoint.getInAttribArray().oappendPrims(sopparms.getPrimSplitAttrib());
+splitPoint.getInAttribArray().oappendVertices(sopparms.getVertexSplitAttrib());
+splitPoint.getInGroupArray().oappendPrims(sopparms.getPrimSplitGroup());
+splitPoint.getInGroupArray().oappendVertices(sopparms.getVertexSplitGroup());
+    
+splitPoint.getOutGroupArray().appendEdges(sopparms.getKeepEdgeGroup());
+    
+splitPoint.setComputeParm(sopparms.getSplitByAttribTol(), sopparms.getPromoteSplitAttrib());
+//splitPoint.splitAttribTol = sopparms.getSplitByAttribTol();
+//splitPoint.promoteAttrib = sopparms.getPromoteSplitAttrib();
+splitPoint.outEdgeGroupAsVertex = sopparms.getOutEdgeGroupAsVertex();
+    
+splitPoint.computeAndBumpDataId();
+splitPoint.visualizeOutGroup();
+
+#endif
 
 
 
+class GFE_SplitPoint : public GFE_AttribCreateFilter {
 
-class GFE_SplitPoint : public GFE_AttribFilter {
-
-private:
-    bool splitByAttrib = false;
-
+#define __GFE_TEMP_SplitPoint_VertexEdgeGroupName "__GFE_TEMP_SplitPoint_VertexEdgeGroupName%d"
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
 
     ~GFE_SplitPoint()
     {
@@ -41,19 +56,19 @@ public:
             const fpreal splitAttribTol = 1e-05,
             const bool promoteAttrib = false
             // ,const exint subscribeRatio = 64,
-            // const exint minGrainSize = 64
+            // const exint minGrainSize   = 64
         )
     {
         setHasComputed();
         this->splitAttribTol = splitAttribTol;
-        this->promoteAttrib = promoteAttrib;
+        this->promoteAttrib  = promoteAttrib;
         // this->subscribeRatio = subscribeRatio;
-        // this->minGrainSize = minGrainSize;
+        // this->minGrainSize   = minGrainSize;
     }
     
     SYS_FORCE_INLINE size_t getNumPointAdded() const
     { return numPointAdded; }
-    
+
     
     // SYS_FORCE_INLINE void setSplitByAttrib(const GA_Attribute* const attribPtr = nullptr)
     // {
@@ -100,42 +115,113 @@ public:
     //     }
     // }
 
-
+    void bumpDataId() const override
+    {
+        if (numPointAdded <= 0)
+            return;
+        // If we'd only added/removed points, we could use
+        // geo->bumpDataIdsForAddOrRemove(true, false, false),
+        // but we also rewired vertices, so we need to bump the
+        // linked-list topology attributes.
+        geo->getAttributes().bumpAllDataIds(GA_ATTRIB_POINT);
+        GA_ATITopology* topo = geo->getTopology().getPointRef();
+        if (topo)
+            topo->bumpDataId();
+        topo = geo->getTopology().getVertexNextRef();
+        if (topo)
+            topo->bumpDataId();
+        topo = geo->getTopology().getVertexPrevRef();
+        if (topo)
+            topo->bumpDataId();
+        // Edge groups might also be affected, if any edges
+        // were on points that were split, so we bump their
+        // data IDs, just in case.
+        geo->edgeGroups().bumpAllDataIds();
+    }
+    
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
+        if (geo->getNumPoints() == 0)
+            return true;
+
         if (groupParser.isEmpty())
             return true;
 
+
+        
+        GFE_GroupArray edgeGroupArray(geo, cookparms);
+        GFE_GroupArray vertexEdgeGroupArray(geo, cookparms);
+        const size_t sizeGroup = getOutGroupArray().size();
+        for (size_t i = 0; i < sizeGroup; ++i)
+        {
+            switch (getOutGroupArray()[i]->classType())
+            {
+            case GA_GROUP_PRIMITIVE: break;
+            case GA_GROUP_POINT:     break;
+            case GA_GROUP_VERTEX:    break;
+            case GA_GROUP_EDGE:
+                edgeGroupArray.append(getOutGroupArray()[i]);
+                if (outEdgeGroupAsVertex)
+                    vertexEdgeGroupArray.findOrCreateVertex(false, getOutGroupArray()[i]->getName());
+                else
+                {
+                    UT_WorkBuffer name;
+                    name.sprintf(__GFE_TEMP_SplitPoint_VertexEdgeGroupName, i);
+                    vertexEdgeGroupArray.findOrCreateVertex(false, name);
+                }
+            break;
+            default: UT_ASSERT_MSG(0, "Unhandled Group Type"); break;
+            }
+        }
+        UT_ASSERT_P(edgeGroupArray.size() == vertexEdgeGroupArray.size());
+
+
+        
+        numPointAdded = 0;
+
+        
         const GA_ElementGroup* const group = groupParser.getElementGroup();
-        if (getOutAttribArray().isEmpty() && getOutGroupArray().isEmpty())
+        if (getInAttribArray().isEmpty() && getInGroupArray().isEmpty())
         {
             splitPoint();
             return true;
         }
         
-        const auto attribSize = getOutAttribArray().size();
+        const size_t sizeAttrib = getOutAttribArray().size();
+        for (size_t i = 0; i < sizeAttrib; ++i)
+        {
+            switch (getOutAttribArray()[i]->getOwner())
+            {
+            case GA_ATTRIB_PRIMITIVE: break;
+            case GA_ATTRIB_VERTEX:    break;
+            case GA_ATTRIB_POINT:     break;
+            case GA_ATTRIB_DETAIL:    break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
+            }
+        }
+        
+        const auto attribSize = getInAttribArray().size();
         for (size_t i = 0; i < attribSize; ++i)
         {
-            splitAttrib = getOutAttribArray()[i];
+            splitAttrib = getInAttribArray()[i];
             splitPointByAttrib();
         }
         if (promoteAttrib)
         {
             for (size_t i = 0; i < attribSize; ++i)
             {
-                GA_Attribute* const attrib = getOutAttribArray()[i];
+                GA_Attribute* const attrib = getInAttribArray()[i];
                 GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
             }
         }
             
-        const auto groupSize = getOutGroupArray().size();
+        const auto groupSize = getInGroupArray().size();
         for (size_t i = 0; i < groupSize; ++i)
         {
-            splitPointByAttrib(getOutGroupArray()[i]);
+            splitPointByAttrib(getInGroupArray()[i]);
             // const GA_Group* const group = getOutGroupArray()[i];
             // if (!group->isElementGroup())
             //     continue;
@@ -146,26 +232,35 @@ private:
         {
             for (size_t i = 0; i < groupSize; ++i)
             {
-                GA_ElementGroup* const attrib = getOutGroupArray().getElementGroup(i);
+                GA_ElementGroup* const attrib = getInGroupArray().getElementGroup(i);
                 GU_Promote::promote(*geo->asGU_Detail(), attrib, GA_ATTRIB_POINT, true, GU_Promote::GU_PROMOTE_FIRST);
             }
         }
 
+
+        
+        UT_ASSERT_P(edgeGroupArray.size() == vertexEdgeGroupArray.size());
+        const size_t sizeEdgeGroup = vertexEdgeGroupArray.size();
+        for (size_t i = 0; i < sizeEdgeGroup; ++i)
+        {
+            UT_ASSERT_MSG(edgeGroupArray.isEdgeGroup(i),         "Unhandled Group Type");
+            UT_ASSERT_MSG(vertexEdgeGroupArray.isVertexGroup(i), "Unhandled Group Type");
+            GFE_GroupUnion::groupUnion(edgeGroupArray[i], vertexEdgeGroupArray[i]);
+            //vertexEdgeGroupArray.destroyAll();
+        }
+        
         return true;
     }
 
 
 
 
-    
-    // NOTE: This will bump any data IDs as needed, if any points are split.
-    GA_Size splitPoint()
+    void splitPoint()
     {
         UT_AutoInterrupt boss("Making Unique Points");
         if (boss.wasInterrupted())
-            return 0;
+            return;
 
-        numPointAdded = 0;
         char bcnt = 0;
         
         const GA_GroupType groupType = groupParser.classType();
@@ -175,6 +270,7 @@ private:
         
         UT_SmallArray<GA_Offset> vtxoffs;
         GA_Offset ptoff_end = geo->getPointMap().lastOffset() + 1;
+        
         GA_Offset start, end;
         for (GA_Iterator it(groupParser.getPointSplittableRange()); it.blockAdvance(start, end); )
         {
@@ -237,35 +333,13 @@ private:
                 for (exint j = exint(skip_first); j < nvtx; ++j, ++newptoff)
                 {
                     if (!bcnt++ && boss.wasInterrupted())
-                        return numPointAdded;
+                        return;
 
                     ptwrangler->copyAttributeValues(newptoff, ptoff);
                     geo->setVertexPoint(vtxoffs(j), newptoff);
                 }
             }
         }
-        if (numPointAdded > 0)
-        {
-            // If we'd only added/removed points, we could use
-            // geo->bumpDataIdsForAddOrRemove(true, false, false),
-            // but we also rewired vertices, so we need to bump the
-            // linked-list topology attributes.
-            geo->getAttributes().bumpAllDataIds(GA_ATTRIB_POINT);
-            GA_ATITopology* topo = geo->getTopology().getPointRef();
-            if (topo)
-                topo->bumpDataId();
-            topo = geo->getTopology().getVertexNextRef();
-            if (topo)
-                topo->bumpDataId();
-            topo = geo->getTopology().getVertexPrevRef();
-            if (topo)
-                topo->bumpDataId();
-            // Edge groups might also be affected, if any edges
-            // were on points that were split, so we bump their
-            // data IDs, just in case.
-            geo->edgeGroups().bumpAllDataIds();
-        }
-        return numPointAdded;
     }
 
     template<typename T>
@@ -273,11 +347,11 @@ private:
         const GA_Offset v1,
         const GA_Offset v2,
         const GA_ROHandleT<T>& attrib,
-        const int tupleSize,
+        const GA_Size tupleSize,
         const fpreal tol
     )
     {
-        for (int i = 0; i < tupleSize; i++)
+        for (GA_Size i = 0; i < tupleSize; i++)
         {
             if (SYSabs(attrib.get(v1, i) - attrib.get(v2, i)) > tol)
                 return false;
@@ -301,9 +375,8 @@ private:
         }
     }
 
-        
-    // NOTE: This will bump any data IDs as needed, if any points are split.
-    template<GA_AttributeOwner OWNER>
+    
+    template<GA_AttributeOwner _Owner>
     void splitPointByAttrib()
     {
         const GA_ElementGroup* const group = groupParser.isPointGroup() ? nullptr : groupParser.getPointGroup();
@@ -312,13 +385,12 @@ private:
         
         const bool isPrimGroup = groupParser.isPrimitiveGroup();
         
-        numPointAdded = 0;
         
         const GA_AIFCompare* compare = nullptr;
         GA_ROHandleT<int64> attribi;
         GA_ROHandleR attribf;
-        int tuplesize;
-        const GA_ATINumeric* numeric = dynamic_cast<const GA_ATINumeric*>(splitAttrib);
+        GA_Size tupleSize;
+        const GA_ATINumeric* const numeric = dynamic_cast<const GA_ATINumeric*>(splitAttrib);
         if (numeric)
         {
             GA_StorageClass storeclass = splitAttrib->getStorageClass();
@@ -326,13 +398,13 @@ private:
             {
                 attribi = splitAttrib;
                 UT_ASSERT(attribi.isValid());
-                tuplesize = attribi.getTupleSize();
+                tupleSize = attribi.getTupleSize();
             }
             else if (storeclass == GA_STORECLASS_FLOAT)
             {
                 attribf = splitAttrib;
                 UT_ASSERT(attribf.isValid());
-                tuplesize = attribf.getTupleSize();
+                tupleSize = attribf.getTupleSize();
             }
             else
             {
@@ -409,12 +481,12 @@ private:
                     // If any vertices mismatch, we make a new point.
                     
                     GA_Offset baseoffset;
-                    if constexpr(OWNER == GA_ATTRIB_VERTEX)
+                    if constexpr(_Owner == GA_ATTRIB_VERTEX)
                         baseoffset = basevtxoff;
                     else
                         baseoffset = baseprimoff;
                     
-                    //GA_Offset baseoffset = OWNER == GA_ATTRIB_VERTEX ? basevtxoff : baseprimoff;
+                    //GA_Offset baseoffset = _Owner == GA_ATTRIB_VERTEX ? basevtxoff : baseprimoff;
                     
                     vtxlist.setSize(1);
                     vtxlist(0) = basevtxoff;
@@ -425,17 +497,17 @@ private:
                             continue;
                     
                         GA_Offset offset;
-                        if constexpr(OWNER == GA_ATTRIB_VERTEX)
+                        if constexpr(_Owner == GA_ATTRIB_VERTEX)
                             offset = vtxoff;
                         else
                             offset = geo->vertexPrimitive(vtxoff);
-                        //GA_Offset offset = constexpr(OWNER == GA_ATTRIB_VERTEX) ? vtxoff : geo->vertexPrimitive(vtxoff);
+                        //GA_Offset offset = constexpr(_Owner == GA_ATTRIB_VERTEX) ? vtxoff : geo->vertexPrimitive(vtxoff);
                         
                         bool match;
                         if (attribi.isValid())
-                            match = compareVertices<int64>(baseoffset, offset, attribi, tuplesize, splitAttribTol);
+                            match = compareVertices<int64> (baseoffset, offset, attribi, tupleSize, splitAttribTol);
                         else if (attribf.isValid())
-                            match = compareVertices<fpreal>(baseoffset, offset, attribf, tuplesize, splitAttribTol);
+                            match = compareVertices<fpreal>(baseoffset, offset, attribf, tupleSize, splitAttribTol);
                         else
                         {
                             bool success = compare->isEqual(match, *splitAttrib, baseoffset, *splitAttrib, offset);
@@ -479,33 +551,17 @@ private:
             }
         }
 
-        if (numPointAdded > 0)
-        {
-            // If we'd only added/removed points, we could use
-            // geo->bumpDataIdsForAddOrRemove(true, false, false),
-            // but we also rewired vertices, so we need to bump the
-            // linked-list topology attributes.
-            geo->getAttributes().bumpAllDataIds(GA_ATTRIB_POINT);
-            GA_ATITopology* topo = geo->getTopology().getPointRef();
-            if (topo)
-                topo->bumpDataId();
-            topo = geo->getTopology().getVertexNextRef();
-            if (topo)
-                topo->bumpDataId();
-            topo = geo->getTopology().getVertexPrevRef();
-            if (topo)
-                topo->bumpDataId();
-            // Edge groups might also be affected, if any edges
-            // were on points that were split, so we bump their
-            // data IDs, just in case.
-            geo->edgeGroups().bumpAllDataIds();
-        }
+        
     }
 
 public:
     const GA_Attribute* splitAttrib = nullptr;
     fpreal splitAttribTol = 1e-05;
     bool promoteAttrib = false;
+    bool outEdgeGroupAsVertex = false;
+
+//private:
+//    bool splitByAttrib = false;
 
 private:
     
@@ -514,6 +570,8 @@ private:
     //exint subscribeRatio = 64;
     //exint minGrainSize = 64;
 
+#undef __GFE_TEMP_SplitPoint_VertexEdgeGroupName
+    
 }; // End of class GFE_SplitPoint
 
 #endif

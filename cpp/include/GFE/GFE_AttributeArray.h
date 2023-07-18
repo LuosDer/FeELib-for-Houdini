@@ -1441,7 +1441,7 @@ public:
         }
     }
     
-    void appends(const GA_GroupType groupClass, const char* groupPattern)
+    void appends(const GA_GroupType groupClass, const char* const groupPattern)
     {
         if (!groupPattern)
             return;
@@ -1455,10 +1455,19 @@ public:
         }
     }
     SYS_FORCE_INLINE void appends(const GA_GroupType groupClass, const UT_StringRef& groupPattern)
-    {
-        if (GFE_Type::isValid(groupPattern))
-            appends(groupClass, groupPattern.c_str());
-    }
+    { if (GFE_Type::isValid(groupPattern)) appends(groupClass, groupPattern.c_str()); }
+
+    SYS_FORCE_INLINE void appendPrimitives(const char* const groupPattern)
+    { return appends(GA_GROUP_PRIMITIVE, groupPattern); }
+
+    SYS_FORCE_INLINE void appendPoints(const char* const groupPattern)
+    { return appends(GA_GROUP_POINT, groupPattern); }
+
+    SYS_FORCE_INLINE void appendVertexs(const char* const groupPattern)
+    { return appends(GA_GROUP_VERTEX, groupPattern); }
+
+    SYS_FORCE_INLINE void appendEdges(const char* const groupPattern)
+    { return appends(GA_GROUP_EDGE, groupPattern); }
 
     void oappends(const GA_GroupType groupClass, const char* groupPattern)
     {

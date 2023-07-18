@@ -858,9 +858,12 @@ SYS_FORCE_INLINE void delOrVisualizeGroup()
         }
     }
 #endif
+    
+SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
+{ return outAttribArray; }
 
 
-
+    
 #if 0
     const size_t sizeGroup = getOutGroupArray().size();
     for (size_t i = 0; i < sizeGroup; ++i)
@@ -875,9 +878,6 @@ SYS_FORCE_INLINE void delOrVisualizeGroup()
         }
     }
 #endif
-
-SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
-{ return outAttribArray; }
 
 SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
 { return outGroupArray; }
