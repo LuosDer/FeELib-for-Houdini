@@ -279,9 +279,10 @@ struct getValueType {
 
 
 
+    SYS_FORCE_INLINE static GA_PrimitiveTypeId typeId(const GEO_PrimitiveType type)
+    { return GA_PrimitiveTypeId(static_cast<int>(type)); }
 
-    static GFE_GroupMergeMethod
-    attribGroupMergeMethod(const GFE_AttribMergeMethod mergeMethod)
+    static GFE_GroupMergeMethod attribGroupMergeMethod(const GFE_AttribMergeMethod mergeMethod)
     {
         switch (mergeMethod)
         {
@@ -296,8 +297,7 @@ struct getValueType {
         return GFE_GroupMergeMethod::First;
     }
 
-    static GFE_AttribMergeMethod
-    attribGroupMergeMethod(const GFE_GroupMergeMethod mergeMethod)
+    static GFE_AttribMergeMethod attribGroupMergeMethod(const GFE_GroupMergeMethod mergeMethod)
     {
         switch (mergeMethod)
         {
@@ -311,8 +311,7 @@ struct getValueType {
         return GFE_AttribMergeMethod::First;
     }
 
-    static GU_Snap::AttributeMergeMethod
-    snapMergeMethod(const GFE_AttribMergeMethod mergeMethod)
+    static GU_Snap::AttributeMergeMethod snapMergeMethod(const GFE_AttribMergeMethod mergeMethod)
     {
         switch (mergeMethod)
         {
@@ -331,8 +330,7 @@ struct getValueType {
         return GU_Snap::AttributeMergeMethod::MERGE_ATTRIBUTE_FIRST;
     }
 
-    static GU_Snap::AttributeMergeMethod
-    snapMergeMethod(const GFE_GroupMergeMethod mergeMethod)
+    static GU_Snap::AttributeMergeMethod snapMergeMethod(const GFE_GroupMergeMethod mergeMethod)
     {
         switch (mergeMethod)
         {

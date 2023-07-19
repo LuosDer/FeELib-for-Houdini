@@ -9,6 +9,7 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "GU/GU_PackedGeometry.h"
 
 #include "GFE/GFE_OffsetAttributeToIndex.h"
 
@@ -430,9 +431,9 @@ private:
         if (pointPointEdgeAttrib)
         {
             if (vertexVertexPrimPrevAttrib && vertexVertexPrimNextAttrib)
-                pointPointEdgeByVertexVertexPrim();
+                1 ? pointPointEdgeByVertexVertexPrim() : pointPointEdgeByVertexVertexPrim();
             else if (vertexPrimIndexAttrib)
-                pointPointEdgeByVertexPrimIndex();
+                1 ? pointPointEdgeByVertexPrimIndexOutPack() : pointPointEdgeByVertexPrimIndex();
             else
                 pointPointEdge();
         }
@@ -465,7 +466,35 @@ private:
         if (primPrimPointAttrib)
             primPrimPoint();
 
-
+        if (pointPointEdgeAttrib)
+        {
+            const GA_ROHandleT<UT_ValArray<GA_Offset>> intArray_oh(pointPointEdgeAttrib);
+            //const GA_AIFNumericArray* const aIFNumericArray = pointPointEdgeAttrib->getAIFNumericArray();
+            GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail();
+            GU_Detail* const geoTemp = geoTemp_h.gdpNC();
+            //geoTemp->appendPrimitiveBlock(GFE_Type::typeId(GEO_PRIMNONE));
+            geoTemp->appendPrimitiveBlock(GEO_PRIMNONE, geo->getNumPoints());
+            
+            const GA_IndexMap& indexMap = geo->getIndexMap(GA_ATTRIB_POINT);
+            UTparallelFor(groupParser.getPointSplittableRange(), [this, geoTemp, &indexMap, &intArray_oh](const GA_SplittableRange& r)
+            {
+                //GA_OffsetListRef vertices;
+                UT_ValArray<GA_Offset> offArray(16);
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        intArray_oh.get(elemoff, offArray);
+                        GA_OffsetList adjElems(offArray);
+                        geoTemp->getPrimitiveList().setVertexList(indexMap.indexFromOffset(elemoff), adjElems);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+                
+            //GU_PrimPacked* primPacked = GU_PackedGeometry::packGeometry(*geo, geoTemp_h);
+        }
+            
         if (outAsOffset)
             return true;
 
@@ -1162,7 +1191,6 @@ void vertexNextEquivNoLoop()
 
     
 
-    //Get all prims neighbours prims with adjacent by edge
     void pointPointEdgeByVertexPrimIndex()
     {
         UT_ASSERT_P(vertexPrimIndexAttrib);
@@ -1214,9 +1242,66 @@ void vertexNextEquivNoLoop()
     }
 
 
+    void pointPointEdgeByVertexPrimIndexOutPack()
+    {
+        UT_ASSERT_P(vertexPrimIndexAttrib);
+        
+        //if (!pointPointEdgeAttrib)
+        //    setPointPointEdge(!outIntermediateAttrib);
+        
+        //intArray_wh = pointPointEdgeAttrib;
+        int_oh = vertexPrimIndexAttrib;
+        
+        //const GA_AIFNumericArray* const aIFNumericArray = pointPointEdgeAttrib->getAIFNumericArray();
+        GU_DetailHandle geoTmp_h = GFE_DetailBase::newDetail();
+        GU_Detail* const geoTmp = geoTmp_h.gdpNC();
+        //geoTmp->appendPrimitiveBlock(GFE_Type::typeId(GEO_PRIMNONE));
+        geoTmp->appendPrimitiveBlock(GEO_PRIMNONE, geo->getNumPoints());
+            
+        const GA_IndexMap& indexMap = geo->getIndexMap(GA_ATTRIB_POINT);
+        
+        const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
+        UTparallelFor(groupParser.getPointSplittableRange(), [this, seamGroup, geoTmp, &indexMap](const GA_SplittableRange& r)
+        {
+            GA_OffsetList adjElems;
+            GA_Offset start, end;
+            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            {
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    GA_Offset pt_next;
+                    for (GA_Offset vtxoff_next = geo->pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
+                    {
+                        const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+                        const GA_Size numvtx = vertices.size();
+                        
+                        const GA_Size vtxpnum = int_oh.get(vtxoff_next);
+                        if (vertices.isClosed() || vtxpnum != 0)
+                        {
+                            pt_next = geo->vertexPoint(vertices[vtxpnum==0 ? numvtx-1 : vtxpnum-1]);
+                            if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
+                                adjElems.append(pt_next);
+                        }
 
-    
-    //Get Vertex Destination Point
+                        const GA_Size vtxpnum_next = vtxpnum+1;
+                        if (vertices.isClosed() || vtxpnum_next != numvtx)
+                        {
+                            pt_next = geo->vertexPoint(vertices[vtxpnum_next==numvtx ? 0 : vtxpnum_next]);
+                            if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
+                                adjElems.append(pt_next);
+                        }
+                    }
+                    geoTmp->getPrimitiveList().setVertexList(indexMap.indexFromOffset(elemoff), adjElems);
+                    adjElems.clear();
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+        
+        GU_PrimPacked* primPacked = GU_PackedGeometry::packGeometry(*geo, geoTmp_h);
+    }
+
+
     void pointPointEdgeByVertexVertexPrim()
     {
         UT_ASSERT_P(vertexVertexPrimPrevAttrib);

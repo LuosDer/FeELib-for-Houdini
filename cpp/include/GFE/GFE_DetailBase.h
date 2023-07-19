@@ -13,8 +13,28 @@
 #include "GFE/GFE_Type.h"
 
 namespace GFE_DetailBase {
-
-
+    
+/*
+        GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail();
+        GU_Detail* const geoTemp = geoTemp_h.gdpNC();
+*/
+    static GU_DetailHandle newDetail()
+    {
+        GU_Detail* const geo = new GU_Detail;
+        GU_DetailHandle geo_h;
+        geo_h.allocateAndSet(geo);
+        return geo_h;
+    }
+    
+    static GU_DetailHandle newDetail(const GA_Detail& geoSrc)
+    {
+        GU_Detail* const geo = new GU_Detail;
+        GU_DetailHandle geo_h;
+        geo_h.allocateAndSet(geo);
+        geo->replaceWith(geoSrc);
+        return geo_h;
+    }
+    
     static GA_Size vertexPrimIndex(const GA_OffsetListRef& vertices, const GA_Offset vtxoff)
     {
         const GA_Size numvtx = vertices.size();
