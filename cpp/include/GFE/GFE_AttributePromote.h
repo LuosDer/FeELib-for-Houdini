@@ -118,7 +118,16 @@ private:
     
     
     SYS_FORCE_INLINE void groupPromote()
-    { GFE_GroupUnion::groupUnion(*dstGroup, *srcGroup); }
+    {
+        if (dstGroup->classType() == GA_GROUP_VERTEX && srcGroup->classType() == GA_GROUP_EDGE)
+        {
+            GFE_GroupUnion::groupUnion(reinterpret_cast<GA_VertexGroup&>(*dstGroup),
+                                       reinterpret_cast<const GA_EdgeGroup&>(*srcGroup),
+                                       vertexEdgeConnectElemType, reverseGroup);
+        }
+        else
+            GFE_GroupUnion::groupUnion(*dstGroup, *srcGroup, reverseGroup, subscribeRatio, minGrainSize);
+    }
     
     //template<GA_GroupType SrcOwner, GA_GroupType dstOwner>
     //void groupPromote()
@@ -385,6 +394,9 @@ public:
     GA_AttributeOwner dstAttribClass = GA_ATTRIB_INVALID;
     GA_GroupType dstGroupClass = GA_GROUP_INVALID;
         
+    GA_AttributeOwner vertexEdgeConnectElemType = GA_ATTRIB_OWNER_N;
+    bool reverseGroup = false;
+    
     UFE_SplittableString newAttribNames;
     UFE_SplittableString newGroupNames;
 
@@ -395,11 +407,9 @@ private:
     const GFE_Detail* geoTmp;
     const GA_Attribute* srcAttrib;
     const GA_Group* srcGroup;
-
         
     GA_Attribute* dstAttrib;
     GA_Group* dstGroup;
-
     //GA_AttributeOwner srcOwner;
 
     exint subscribeRatio = 64;

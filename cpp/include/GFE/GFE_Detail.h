@@ -516,36 +516,24 @@ void keepStdGroup(
     }
 #endif
 
+        
+SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_OffsetListRef& vertices, const GA_Offset vtxoff)
+{ return GFE_DetailBase::vertexPrimIndex(vertices, vtxoff); }
+        
+SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_PrimitiveList& primList, const GA_Offset primoff, const GA_Offset vtxoff)
+{ return GFE_DetailBase::vertexPrimIndex(primList, primoff, vtxoff); }
+    
+SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset primoff, const GA_Offset vtxoff)
+{ return GFE_DetailBase::vertexPrimIndex(*this, primoff, vtxoff); }
 
 SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset vtxoff)
-{ return vertexPrimIndex(vertexPrimitive(vtxoff), vtxoff); }
+{ return GFE_DetailBase::vertexPrimIndex(*this, vtxoff); }
 
-GA_Size vertexPrimIndex(const GA_Offset primoff, const GA_Offset vtxoff)
-{
-    const GA_Size numvtx = getPrimitiveVertexCount(primoff);
-    for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
-    {
-        if (getPrimitiveVertexOffset(primoff, vtxpnum) == vtxoff)
-            return vtxpnum;
-    }
-    return GFE_INVALID_OFFSET;
-}
-    
-GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
-{
-    const GA_Size vtxpnum_next = vtxpnum+1;
-    if (vtxpnum_next != getPrimitiveVertexCount(primoff))
-        return vertexPoint(getPrimitiveVertexOffset(primoff, vtxpnum_next));
-    if (getPrimitiveClosedFlag(primoff))
-        return vertexPoint(getPrimitiveVertexOffset(primoff, 0));
-    return GFE_INVALID_OFFSET;
-}
+SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
+{ return GFE_DetailBase::vertexPointDst(*this, primoff, vtxpnum); }
 
 SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset vtxoff)
-{
-    const GA_Offset primoff = vertexPrimitive(vtxoff);
-    return vertexPointDst(primoff, vertexPrimIndex(primoff, vtxoff));
-}
+{ return GFE_DetailBase::vertexPointDst(*this, vtxoff); }
 
         
 
