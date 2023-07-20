@@ -284,10 +284,13 @@ struct getValueType {
 
 #endif
 
+    
 
+    //SYS_FORCE_INLINE static GA_PageNum getNumPage(const GA_Offset v)
+    //{ return GA_PageNum(v >> GA_PAGE_BITS); }
 
-    SYS_FORCE_INLINE static GA_PrimitiveTypeId typeId(const GEO_PrimitiveType type)
-    { return GA_PrimitiveTypeId(static_cast<int>(type)); }
+    //SYS_FORCE_INLINE static GA_PrimitiveTypeId typeId(const GEO_PrimitiveType type)
+    //{ return GA_PrimitiveTypeId(static_cast<int>(type)); }
 
     static GFE_GroupMergeMethod attribGroupMergeMethod(const GFE_AttribMergeMethod mergeMethod)
     {

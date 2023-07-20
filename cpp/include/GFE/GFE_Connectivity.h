@@ -206,7 +206,6 @@ void connectivity()
     timeEnd   = std::chrono::steady_clock::now();
     std::chrono::duration<double> diff;
 #endif
-    //::std::vector<::std::vector<GA_Offset>> adjElems;
 
 
     const GA_AttributeOwner connectivityOwner = connectivityConstraint ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT;
@@ -222,6 +221,63 @@ void connectivity()
         
     if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
         adjElemsAttrib_h->getAIFNumericArray()->getPackedArrayFromIndices(adjElemsAttrib_h.getAttribute(), 0, nelems, packedArray);
+    else if constexpr (1)
+    {
+        GA_PrimitiveList& primList = geoTmp->getPrimitiveList();
+        const GA_Size numelem = geoTmp->getNumPrimitives();
+        
+        if (primList.isFullRepresentation())
+        {
+            for (GA_Offset elemoff = 0; elemoff < numelem; ++elemoff)
+            {
+                const GA_OffsetListRef& vertices = primList.getVertexList(elemoff);
+                packedArray.append(vertices.getArray(), vertices.size());
+            }
+        }
+        else
+        {
+            const GA_PageNum pagenumMax = GAgetPageNum(numelem);
+            const GA_PageNum pageoffMax = GAgetPageOff(numelem);
+            for (GA_PageNum pagenum = 0; pagenum < pagenumMax; ++pagenum)
+            {
+                const GA_OffsetListRef* const vertexListPage = primList.getVertexListPage(pagenum);
+                const bool isVertexListPageConstant = primList.isVertexListPageConstant(pagenum);
+                if (isVertexListPageConstant)
+                {
+                    for (GA_Offset pageoff = 0; pageoff < GA_PAGE_SIZE; ++pageoff)
+                    {
+                        const exint size = vertexListPage->size();
+                        const GA_OffsetListRef& vertices = GA_OffsetListRef(vertexListPage->trivialStart() + size*pageoff, size, vertexListPage->getExtraFlag());
+                        packedArray.append(vertices.getArray(), vertices.size());
+                    }
+                }
+                else
+                {
+                    for (GA_Offset pageoff = 0; pageoff < GA_PAGE_SIZE; ++pageoff)
+                    {
+                        const GA_OffsetListRef& vertices = vertexListPage[pageoff];
+                        packedArray.append(vertices.getArray(), vertices.size());
+                    }
+                }
+            }
+            const GA_OffsetListRef* const vertexListPage = primList.getVertexListPage(pagenumMax);
+            const bool isVertexListPageConstant = primList.isVertexListPageConstant(pagenumMax);
+            for (GA_Offset pageoff = 0; pageoff < pageoffMax; ++pageoff)
+            {
+                if (isVertexListPageConstant)
+                {
+                    exint size = vertexListPage->size();
+                    const GA_OffsetListRef& vertices = GA_OffsetListRef(vertexListPage->trivialStart() + size*pageoff, size, vertexListPage->getExtraFlag());
+                    packedArray.append(vertices.getArray(), vertices.size());
+                }
+                else
+                {
+                    const GA_OffsetListRef& vertices = vertexListPage[pageoff];
+                    packedArray.append(vertices.getArray(), vertices.size());
+                }
+            }
+        }
+    }
 
     const UT_Array<GA_Size>& rawOffsets = packedArray.rawOffsets();
     UT_Array<GA_Offset>& rawData = packedArray.rawData();
@@ -265,14 +321,17 @@ void connectivity()
     //     }
     // }
 
-
+#if __GFE_Connectivity_OutTime
     timeEnd = std::chrono::steady_clock::now();
     diff = timeEnd - timeStart;
     timeTotal0 += diff.count();
     timeStart = std::chrono::steady_clock::now();
 
+#endif
 
-    if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
+
+    //if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
+    if constexpr (1)
     {
         GA_Index classnum = startClassnum;
         for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
@@ -300,6 +359,7 @@ void connectivity()
     }
     else
     {
+        //size_t len = 0;
         GA_Index classnum = startClassnum;
         for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
         {
@@ -315,15 +375,34 @@ void connectivity()
                 UT_ASSERT_P(GFE_Type::isValidOffset(geoTmp->getPrimitiveMap(), lastElem));
                 
                 const GA_OffsetListRef& vertices = geoTmp->getPrimitiveVertexList(lastElem);
-                const GA_Size numvtx = vertices.size();
-                for (GA_Size i = 0; i < numvtx; ++i)
+                if (vertices.isTrivial())
                 {
-                    const GA_Offset rawDataVal = vertices[i];
-                    UT_ASSERT_P(rawDataVal == GFE_INVALID_OFFSET || rawDataVal < classnumArray.size());
-                    if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
-                        continue;
-                    classnumArray[rawDataVal] = classnum;
-                    elemHeap.emplace_back(rawDataVal);
+                    const GA_Offset trivialStart = vertices.trivialStart();
+                    const GA_Size numvtx = trivialStart + vertices.size();
+                    for (GA_Size rawDataVal = trivialStart; rawDataVal < numvtx; ++rawDataVal)
+                    {
+                        UT_ASSERT_P(rawDataVal != GFE_INVALID_OFFSET && rawDataVal < classnumArray.size());
+                        if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
+                            continue;
+                        classnumArray[rawDataVal] = classnum;
+                        //elemHeap[len++] = rawDataVal;
+                        elemHeap.emplace_back(rawDataVal);
+                    }
+                }
+                else
+                {
+                    const exint* const data = vertices.getArray();
+                    const GA_Size numvtx = vertices.size();
+                    for (GA_Size i = 0; i < numvtx; ++i)
+                    {
+                        const GA_Offset rawDataVal = data[i];
+                        UT_ASSERT_P(rawDataVal != GFE_INVALID_OFFSET && rawDataVal < classnumArray.size());
+                        if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
+                            continue;
+                        classnumArray[rawDataVal] = classnum;
+                        //elemHeap[len++] = rawDataVal;
+                        elemHeap.emplace_back(rawDataVal);
+                    }
                 }
             }
             ++classnum;
@@ -353,15 +432,17 @@ void connectivity()
     //geo->setAttributeFromArray(attrib_h.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
 
 
+#if __GFE_Connectivity_OutTime
     timeEnd = std::chrono::steady_clock::now();
     diff = timeEnd - timeStart;
     timeTotal1 += diff.count();
     timeStart = std::chrono::steady_clock::now();
 
-    //geo->setDetailAttributeF("time", timeTotal0 * 1000);
-    //geo->setDetailAttributeF("time1", timeTotal1 * 1000);
+    geo->asGEO_Detail()->setDetailAttributeF("time0", timeTotal0 * 1000);
+    geo->asGEO_Detail()->setDetailAttributeF("time1", timeTotal1 * 1000);
+#endif
+        
 }
-
 
 
 //#undef GFE_TEMP_ConnectivityAttribName
@@ -380,7 +461,7 @@ private:
 
 
     
-    const char* GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
+    //const char* GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
 
 #undef __GFE_Connectivity_OutTime
     
