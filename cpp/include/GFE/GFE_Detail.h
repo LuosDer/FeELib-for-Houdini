@@ -654,9 +654,7 @@ GA_OffsetList getOffsetList(const GA_IndexMap& indexMap, const GA_ElementGroup* 
     if (!group && indexMap.isTrivialMap())
     {
         if (!reverse)
-        {
             offList.setTrivial(GA_Offset(0), indexMap.indexSize());
-        }
     }
     else
     {
@@ -669,22 +667,23 @@ GA_OffsetList getOffsetList(const GA_IndexMap& indexMap, const GA_ElementGroup* 
     return offList;
 }
     
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(
-    const GA_AttributeOwner owner,
-    const GA_ElementGroup* const group = nullptr,
-    const bool reverse = false
-) const
+//GA_OffsetList offList = GFE_Detail::getOffsetList(group);
+    
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_AttributeOwner owner, const GA_ElementGroup* const group = nullptr, const bool reverse = false) const
 { return getOffsetList(getIndexMap(owner), group, reverse); }
 
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PrimitiveGroup* const group,const bool reverse = false) const
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_ElementGroup& group, const bool reverse = false) const
+{ return getOffsetList(group.getOwner(), &group, reverse); }
+
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PrimitiveGroup* const group, const bool reverse = false) const
 { return getOffsetList(getPrimitiveMap(), group, reverse); }
 
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PointGroup* const group,const bool reverse = false) const
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PointGroup* const group, const bool reverse = false) const
 { return getOffsetList(getPointMap(), group, reverse); }
 
-//GA_OffsetList offList = GFE_Detail::getOffsetList(group);
 SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_VertexGroup* const group, const bool reverse = false) const
 { return getOffsetList(getVertexMap(), group, reverse); }
+
 
 
 SYS_FORCE_INLINE GA_Offset offsetFromIndex(const GA_AttributeOwner owner, const GA_Size elemoff) const

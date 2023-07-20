@@ -158,6 +158,13 @@ default: UT_ASSERT_MSG(0, "Unhandled GFE_CurveEndsType"); break;
 #endif
 
 
+enum class GFE_OutArrayType
+{
+    Attrib,
+    Packed,
+    Geo,
+};
+
 
 
 

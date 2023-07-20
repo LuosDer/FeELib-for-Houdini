@@ -15,6 +15,8 @@
 #include "GFE/GFE_AttributeCast.h"
 
 
+#define __GFE_Connectivity_OutTime 1
+
 class GFE_Connectivity : public GFE_AttribFilter
 {
 
@@ -48,10 +50,10 @@ GFE_Connectivity(
 
     
     void
-    setComputeParm(
-        const bool connectivityConstraint = false,
-        const bool outTopoAttrib = true
-    )
+        setComputeParm(
+            const bool connectivityConstraint = false,
+            const bool outTopoAttrib = true
+        )
     {
         setHasComputed();
 
@@ -65,7 +67,7 @@ GFE_Connectivity(
             const GA_AttributeOwner attribOwner = GA_ATTRIB_PRIMITIVE,
             const GA_StorageClass storageClass = GA_STORECLASS_INT,
             const GA_Storage storage = GA_STORE_INVALID,
-            const UT_StringHolder& name = "__topo_connectivity"
+            const UT_StringRef& name = "__topo_connectivity"
         )
     {
         getOutAttribArray().clear();
@@ -107,7 +109,10 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        connectivity();
+        if (computeTopologyAttrib)
+            connectivity<GFE_OutArrayType::Attrib>();
+        else
+            connectivity<GFE_OutArrayType::Geo>();
 
         if (getOutAttribArray().size() > 1)
         {
@@ -154,66 +159,69 @@ private:
 
 
 
-
-    void
-        connectivity()
-    {
-#if 1
-        GFE_MeshTopology meshTopology(geo, cookparms);
-        meshTopology.outAsOffset = false;
-        meshTopology.outIntermediateAttrib = true;
+template<GFE_OutArrayType _OutArrayType>
+void connectivity()
+{
         
-        if (connectivityConstraint)
-        {
-            meshTopology.groupParser.setGroup(groupParser.getPrimitiveGroup());
-            meshTopology.setPrimPrimEdge(true);
-            meshTopology.compute();
-            adjElemsAttrib_h.bind(meshTopology.getPrimPrimEdge());
-        }
-        else
-        {
-            meshTopology.groupParser.setGroup(groupParser.getPointGroup());
-            meshTopology.setPointPointEdge(true);
-            meshTopology.compute();
-            adjElemsAttrib_h.bind(meshTopology.getPointPointEdge());
-        }
-#else
-        GA_Attribute* adjElemsAttrib = nullptr;
+    GU_DetailHandle geoTmp_h;
+    GU_Detail* geoTmp;
+    if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
+    {
+        geoTmp = geo->asGU_Detail();
+    }   
+    else
+    {
+        geoTmp_h = GFE_DetailBase::newDetail(geo);
+        geoTmp = geoTmp_h.gdpNC();
+    }
+        
+    GFE_MeshTopology meshTopology(geoTmp, cookparms);
+    meshTopology.outAsOffset = false;
+    meshTopology.outArrayType = _OutArrayType;
+    meshTopology.outIntermediateAttrib = true;
+    
     if (connectivityConstraint)
     {
-        adjElemsAttrib = GFE_Adjacency_Namespace::addAttribPrimPrimEdge(geo, groupParser.getPrimitiveGroup(), groupParserSeam.getVertexGroup());
+        meshTopology.groupParser.setGroup(groupParser.getPrimitiveGroup());
+        meshTopology.setPrimPrimEdge(true);
+        meshTopology.compute();
+        if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
+            adjElemsAttrib_h.bind(meshTopology.getPrimPrimEdge());
     }
     else
     {
-        adjElemsAttrib = GFE_Adjacency_Namespace::addAttribPointPointEdge(geo, groupParser.getPointGroup(), groupParserSeam.getPointGroup());
+        meshTopology.groupParser.setGroup(groupParser.getPointGroup());
+        meshTopology.setPointPointEdge(true);
+        meshTopology.compute();
+        if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
+            adjElemsAttrib_h.bind(meshTopology.getPointPointEdge());
     }
-    adjElemsAttrib_h.bind(adjElemsAttrib);
+
+#if __GFE_Connectivity_OutTime
+    double timeTotal0 = 0;
+    double timeTotal1 = 0;
+    auto timeStart = std::chrono::steady_clock::now();
+    auto timeEnd   = std::chrono::steady_clock::now();
+    timeStart = std::chrono::steady_clock::now();
+    timeEnd   = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff;
 #endif
-
-    //double timeTotal = 0;
-    //double timeTotal1 = 0;
-    //auto timeStart = std::chrono::steady_clock::now();
-    //auto timeEnd = std::chrono::steady_clock::now();
-    //timeStart = std::chrono::steady_clock::now();
-    //timeEnd = std::chrono::steady_clock::now();
-    //std::chrono::duration<double> diff;
-
     //::std::vector<::std::vector<GA_Offset>> adjElems;
 
-    //const GA_PrimitiveGroup* const geoGroup = groupParser.getPrimitiveGroup();
 
     const GA_AttributeOwner connectivityOwner = connectivityConstraint ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_POINT;
-    
     const GA_Size nelems = connectivityConstraint ? geo->getNumPrimitives() : geo->getNumPoints();
 
     ::std::vector<GA_Offset> elemHeap;
-    //elemHeap.reserve(__min(maxElemHeapSize, nelems));
-    elemHeap.reserve(SYSmin(maxElemHeapSize, nelems));
-
+    elemHeap.reserve(((1 << 11) - 1) & nelems); //SYSmin(1 << 10, nelems)
+    
     ::std::vector<GA_Offset> classnumArray(nelems, GFE_INVALID_OFFSET);
 
+        
     UT_PackedArrayOfArrays<GA_Offset> packedArray;
-    adjElemsAttrib_h->getAIFNumericArray()->getPackedArrayFromIndices(adjElemsAttrib_h.getAttribute(), 0, nelems, packedArray);
+        
+    if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
+        adjElemsAttrib_h->getAIFNumericArray()->getPackedArrayFromIndices(adjElemsAttrib_h.getAttribute(), 0, nelems, packedArray);
 
     const UT_Array<GA_Size>& rawOffsets = packedArray.rawOffsets();
     UT_Array<GA_Offset>& rawData = packedArray.rawData();
@@ -258,36 +266,71 @@ private:
     // }
 
 
-    //timeEnd = std::chrono::steady_clock::now();
-    //diff = timeEnd - timeStart;
-    //timeTotal += diff.count();
-    //timeStart = std::chrono::steady_clock::now();
+    timeEnd = std::chrono::steady_clock::now();
+    diff = timeEnd - timeStart;
+    timeTotal0 += diff.count();
+    timeStart = std::chrono::steady_clock::now();
 
 
-    GA_Index classnum = startClassnum;
-    for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
+    if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
     {
-        if (classnumArray[elemoff] != GFE_INVALID_OFFSET)
-            continue;
-        classnumArray[elemoff] = classnum;
-        elemHeap.emplace_back(elemoff);
-        while (!elemHeap.empty())
+        GA_Index classnum = startClassnum;
+        for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
         {
-            const GA_Size lastElem = elemHeap[elemHeap.size() - 1];
-            elemHeap.pop_back();
-            const GA_Size rawOffsetEnd = rawOffsets[lastElem + 1];
-            for (GA_Size i = rawOffsets[lastElem]; i < rawOffsetEnd; ++i)
+            if (classnumArray[elemoff] != GFE_INVALID_OFFSET)
+                continue;
+            classnumArray[elemoff] = classnum;
+            elemHeap.emplace_back(elemoff);
+            while (!elemHeap.empty())
             {
-                const GA_Offset rawDataVal = rawData[i];
-                if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
-                    continue;
-                classnumArray[rawDataVal] = classnum;
-                elemHeap.emplace_back(rawDataVal);
+                const GA_Size lastElem = elemHeap[elemHeap.size() - 1];
+                elemHeap.pop_back();
+                const GA_Size rawOffsetEnd = rawOffsets[lastElem + 1];
+                for (GA_Size i = rawOffsets[lastElem]; i < rawOffsetEnd; ++i)
+                {
+                    const GA_Offset rawDataVal = rawData[i];
+                    if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
+                        continue;
+                    classnumArray[rawDataVal] = classnum;
+                    elemHeap.emplace_back(rawDataVal);
+                }
             }
+            ++classnum;
         }
-        ++classnum;
     }
-    
+    else
+    {
+        GA_Index classnum = startClassnum;
+        for (GA_Size elemoff = 0; elemoff < nelems; ++elemoff)
+        {
+            if (classnumArray[elemoff] != GFE_INVALID_OFFSET)
+                continue;
+            classnumArray[elemoff] = classnum;
+            elemHeap.emplace_back(elemoff);
+            while (!elemHeap.empty())
+            {
+                const GA_Size lastElem = elemHeap[elemHeap.size() - 1];
+                elemHeap.pop_back();
+
+                UT_ASSERT_P(GFE_Type::isValidOffset(geoTmp->getPrimitiveMap(), lastElem));
+                
+                const GA_OffsetListRef& vertices = geoTmp->getPrimitiveVertexList(lastElem);
+                const GA_Size numvtx = vertices.size();
+                for (GA_Size i = 0; i < numvtx; ++i)
+                {
+                    const GA_Offset rawDataVal = vertices[i];
+                    UT_ASSERT_P(rawDataVal == GFE_INVALID_OFFSET || rawDataVal < classnumArray.size());
+                    if (classnumArray[rawDataVal] != GFE_INVALID_OFFSET)
+                        continue;
+                    classnumArray[rawDataVal] = classnum;
+                    elemHeap.emplace_back(rawDataVal);
+                }
+            }
+            ++classnum;
+        }
+    }
+
+        
     GA_Attribute* const connectivityAttrib = this->connectivityAttrib;
     const GA_IndexMap& indexMap = geo->getIndexMap(connectivityOwner);
     UTparallelFor(groupParser.getSplittableRange(connectivityOwner),
@@ -310,12 +353,12 @@ private:
     //geo->setAttributeFromArray(attrib_h.getAttribute(), GA_Range(), UT_Array<GA_Size>(classnumArray));
 
 
-    //timeEnd = std::chrono::steady_clock::now();
-    //diff = timeEnd - timeStart;
-    //timeTotal1 += diff.count();
-    //timeStart = std::chrono::steady_clock::now();
+    timeEnd = std::chrono::steady_clock::now();
+    diff = timeEnd - timeStart;
+    timeTotal1 += diff.count();
+    timeStart = std::chrono::steady_clock::now();
 
-    //geo->setDetailAttributeF("time", timeTotal * 1000);
+    //geo->setDetailAttributeF("time", timeTotal0 * 1000);
     //geo->setDetailAttributeF("time1", timeTotal1 * 1000);
 }
 
@@ -329,16 +372,17 @@ public:
     bool connectivityConstraint = false; // false means point  and  true means edge 
     //GA_AttributeOwner connectivityOwner = GA_ATTRIB_PRIMITIVE;
     // bool outAsOffset = true;
-
+    bool computeTopologyAttrib = false;
+    
 private:
     GA_Attribute* connectivityAttrib;
     GA_ROHandleT<UT_ValArray<GA_Offset>> adjElemsAttrib_h;
 
 
     
-    const GA_Size maxElemHeapSize = pow(2, 15);
-    const UT_StringHolder GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
+    const char* GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
 
+#undef __GFE_Connectivity_OutTime
     
 }; // End of class GFE_Connectivity
 
@@ -413,7 +457,7 @@ connectivityPoint(
     const GA_PointGroup* const geoGroup = nullptr
 )
 {
-    //double timeTotal = 0;
+    //double timeTotal0 = 0;
     //double timeTotal1 = 0;
     //auto timeStart = std::chrono::steady_clock::now();
     //auto timeEnd = std::chrono::steady_clock::now();
@@ -455,7 +499,7 @@ connectivityPoint(
 
     //timeEnd = std::chrono::steady_clock::now();
     //diff = timeEnd - timeStart;
-    //timeTotal += diff.count();
+    //timeTotal0 += diff.count();
     //timeStart = std::chrono::steady_clock::now();
 
 
@@ -504,7 +548,7 @@ connectivityPoint(
     //timeTotal1 += diff.count();
     //timeStart = std::chrono::steady_clock::now();
 
-    //geo.setDetailAttributeF("time", timeTotal * 1000);
+    //geo.setDetailAttributeF("time", timeTotal0 * 1000);
     //geo.setDetailAttributeF("time1", timeTotal1 * 1000);
 }
 
@@ -518,7 +562,7 @@ connectivityPrim(
     const GA_PrimitiveGroup* const geoGroup = nullptr
 )
 {
-    //double timeTotal = 0;
+    //double timeTotal0 = 0;
     //double timeTotal1 = 0;
     //auto timeStart = std::chrono::steady_clock::now();
     //auto timeEnd = std::chrono::steady_clock::now();
@@ -610,7 +654,7 @@ addAttribConnectivityPoint(
     const GA_PointGroup* const geoGroup = nullptr,
     const GA_PointGroup* const geoSeamGroup = nullptr,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& name = "__topo_connectivity",
+    const UT_StringRef& name = "__topo_connectivity",
     const UT_Options* const creation_args = nullptr,
     const GA_AttributeOptions* const attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy()
@@ -651,7 +695,7 @@ addAttribConnectivityPrim(
     const GA_PrimitiveGroup* geoGroup = nullptr,
     const GA_VertexGroup* geoSeamGroup = nullptr,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& name = "__topo_connectivity",
+    const UT_StringRef& name = "__topo_connectivity",
     const UT_Options* const creation_args = nullptr,
     const GA_AttributeOptions* const attribute_options = nullptr,
     const GA_ReuseStrategy& reuse = GA_ReuseStrategy()
@@ -685,7 +729,7 @@ addAttribConnectivity(
     const bool connectivityConstraint = false,
     const GA_AttributeOwner attribOwner = GA_ATTRIB_PRIMITIVE,
     const GA_Storage storage = GA_STORE_INVALID,
-    const UT_StringHolder& name = "__topo_connectivity"
+    const UT_StringRef& name = "__topo_connectivity"
     //,const exint subscribeRatio = 32,
     //const exint minGrainSize = 1024
 )

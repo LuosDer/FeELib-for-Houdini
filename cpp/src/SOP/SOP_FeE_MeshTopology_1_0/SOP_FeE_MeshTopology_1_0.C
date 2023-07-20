@@ -293,6 +293,20 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
 
+    parm {
+        name    "outArrayType"
+        cppname "OutArrayType"
+        label   "Output Array Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "attrib"    "Attrib"
+            "packed"    "Packed"
+            "geo"       "Geo"
+        }
+    }
+
+
 
 
 
@@ -421,6 +435,20 @@ SOP_FeE_MeshTopology_1_0::cookVerb() const
 
 
 
+static GFE_OutArrayType
+sopOutArrayType(const SOP_FeE_MeshTopology_1_0Parms::OutArrayType parmGroupType)
+{
+    using namespace SOP_FeE_MeshTopology_1_0Enums;
+    switch (parmGroupType)
+    {
+    case OutArrayType::ATTRIB:     return GFE_OutArrayType::Attrib; break;
+    case OutArrayType::PACKED:     return GFE_OutArrayType::Packed; break;
+    case OutArrayType::GEO:        return GFE_OutArrayType::Geo;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
+    return GFE_OutArrayType::Attrib;
+}
+
 static GA_GroupType
 sopGroupType(const SOP_FeE_MeshTopology_1_0Parms::GroupType parmGroupType)
 {
@@ -548,8 +576,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
+    const GFE_OutArrayType outArrayType = sopOutArrayType(sopparms.getOutArrayType());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -564,7 +591,8 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //meshTopology.outTopoAttrib = sopparms.getOutTopoAttrib();
 
     meshTopology.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    meshTopology.outArrayType = outArrayType;
+    
     meshTopology.groupParser.setGroup(groupType, sopparms.getGroup());
     //meshTopology.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 

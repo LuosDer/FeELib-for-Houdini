@@ -13,6 +13,11 @@
 #include "GFE/GFE_Type.h"
 
 namespace GFE_DetailBase {
+
+
+
+
+
     
 /*
         GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail();
@@ -28,12 +33,21 @@ namespace GFE_DetailBase {
     
     static GU_DetailHandle newDetail(const GA_Detail& geoSrc)
     {
-        GU_Detail* const geo = new GU_Detail;
-        GU_DetailHandle geo_h;
-        geo_h.allocateAndSet(geo);
-        geo->replaceWith(geoSrc);
+        GU_DetailHandle geo_h = newDetail();
+        geo_h.gdpNC()->replaceWith(geoSrc);
         return geo_h;
     }
+
+
+    SYS_FORCE_INLINE static GU_DetailHandle newDetail(const GA_Detail* const geoSrc)
+    { UT_ASSERT_P(geoSrc); return newDetail(*geoSrc); }
+
+
+
+
+
+
+
     
     static GA_Size vertexPrimIndex(const GA_OffsetListRef& vertices, const GA_Offset vtxoff)
     {

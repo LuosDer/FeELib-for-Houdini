@@ -192,9 +192,9 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
     parm {
-        name    "uvAttribName"
-        cppname "UVAttribName"
-        label   "UV Attrib Name"
+        name    "uvAttrib"
+        cppname "UVAttrib"
+        label   "UV Attrib"
         type    string
         default { "uv" }
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = (hou.geometryType.Points,)\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
@@ -213,6 +213,13 @@ static const char *theDsFile = R"THEDSFILE(
         default { "0" }
     }
 
+    parm {
+        name    "computeTopologyAttrib"
+        cppname "ComputeTopologyAttrib"
+        label   "Compute Topology Attrib"
+        type    toggle
+        default { "0" }
+    }
     //parm {
     //    name    "subscribeRatio"
     //    cppname "SubscribeRatio"
@@ -239,6 +246,9 @@ SOP_FeE_Connectivity_1_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
+        templ.setChoiceListPtr("seamGroup"_sh, &SOP_Node::groupNameMenu);
+        
+        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::vertexAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -300,13 +310,9 @@ public:
 
     virtual void cook(const CookParms &cookparms) const;
 
-    /// This static data member automatically registers
-    /// this verb class at library ldir0d time.
     static const SOP_NodeVerb::Register<SOP_FeE_Connectivity_1_0Verb> theVerb;
 };
 
-// The static member variable definition has to be outside the class definition.
-// The declaration is inside the class.
 const SOP_NodeVerb::Register<SOP_FeE_Connectivity_1_0Verb> SOP_FeE_Connectivity_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
@@ -314,6 +320,11 @@ SOP_FeE_Connectivity_1_0::cookVerb() const
 { 
     return SOP_FeE_Connectivity_1_0Verb::theVerb.get();
 }
+
+
+
+
+
 
 
 
@@ -350,10 +361,10 @@ sopStorageClass(const SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribType attr
 
 
 static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case ConnectivityAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case ConnectivityAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -364,10 +375,10 @@ sopAttribOwner(const SOP_FeE_Connectivity_1_0Parms::ConnectivityAttribClass attr
 }
 
 static GA_GroupType
-sopGroupType(const SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_Connectivity_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -380,10 +391,10 @@ sopGroupType(const SOP_FeE_Connectivity_1_0Parms::GroupType parmgrouptype)
 }
 
 static GA_GroupType
-sopGroupType(const SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmgrouptype)
+sopGroupType(const SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmGroupType)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case SeamGroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case SeamGroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -399,10 +410,10 @@ sopGroupType(const SOP_FeE_Connectivity_1_0Parms::SeamGroupType parmgrouptype)
 
 
 static GFE_PieceAttribSearchOrder
-sopPieceAttribSearchOrder(const SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder parmgrouptype)
+sopPieceAttribSearchOrder(const SOP_FeE_Connectivity_1_0Parms::PieceAttribSearchOrder parmPieceAttribSearchOrder)
 {
     using namespace SOP_FeE_Connectivity_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmPieceAttribSearchOrder)
     {
     case PieceAttribSearchOrder::PRIM:       return GFE_PieceAttribSearchOrder::Primitive;    break;
     case PieceAttribSearchOrder::POINT:      return GFE_PieceAttribSearchOrder::Point;        break;
@@ -431,7 +442,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& geo0AttribNames = sopparms.getConnectivityAttribName();
-    if (!geo0AttribNames.isstring())
+    if (GFE_Type::isInvalid(geo0AttribNames))
         return;
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getConnectivityAttribClass());
@@ -441,7 +452,7 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const UT_StringHolder& stringPrefix = sopparms.getStringPrefix();
-    const UT_StringHolder& stringSufix = sopparms.getStringSufix();
+    const UT_StringHolder& stringSufix  = sopparms.getStringSufix();
 
     if (sopparms.getFindInputPieceAttrib())
     {
@@ -490,18 +501,20 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     if (sopparms.getUseUVConnectivity())
     {
-        const UT_StringHolder& uvAttribName = sopparms.getUVAttribName();
-        if (uvAttribName.isstring())
+        const UT_StringHolder& uvAttribName = sopparms.getUVAttrib();
+        if (GFE_Type::isValid(uvAttribName))
         {
             //connectivity.getInAttribArray().appendUV(uvAttribName);
         }
     }
 
+    connectivity.setComputeParm(connectivityConstraint, sopparms.getOutTopoAttrib());
+    connectivity.computeTopologyAttrib = sopparms.getComputeTopologyAttrib();
+    
     connectivity.groupParser.setGroup(groupType, sopparms.getGroup());
 
     connectivity.groupParserSeam.setGroup(seamGroupType, sopparms.getSeamGroup());
 
-    connectivity.setComputeParm(connectivityConstraint, sopparms.getOutTopoAttrib());
     connectivity.findOrCreateTuple(false, geo0AttribClass, connectivityStorageClass, GA_STORE_INVALID, geo0AttribNames);
     
     connectivity.computeAndBumpDataId();
@@ -513,12 +526,5 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //outGeo0->setDetailAttributeF("timeTotal", timeTotal * 1000);
     //outGeo0->setDetailAttributeF("timeTotal1", timeTotal1 * 1000);
 
-
-
 }
 
-
-
-namespace SOP_FeE_Connectivity_1_0_Namespace {
-
-} // End SOP_FeE_Connectivity_1_0_Namespace namespace
