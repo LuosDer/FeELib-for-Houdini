@@ -227,8 +227,6 @@ private:
         const size_t sizeEdgeGroup = vertexEdgeGroupArray.size();
         for (size_t i = 0; i < sizeEdgeGroup; ++i)
         {
-            UT_ASSERT_MSG(edgeGroupArray.isEdgeGroup(i),         "Unhandled Group Type");
-            UT_ASSERT_MSG(vertexEdgeGroupArray.isVertexGroup(i), "Unhandled Group Type");
             GFE_GroupUnion::groupUnion(*edgeGroupArray.getEdgeGroup(i), *vertexEdgeGroupArray.getVertexGroup(i));
         }
         vertexEdgeGroupArray.destroyAll();

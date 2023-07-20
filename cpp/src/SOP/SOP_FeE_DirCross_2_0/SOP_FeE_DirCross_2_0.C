@@ -241,7 +241,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_DirCross_2_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_DirCross_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -265,7 +265,7 @@ SOP_FeE_DirCross_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_DirCross_2_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_DirCross_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_DirCross_2_0Enums;
     switch (parmGroupType)
@@ -281,7 +281,7 @@ sopGroupType(SOP_FeE_DirCross_2_0Parms::GroupType parmGroupType)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_DirCross_2_0Parms::AttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_DirCross_2_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_DirCross_2_0Enums;
     switch (parmAttribClass)
@@ -296,7 +296,7 @@ sopAttribOwner(SOP_FeE_DirCross_2_0Parms::AttribClass parmAttribClass)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_DirCross_2_0Parms::UpAttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_DirCross_2_0Parms::UpAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_DirCross_2_0Enums;
     switch (parmAttribClass)
@@ -318,9 +318,9 @@ SOP_FeE_DirCross_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_DirCross_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 

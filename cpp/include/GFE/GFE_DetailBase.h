@@ -13,8 +13,28 @@
 #include "GFE/GFE_Type.h"
 
 namespace GFE_DetailBase {
-
-
+    
+/*
+        GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail();
+        GU_Detail* const geoTemp = geoTemp_h.gdpNC();
+*/
+    static GU_DetailHandle newDetail()
+    {
+        GU_Detail* const geo = new GU_Detail;
+        GU_DetailHandle geo_h;
+        geo_h.allocateAndSet(geo);
+        return geo_h;
+    }
+    
+    static GU_DetailHandle newDetail(const GA_Detail& geoSrc)
+    {
+        GU_Detail* const geo = new GU_Detail;
+        GU_DetailHandle geo_h;
+        geo_h.allocateAndSet(geo);
+        geo->replaceWith(geoSrc);
+        return geo_h;
+    }
+    
     static GA_Size vertexPrimIndex(const GA_OffsetListRef& vertices, const GA_Offset vtxoff)
     {
         const GA_Size numvtx = vertices.size();
@@ -30,23 +50,38 @@ namespace GFE_DetailBase {
     { return vertexPrimIndex(primList.getVertexList(primoff), vtxoff); }
     
     SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset primoff, const GA_Offset vtxoff)
-    { return vertexPrimIndex(geo.getPrimitiveList(), primoff, vtxoff); }
+    { return vertexPrimIndex(geo.getPrimitiveVertexList(primoff), vtxoff); }
     
     SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset vtxoff)
     { return vertexPrimIndex(geo, geo.vertexPrimitive(vtxoff), vtxoff); }
 
-
         
+    static GA_Offset vertexNext(const GA_Detail& geo, const GA_Offset primoff, const GA_Size vtxpnum)
+    {
+        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
+        const GA_Size vtxpnum_next = vtxpnum+1;
+        const bool isEnd = vtxpnum_next == vertices.size();
+        return vertices.isClosed() || !isEnd
+               ? vertices[isEnd ? 0 : vtxpnum_next]
+               : GFE_INVALID_OFFSET;
+    }
+    
     static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset primoff, const GA_Size vtxpnum)
     {
+        const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
         const GA_Size vtxpnum_next = vtxpnum+1;
-        if (vtxpnum_next != geo.getPrimitiveVertexCount(primoff))
-            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
-        if (geo.getPrimitiveClosedFlag(primoff))
-            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
-        return GFE_INVALID_OFFSET;
+        const bool isEnd = vtxpnum_next == vertices.size();
+        return vertices.isClosed() || !isEnd
+               ? geo.vertexPoint(vertices[isEnd ? 0 : vtxpnum_next])
+               : GFE_INVALID_OFFSET;
     }
 
+    SYS_FORCE_INLINE static GA_Offset vertexNext(const GA_Detail& geo, const GA_Offset vtxoff)
+    {
+        const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
+        return vertexNext(geo, primoff, vertexPrimIndex(geo, primoff, vtxoff));
+    }
+    
     SYS_FORCE_INLINE static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset vtxoff)
     {
         const GA_Offset primoff = geo.vertexPrimitive(vtxoff);

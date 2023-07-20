@@ -82,7 +82,8 @@ static const char *theDsFile = R"THEDSFILE(
         menu {
             "prim"      "Primitive"
             "point"     "Point"
-            "vertex"    "Vertex"
+            "oneVertex" "OneVertex"
+            "allVertex" "AllVertex"
         }
         disablewhen "{ combineGroupType != guess combineGroupType != vertex } { groupType != guess groupType != edge }"
     }
@@ -237,16 +238,17 @@ sopGroupType(const SOP_FeE_GroupCombine_1_0Parms::GroupType parmGroupType)
 
 
 static GA_AttributeOwner
-sopVertexEdgeConnectElemType(const SOP_FeE_GroupCombine_1_0Parms::VertexEdgeConnectElemType parmAttribOwner)
+sopVertexEdgeConnectElemType(const SOP_FeE_GroupCombine_1_0Parms::VertexEdgeConnectElemType parmVertexEdgeConnectElemType)
 {
     using namespace SOP_FeE_GroupCombine_1_0Enums;
-    switch (parmAttribOwner)
+    switch (parmVertexEdgeConnectElemType)
     {
     case VertexEdgeConnectElemType::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case VertexEdgeConnectElemType::POINT:     return GA_ATTRIB_POINT;      break;
-    case VertexEdgeConnectElemType::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case VertexEdgeConnectElemType::ONEVERTEX: return GA_ATTRIB_VERTEX;     break;
+    case VertexEdgeConnectElemType::ALLVERTEX: return GA_ATTRIB_OWNER_N;    break;
     }
-    UT_ASSERT_MSG(0, "Unhandled VertexEdgeConnectElemType!");
+    UT_ASSERT_MSG(0, "Unhandled Vertex Edge Connect Element Type!");
     return GA_ATTRIB_INVALID;
 }
 

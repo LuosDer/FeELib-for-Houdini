@@ -127,6 +127,28 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ renameGroup == 0 }"
     }
 
+    parm {
+        name    "reverseGroup"
+        cppname "ReverseGroup"
+        label   "Reverse Group"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "vertexEdgeConnectElemType"
+        cppname "VertexEdgeConnectElemType"
+        label   "Vertex Edge Connect Elem Type"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "oneVertex" "OneVertex"
+            "allVertex" "AllVertex"
+        }
+        disablewhen "{ dstGroupClass != vertex } { srcGroupClass != edge }"
+    }
+
 
 
     parm {
@@ -303,6 +325,21 @@ sopGroupType(const SOP_FeE_AttribPromote_1_0Parms::DstGroupClass parmGroupType)
     return GA_GROUP_INVALID;
 }
 
+static GA_AttributeOwner
+sopVertexEdgeConnectElemType(const SOP_FeE_AttribPromote_1_0Parms::VertexEdgeConnectElemType parmVertexEdgeConnectElemType)
+{
+    using namespace SOP_FeE_AttribPromote_1_0Enums;
+    switch (parmVertexEdgeConnectElemType)
+    {
+    case VertexEdgeConnectElemType::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case VertexEdgeConnectElemType::POINT:     return GA_ATTRIB_POINT;      break;
+    case VertexEdgeConnectElemType::ONEVERTEX: return GA_ATTRIB_VERTEX;     break;
+    case VertexEdgeConnectElemType::ALLVERTEX: return GA_ATTRIB_OWNER_N;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Vertex Edge Connect Element Type!");
+    return GA_ATTRIB_INVALID;
+}
+
 
 void
 SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
@@ -323,7 +360,6 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     if (srcAttribClass == dstAttribClass && srcGroupClass == dstGroupClass)
         return;
     
-
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
@@ -358,8 +394,11 @@ SOP_FeE_AttribPromote_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     
     attribPromote.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
+    
     attribPromote.dstAttribClass = dstAttribClass;
     attribPromote.dstGroupClass  = dstGroupClass;
+    attribPromote.reverseGroup = sopparms.getReverseGroup();
+    attribPromote.vertexEdgeConnectElemType = sopVertexEdgeConnectElemType(sopparms.getVertexEdgeConnectElemType());
     if (sopparms.getRenameAttrib())
         attribPromote.newAttribNames = sopparms.getNewAttribName();
     if (sopparms.getRenameGroup())
