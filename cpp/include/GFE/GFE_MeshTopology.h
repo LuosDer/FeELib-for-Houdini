@@ -2069,7 +2069,7 @@ private:
 
     uint8 kernel = 0;
     exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    exint minGrainSize   = 1024;
 
 #undef GFE_MeshTopology_VertexNextEquivDual
     

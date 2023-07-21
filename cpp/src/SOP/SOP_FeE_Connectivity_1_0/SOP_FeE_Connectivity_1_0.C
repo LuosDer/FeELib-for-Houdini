@@ -218,24 +218,24 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "ComputeTopologyAttrib"
         label   "Compute Topology Attrib"
         type    toggle
-        default { "0" }
+        default { "1" }
     }
-    //parm {
-    //    name    "subscribeRatio"
-    //    cppname "SubscribeRatio"
-    //    label   "Subscribe Ratio"
-    //    type    integer
-    //    default { 128 }
-    //    range   { 0! 256 }
-    //}
-    //parm {
-    //    name    "minGrainSize"
-    //    cppname "MinGrainSize"
-    //    label   "Min Grain Size"
-    //    type    intlog
-    //    default { 64 }
-    //    range   { 0! 2048 }
-    //}
+    parm {
+        name    "subscribeRatio"
+        cppname "SubscribeRatio"
+        label   "Subscribe Ratio"
+        type    integer
+        default { 128 }
+        range   { 0! 256 }
+    }
+    parm {
+        name    "minGrainSize"
+        cppname "MinGrainSize"
+        label   "Min Grain Size"
+        type    intlog
+        default { 64 }
+        range   { 0! 2048 }
+    }
 }
 )THEDSFILE";
 
@@ -508,7 +508,8 @@ SOP_FeE_Connectivity_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         }
     }
 
-    connectivity.setComputeParm(connectivityConstraint, sopparms.getOutTopoAttrib());
+    connectivity.setComputeParm(connectivityConstraint, sopparms.getOutTopoAttrib(), 
+                            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     connectivity.computeTopologyAttrib = sopparms.getComputeTopologyAttrib();
     
     connectivity.groupParser.setGroup(groupType, sopparms.getGroup());
