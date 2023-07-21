@@ -2,7 +2,6 @@
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_MatchBBox_2_0.h"
 
-
 #include "SOP_FeE_MatchBBox_2_0.proto.h"
 
 #include "GA/GA_Detail.h"
@@ -11,12 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-
-
 #include "GFE/GFE_MatchBBox.h"
-
-
-
 
 using namespace SOP_FeE_MatchBBox_2_0_Namespace;
 
@@ -421,7 +415,7 @@ R"THEDSFILE(
         label   "Center"
 
         parm {
-            name    "autobindcenter"
+            name    "autoBindCenter"
             cppname "autoBindCenter"
             label   "Auto Bind Center"
             type    toggle
@@ -434,7 +428,7 @@ R"THEDSFILE(
             label   "BBox Ref Translate X"
             type    float
             default { "0" }
-            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            disablewhen "{ autoBindCenter == 1 doTranslate == 1 }"
             range   { -1 1 }
         }
         parm {
@@ -443,7 +437,7 @@ R"THEDSFILE(
             label   "BBox Ref Translate Y"
             type    float
             default { "0" }
-            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            disablewhen "{ autoBindCenter == 1 doTranslate == 1 }"
             range   { -1 1 }
         }
         parm {
@@ -452,7 +446,7 @@ R"THEDSFILE(
             label   "BBox Ref Translate Z"
             type    float
             default { "0" }
-            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            disablewhen "{ autoBindCenter == 1 doTranslate == 1 }"
             range   { -1 1 }
         }
         parm {
@@ -461,7 +455,7 @@ R"THEDSFILE(
             label   "BBox Ref Center X"
             type    float
             default { "1" }
-            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            disablewhen "{ autoBindCenter == 1 doTranslate == 1 }"
             hidewhen "{ ezMode == 1 }"
             range   { 0 1 }
         }
@@ -471,7 +465,7 @@ R"THEDSFILE(
             label   "BBox Ref Center Y"
             type    float
             default { "1" }
-            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            disablewhen "{ autoBindCenter == 1 doTranslate == 1 }"
             hidewhen "{ ezMode == 1 }"
             range   { 0 1 }
         }
@@ -481,7 +475,7 @@ R"THEDSFILE(
             label   "BBox Ref Center Z"
             type    float
             default { "1" }
-            disablewhen "{ autobindcenter == 1 dotranslate == 1 }"
+            disablewhen "{ autoBindCenter == 1 doTranslate == 1 }"
             hidewhen "{ ezMode == 1 }"
             range   { 0 1 }
         }
@@ -543,7 +537,7 @@ R"THEDSFILE(
             label   "Volume Name"
             type    string
             default { "@name=height" }
-            disablewhen "{ scalevolume == 0 }"
+            disablewhen "{ scaleVolume == 0 }"
         }
         parm {
             name    "uniScale"
@@ -558,7 +552,7 @@ R"THEDSFILE(
             label   "Scale Axis"
             type    ordinal
             default { "min" }
-            hidewhen "{ uniformscale == 0 }"
+            hidewhen "{ uniScale == 0 }"
             menu {
                 "x"         "X"
                 "y"         "Y"
@@ -623,7 +617,7 @@ R"THEDSFILE(
             type    float
             default { "1" }
             disablewhen "{ lerpsx == 0 }"
-            hidewhen "{ uniformscale == 1 }"
+            hidewhen "{ uniScale == 1 }"
             range   { 0 1 }
         }
         parm {
@@ -633,7 +627,7 @@ R"THEDSFILE(
             type    float
             default { "1" }
             disablewhen "{ lerpsy == 0 }"
-            hidewhen "{ uniformscale == 1 }"
+            hidewhen "{ uniScale == 1 }"
             range   { 0 1 }
         }
         parm {
@@ -643,7 +637,7 @@ R"THEDSFILE(
             type    float
             default { "1" }
             disablewhen "{ lerpsz == 0 }"
-            hidewhen "{ uniformscale == 1 }"
+            hidewhen "{ uniScale == 1 }"
             range   { 0 1 }
         }
         parm {

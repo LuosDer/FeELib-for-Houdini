@@ -38,51 +38,58 @@ private:
         const size_t sizeAttrib = getOutAttribArray().size();
         for (size_t i = 0; i < sizeAttrib; i++)
         {
-            GA_Attribute& attrib = *getOutAttribArray()[i];
-            //const char* name = attrib.getName().c_str();
-            switch (attrib.getType().getTypeId())
+            attrib = getOutAttribArray()[i];
+            const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
+            if (aifTuple)
             {
-            case 0:                                     break; // unknown
-            case 1:                                     break; // topo
-            case 2:  offsetTupleAttribToIndex(attrib);  break; // int float vector(tuple)
-            case 3:                                     break; // string
-            case 4:                                     break; // unknown
-            case 5:                                     break; // unknown
-            case 6:  offsetArrayAttribToIndex(attrib);  break; // int array
-            case 7:                                     break; // unknown
-            case 8:  offsetArrayAttribToIndex(attrib);  break; // float array
-            case 9:                                     break; // unknown
-            case 10:                                    break; // string array
-            case 11:                                    break; // dict
-            case 12:                                    break; // dict array
-            default:                                    break;
+                offsetTupleAttribToIndex();
             }
+            else
+            {
+                const GA_AIFNumericArray* const aifNumArray = attrib->getAIFNumericArray();
+                if (aifNumArray)
+                {
+                    offsetArrayAttribToIndex();
+                }
+            }
+            //const char* name = attrib->getName().c_str();
+            // switch (attrib->getType().getTypeId())
+            // {
+            // case 0:                              break; // unknown
+            // case 1:                              break; // topo
+            // case 2:  offsetTupleAttribToIndex(); break; // int float vector(tuple)
+            // case 3:                              break; // string
+            // case 4:                              break; // unknown
+            // case 5:                              break; // unknown
+            // case 6:  offsetArrayAttribToIndex(); break; // int array
+            // case 7:                              break; // unknown
+            // case 8:  offsetArrayAttribToIndex(); break; // float array
+            // case 9:                              break; // unknown
+            // case 10:                             break; // string array
+            // case 11:                             break; // dict
+            // case 12:                             break; // dict array
+            // default:                             break;
+            // }
         }
 
         return true;
     }
 
 
-    void offsetTupleAttribToIndex(GA_Attribute& attrib)
+    void offsetTupleAttribToIndex()
     {
+        const GA_IndexMap& indexMap = attrib->getIndexMap();
         
-        const GA_IndexMap& indexMap = attrib.getIndexMap();
-#if 1
-        const GA_SplittableRange geoSplittableRange0 = groupParser.getSplittableRange(attrib);
-#else
-        const GA_Range geoRange0(indexMap);
-        const GA_SplittableRange geoSplittableRange0(geoRange0);
-#endif
         if (offsetToIndex)
         {
             const GA_Offset offsetSize = indexMap.lastOffset();
-            UTparallelFor(geoSplittableRange0, [&indexMap, &attrib, offsetSize](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange(attrib), [&indexMap, this, offsetSize](const GA_SplittableRange& r)
             {
                 GA_Offset attribVal;
-                GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(&attrib);
+                GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(attrib);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -100,13 +107,13 @@ private:
         else
         {
             const GA_Index indexSize = indexMap.indexSize();
-            UTparallelFor(geoSplittableRange0, [&indexMap, &attrib, indexSize](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange(attrib), [&indexMap, this, indexSize](const GA_SplittableRange& r)
             {
                 GA_Index attribVal;
-                GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(&attrib);
+                GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(attrib);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -125,21 +132,14 @@ private:
 
 
 
-    void offsetArrayAttribToIndex(GA_Attribute& attrib)
+    void offsetArrayAttribToIndex()
     {
-        GA_RWHandleT<UT_ValArray<GA_Offset>> attrib_h(&attrib);
-        
-        const GA_IndexMap& indexMap = attrib.getIndexMap();
-#if 1
-        const GA_SplittableRange geoSplittableRange0 = groupParser.getSplittableRange(attrib);
-#else
-        const GA_Range geoRange0(indexMap);
-        const GA_SplittableRange geoSplittableRange0(geoRange0);
-#endif
+        GA_RWHandleT<UT_ValArray<GA_Offset>> attrib_h(attrib);
+        const GA_IndexMap& indexMap = attrib->getIndexMap();
         if (offsetToIndex)
         {
             const GA_Offset offsetSize = indexMap.lastOffset();
-            UTparallelFor(geoSplittableRange0, [&indexMap, &attrib_h, offsetSize](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange(attrib), [&indexMap, attrib_h, offsetSize](const GA_SplittableRange& r)
             {
                 UT_ValArray<GA_Offset> attribVal;
                 GA_Offset start, end;
@@ -163,7 +163,7 @@ private:
         else
         {
             const GA_Index indexSize = indexMap.indexSize();
-            UTparallelFor(geoSplittableRange0, [&indexMap, &attrib_h, indexSize](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange(attrib), [&indexMap, attrib_h, indexSize](const GA_SplittableRange& r)
             {
                 UT_ValArray<GA_Offset> attribVal;
                 GA_Offset start, end;
@@ -194,6 +194,8 @@ public:
     
 
 private:
+    GA_Attribute* attrib;
+    
     exint subscribeRatio = 64;
     exint minGrainSize = 1024;
 

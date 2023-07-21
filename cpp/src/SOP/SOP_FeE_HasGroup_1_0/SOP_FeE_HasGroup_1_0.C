@@ -179,15 +179,15 @@ SOP_FeE_HasGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     
-    const GA_Group* const groupPtr = outGeo0.getGroupTable(groupType)->find(sopparms.getHasGroupName());
-    const bool hasGroup = static_cast<bool>(groupPtr);
+    const GA_Group* const group = outGeo0.getGroupTable(groupType)->find(sopparms.getHasGroupName());
+    const bool hasGroup = static_cast<bool>(group);
 
     GFE_AttributeArray attributeArray(outGeo0, cookparms);
     GA_Attribute* attribPtr = attributeArray.findOrCreateTuple(false, GA_ATTRIB_GLOBAL, GA_STORECLASS_INT, GA_STORE_INVALID, sopparms.getHasGroupAttribName());
 
     attribPtr->getAIFTuple()->set(attribPtr, 0, static_cast<int>(hasGroup));
     if (hasGroup)
-        cookparms.select(*groupPtr);
+        cookparms.select(*group);
 
 }
 

@@ -53,11 +53,10 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        if (GFE_Type::isInvalidPosAttrib(posAttrib))
-            posAttrib = geo->getP();
+        setValidPosAttrib();
         
         const GA_Attribute* const normal3DAttrib = normal3D.getAttrib();
-        UT_ASSERT_MSG(normal3DAttrib, "no normal3d attrib");
+        UT_ASSERT_MSG(normal3DAttrib, "no normal3d attrib"); 
         normal3D.compute();
         
         

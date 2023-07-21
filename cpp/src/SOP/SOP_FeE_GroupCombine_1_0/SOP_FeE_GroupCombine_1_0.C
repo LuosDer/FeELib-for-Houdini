@@ -74,6 +74,21 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
     parm {
+        name    "vertexEdgeConnectElemType"
+        cppname "VertexEdgeConnectElemType"
+        label   "Vertex Edge Connect Elem Type"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "oneVertex" "OneVertex"
+            "allVertex" "AllVertex"
+        }
+        disablewhen "{ combineGroupType != guess combineGroupType != vertex } { groupType != guess groupType != edge }"
+    }
+
+    parm {
         name    "reverse"
         cppname "Reverse"
         label   "Reverse"
@@ -97,7 +112,6 @@ static const char *theDsFile = R"THEDSFILE(
         default { 1024 }
         range   { 0! 2048 }
     }
-
 }
 )THEDSFILE";
 
@@ -223,6 +237,21 @@ sopGroupType(const SOP_FeE_GroupCombine_1_0Parms::GroupType parmGroupType)
 }
 
 
+static GA_AttributeOwner
+sopVertexEdgeConnectElemType(const SOP_FeE_GroupCombine_1_0Parms::VertexEdgeConnectElemType parmVertexEdgeConnectElemType)
+{
+    using namespace SOP_FeE_GroupCombine_1_0Enums;
+    switch (parmVertexEdgeConnectElemType)
+    {
+    case VertexEdgeConnectElemType::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
+    case VertexEdgeConnectElemType::POINT:     return GA_ATTRIB_POINT;      break;
+    case VertexEdgeConnectElemType::ONEVERTEX: return GA_ATTRIB_VERTEX;     break;
+    case VertexEdgeConnectElemType::ALLVERTEX: return GA_ATTRIB_OWNER_N;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Vertex Edge Connect Element Type!");
+    return GA_ATTRIB_INVALID;
+}
+
 
 void
 SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
@@ -276,14 +305,19 @@ SOP_FeE_GroupCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) con
     GFE_GroupParser groupParser(outGeo0, gop, &cookparms);
     //const GA_Group* const geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, &outGeo0, groupType, sopparms.getGroup(), gop);
     const GA_Group* const geo0Group = groupParser.setGroup(groupType, sopparms.getGroup());
-    
+
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-
-    GFE_GroupUnion::groupUnion(combineGroup, geo0Group, sopparms.getReverse(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    if (combineGroup.classType() == GA_GROUP_VERTEX && geo0Group->classType() == GA_GROUP_EDGE)
+    {
+        const GA_AttributeOwner vertexEdgeConnectElemType = sopVertexEdgeConnectElemType(sopparms.getVertexEdgeConnectElemType());
+        GFE_GroupUnion::groupUnion(static_cast<GA_VertexGroup&>(combineGroup), static_cast<const GA_EdgeGroup*>(geo0Group), vertexEdgeConnectElemType, sopparms.getReverse());
+    }
+    else
+        GFE_GroupUnion::groupUnion(combineGroup, geo0Group, sopparms.getReverse(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     GFE_Group::groupBumpDataId(combineGroup);
 

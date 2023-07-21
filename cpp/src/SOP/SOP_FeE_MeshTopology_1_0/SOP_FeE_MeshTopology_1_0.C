@@ -293,6 +293,20 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
 
+    parm {
+        name    "outArrayType"
+        cppname "OutArrayType"
+        label   "Output Array Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "attrib"    "Attrib"
+            "packed"    "Packed"
+            "geo"       "Geo"
+        }
+    }
+
+
 
 
 
@@ -302,7 +316,7 @@ static const char *theDsFile = R"THEDSFILE(
        label   "Kernel"
        type    integer
        default { 0 }
-       range   { 0! 4 }
+       range   { 0! 2! }
     }
 
     parm {
@@ -398,7 +412,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_MeshTopology_1_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_MeshTopology_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -421,11 +435,25 @@ SOP_FeE_MeshTopology_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopGroupType(SOP_FeE_MeshTopology_1_0Parms::GroupType parmgrouptype)
+static GFE_OutArrayType
+sopOutArrayType(const SOP_FeE_MeshTopology_1_0Parms::OutArrayType parmGroupType)
 {
     using namespace SOP_FeE_MeshTopology_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
+    {
+    case OutArrayType::ATTRIB:     return GFE_OutArrayType::Attrib; break;
+    case OutArrayType::PACKED:     return GFE_OutArrayType::Packed; break;
+    case OutArrayType::GEO:        return GFE_OutArrayType::Geo;    break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
+    return GFE_OutArrayType::Attrib;
+}
+
+static GA_GroupType
+sopGroupType(const SOP_FeE_MeshTopology_1_0Parms::GroupType parmGroupType)
+{
+    using namespace SOP_FeE_MeshTopology_1_0Enums;
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -433,12 +461,9 @@ sopGroupType(SOP_FeE_MeshTopology_1_0Parms::GroupType parmgrouptype)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
-
-
-
 
 void
 SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
@@ -447,9 +472,9 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_MeshTopology_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     //outGeo0 = sopNodeProcess(*inGeo0);
 
@@ -551,8 +576,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
+    const GFE_OutArrayType outArrayType = sopOutArrayType(sopparms.getOutArrayType());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -567,59 +591,41 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //meshTopology.outTopoAttrib = sopparms.getOutTopoAttrib();
 
     meshTopology.setComputeParm(sopparms.getOutAsOffset(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    meshTopology.outArrayType = outArrayType;
+    
     meshTopology.groupParser.setGroup(groupType, sopparms.getGroup());
     //meshTopology.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
 
-    if(calVertexPrimIndex)
-    {
+    if (calVertexPrimIndex)
         meshTopology.setVertexPrimIndex(false, vertexPrimIndexAttribName);
-    }
-    if(calVertexVertexPrim)
-    {
+    if (calVertexVertexPrim)
         meshTopology.setVertexVertexPrim(false, vertexVertexPrimPrevAttribName, vertexVertexPrimNextAttribName);
-    }
-    if(calVertexPointDst)
-    {
+    if (calVertexPointDst)
         meshTopology.setVertexPointDst(false, vertexPointDstAttribName);
-    }
-    if(calVertexNextEquiv)
-    {
-        meshTopology.setVertexNextEquiv(false, vertexNextEquivAttribName);
-    }
-    if(calVertexNextEquivNoLoop)
-    {
-        meshTopology.setVertexNextEquivNoLoop(false, vertexNextEquivNoLoopAttribName);
-    }
 
     
-    if(calVertexNextEquivGroup)
-    {
+    if (calVertexNextEquiv)
+        meshTopology.setVertexNextEquiv(false, vertexNextEquivAttribName);
+    if (calVertexNextEquivNoLoop)
+        meshTopology.setVertexNextEquivNoLoop(false, vertexNextEquivNoLoopAttribName);
+    
+    if (calVertexNextEquivGroup)
         meshTopology.setVertexNextEquivGroup(false, vertexNextEquivGroupName);
-    }
-    if(calVertexNextEquivNoLoopGroup)
-    {
+    if (calVertexNextEquivNoLoopGroup)
         meshTopology.setVertexNextEquivNoLoopGroup(false, vertexNextEquivNoLoopGroupName);
-    }
+
+
     
-    
-    if(calPointPointEdge)
-    {
+    if (calPointPointEdge)
         meshTopology.setPointPointEdge(false, pointPointEdgeAttribName);
-    }
-    if(calPointPointPrim)
-    {
+    if (calPointPointPrim)
         meshTopology.setPointPointPrim(false, pointPointPrimAttribName);
-    }
-    if(calPrimPrimEdge)
-    {
+    
+    if (calPrimPrimEdge)
         meshTopology.setPrimPrimEdge(false, primPrimEdgeAttribName);
-    }
-    if(calPrimPrimPoint)
-    {
+    if (calPrimPrimPoint)
         meshTopology.setPrimPrimPoint(false, primPrimPointAttribName);
-    }
 
     meshTopology.computeAndBumpDataId();
     meshTopology.visualizeOutGroup();
@@ -652,7 +658,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const GA_EdgeGroup* const edgeSeamGroup = GFE_GroupParser_Namespace::findOrParseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
     //GFE_Group::combineGroup<GA_VertexGroup, GA_EdgeGroup>(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
     //GFE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
-    if(vertexEdgeSeamGroup)
+    if (vertexEdgeSeamGroup)
         GFE_GroupUnion::groupUnion(vertexEdgeSeamGroup, edgeSeamGroup);
 
 

@@ -135,7 +135,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_CurveSubtractMesh_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_CurveSubtractMesh_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -159,7 +159,7 @@ SOP_FeE_CurveSubtractMesh_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_CurveSubtractMesh_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_CurveSubtractMesh_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_CurveSubtractMesh_1_0Enums;
     switch (parmGroupType)
@@ -175,7 +175,7 @@ sopGroupType(SOP_FeE_CurveSubtractMesh_1_0Parms::GroupType parmGroupType)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_CurveSubtractMesh_1_0Parms::Class parmAttribClass)
+sopAttribOwner(const SOP_FeE_CurveSubtractMesh_1_0Parms::Class parmAttribClass)
 {
     using namespace SOP_FeE_CurveSubtractMesh_1_0Enums;
     switch (parmAttribClass)
@@ -196,9 +196,9 @@ SOP_FeE_CurveSubtractMesh_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_CurveSubtractMesh_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 

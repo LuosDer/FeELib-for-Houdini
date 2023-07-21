@@ -75,8 +75,8 @@ FeE::groupCurveEnds
 FeE::delCurveEnds::1.0
 
 
-
-
+pointsplit_fee
+FeE::splitPointsKeepEdgeGroup::1.0
 
 
 

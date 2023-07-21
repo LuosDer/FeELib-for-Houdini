@@ -6,11 +6,16 @@
 
 #include "GFE/GFE_Ray.h"
 
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
+#if 0
+
+GFE_Ray ray(geo, cookparms);
+ray.findOrCreateTuple(true, GA_ATTRIB_POINT);
+ray.compute();
+
+#endif
 
 class GFE_Ray : public GFE_AttribFilter {
 

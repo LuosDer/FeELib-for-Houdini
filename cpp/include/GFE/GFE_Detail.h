@@ -336,48 +336,16 @@ public:
     
 private:
     
-    GA_Offset edgeVertexSub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
-    {
-        for (GA_Offset vtxoff = pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = vertexToNextVertex(vtxoff))
-        {
-            const GA_Offset primoff = vertexPrimitive(vtxoff);
-            const GA_Size numvtx = getPrimitiveVertexCount(primoff);
-            for (GA_Size vtxpnum = 0; vtxpnum <= numvtx; ++vtxpnum)
-            {
-                const GA_Offset primVtx = getPrimitiveVertexOffset(primoff, vtxpnum);
-                const GA_Offset primPoint = vertexPoint(primVtx);
-                if (primPoint != ptoff0)
-                    continue;
-                
-                GA_Size vtxpnum_next = vtxpnum+1;
-                if (vtxpnum_next == numvtx)
-                {
-                    if (!getPrimitiveClosedFlag(primoff))
-                        break;
-                    vtxpnum_next = 0;
-                }
-                const GA_Offset primPoint_next = getPrimitivePointOffset(primoff, vtxpnum_next);
-                
-                if (primPoint_next == ptoff1)
-                    return primVtx;
-                    //return getPrimitiveVertexOffset(primoff, vtxpnum_next);
-            }
-        }
-        return GFE_INVALID_OFFSET;
-    }
+    SYS_FORCE_INLINE GA_Offset edgeVertexSub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    { return GFE_DetailBase::edgeVertexSub(*this, ptoff0, ptoff1); }
     
 public:
     
-    GA_Offset edgeVertex(const GA_Offset ptoff0, const GA_Offset ptoff1) const
-    {
-        GA_Offset result = edgeVertexSub(ptoff0, ptoff1);
-        if (GFE_Type::isInvalidOffset(result))
-            result = edgeVertexSub(ptoff1, ptoff0);
-        return result;
-    }
+    SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Offset ptoff0, const GA_Offset ptoff1) const
+    { return GFE_DetailBase::edgeVertex(*this, ptoff0, ptoff1); }
     
     SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Edge& edge) const
-    { return edgeVertex(edge.p0(), edge.p1()); }
+    { return GFE_DetailBase::edgeVertex(*this, edge); }
     
     
 
@@ -548,36 +516,24 @@ void keepStdGroup(
     }
 #endif
 
+        
+SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_OffsetListRef& vertices, const GA_Offset vtxoff)
+{ return GFE_DetailBase::vertexPrimIndex(vertices, vtxoff); }
+        
+SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_PrimitiveList& primList, const GA_Offset primoff, const GA_Offset vtxoff)
+{ return GFE_DetailBase::vertexPrimIndex(primList, primoff, vtxoff); }
+    
+SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset primoff, const GA_Offset vtxoff)
+{ return GFE_DetailBase::vertexPrimIndex(*this, primoff, vtxoff); }
 
 SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset vtxoff)
-{ return vertexPrimIndex(vertexPrimitive(vtxoff), vtxoff); }
+{ return GFE_DetailBase::vertexPrimIndex(*this, vtxoff); }
 
-GA_Size vertexPrimIndex(const GA_Offset primoff, const GA_Offset vtxoff)
-{
-    const GA_Size numvtx = getPrimitiveVertexCount(primoff);
-    for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
-    {
-        if (getPrimitiveVertexOffset(primoff, vtxpnum) == vtxoff)
-            return vtxpnum;
-    }
-    return GFE_INVALID_OFFSET;
-}
-    
-GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
-{
-    const GA_Size vtxpnum_next = vtxpnum+1;
-    if (vtxpnum_next != getPrimitiveVertexCount(primoff))
-        return vertexPoint(getPrimitiveVertexOffset(primoff, vtxpnum_next));
-    if (getPrimitiveClosedFlag(primoff))
-        return vertexPoint(getPrimitiveVertexOffset(primoff, 0));
-    return GFE_INVALID_OFFSET;
-}
+SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
+{ return GFE_DetailBase::vertexPointDst(*this, primoff, vtxpnum); }
 
 SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset vtxoff)
-{
-    const GA_Offset primoff = vertexPrimitive(vtxoff);
-    return vertexPointDst(primoff, vertexPrimIndex(primoff, vtxoff));
-}
+{ return GFE_DetailBase::vertexPointDst(*this, vtxoff); }
 
         
 
@@ -698,9 +654,7 @@ GA_OffsetList getOffsetList(const GA_IndexMap& indexMap, const GA_ElementGroup* 
     if (!group && indexMap.isTrivialMap())
     {
         if (!reverse)
-        {
             offList.setTrivial(GA_Offset(0), indexMap.indexSize());
-        }
     }
     else
     {
@@ -713,22 +667,23 @@ GA_OffsetList getOffsetList(const GA_IndexMap& indexMap, const GA_ElementGroup* 
     return offList;
 }
     
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(
-    const GA_AttributeOwner owner,
-    const GA_ElementGroup* const group = nullptr,
-    const bool reverse = false
-) const
+//GA_OffsetList offList = GFE_Detail::getOffsetList(group);
+    
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_AttributeOwner owner, const GA_ElementGroup* const group = nullptr, const bool reverse = false) const
 { return getOffsetList(getIndexMap(owner), group, reverse); }
 
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PrimitiveGroup* const group,const bool reverse = false) const
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_ElementGroup& group, const bool reverse = false) const
+{ return getOffsetList(group.getOwner(), &group, reverse); }
+
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PrimitiveGroup* const group, const bool reverse = false) const
 { return getOffsetList(getPrimitiveMap(), group, reverse); }
 
-SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PointGroup* const group,const bool reverse = false) const
+SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_PointGroup* const group, const bool reverse = false) const
 { return getOffsetList(getPointMap(), group, reverse); }
 
-//GA_OffsetList offList = GFE_Detail::getOffsetList(group);
 SYS_FORCE_INLINE GA_OffsetList getOffsetList(const GA_VertexGroup* const group, const bool reverse = false) const
 { return getOffsetList(getVertexMap(), group, reverse); }
+
 
 
 SYS_FORCE_INLINE GA_Offset offsetFromIndex(const GA_AttributeOwner owner, const GA_Size elemoff) const

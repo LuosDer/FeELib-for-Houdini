@@ -13,6 +13,7 @@
 #include "GA/GA_PageIterator.h" // SOP_FeE_GroupPolyByWinding_1_0 can not compile with out this .h
 
 #include "GFE/GFE_Type.h"
+#include "GFE/GFE_DetailBase.h"
 
 class GFE_GroupUnion {
 
@@ -244,19 +245,19 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         const exint subscribeRatio = 64, const exint minGrainSize = 1024)
     {
         const GA_Detail& geo = group.getDetail();
-        const GA_PrimitiveList& primList = geo.getPrimitiveList();
         
-        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group, &primList](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const GA_Size numvtx = primList.getVertexCount(elemoff);
+                    const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
+                    const GA_Size numvtx = vertices.size();
                     for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                     {
-                        group.setElement(geo.vertexPoint(primList.getVertexOffset(elemoff, vtxpnum)), true);
+                        group.setElement(geo.vertexPoint(vertices[vtxpnum]), true);
                     }
                 }
             }
@@ -302,19 +303,18 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
             return;
         }
         const GA_Detail& geo = group.getDetail();
-        const GA_PrimitiveList& primList = geo.getPrimitiveList();
-        
-        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&group, &primList](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(GA_Range(groupRef, reverse)), [&geo, &group](const GA_SplittableRange& r)
         {
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    const GA_Size numvtx = primList.getVertexCount(elemoff);
+                    const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
+                    const GA_Size numvtx = vertices.size();
                     for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                     {
-                        group.setElement(primList.getVertexOffset(elemoff, vtxpnum), true);
+                        group.setElement(vertices[vtxpnum], true);
                     }
                 }
             }
@@ -346,6 +346,17 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
     SYS_FORCE_INLINE static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     { group.combine(&groupRef); }
 
+private:
+    
+    SYS_FORCE_INLINE static void groupUnionPrimitiveVertexEdge(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    { group.combine(&groupRef); }
+
+    static void groupUnionPointVertexEdge(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    {
+        const GA_PointGroupUPtr pointGroupUPtr = group.getDetail().createDetachedPointGroup();
+        pointGroupUPtr->combine(&groupRef);
+        group.combine(pointGroupUPtr.get());
+    }
 
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
@@ -353,7 +364,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
-    static void groupUnionVertexEdge(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    static void groupUnionOneVertexEdge(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
         const GA_Detail& geo = group.getDetail();
         UT_ASSERT_P(&geo == &groupRef.getDetail());
@@ -374,59 +385,132 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         }
         for (GA_EdgeGroup::const_iterator it = edgeGroupRef->begin(); !it.atEnd(); ++it)
         {
-            group.setElement(edgeVertex(geo, *it), true);
+            group.setElement(GFE_DetailBase::edgeVertex(geo, *it), true);
         }
     }
-    /////////////////////////////////////// Very Slow //////////////////////////////////////////
-    /////////////////////////////////////// Very Slow //////////////////////////////////////////
-    /////////////////////////////////////// Very Slow //////////////////////////////////////////
-    /////////////////////////////////////// Very Slow //////////////////////////////////////////
-    /////////////////////////////////////// Very Slow //////////////////////////////////////////
-    /////////////////////////////////////// Very Slow //////////////////////////////////////////
-
-private:
     
-    static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
+    static void groupUnionAllVertexEdge(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
-        GA_Offset result = edgeVertexSub(geo, ptoff0, ptoff1);
-        if (GFE_Type::isInvalidOffset(result))
-            result = edgeVertexSub(geo, ptoff1, ptoff0);
-        return result;
-    }
-    
-    SYS_FORCE_INLINE static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Edge& edge)
-    { return edgeVertex(geo, edge.p0(), edge.p1()); }
-    
-
-    static GA_Offset edgeVertexSub(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
-    {
-        for (GA_Offset vtxoff = geo.pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
+        const GA_Detail& geo = group.getDetail();
+        UT_ASSERT_P(&geo == &groupRef.getDetail());
+        
+        GA_EdgeGroupUPtr edgeGroupUPtr;
+        const GA_EdgeGroup* edgeGroupRef;
+        if (reverse)
         {
-            const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
-            const GA_Size numvtx = geo.getPrimitiveVertexCount(primoff);
-            for (GA_Size vtxpnum = 0; vtxpnum <= numvtx; ++vtxpnum)
+            edgeGroupUPtr = geo.createDetachedEdgeGroup();
+            GA_EdgeGroup* const edgeGroupTmp = edgeGroupUPtr.get();
+            edgeGroupTmp->combine(&groupRef);
+            edgeGroupTmp->toggleEntries();
+            edgeGroupRef = edgeGroupTmp;
+        }
+        else
+        {
+            edgeGroupRef = &groupRef;
+        }
+        for (GA_EdgeGroup::const_iterator it = edgeGroupRef->begin(); !it.atEnd(); ++it)
+        {
+            GA_Offset ptoff1 = it->p1();
+            GA_Size vtxpnum_next;
+            GA_Offset primPoint_next;
+            for (GA_Offset vtxoff = geo.pointVertex(it->p0()); GFE_Type::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
             {
-                const GA_Offset primVtx = geo.getPrimitiveVertexOffset(primoff, vtxpnum);
-                const GA_Offset primPoint = geo.vertexPoint(primVtx);
-                if (primPoint != ptoff0)
-                    continue;
-                
-                GA_Size vtxpnum_next = vtxpnum+1;
-                if (vtxpnum_next == numvtx)
+                const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
+                const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
+                const GA_Size numvtx = vertices.size();
+                for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                 {
-                    if (!geo.getPrimitiveClosedFlag(primoff))
-                        break;
-                    vtxpnum_next = 0;
-                }
-                const GA_Offset primPoint_next = geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
+                    if (vertices[vtxpnum] != vtxoff)
+                        continue;
                 
-                if (primPoint_next == ptoff1)
-                    return primVtx;
-                //return getPrimitiveVertexOffset(primoff, vtxpnum_next);
+                    vtxpnum_next = vtxpnum+1;
+                    if (vtxpnum_next != numvtx || vertices.isClosed())
+                    {
+                        if (vtxpnum_next == numvtx)
+                            vtxpnum_next = 0;
+                        primPoint_next = geo.vertexPoint(vertices[vtxpnum_next]);
+                        if (primPoint_next == ptoff1)
+                            group.setElement(vtxoff, true);
+                    }
+                
+                    if (vtxpnum != 0 || vertices.isClosed())
+                    {
+                        vtxpnum_next = vtxpnum==0 ? numvtx-1 : vtxpnum-1;
+                        primPoint_next = geo.vertexPoint(vertices[vtxpnum_next]);
+                        if (primPoint_next == ptoff1)
+                            group.setElement(vertices[vtxpnum_next], true);
+                    }
+                }
             }
         }
-        return GFE_INVALID_OFFSET;
     }
+
+
+    
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+    /////////////////////////////////////// Very Slow //////////////////////////////////////////
+
+public:
+
+    template<GA_AttributeOwner _ConnectElemType>
+    static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
+    {
+        if constexpr (_ConnectElemType == GA_ATTRIB_PRIMITIVE)
+            groupUnionPrimitiveVertexEdge(group, groupRef, reverse);
+        else if constexpr (_ConnectElemType == GA_ATTRIB_POINT)
+            groupUnionPointVertexEdge    (group, groupRef, reverse);
+        else if constexpr (_ConnectElemType == GA_ATTRIB_VERTEX)
+            groupUnionOneVertexEdge      (group, groupRef, reverse);
+        else if constexpr (_ConnectElemType == GA_ATTRIB_OWNER_N)
+            groupUnionAllVertexEdge      (group, groupRef, reverse);
+        else
+            UT_ASSERT_MSG(0, "Unhandled Group Union Owner");
+    }
+
+    static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const GA_AttributeOwner connectElemType, const bool reverse = false)
+    {
+        switch (connectElemType)
+        {
+        case GA_ATTRIB_PRIMITIVE: groupUnionPrimitiveVertexEdge(group, groupRef, reverse); break;
+        case GA_ATTRIB_POINT:     groupUnionPointVertexEdge    (group, groupRef, reverse); break;
+        case GA_ATTRIB_VERTEX:    groupUnionOneVertexEdge      (group, groupRef, reverse); break;
+        case GA_ATTRIB_OWNER_N:   groupUnionAllVertexEdge      (group, groupRef, reverse); break;
+        default: UT_ASSERT_MSG(0, "Unhandled Group Union Owner"); break;
+        }
+    }
+
+    template<GA_AttributeOwner _ConnectElemType>
+    static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup* const groupRef, const bool reverse = false)
+    {
+        if (!groupRef)
+        {
+            if (!reverse)
+                group.addAll();
+            return;
+        }
+        groupUnion<_ConnectElemType>(group, *groupRef, reverse);
+    }
+
+    static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup* const groupRef, const GA_AttributeOwner connectElemType, const bool reverse = false)
+    {
+        if (!groupRef)
+        {
+            if (!reverse)
+                group.addAll();
+            return;
+        }
+        groupUnion(group, *groupRef, connectElemType, reverse);
+    }
+
+
+
+
+
+
 
 
     
@@ -438,30 +522,28 @@ public:
     static void groupUnion(GA_EdgeGroup& group, const GA_PrimitiveGroup& groupRef, const bool reverse = false)
     {
         const GA_Detail& geo = groupRef.getDetail();
-        
-        const GA_PrimitiveList& primList = geo.getPrimitiveList();
-        const GA_Topology& topo = geo.getTopology();
-        const GA_ATITopology& vtxPointRef = *topo.getPointRef();
+        const GA_ATITopology& pointRef = *geo.getTopology().getPointRef();
 
         GA_Offset start, end;
         for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                const GA_Size numvtx = primList.getVertexCount(elemoff);
+                const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(elemoff);
+                const GA_Size numvtx = vertices.size();
 
-                const GA_Offset vtxoff0 = primList.getVertexOffset(elemoff, 0);
-                GA_Offset vtxoff_prev = vtxPointRef.getLink(vtxoff0);
+                const GA_Offset vtxoff0 = vertices[0];
+                GA_Offset vtxoff_prev = pointRef.getLink(vtxoff0);
                 GA_Offset vtxoff_next;
                 for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                 {
-                    vtxoff_next = vtxPointRef.getLink(primList.getVertexOffset(elemoff, vtxpnum));
+                    vtxoff_next = pointRef.getLink(vertices[vtxpnum]);
                     group.add(vtxoff_prev, vtxoff_next);
                     vtxoff_prev = vtxoff_next;
                 }
-                if (primList.getClosedFlag(elemoff))
+                if (vertices.isClosed())
                 {
-                    vtxoff_next = vtxPointRef.getLink(vtxoff0);
+                    vtxoff_next = pointRef.getLink(vtxoff0);
                     group.add(vtxoff_prev, vtxoff_next);
                 }
             }
@@ -472,9 +554,8 @@ public:
     {
         const GA_Detail& geo = groupRef.getDetail();
         
-        const GA_PrimitiveList& primList = geo.getPrimitiveList();
         const GA_Topology& topo = geo.getTopology();
-        const GA_ATITopology& vtxPointRef = *topo.getPointRef();
+        const GA_ATITopology& pointRef = *topo.getPointRef();
         
         GA_Offset start, end;
         for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
@@ -485,55 +566,58 @@ public:
                 for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                 {
                     const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
-                    const GA_Size numvtx = primList.getVertexCount(primoff);
-                    const GA_Size vtxpnum = vertexPrimIndex(primList, primoff, vtxoff_next);
+                    const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
+                    const GA_Size numvtx = vertices.size();
+                    const GA_Size vtxpnum = GFE_DetailBase::vertexPrimIndex(vertices, vtxoff_next);
 
                     if (vtxpnum == 0)
                     {
-                        if (primList.getClosedFlag(primoff))
+                        if (vertices.isClosed())
                         {
-                            pt_next = vtxPointRef.getLink(primList.getVertexOffset(primoff, numvtx-1));
+                            pt_next = pointRef.getLink(vertices[numvtx-1]);
                             group.add(elemoff, pt_next);
                         }
                     }
                     else
                     {
-                        pt_next = vtxPointRef.getLink(primList.getVertexOffset(primoff, vtxpnum-1));
+                        pt_next = pointRef.getLink(vertices[vtxpnum-1]);
                         group.add(elemoff, pt_next);
                     }
 
                     const GA_Size vtxpnum_next = vtxpnum+1;
                     if (vtxpnum_next == numvtx)
                     {
-                        if (primList.getClosedFlag(primoff))
+                        if (vertices.isClosed())
                         {
-                            pt_next = vtxPointRef.getLink(primList.getVertexOffset(primoff, 0));
+                            pt_next = pointRef.getLink(vertices[0]);
                             group.add(elemoff, pt_next);
                         }
                     }
                     else
                     {
-                        pt_next = vtxPointRef.getLink(primList.getVertexOffset(primoff, vtxpnum_next));
+                        pt_next = pointRef.getLink(vertices[vtxpnum_next]);
                         group.add(elemoff, pt_next);
                     }
                 }
             }
         }
     }
-
+    
     static void groupUnion(GA_EdgeGroup& group, const GA_VertexGroup& groupRef, const bool reverse = false)
     {
         const GA_Detail& geo = group.getDetail();
-        const GA_ATITopology& vtxPointRef = *geo.getTopology().getPointRef();
+        const GA_ATITopology& pointRef = *geo.getTopology().getPointRef();
+#if GFE_DEBUG_MODE
         GA_Size a = groupRef.computeGroupEntries();
         a = a;
+#endif
         GA_Offset start, end;
         for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                const GA_Offset dstpt = vertexPointDst(geo, elemoff);
-                group.add(vtxPointRef.getLink(elemoff), dstpt);
+                const GA_Offset dstpt = GFE_DetailBase::vertexPointDst(geo, elemoff);
+                group.add(pointRef.getLink(elemoff), dstpt);
             }
         }
     }
@@ -562,7 +646,7 @@ public:
     {
         // dstptAttrib is in geo but not in geoRef
         
-        const GA_ATITopology& vtxPointRef = *group.getDetail().getTopology().getPointRef();
+        const GA_ATITopology& pointRef = *group.getDetail().getTopology().getPointRef();
 
         GA_PageHandleT<GA_Offset, GA_Offset, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> refAttrib_ph(&dstptAttrib);
         
@@ -575,7 +659,7 @@ public:
                 refAttrib_ph.setPage(start);
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    group.add(vtxPointRef.getLink(elemoff), refAttrib_ph.value(elemoff));
+                    group.add(pointRef.getLink(elemoff), refAttrib_ph.value(elemoff));
                 }
             }
         }
@@ -585,7 +669,7 @@ public:
         // {
         //     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
         //     {
-        //         group.add(vtxPointRef.getLink(elemoff), refAttrib_h.get(elemoff));
+        //         group.add(pointRef.getLink(elemoff), refAttrib_h.get(elemoff));
         //     }
         // }
     }
@@ -637,10 +721,10 @@ public:
     //    case GA_GROUP_PRIMITIVE:
     //    {
     //        const GA_Topology& topo = geo->getTopology();
-    //        const GA_ATITopology* const vtxPointRef = topo.getPointRef();
+    //        const GA_ATITopology* const pointRef = topo.getPointRef();
 
     //        const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(static_cast<const GA_PrimitiveGroup*>(groupRef)));
-    //        UTparallelFor(geoSplittableRange, [geo, group, vtxPointRef](const GA_SplittableRange& r)
+    //        UTparallelFor(geoSplittableRange, [geo, group, pointRef](const GA_SplittableRange& r)
     //            {
     //                GA_Offset start, end;
     //                for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -650,17 +734,17 @@ public:
     //                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
     //                        const GA_Size numvtx = vertices.size();
 
-    //                        GA_Offset vtxoff_prev = vtxPointRef->getLink(vertices[0]);
+    //                        GA_Offset vtxoff_prev = pointRef->getLink(vertices[0]);
     //                        GA_Offset vtxoff_next;
     //                        for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
     //                        {
-    //                            vtxoff_next = vtxPointRef->getLink(vertices[vtxpnum]);
+    //                            vtxoff_next = pointRef->getLink(vertices[vtxpnum]);
     //                            group->add(vtxoff_prev, vtxoff_next);
     //                            vtxoff_prev = vtxoff_next;
     //                        }
     //                        if (geo->getPrimitiveClosedFlag(elemoff))
     //                        {
-    //                            vtxoff_next = vtxPointRef->getLink(vertices[0]);
+    //                            vtxoff_next = pointRef->getLink(vertices[0]);
     //                            group->add(vtxoff_prev, vtxoff_next);
     //                        }
     //                    }
@@ -683,7 +767,7 @@ public:
     //                        {
     //                            const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
     //                            const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-    //                            const GA_Size vtxpnum = GFE_TopologyReference_Namespace::vertexPrimIndex(geo, primoff, vtxoff_next);
+    //                            const GA_Size vtxpnum = GFE_DetailBase::vertexPrimIndex(geo, primoff, vtxoff_next);
 
     //                            if (vtxpnum == 0)
     //                            {
@@ -728,7 +812,7 @@ public:
     //                {
     //                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     //                    {
-    //                        const GA_Offset dstpt = GFE_TopologyReference_Namespace::vertexPointDst(geo, elemoff);
+    //                        const GA_Offset dstpt = GFE_DetailBase::vertexPointDst(geo, elemoff);
     //                        group->add(geo->vertexPoint(elemoff), dstpt);
     //                    }
     //                }
@@ -743,41 +827,6 @@ public:
     //    }
     //}
 
-private:
-    
-    SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset vtxoff)
-    { return vertexPrimIndex(geo, geo.vertexPrimitive(vtxoff), vtxoff); }
-
-    SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_Detail& geo, const GA_Offset primoff, const GA_Offset vtxoff)
-    { return vertexPrimIndex(geo.getPrimitiveList(), primoff, vtxoff); }
-
-    static GA_Size vertexPrimIndex(const GA_PrimitiveList& primList, const GA_Offset primoff, const GA_Offset vtxoff)
-    {
-        const GA_Size numvtx = primList.getVertexCount(primoff);
-        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
-        {
-            if (primList.getVertexOffset(primoff, vtxpnum) == vtxoff)
-                return vtxpnum;
-        }
-        return GFE_INVALID_OFFSET;
-    }
-
-    static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset primoff, const GA_Size vtxpnum)
-    {
-        const GA_Size vtxpnum_next = vtxpnum+1;
-        if (vtxpnum_next != geo.getPrimitiveVertexCount(primoff))
-            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, vtxpnum_next));
-        if (geo.getPrimitiveClosedFlag(primoff))
-            return geo.vertexPoint(geo.getPrimitiveVertexOffset(primoff, 0));
-        return GFE_INVALID_OFFSET;
-    }
-
-    SYS_FORCE_INLINE static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset vtxoff)
-    {
-        const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
-        return vertexPointDst(geo, primoff, vertexPrimIndex(geo, primoff, vtxoff));
-    }
-    
 
 
 }; // End of class GFE_GroupUnion

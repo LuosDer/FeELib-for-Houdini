@@ -14,8 +14,7 @@
 #include "GFE/GFE_Bound.h"
 #include "GFE/GFE_XformByAttrib.h"
 
-
-
+template<typename _TScalar = fpreal>
 class GFE_MatchBBoxXform {
 
 public:
@@ -31,19 +30,58 @@ public:
 
     void setMatchCenter()
     {
-        xform.
         UT_Vector3T<fpreal> center0 = restBBox.center();
         UT_Vector3T<fpreal> center1 = refBBox.center();
         UT_Vector3T<fpreal> size0   = restBBox.size();
         UT_Vector3T<fpreal> size1   = refBBox.size();
         xform.translate(center1-center0);
     }
+
     
+    
+    SYS_FORCE_INLINE void setRestBBox(const GA_Detail& geo, const GA_Range& pointRange, const GA_Attribute* posAttrib = nullptr)
+    { restBBox = GFE_Bound::getBBox<fpreal>(geo, restBBox); }
+    
+    SYS_FORCE_INLINE void setRefBBox(const GA_Detail& geo, const GA_Range& pointRange, const GA_Attribute* posAttrib = nullptr)
+    { refBBox = GFE_Bound::getBBox<fpreal>(geo, restBBox); }
+    
+    //SYS_FORCE_INLINE UT_BoundingBoxT<fpreal> getRestBBox() const
+    //{ return restBBox; }
+    //SYS_FORCE_INLINE UT_BoundingBoxT<fpreal> getRefBBox() const
+    //{ return refBBox; }
+    
+    SYS_FORCE_INLINE UT_Vector3T<_TScalar> computeTranslate(const _TScalar biasRest, const _TScalar biasRef) const
+    {
+        return restBBox.maxvec() * (biasRest - 1.0) - restBBox.minvec() * biasRest
+             + refBBox .maxvec() * (biasRest + 1.0) - refBBox .minvec() * biasRef;
+    }
+    
+    SYS_FORCE_INLINE UT_Vector3T<_TScalar> computeTranslate(const _TScalar bias) const
+    { return computeTranslate(bias, bias); }
+
+    
+    SYS_FORCE_INLINE UT_Vector3T<_TScalar> computeScale(const _TScalar biasRest, const _TScalar biasRef) const
+    {
+        return restBBox.maxvec() * (biasRest - 1.0) - restBBox.minvec() * biasRest
+             + refBBox .maxvec() * (biasRest + 1.0) - refBBox .minvec() * biasRef;
+    }
+    
+    SYS_FORCE_INLINE UT_Vector3T<_TScalar> computeScale(const _TScalar bias) const
+    { return computeScale(bias, bias); }
+
+    
+    UT_Matrix4T<_TScalar> computeXform(const _TScalar biasRestT, const _TScalar biasRefT, const _TScalar biasRestS, const _TScalar biasRefS) const
+    {
+        UT_Vector3T<_TScalar> translate = computeTranslate();
+        UT_Vector3T<_TScalar> scale = computeTranslate();
+    }
     
 public:
-    UT_BoundingBoxT<fpreal> restBBox;
-    UT_BoundingBoxT<fpreal> refBBox;
-    UT_Matrix4T<fpreal> xform;
+    UT_BoundingBoxT<_TScalar> restBBox;
+    UT_BoundingBoxT<_TScalar> refBBox;
+    //UT_Vector3T<_TScalar> translate;
+    //UT_Vector3T<_TScalar> scale;
+    //UT_Matrix4T<_TScalar> xform;
     
 }; // End of class GFE_MatchBBoxXform
 
@@ -97,11 +135,15 @@ private:
         if (groupParser.isEmpty())
             return true;
 
+        setValidPosAttrib();
+        
         geoRest = geoRef1 ? geoRef1 : geo;
         
         GFE_MatchBBoxXform bboxXform;
         GFE_XformByAttrib xformByAttrib(geo, nullptr, cookparms);
         xformByAttrib.groupParser.setGroup(groupParser);
+        
+        bboxXform.setRestBBox(*geoRest, groupParser.getPointRange(), posAttrib);
         
         const size_t sizeAttrib = getOutAttribArray().size();
         for (size_t i = 0; i < sizeAttrib; ++i)

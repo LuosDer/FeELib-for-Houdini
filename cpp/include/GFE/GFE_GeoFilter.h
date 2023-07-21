@@ -856,11 +856,47 @@ SYS_FORCE_INLINE void delOrVisualizeGroup()
         case GA_ATTRIB_DETAIL:    break;
         default: UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
         }
+        const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
+        if (aifTuple)
+        {
+            switch (aifTuple->getStorage(attrib))
+            {
+            case GA_STORE_INT8:      break;
+            case GA_STORE_INT16:     break;
+            case GA_STORE_INT32:     break;
+            case GA_STORE_INT64:     break;
+            case GA_STORE_REAL16:    break;
+            case GA_STORE_REAL32:    break;
+            case GA_STORE_REAL64:    break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
+            }
+        }
+        else
+        {
+            const GA_AIFNumericArray* const aifNumArray = attrib->getAIFNumericArray();
+            if (aifNumArray)
+            {
+                switch (aifNumArray->getStorage(attrib))
+                {
+                case GA_STORE_INT8:      break;
+                case GA_STORE_INT16:     break;
+                case GA_STORE_INT32:     break;
+                case GA_STORE_INT64:     break;
+                case GA_STORE_REAL16:    break;
+                case GA_STORE_REAL32:    break;
+                case GA_STORE_REAL64:    break;
+                default: UT_ASSERT_MSG(0, "Unhandled Attrib Owner"); break;
+                }
+            }
+        }
     }
 #endif
+    
+SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
+{ return outAttribArray; }
 
 
-
+    
 #if 0
     const size_t sizeGroup = getOutGroupArray().size();
     for (size_t i = 0; i < sizeGroup; ++i)
@@ -876,9 +912,6 @@ SYS_FORCE_INLINE void delOrVisualizeGroup()
     }
 #endif
 
-SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
-{ return outAttribArray; }
-
 SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
 { return outGroupArray; }
 
@@ -891,7 +924,7 @@ SYS_FORCE_INLINE ::std::vector<GA_Group*>& getOutGroupArrayRef()
 
 
 SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
-{ return outAttribArray; }
+{ return outAttribArray; } 
 
 SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
 { return outGroupArray; }
