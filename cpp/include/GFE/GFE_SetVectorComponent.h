@@ -60,7 +60,7 @@ public:
     { comp = v; }
     
     SYS_FORCE_INLINE void setComp(const GFE_Axis axis = GFE_Axis::Y)
-    { comp = GFE_Type::axisDir<>(); }
+    { comp = static_cast<int8>(axis); }
     
     void setRefAttrib(const GA_Attribute* const attrib)
     {

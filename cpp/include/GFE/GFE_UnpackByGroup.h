@@ -4,6 +4,8 @@
 #ifndef __GFE_UnpackByGroup_h__
 #define __GFE_UnpackByGroup_h__
 
+#include <GU/GU_PackedGeometry.h>
+
 #include "GFE/GFE_UnpackByGroup.h"
 
 
@@ -52,31 +54,31 @@ private:
     virtual bool
         computeCore() override
     {
+		GU_DetailHandle geoSrcTmp_h;
     	if (geoSrc)
     	{
-    		if(geoSrc->getNumPrimitives() <= 0)
+    		if (geoSrc->getNumPrimitives() <= 0)
     			return true;
         	geoSrcTmp = geoSrc;
     	}
         else
         {
-        	if(geo->getNumPrimitives() <= 0)
+        	if (geo->getNumPrimitives() <= 0)
         		return true;
-        	geoSrcTmpGU = new GU_Detail();
-        	geoSrcTmp_h.allocateAndSet(geoSrcTmpGU);
-        	geoSrcTmpGU->replaceWith(*geo->asGA_Detail());
-        	geoSrcTmp = geoSrcTmpGU;
+        	geoSrcTmp_h = GFE_DetailBase::newDetail(geo);
+        	geoSrcTmp   = geoSrcTmp_h.gdpNC();
         }
 
-    	GFE_GroupParser groupParserSrc(geoSrcTmp, groupParser.getGOPRef(), cookparms);
-    	groupParserSrc.setGroup(groupParser);
+    	//GFE_GroupParser groupParserSrc(geoSrcTmp, groupParser.getGOPRef(), cookparms);
+    	//groupParserSrc.setGroup(groupParser);
     	
     	geo->clear();
 		
-    	switch (elemTraversingMethod) {
-    	case GFE_ElemTraversingMethod::Custom:    unpackByGroup_Custom(groupParserSrc); break;
-    	case GFE_ElemTraversingMethod::OneElem:   unpackByGroup_OneElem();              break;
-    	case GFE_ElemTraversingMethod::SkipNElem: unpackByGroup_SkipNElem();            break;
+    	switch (elemTraversingMethod)
+    	{
+    	case GFE_ElemTraversingMethod::Custom:    unpackByGroup_Custom();    break;
+    	case GFE_ElemTraversingMethod::OneElem:   unpackByGroup_OneElem();   break;
+    	case GFE_ElemTraversingMethod::SkipNElem: unpackByGroup_SkipNElem(); break;
     	default: break;
     	}
      
@@ -89,15 +91,13 @@ private:
 
 	SYS_FORCE_INLINE void unpackPrim(GU_Detail& geoGU, const GA_Offset primoff)
 	{
-    	//int typeId = geoSrcTmp->getPrimitiveTypeId(primoff);
-    		
     	if (GFE_Type::isPacked(geoSrcTmp->getPrimitiveTypeId(primoff)))
-			static_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
+	        reinterpret_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
 		//GA_Primitive* const prim = geoSrcTmp->getPrimitive(primoff);
 		//GU_PrimPacked* const primPacked = static_cast<GU_PrimPacked*>(prim);
 	}
 	
-	void unpackByGroup_Custom(GFE_GroupParser &groupParser)
+	void unpackByGroup_Custom()
     {
     	GU_Detail& geoGU = *geo->asGU_Detail();
     	GA_Offset start, end;
@@ -116,7 +116,7 @@ private:
     	if (reverseGroup)
     	{
     		GA_Offset start, end;
-    		for (GA_Iterator it(geoSrcTmp->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    		for (GA_Iterator it(groupParser.getPrimitiveRange()); it.fullBlockAdvance(start, end); )
     		{
     			for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     			{
@@ -128,8 +128,7 @@ private:
     	}
     	else
     	{
-    		//const GA_Offset offsetSize = geoSrcTmp->getPrimitiveMap().offsetSize();
-    		if(geoSrcTmp->getPrimitiveMap().isOffsetInRange(primoff))
+    		if (GFE_Type::isValidOffset(geoSrcTmp->getPrimitiveMap(), primoff))
     			unpackPrim(geoGU, primoff);
     	}
     }
@@ -142,7 +141,7 @@ private:
     	{
     		if (!reverseGroup)
     		{
-    			for (GA_Iterator it(geoSrcTmp->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    			for (GA_Iterator it(groupParser.getPrimitiveRange()); it.fullBlockAdvance(start, end); )
     			{
     				for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     				{
@@ -156,7 +155,7 @@ private:
     	GA_Size delSize = geo->getPrimitiveMap().indexFromOffset(primoff);
     	delSize %= skipNPrim;
         
-    	for (GA_Iterator it(geoSrcTmp->getPrimitiveRange()); it.fullBlockAdvance(start, end); )
+    	for (GA_Iterator it(groupParser.getPrimitiveRange()); it.fullBlockAdvance(start, end); )
     	{
     		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     		{
@@ -184,9 +183,7 @@ public:
 private:
 	
 	const GA_Detail* geoSrcTmp;
-	GU_Detail* geoSrcTmpGU;
 	
-	GU_DetailHandle geoSrcTmp_h;
 	
     //exint subscribeRatio = 64;
     //exint minGrainSize = 1024;

@@ -21,7 +21,7 @@ namespace GFE_DetailBase {
     
 /*
         GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail();
-        GU_Detail* const geoTemp = geoTemp_h.gdpNC();
+        GU_Detail* const geoTemp  = geoTemp_h.gdpNC();
 */
     static GU_DetailHandle newDetail()
     {
