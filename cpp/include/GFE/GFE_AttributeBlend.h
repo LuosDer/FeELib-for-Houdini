@@ -87,7 +87,12 @@ private:
                     dstAttrib_ph.setPage(start);
                     for(GA_Offset elemoff = start; elemoff < end; elemoff++)
                     {
-                        dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1.0 - blend) + srcAttrib_h.get(elemoff) * blend;
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, srcOwner>(elemoff);
+                        if(GFE_Type::isValidOffset(dstOff))
+                        {
+                            dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1.0 - blend) + srcAttrib_h.get(elemoff) * blend;
+                        }
+
                     }
                 }
             }
@@ -112,7 +117,12 @@ private:
                     dstAttrib_ph.setPage(start);
                     for(GA_Offset elemoff = start; elemoff < end; elemoff++)
                     {
-                        dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1.0 - blend) + srcAttrib_h.get(elemoff) * blend;
+                        const GA_Offset dstOff = geo->offsetPromote<dstOwner, srcOwner>(elemoff);
+                        if (GFE_Type::isValidOffset(dstOff))
+                        {
+                            dstAttrib_ph.value(elemoff) = dstAttrib_ph.value(elemoff) * (1.0 - blend) + srcAttrib_h.get(elemoff) * blend;
+                        }
+
                     }
                 }
             }
