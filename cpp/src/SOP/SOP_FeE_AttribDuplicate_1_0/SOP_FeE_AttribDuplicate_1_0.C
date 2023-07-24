@@ -221,7 +221,6 @@ SOP_FeE_AttribDuplicate_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) 
         return;
     
     GFE_AttribDuplicate attribDuplicate(outGeo0, inGeo1, cookparms);
-    outGeo0.getPrimitiveClosedFlag()
     if (inGeo1)
     {
         attribDuplicate.getRef0AttribArray().set(attribClass, sopparms.getDuplicateAttrib());

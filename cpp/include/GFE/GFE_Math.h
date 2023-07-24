@@ -27,6 +27,40 @@ SYS_FORCE_INLINE static T degrees(const T radians)
 { return radians * 180 / PI; }
 
 
+    
+static GA_Size appendSorted(GA_OffsetList& arr, const GA_Offset val)
+{
+    const GA_Size size = arr.size();
+    if (size == 0)
+        return arr.append(val);
+    if (arr[size-1] <= val)
+        return arr.append(val);
+    if (size == 1)
+        return arr.insert(0, val);
+        
+    GA_Size l = 0;
+    GA_Size r = size-1;
+    GA_Size m = r >> 1;
+    while (l < r)
+    {
+        if (arr[m] > val)
+        {
+            r = m-1;
+        }
+        else if (arr[m] < val)
+        {
+            l = m+1;
+        }
+        else
+        {
+            break;
+        }
+        m = (l+r) >> 1;
+    }
+    UT_ASSERT_P(l <= r || l == r+1);
+    return l > r ? arr.insert(l, val) : arr.insert(m, val);
+}
+
 template<typename T>
 SYS_FORCE_INLINE static typename T::value_type tupleDistance2(const T& val0, const T& val1)
 {

@@ -39,7 +39,6 @@ static const char *theDsFile = R"THEDSFILE(
         label   "Group"
         type    string
         default { "" }
-        hidewhen "{ elemTraversingMethod != custom }"
         parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
         parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
         parmtag { "script_action_icon" "BUTTONS_reselect" }
@@ -228,12 +227,12 @@ SOP_FeE_UnpackByGroup_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) co
     
     unpackByGroup.setComputeParm(elemTraversingMethod, sopparms.getReverseGroup(), sopparms.getDelGroup());
     
-    const GA_Offset primoff = sopparms.getInputAsOffset() ? outGeo0.primitiveOffset(sopparms.getPrimoff()) : sopparms.getPrimoff();
+    const GA_Offset primoff = sopparms.getInputAsOffset() ? sopparms.getPrimoff() : inGeo0.primitiveOffset(sopparms.getPrimoff());
 
-    
+    unpackByGroup.groupParser.setGroup(groupType, sopparms.getGroup());
     switch (elemTraversingMethod)
     {
-    case GFE_ElemTraversingMethod::Custom:    unpackByGroup.groupParser.setGroup(groupType, sopparms.getGroup());  break;
+    case GFE_ElemTraversingMethod::Custom:                                                                         break;
     case GFE_ElemTraversingMethod::OneElem:   unpackByGroup.setPrimoff(primoff);                                   break;
     case GFE_ElemTraversingMethod::SkipNElem: unpackByGroup.setSkipNPrim(primoff, sopparms.getSkipNPrim());        break;
     }

@@ -350,7 +350,7 @@ static const char *theDsFile = R"THEDSFILE(
        cppname "MinGrainSize"
        label   "Min Grain Size"
        type    intlog
-       default { 64 }
+       default { 1024 }
        range   { 0! 2048 }
     }
 }
@@ -504,17 +504,17 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const UT_StringHolder& primPrimPointAttribName               = sopparms.getPrimPrimPointAttribName();
     const UT_StringHolder& vertexVertexPrimPrevAttribName        = sopparms.getVertexVertexPrimPrevAttribName();
 
-    calVertexPrimIndex            = calVertexPrimIndex            && vertexPrimIndexAttribName.isstring()        && vertexPrimIndexAttribName.length() != 0;
-    calVertexVertexPrim           = calVertexVertexPrim           && ((vertexVertexPrimPrevAttribName.isstring() && vertexVertexPrimPrevAttribName.length() != 0) || (vertexVertexPrimNextAttribName.isstring() && vertexVertexPrimNextAttribName.length() != 0));
-    calVertexPointDst             = calVertexPointDst             && vertexPointDstAttribName.isstring()         && vertexPointDstAttribName.length() != 0;
-    calVertexNextEquiv            = calVertexNextEquiv            && vertexNextEquivAttribName.isstring()        && vertexNextEquivAttribName.length() != 0;
-    calVertexNextEquivNoLoop      = calVertexNextEquivNoLoop      && vertexNextEquivNoLoopAttribName.isstring()  && vertexNextEquivNoLoopAttribName.length() != 0;
-    calVertexNextEquivGroup       = calVertexNextEquivGroup       && vertexNextEquivGroupName.isstring()         && vertexNextEquivGroupName.length() != 0;
-    calVertexNextEquivNoLoopGroup = calVertexNextEquivNoLoopGroup && vertexNextEquivNoLoopGroupName.isstring()   && vertexNextEquivNoLoopGroupName.length() != 0;
-    calPointPointEdge             = calPointPointEdge             && pointPointEdgeAttribName.isstring()         && pointPointEdgeAttribName.length() != 0;
-    calPointPointPrim             = calPointPointPrim             && pointPointPrimAttribName.isstring()         && pointPointPrimAttribName.length() != 0;
-    calPrimPrimEdge               = calPrimPrimEdge               && primPrimEdgeAttribName.isstring()           && primPrimEdgeAttribName.length() != 0;
-    calPrimPrimPoint              = calPrimPrimPoint              && primPrimPointAttribName.isstring()          && primPrimPointAttribName.length() != 0;
+    calVertexPrimIndex            = calVertexPrimIndex            && GFE_Type::isValid(vertexPrimIndexAttribName);
+    calVertexVertexPrim           = calVertexVertexPrim           && (GFE_Type::isValid(vertexVertexPrimPrevAttribName) || GFE_Type::isValid(vertexVertexPrimNextAttribName));
+    calVertexPointDst             = calVertexPointDst             && GFE_Type::isValid(vertexPointDstAttribName);
+    calVertexNextEquiv            = calVertexNextEquiv            && GFE_Type::isValid(vertexNextEquivAttribName);
+    calVertexNextEquivNoLoop      = calVertexNextEquivNoLoop      && GFE_Type::isValid(vertexNextEquivNoLoopAttribName);
+    calVertexNextEquivGroup       = calVertexNextEquivGroup       && GFE_Type::isValid(vertexNextEquivGroupName);
+    calVertexNextEquivNoLoopGroup = calVertexNextEquivNoLoopGroup && GFE_Type::isValid(vertexNextEquivNoLoopGroupName);
+    calPointPointEdge             = calPointPointEdge             && GFE_Type::isValid(pointPointEdgeAttribName);
+    calPointPointPrim             = calPointPointPrim             && GFE_Type::isValid(pointPointPrimAttribName);
+    calPrimPrimEdge               = calPrimPrimEdge               && GFE_Type::isValid(primPrimEdgeAttribName);
+    calPrimPrimPoint              = calPrimPrimPoint              && GFE_Type::isValid(primPrimPointAttribName);
 #else
     UT_StringHolder& pointPointEdgeAttribName;
     UT_StringHolder& pointPointPrimAttribName;
@@ -583,7 +583,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     if (boss.wasInterrupted())
         return;
 
-#if 1
+    
     GFE_MeshTopology meshTopology(outGeo0, &cookparms);
     meshTopology.setKernel(sopparms.getKernel());
 
@@ -629,273 +629,6 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     meshTopology.computeAndBumpDataId();
     meshTopology.visualizeOutGroup();
-#else
-    
-    const GA_Storage inStorageI = GFE_Type::getPreferredStorageI(outGeo0);
-    const exint kernel = sopparms.getKernel();
-
-    
-    const exint subscribeRatio = sopparms.getSubscribeRatio();
-    const exint minGrainSize = sopparms.getMinGrainSize();
-
-
-    GOP_Manager gop;
-    const GA_Group* geo0Group = GFE_GroupParser_Namespace::findOrParseGroupDetached(cookparms, outGeo0, groupType, sopparms.getGroup(), gop);
-    //notifyGroupParmListeners(cookparms.getNode(), 0, 1, outGeo0, geo0Group);
-    if (geo0Group && geo0Group->isEmpty())
-        return;
-
-    //const GA_Range geo0Range = GFE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass);
-    //const GA_SplittableRange geo0SplittableRange(GFE_Group::groupPromoteRange(outGeo0, geo0Group, geo0AttribClass));
-    //const GA_SplittableRange geo0SplittableRange = GFE_Group::groupPromoteSplittableRange(outGeo0, geo0Group, geo0AttribClass);
-
-
-    GA_VertexGroup* const vertexEdgeSeamGroup = const_cast<GA_VertexGroup*>(GFE_GroupParser_Namespace::findOrParseVertexGroupDetached(cookparms, outGeo0, vertexEdgeSeamGroupName, gop));
-
-    const GA_PointGroup* const pointSeamGroup = GFE_GroupParser_Namespace::findOrParsePointGroupDetached(cookparms, outGeo0, pointSeamGroupName, gop);
-    //const GA_ElementGroup* edgeSeamGroup = nullptr;
-
-    const GA_EdgeGroup* const edgeSeamGroup = GFE_GroupParser_Namespace::findOrParseEdgeGroupDetached(cookparms, outGeo0, edgeSeamGroupName, gop);
-    //GFE_Group::combineGroup<GA_VertexGroup, GA_EdgeGroup>(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
-    //GFE_Group::combineVertexFromEdgeGroup(outGeo0, vertexEdgeSeamGroup, edgeSeamGroup);
-    if (vertexEdgeSeamGroup)
-        GFE_GroupUnion::groupUnion(vertexEdgeSeamGroup, edgeSeamGroup);
-
-
-
-    GA_ATINumericUPtr vtxpnumAttribUPtr;
-    GA_RWHandleT<GA_Size> vtxpnumAttribHandle;
-    if (calVertexPrimIndex)
-    {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPrimIndexAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        vtxpnumAttribHandle.bind(attribPtr);
-    }
-    else if (calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
-    {
-        vtxpnumAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        //GA_ATINumeric* vtxpnumATI = vtxpnumAttribUPtr.get();
-        vtxpnumAttribHandle.bind(vtxpnumAttribUPtr.get());
-    }
-    if (calVertexPrimIndex || calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPointPointEdge || calPrimPrimEdge)
-    {
-        GFE_TopologyReference_Namespace::vertexPrimIndex(outGeo0, vtxpnumAttribHandle,
-            static_cast<const GA_VertexGroup*>(geo0Group),
-            subscribeRatio, minGrainSize);
-        //GFE_TopologyReference::vertexPrimIndex(outGeo0, vtxpnumAttribHandle, static_cast<const GA_VertexGroup*>(geo0Group), subscribeRatio, minGrainSize);
-        vtxpnumAttribHandle.bumpDataId();
-    }
-
-
-
-    GA_ATINumericUPtr dstptAttribUPtr;
-    GA_RWHandleT<GA_Offset> dstptAttribHandle;
-    if (calVertexPointDst)
-    {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexPointDstAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        dstptAttribHandle.bind(attribPtr);
-    }
-    else if (calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge)
-    {
-        dstptAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-        dstptAttribHandle.bind(dstptAttribUPtr.get());
-    }
-    if (calVertexPointDst || calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge)
-    {
-        switch ((calVertexNextEquiv || calVertexNextEquivNoLoop || calPrimPrimEdge) ? 0 : kernel)
-        {
-        case 0:
-            GFE_TopologyReference::vertexPointDstByVtxpnum(outGeo0, dstptAttribHandle, vtxpnumAttribHandle,
-                static_cast<const GA_VertexGroup*>(geo0Group),
-                subscribeRatio, minGrainSize);
-            break;
-        case 1:
-            GFE_TopologyReference::vertexPointDst(outGeo0, dstptAttribHandle.getAttribute(), vtxpnumAttribHandle.getAttribute(),
-                static_cast<const GA_VertexGroup*>(geo0Group),
-                subscribeRatio, minGrainSize);
-            break;
-        default:
-            break;
-        }
-        dstptAttribHandle.bumpDataId();
-    }
-
-
-
-    GA_ATINumericUPtr vtxPrevAttribUPtr, vtxNextAttribUPtr;
-    GA_RWHandleT<GA_Offset> vtxPrevAttribHandle, vtxNextAttribHandle;
-    if (calVertexVertexPrim)
-    {
-        vtxPrevAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimPrevAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        vtxNextAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexVertexPrimNextAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-    }
-    else if (calPointPointEdge)
-    {
-        vtxPrevAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        vtxNextAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        //GA_ATINumeric* dstptATI = dstptAttribUPtr.get();
-        vtxPrevAttribHandle = vtxPrevAttribUPtr.get();
-        vtxNextAttribHandle = vtxNextAttribUPtr.get();
-    }
-    if (calVertexVertexPrim || calPointPointEdge)
-    {
-        switch (calPointPointEdge ? 0 : kernel)
-        {
-        case 0:
-            GFE_TopologyReference::vertexVertexPrim(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
-                static_cast<const GA_VertexGroup*>(geo0Group),
-                subscribeRatio, minGrainSize);
-            break;
-        case 1:
-            GFE_TopologyReference::vertexVertexPrim1(outGeo0, vtxPrevAttribHandle, vtxNextAttribHandle,
-                static_cast<const GA_VertexGroup*>(geo0Group),
-                subscribeRatio, minGrainSize);
-            break;
-        default:
-            break;
-        }
-        vtxPrevAttribHandle.bumpDataId();
-        vtxNextAttribHandle.bumpDataId();
-    }
-
-
-
-
-    GA_ATINumericUPtr vtxNextEquivAttribUPtr;
-    GA_RWHandleT<GA_Offset> vtxNextEquivAttribHandle;
-    if (calVertexNextEquiv)
-    {
-        vtxNextEquivAttribHandle = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-    }
-    else if (calPrimPrimEdge)
-    {
-        vtxNextEquivAttribUPtr = outGeo0->createDetachedTupleAttribute(GA_ATTRIB_VERTEX, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        vtxNextEquivAttribHandle = vtxNextEquivAttribUPtr.get();
-    }
-    if (calVertexNextEquiv || calPrimPrimEdge)
-    {
-        GFE_VertexNextEquiv_Namespace::vertexNextEquiv(outGeo0, vtxNextEquivAttribHandle, dstptAttribHandle,
-            static_cast<const GA_VertexGroup*>(geo0Group),
-            subscribeRatio, minGrainSize);
-        vtxNextEquivAttribHandle.bumpDataId();
-    }
-
-
-    
-
-    GA_RWHandleT<GA_Offset> intAttribHandle;
-    GA_RWHandleT<UT_ValArray<GA_Offset>> attribHandle;
-
-    if (calVertexNextEquivNoLoop)
-    {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_VERTEX, vertexNextEquivNoLoopAttribName, inStorageI, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        intAttribHandle.bind(attribPtr);
-        GFE_VertexNextEquiv_Namespace::vertexNextEquivNoLoop(outGeo0, intAttribHandle, dstptAttribHandle,
-            static_cast<const GA_VertexGroup*>(geo0Group),
-            subscribeRatio, minGrainSize);
-        attribPtr->bumpDataId();
-    }
-
-    if (calPointPointEdge)
-    {
-        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointEdgeAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointEdgeAttribName, inStorageI, 1);
-        attribHandle.bind(attribPtr);
-        switch (kernel)
-        {
-        case 0:
-            GFE_Adjacency_Namespace::pointPointEdge(outGeo0, attribHandle, vtxpnumAttribHandle,
-                static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-                subscribeRatio, minGrainSize);
-            break;
-        case 1:
-            GFE_Adjacency_Namespace::pointPointEdge(outGeo0, attribHandle, vtxPrevAttribHandle, vtxNextAttribHandle,
-                static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-                subscribeRatio, minGrainSize);
-            break;
-        case 2:
-            GFE_Adjacency_Namespace::pointPointEdge(outGeo0, attribHandle,
-                static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-                subscribeRatio, minGrainSize);
-            break;
-        default:
-            break;
-        }
-        attribPtr->bumpDataId();
-    }
-
-    if (calPointPointPrim)
-    {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_POINT, GA_SCOPE_PUBLIC, pointPointPrimAttribName, inStorageI, 1);
-        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_POINT, pointPointPrimAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        attribHandle.bind(attribPtr);
-        //GFE_Adjacency_Namespace::pointPointPrim(outGeo0, attribHandle,
-        //    static_cast<const GA_PointGroup*>(geo0Group), nullptr,
-        //    subscribeRatio, minGrainSize);
-        attribPtr->bumpDataId();
-    }
-
-    if (calPrimPrimEdge)
-    {
-        if (0 && kernel==0)
-        {
-            GFE_Adjacency_Namespace::addAttribPrimPrimEdge(outGeo0,
-                static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup, 
-                inStorageI, primPrimEdgeAttribName,
-                nullptr, nullptr, GA_ReuseStrategy(),
-                subscribeRatio, minGrainSize);
-        }
-        else
-        {
-            GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimEdgeAttribName, inStorageI, 1);
-            //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimEdgeAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
-            attribHandle.bind(attribPtr);
-            switch (kernel)
-            {
-            case 0:
-                GFE_Adjacency_Namespace::primPrimEdge(outGeo0, attribHandle, vtxNextEquivAttribHandle,
-                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                    subscribeRatio, minGrainSize);
-                break;
-            case 1:
-                GFE_Adjacency_Namespace::primPrimEdge1(outGeo0, attribHandle, dstptAttribHandle,
-                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                    subscribeRatio, minGrainSize);
-                break;
-            case 2:
-                GFE_Adjacency_Namespace::primPrimEdge2(outGeo0, attribHandle, dstptAttribHandle,
-                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                    subscribeRatio, minGrainSize);
-                break;
-            case 3:
-                GFE_Adjacency_Namespace::primPrimEdge3(outGeo0, attribHandle, dstptAttribHandle,
-                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                    subscribeRatio, minGrainSize);
-                break;
-            case 4:
-                GFE_Adjacency_Namespace::primPrimEdge4(outGeo0, attribHandle,
-                    static_cast<const GA_PrimitiveGroup*>(geo0Group), vertexEdgeSeamGroup,
-                    subscribeRatio, minGrainSize);
-                break;
-            default:
-                break;
-            }
-            attribPtr->bumpDataId();
-        }
-    }
-
-    if (calPrimPrimPoint)
-    {
-        GA_Attribute* attribPtr = outGeo0->getAttributes().createArrayAttribute(GA_ATTRIB_PRIMITIVE, GA_SCOPE_PUBLIC, primPrimPointAttribName, inStorageI, 1);
-        //GA_Attribute* attribPtr = outGeo0->getAttributes().createTupleAttribute(GA_ATTRIB_PRIMITIVE, primPrimPointAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        attribHandle.bind(attribPtr);
-        GFE_Adjacency_Namespace::primPrimPoint(outGeo0, attribHandle,
-            static_cast<const GA_PrimitiveGroup*>(geo0Group), pointSeamGroup,
-            subscribeRatio, minGrainSize);
-        attribPtr->bumpDataId();
-    }
-
-#endif
     
 }
 
