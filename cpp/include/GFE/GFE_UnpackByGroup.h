@@ -89,30 +89,34 @@ private:
     }
 
 
-	SYS_FORCE_INLINE void unpackPrim(GU_Detail& geoGU, const GA_Offset primoff)
+	SYS_FORCE_INLINE void unpackPrim(const GA_Offset primoff)
 	{
+    	
     	if (GFE_Type::isPacked(geoSrcTmp->getPrimitiveTypeId(primoff)))
-	        reinterpret_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
+    	{
+	        //reinterpret_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
+    		GU_PackedImpl packedImpl;
+    		GU_PrimPacked packed(&packedImpl, geoSrcTmp, primoff);
+    		packed.unpack(*geo->asGU_Detail());
+    	}
 		//GA_Primitive* const prim = geoSrcTmp->getPrimitive(primoff);
 		//GU_PrimPacked* const primPacked = static_cast<GU_PrimPacked*>(prim);
 	}
 	
 	void unpackByGroup_Custom()
     {
-    	GU_Detail& geoGU = *geo->asGU_Detail();
     	GA_Offset start, end;
     	for (GA_Iterator it(groupParser.getPrimitiveRange()); it.fullBlockAdvance(start, end); )
     	{
     		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     		{
-    			unpackPrim(geoGU, elemoff);
+    			unpackPrim(elemoff);
     		}
     	}
 	}
 	
 	void unpackByGroup_OneElem()
     {
-    	GU_Detail& geoGU = *geo->asGU_Detail();
     	if (reverseGroup)
     	{
     		GA_Offset start, end;
@@ -122,20 +126,19 @@ private:
     			{
     				if (elemoff == primoff)
     					continue;
-    				unpackPrim(geoGU, elemoff);
+    				unpackPrim(elemoff);
 				}
     		}
     	}
     	else
     	{
     		if (GFE_Type::isValidOffset(geoSrcTmp->getPrimitiveMap(), primoff))
-    			unpackPrim(geoGU, primoff);
+    			unpackPrim(primoff);
     	}
     }
 	
 	void unpackByGroup_SkipNElem()
     {
-    	GU_Detail& geoGU = *geo->asGU_Detail();
     	GA_Offset start, end;
     	if (skipNPrim <= 0)
     	{
@@ -145,7 +148,7 @@ private:
     			{
     				for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     				{
-    					unpackPrim(geoGU, elemoff);
+    					unpackPrim(elemoff);
     				}
     			}
     		}
@@ -160,7 +163,7 @@ private:
     		for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
     		{
     			if (delSize!=0 ^ !reverseGroup)
-    				unpackPrim(geoGU, elemoff);
+    				unpackPrim(elemoff);
                 
     			if (delSize == skipNPrim)
     				delSize = 0;

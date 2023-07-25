@@ -35,8 +35,8 @@ public:
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(static_cast<GFE_Detail*>(&geo))
-        //, geoConst(static_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<GFE_Detail*>(&geo))
+        //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
         , cookparms(cookparms)
         , groupParser(geo, gop, cookparms)
     {
@@ -46,8 +46,8 @@ public:
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(static_cast<GFE_Detail*>(geo))
-        //, geoConst(static_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<GFE_Detail*>(geo))
+        //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
         , cookparms(cookparms)
         , groupParser(*geo, gop, cookparms)
     {
@@ -57,8 +57,8 @@ public:
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : geo(static_cast<GFE_Detail*>(&geo))
-        //, geoConst(static_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<GFE_Detail*>(&geo))
+        //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
         , cookparms(&cookparms)
         , groupParser(geo, gop, cookparms)
     {
@@ -83,7 +83,7 @@ public:
         const GA_Detail& geoSrc,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : geo(static_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<GFE_Detail*>(&geo))
         , geoSrc(&geoSrc)
         , cookparms(&cookparms)
         , groupParser(geoSrc, gop, cookparms)
@@ -95,7 +95,7 @@ public:
         const GA_Detail& geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(static_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<GFE_Detail*>(&geo))
         , geoSrc(&geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc, gop, cookparms)
@@ -107,7 +107,7 @@ public:
         const GA_Detail* const geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(static_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<GFE_Detail*>(&geo))
         , geoSrc(geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc ? *geoSrc : geo, gop, cookparms)
@@ -131,7 +131,7 @@ public:
 
     virtual void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
-        geo = static_cast<GFE_Detail*>(&inGeo);
+        geo = reinterpret_cast<GFE_Detail*>(&inGeo);
         this->cookparms = cookparms;
         groupParser.reset(geo, cookparms);
         setHasComputed();
@@ -236,7 +236,7 @@ private:
 private:
     SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo)
     {
-        geo = static_cast<GFE_Detail*>(&inGeo);
+        geo = reinterpret_cast<GFE_Detail*>(&inGeo);
         groupParser.setDetail(geo);
     }
 
@@ -336,7 +336,7 @@ public:
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geoRef0(static_cast<const GFE_Detail*>(geoRef0))
+        : geoRef0(reinterpret_cast<const GFE_Detail*>(geoRef0))
         , cookparmsRef0(cookparms)
         , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
@@ -351,7 +351,7 @@ public:
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geoRef0(static_cast<const GFE_Detail*>(&geoRef0))
+        : geoRef0(reinterpret_cast<const GFE_Detail*>(&geoRef0))
         , cookparmsRef0(cookparms)
         , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
@@ -365,7 +365,7 @@ public:
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : geoRef0(static_cast<const GFE_Detail*>(geoRef0))
+        : geoRef0(reinterpret_cast<const GFE_Detail*>(geoRef0))
         , cookparmsRef0(&cookparms)
         , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
@@ -408,14 +408,14 @@ public:
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-    { resetGeoFilterRef0(static_cast<const GFE_Detail*>(geoRef0), gop, cookparmsRef0); }
+    { resetGeoFilterRef0(reinterpret_cast<const GFE_Detail*>(geoRef0), gop, cookparmsRef0); }
 
     SYS_FORCE_INLINE void resetGeoFilterRef0(
         const GA_Detail& geoRef0,
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-    { resetGeoFilterRef0(static_cast<const GFE_Detail&>(geoRef0), gop, cookparmsRef0); }
+    { resetGeoFilterRef0(reinterpret_cast<const GFE_Detail&>(geoRef0), gop, cookparmsRef0); }
 
 
     
@@ -447,7 +447,7 @@ private:
     }
 
     SYS_FORCE_INLINE virtual void setRef0DetailBase(const GA_Detail* const inGeo)
-    { setRef0DetailBase(static_cast<const GFE_Detail*>(inGeo)); }
+    { setRef0DetailBase(reinterpret_cast<const GFE_Detail*>(inGeo)); }
 
 
 
@@ -497,7 +497,7 @@ public:                                                                         
         GOP_Manager& gop,                                                                            \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                     \
     )                                                                                                \
-        : geoRef##NUM(static_cast<const GFE_Detail*>(geoRef##NUM))                                   \
+        : geoRef##NUM(reinterpret_cast<const GFE_Detail*>(geoRef##NUM))                                   \
         , cookparmsRef##NUM(cookparms)                                                               \
         , gopRef##NUM(&gop)                                                                          \
         , groupParserRef##NUM(geoRef##NUM, gop, cookparms)                                           \
@@ -511,7 +511,7 @@ public:                                                                         
         GOP_Manager& gop,                                                                            \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                     \
     )                                                                                                \
-        : geoRef##NUM(static_cast<const GFE_Detail*>(&geoRef##NUM))                                  \
+        : geoRef##NUM(reinterpret_cast<const GFE_Detail*>(&geoRef##NUM))                                  \
         , cookparmsRef##NUM(cookparms)                                                               \
         , gopRef##NUM(&gop)                                                                          \
         , groupParserRef##NUM(geoRef##NUM, gop, cookparms)                                           \
@@ -525,7 +525,7 @@ public:                                                                         
         GOP_Manager& gop,                                                                            \
         const SOP_NodeVerb::CookParms& cookparms                                                     \
     )                                                                                                \
-        : geoRef##NUM(static_cast<const GFE_Detail*>(geoRef##NUM))                                   \
+        : geoRef##NUM(reinterpret_cast<const GFE_Detail*>(geoRef##NUM))                                   \
         , cookparmsRef##NUM(&cookparms)                                                              \
         , gopRef##NUM(&gop)                                                                          \
         , groupParserRef##NUM(geoRef##NUM, gop, cookparms)                                           \
@@ -567,14 +567,14 @@ public:                                                                         
         GOP_Manager* const gop,                                                                      \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                     \
     )                                                                                                \
-    { resetGeoFilterRef##NUM(static_cast<const GFE_Detail*>(geoRef##NUM), gop, cookparmsRef##NUM); } \
+    { resetGeoFilterRef##NUM(reinterpret_cast<const GFE_Detail*>(geoRef##NUM), gop, cookparmsRef##NUM); } \
                                                                                                      \
     SYS_FORCE_INLINE void resetGeoFilterRef##NUM(                                                    \
         const GA_Detail& geoRef##NUM,                                                                \
         GOP_Manager* const gop,                                                                      \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                     \
     )                                                                                                \
-    { resetGeoFilterRef##NUM(static_cast<const GFE_Detail&>(geoRef##NUM), gop, cookparmsRef##NUM); } \
+    { resetGeoFilterRef##NUM(reinterpret_cast<const GFE_Detail&>(geoRef##NUM), gop, cookparmsRef##NUM); } \
                                                                                                      \
                                                                                                      \
                                                                                                      \
@@ -614,7 +614,7 @@ private:                                                                        
     }                                                                                                \
                                                                                                      \
     SYS_FORCE_INLINE virtual void setRef##NUM##DetailBase(const GA_Detail* const inGeo)              \
-    { setRef##NUM##DetailBase(static_cast<const GFE_Detail*>(inGeo)); }                              \
+    { setRef##NUM##DetailBase(reinterpret_cast<const GFE_Detail*>(inGeo)); }                              \
                                                                                                      \
                                                                                                      \
                                                                                                      \

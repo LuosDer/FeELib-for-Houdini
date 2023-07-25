@@ -4,14 +4,13 @@
 #ifndef __GFE_MeshTopology_h__
 #define __GFE_MeshTopology_h__
 
-#include "GFE_Math.h"
 #include "GFE/GFE_MeshTopology.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "GFE/GFE_Math.h"
 #include "GFE/GFE_OffsetArrayAttributeToGeometry.h"
-
 #include "GFE/GFE_OffsetAttributeToIndex.h"
 
 
@@ -22,6 +21,15 @@
     const GA_VertexGroup* const vtxNextEquivNoLoopGroup = meshTopology.setVertexNextEquivNoLoopGroup(true);
     meshTopology.compute();
 */
+
+
+
+#define __GFE_MeshTopology_TestSpped 0
+
+
+#define GFE_MeshTopology_OptimizeTrivialVertices 1
+#define GFE_MeshTopology_VertexNextEquivDual 1
+
 
 
 class GFE_MeshTopology : public GFE_AttribFilter {
@@ -141,40 +149,37 @@ public:
 
 
     
-    SYS_FORCE_INLINE void setVertexVertexPrim(
-        const bool detached = true,
-        const UT_StringRef& attribName0 = "__topo_vertexVertexPrimPrev",
-        const UT_StringRef& attribName1 = "__topo_vertexVertexPrimNext",
-        const GA_Storage storage = GA_STORE_INVALID
-    )
-    {
-        vertexVertexPrimPrevAttrib = getOutAttribArray().findOrCreateTuple(detached,
-            GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName0, 1, GA_Defaults(GFE_INVALID_OFFSET));
-        vertexVertexPrimNextAttrib = getOutAttribArray().findOrCreateTuple(detached,
-            GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName1, 1, GA_Defaults(GFE_INVALID_OFFSET));
-    }
-    SYS_FORCE_INLINE void setVertexVertexPrim(GA_Attribute* const attribPtr0, GA_Attribute* const attribPtr1)
-    {
-        vertexVertexPrimPrevAttrib = attribPtr0;
-        vertexVertexPrimNextAttrib = attribPtr1;
-    }
 
-
-
-#define GFE_SETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)              \
-    SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                             \
-        const bool detached = true,                                                                    \
-        const UT_StringRef& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                                 \
-        const GA_Storage storage = GA_STORE_INVALID                                                    \
-    )                                                                                                  \
-    {                                                                                                  \
-        ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateTuple(detached,                   \
-            ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET)); \
-        return ATTRIB_NAME_LOWNER##Attrib;                                                             \
-    }                                                                                                  \
-    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                        \
-    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; }                                                        \
+#define GFE_SETATTRIB_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)                 \
+    SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                                \
+        const bool detached = true,                                                                       \
+        const UT_StringRef& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                                    \
+        const GA_Storage storage = GA_STORE_INVALID,                                                      \
+        const bool findInputAttrib = false                                                                \
+    )                                                                                                     \
+    {                                                                                                     \
+        if (findInputAttrib)                                                                                          \
+        {                                                                                                             \
+            ATTRIB_NAME_LOWNER##Attrib = geo->findAttribute(ATTRIB_OWNER, attribName);                                \
+            if (ATTRIB_NAME_LOWNER##Attrib)                                                                           \
+            {                                                                                                         \
+                if (GFE_Type::checkTupleAttrib(ATTRIB_NAME_LOWNER##Attrib, GA_STORECLASS_INT, storage, 1, nullptr))   \
+                {                                                                                                     \
+                    cal##ATTRIB_NAME_UPPER##Attrib = false;                                                           \
+                    return ATTRIB_NAME_LOWNER##Attrib;                                                                \
+                }                                                                                                     \
+            }                                                                                                         \
+        }                                                                                                             \
+        cal##ATTRIB_NAME_UPPER##Attrib = true;                                                            \
+        ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateTuple(detached,                      \
+            ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET));    \
+        return ATTRIB_NAME_LOWNER##Attrib;                                                                \
+    }                                                                                                     \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr, const bool cal = true)    \
+    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; cal##ATTRIB_NAME_UPPER##Attrib = cal; }                     \
     
+    GFE_SETATTRIB_SPECIALIZATION(VertexVertexPrimPrev,  vertexVertexPrimPrev,  GA_ATTRIB_VERTEX)
+    GFE_SETATTRIB_SPECIALIZATION(VertexVertexPrimNext,  vertexVertexPrimNext,  GA_ATTRIB_VERTEX)
     GFE_SETATTRIB_SPECIALIZATION(VertexPrimIndex,       vertexPrimIndex,       GA_ATTRIB_VERTEX)
     GFE_SETATTRIB_SPECIALIZATION(VertexPointDst,        vertexPointDst,        GA_ATTRIB_VERTEX)
     GFE_SETATTRIB_SPECIALIZATION(VertexNextEquiv,       vertexNextEquiv,       GA_ATTRIB_VERTEX)
@@ -183,6 +188,29 @@ public:
 #undef GFE_SETATTRIB_SPECIALIZATION
     
 
+    SYS_FORCE_INLINE void setVertexVertexPrim(
+        const bool detached = true,
+        const UT_StringRef& attribName0 = "__topo_vertexVertexPrimPrev",
+        const UT_StringRef& attribName1 = "__topo_vertexVertexPrimNext",
+        const GA_Storage storage = GA_STORE_INVALID,
+        const bool findInputAttrib = false
+    )
+    {
+        setVertexVertexPrimPrev(detached, attribName0, storage, findInputAttrib);
+        setVertexVertexPrimNext(detached, attribName1, storage, findInputAttrib);
+        //vertexVertexPrimPrevAttrib = getOutAttribArray().findOrCreateTuple(detached,
+        //    GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName0, 1, GA_Defaults(GFE_INVALID_OFFSET));
+        //vertexVertexPrimNextAttrib = getOutAttribArray().findOrCreateTuple(detached,
+        //    GA_ATTRIB_VERTEX, GA_STORECLASS_INT, storage, attribName1, 1, GA_Defaults(GFE_INVALID_OFFSET));
+    }
+    SYS_FORCE_INLINE void setVertexVertexPrim(GA_Attribute* const attribPtr0, GA_Attribute* const attribPtr1, const bool cal = true)
+    {
+        setVertexVertexPrimPrev(attribPtr0, cal);
+        setVertexVertexPrimNext(attribPtr1, cal);
+        //vertexVertexPrimPrevAttrib = attribPtr0;
+        //vertexVertexPrimNextAttrib = attribPtr1;
+    }
+    
         
 
 
@@ -191,15 +219,29 @@ public:
     SYS_FORCE_INLINE GA_Attribute* set##ATTRIB_NAME_UPPER(                                       \
         const bool detached = false,                                                             \
         const UT_StringRef& attribName = "__topo_"#ATTRIB_NAME_LOWNER,                           \
-        const GA_Storage storage = GA_STORE_INVALID                                              \
+        const GA_Storage storage = GA_STORE_INVALID,                                             \
+        const bool findInputAttrib = false                                                       \
     )                                                                                            \
     {                                                                                            \
+        if (findInputAttrib)                                                                                \
+        {                                                                                                   \
+            ATTRIB_NAME_LOWNER##Attrib = geo->findAttribute(ATTRIB_OWNER, attribName);                      \
+            if (ATTRIB_NAME_LOWNER##Attrib)                                                                 \
+            {                                                                                               \
+                if (GFE_Type::checkArrayAttrib(ATTRIB_NAME_LOWNER##Attrib, GA_STORECLASS_INT, storage, 1))  \
+                {                                                                                           \
+                    cal##ATTRIB_NAME_UPPER##Attrib = false;                                                 \
+                    return ATTRIB_NAME_LOWNER##Attrib;                                                      \
+                }                                                                                           \
+            }                                                                                               \
+        }                                                                                                   \
+        cal##ATTRIB_NAME_UPPER##Attrib = true;                                                   \
         ATTRIB_NAME_LOWNER##Attrib = getOutAttribArray().findOrCreateArray(detached,             \
             ATTRIB_OWNER, GA_STORECLASS_INT, storage, attribName);                               \
         return ATTRIB_NAME_LOWNER##Attrib;                                                       \
     }                                                                                            \
-    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr)                  \
-    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; }                                                  \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_Attribute* const attribPtr, const bool cal = true)    \
+    { ATTRIB_NAME_LOWNER##Attrib = attribPtr; cal##ATTRIB_NAME_UPPER##Attrib = cal; }                     \
 
     GFE_SETATTRIB_ARRAY_SPECIALIZATION(PointPointEdge, pointPointEdge, GA_ATTRIB_POINT)
     GFE_SETATTRIB_ARRAY_SPECIALIZATION(PointPointPrim, pointPointPrim, GA_ATTRIB_POINT)
@@ -215,15 +257,26 @@ public:
 #define GFE_SETGROUP_SPECIALIZATION(ATTRIB_NAME_UPPER, ATTRIB_NAME_LOWNER, ATTRIB_OWNER)     \
     SYS_FORCE_INLINE GA_VertexGroup* set##ATTRIB_NAME_UPPER##Group(                          \
         const bool detached = true,                                                          \
-        const UT_StringRef& groupName = "__topo_"#ATTRIB_NAME_LOWNER                         \
+        const UT_StringRef& groupName = "__topo_"#ATTRIB_NAME_LOWNER,                        \
+        const bool findInput = false                                                         \
     )                                                                                        \
     {                                                                                        \
+        if (findInput)                                                                       \
+        {                                                                                    \
+            ATTRIB_NAME_LOWNER##Group = geo->findVertexGroup(groupName);                     \
+            if (ATTRIB_NAME_LOWNER##Group)                                                   \
+            {                                                                                \
+                cal##ATTRIB_NAME_UPPER##Group = false;                                       \
+                return ATTRIB_NAME_LOWNER##Group;                                            \
+            }                                                                                \
+        }                                                                                    \
+        cal##ATTRIB_NAME_UPPER##Group = true;                                                \
         ATTRIB_NAME_LOWNER##Group = static_cast<GA_VertexGroup*>(                            \
             getOutGroupArray().findOrCreate(detached, ATTRIB_OWNER, groupName));             \
         return ATTRIB_NAME_LOWNER##Group;                                                    \
     }                                                                                        \
-    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_VertexGroup* const groupPtr)             \
-    { ATTRIB_NAME_LOWNER##Group = groupPtr; }                                                \
+    SYS_FORCE_INLINE void set##ATTRIB_NAME_UPPER(GA_VertexGroup* const groupPtr, const bool cal = true) \
+    { ATTRIB_NAME_LOWNER##Group = groupPtr; cal##ATTRIB_NAME_UPPER##Group = cal; }                      \
     
     GFE_SETGROUP_SPECIALIZATION(VertexNextEquiv,        vertexNextEquiv,        GA_GROUP_VERTEX)
     GFE_SETGROUP_SPECIALIZATION(VertexNextEquivNoLoop,  vertexNextEquivNoLoop,  GA_GROUP_VERTEX)
@@ -262,7 +315,6 @@ GFE_GETGROUP_SPECIALIZATION(VertexNextEquivNoLoop, vertexNextEquivNoLoop)
 
 
 
-    
 
     GA_Attribute* setAdjacency(
         const bool detached = false,
@@ -310,35 +362,37 @@ GFE_GETGROUP_SPECIALIZATION(VertexNextEquivNoLoop, vertexNextEquivNoLoop)
 private:
 
 
-    
-#define GFE_MeshTopology_VertexNextEquivDual 1
 
     
     virtual bool
         computeCore() override
     {
-        // calVertexPrimIndex       = outVertexPrimIndex;
-        // calVertexVertexPrim      = outVertexVertexPrim;
-        // calVertexPointDst        = outVertexPointDst;
-        // calVertexNextEquiv       = outVertexNextEquiv;
-        // calVertexNextEquivNoLoop = outVertexNextEquivNoLoop;
-        // calPointPointEdge        = outPointPointEdge;
-        // calPointPointPrim        = outPointPointPrim;
-        // calPrimPrimEdge          = outPrimPrimEdge;
-        // calPrimPrimPoint         = outPrimPrimPoint;
-        
-        if (!vertexPrimIndexAttrib &&
-            !vertexVertexPrimPrevAttrib &&
-            !vertexVertexPrimNextAttrib &&
-            !vertexPointDstAttrib &&
-            !vertexNextEquivAttrib &&
+        if (!vertexPrimIndexAttrib       &&
+            !vertexVertexPrimPrevAttrib  &&
+            !vertexVertexPrimNextAttrib  &&
+            !vertexPointDstAttrib        &&
+            !vertexNextEquivAttrib       &&
             !vertexNextEquivNoLoopAttrib &&
-            !pointPointEdgeAttrib &&
-            !pointPointPrimAttrib &&
-            !primPrimEdgeAttrib &&
-            !primPrimPointAttrib &&
-            !vertexNextEquivGroup &&
+            !pointPointEdgeAttrib        &&
+            !pointPointPrimAttrib        &&
+            !primPrimEdgeAttrib          &&
+            !primPrimPointAttrib         &&
+            !vertexNextEquivGroup        &&
             !vertexNextEquivNoLoopGroup)
+            return false;
+
+        if (!calVertexPrimIndexAttrib       &&
+            !calVertexVertexPrimPrevAttrib  &&
+            !calVertexVertexPrimNextAttrib  &&
+            !calVertexPointDstAttrib        &&
+            !calVertexNextEquivAttrib       &&
+            !calVertexNextEquivNoLoopAttrib &&
+            !calPointPointEdgeAttrib        &&
+            !calPointPointPrimAttrib        &&
+            !calPrimPrimEdgeAttrib          &&
+            !calPrimPrimPointAttrib         &&
+            !calVertexNextEquivGroup        &&
+            !calVertexNextEquivNoLoopGroup)
             return false;
 
         if (groupParser.isEmpty())
@@ -353,11 +407,17 @@ private:
             setVertexNextEquiv(!outIntermediateAttrib);
         
         const bool calVertexNextEquivDual =
-                   vertexNextEquivNoLoopAttrib ||
-                   vertexNextEquivNoLoopGroup  ||
-                   vertexNextEquivAttrib       ||
-                   vertexNextEquivGroup        ||
-                   primPrimEdgeAttrib;
+                  (calVertexNextEquivNoLoopAttrib ||
+                   calVertexNextEquivNoLoopGroup  ||
+                   calVertexNextEquivAttrib       ||
+                   calVertexNextEquivGroup        ||
+                   calPrimPrimEdgeAttrib)         &&
+                       
+                  (vertexNextEquivNoLoopAttrib    ||
+                   vertexNextEquivNoLoopGroup     ||
+                   vertexNextEquivAttrib          ||
+                   vertexNextEquivGroup           ||
+                   primPrimEdgeAttrib);
 
 #else
         const bool calVertexNextEquivNoLoop =
@@ -375,31 +435,55 @@ private:
 #endif
         
         const bool calVertexVertexPrim =
-                   vertexVertexPrimPrevAttrib  ||
-                   vertexVertexPrimNextAttrib  ;
+                  (calVertexVertexPrimPrevAttrib  ||
+                   calVertexVertexPrimNextAttrib) &&
+                  (vertexVertexPrimPrevAttrib     ||
+                   vertexVertexPrimNextAttrib);
         
         const bool calVertexPointDst =
-                   vertexPointDstAttrib        ||
-                   calVertexNextEquivDual;
+                   calVertexPointDstAttrib        &&
+                  (vertexPointDstAttrib           ||
+                   calVertexNextEquivDual);
         
         //const bool calVertexPrimIndex =
-        //           vertexPrimIndexAttrib       ||
+        //           vertexPrimIndexAttrib        ||
         //           pointPointEdgeAttrib;
         
-        const bool calVertexPrimIndex = vertexPrimIndexAttrib ||
-                   (pointPointEdgeAttrib && !(vertexVertexPrimPrevAttrib && vertexVertexPrimNextAttrib));
+        const bool calVertexPrimIndex =
+                   calVertexPrimIndexAttrib       &&
+                  (vertexPrimIndexAttrib          ||
+                  (pointPointEdgeAttrib && !(vertexVertexPrimPrevAttrib && vertexVertexPrimNextAttrib)));
         
         
         
-        if (calVertexPrimIndex && calVertexPointDst)
-            vertexPrimIndex_vertexPointDst();
+        if (calVertexPrimIndex)
+        {
+            if (calVertexPointDst)
+            {
+                vertexPrimIndex_vertexPointDst();
+            }
+            else
+            {
+#if __GFE_MeshTopology_TestSpped
+                switch (kernel)
+                {
+                default:
+                case 0: vertexPrimIndex();  break;
+                case 1: vertexPrimIndex1(); break;
+                }
+#else
+                vertexPrimIndex();
+#endif
+            }
+            //calVertexPointDst ? vertexPrimIndex_vertexPointDst() : vertexPrimIndex();
+        }
         
-        if (calVertexPrimIndex && !calVertexPointDst)
-            vertexPrimIndex();
         
         if (calVertexVertexPrim)
         {
-#if GFE_DEBUG_MODE
+            calTmpVertexVertexPrimPrevAttrib = calVertexVertexPrimPrevAttrib && vertexVertexPrimPrevAttrib;
+            calTmpVertexVertexPrimNextAttrib = calVertexVertexPrimNextAttrib && vertexVertexPrimNextAttrib;
+#if __GFE_MeshTopology_TestSpped
             switch (pointPointEdgeAttrib ? 0 : kernel)
             {
             default:
@@ -423,7 +507,13 @@ private:
         
 #if GFE_MeshTopology_VertexNextEquivDual
         if (calVertexNextEquivDual)
+        {
+            calTmpVertexNextEquivAttrib       = calVertexNextEquivAttrib       && vertexNextEquivAttrib      ;
+            calTmpVertexNextEquivNoLoopAttrib = calVertexNextEquivNoLoopAttrib && vertexNextEquivNoLoopAttrib;
+            calTmpVertexNextEquivGroup        = calVertexNextEquivGroup        && vertexNextEquivGroup       ;
+            calTmpVertexNextEquivNoLoopGroup  = calVertexNextEquivNoLoopGroup  && vertexNextEquivNoLoopGroup ;
             vertexNextEquivDualByVertexPointDst();
+        }
 #else
         if (calVertexNextEquiv)
             vertexNextEquiv();
@@ -431,7 +521,7 @@ private:
             vertexNextEquivNoLoop();
 #endif
             
-        if (pointPointEdgeAttrib)
+        if (calPointPointEdgeAttrib && pointPointEdgeAttrib)
         {
             if (vertexVertexPrimPrevAttrib && vertexVertexPrimNextAttrib)
             {
@@ -466,7 +556,7 @@ private:
                 primPrimEdgeByVertexNextEquiv();
             else if (vertexPointDstAttrib)
             {
-#if GFE_DEBUG_MODE
+#if __GFE_MeshTopology_TestSpped
                 switch (kernel)
                 {
                 default:
@@ -475,7 +565,7 @@ private:
                 case 2: primPrimEdgeByVertexPointDst2(); break;
                 }
 #else
-                primPrimEdge();
+                primPrimEdgeByVertexPointDst0();
 #endif
             }
             else
@@ -487,9 +577,7 @@ private:
 
 #if 0
         if (pointPointEdgeAttrib && outArrayType == GFE_OutArrayType::Attrib)
-        {
             GFE_OffsetArrayAttribToGeo::offsetArrayAttribToPacked(geo, pointPointEdgeAttrib, groupParser.getPointGroup());
-        }
 #endif
             
         if (outAsOffset || outArrayType != GFE_OutArrayType::Attrib)
@@ -498,16 +586,16 @@ private:
             
         GFE_OffsetAttribToIndex offsetAttribToIndex(geo);
         //offsetAttribToIndex.offsetToIndex = true;
-        
-        offsetAttribToIndex.getOutAttribArray().append(vertexVertexPrimPrevAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(vertexVertexPrimNextAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(vertexPointDstAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(vertexNextEquivAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(vertexNextEquivNoLoopAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(pointPointEdgeAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(pointPointPrimAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(primPrimEdgeAttrib);
-        offsetAttribToIndex.getOutAttribArray().append(primPrimPointAttrib);
+            
+        if (calVertexVertexPrimPrevAttrib  && vertexVertexPrimPrevAttrib )offsetAttribToIndex.getOutAttribArray().append(vertexVertexPrimPrevAttrib);
+        if (calVertexVertexPrimNextAttrib  && vertexVertexPrimNextAttrib )offsetAttribToIndex.getOutAttribArray().append(vertexVertexPrimNextAttrib);
+        if (calVertexPointDstAttrib        && vertexPointDstAttrib       )offsetAttribToIndex.getOutAttribArray().append(vertexPointDstAttrib);
+        if (calVertexNextEquivAttrib       && vertexNextEquivAttrib      )offsetAttribToIndex.getOutAttribArray().append(vertexNextEquivAttrib);
+        if (calVertexNextEquivNoLoopAttrib && vertexNextEquivNoLoopAttrib)offsetAttribToIndex.getOutAttribArray().append(vertexNextEquivNoLoopAttrib);
+        if (calPointPointEdgeAttrib        && pointPointEdgeAttrib       )offsetAttribToIndex.getOutAttribArray().append(pointPointEdgeAttrib);
+        if (calPointPointPrimAttrib        && pointPointPrimAttrib       )offsetAttribToIndex.getOutAttribArray().append(pointPointPrimAttrib);
+        if (calPrimPrimEdgeAttrib          && primPrimEdgeAttrib         )offsetAttribToIndex.getOutAttribArray().append(primPrimEdgeAttrib);
+        if (calPrimPrimPointAttrib         && primPrimPointAttrib        )offsetAttribToIndex.getOutAttribArray().append(primPrimPointAttrib);
 
         offsetAttribToIndex.compute();
         return true;
@@ -539,11 +627,48 @@ private:
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
                         const GA_Size numvtx = vertices.size();
-
-                        vtxoff_prev = vertices[numvtx-1];
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            vtxoff = vertices.trivialStart();
+                            vtxoff_prev = vtxoff + numvtx-1;
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            vtxoff = data[0];
+                            vtxoff_prev = data[numvtx-1];
+                        }
+#else
                         vtxoff = vertices[0];
+                        vtxoff_prev = vertices[numvtx-1];
+#endif
                         int0_wh.set(vtxoff, 0);
                         int1_wh.set(vtxoff_prev, vertices.isClosed() ? pointRef->getLink(vtxoff) : GFE_INVALID_OFFSET);
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxoff_prev = vtxoff;
+                                vtxoff = startVtxpnum + vtxpnum;
+                                int0_wh.set(vtxoff, vtxpnum);
+                                int1_wh.set(vtxoff_prev, pointRef->getLink(vtxoff));
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxoff_prev = vtxoff;
+                                vtxoff = data[vtxpnum];
+                                int0_wh.set(vtxoff, vtxpnum);
+                                int1_wh.set(vtxoff_prev, pointRef->getLink(vtxoff));
+                            }
+                        }
+#else
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_prev = vtxoff;
@@ -551,6 +676,7 @@ private:
                             int0_wh.set(vtxoff, vtxpnum);
                             int1_wh.set(vtxoff_prev, pointRef->getLink(vtxoff));
                         }
+#endif
                     }
                 }
             }, subscribeRatio, minGrainSize);
@@ -618,10 +744,29 @@ private:
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
                         const GA_Size numvtx = vertices.size();
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                int0_wh.set(startVtxpnum + vtxpnum, vtxpnum);
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                int0_wh.set(data[vtxpnum], vtxpnum);
+                            }
+                        }
+#else
                         for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
                             int0_wh.set(vertices[vtxpnum], vtxpnum);
                         }
+#endif
                     }
                 }
             }, subscribeRatio, minGrainSize);
@@ -639,11 +784,34 @@ private:
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
                         const GA_Size numvtx = vertices.size();
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                const GA_Offset vtxoff = startVtxpnum + vtxpnum;
+                                if (vtxGroup->contains(vtxoff))
+                                    int0_wh.set(vtxoff, vtxpnum);
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                if (vtxGroup->contains(data[vtxpnum]))
+                                    int0_wh.set(data[vtxpnum], vtxpnum);
+                            }
+                        }
+#else
                         for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
                         {
-                            if (vtxGroup->contains(vertices[vtxpnum]))
-                                int0_wh.set(vertices[vtxpnum], vtxpnum);
+                            const GA_Offset vtxoff = vertices[vtxpnum];
+                            if (vtxGroup->contains(vtxoff))
+                                int0_wh.set(vtxoff, vtxpnum);
                         }
+#endif
                     }
                 }
             }, subscribeRatio, minGrainSize);
@@ -653,6 +821,120 @@ private:
 
 
 
+#if __GFE_MeshTopology_TestSpped
+    void vertexPrimIndex1()
+    {
+        if (!vertexPrimIndexAttrib)
+            setVertexPrimIndex(!outIntermediateAttrib);
+
+        
+        ::std::vector<GA_Size> vtxpnums;
+        vtxpnums.reserve(geo->getVertexMap().offsetSize());
+        
+        if (groupParser.isFull() || groupParser.classType() == GA_GROUP_PRIMITIVE)
+        {
+            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &vtxpnums](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+                        const GA_Size numvtx = vertices.size();
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxpnums[startVtxpnum + vtxpnum] = vtxpnum;
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxpnums[data[vtxpnum]] = vtxpnum;
+                            }
+                        }
+#else
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                        {
+                            vtxpnums[vertices[vtxpnum]] = vtxpnum;
+                        }
+#endif
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            const GA_VertexGroup* const vtxGroup = groupParser.getVertexGroup();
+            UT_ASSERT_P(vtxGroup);
+            UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &vtxpnums, vtxGroup](const GA_SplittableRange& r)
+            {
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
+                        const GA_Size numvtx = vertices.size();
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                const GA_Offset vtxoff = startVtxpnum + vtxpnum;
+                                if (vtxGroup->contains(vtxoff))
+                                    vtxpnums[vtxoff] = vtxpnum;
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                if (vtxGroup->contains(data[vtxpnum]))
+                                    vtxpnums[data[vtxpnum]] = vtxpnum;
+                            }
+                        }
+#else
+                        for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
+                        {
+                            const GA_Offset vtxoff = vertices[vtxpnum];
+                            if (vtxGroup->contains(vtxoff))
+                                vtxpnums[vtxoff] = vtxpnum;
+                        }
+#endif
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        UTparallelFor(groupParser.getVertexSplittableRange(), [this, &vtxpnums](const GA_SplittableRange& r)
+        {
+            GA_PageHandleScalar<GA_Offset>::RWType vtxpnum_ph(vertexPrimIndexAttrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    vtxpnum_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        vtxpnum_ph.value(elemoff) = vtxpnums[elemoff];
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+
+#endif
 
     
 
@@ -812,25 +1094,53 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(elemoff);
-                        const GA_Size numvtx = vertices.size();
+                        const GA_Size numvtx  = vertices.size();
                         GA_Offset vtxoff_prev = vertices[numvtx-1];
                         GA_Offset vtxoff_next = vertices[0];
                         
-                        if (vertexVertexPrimPrevAttrib)
+                        if (calTmpVertexVertexPrimPrevAttrib)
                             int0_wh.set(vtxoff_next, vertices.isClosed() ? vtxoff_prev : GFE_INVALID_OFFSET);
-                        if (vertexVertexPrimNextAttrib)
+                        if (calTmpVertexVertexPrimNextAttrib)
                             int1_wh.set(vtxoff_prev, vertices.isClosed() ? vtxoff_next : GFE_INVALID_OFFSET);
-                        
                         vtxoff_prev = vtxoff_next;
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxoff_next = startVtxpnum + vtxpnum;
+                                if (calTmpVertexVertexPrimPrevAttrib)
+                                    int0_wh.set(vtxoff_next, vtxoff_prev);
+                                if (calTmpVertexVertexPrimNextAttrib)
+                                    int1_wh.set(vtxoff_prev, vtxoff_next);
+                                vtxoff_prev = vtxoff_next;
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxoff_next = data[vtxpnum];
+                                if (calTmpVertexVertexPrimPrevAttrib)
+                                    int0_wh.set(vtxoff_next, vtxoff_prev);
+                                if (calTmpVertexVertexPrimNextAttrib)
+                                    int1_wh.set(vtxoff_prev, vtxoff_next);
+                                vtxoff_prev = vtxoff_next;
+                            }
+                        }
+#else
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
-                            if (vertexVertexPrimPrevAttrib)
+                            if (calTmpVertexVertexPrimPrevAttrib)
                                 int0_wh.set(vtxoff_next, vtxoff_prev);
-                            if (vertexVertexPrimNextAttrib)
+                            if (calTmpVertexVertexPrimNextAttrib)
                                 int1_wh.set(vtxoff_prev, vtxoff_next);
                             vtxoff_prev = vtxoff_next;
                         }
+#endif
                     }
                 }
             }, subscribeRatio, minGrainSize);
@@ -851,21 +1161,50 @@ private:
                         GA_Offset vtxoff_prev = vertices[numvtx-1];
                         GA_Offset vtxoff_next = vertices[0];
                         
-                        if (vertexVertexPrimPrevAttrib && vtxGroup->contains(vtxoff_next))
+                        if (calTmpVertexVertexPrimPrevAttrib && vtxGroup->contains(vtxoff_next))
                             int0_wh.set(vtxoff_next, vertices.isClosed() ? vtxoff_prev : GFE_INVALID_OFFSET);
-                        if (vertexVertexPrimNextAttrib && vtxGroup->contains(vtxoff_prev))
+                        if (calTmpVertexVertexPrimNextAttrib && vtxGroup->contains(vtxoff_prev))
                             int1_wh.set(vtxoff_prev, vertices.isClosed() ? vtxoff_next : GFE_INVALID_OFFSET);
                         
                         vtxoff_prev = vtxoff_next;
+#if GFE_MeshTopology_OptimizeTrivialVertices
+                        if (vertices.isTrivial())
+                        {
+                            const GA_Size startVtxpnum = vertices.trivialStart();
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxoff_next = startVtxpnum + vtxpnum;
+                                if (calTmpVertexVertexPrimPrevAttrib && vtxGroup->contains(vtxoff_next))
+                                    int0_wh.set(vtxoff_next, vtxoff_prev);
+                                if (calTmpVertexVertexPrimNextAttrib && vtxGroup->contains(vtxoff_prev))
+                                    int1_wh.set(vtxoff_prev, vtxoff_next);
+                                vtxoff_prev = vtxoff_next;
+                            }
+                        }
+                        else
+                        {
+                            const exint* const data = vertices.getArray();
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
+                            {
+                                vtxoff_next = data[vtxpnum];
+                                if (calTmpVertexVertexPrimPrevAttrib && vtxGroup->contains(vtxoff_next))
+                                    int0_wh.set(vtxoff_next, vtxoff_prev);
+                                if (calTmpVertexVertexPrimNextAttrib && vtxGroup->contains(vtxoff_prev))
+                                    int1_wh.set(vtxoff_prev, vtxoff_next);
+                                vtxoff_prev = vtxoff_next;
+                            }
+                        }
+#else
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; ++vtxpnum)
                         {
                             vtxoff_next = vertices[vtxpnum];
-                            if (vertexVertexPrimPrevAttrib && vtxGroup->contains(vtxoff_next))
+                            if (calTmpVertexVertexPrimPrevAttrib && vtxGroup->contains(vtxoff_next))
                                 int0_wh.set(vtxoff_next, vtxoff_prev);
-                            if (vertexVertexPrimNextAttrib && vtxGroup->contains(vtxoff_prev))
+                            if (calTmpVertexVertexPrimNextAttrib && vtxGroup->contains(vtxoff_prev))
                                 int1_wh.set(vtxoff_prev, vtxoff_next);
                             vtxoff_prev = vtxoff_next;
                         }
+#endif
                     }
                 }
             }, subscribeRatio, minGrainSize);
@@ -893,9 +1232,9 @@ private:
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
                         topo.getAdjacentBoundaryVertices(elemoff, vtxoff_prev, vtxoff_next);
-                        if (vertexVertexPrimPrevAttrib)
+                        if (calTmpVertexVertexPrimPrevAttrib)
                             vtxPrev_ph.value(elemoff) = vtxoff_prev;
-                        if (vertexVertexPrimNextAttrib)
+                        if (calTmpVertexVertexPrimNextAttrib)
                             vtxNext_ph.value(elemoff) = vtxoff_next;
                     }
                 }
@@ -947,15 +1286,14 @@ void vertexNextEquivDualByVertexPointDst()
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     dstpt = dstpt_ph.value(elemoff);
-                    
                     if (edgeGroup && !edgeGroup->contains(GA_Edge(pointRef->getLink(elemoff), dstpt)))
                         continue;
                     
                     if (GFE_Type::isInvalidOffset(dstpt))
                     {
-                        if (vertexNextEquivAttrib)
+                        if (calTmpVertexNextEquivAttrib)
                             equiv_ph.value(elemoff) = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivNoLoopAttrib)
+                        if (calTmpVertexNextEquivNoLoopAttrib)
                             equivNoLoop_ph.value(elemoff) = GFE_INVALID_OFFSET;
                         continue;
                     }
@@ -964,9 +1302,9 @@ void vertexNextEquivDualByVertexPointDst()
                         if (int_oh.get(vtxoff_next) != dstpt)
                             continue;
                         dstpt = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivAttrib)
+                        if (calTmpVertexNextEquivAttrib)
                             equiv_ph.value(elemoff) = vtxoff_next;
-                        if (vertexNextEquivNoLoopAttrib)
+                        if (calTmpVertexNextEquivNoLoopAttrib)
                             equivNoLoop_ph.value(elemoff) = vtxoff_next;
                         break;
                     }
@@ -977,31 +1315,31 @@ void vertexNextEquivDualByVertexPointDst()
                     {
                         if (GFE_Type::isInvalidOffset(vtxoff_next))
                         {
-                            if (vertexNextEquivGroup)
+                            if (calTmpVertexNextEquivGroup)
                                 vertexNextEquivGroup->setElement(elemoff, true);
-                            if (vertexNextEquivAttrib)
+                            if (calTmpVertexNextEquivAttrib)
                                 equiv_ph.value(elemoff) = GFE_INVALID_OFFSET;
                             
-                            if (vertexNextEquivNoLoopGroup)
+                            if (calTmpVertexNextEquivNoLoopGroup)
                                 vertexNextEquivNoLoopGroup->setElement(elemoff, true);
-                            if (vertexNextEquivNoLoopAttrib)
+                            if (calTmpVertexNextEquivNoLoopAttrib)
                                 equivNoLoop_ph.value(elemoff) = GFE_INVALID_OFFSET;
                             break;
                         }
                         if (int_oh.get(vtxoff_next) == ptoff)
                         {
-                            if (vertexNextEquivAttrib)
+                            if (calTmpVertexNextEquivAttrib)
                                 equiv_ph.value(elemoff) = vtxoff_next;
                             if (dstpt > ptoff)
                             {
-                                if (vertexNextEquivNoLoopAttrib)
+                                if (calTmpVertexNextEquivNoLoopAttrib)
                                     equivNoLoop_ph.value(elemoff) = vtxoff_next;
                             }
                             else
                             {
-                                if (vertexNextEquivNoLoopGroup)
+                                if (calTmpVertexNextEquivNoLoopGroup)
                                     vertexNextEquivNoLoopGroup->setElement(elemoff, true);
-                                if (vertexNextEquivNoLoopAttrib)
+                                if (calTmpVertexNextEquivNoLoopAttrib)
                                     equivNoLoop_ph.value(elemoff) = GFE_INVALID_OFFSET;
                             }
                             break;
@@ -1014,9 +1352,9 @@ void vertexNextEquivDualByVertexPointDst()
         
     }, subscribeRatio, minGrainSize);
 
-    if (vertexNextEquivGroup)
+    if (calTmpVertexNextEquivGroup)
         vertexNextEquivGroup->invalidateGroupEntries();
-    if (vertexNextEquivNoLoopGroup)
+    if (calTmpVertexNextEquivNoLoopGroup)
         vertexNextEquivNoLoopGroup->invalidateGroupEntries();
 }
 
@@ -1055,7 +1393,7 @@ void vertexNextEquiv()
                 
                 if (GFE_Type::isInvalidOffset(dstpt))
                 {
-                    if (vertexNextEquivAttrib)
+                    if (calTmpVertexNextEquivAttrib)
                         int0_wh.set(elemoff, GFE_INVALID_OFFSET);
                     continue;
                 }
@@ -1064,7 +1402,7 @@ void vertexNextEquiv()
                     if (int_oh.get(vtxoff_next) != dstpt)
                         continue;
                     dstpt = GFE_INVALID_OFFSET;
-                    if (vertexNextEquivAttrib)
+                    if (calTmpVertexNextEquivAttrib)
                         int0_wh.set(elemoff, vtxoff_next);
                     break;
                 }
@@ -1076,21 +1414,21 @@ void vertexNextEquiv()
                     if (int_oh.get(vtxoff_next) != ptoff)
                         continue;
                     dstpt = GFE_INVALID_OFFSET;
-                    if (vertexNextEquivAttrib)
+                    if (calTmpVertexNextEquivAttrib)
                         int0_wh.set(elemoff, vtxoff_next);
                     break;
                 }
                 if (GFE_Type::isInvalidOffset(dstpt))
                     continue;
-                if (vertexNextEquivGroup)
+                if (calTmpVertexNextEquivGroup)
                     vertexNextEquivGroup->setElement(elemoff, true);
-                if (vertexNextEquivAttrib)
+                if (calTmpVertexNextEquivAttrib)
                     int0_wh.set(elemoff, GFE_INVALID_OFFSET);
             }
         }
     }, subscribeRatio, minGrainSize);
     
-    if (vertexNextEquivGroup)
+    if (calTmpVertexNextEquivGroup)
         vertexNextEquivGroup->invalidateGroupEntries();
 }
 
@@ -1128,7 +1466,7 @@ void vertexNextEquivNoLoop()
                 
                 if (GFE_Type::isInvalidOffset(dstpt))
                 {
-                    if (vertexNextEquivNoLoopAttrib)
+                    if (calTmpVertexNextEquivNoLoopAttrib)
                         int0_wh.set(elemoff, GFE_INVALID_OFFSET);
                     continue;
                 }
@@ -1137,7 +1475,7 @@ void vertexNextEquivNoLoop()
                     if (int_oh.get(vtxoff_next) != dstpt)
                         continue;
                     dstpt = GFE_INVALID_OFFSET;
-                    if (vertexNextEquivNoLoopAttrib)
+                    if (calTmpVertexNextEquivNoLoopAttrib)
                         int0_wh.set(elemoff, vtxoff_next);
                     break;
                 }
@@ -1151,38 +1489,26 @@ void vertexNextEquivNoLoop()
                     if (dstpt > ptoff)
                     {
                         dstpt = GFE_INVALID_OFFSET;
-                        if (vertexNextEquivNoLoopAttrib)
+                        if (calTmpVertexNextEquivNoLoopAttrib)
                             int0_wh.set(elemoff, vtxoff_next);
                     }
                     break;
                 }
                 if (GFE_Type::isInvalidOffset(dstpt))
                     continue;
-                if (vertexNextEquivNoLoopGroup)
+                if (calTmpVertexNextEquivNoLoopGroup)
                     vertexNextEquivNoLoopGroup->setElement(elemoff, true);
-                if (vertexNextEquivNoLoopAttrib)
+                if (calTmpVertexNextEquivNoLoopAttrib)
                     int0_wh.set(elemoff, GFE_INVALID_OFFSET);
             }
         }
     }, subscribeRatio, minGrainSize);
     
-    if (vertexNextEquivNoLoopGroup)
+    if (calTmpVertexNextEquivNoLoopGroup)
         vertexNextEquivNoLoopGroup->invalidateGroupEntries();
 }
 
 #endif
-
-
-
-    
-    // void unsharedEdge()
-    // {
-    //     if (!unsharedEdgeGroup)
-    //         setUnsharedEdgeGroup(!outIntermediateAttrib);
-    //     
-    // }
-
-    
 
 
     
@@ -1200,7 +1526,7 @@ void vertexNextEquivNoLoop()
         const GA_PointGroup* const seamGroup = pointSeamGroup.getPointGroup();
         UTparallelFor(groupParser.getPointSplittableRange(), [this, seamGroup](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(16);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -1217,16 +1543,14 @@ void vertexNextEquivNoLoop()
                         if (vertices.isClosed() || vtxpnum != 0)
                         {
                             pt_next = geo->vertexPoint(vertices[vtxpnum==0 ? numvtx-1 : vtxpnum-1]);
-                            if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                adjElems.emplace_back(pt_next);
+                            GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                         }
 
                         const GA_Size vtxpnum_next = vtxpnum+1;
                         if (vertices.isClosed() || vtxpnum_next != numvtx)
                         {
                             pt_next = geo->vertexPoint(vertices[vtxpnum_next==numvtx ? 0 : vtxpnum_next]);
-                            if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                adjElems.emplace_back(pt_next);
+                            GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                         }
                     }
                     intArray_wh.set(elemoff, adjElems);
@@ -1272,7 +1596,7 @@ void vertexNextEquivNoLoop()
             GA_Offset start, end;
             if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
             {
-                UT_ValArray<GA_Offset> adjElems(16);
+                UT_ValArray<GA_Offset> adjElems;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -1290,8 +1614,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.append(pt_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
 
                             const GA_Size vtxpnum_next = vtxpnum+1;
@@ -1301,8 +1624,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.append(pt_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1334,8 +1656,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.findSorted(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    GFE_Math::appendSorted(adjElems, pt_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
 
                             const GA_Size vtxpnum_next = vtxpnum+1;
@@ -1345,8 +1666,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.findSorted(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    GFE_Math::appendSorted(adjElems, pt_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1423,7 +1743,7 @@ void vertexNextEquivNoLoop()
             GA_Offset start, end;
             if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
             {
-                UT_ValArray<GA_Offset> adjElems(16);
+                UT_ValArray<GA_Offset> adjElems;
                 for (GA_Iterator it(r); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -1437,14 +1757,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.append(pt_next);
-                                //adjElems.uniqueSortedInsert(pt_next);
-                                //if (adjElems.uniqueSortedFindAscending(pt_next) == GFE_FIND_INVALID_INDEX)
-                                //{
-                                //    adjElems.append(pt_next);
-                                //    adjElems.sort();
-                                //}
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
                             const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
                             if (GFE_Type::isValidOffset(vtxNext))
@@ -1453,8 +1766,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.append(pt_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1482,16 +1794,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.findSorted(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    GFE_Math::appendSorted(adjElems, pt_next);
-                                //if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                //    adjElems.append(pt_next);
-                                //adjElems.uniqueSortedInsert(pt_next);
-                                //if (adjElems.uniqueSortedFindAscending(pt_next) == GFE_FIND_INVALID_INDEX)
-                                //{
-                                //    adjElems.append(pt_next);
-                                //    adjElems.sort();
-                                //}
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
                             const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
                             if (GFE_Type::isValidOffset(vtxNext))
@@ -1500,10 +1803,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                if (adjElems.findSorted(pt_next) == GFE_FIND_INVALID_INDEX)
-                                    GFE_Math::appendSorted(adjElems, pt_next);
-                                //if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                                //    adjElems.append(pt_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1545,16 +1845,14 @@ void vertexNextEquivNoLoop()
             if (vertices.isClosed() || vtxpnum != 0)
             {
                 pt_next = geo->vertexPoint(vertices[vtxpnum==0 ? numvtx-1 : vtxpnum-1]);
-                if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                    adjElems.emplace_back(pt_next);
+                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
             }
 
             const GA_Size vtxpnum_next = vtxpnum + 1;
             if (vertices.isClosed() || vtxpnum_next != numvtx)
             {
                 pt_next = geo->vertexPoint(vertices[vtxpnum_next==numvtx ? 0 : vtxpnum_next]);
-                if (adjElems.find(pt_next) == GFE_FIND_INVALID_INDEX)
-                    adjElems.emplace_back(pt_next);
+                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
             }
         }
     }
@@ -1569,7 +1867,7 @@ void vertexNextEquivNoLoop()
         
         UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(16);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -1602,7 +1900,7 @@ void vertexNextEquivNoLoop()
 
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup, primRef](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(32);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -1621,8 +1919,7 @@ void vertexNextEquivNoLoop()
                         for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
                         {
                             const GA_Offset primoff = primRef->getLink(vtxoff_next);
-                            if (adjElems.find(primoff) == GFE_FIND_INVALID_INDEX)
-                                adjElems.emplace_back(primRef->getLink(vtxoff_next));
+                            GFE_Math::uniqueAppendSorted(adjElems, primoff);
                         }
                     }
                     intArray_wh.set(elemoff, adjElems);
@@ -1646,7 +1943,7 @@ void vertexNextEquivNoLoop()
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(32);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             if (seamGroup)
@@ -1670,16 +1967,16 @@ void vertexNextEquivNoLoop()
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1708,16 +2005,16 @@ void vertexNextEquivNoLoop()
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1742,7 +2039,7 @@ void vertexNextEquivNoLoop()
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(32);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             if (seamGroup)
@@ -1766,16 +2063,16 @@ void vertexNextEquivNoLoop()
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1804,16 +2101,16 @@ void vertexNextEquivNoLoop()
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1838,7 +2135,7 @@ void vertexNextEquivNoLoop()
         const GA_VertexGroup* const seamGroup = vertexEdgeSeamGroup.getVertexGroup();
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(32);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             if (seamGroup)
@@ -1862,16 +2159,16 @@ void vertexNextEquivNoLoop()
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1900,16 +2197,16 @@ void vertexNextEquivNoLoop()
                                     continue;
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
                             {
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
-                                if (adjElems.find(geo->vertexPrimitive(vtxoff_next)) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(geo->vertexPrimitive(vtxoff_next));
+                                const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -1933,7 +2230,7 @@ void vertexNextEquivNoLoop()
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, geoGEO, seamGroup](const GA_SplittableRange& r)
         {
             GEO_Detail::GEO_EdgeAdjArray adjElemStruct;
-            UT_ValArray<GA_Offset> adjElems(32);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -1987,7 +2284,7 @@ void vertexNextEquivNoLoop()
         
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, seamGroup, vtxNextRef, pointRef, pointVtxRef, primRef](const GA_SplittableRange& r)
         {
-            UT_ValArray<GA_Offset> adjElems(32);
+            UT_ValArray<GA_Offset> adjElems;
             GA_Offset vtxoff_next;
             GA_Offset start, end;
             if (seamGroup)
@@ -2009,8 +2306,7 @@ void vertexNextEquivNoLoop()
                                 if (vtxoff_next == vtxoff)
                                     continue;
                                 const GA_Offset primoff = primRef->getLink(vtxoff_next);
-                                if (adjElems.find(primoff) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(primoff);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2035,8 +2331,7 @@ void vertexNextEquivNoLoop()
                                 if (vtxoff_next == vtxoff)
                                     continue;
                                 const GA_Offset primoff = primRef->getLink(vtxoff_next);
-                                if (adjElems.find(primoff) == GFE_FIND_INVALID_INDEX)
-                                    adjElems.emplace_back(primoff);
+                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2071,6 +2366,26 @@ private:
     GA_VertexGroup* vertexNextEquivNoLoopGroup  = nullptr;
     //GA_EdgeGroup*   unsharedEdgeGroup           = nullptr;
     
+    bool calVertexPrimIndexAttrib       = true;
+    bool calVertexVertexPrimPrevAttrib  = true;
+    bool calVertexVertexPrimNextAttrib  = true;
+    bool calVertexPointDstAttrib        = true;
+    bool calVertexNextEquivAttrib       = true;
+    bool calVertexNextEquivNoLoopAttrib = true;
+    bool calPointPointEdgeAttrib        = true;
+    bool calPointPointPrimAttrib        = true;
+    bool calPrimPrimEdgeAttrib          = true;
+    bool calPrimPrimPointAttrib         = true;
+    bool calVertexNextEquivGroup        = true;
+    bool calVertexNextEquivNoLoopGroup  = true;
+        
+    bool calTmpVertexVertexPrimPrevAttrib;
+    bool calTmpVertexVertexPrimNextAttrib;
+        
+    bool calTmpVertexNextEquivAttrib      ;
+    bool calTmpVertexNextEquivNoLoopAttrib;
+    bool calTmpVertexNextEquivGroup       ;
+    bool calTmpVertexNextEquivNoLoopGroup ;
         
     GA_RWHandleT<GA_Offset> int0_wh;
     GA_RWHandleT<GA_Offset> int1_wh;
@@ -2088,6 +2403,7 @@ private:
     exint minGrainSize   = 1024;
 
 #undef GFE_MeshTopology_VertexNextEquivDual
+#undef GFE_MeshTopology_OptimizeTrivialVertices
     
 }; // End of class GFE_MeshTopology
 

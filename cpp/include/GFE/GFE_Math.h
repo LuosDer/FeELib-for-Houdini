@@ -27,7 +27,82 @@ SYS_FORCE_INLINE static T degrees(const T radians)
 { return radians * 180 / PI; }
 
 
+template<typename _ArrayT, typename _ArrayValueType>
+static GA_Size appendSorted(_ArrayT& arr, const _ArrayValueType val)
+{
+    const GA_Size size = arr.size();
+    if (size == 0)
+        return arr.emplace_back(val);
+    if (arr[size-1] <= val)
+        return arr.emplace_back(val);
+    if (size == 1)
+        return arr.insert(val, 0);
+        
+    GA_Size l = 0;
+    GA_Size r = size;
+    GA_Size m = r >> 1;
+    while (l < r)
+    {
+        if (arr[m] > val)
+        {
+            r = m;
+        }
+        else if (arr[m] < val)
+        {
+            l = m+1;
+        }
+        else
+        {
+            return arr.insert(val, m+1);
+            //break;
+        }
+        m = (l+r) >> 1;
+    }
+    UT_ASSERT_P(l <= r || l == r+1);
+    return l > r ? arr.insert(val, l) : arr.insert(val, m);
+}
     
+
+template<>
+static GA_Size appendSorted(UT_ValArray<GA_Offset>& arr, const GA_Offset val)
+{
+#if GFE_DEBUG_MODE
+    const GA_Offset* const data = arr.data();
+    ::std::vector<GA_Offset> array(data, data + arr.size());
+#endif
+    const GA_Size size = arr.size();
+    if (size == 0)
+        return arr.emplace_back(val);
+    if (arr[size-1] <= val)
+        return arr.emplace_back(val);
+    if (size == 1)
+        return arr.insert(val, 0);
+        
+    GA_Size l = 0;
+    GA_Size r = size;
+    GA_Size m = r >> 1;
+    while (l < r)
+    {
+        if (arr[m] > val)
+        {
+            r = m;
+        }
+        else if (arr[m] < val)
+        {
+            l = m+1;
+        }
+        else
+        {
+            return arr.insert(val, m+1);
+            //break;
+        }
+        m = (l+r) >> 1;
+    }
+    UT_ASSERT_P(l <= r || l == r+1);
+    return l > r ? arr.insert(val, l) : arr.insert(val, m);
+}
+    
+template<>
 static GA_Size appendSorted(GA_OffsetList& arr, const GA_Offset val)
 {
     const GA_Size size = arr.size();
@@ -37,15 +112,15 @@ static GA_Size appendSorted(GA_OffsetList& arr, const GA_Offset val)
         return arr.append(val);
     if (size == 1)
         return arr.insert(0, val);
-        
+    
     GA_Size l = 0;
-    GA_Size r = size-1;
+    GA_Size r = size;
     GA_Size m = r >> 1;
     while (l < r)
     {
         if (arr[m] > val)
         {
-            r = m-1;
+            r = m;
         }
         else if (arr[m] < val)
         {
@@ -53,7 +128,8 @@ static GA_Size appendSorted(GA_OffsetList& arr, const GA_Offset val)
         }
         else
         {
-            break;
+            return arr.insert(val, m+1);
+            //break;
         }
         m = (l+r) >> 1;
     }
@@ -61,6 +137,29 @@ static GA_Size appendSorted(GA_OffsetList& arr, const GA_Offset val)
     return l > r ? arr.insert(l, val) : arr.insert(m, val);
 }
 
+
+template<typename _ArrayT, typename _ArrayValueType>
+SYS_FORCE_INLINE static void uniqueAppendSorted(_ArrayT& arr, const _ArrayValueType val)
+{
+    if (arr.uniqueSortedFind(val) == GFE_FIND_INVALID_INDEX)
+        GFE_Math::appendSorted(arr, val);
+}
+
+template<>
+SYS_FORCE_INLINE static void uniqueAppendSorted(UT_ValArray<GA_Offset>& arr, const GA_Offset val)
+{
+    if (arr.uniqueSortedFind(val) == GFE_FIND_INVALID_INDEX)
+        GFE_Math::appendSorted(arr, val);
+}
+
+template<>
+SYS_FORCE_INLINE static void uniqueAppendSorted(GA_OffsetList& arr, const GA_Offset val)
+{
+    if (arr.findSorted(val) == GFE_FIND_INVALID_INDEX)
+        GFE_Math::appendSorted(arr, val);
+}
+
+    
 template<typename T>
 SYS_FORCE_INLINE static typename T::value_type tupleDistance2(const T& val0, const T& val1)
 {

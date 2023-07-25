@@ -292,33 +292,6 @@ static const char *theDsFile = R"THEDSFILE(
         disablewhen "{ calPrimPrimPoint == 0 }"
     }
 
-
-    parm {
-        name    "outArrayType"
-        cppname "OutArrayType"
-        label   "Output Array Type"
-        type    ordinal
-        default { "guess" }
-        menu {
-            "attrib"    "Attrib"
-            "packed"    "Packed"
-            "geo"       "Geo"
-        }
-    }
-
-
-
-
-
-    parm {
-       name    "kernel"
-       cppname "Kernel"
-       label   "Kernel"
-       type    integer
-       default { 0 }
-       range   { 0! 2! }
-    }
-
     parm {
         name    "outAsOffset"
         cppname "OutAsOffset"
@@ -326,9 +299,13 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { "1" }
     }
-
-
-
+    parm {
+        name    "findInputAttrib"
+        cppname "FindInputAttrib"
+        label   "Find Input Attribute"
+        type    toggle
+        default { "0" }
+    }
     parm {
         name    "outTopoAttrib"
         cppname "OutTopoAttrib"
@@ -336,6 +313,7 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { "0" }
     }
+
 
     parm {
        name    "subscribeRatio"
@@ -352,6 +330,26 @@ static const char *theDsFile = R"THEDSFILE(
        type    intlog
        default { 1024 }
        range   { 0! 2048 }
+    }
+    parm {
+        name    "outArrayType"
+        cppname "OutArrayType"
+        label   "Output Array Type"
+        type    ordinal
+        default { "guess" }
+        menu {
+            "attrib"    "Attrib"
+            "packed"    "Packed"
+            "geo"       "Geo"
+        }
+    }
+    parm {
+       name    "kernel"
+       cppname "Kernel"
+       label   "Kernel"
+       type    integer
+       default { 0 }
+       range   { 0! 2! }
     }
 }
 )THEDSFILE";
@@ -585,8 +583,11 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
     
     GFE_MeshTopology meshTopology(outGeo0, &cookparms);
-    meshTopology.setKernel(sopparms.getKernel());
 
+#if __GFE_MeshTopology_TestSpped
+    meshTopology.setKernel(sopparms.getKernel());
+#endif
+    
     meshTopology.outIntermediateAttrib = sopparms.getOutTopoAttrib();
     //meshTopology.outTopoAttrib = sopparms.getOutTopoAttrib();
 
@@ -598,34 +599,36 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     if (calVertexPrimIndex)
-        meshTopology.setVertexPrimIndex(false, vertexPrimIndexAttribName);
+        meshTopology.setVertexPrimIndex(false, vertexPrimIndexAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
     if (calVertexVertexPrim)
-        meshTopology.setVertexVertexPrim(false, vertexVertexPrimPrevAttribName, vertexVertexPrimNextAttribName);
+        meshTopology.setVertexVertexPrim(false,
+            vertexVertexPrimPrevAttribName, vertexVertexPrimNextAttribName,
+            GA_STORE_INVALID, sopparms.getFindInputAttrib());
     if (calVertexPointDst)
-        meshTopology.setVertexPointDst(false, vertexPointDstAttribName);
+        meshTopology.setVertexPointDst(false, vertexPointDstAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
 
     
     if (calVertexNextEquiv)
-        meshTopology.setVertexNextEquiv(false, vertexNextEquivAttribName);
+        meshTopology.setVertexNextEquiv(false, vertexNextEquivAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
     if (calVertexNextEquivNoLoop)
-        meshTopology.setVertexNextEquivNoLoop(false, vertexNextEquivNoLoopAttribName);
+        meshTopology.setVertexNextEquivNoLoop(false, vertexNextEquivNoLoopAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
     
     if (calVertexNextEquivGroup)
-        meshTopology.setVertexNextEquivGroup(false, vertexNextEquivGroupName);
+        meshTopology.setVertexNextEquivGroup(false, vertexNextEquivGroupName, sopparms.getFindInputAttrib());
     if (calVertexNextEquivNoLoopGroup)
-        meshTopology.setVertexNextEquivNoLoopGroup(false, vertexNextEquivNoLoopGroupName);
+        meshTopology.setVertexNextEquivNoLoopGroup(false, vertexNextEquivNoLoopGroupName, sopparms.getFindInputAttrib());
 
 
     
     if (calPointPointEdge)
-        meshTopology.setPointPointEdge(false, pointPointEdgeAttribName);
+        meshTopology.setPointPointEdge(false, pointPointEdgeAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
     if (calPointPointPrim)
-        meshTopology.setPointPointPrim(false, pointPointPrimAttribName);
+        meshTopology.setPointPointPrim(false, pointPointPrimAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
     
     if (calPrimPrimEdge)
-        meshTopology.setPrimPrimEdge(false, primPrimEdgeAttribName);
+        meshTopology.setPrimPrimEdge(false, primPrimEdgeAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
     if (calPrimPrimPoint)
-        meshTopology.setPrimPrimPoint(false, primPrimPointAttribName);
+        meshTopology.setPrimPrimPoint(false, primPrimPointAttribName, GA_STORE_INVALID, sopparms.getFindInputAttrib());
 
     meshTopology.computeAndBumpDataId();
     meshTopology.visualizeOutGroup();

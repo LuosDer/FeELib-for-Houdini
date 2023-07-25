@@ -31,10 +31,10 @@ public:
     void setMatchCenter()
     {
         UT_Vector3T<fpreal> center0 = restBBox.center();
-        UT_Vector3T<fpreal> center1 = refBBox.center();
+        UT_Vector3T<fpreal> center1 = refBBox .center();
         UT_Vector3T<fpreal> size0   = restBBox.size();
-        UT_Vector3T<fpreal> size1   = refBBox.size();
-        xform.translate(center1-center0);
+        UT_Vector3T<fpreal> size1   = refBBox .size();
+        xform.translate(center1 - center0);
     }
 
     
@@ -72,8 +72,12 @@ public:
     
     UT_Matrix4T<_TScalar> computeXform(const _TScalar biasRestT, const _TScalar biasRefT, const _TScalar biasRestS, const _TScalar biasRefS) const
     {
-        UT_Vector3T<_TScalar> translate = computeTranslate();
-        UT_Vector3T<_TScalar> scale = computeTranslate();
+        UT_Vector3T<_TScalar> translate = computeTranslate(biasRestT, biasRefT);
+        UT_Vector3T<_TScalar> scale = computeTranslate(biasRestS, biasRefS);
+        UT_Matrix4T<_TScalar> xform;
+        xform.translate(translate);
+        xform.scale(scale);
+        return xform;
     }
     
 public:
@@ -140,6 +144,9 @@ private:
         geoRest = geoRef1 ? geoRef1 : geo;
         
         GFE_MatchBBoxXform bboxXform;
+        bboxXform.setRestBBox(geoRest, groupParser.getPointRange(),     geoRef1 ? geoRef1->findPointAttrib(*posAttrib) : posAttrib);
+        bboxXform.setRefBBox (geoRest, groupParserRef0.getPointRange(), geoRef1 ? geoRef1->findPointAttrib(*posAttrib) : posAttrib);
+        
         GFE_XformByAttrib xformByAttrib(geo, nullptr, cookparms);
         xformByAttrib.groupParser.setGroup(groupParser);
         
