@@ -29,7 +29,6 @@ namespace GFE_Bound {
     //typedef stdBoundingBoxT<fpreal>   stdBoundingBoxR;
 
 
-    
     template<typename _TScalar, typename _TScalar1>
     static void expandBounds(UT_BoundingBoxT<_TScalar>& bound, const UT_BoundingBoxT<_TScalar1>& boundRef)
     {
@@ -60,7 +59,21 @@ namespace GFE_Bound {
             return UT_BoundingBoxT<_TScalar>(bbox);
     }
     
-
+    template<typename _TScalar>
+    static UT_BoundingBoxT<_TScalar> getUnitBBox()
+    {
+        return UT_BoundingBoxT<_TScalar>(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
+    }
+    
+    template<typename _TScalar>
+    static void scale(UT_BoundingBoxT<_TScalar>& bbox, const UT_Vector3T<_TScalar>& scale)
+    {
+        bbox.vals[0][0] *= scale[0]; bbox.vals[0][1] *= scale[0];
+        bbox.vals[1][0] *= scale[1]; bbox.vals[1][1] *= scale[1];
+        bbox.vals[2][0] *= scale[2]; bbox.vals[2][1] *= scale[2];
+    }
+    
+    
 } // End of namespace GFE_Bound
 
 #endif

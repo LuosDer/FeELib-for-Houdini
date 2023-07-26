@@ -7,7 +7,6 @@
 #include "GFE/GFE_Type.h"
 
 #include "GA/GA_Detail.h"
-//#include <assert.h>
 
 
 #include "GU/GU_Snap.h"
@@ -167,6 +166,22 @@ enum class GFE_OutArrayType
 
 
 
+enum class GFE_ScaleAxis
+{
+    X,
+    Y,
+    Z,
+    XYZMin,
+    XYZMiddle,
+    XYZMax,
+    XYMin,
+    YZMin,
+    ZXMin,
+    XYMax,
+    YZMax,
+    ZXMax,
+    Invalid = -1,
+};
 
 
 namespace GFE_Type {
@@ -357,134 +372,6 @@ struct getValueType {
     
     
     
-    
-    
-    
-    
-    
-    
-    
-
-template<typename VECTOR_T>
-static VECTOR_T axisDir(const GFE_Axis axis)
-{
-    switch (axis)
-    {
-    case GFE_Axis::X: return VECTOR_T(1,0,0); break;
-    case GFE_Axis::Y: return VECTOR_T(0,1,0); break;
-    case GFE_Axis::Z: return VECTOR_T(0,0,1); break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Axis");
-    return VECTOR_T(0,1,0);
-}
-
-SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
-{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
-
-SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
-{ return axisDir<UT_Vector3T<fpreal32>>(axis); }
-    
-SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
-{ return axisDir<UT_Vector3T<fpreal64>>(axis); }
-    
-SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const char* const str1)
-{ return strcmp(str0, str1) == 0; }
-
-SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
-{ return stringEqual(str0.c_str(), str1.c_str()); }
-
-    
-static bool isAttribTypeEqual(const GA_Attribute* const attrib0, const GA_Attribute* const attrib1)
-{
-    UT_ASSERT_P(attrib0);
-    UT_ASSERT_P(attrib1);
-    return &attrib0->getDetail()       == &attrib1->getDetail()       &&
-            attrib0->getTupleSize()    ==  attrib1->getTupleSize()    &&
-            attrib0->getStorageClass() ==  attrib1->getStorageClass() &&
-            (
-                !attrib0->getAIFTuple() ||
-                 attrib0->getAIFTuple() &&
-                 attrib1->getAIFTuple() &&
-                 attrib0->getAIFTuple()->getStorage(attrib0) == attrib1->getAIFTuple()->getStorage(attrib1)
-            );
-}
-
-static bool checkTupleAttrib(
-    const GA_Attribute* const attrib,
-    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
-    const GA_Storage storage = GA_STORE_INVALID,
-    const int tupleSize = 1,
-    const GA_Defaults* const defaults = nullptr
-)
-{
-    if (!attrib)
-        return false;
-    if (attrib->getTupleSize() != tupleSize)
-        return false;
-    if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
-        return false;
-        
-    const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
-    if (aifTuple)
-    {
-        if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attrib) != storage) ||
-            (defaults && aifTuple->getDefaults(attrib) != *defaults))
-            return false;
-    }
-    else
-    {
-        if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
-            return false;
-        //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
-    }
-    return true;
-}
-
-SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attrib, const GA_StorageClass storageClass = GA_STORECLASS_INVALID, const GA_Storage storage = GA_STORE_INVALID)
-{ return checkTupleAttrib(attrib, storageClass, storage, 3); }
-
-static bool checkArrayAttrib(
-    const GA_Attribute* const attrib,
-    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
-    const GA_Storage storage = GA_STORE_INVALID,
-    const int tupleSize = 3
-)
-{
-    if (!attrib)
-        return false;
-    if (attrib->getTupleSize() != tupleSize)
-        return false;
-    if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
-        return false;
-    const GA_AIFNumericArray* const aifNumericArray = attrib->getAIFNumericArray();
-    if (aifNumericArray)
-    {
-        if (storage != GA_STORE_INVALID && aifNumericArray->getStorage(attrib) != storage)
-            return false;
-    }
-    else
-    {
-        if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
-            return false;
-        //const GA_AIFSharedStringArray* const aifStrArray = attribPtr->getAIFSharedStringArray();
-    }
-    return true;
-}
-
-
-SYS_FORCE_INLINE static bool isValidPosAttrib(const GA_Attribute& posAttrib)
-{ return posAttrib.getOwner() == GA_ATTRIB_POINT && posAttrib.getAIFTuple() && posAttrib.getTupleSize()==3; }
-
-SYS_FORCE_INLINE static bool isValidPosAttrib(const GA_Attribute* const posAttrib)
-{ return posAttrib && isValidPosAttrib(*posAttrib); }
-
-SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute& posAttrib)
-{ return !isValidPosAttrib(posAttrib); }
-    
-SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAttrib)
-{ return !isValidPosAttrib(posAttrib); }
-
-
     
 template<typename VECTOR_T>
 SYS_FORCE_INLINE static VECTOR_T getZeroVector()
@@ -715,6 +602,169 @@ SYS_FORCE_INLINE static GA_Storage getPreferredStorage(const GA_Detail& geo, con
 
 SYS_FORCE_INLINE static GA_Storage getPreferredStorage(const GA_Detail* const geo, const GA_StorageClass storageClass, const GA_Storage storage)
 { return getPreferredStorage(*geo, storageClass, storage); }
+
+
+    
+    
+    
+    
+    
+    
+    
+
+template<typename VECTOR_T>
+static VECTOR_T axisDir(const GFE_Axis axis)
+{
+    switch (axis)
+    {
+    case GFE_Axis::X: return VECTOR_T(1,0,0); break;
+    case GFE_Axis::Y: return VECTOR_T(0,1,0); break;
+    case GFE_Axis::Z: return VECTOR_T(0,0,1); break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Axis");
+    return VECTOR_T(0,1,0);
+}
+
+SYS_FORCE_INLINE static UT_Vector3T<fpreal16> axisDirH(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal16>>(axis); }
+
+SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal32>>(axis); }
+    
+SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
+{ return axisDir<UT_Vector3T<fpreal64>>(axis); }
+    
+SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const char* const str1)
+{ return strcmp(str0, str1) == 0; }
+
+SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
+{ return stringEqual(str0.c_str(), str1.c_str()); }
+
+    
+static bool isAttribTypeEqual(const GA_Attribute* const attrib0, const GA_Attribute* const attrib1)
+{
+    UT_ASSERT_P(attrib0);
+    UT_ASSERT_P(attrib1);
+    return &attrib0->getDetail()       == &attrib1->getDetail()       &&
+            attrib0->getTupleSize()    ==  attrib1->getTupleSize()    &&
+            attrib0->getStorageClass() ==  attrib1->getStorageClass() &&
+            (
+                !attrib0->getAIFTuple() ||
+                 attrib0->getAIFTuple() &&
+                 attrib1->getAIFTuple() &&
+                 attrib0->getAIFTuple()->getStorage(attrib0) == attrib1->getAIFTuple()->getStorage(attrib1)
+            );
+}
+
+    static bool checkTupleAttrib(
+        const GA_Attribute* const attrib,
+        const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
+        const GA_Precision precision = GA_PRECISION_INVALID,
+        const int tupleSize = 1,
+        const GA_Defaults* const defaults = nullptr
+    )
+    {
+        if (!attrib)
+            return false;
+        if (attrib->getTupleSize() != tupleSize)
+            return false;
+        if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
+            return false;
+        
+        const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
+        if (aifTuple)
+        {
+            if ((precision != GA_PRECISION_INVALID && precisionFromStorage(aifTuple->getStorage(attrib)) != precision) ||
+                (defaults && aifTuple->getDefaults(attrib) != *defaults))
+                    return false;
+        }
+        else
+        {
+            if (storageClass != GA_STORECLASS_INVALID && storageClass != GA_STORECLASS_STRING)
+                return false;
+            //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
+        }
+        return true;
+    }
+    
+static bool checkTupleAttrib(
+    const GA_Attribute* const attrib,
+    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const int tupleSize = 1,
+    const GA_Defaults* const defaults = nullptr
+)
+{
+    if (!attrib)
+        return false;
+    if (attrib->getTupleSize() != tupleSize)
+        return false;
+    if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
+        return false;
+        
+    const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
+    if (aifTuple)
+    {
+        if ((storage != GA_STORE_INVALID && aifTuple->getStorage(attrib) != storage) ||
+            (defaults && aifTuple->getDefaults(attrib) != *defaults))
+            return false;
+    }
+    else
+    {
+        if (storageClass != GA_STORECLASS_INVALID && storageClass != GA_STORECLASS_STRING)
+            return false;
+        if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
+            return false;
+        //const GA_AIFStringTuple* const aifStrTuple = attribPtr->getAIFStringTuple();
+    }
+    return true;
+}
+
+SYS_FORCE_INLINE static bool checkDirAttrib(const GA_Attribute* const attrib, const GA_StorageClass storageClass = GA_STORECLASS_INVALID, const GA_Storage storage = GA_STORE_INVALID)
+{ return checkTupleAttrib(attrib, storageClass, storage, 3); }
+
+static bool checkArrayAttrib(
+    const GA_Attribute* const attrib,
+    const GA_StorageClass storageClass = GA_STORECLASS_INVALID,
+    const GA_Storage storage = GA_STORE_INVALID,
+    const int tupleSize = 3
+)
+{
+    if (!attrib)
+        return false;
+    if (attrib->getTupleSize() != tupleSize)
+        return false;
+    if (storageClass != GA_STORECLASS_INVALID && attrib->getStorageClass() != storageClass)
+        return false;
+    const GA_AIFNumericArray* const aifNumericArray = attrib->getAIFNumericArray();
+    if (aifNumericArray)
+    {
+        if (storage != GA_STORE_INVALID && aifNumericArray->getStorage(attrib) != storage)
+            return false;
+    }
+    else
+    {
+        if (storageClass != GA_STORECLASS_INVALID && storageClass != GA_STORECLASS_STRING)
+            return false;
+        if (storage != GA_STORE_INVALID && storage != GA_STORE_STRING)
+            return false;
+        //const GA_AIFSharedStringArray* const aifStrArray = attribPtr->getAIFSharedStringArray();
+    }
+    return true;
+}
+
+
+SYS_FORCE_INLINE static bool isValidPosAttrib(const GA_Attribute& posAttrib)
+{ return posAttrib.getOwner() == GA_ATTRIB_POINT && posAttrib.getAIFTuple() && posAttrib.getTupleSize()==3; }
+
+SYS_FORCE_INLINE static bool isValidPosAttrib(const GA_Attribute* const posAttrib)
+{ return posAttrib && isValidPosAttrib(*posAttrib); }
+
+SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute& posAttrib)
+{ return !isValidPosAttrib(posAttrib); }
+    
+SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAttrib)
+{ return !isValidPosAttrib(posAttrib); }
 
 
 

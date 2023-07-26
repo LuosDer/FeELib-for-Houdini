@@ -201,9 +201,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -233,9 +233,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -273,9 +273,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -305,9 +305,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -345,9 +345,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -397,9 +397,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -459,9 +459,9 @@ private:
                 {
                     GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
                     GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -510,9 +510,9 @@ private:
                 UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -606,9 +606,9 @@ private:
                 {
                     GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
                     GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -637,9 +637,9 @@ private:
                 UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -714,9 +714,9 @@ private:
                 {
                     GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
                     GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -745,9 +745,9 @@ private:
                 UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -821,9 +821,9 @@ private:
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform](const GA_SplittableRange& r)
         {
             GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -872,9 +872,9 @@ private:
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform](const GA_SplittableRange& r)
         {
             GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);

@@ -9,7 +9,7 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
-#include "GFE/GFE_Math.h"
+#include "GFE/GFE_Array.h"
 #include "GFE/GFE_OffsetArrayAttributeToGeometry.h"
 #include "GFE/GFE_OffsetAttributeToIndex.h"
 
@@ -1543,14 +1543,14 @@ void vertexNextEquivNoLoop()
                         if (vertices.isClosed() || vtxpnum != 0)
                         {
                             pt_next = geo->vertexPoint(vertices[vtxpnum==0 ? numvtx-1 : vtxpnum-1]);
-                            GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                            GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                         }
 
                         const GA_Size vtxpnum_next = vtxpnum+1;
                         if (vertices.isClosed() || vtxpnum_next != numvtx)
                         {
                             pt_next = geo->vertexPoint(vertices[vtxpnum_next==numvtx ? 0 : vtxpnum_next]);
-                            GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                            GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                         }
                     }
                     intArray_wh.set(elemoff, adjElems);
@@ -1614,7 +1614,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
 
                             const GA_Size vtxpnum_next = vtxpnum+1;
@@ -1624,7 +1624,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1656,7 +1656,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
 
                             const GA_Size vtxpnum_next = vtxpnum+1;
@@ -1666,7 +1666,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1757,7 +1757,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
                             const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
                             if (GFE_Type::isValidOffset(vtxNext))
@@ -1766,7 +1766,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1794,7 +1794,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
                             const GA_Offset vtxNext = vtxNext_h.get(vtxoff_next);
                             if (GFE_Type::isValidOffset(vtxNext))
@@ -1803,7 +1803,7 @@ void vertexNextEquivNoLoop()
                                 if constexpr (_OutArrayType != GFE_OutArrayType::Attrib)
                                     if (!outAsOffset)
                                         pt_next = indexMap.indexFromOffset(pt_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
                             }
                         }
                         if constexpr (_OutArrayType == GFE_OutArrayType::Attrib)
@@ -1845,14 +1845,14 @@ void vertexNextEquivNoLoop()
             if (vertices.isClosed() || vtxpnum != 0)
             {
                 pt_next = geo->vertexPoint(vertices[vtxpnum==0 ? numvtx-1 : vtxpnum-1]);
-                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
             }
 
             const GA_Size vtxpnum_next = vtxpnum + 1;
             if (vertices.isClosed() || vtxpnum_next != numvtx)
             {
                 pt_next = geo->vertexPoint(vertices[vtxpnum_next==numvtx ? 0 : vtxpnum_next]);
-                GFE_Math::uniqueAppendSorted(adjElems, pt_next);
+                GFE_Array::uniqueAppendSorted(adjElems, pt_next);
             }
         }
     }
@@ -1919,7 +1919,7 @@ void vertexNextEquivNoLoop()
                         for (; vtxoff_next != vtxoff_start; vtxoff_next = int_oh.get(vtxoff_next))
                         {
                             const GA_Offset primoff = primRef->getLink(vtxoff_next);
-                            GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                            GFE_Array::uniqueAppendSorted(adjElems, primoff);
                         }
                     }
                     intArray_wh.set(elemoff, adjElems);
@@ -1968,7 +1968,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
@@ -1976,7 +1976,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2006,7 +2006,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
@@ -2014,7 +2014,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2064,7 +2064,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
@@ -2072,7 +2072,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2102,7 +2102,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
@@ -2110,7 +2110,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2160,7 +2160,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
@@ -2168,7 +2168,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2198,7 +2198,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != dstpt)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
 
                             for (vtxoff_next = geo->pointVertex(dstpt); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo->vertexToNextVertex(vtxoff_next))
@@ -2206,7 +2206,7 @@ void vertexNextEquivNoLoop()
                                 if (int_oh.get(vtxoff_next) != ptoff)
                                     continue;
                                 const GA_Offset primoff = geo->vertexPrimitive(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2306,7 +2306,7 @@ void vertexNextEquivNoLoop()
                                 if (vtxoff_next == vtxoff)
                                     continue;
                                 const GA_Offset primoff = primRef->getLink(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);
@@ -2331,7 +2331,7 @@ void vertexNextEquivNoLoop()
                                 if (vtxoff_next == vtxoff)
                                     continue;
                                 const GA_Offset primoff = primRef->getLink(vtxoff_next);
-                                GFE_Math::uniqueAppendSorted(adjElems, primoff);
+                                GFE_Array::uniqueAppendSorted(adjElems, primoff);
                             }
                         }
                         intArray_wh.set(elemoff, adjElems);

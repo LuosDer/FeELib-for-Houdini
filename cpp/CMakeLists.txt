@@ -165,6 +165,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_OffsetVertexOrder_2_0
     SOP_FeE_OnPoly_1_0
     SOP_FeE_OrientAlongCurve_1_0
+    SOP_FeE_PointFromVoxel_1_0
     SOP_FeE_PointGenPerElem_1_0
     SOP_FeE_PointInBBox_2_0
     SOP_FeE_PointInMesh_WN_2_0
@@ -192,6 +193,8 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_UVScaletoWorldSize_3_0
     SOP_FeE_UVTileSize_1_0
     SOP_FeE_VerticalNormal_1_0
+    SOP_FeE_VolumeFromArray_1_0
+    SOP_FeE_VoxelFromPoint_1_0
     SOP_FeE_WindingNumber_1_0
     SOP_FeE_XformByAttrib_1_0
 )

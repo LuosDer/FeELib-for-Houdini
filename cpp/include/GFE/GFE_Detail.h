@@ -813,10 +813,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
         }
     }
     
-    void deleteOneVertex(
-        const GA_Offset elemoff,
-        const bool reverseGroup = false
-    )
+    void deleteOneVertex(const GA_Offset elemoff, const bool reverseGroup = false)
     {
         if (reverseGroup)
         {
@@ -839,10 +836,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
     // }
     
     
-    void deleteOneElement(
-        const GA_AttributeOwner owner,
-        const GA_Offset elemoff,
-        const bool reverseGroup = false
+    void deleteOneElement(const GA_AttributeOwner owner, const GA_Offset elemoff, const bool reverseGroup = false
     )
     {
         switch (owner)
@@ -853,10 +847,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
         }
     }
 
-    void deleteOneElement(
-        const GA_GroupType owner,
-        const GA_Offset elemoff,
-        const bool reverseGroup = false
+    void deleteOneElement(const GA_GroupType owner, const GA_Offset elemoff, const bool reverseGroup = false
     )
     {
         switch (owner)
@@ -1024,7 +1015,7 @@ SYS_FORCE_INLINE bool destroyNonDetachedAttrib(GA_Attribute* const attrib)
 }
 
 
-void attribBumpDataId(const GA_AttributeOwner owner, const char* pattern)
+void attribBumpDataId(const GA_AttributeOwner owner, const char* const pattern)
 {
     if (!pattern || pattern == "")
         return;
@@ -1037,7 +1028,7 @@ void attribBumpDataId(const GA_AttributeOwner owner, const char* pattern)
     }
 }
 
-SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* groupPattern)
+SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* const groupPattern)
 { return GFE_Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
 
     
