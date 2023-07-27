@@ -1,29 +1,28 @@
 
 #pragma once
 
-#ifndef __GFE_Enumerate_h__
-#define __GFE_Enumerate_h__
+#ifndef __GFE_PointFromVoxel_h__
+#define __GFE_PointFromVoxel_h__
 
-#include "GFE/GFE_Enumerate.h"
+#include "GFE/GFE_PointFromVoxel.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
-
-#include "GFE/GFE_AttributeCast.h"
-#include "SOP/SOP_Enumerate.proto.h"
-
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_PointFromVoxel pointFromVoxel(geo, cookparms);
+    pointFromVoxel.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    pointFromVoxel.compute();
 */
-    
-class GFE_Enumerate : public GFE_AttribFilter {
 
-#define __TEMP_GFE_Enumerate_GroupName       "__TEMP_GFE_Enumerate_Group"
-#define __TEMP_GFE_Enumerate_PieceAttribName "__TEMP_GFE_Enumerate_PieceAttrib"
-#define __TEMP_GFE_Enumerate_OutAttribName   "__TEMP_GFE_Enumerate_OutAttrib"
+
+#include "UT/UT_VoxelArray.h"
+    
+class GFE_PointFromVoxel : public GFE_AttribFilter {
+
+#define __TEMP_GFE_PointFromVoxel_GroupName       "__TEMP_GFE_PointFromVoxel_Group"
+#define __TEMP_GFE_PointFromVoxel_PieceAttribName "__TEMP_GFE_PointFromVoxel_PieceAttrib"
+#define __TEMP_GFE_PointFromVoxel_OutAttribName   "__TEMP_GFE_PointFromVoxel_OutAttrib"
     
 
 public:
@@ -58,7 +57,7 @@ public:
     {
         outAttribName = attribName.c_str();
         return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, __TEMP_GFE_Enumerate_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
+            storageClass, storage, __TEMP_GFE_PointFromVoxel_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         
         // if (pieceAttrib && !detached && !pieceAttrib->isDetached() && GFE_Type::stringEqual(pieceAttrib->getName(), attribName))
         // {
@@ -81,18 +80,56 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
-
-        if (groupParser.isEmpty())
-            return true;
-        
-        if (pieceAttrib)
+        if (GFE_Type::isInvalidOffset(volumeoff))
         {
-            enumerateSideFX();
-            return true;
+            volumeoff = geo->getFirstVolumeoff(groupParser.getPrimitiveGroup());
+            
+            if (GFE_Type::isInvalidOffset(volumeoff))
+            {
+                geo->clearElement();
+                return true;
+            }
         }
         
+        if (geo->isVDB(volumeoff))
+        {
+            
+        }
+        else
+        {
+            
+        }
+        UT_VoxelArrayF* vox = geo->volume;
+        int x, y, z;
+        float total = 0.0;
+        for (z = 0; z < vox->getZRes(); z++)
+            for (y = 0; y < vox->getYRes(); y++)
+                for (x = 0; x < vox->getXRes(); x++)
+                    total += (*vox)(x, y, z);
+        
+        if ((geoSrc ? geoSrc : geo).isva)
+            return false;
+        
+        if (geoSrc)
+        {
+            
+            const GA_Size numpt = geo->getNumPoints();
+        
+            const GA_Size numvoxel = geo->getNumPoints();
+            geo->appendPointBlock();
+            if (numpt < )
+        }
+        else
+        {
+            
+        }
+        
+        if (getOutAttribArray().isEmpty())
+            return false;
+        
+        if (groupParser.isEmpty())
+            return true;
+
         
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
@@ -135,8 +172,19 @@ private:
         UT_ASSERT_P(enumAttrib);
         
         const GA_AttributeOwner owner = enumAttrib->getOwner();
+
+
         
-        UT_ASSERT_MSG(pieceAttrib->getOwner() == owner, "not same owner");
+        GA_Offset start, end;
+        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+        {
+            attrib_ph.setPage(start);
+            //const GA_Offset baseOff = start - GAgetPageOff(start);
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            {
+                attrib_ph.value(elemoff) = firstIndex + elemoff;
+            }
+        }
 
         
         GA_ElementGroup* elemGroup = nullptr;
@@ -145,9 +193,9 @@ private:
         {
             if (group->isDetached())
             {
-                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_Enumerate_GroupName);
+                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_PointFromVoxel_GroupName);
                 elemGroup->combine(group);
-                enumParms.setGroup(__TEMP_GFE_Enumerate_GroupName);
+                enumParms.setGroup(__TEMP_GFE_PointFromVoxel_GroupName);
             }
             else
             {
@@ -162,8 +210,8 @@ private:
         GA_Attribute* namedPieceAttrib = nullptr;
         if (pieceAttrib->isDetached())
         {
-            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_Enumerate_PieceAttribName);
-            enumParms.setPieceAttrib(__TEMP_GFE_Enumerate_PieceAttribName);
+            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_PointFromVoxel_PieceAttribName);
+            enumParms.setPieceAttrib(__TEMP_GFE_PointFromVoxel_PieceAttribName);
             //namedPieceAttrib->bumpDataId();
         }
         else
@@ -186,11 +234,11 @@ private:
         //GA_Attribute* outAttrib = nullptr;
         //if (enumAttrib->isDetached() || GFE_Type::stringEqual(enumAttrib->getName(), pieceAttrib->getName()))
         
-        enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        enumParms.setAttribname(__TEMP_GFE_PointFromVoxel_OutAttribName);
         // if (enumAttrib->isDetached() || enumAttrib == pieceAttrib)
         // {
-        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_Enumerate_OutAttribName);
-        //     enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_PointFromVoxel_OutAttribName);
+        //     enumParms.setAttribname(__TEMP_GFE_PointFromVoxel_OutAttribName);
         // }
         // else
         // {
@@ -227,7 +275,7 @@ private:
         
         enumVerb->cook(enumCookparms);
         
-        attribCast.getInAttribArray().set(owner, __TEMP_GFE_Enumerate_OutAttribName);
+        attribCast.getInAttribArray().set(owner, __TEMP_GFE_PointFromVoxel_OutAttribName);
         if (attribCast.newStorageClass == GA_STORECLASS_STRING)
         {
             attribCast.prefix = prefix;
@@ -253,9 +301,9 @@ private:
             UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
+                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -276,9 +324,9 @@ private:
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
+                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -295,9 +343,9 @@ private:
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
+                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -378,13 +426,8 @@ private:
 
 
 public:
-    GA_Size firstIndex = 0;
-    bool outAsOffset   = true;
-    bool negativeIndex = false;
-    
-    const char* prefix = "";
-    const char* sufix  = "";
-    
+
+    GA_Offset volumeoff = GFE_INVALID_OFFSET;
     bool enumeratePieceElem = false;
     
     
@@ -396,18 +439,13 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;
 
-private:
-    GU_DetailHandle destgdh;
-    UT_Array<GU_ConstDetailHandle> inputgdh;
-    SOP_EnumerateParms enumParms;
-    const SOP_NodeVerb* const enumVerb = SOP_NodeVerb::lookupVerb("enumerate");
 
-#undef __TEMP_GFE_Enumerate_GroupName
-#undef __TEMP_GFE_Enumerate_PieceAttribName
-#undef __TEMP_GFE_Enumerate_OutAttribName
+#undef __TEMP_GFE_PointFromVoxel_GroupName
+#undef __TEMP_GFE_PointFromVoxel_PieceAttribName
+#undef __TEMP_GFE_PointFromVoxel_OutAttribName
 
     
-}; // End of class GFE_Enumerate
+}; // End of class GFE_PointFromVoxel
 
 
 

@@ -33,7 +33,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "GroupType"
         label   "Group Type"
         type    ordinal
-        default { "point" }
+        default { "guess" }
         menu {
             "guess"     "Guess from Group"
             "prim"      "Primitive"
@@ -119,13 +119,13 @@ static const char *theDsFile = R"THEDSFILE(
     }
 
 
-    parm {
-        name    "ezMode"
-        cppname "EZMode"
-        label   "Eazy Mode"
-        type    toggle
-        default { "0" }
-    }
+    //parm {
+    //    name    "ezMode"
+    //    cppname "EZMode"
+    //    label   "Eazy Mode"
+    //    type    toggle
+    //    default { "0" }
+    //}
 
 
     parm {
@@ -135,26 +135,28 @@ static const char *theDsFile = R"THEDSFILE(
         type    toggle
         default { "0" }
     }
+    //parm {
+    //    name    "repairPrecision"
+    //    cppname "RepairPrecision"
+    //    label   "Repair Precision"
+    //    type    toggle
+    //    default { "1" }
+    //    joinnext
+    //}
+    //parm {
+    //    name    "repairPrecisionThreshold"
+    //    cppname "RepairPrecisionThreshold"
+    //    label   "Repair Precision Threshold"
+    //    type    log
+    //    default { "1e-07" }
+    //    disablewhen "{ repairPrecision == 0 }"
+    //    range   { 1e-05 0.001 }
+    //    nolabel
+    //}
     parm {
-        name    "repairPrecision"
-        cppname "RepairPrecision"
-        label   "Repair Precision"
-        type    toggle
-        default { "1" }
-    }
-    parm {
-        name    "repairPrecisionThreshold"
-        cppname "RepairPrecisionThreshold"
-        label   "Repair Precision Threshold"
-        type    log
-        default { "1e-07" }
-        disablewhen "{ repairPrecision == 0 }"
-        range   { 1e-07 0.0001 }
-    }
-    parm {
-        name    "ignoreHFHeight"
-        cppname "IgnoreHFHeight"
-        label   "Ignore HeightField Height"
+        name    "usePrimBounding"
+        cppname "UsePrimBounding"
+        label   "Use Primitive Bounding"
         type    toggle
         default { "0" }
     }
@@ -340,7 +342,7 @@ R"THEDSFILE(
         //     label   "BBox Center Translate"
         //     hidewhen "{ ezMode == 1 }"
         //     grouptag { "group_type" "simple" }
-// 
+        // 
         //     parm {
         //         name    "bboxcx"
         //         cppname "bboxcx"
@@ -576,7 +578,7 @@ R"THEDSFILE(
     group {
         name    "matchingtranslate_2_3"
         label   "Matching Scale"
-        hidewhentab "{ doscale == 0 }"
+        hidewhentab "{ doScale == 0 }"
 
         parm {
             name    "scaleVolume"
@@ -619,21 +621,22 @@ R"THEDSFILE(
             default { "0" }
             range   { -1 1 }
         }
-        parm {
-            name    "uniScale"
-            cppname "UniScale"
-            label   "Uniform Scale"
-            type    toggle
-            default { "off" }
-        }
+        //parm {
+        //    name    "uniScale"
+        //    cppname "UniScale"
+        //    label   "Uniform Scale"
+        //    type    toggle
+        //    default { "off" }
+        //}
         parm {
             name    "scaleAxis"
             cppname "ScaleAxis"
             label   "Scale Axis"
             type    ordinal
             default { "min" }
-            hidewhen "{ uniScale == 0 }"
+            //hidewhen "{ uniScale == 0 }"
             menu {
+                "xyz"       "XYZ"
                 "x"         "X"
                 "y"         "Y"
                 "z"         "Z"
@@ -845,6 +848,7 @@ R"THEDSFILE(
         type    string
         default { "xform" }
         disablewhen "{ outXformAttrib == 0 }"
+        joinnext
     }
     parm {
         name    "xformMergeType"
@@ -1004,6 +1008,7 @@ sopScaleAxis(const SOP_FeE_MatchBBox_2_0Parms::ScaleAxis parmScaleAxis)
     using namespace SOP_FeE_MatchBBox_2_0Enums;
     switch (parmScaleAxis)
     {
+    case ScaleAxis::XYZ:       return GFE_ScaleAxis::Invalid  ; break;
     case ScaleAxis::X:         return GFE_ScaleAxis::X        ; break;
     case ScaleAxis::Y:         return GFE_ScaleAxis::Y        ; break;
     case ScaleAxis::Z:         return GFE_ScaleAxis::Z        ; break;
@@ -1051,10 +1056,17 @@ SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     const GA_Detail* const geoRef0 = inGeo1 ? inGeo1 : (sopparms.getUseSelfAsRef() ? &outGeo0 : nullptr);
     GFE_MatchBBox matchBBox(outGeo0, geoRef0, inGeo2, &cookparms);
     
+    matchBBox.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    matchBBox.scaleAxis = scaleAxis;
+    matchBBox.doTranslate = sopparms.getDoTranslate();
+    matchBBox.doScale     = sopparms.getDoScale();
+    matchBBox.usePrimBounding = sopparms.getUsePrimBounding();
+
+    
     matchBBox.setPositionAttrib(sopparms.getPosAttrib());
     matchBBox.setPositionRef0Attrib(sopparms.getPosRefAttrib());
     matchBBox.setPositionRef1Attrib(sopparms.getPosRestAttrib());
-    matchBBox.scaleAxis = scaleAxis;
+
     
     matchBBox.getOutAttribArray().appendPrimitives(sopparms.getPrimAttribToXform());
     matchBBox.getOutAttribArray().appendPoints    (sopparms.getPointAttribToXform());
@@ -1065,12 +1077,6 @@ SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         matchBBox.setXformAttrib(false, GA_STORE_INVALID, sopparms.getXformAttribName());
     
     
-    matchBBox.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    
-    matchBBox.doTranslate    = sopparms.getDoTranslate();
-    matchBBox.doScale        = sopparms.getDoScale();
-    matchBBox.ignoreHFHeight = sopparms.getIgnoreHFHeight();
-
     if (matchBBox.doTranslate)
     {
         matchBBox.tBiasRest[0] = sopparms.getTBiasRestx();
@@ -1096,8 +1102,8 @@ SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         matchBBox.sPost   *= sopparms.getScale();
     }
     
-    if (sopparms.getRepairPrecision())
-        matchBBox.setRepairPrecision(sopparms.getRepairPrecisionThreshold());
+    //if (sopparms.getRepairPrecision())
+    //    matchBBox.setRepairPrecision(sopparms.getRepairPrecisionThreshold());
     
     
     matchBBox.groupParser.setGroup(groupType, sopparms.getGroup());

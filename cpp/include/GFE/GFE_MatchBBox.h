@@ -47,8 +47,8 @@ public:
     
     SYS_FORCE_INLINE UT_Vector3T<_TScalar> computeTranslate(const UT_Vector3T<_TScalar>& biasRest, const UT_Vector3T<_TScalar>& biasRef) const
     {
-        return restBBox.maxvec() * (biasRest - 1.0) - restBBox.minvec() *  biasRest
-             + refBBox .maxvec() * (biasRef  + 1.5) - refBBox .minvec() * (biasRef + 0.5);
+        return restBBox.maxvec() * (biasRest * 0.5 - 0.5) - restBBox.minvec() * (biasRest * 0.5 + 0.5)
+             + refBBox .maxvec() * (biasRef  * 0.5 + 0.5) + refBBox .minvec() * (-biasRef * 0.5 + 0.5);
     }
     
     SYS_FORCE_INLINE UT_Vector3T<_TScalar> computeTranslate(const UT_Vector3T<_TScalar>& bias) const
@@ -58,12 +58,8 @@ public:
     
     UT_Vector3T<_TScalar> computeScale(const UT_Vector3T<_TScalar>& bias, const GFE_ScaleAxis scaleAxis) const
     {
-        UT_Vector3T<_TScalar> s;
-        if (scaleAxis == GFE_ScaleAxis::Invalid)
-        {
-            s = refBBox.size() / restBBox.size();
-        }
-        else
+        UT_Vector3T<_TScalar> s = refBBox.size() / restBBox.size();
+        if (scaleAxis != GFE_ScaleAxis::Invalid)
         {
             int8 idx;
             switch (scaleAxis)
@@ -82,7 +78,7 @@ public:
             case GFE_ScaleAxis::ZXMax    : idx = bias[2] >= bias[0] ? 2 : 0;    break;
             default: UT_ASSERT_MSG(0, "Unhandled Scale Axis!"); return {1,1,1}; break;
             }
-            s = bias[idx];
+            s = s[idx];
         }
         s = SYSlerp(UT_Vector3T<_TScalar>(1,1,1), s, bias);
         return s;
@@ -92,7 +88,7 @@ public:
     { return restBBox.center(); }
     
     
-    SYS_FORCE_INLINE void computeScaleTranslate(
+    void computeScaleTranslate(
         UT_Vector3T<_TScalar>& c,
         UT_Vector3T<_TScalar>& s,
         UT_Vector3T<_TScalar>& t,
@@ -110,8 +106,8 @@ public:
         GFE_Bound::scale(restBBoxScaled, s);
         restBBoxScaled.translate(c);
         
-        t = restBBoxScaled.maxvec() * (tBiasRest - 1.0) - restBBoxScaled.minvec() *  tBiasRest
-          + refBBox       .maxvec() * (tBiasRef  + 1.5) - refBBox       .minvec() * (tBiasRef + 0.5);
+        t = restBBoxScaled.maxvec() * (tBiasRest * 0.5 - 0.5) - restBBoxScaled.minvec() * (tBiasRest * 0.5 + 0.5)
+          + refBBox       .maxvec() * (tBiasRef  * 0.5 + 0.5) + refBBox       .minvec() * (-tBiasRef * 0.5 + 0.5);
     }
     
 
@@ -170,11 +166,11 @@ public:
         this->minGrainSize   = minGrainSize;
     }
     
-    SYS_FORCE_INLINE void setRepairPrecision()
-    { repairPrecision = false; }
-    
-    SYS_FORCE_INLINE void setRepairPrecision(const fpreal threshold)
-    { repairPrecision = true; repairPrecisionThreshold = threshold; }
+    //SYS_FORCE_INLINE void setRepairPrecision()
+    //{ repairPrecision = false; }
+    //
+    //SYS_FORCE_INLINE void setRepairPrecision(const fpreal threshold)
+    //{ repairPrecision = true; repairPrecisionThreshold = threshold; }
 
     
     SYS_FORCE_INLINE GA_Attribute* setXformAttrib(GA_Attribute* const inAttrib = nullptr)
@@ -213,10 +209,10 @@ private:
         UT_ASSERT_P(!posRef0Attrib || GFE_Type::checkTupleAttrib(posRef0Attrib, GA_STORECLASS_FLOAT, GA_STORE_INVALID, 3));
         UT_ASSERT_P(!posRef1Attrib || GFE_Type::checkTupleAttrib(posRef1Attrib, GA_STORECLASS_FLOAT, GA_STORE_INVALID, 3));
 
-        
-        bboxXform.setRestBBox(geoRef1 ? *geoRef1 : *geo, groupParser.getPointRange(), geoRef1 ? posRef1Attrib : posAttrib);
+        bboxXform.setRestBBox(geoRef1 ? *geoRef1 : *geo, usePrimBounding ? groupParser.getPrimitiveRange() : groupParser.getPointRange(), geoRef1 ? posRef1Attrib : posAttrib);
+        //bboxXform.setRefBBox(geoRef0 ? *geoRef0 : *geo, (geoRef0 ? groupParserRef0 : groupParser).getPointRange(), geoRef0 ? posRef0Attrib : posAttrib);
         if (geoRef0)
-            bboxXform.setRefBBox(geoRef0 ? *geoRef0 : *geo, (geoRef0 ? groupParserRef0 : groupParser).getPointRange(), geoRef0 ? posRef0Attrib : posAttrib);
+            bboxXform.setRefBBox(*geoRef0, usePrimBounding ? groupParserRef0.getPrimitiveRange() : groupParserRef0.getPointRange(), posRef0Attrib);
         else
             bboxXform.setUnitRefBBox();
         
@@ -237,17 +233,17 @@ private:
             s = bboxXform.computeScale(sBias, scaleAxis);
             s *= sPost;
         }
-        
+        /*
         if (repairPrecision)
         {
             for (int8 i = 0; i < 6; ++i)
             {
-                if (abs(bboxXform.restBBox[i]) < repairPrecisionThreshold)
-                    bboxXform.restBBox[i] = 0;
+                if (SYSabs(bboxXform.restBBox.myFloats[i]) < repairPrecisionThreshold)
+                    bboxXform.restBBox.myFloats[i] = 0;
             }
             translate(xform, -(bboxmin0 + bboxmax0));
         }
-        
+        */
         const size_t sizeAttrib = getOutAttribArray().size();
         for (size_t i = 0; i < sizeAttrib; ++i)
         {
@@ -369,7 +365,7 @@ private:
 public:
     bool doTranslate = false;
     bool doScale = false;
-    bool ignoreHFHeight = false;
+    bool usePrimBounding = false;
     GFE_ScaleAxis scaleAxis = GFE_ScaleAxis::Invalid;
     
     UT_Vector3T<fpreal> sBias     = {1,1,1};
@@ -379,9 +375,9 @@ public:
     UT_Vector3T<xform_value_type> tPost = {0,0,0};
     UT_Vector3T<xform_value_type> sPost = {1,1,1};
     
-private:
-    bool repairPrecision = true;
-    fpreal repairPrecisionThreshold = 1e-05;
+//private:
+//    bool repairPrecision = true;
+//    fpreal repairPrecisionThreshold = 1e-05;
 
     
 private:

@@ -13,7 +13,7 @@
 
 
 
-#include "GFE/GFE_Enumerate.h"
+#include "GFE/GFE_PointFromVoxel.h"
 
 
 
@@ -228,7 +228,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_PointFromVoxel_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_PointFromVoxel_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -306,7 +306,7 @@ SOP_FeE_PointFromVoxel_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PointFromVoxel_1_0Cache*)cookparms.cache();
 
-    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     //outGeo0.replaceWith(inGeo0);
 
@@ -322,21 +322,19 @@ SOP_FeE_PointFromVoxel_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
         return;
 
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
+    GFE_PointFromVoxel pointFromVoxel(outGeo0, inGeo0, cookparms);
     if (sopparms.getUsePieceAttrib())
     {
-        enumerate.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
-        enumerate.enumeratePieceElem = sopparms.getEnumPieceElem();
+        pointFromVoxel.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
+        pointFromVoxel.enumeratePieceElem = sopparms.getEnumPieceElem();
     }
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    pointFromVoxel.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.prefix = sopparms.getPrefix();
-    enumerate.sufix  = sopparms.getSufix();
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-    enumerate.computeAndBumpDataId();
+    pointFromVoxel.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    pointFromVoxel.groupParser.setGroup(groupType, sopparms.getGroup());
+    pointFromVoxel.computeAndBumpDataId();
 
     
 

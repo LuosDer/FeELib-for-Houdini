@@ -253,9 +253,9 @@ private:
             UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
+                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -276,9 +276,9 @@ private:
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
+                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -295,9 +295,9 @@ private:
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
+                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);

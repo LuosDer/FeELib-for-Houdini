@@ -44,7 +44,48 @@ public:
     { return getNumVertices() >= 0; }
 
 
+    
 
+    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_AttributeOwner owner) const
+    { return GFE_DetailBase::getFirstElement(getIndexMap(owner)); }
+
+    template<GA_AttributeOwner _Owner>
+    SYS_FORCE_INLINE GA_Offset getFirstElement() const
+    { return GFE_DetailBase::getFirstElement(getIndexMap(_Owner)); }
+
+
+    
+    SYS_FORCE_INLINE bool isHoudiniVolume(const GA_Offset elemoff)
+    { return GFE_Type::isHoudiniVolume(getPrimitiveTypeId(elemoff)); }
+    
+    SYS_FORCE_INLINE bool isVDB(const GA_Offset elemoff)
+    { return GFE_Type::isVDB(getPrimitiveTypeId(elemoff)); }
+    
+    SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup)
+    {
+        const GA_Offset volumeoff = geoPrimGroup
+                            ? GFE_Group::getFirstElement(*geoPrimGroup)
+                            : GFE_DetailBase::getFirstElement<GA_ATTRIB_PRIMITIVE>(this);
+        
+        if (isInvalidOffset<GA_ATTRIB_PRIMITIVE>(volumeoff))
+            return GFE_INVALID_OFFSET;
+        
+        if (!GFE_Type::isPacked(getPrimitiveTypeId(volumeoff)))
+            return GFE_INVALID_OFFSET;
+        
+        return volumeoff;
+    }
+
+    
+    
+    template<GA_AttributeOwner _Owner>
+    SYS_FORCE_INLINE bool isInvalidOffset(const GA_Offset elemoff) const
+    { return GFE_Type::isInvalidOffset(getIndexMap(_Owner), elemoff); }
+
+    SYS_FORCE_INLINE bool isInvalidOffset(const GA_AttributeOwner owner, const GA_Offset elemoff) const
+    { return GFE_Type::isInvalidOffset(getIndexMap(owner), elemoff); }
+
+    
     SYS_FORCE_INLINE void setValidPosAttrib(GA_Attribute*& attrib)
     { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
     

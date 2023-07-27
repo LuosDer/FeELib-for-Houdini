@@ -381,10 +381,26 @@ SYS_FORCE_INLINE static VECTOR_T getZeroVector()
     else
         return VECTOR_T(0.0);
 }
-    
 
-SYS_FORCE_INLINE static bool isPacked(const int i)
-{ return i >= 25 && i <= 27; }
+
+SYS_FORCE_INLINE static bool isHoudiniVolume(const int id)
+{ return id == GA_PRIMVOLUME; } // 20
+
+SYS_FORCE_INLINE static bool isVDB(const int id)
+{ return id == GA_PRIMVDB; } // 23
+
+SYS_FORCE_INLINE static bool isVolume(const int id)
+{ return isHoudiniVolume(id) || isVDB(id); }
+
+
+SYS_FORCE_INLINE static bool isPackedGeometry(const int id)
+{ return id == 25; } // 25
+
+SYS_FORCE_INLINE static bool isPackedFragment(const int id)
+{ return id == 27; } // 27
+
+SYS_FORCE_INLINE static bool isPacked(const int id)
+{ return isPackedGeometry(id) || isPackedFragment(id); }
 
 
 

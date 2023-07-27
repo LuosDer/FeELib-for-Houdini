@@ -16,7 +16,12 @@ namespace GFE_Bound {
 
     template<typename _TScalar>
     SYS_FORCE_INLINE static UT_BoundingBoxT<_TScalar> stdBoundingBoxT()
-    { return UT_BoundingBoxT<_TScalar>(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN); }
+    { return UT_BoundingBoxT<_TScalar>(std::numeric_limits<_TScalar>::max(),
+                                       std::numeric_limits<_TScalar>::max(),
+                                       std::numeric_limits<_TScalar>::max(),
+                                       std::numeric_limits<_TScalar>::lowest(),
+                                       std::numeric_limits<_TScalar>::lowest(),
+                                       std::numeric_limits<_TScalar>::lowest()); }
 
     //using stdBoundingBoxH = stdBoundingBoxT<fpreal16>;
     //using stdBoundingBoxF = stdBoundingBoxT<fpreal32>;
@@ -42,8 +47,13 @@ namespace GFE_Bound {
 
     template<typename _TScalar>
     SYS_FORCE_INLINE static void setStd(UT_BoundingBoxT<_TScalar>& bbox)
-    { bbox.setBounds(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN); }
-
+    { bbox.setBounds(std::numeric_limits<_TScalar>::max(),
+                     std::numeric_limits<_TScalar>::max(),
+                     std::numeric_limits<_TScalar>::max(),
+                     std::numeric_limits<_TScalar>::lowest(),
+                     std::numeric_limits<_TScalar>::lowest(),
+                     std::numeric_limits<_TScalar>::lowest()); }
+    
     
     template<typename _TScalar>
     static UT_BoundingBoxT<_TScalar> getBBox(const GA_Detail& geo, const GA_Range& pointRange, const GA_Attribute* posAttrib = nullptr)
@@ -53,10 +63,11 @@ namespace GFE_Bound {
         
         auto bbox = stdBoundingBoxT<fpreal32>();
         geo.enlargeBoundingBox(bbox, pointRange, posAttrib);
-        if constexpr (std::is_same_v<_TScalar, float>)
-            return bbox;
-        else
-            return UT_BoundingBoxT<_TScalar>(bbox);
+        return UT_BoundingBoxT<_TScalar>(bbox);
+        // if constexpr (std::is_same_v<_TScalar, float>)
+        //     return bbox;
+        // else
+        //     return UT_BoundingBoxT<_TScalar>(bbox);
     }
     
     template<typename _TScalar>

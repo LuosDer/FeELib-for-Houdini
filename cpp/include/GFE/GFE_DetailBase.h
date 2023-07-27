@@ -10,6 +10,7 @@
 
 
 
+//#include "GFE/GFE_Group.h"
 #include "GFE/GFE_Type.h"
 
 namespace GFE_DetailBase {
@@ -147,6 +148,37 @@ namespace GFE_DetailBase {
 
     SYS_FORCE_INLINE static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Edge& edge)
     { return edgeVertex(geo, edge.p0(), edge.p1()); }
+
+
+
+
+
+
+
+
+
+
+SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_IndexMap& indexMap)
+{ return indexMap.offsetSize() > 0 ? indexMap.offsetFromIndex(0) : GFE_INVALID_OFFSET; }
+
+// SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_IndexMap& indexMap, const GA_ElementGroup* const group)
+// { return group ? GFE_Group::getFirstElement(*group) : getFirstElement(indexMap); }
+
+SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_Detail& geo, const GA_AttributeOwner owner)
+{ return getFirstElement(geo.getIndexMap(owner)); }
+
+template<GA_AttributeOwner _Owner>
+SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_Detail& geo)
+{ return getFirstElement(geo.getIndexMap(_Owner)); }
+
+template<GA_AttributeOwner _Owner>
+SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_Detail* const geo)
+{ UT_ASSERT_P(geo); return getFirstElement<_Owner>(*geo); }
+
+
+
+
+
 
 
 
