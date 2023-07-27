@@ -1658,4 +1658,104 @@ public:
 
 
 
+class GFE_AttribFilterWithRef2 : public GFE_AttribFilterWithRef1, public GFE_GeoFilterRef2 {
+
+public:
+
+    GFE_AttribFilterWithRef2(
+        GFE_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribFilterWithRef2(
+        GFE_Detail& geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribFilterWithRef2(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
+    GFE_AttribFilterWithRef2(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribFilterWithRef2(
+        GA_Detail* const geo,
+        const GA_Detail& geoRef,
+        const GA_Detail& geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribFilterWithRef2(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    GFE_AttribFilterWithRef2(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const GA_Detail& geoRef1,
+        const GA_Detail* const geoRef2,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), &cookparms)
+    {
+    }
+
+
+    ~GFE_AttribFilterWithRef2()
+    {
+    }
+
+
+
+}; // End of class GFE_AttribFilterWithRef2
+
+
+
 #endif

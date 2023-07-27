@@ -17,7 +17,6 @@
 
 
 
-
 using namespace SOP_FeE_BlockStopCondition_2_0_Namespace;
 
 
@@ -228,10 +227,25 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_BlockStopCondition_2_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_BlockStopCondition_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
 
     virtual void cook(const CookParms &cookparms) const;
+
+    bool doPartialInputCook() const override
+    { return true; }
     
+    bool cookInputs(const InputParms& parms) const override
+    {
+        for (exint i = 0; i < parms.inputs().nInputs(); i++)
+        {
+            if (parms.inputs().hasInput(i))
+            {
+                if (!parms.inputs().cookInput(i))
+                    return false;
+            }
+        }
+        return true;
+    }
     /// This static data member automatically registers
     /// this verb class at library load time.
     static const SOP_NodeVerb::Register<SOP_FeE_BlockStopCondition_2_0Verb> theVerb;
@@ -305,8 +319,10 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     auto&& sopparms = cookparms.parms<SOP_FeE_BlockStopCondition_2_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_BlockStopCondition_2_0Cache*)cookparms.cache();
-
-    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    
+    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
+    const GA_Detail* const inGeo2 = cookparms.inputGeo(2);
 
     //outGeo0.replaceWith(inGeo0);
 
@@ -322,21 +338,18 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
 
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
+    GFE_BlockStopCondition blockStopCondition(outGeo0, inGeo0, inGeo1, inGeo2, cookparms);
     if (sopparms.getUsePieceAttrib())
     {
-        enumerate.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
-        enumerate.enumeratePieceElem = sopparms.getEnumPieceElem();
+        blockStopCondition.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
+        blockStopCondition.enumeratePieceElem = sopparms.getEnumPieceElem();
     }
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    blockStopCondition.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.prefix = sopparms.getPrefix();
-    enumerate.sufix  = sopparms.getSufix();
-    
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-    enumerate.computeAndBumpDataId();
+    blockStopCondition.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    blockStopCondition.groupParser.setGroup(groupType, sopparms.getGroup());
+    blockStopCondition.computeAndBumpDataId();
 
     
 

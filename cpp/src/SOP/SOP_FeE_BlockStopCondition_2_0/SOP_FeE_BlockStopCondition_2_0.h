@@ -19,7 +19,7 @@ public:
         //newOp->setUserData("nodeshape", "tilted", false);
         return newOp;
     }
-
+    
     static const UT_StringHolder theSOPTypeName;
     
     const SOP_NodeVerb *cookVerb() const override;
@@ -45,7 +45,9 @@ protected:
     {
         switch (idx)
         {
-        case 0:     return "Curve";
+        case 0:     return "Geo Flow";
+        case 1:     return "Loop Begin(Feedback)";
+        case 2:     return "Stop Condition";
         default:    return "Invalid Source";
         }
     }

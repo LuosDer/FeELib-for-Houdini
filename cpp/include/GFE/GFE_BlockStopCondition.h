@@ -1,33 +1,30 @@
 
 #pragma once
 
-#ifndef __GFE_Enumerate_h__
-#define __GFE_Enumerate_h__
+#ifndef __GFE_BlockStopCondition_h__
+#define __GFE_BlockStopCondition_h__
 
-#include "GFE/GFE_Enumerate.h"
+#include "GFE/GFE_BlockStopCondition.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
 
-#include "GFE/GFE_AttributeCast.h"
-#include "SOP/SOP_Enumerate.proto.h"
-
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_BlockStopCondition blockStopCondition(geo, cookparms);
+    blockStopCondition.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    blockStopCondition.compute();
 */
     
-class GFE_Enumerate : public GFE_AttribFilter {
+class GFE_BlockStopCondition : public GFE_AttribFilterWithRef2 {
 
-#define __TEMP_GFE_Enumerate_GroupName       "__TEMP_GFE_Enumerate_Group"
-#define __TEMP_GFE_Enumerate_PieceAttribName "__TEMP_GFE_Enumerate_PieceAttrib"
-#define __TEMP_GFE_Enumerate_OutAttribName   "__TEMP_GFE_Enumerate_OutAttrib"
+#define __TEMP_GFE_BlockStopCondition_GroupName       "__TEMP_GFE_BlockStopCondition_Group"
+#define __TEMP_GFE_BlockStopCondition_PieceAttribName "__TEMP_GFE_BlockStopCondition_PieceAttrib"
+#define __TEMP_GFE_BlockStopCondition_OutAttribName   "__TEMP_GFE_BlockStopCondition_OutAttrib"
     
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribFilterWithRef2::GFE_AttribFilterWithRef2;
 
 
     void
@@ -58,7 +55,7 @@ public:
     {
         outAttribName = attribName.c_str();
         return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, __TEMP_GFE_Enumerate_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
+            storageClass, storage, __TEMP_GFE_BlockStopCondition_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         
         // if (pieceAttrib && !detached && !pieceAttrib->isDetached() && GFE_Type::stringEqual(pieceAttrib->getName(), attribName))
         // {
@@ -81,18 +78,7 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
-
-        if (groupParser.isEmpty())
-            return true;
-        
-        if (pieceAttrib)
-        {
-            enumerateSideFX();
-            return true;
-        }
-        
+        blockStopCondition
         
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
@@ -145,9 +131,9 @@ private:
         {
             if (group->isDetached())
             {
-                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_Enumerate_GroupName);
+                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_BlockStopCondition_GroupName);
                 elemGroup->combine(group);
-                enumParms.setGroup(__TEMP_GFE_Enumerate_GroupName);
+                enumParms.setGroup(__TEMP_GFE_BlockStopCondition_GroupName);
             }
             else
             {
@@ -162,8 +148,8 @@ private:
         GA_Attribute* namedPieceAttrib = nullptr;
         if (pieceAttrib->isDetached())
         {
-            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_Enumerate_PieceAttribName);
-            enumParms.setPieceAttrib(__TEMP_GFE_Enumerate_PieceAttribName);
+            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_BlockStopCondition_PieceAttribName);
+            enumParms.setPieceAttrib(__TEMP_GFE_BlockStopCondition_PieceAttribName);
             //namedPieceAttrib->bumpDataId();
         }
         else
@@ -186,11 +172,11 @@ private:
         //GA_Attribute* outAttrib = nullptr;
         //if (enumAttrib->isDetached() || GFE_Type::stringEqual(enumAttrib->getName(), pieceAttrib->getName()))
         
-        enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        enumParms.setAttribname(__TEMP_GFE_BlockStopCondition_OutAttribName);
         // if (enumAttrib->isDetached() || enumAttrib == pieceAttrib)
         // {
-        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_Enumerate_OutAttribName);
-        //     enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_BlockStopCondition_OutAttribName);
+        //     enumParms.setAttribname(__TEMP_GFE_BlockStopCondition_OutAttribName);
         // }
         // else
         // {
@@ -227,7 +213,7 @@ private:
         
         enumVerb->cook(enumCookparms);
         
-        attribCast.getInAttribArray().set(owner, __TEMP_GFE_Enumerate_OutAttribName);
+        attribCast.getInAttribArray().set(owner, __TEMP_GFE_BlockStopCondition_OutAttribName);
         if (attribCast.newStorageClass == GA_STORECLASS_STRING)
         {
             attribCast.prefix = prefix;
@@ -402,12 +388,12 @@ private:
     SOP_EnumerateParms enumParms;
     const SOP_NodeVerb* const enumVerb = SOP_NodeVerb::lookupVerb("enumerate");
 
-#undef __TEMP_GFE_Enumerate_GroupName
-#undef __TEMP_GFE_Enumerate_PieceAttribName
-#undef __TEMP_GFE_Enumerate_OutAttribName
+#undef __TEMP_GFE_BlockStopCondition_GroupName
+#undef __TEMP_GFE_BlockStopCondition_PieceAttribName
+#undef __TEMP_GFE_BlockStopCondition_OutAttribName
 
     
-}; // End of class GFE_Enumerate
+}; // End of class GFE_BlockStopCondition
 
 
 
