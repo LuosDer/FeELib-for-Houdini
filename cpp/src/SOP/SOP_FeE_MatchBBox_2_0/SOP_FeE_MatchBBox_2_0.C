@@ -1047,7 +1047,7 @@ SOP_FeE_MatchBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     
     const GA_GroupType groupType    = sopGroupType(sopparms.getGroupType());
     const GA_GroupType groupTypeRef = sopGroupType(sopparms.getGroupTypeRef());
-    const GFE_ScaleAxis scaleAxis   = sopScaleAxis(sopparms.getScaleAxis());
+    const GFE_ScaleAxis scaleAxis = sopScaleAxis(sopparms.getScaleAxis());
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())

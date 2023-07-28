@@ -62,9 +62,9 @@ static void accumulateT(GA_Attribute& attrib, const GA_SplittableRange& r)
 {
     FLOAT_T valuePrev = 0;
     GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+    GA_Offset start, end;
     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
     {
-        GA_Offset start, end;
         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
         {
             attrib_ph.setPage(start);
@@ -99,10 +99,11 @@ static void computeIndexAttrib(GA_Attribute& attrib, const GA_SplittableRange* c
     UT_ASSERT_P(attrib.getStorageClass() == GA_STORECLASS_INT);
     const GA_SplittableRange& r = srange ? *srange : GA_SplittableRange(GA_Range(attrib.getIndexMap()));
     GA_Index index = startIndex;
+    
     GA_PageHandleT<GA_Index, GA_Index, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+    GA_Offset start, end;
     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
     {
-        GA_Offset start, end;
         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
         {
             attrib_ph.setPage(start);
@@ -151,9 +152,9 @@ static void cloneArray(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     UTparallelFor(geoSplittableRange, [&out_h, &in_h](const GA_SplittableRange& r)
     {
         ARRAY_T array;
+        GA_Offset start, end;
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            GA_Offset start, end;
             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -175,7 +176,8 @@ static void cloneArray(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
 
 template<typename VECTOR_T>
 static void cloneVec(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
-    const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+                     const exint subscribeRatio = 64, const exint minGrainSize = 1024
+)
 {
     UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
     
@@ -184,9 +186,9 @@ static void cloneVec(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     {
         GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> out_ph(&outAttrib);
         GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&inAttrib);
+        GA_Offset start, end;
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            GA_Offset start, end;
             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
                 out_ph.setPage(start);
@@ -212,9 +214,9 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     {
         GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> out_ph(&outAttrib);
         GA_PageHandleT<FLOAT_T, FLOAT_T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> in_ph(&inAttrib);
+        GA_Offset start, end;
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            GA_Offset start, end;
             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
                 out_ph.setPage(start);
@@ -229,25 +231,22 @@ static void clone(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
 }
     
 template<>
-static void clone<UT_StringHolder>(GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
+static void clone<UT_StringHolder>(
+    GA_Attribute& outAttrib, const GA_Attribute& inAttrib,
     const exint subscribeRatio, const exint minGrainSize)
 {
     UT_ASSERT_MSG(outAttrib.getOwner() == inAttrib.getOwner(), "not same owner");
 
     GA_RWHandleS out_h(&outAttrib);
     GA_ROHandleS in_h(&inAttrib);
-    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
-    UTparallelFor(geoSplittableRange, [&out_h, &in_h](const GA_SplittableRange& r)
+    UTparallelFor(GA_SplittableRange(GA_Range(outAttrib.getIndexMap())), [&out_h, &in_h](const GA_SplittableRange& r)
     {
-        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
-            GA_Offset start, end;
-            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    out_h.set(elemoff, in_h.get(elemoff));
-                }
+                out_h.set(elemoff, in_h.get(elemoff));
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -261,18 +260,14 @@ static void clone<UT_OptionsHolder>(GA_Attribute& outAttrib, const GA_Attribute&
 
     GA_RWHandleDict out_h(&outAttrib);
     GA_ROHandleDict in_h(&inAttrib);
-    const GA_SplittableRange geoSplittableRange(GA_Range(outAttrib.getIndexMap()));
-    UTparallelFor(geoSplittableRange, [&out_h, &in_h](const GA_SplittableRange& r)
+    UTparallelFor(GA_SplittableRange(GA_Range(outAttrib.getIndexMap())), [&out_h, &in_h](const GA_SplittableRange& r)
     {
-        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+        GA_Offset start, end;
+        for (GA_Iterator it(r); it.blockAdvance(start, end); )
         {
-            GA_Offset start, end;
-            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    out_h.set(elemoff, in_h.get(elemoff));
-                }
+                out_h.set(elemoff, in_h.get(elemoff));
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -1046,8 +1041,7 @@ findNormal3D(
 }
 
 
-static GA_Attribute*
-findNormal3D(
+static GA_Attribute* findNormal3D(
     GA_Detail& geo,
     const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::Invalid,
     const UT_StringRef& name = "N"
@@ -1067,7 +1061,7 @@ findNormal3D(
         normal3DAttrib = geo.findPointAttribute(name);
         if (!normal3DAttrib)
             normal3DAttrib = geo.findVertexAttribute(name);
-        break;
+    break;
     case GFE_NormalSearchOrder::All:
         normal3DAttrib = geo.findPrimitiveAttribute(name);
         if (!normal3DAttrib)
@@ -1080,7 +1074,7 @@ findNormal3D(
                     normal3DAttrib = geo.findGlobalAttribute(name);
             }
         }
-        break;
+    break;
     default: UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder"); break;
     }
     return normal3DAttrib;
@@ -1116,12 +1110,17 @@ public:
     void operator()(const GA_SplittableRange& r)
     {
         UT_ASSERT_MSG(r.getOwner() == attrib_h->getOwner(), "not same owner");
+        GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib_h.getAttribute());
         GA_Offset start, end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
-                mySum += attrib_h.get(elemoff);
+                attrib_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    mySum += attrib_ph.value(elemoff);
+                }
             }
         }
     }
@@ -1142,7 +1141,7 @@ private:
         const GA_ROHandleT<T>& attrib_h,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
-        const exint minGrainSize = 1024
+        const exint minGrainSize   = 1024
     )
     {
         ComputeAttribSum body(attrib_h);
@@ -1155,7 +1154,7 @@ private:
         const GA_ROHandleT<T>& attrib_h,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
-        const exint minGrainSize = 1024
+        const exint minGrainSize   = 1024
     )
     {
         //const GA_Range range(group->getIndexMap(), group);
@@ -1166,6 +1165,93 @@ private:
 
 
 
+    
+    template<typename T>
+    class ComputeAttribExtreme
+    {
+    public:
+        ComputeAttribExtreme(const GA_Attribute* const attrib)
+            : myAttrib(attrib)
+            , myMin(std::numeric_limits<T>::max())
+            , myMax(std::numeric_limits<T>::lowest())
+        {}
+        ComputeAttribExtreme(ComputeAttribExtreme& src, UT_Split)
+            : myAttrib(src.myAttrib)
+            , myMin(std::numeric_limits<T>::max())
+            , myMax(std::numeric_limits<T>::lowest())
+        {}
+        void operator()(const GA_SplittableRange& r)
+        {
+            UT_ASSERT_MSG(r.getOwner() == myAttrib->getOwner(), "not same owner");
+            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(myAttrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if (attrib_ph.value(elemoff) < myMin)
+                            myMin = attrib_ph.value(elemoff);
+                        if (attrib_ph.value(elemoff) > myMax)
+                            myMax = attrib_ph.value(elemoff);
+                    }
+                }
+            }
+        }
+        SYS_FORCE_INLINE void join(const ComputeAttribExtreme& other)
+        {
+            if (other.myMin < myMin)
+                myMin = other.myMin;
+            if (other.myMax > myMax)
+                myMax = other.myMax;
+        }
+        SYS_FORCE_INLINE T getMin() const
+        { return myMin; }
+        SYS_FORCE_INLINE T getMax() const
+        { return myMax; }
+    private:
+        T myMin;
+        T myMax;
+        const GA_Attribute* const myAttrib;
+    }; // End of Class ComputeAttribExtreme
+
+
+
+
+    template<typename T>
+    T computeAttribExtreme(
+        const GA_ROHandleT<T>& attrib_h,
+        const GA_SplittableRange& splittableRange,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize   = 1024
+    )
+    {
+        ComputeAttribExtreme body(attrib_h);
+        UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
+        return body.getSum();
+    }
+    
+    template<typename T>
+    SYS_FORCE_INLINE T computeAttribExtreme(
+        const GA_ROHandleT<T>& attrib_h,
+        const GA_ElementGroup* const group = nullptr,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize   = 1024
+    )
+    {
+        //const GA_Range range(group->getIndexMap(), group);
+        //const GA_SplittableRange splittableRange(range);
+        const GA_SplittableRange splittableRange(GA_Range(attrib_h->getIndexMap(), group));
+        return computeAttribExtreme<T>(attrib_h, splittableRange, subscribeRatio, minGrainSize);
+    }
+
+
+
+
+
+    
 } // End of namespace GFE_Attribute
 
 #endif

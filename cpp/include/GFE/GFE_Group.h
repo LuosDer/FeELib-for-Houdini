@@ -216,7 +216,7 @@ namespace GFE_Group {
     static GA_Offset getFirstElement(const GA_ElementGroup& group)
     {
         GA_Offset start, end;
-        for (GA_Iterator it(GA_Range(group.getIndexMap(), group)); it.blockAdvance(start, end); )
+        for (GA_Iterator it(GA_Range(group.getIndexMap(), &group)); it.blockAdvance(start, end); )
         {
             //const GA_Offset baseOff = start - GAgetPageOff(start);
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -235,11 +235,7 @@ SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group& group)
 { return GFE_Type::attributeOwner_groupType(group.classType()); }
 
 SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group* const group)
-{
-    if (!group)
-        return GA_ATTRIB_INVALID;
-    return getOwner(*group);
-}
+{ return group ? getOwner(*group) : GA_ATTRIB_INVALID; }
 
 SYS_FORCE_INLINE static void groupBumpDataId(GA_Group& group)
 {

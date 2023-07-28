@@ -1,15 +1,15 @@
 
 #pragma once
 
-#ifndef __GFE_ScaleAttributeElement_h__
-#define __GFE_ScaleAttributeElement_h__
+#ifndef __GFE_AttributeRemap_h__
+#define __GFE_AttributeRemap_h__
 
-#include "GFE/GFE_ScaleAttributeElement.h"
+#include "GFE/GFE_AttributeRemap.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
-class GFE_ScaleAttribElement : public GFE_AttribFilter {
+class GFE_AttribRemap : public GFE_AttribFilter {
 
 
 public:
@@ -17,7 +17,7 @@ public:
     using GFE_AttribFilter::GFE_AttribFilter;
 
 
-    ~GFE_ScaleAttribElement()
+    ~GFE_AttribRemap()
     {
     }
 
@@ -27,14 +27,14 @@ void
         const bool doNormalize = true,
         const fpreal64 uniScale = 1.0,
         const exint subscribeRatio = 64,
-        const exint minGrainSize   = 1024
+        const exint minGrainSize = 64
     )
 {
     setHasComputed();
     this->doNormalize = doNormalize;
     this->uniScale = uniScale;
     this->subscribeRatio = subscribeRatio;
-    this->minGrainSize   = minGrainSize;
+    this->minGrainSize = minGrainSize;
 }
 
 
@@ -54,13 +54,13 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        const size_t size = getOutAttribArray().size();
+        const ::std::vector<GA_Attribute*>::size_type size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
-            attrib = getOutAttribArray()[i];
+            attribPtr = getOutAttribArray()[i];
             
-            const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
-            switch (attrib->getAIFTuple()->getTupleSize(attrib))
+            const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
+            switch (attribPtr->getAIFTuple()->getTupleSize(attribPtr))
             {
             case 1:
                 switch (storage)
@@ -74,7 +74,6 @@ private:
                     case GA_STORE_REAL64: scaleNumericAttribElement<fpreal64>(); break;
                     default: break;
                 }
-            break;
             case 2:
                 switch (storage)
                 {
@@ -83,7 +82,7 @@ private:
                     case GA_STORE_REAL64: scaleVectorAttribElement<UT_Vector2T<fpreal64>>(); break;
                     default: break;
                 }
-            break;
+                break;
             case 3:
                 switch (storage)
                 {
@@ -92,7 +91,7 @@ private:
                     case GA_STORE_REAL64: scaleVectorAttribElement<UT_Vector3T<fpreal64>>(); break;
                     default: break;
                 }
-            break;
+                break;
             case 4:
                 switch (storage)
                 {
@@ -101,7 +100,7 @@ private:
                     case GA_STORE_REAL64: scaleVectorAttribElement<UT_Vector4T<fpreal64>>(); break;
                     default: break;
                 }
-            break;
+                break;
             default: break;
             }
         }
@@ -112,12 +111,12 @@ private:
     template<typename VECTOR_T>
     void scaleVectorAttribElement()
     {
-        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
-            GA_Offset start, end;
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
+                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -136,12 +135,12 @@ private:
     template<typename SCALE_T>
     void scaleNumericAttribElement()
     {
-        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<SCALE_T, SCALE_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
-            GA_Offset start, end;
+            GA_PageHandleT<SCALE_T, SCALE_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
+                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -156,28 +155,28 @@ private:
 
 
 
-    // #if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-    // 
-    // template<typename VECTOR_T>
-    // void scaleVectorAttribElement1()
-    // {
-    //     GAparallelForEachPage(groupParser.getRange(attrib->getOwner()), true, [this](GA_PageIterator pit)
-    //     {
-    //         GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
-    //         GAforEachPageBlock(pit, [&attrib_ph, this](GA_Offset start, GA_Offset end)
-    //         {
-    //             attrib_ph.setPage(start);
-    //             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-    //             {
-    //                 if (doNormalize)
-    //                     attrib_ph.value(elemoff).normalize();
-    //                 attrib_ph.value(elemoff) *= uniScale;
-    //             }
-    //         });
-    //     });
-    // }
-    // 
-    // #endif
+    #if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
+    
+    template<typename VECTOR_T>
+    void scaleVectorAttribElement1()
+    {
+        GAparallelForEachPage(groupParser.getRange(attribPtr->getOwner()), true, [this](GA_PageIterator pit)
+        {
+            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GAforEachPageBlock(pit, [&attrib_ph, this](GA_Offset start, GA_Offset end)
+            {
+                attrib_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    if (doNormalize)
+                        attrib_ph.value(elemoff).normalize();
+                    attrib_ph.value(elemoff) *= uniScale;
+                }
+            });
+        });
+    }
+    
+    #endif
 
 
 
@@ -186,12 +185,12 @@ public:
     fpreal64 uniScale = 1;
 
 private:
-    GA_Attribute* attrib;
-    GA_Attribute* refattrib;
+    GA_Attribute* attribPtr;
+    GA_Attribute* refAttribPtr;
 
     
     exint subscribeRatio = 64;
-    exint minGrainSize   = 1024;
+    exint minGrainSize = 64;
 
     
 };

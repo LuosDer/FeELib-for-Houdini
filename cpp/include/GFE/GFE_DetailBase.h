@@ -20,10 +20,15 @@ namespace GFE_DetailBase {
 
 
     
-/*
-        GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail();
+#if 0
+        GU_DetailHandle geoTemp_h;
+        GU_Detail* geoTemp;
+        geoTemp_h = GFE_DetailBase::newDetail(geo);
+        geoTemp = geoTemp_h.gdpNC();
+        
+        GU_DetailHandle geoTemp_h = GFE_DetailBase::newDetail(geo);
         GU_Detail* const geoTemp  = geoTemp_h.gdpNC();
-*/
+#endif
     static GU_DetailHandle newDetail()
     {
         GU_Detail* const geo = new GU_Detail;

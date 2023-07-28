@@ -46,14 +46,6 @@ public:
 
     
 
-    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_AttributeOwner owner) const
-    { return GFE_DetailBase::getFirstElement(getIndexMap(owner)); }
-
-    template<GA_AttributeOwner _Owner>
-    SYS_FORCE_INLINE GA_Offset getFirstElement() const
-    { return GFE_DetailBase::getFirstElement(getIndexMap(_Owner)); }
-
-
     
     SYS_FORCE_INLINE bool isHoudiniVolume(const GA_Offset elemoff)
     { return GFE_Type::isHoudiniVolume(getPrimitiveTypeId(elemoff)); }
@@ -61,19 +53,35 @@ public:
     SYS_FORCE_INLINE bool isVDB(const GA_Offset elemoff)
     { return GFE_Type::isVDB(getPrimitiveTypeId(elemoff)); }
     
-    SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup)
+    SYS_FORCE_INLINE bool isVolume(const GA_Offset elemoff)
+    { return isHoudiniVolume(elemoff) || isVDB(elemoff); }
+
+
+
+    
+
+    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_AttributeOwner owner) const
+    { return GFE_DetailBase::getFirstElement(getIndexMap(owner)); }
+
+    template<GA_AttributeOwner _Owner>
+    SYS_FORCE_INLINE GA_Offset getFirstElement() const
+    { return GFE_DetailBase::getFirstElement(getIndexMap(_Owner)); }
+
+    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_PrimitiveGroup* const geoPrimGroup)
     {
         const GA_Offset volumeoff = geoPrimGroup
-                            ? GFE_Group::getFirstElement(*geoPrimGroup)
-                            : GFE_DetailBase::getFirstElement<GA_ATTRIB_PRIMITIVE>(this);
+                                  ? GFE_Group::getFirstElement(*geoPrimGroup)
+                                  : GFE_DetailBase::getFirstElement<GA_ATTRIB_PRIMITIVE>(this);
         
-        if (isInvalidOffset<GA_ATTRIB_PRIMITIVE>(volumeoff))
-            return GFE_INVALID_OFFSET;
-        
-        if (!GFE_Type::isPacked(getPrimitiveTypeId(volumeoff)))
-            return GFE_INVALID_OFFSET;
-        
-        return volumeoff;
+        return isInvalidOffset<GA_ATTRIB_PRIMITIVE>(volumeoff) ? GFE_INVALID_OFFSET : volumeoff;
+    }
+
+
+    
+    SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup)
+    {
+        const GA_Offset volumeoff = getFirstElement(geoPrimGroup);
+        return isVolume(volumeoff) ? volumeoff : GFE_INVALID_OFFSET;
     }
 
     
@@ -741,7 +749,8 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
     
 /////////////////////////////////// deleteElements ////////////////////////////////////////
 
-
+    SYS_FORCE_INLINE bool deletePointOffsetOnly(const GA_Offset ptoff)
+    { return destroyPointOffset(ptoff, GA_Detail::GA_LEAVE_PRIMITIVES, true); }
     
     SYS_FORCE_INLINE void deletePrimitiveOffsets(
         const GA_PrimitiveGroup* const group,
