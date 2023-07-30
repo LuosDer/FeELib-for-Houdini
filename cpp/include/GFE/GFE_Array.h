@@ -127,31 +127,28 @@ template<typename _ArrayT, typename _ArrayValueType>
 SYS_FORCE_INLINE static void uniqueAppendSorted(_ArrayT& arr, const _ArrayValueType val)
 {
     if (arr.uniqueSortedFind(val) == GFE_FIND_INVALID_INDEX)
-        GFE_Math::appendSorted(arr, val);
+        GFE_Array::appendSorted(arr, val);
 }
 
 template<>
 SYS_FORCE_INLINE static void uniqueAppendSorted(UT_ValArray<GA_Offset>& arr, const GA_Offset val)
 {
     if (arr.uniqueSortedFind(val) == GFE_FIND_INVALID_INDEX)
-        GFE_Math::appendSorted(arr, val);
+        GFE_Array::appendSorted(arr, val);
 }
 
 template<>
 SYS_FORCE_INLINE static void uniqueAppendSorted(GA_OffsetList& arr, const GA_Offset val)
 {
     if (arr.findSorted(val) == GFE_FIND_INVALID_INDEX)
-        GFE_Math::appendSorted(arr, val);
+        GFE_Array::appendSorted(arr, val);
 }
 
     
 
 
 template<typename T>
-std::vector<int>
-argsort(
-    const std::vector<T>& inArray
-)
+std::vector<int> argsort(const std::vector<T>& inArray)
 {
     std::vector<int> indexs(inArray.size());
     for (int i = 0; i < inArray.size(); ++i)
@@ -166,10 +163,7 @@ argsort(
 
 
 template<typename T>
-UT_Array<int>
-argsort_UT_Array(
-    const UT_Array<T>& inArray
-)
+UT_Array<int> argsort_UT_Array(const UT_Array<T>& inArray)
 {
     UT_Array<int> indexs(inArray.size());
     for (int i = 0; i < inArray.size(); ++i)
@@ -184,10 +178,7 @@ argsort_UT_Array(
 
 
 
-//UT_Array<int>
-//argsort_UT_Array(
-//    const UT_Array<fpreal>& inArray
-//)
+//UT_Array<int> argsort_UT_Array(const UT_Array<fpreal>& inArray)
 //{
 //    UT_Array<int> indexs(inArray.size());
 //    for (int i = 0; i < inArray.size(); ++i)
