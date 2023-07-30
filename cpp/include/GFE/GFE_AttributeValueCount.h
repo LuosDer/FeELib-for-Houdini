@@ -6,11 +6,6 @@
 
 #include "GFE/GFE_AttributeValueCount.h"
 
-
-
-
-
-
 #include "GFE/GFE_GeoFilter.h"
 
 
@@ -52,7 +47,6 @@ public:
 private:
 
     
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -64,8 +58,9 @@ private:
         
         attribValCount = 0;
 
-        const attribValI = 0;
-        for
+        const attribValI = 0
+
+        
         attribPtr = getOutAttribArray()[0];
         // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
         switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
@@ -114,9 +109,9 @@ private:
         void operator()(const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(myAttrib);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);

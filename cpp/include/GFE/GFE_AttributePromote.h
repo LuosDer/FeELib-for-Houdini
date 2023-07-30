@@ -4,7 +4,6 @@
 #ifndef __GFE_AttributePromote_h__
 #define __GFE_AttributePromote_h__
 
-
 #include "GFE/GFE_AttributePromote.h"
 
 #include "GFE/GFE_GeoFilter.h"

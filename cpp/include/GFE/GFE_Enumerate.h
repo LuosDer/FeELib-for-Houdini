@@ -13,6 +13,12 @@
 #include "GFE/GFE_AttributeCast.h"
 #include "SOP/SOP_Enumerate.proto.h"
 
+/*
+    GFE_Enumerate enumerate(geo, cookparms);
+    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    enumerate.compute();
+*/
+    
 class GFE_Enumerate : public GFE_AttribFilter {
 
 #define __TEMP_GFE_Enumerate_GroupName       "__TEMP_GFE_Enumerate_Group"
@@ -30,7 +36,7 @@ public:
             const bool negativeIndex   = false,
             const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
-            const exint minGrainSize   = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
@@ -98,13 +104,12 @@ private:
             {
                 switch (aifTuple->getStorage(enumAttrib))
                 {
-                case GA_STORE_INT16:  enumerate<int16>();           break;
-                case GA_STORE_INT32:  enumerate<int32>();           break;
-                case GA_STORE_INT64:  enumerate<int64>();           break;
-                case GA_STORE_REAL16: enumerate<fpreal16>();        break;
-                case GA_STORE_REAL32: enumerate<fpreal32>();        break;
-                case GA_STORE_REAL64: enumerate<fpreal64>();        break;
-                //case GA_STORE_STRING: enumerate<UT_StringHolder>(); break;
+                case GA_STORE_INT16:  enumerate<int16>();    break;
+                case GA_STORE_INT32:  enumerate<int32>();    break;
+                case GA_STORE_INT64:  enumerate<int64>();    break;
+                case GA_STORE_REAL16: enumerate<fpreal16>(); break;
+                case GA_STORE_REAL32: enumerate<fpreal32>(); break;
+                case GA_STORE_REAL64: enumerate<fpreal64>(); break;
                 default: break;
                 }
             }
@@ -116,7 +121,6 @@ private:
                     enumerate<UT_StringHolder>();
                 }
             }
-            
         }
         geo->forceRenameAttribute(enumAttrib, outAttribName);
         return true;
@@ -249,12 +253,13 @@ private:
             UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
+                        //const GA_Offset baseOff = start - GAgetPageOff(start);
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             attrib_ph.value(elemoff) = firstIndex + elemoff;
@@ -271,9 +276,9 @@ private:
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -290,9 +295,9 @@ private:
                 UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
                 {
                     GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
+                    GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
-                        GA_Offset start, end;
                         for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                         {
                             attrib_ph.setPage(start);
@@ -374,20 +379,22 @@ private:
 
 public:
     GA_Size firstIndex = 0;
-    bool outAsOffset = true;
+    bool outAsOffset   = true;
     bool negativeIndex = false;
     
     const char* prefix = "";
-    const char* sufix = "";
+    const char* sufix  = "";
     
     bool enumeratePieceElem = false;
-
-private:
     
+    
+private:
     const char* outAttribName = nullptr;
     GA_Attribute* enumAttrib;
+    
+    
     exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    exint minGrainSize   = 1024;
 
 private:
     GU_DetailHandle destgdh;

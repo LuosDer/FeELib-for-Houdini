@@ -16,7 +16,12 @@ namespace GFE_Bound {
 
     template<typename _TScalar>
     SYS_FORCE_INLINE static UT_BoundingBoxT<_TScalar> stdBoundingBoxT()
-    { return UT_BoundingBoxT<_TScalar>(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN); }
+    { return UT_BoundingBoxT<_TScalar>(std::numeric_limits<_TScalar>::max(),
+                                       std::numeric_limits<_TScalar>::max(),
+                                       std::numeric_limits<_TScalar>::max(),
+                                       std::numeric_limits<_TScalar>::lowest(),
+                                       std::numeric_limits<_TScalar>::lowest(),
+                                       std::numeric_limits<_TScalar>::lowest()); }
 
     //using stdBoundingBoxH = stdBoundingBoxT<fpreal16>;
     //using stdBoundingBoxF = stdBoundingBoxT<fpreal32>;
@@ -29,7 +34,6 @@ namespace GFE_Bound {
     //typedef stdBoundingBoxT<fpreal>   stdBoundingBoxR;
 
 
-    
     template<typename _TScalar, typename _TScalar1>
     static void expandBounds(UT_BoundingBoxT<_TScalar>& bound, const UT_BoundingBoxT<_TScalar1>& boundRef)
     {
@@ -43,8 +47,13 @@ namespace GFE_Bound {
 
     template<typename _TScalar>
     SYS_FORCE_INLINE static void setStd(UT_BoundingBoxT<_TScalar>& bbox)
-    { bbox.setBounds(SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MAX, SYS_FP32_MIN, SYS_FP32_MIN, SYS_FP32_MIN); }
-
+    { bbox.setBounds(std::numeric_limits<_TScalar>::max(),
+                     std::numeric_limits<_TScalar>::max(),
+                     std::numeric_limits<_TScalar>::max(),
+                     std::numeric_limits<_TScalar>::lowest(),
+                     std::numeric_limits<_TScalar>::lowest(),
+                     std::numeric_limits<_TScalar>::lowest()); }
+    
     
     template<typename _TScalar>
     static UT_BoundingBoxT<_TScalar> getBBox(const GA_Detail& geo, const GA_Range& pointRange, const GA_Attribute* posAttrib = nullptr)
@@ -54,13 +63,28 @@ namespace GFE_Bound {
         
         auto bbox = stdBoundingBoxT<fpreal32>();
         geo.enlargeBoundingBox(bbox, pointRange, posAttrib);
-        if constexpr (std::is_same_v<_TScalar, float>)
-            return bbox;
-        else
-            return UT_BoundingBoxT<_TScalar>(bbox);
+        return UT_BoundingBoxT<_TScalar>(bbox);
+        // if constexpr (std::is_same_v<_TScalar, float>)
+        //     return bbox;
+        // else
+        //     return UT_BoundingBoxT<_TScalar>(bbox);
     }
     
-
+    template<typename _TScalar>
+    static UT_BoundingBoxT<_TScalar> getUnitBBox()
+    {
+        return UT_BoundingBoxT<_TScalar>(-0.5, -0.5, -0.5, 0.5, 0.5, 0.5);
+    }
+    
+    template<typename _TScalar>
+    static void scale(UT_BoundingBoxT<_TScalar>& bbox, const UT_Vector3T<_TScalar>& scale)
+    {
+        bbox.vals[0][0] *= scale[0]; bbox.vals[0][1] *= scale[0];
+        bbox.vals[1][0] *= scale[1]; bbox.vals[1][1] *= scale[1];
+        bbox.vals[2][0] *= scale[2]; bbox.vals[2][1] *= scale[2];
+    }
+    
+    
 } // End of namespace GFE_Bound
 
 #endif

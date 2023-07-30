@@ -38,6 +38,7 @@ protected:
     {
         return cookMyselfAsVerb(context);
     }
+    //GU_DetailHandle cookMySopOutput(OP_Context &context, int outputidx, SOP_Node *interest) override;
     const char* inputLabel(unsigned idx) const override
     {
         switch (idx)

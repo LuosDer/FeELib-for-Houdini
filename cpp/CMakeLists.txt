@@ -90,12 +90,15 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_AttribDel_2_0
     SOP_FeE_AttribDuplicate_1_0
     SOP_FeE_AttribInterpRay_2_0
+    SOP_FeE_AttribNormalize_2_0
     SOP_FeE_AttribOut_1_0
     SOP_FeE_AttribPromote_1_0
+    SOP_FeE_AttribRemap_1_0
     SOP_FeE_AttribScale_1_0
     #SOP_FeE_AttribSetToDefault_1_0
     SOP_FeE_AttribValReplace_1_0
     SOP_FeE_BezierCurveInsertPoint_1_0
+    SOP_FeE_BlockStopCondition_2_0
     SOP_FeE_Carve_1_0
     SOP_FeE_Clip_1_0
     SOP_FeE_Connectivity_1_0
@@ -103,6 +106,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_ConvexPoly_1_0
     SOP_FeE_Cook_1_0
     SOP_FeE_CornerPoint_1_0
+    SOP_FeE_CullingByVolume2DTrace_1_0
     SOP_FeE_CurveDirSoftBlend_1_0
     SOP_FeE_CurveExpand2d_3_0
     SOP_FeE_CurveExtendedLine_3_0
@@ -146,6 +150,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_GroupUnshared_1_0
     SOP_FeE_GroupVis_2_0
     SOP_FeE_HasGroup_1_0
+    SOP_FeE_HeightFieldProject_2_0
     SOP_FeE_InlinePoint_1_0
     SOP_FeE_InsertPoint_1_0
     SOP_FeE_InsertPointEdge_1_0
@@ -165,6 +170,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_OffsetVertexOrder_2_0
     SOP_FeE_OnPoly_1_0
     SOP_FeE_OrientAlongCurve_1_0
+    SOP_FeE_PointFromVoxel_1_0
     SOP_FeE_PointGenPerElem_1_0
     SOP_FeE_PointInBBox_2_0
     SOP_FeE_PointInMesh_WN_2_0
@@ -183,6 +189,7 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_SmallPiece_1_0
     # SOP_FeE_Split_2_0
     SOP_FeE_SplitPoint_1_0
+    SOP_FeE_Star_1_0
     SOP_FeE_Symmetrise_1_0
     SOP_FeE_Triangulate2D_2_0
     SOP_FeE_UnpackByGroup_1_0
@@ -191,7 +198,13 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_UVScaletoWorldSize_0_5
     SOP_FeE_UVScaletoWorldSize_3_0
     SOP_FeE_UVTileSize_1_0
+    SOP_FeE_VDBActivateByPoint_1_0
     SOP_FeE_VerticalNormal_1_0
+    SOP_FeE_VolumeFromArray_1_0
+    SOP_FeE_VolumeNormalize_1_0
+    SOP_FeE_VolumeProject_1_0
+    SOP_FeE_VolumeRemap_1_0
+    SOP_FeE_VoxelFromPoint_1_0
     SOP_FeE_WindingNumber_1_0
     SOP_FeE_XformByAttrib_1_0
 )

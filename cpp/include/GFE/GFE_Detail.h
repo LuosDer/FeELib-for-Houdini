@@ -44,7 +44,56 @@ public:
     { return getNumVertices() >= 0; }
 
 
+    
 
+    
+    SYS_FORCE_INLINE bool isHoudiniVolume(const GA_Offset elemoff)
+    { return GFE_Type::isHoudiniVolume(getPrimitiveTypeId(elemoff)); }
+    
+    SYS_FORCE_INLINE bool isVDB(const GA_Offset elemoff)
+    { return GFE_Type::isVDB(getPrimitiveTypeId(elemoff)); }
+    
+    SYS_FORCE_INLINE bool isVolume(const GA_Offset elemoff)
+    { return isHoudiniVolume(elemoff) || isVDB(elemoff); }
+
+
+
+    
+
+    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_AttributeOwner owner) const
+    { return GFE_DetailBase::getFirstElement(getIndexMap(owner)); }
+
+    template<GA_AttributeOwner _Owner>
+    SYS_FORCE_INLINE GA_Offset getFirstElement() const
+    { return GFE_DetailBase::getFirstElement(getIndexMap(_Owner)); }
+
+    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_PrimitiveGroup* const geoPrimGroup)
+    {
+        const GA_Offset volumeoff = geoPrimGroup
+                                  ? GFE_Group::getFirstElement(*geoPrimGroup)
+                                  : GFE_DetailBase::getFirstElement<GA_ATTRIB_PRIMITIVE>(this);
+        
+        return isInvalidOffset<GA_ATTRIB_PRIMITIVE>(volumeoff) ? GFE_INVALID_OFFSET : volumeoff;
+    }
+
+
+    
+    SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup)
+    {
+        const GA_Offset volumeoff = getFirstElement(geoPrimGroup);
+        return isVolume(volumeoff) ? volumeoff : GFE_INVALID_OFFSET;
+    }
+
+    
+    
+    template<GA_AttributeOwner _Owner>
+    SYS_FORCE_INLINE bool isInvalidOffset(const GA_Offset elemoff) const
+    { return GFE_Type::isInvalidOffset(getIndexMap(_Owner), elemoff); }
+
+    SYS_FORCE_INLINE bool isInvalidOffset(const GA_AttributeOwner owner, const GA_Offset elemoff) const
+    { return GFE_Type::isInvalidOffset(getIndexMap(owner), elemoff); }
+
+    
     SYS_FORCE_INLINE void setValidPosAttrib(GA_Attribute*& attrib)
     { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
     
@@ -700,7 +749,8 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
     
 /////////////////////////////////// deleteElements ////////////////////////////////////////
 
-
+    SYS_FORCE_INLINE bool deletePointOffsetOnly(const GA_Offset ptoff)
+    { return destroyPointOffset(ptoff, GA_Detail::GA_LEAVE_PRIMITIVES, true); }
     
     SYS_FORCE_INLINE void deletePrimitiveOffsets(
         const GA_PrimitiveGroup* const group,
@@ -813,10 +863,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
         }
     }
     
-    void deleteOneVertex(
-        const GA_Offset elemoff,
-        const bool reverseGroup = false
-    )
+    void deleteOneVertex(const GA_Offset elemoff, const bool reverseGroup = false)
     {
         if (reverseGroup)
         {
@@ -839,10 +886,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
     // }
     
     
-    void deleteOneElement(
-        const GA_AttributeOwner owner,
-        const GA_Offset elemoff,
-        const bool reverseGroup = false
+    void deleteOneElement(const GA_AttributeOwner owner, const GA_Offset elemoff, const bool reverseGroup = false
     )
     {
         switch (owner)
@@ -853,10 +897,7 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
         }
     }
 
-    void deleteOneElement(
-        const GA_GroupType owner,
-        const GA_Offset elemoff,
-        const bool reverseGroup = false
+    void deleteOneElement(const GA_GroupType owner, const GA_Offset elemoff, const bool reverseGroup = false
     )
     {
         switch (owner)
@@ -1024,7 +1065,7 @@ SYS_FORCE_INLINE bool destroyNonDetachedAttrib(GA_Attribute* const attrib)
 }
 
 
-void attribBumpDataId(const GA_AttributeOwner owner, const char* pattern)
+void attribBumpDataId(const GA_AttributeOwner owner, const char* const pattern)
 {
     if (!pattern || pattern == "")
         return;
@@ -1037,7 +1078,7 @@ void attribBumpDataId(const GA_AttributeOwner owner, const char* pattern)
     }
 }
 
-SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* groupPattern)
+SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* const groupPattern)
 { return GFE_Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
 
     

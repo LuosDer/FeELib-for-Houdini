@@ -388,9 +388,9 @@ private:
             UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)                     \
             {                                                                                                                        \
                 GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);      \
+                GA_Offset start, end;                                                                                                \
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)                                                      \
                 {                                                                                                                    \
-                    GA_Offset start, end;                                                                                            \
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )                                                 \
                     {                                                                                                                \
                         measure_ph.setPage(start);                                                                                   \
@@ -419,17 +419,16 @@ void computeVolume()
     UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &bboxCenter](const GA_SplittableRange& r)
     {
         GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);
+        GA_Offset start, end;
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            GA_Offset start, end;
             for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
                 measure_ph.setPage(start);
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
                     const GEO_Hull* const prim = static_cast<const GEO_Hull*>(geo->getPrimitive(elemoff));
-                    const FLOAT_T value = prim->calcVolume(bboxCenter);
-                    measure_ph.value(elemoff) = value;
+                    measure_ph.value(elemoff) = prim->calcVolume(bboxCenter);
                     //measure_ph.value(elemoff) = computeVolume<FLOAT_T>(elemoff);
                 }
             }
@@ -706,27 +705,30 @@ computePerimeter##T(                                                            
 
 
 
-    template<typename T>
+    template<typename FLOAT_T>
     static void
         computePerimeter(
             const GA_Detail* const geo,
-            const GA_RWHandleT<T>& p_h,
+            const GA_RWHandleT<FLOAT_T>& p_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
             const exint minGrainSize = 1024
         )
     {
         //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &p_h](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(geo->getPrimitiveRange(geoPrimGroup)), [geo, &p_h](const GA_SplittableRange& r)
         {
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(p_h.getAttribute());
             GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    //T attribValue = GFE_Measure::computePerimeter(outGeo0, elemoff, attribHandle, geo0AttribClassFinal);
-                    p_h.set(elemoff, computePerimeter<T>(geo, elemoff));
+                    measure_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        measure_ph.value(elemoff) = computePerimeter<T>(geo, elemoff);
+                    }
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -743,28 +745,20 @@ computePerimeter##T(                                                            
     {
         switch (pAttrib->getAIFTuple()->getStorage(pAttrib))
         {
-            //case GA_STORE_REAL16:
-            //    computePerimeter<fpreal16>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            //    break;
-        case GA_STORE_REAL32:
-            computePerimeter<fpreal32>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        case GA_STORE_REAL64:
-            computePerimeter<fpreal64>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize);
-            break;
-        default:
-            UT_ASSERT_MSG(0, "unhandled storage type");
-            break;
+        //case GA_STORE_REAL16: computePerimeter<fpreal16>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize); break;
+        case GA_STORE_REAL32: computePerimeter<fpreal32>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize); break;
+        case GA_STORE_REAL64: computePerimeter<fpreal64>(geo, pAttrib, geoPrimGroup, subscribeRatio, minGrainSize); break;
+        default: UT_ASSERT_MSG(0, "unhandled storage type"); break;
         }
     }
 
 
 
-    template<typename T, typename T1>
+    template<typename FLOAT_T, typename T1>
     static void
         computePerimeter(
             const GA_Detail* const geo,
-            const GA_RWHandleT<T>& p_h,
+            const GA_RWHandleT<FLOAT_T>& p_h,
             const GA_ROHandleT<UT_Vector3T<T1>>& pos_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
@@ -772,16 +766,19 @@ computePerimeter##T(                                                            
         )
     {
         //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &p_h, &pos_h](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(geo->getPrimitiveRange(geoPrimGroup)), [geo, &p_h, &pos_h](const GA_SplittableRange& r)
         {
+            GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(p_h.getAttribute());
             GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    const T attribValue = computePerimeter(geo, elemoff, pos_h);
-                    p_h.set(elemoff, attribValue);
+                    measure_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        measure_ph.value(elemoff) = computePerimeter(geo, elemoff, pos_h);
+                    }
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -1178,16 +1175,19 @@ computeArea##T(const GA_Detail* const geo, const GA_Offset primoff)             
         )
     {
         //GU_Measure::computeArea(*geo, area_h, geoPrimGroup);
-        const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-        UTparallelFor(geoSplittableRange0, [geo, &area_h, &pos_h](const GA_SplittableRange& r)
+        UTparallelFor(GA_SplittableRange(geo->getPrimitiveRange(geoPrimGroup)), [geo, &area_h, &pos_h](const GA_SplittableRange& r)
         {
+            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(area_h.getAttribute());
             GA_Offset start, end;
-            for (GA_Iterator it(r); it.blockAdvance(start, end); )
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    const T area = computeArea(geo, elemoff, pos_h);
-                    area_h.set(elemoff, area);
+                    measure_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        measure_ph.value(elemoff) = computeArea(geo, elemoff, pos_h);
+                    }
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -1206,16 +1206,19 @@ static void
     )
 {
     //GU_Measure::computeArea(*geo, area_h, geoPrimGroup);
-    const GA_SplittableRange geoSplittableRange0(geo->getPrimitiveRange(geoPrimGroup));
-    UTparallelFor(geoSplittableRange0, [geo, &area_h](const GA_SplittableRange& r)
+    UTparallelFor(GA_SplittableRange(geo->getPrimitiveRange(geoPrimGroup)), [geo, &area_h](const GA_SplittableRange& r)
     {
+        GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(area_h.getAttribute());
         GA_Offset start, end;
-        for (GA_Iterator it(r); it.blockAdvance(start, end); )
+        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
-            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
             {
-                const T area = computeArea<T>(geo, elemoff);
-                area_h.set(elemoff, area);
+                measure_ph.setPage(start);
+                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                {
+                    measure_ph.value(elemoff) = computeArea<T>(geo, elemoff);
+                }
             }
         }
     }, subscribeRatio, minGrainSize);
@@ -1555,7 +1558,7 @@ private:
     GA_Attribute* measureAttrib;
     
     exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    exint minGrainSize   = 1024;
     
 }; // End of Class GFE_Measure
 

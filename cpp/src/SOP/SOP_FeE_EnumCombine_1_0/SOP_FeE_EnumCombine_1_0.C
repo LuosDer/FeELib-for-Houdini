@@ -15,9 +15,6 @@
 
 #include "GFE/GFE_EnumerateCombine.h"
 
-
-
-
 using namespace SOP_FeE_EnumCombine_1_0_Namespace;
 
 
@@ -61,9 +58,16 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
+        name    "enumAttrib"
+        cppname "EnumAttrib"
+        label   "Enum Attrib"
+        type    string
+        default { "index" }
+    }
+    parm {
+        name    "outAttribName"
+        cppname "OutAttribName"
+        label   "Out Attrib Name"
         type    string
         default { "index" }
     }
@@ -82,7 +86,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -135,7 +139,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_EnumCombine_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_EnumCombine_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -159,7 +163,7 @@ SOP_FeE_EnumCombine_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_EnumCombine_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_EnumCombine_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_EnumCombine_1_0Enums;
     switch (parmGroupType)
@@ -175,7 +179,7 @@ sopGroupType(SOP_FeE_EnumCombine_1_0Parms::GroupType parmGroupType)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_EnumCombine_1_0Parms::Class parmAttribClass)
+sopAttribOwner(const SOP_FeE_EnumCombine_1_0Parms::Class parmAttribClass)
 {
     using namespace SOP_FeE_EnumCombine_1_0Enums;
     switch (parmAttribClass)
@@ -195,15 +199,12 @@ SOP_FeE_EnumCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     auto&& sopparms = cookparms.parms<SOP_FeE_EnumCombine_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_EnumCombine_1_0Cache*)cookparms.cache();
-
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-
-    outGeo0.replaceWith(inGeo0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
@@ -211,24 +212,17 @@ SOP_FeE_EnumCombine_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     if (boss.wasInterrupted())
         return;
     
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
-*/
     
-    GFE_EnumerateCombine enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-
+    GFE_EnumCombine enumerateCombine(outGeo0, cookparms);
+    enumerateCombine.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-
-    enumerate.computeAndBumpDataId();
+    enumerateCombine.groupParser.setGroup(groupType, sopparms.getGroup());
+    enumerateCombine.getInAttribArray().appends(attribClass, sopparms.getEnumAttrib());
     
+    enumerateCombine.getOutAttribArray().findOrCreateTuple(false, attribClass, GA_STORECLASS_INT, GA_STORE_INVALID, sopparms.getAttribName());
 
+    enumerateCombine.computeAndBumpDataId();
+    
 }
 
 

@@ -6,8 +6,9 @@
 
 #include "GFE/GFE_SetVectorComponent.h"
 
-
 #include "GFE/GFE_GeoFilter.h"
+
+
 
 #include "GFE/GFE_RestVectorComponent.h"
 
@@ -304,9 +305,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, attribVal](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -329,9 +330,9 @@ private:
         {
             GA_PageHandleT<T,     typename T::value_type,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             GA_PageHandleT<T_REF, typename T_REF::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -355,9 +356,9 @@ private:
         {
             GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
             GA_PageHandleT<T_REF, T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -380,9 +381,9 @@ private:
             {
                 GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
                 GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
@@ -401,9 +402,9 @@ private:
             UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, attribVal](const GA_SplittableRange& r)
             {
                 GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
-                    GA_Offset start, end;
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);

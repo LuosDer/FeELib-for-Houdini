@@ -9,27 +9,25 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+/*
+    GFE_EnumCombine enumerateCombine(geo, cookparms);
+    enumerateCombine.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    enumerateCombine.compute();
+*/
 
-class GFE_EnumCombine : public GFE_AttribFilter {
-
+class GFE_EnumCombine : public GFE_AttribCreateFilter {
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
 
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
-            const exint minGrainSize   = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
@@ -46,7 +44,7 @@ private:
         if (groupParser.isEmpty())
             return true;
         
-        
+        geo->getUniqueValueCount()
         attribPtr = getOutAttribArray()[0];
         // const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
         switch (attribPtr->getAIFTuple()->getStorage(attribPtr))
