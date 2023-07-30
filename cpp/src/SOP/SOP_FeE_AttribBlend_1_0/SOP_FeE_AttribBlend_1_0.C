@@ -1,16 +1,11 @@
-
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_AttribBlend_1_0.h"
-
-
 #include "SOP_FeE_AttribBlend_1_0.proto.h"
 
 #include "GA/GA_Detail.h"
 #include "PRM/PRM_TemplateBuilder.h"
 #include "UT/UT_Interrupt.h"
 #include "UT/UT_DSOVersion.h"
-
-
 
 
 #include "GFE/GFE_AttributeBlend.h"
@@ -49,26 +44,53 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
+        name    "sourceClass"
+        cppname "SourceClass"
+        label   "Source Class"
         type    ordinal
-        default { "prim" }
+        default { "point" }
         menu {
             "prim"      "Primitive"
             "point"     "Point"
             "vertex"    "Vertex"
+            "detail"    "Detail"
         }
     }
     parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
+        name    "attribSource"
+        cppname "AttribSource"
+        label   "Attrib Source"
         type    string
-        default { "index" }
+        default { "P" }
     }
-
-
+    parm {
+        name    "destinationClass"
+        cppname "DestinationClass"
+        label   "Destination Class"
+        type    ordinal
+        default { "point" }
+        menu {
+            "prim"      "Primitive"
+            "point"     "Point"
+            "vertex"    "Vertex"
+            "detail"    "Detail"
+        }
+    }
+    parm {
+        name    "destinationAttrib"
+        cppname "DestinationAttrib"
+        label   "Destination Attrib"
+        type    string
+        default { "uv" }
+    }
+    parm {
+        name    "blend"
+        cppname "Blend"
+        label   "Blend"
+        type    float
+        default { 1 }
+        range { -1 1 } 
+    }
     parm {
         name    "subscribeRatio"
         cppname "SubscribeRatio"
@@ -110,7 +132,7 @@ newSopOperator(OP_OperatorTable* table)
         SOP_FeE_AttribBlend_1_0::myConstructor,
         SOP_FeE_AttribBlend_1_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -154,43 +176,51 @@ SOP_FeE_AttribBlend_1_0::cookVerb() const
     return SOP_FeE_AttribBlend_1_0Verb::theVerb.get();
 }
 
-
-
-
-
 static GA_GroupType
-sopGroupType(const SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
+sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmGroupType)
     {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
+    case GroupType::GUESS:     return GA_GroupType::GA_GROUP_INVALID;    break;
+    case GroupType::PRIM:      return GA_GroupType::GA_GROUP_PRIMITIVE;  break;
+    case GroupType::POINT:     return GA_GroupType::GA_GROUP_POINT;      break;
+    case GroupType::VERTEX:    return GA_GroupType::GA_GROUP_VERTEX;     break;
+    case GroupType::EDGE:      return GA_GroupType::GA_GROUP_EDGE;       break;
     }
     UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
+    return GA_GroupType::GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_AttribBlend_1_0Parms::Class parmAttribClass)
+static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms:: DestinationClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)
     {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
+    case DestinationClass::PRIM:      return GA_AttributeOwner::GA_ATTRIB_PRIMITIVE;  break;
+    case DestinationClass::POINT:     return GA_AttributeOwner::GA_ATTRIB_POINT;      break;
+    case DestinationClass::VERTEX:    return GA_AttributeOwner::GA_ATTRIB_VERTEX;     break;
+    case DestinationClass::DETAIL:    return GA_AttributeOwner::GA_ATTRIB_DETAIL;     break;
     }
     UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
+    return GA_AttributeOwner::GA_ATTRIB_INVALID;
 }
 
+static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::SourceClass parmAttribClass)
+{
+    using namespace SOP_FeE_AttribBlend_1_0Enums;
+    switch (parmAttribClass)
+    {
+    case SourceClass::PRIM:           return GA_AttributeOwner::GA_ATTRIB_PRIMITIVE;  break;
+    case SourceClass::POINT:          return GA_AttributeOwner::GA_ATTRIB_POINT;      break;
+    case SourceClass::VERTEX:         return GA_AttributeOwner::GA_ATTRIB_VERTEX;     break;
+    case SourceClass::DETAIL:         return GA_AttributeOwner::GA_ATTRIB_DETAIL;     break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Class type!");
+    return GA_AttributeOwner::GA_ATTRIB_INVALID;
+}
 
-void
-SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+void SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_AttribBlend_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
@@ -202,27 +232,29 @@ SOP_FeE_AttribBlend_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     outGeo0.replaceWith(inGeo0);
     
     const fpreal64 blend = sopparms.getBlend();
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
+    
+    const GA_AttributeOwner destinationAttribClass = sopAttribOwner(sopparms.getDestinationClass());
+    const GA_AttributeOwner sourceAttribClass = sopAttribOwner(sopparms.getSourceClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted()) return;
 
-
-    //core
     GFE_AttribBlend attribBlend(outGeo0, inGeo1, cookparms);
-    
     attribBlend.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    attribBlend.getOutAttribArray().appends(attribClass, sopparms.getAttribTarget());
     if (inGeo1)
-        attribBlend.getRef0AttribArray().appends(attribClass, sopparms.getAttribTarget());
+    {
+        attribBlend.getOutAttribArray().appends(destinationAttribClass, sopparms.getDestinationAttrib());
+        attribBlend.getRef0AttribArray().appends(sourceAttribClass, sopparms.getAttribSource());
+    }
     else
-        attribBlend.getInAttribArray().appends(attribClass, sopparms.getAttribSource());
+    {
+        attribBlend.getOutAttribArray().appends(destinationAttribClass, sopparms.getDestinationAttrib());
+        attribBlend.getInAttribArray().appends(sourceAttribClass, sopparms.getAttribSource());
+    }
     
     attribBlend.setComputeParm(blend, sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    attribBlend.computeAndBumpDataId();
     
-
 }
-
-

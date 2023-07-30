@@ -128,13 +128,9 @@ private:
 
         const GA_RWHandleT<VECTOR_T> uv_h(uvAttrib);
 
-        //static_cast<GU_Detail*>(geo)->length
         const bool isPointAttrib = uvAttrib->getOwner() == GA_ATTRIB_POINT;
         const GA_AttributeOwner owner = uvAttrib->getOwner();
 
-        //GA_Attribute* const pAttribPtr = GFE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
-        //GA_ROHandleT<fpreal> p_h(pAttribPtr);
-        //GA_Attribute* const pAttribPtr = GFE_Measure::addAttribPrimPerimeter(geo, geoPrimGroup);
         const GA_ROHandleT<UT_Vector3T<value_type>> pos_h(posAttrib);
 
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
@@ -149,10 +145,14 @@ private:
             {
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
+                    const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
+                    
+                    const GA_Size numvtx = vertices.size();
+                    if (numvtx < 2)
+                        continue;
+                    
                     value_type dist = 0;
                     uv = GFE_Type::getZeroVector<VECTOR_T>();
-                    const GA_Size numvtx = geo->getPrimitiveVertexCount(primoff);
-                    if (numvtx < 2) return;
 #if 1
                     switch (curveUVMethod)
                     {
@@ -160,7 +160,7 @@ private:
                         dist = 1.0 / (numvtx - 1);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            vtxoff = vertices[vtxpnum];
                             uv[0] += dist;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
@@ -168,11 +168,11 @@ private:
                     case GFE_CurveUVMethod::LocalArcLength:
                     {
                         uvs.setSize(numvtx);
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
+                        ptoff = geo->vertexPoint(vertices[0]);
                         pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            vtxoff = vertices[vtxpnum];
                             ptoff = geo->vertexPoint(vtxoff);
                             pos = pos_h.get(ptoff);
                             dist += pos.distance(pos_prev);
@@ -183,21 +183,21 @@ private:
                         value_type p = uvs[lastIndex];
                         for (GA_Size vtxpnum = 1; vtxpnum < lastIndex; vtxpnum++)
                         {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            vtxoff = vertices[vtxpnum];
                             uv[0] = uvs[vtxpnum] / p;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
-                        vtxoff = geo->getPrimitiveVertexOffset(primoff, lastIndex);
+                        vtxoff = vertices[lastIndex];
                         uv[0] = 1.0;
                         uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                     }
                     break;
                     case GFE_CurveUVMethod::WorldAverage:
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
+                        ptoff = geo->vertexPoint(vertices[0]);
                         pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            vtxoff = vertices[vtxpnum];
                             ptoff = geo->vertexPoint(vtxoff);
                             pos = pos_h.get(ptoff);
                             dist += pos.distance(pos_prev);
@@ -206,17 +206,17 @@ private:
                         dist /= (numvtx - 1);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            vtxoff = vertices[vtxpnum];
                             uv[0] += dist;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
                     break;
                     case GFE_CurveUVMethod::WorldArcLength:
-                        ptoff = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
+                        ptoff = geo->vertexPoint(vertices[0]);
                         pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
-                            vtxoff = geo->getPrimitiveVertexOffset(primoff, vtxpnum);
+                            vtxoff = vertices[vtxpnum];
                             ptoff = geo->vertexPoint(vtxoff);
                             pos = pos_h.get(ptoff);
                             uv[0] += pos.distance(pos_prev);

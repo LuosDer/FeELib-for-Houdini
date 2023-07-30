@@ -76,7 +76,7 @@ public:
         , myMetaCacheCount(-1)
     {}
     
-    virtual ~GFE_WindingNumber_Cache() {}
+    ~GFE_WindingNumber_Cache() {}
 
 
 

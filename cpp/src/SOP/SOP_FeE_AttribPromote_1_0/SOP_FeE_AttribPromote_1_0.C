@@ -266,10 +266,10 @@ SOP_FeE_AttribPromote_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_AttribPromote_1_0Parms::SrcAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_AttribPromote_1_0Parms::SrcAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribPromote_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case SrcAttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case SrcAttribClass::POINT:     return GA_ATTRIB_POINT;      break;

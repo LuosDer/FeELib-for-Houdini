@@ -17,8 +17,12 @@
 class GFE_Math {
 
 public:
+    
 
-
+    
+    template<typename _Ty>
+    SYS_FORCE_INLINE static _Ty lerp(const _Ty v0, const _Ty v1, const fpreal bias)
+    { return v0 * (1.0 - bias) + v1 * bias; }
     
     template<typename _TScalar>
     static int8 minidx(const UT_Vector3T<_TScalar>& arg)
