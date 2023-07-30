@@ -150,7 +150,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_UnpackByGroup_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_UnpackByGroup_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERATOR; }
 
     virtual void cook(const CookParms &cookparms) const;
     

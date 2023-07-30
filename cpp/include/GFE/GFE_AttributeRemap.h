@@ -25,9 +25,9 @@ public:
 void
     setComputeParm(
         const bool doNormalize = true,
-        const fpreal64 uniScale = 1.0,
+        const fpreal uniScale = 1.0,
         const exint subscribeRatio = 64,
-        const exint minGrainSize = 64
+        const exint minGrainSize   = 1024
     )
 {
     setHasComputed();
@@ -109,7 +109,7 @@ private:
 
 
     template<typename VECTOR_T>
-    void scaleVectorAttribElement()
+    void attribRemap()
     {
         UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
         {
@@ -133,7 +133,7 @@ private:
 
 
     template<typename SCALE_T>
-    void scaleNumericAttribElement()
+    void attribRemap()
     {
         UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
         {
@@ -158,7 +158,7 @@ private:
     #if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
     
     template<typename VECTOR_T>
-    void scaleVectorAttribElement1()
+    void attribRemap()
     {
         GAparallelForEachPage(groupParser.getRange(attribPtr->getOwner()), true, [this](GA_PageIterator pit)
         {
@@ -182,7 +182,7 @@ private:
 
 public:
     bool doNormalize = true;
-    fpreal64 uniScale = 1;
+    fpreal uniScale = 1;
 
 private:
     GA_Attribute* attribPtr;

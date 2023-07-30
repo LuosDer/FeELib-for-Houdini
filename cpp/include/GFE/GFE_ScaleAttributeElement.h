@@ -25,7 +25,7 @@ public:
 void
     setComputeParm(
         const bool doNormalize = true,
-        const fpreal64 uniScale = 1.0,
+        const fpreal uniScale = 1.0,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
@@ -65,13 +65,13 @@ private:
             case 1:
                 switch (storage)
                 {
-                    case GA_STORE_INT8:   scaleNumericAttribElement<int8>();     break;
-                    case GA_STORE_INT16:  scaleNumericAttribElement<int16>();    break;
-                    case GA_STORE_INT32:  scaleNumericAttribElement<int32>();    break;
-                    case GA_STORE_INT64:  scaleNumericAttribElement<int64>();    break;
-                    case GA_STORE_REAL16: scaleNumericAttribElement<fpreal16>(); break;
-                    case GA_STORE_REAL32: scaleNumericAttribElement<fpreal32>(); break;
-                    case GA_STORE_REAL64: scaleNumericAttribElement<fpreal64>(); break;
+                    //case GA_STORE_INT8:   scaleVectorAttribElement<int8>();     break;
+                    //case GA_STORE_INT16:  scaleVectorAttribElement<int16>();    break;
+                    //case GA_STORE_INT32:  scaleVectorAttribElement<int32>();    break;
+                    //case GA_STORE_INT64:  scaleVectorAttribElement<int64>();    break;
+                    //case GA_STORE_REAL16: scaleVectorAttribElement<fpreal16>(); break;
+                    //case GA_STORE_REAL32: scaleVectorAttribElement<fpreal32>(); break;
+                    //case GA_STORE_REAL64: scaleVectorAttribElement<fpreal64>(); break;
                     default: break;
                 }
             break;
@@ -112,9 +112,10 @@ private:
     template<typename VECTOR_T>
     void scaleVectorAttribElement()
     {
+        using value_type = typename std::conditional_t<std::is_integral_v<VECTOR_T>, VECTOR_T, typename VECTOR_T::value_type>;
         UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
+            GA_PageHandleT<VECTOR_T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -123,8 +124,8 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        if (doNormalize)
-                            attrib_ph.value(elemoff).normalize();
+                        //if (doNormalize)
+                        //    attrib_ph.value(elemoff).normalize();
                         attrib_ph.value(elemoff) *= uniScale;
                     }
                 }
@@ -183,7 +184,7 @@ private:
 
 public:
     bool doNormalize = true;
-    fpreal64 uniScale = 1;
+    fpreal uniScale = 1.0;
 
 private:
     GA_Attribute* attrib;

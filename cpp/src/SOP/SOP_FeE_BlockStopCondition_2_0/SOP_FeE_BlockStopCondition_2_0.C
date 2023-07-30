@@ -11,6 +11,9 @@
 #include "UT/UT_DSOVersion.h"
 
 
+#define __GFE_StopCondition_UseCache 0
+#define __GFE_StopCondition_FirstValue 2
+#define __GFE_StopCondition_SecondValue 1
 
 using namespace SOP_FeE_BlockStopCondition_2_0_Namespace;
 
@@ -94,6 +97,7 @@ newSopOperator(OP_OperatorTable* table)
 
 
 
+#if __GFE_StopCondition_UseCache
 
 class GFE_BlockStopCondition_Cache : public SOP_NodeCache
 {
@@ -111,6 +115,10 @@ public:
     
 }; // End of Class GFE_BlockStopCondition_Cache
 
+#endif
+
+
+
 
 
 class SOP_FeE_BlockStopCondition_2_0Verb : public SOP_NodeVerb
@@ -120,7 +128,9 @@ public:
     virtual ~SOP_FeE_BlockStopCondition_2_0Verb() {}
 
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_BlockStopCondition_2_0Parms(); }
+#if __GFE_StopCondition_UseCache
     virtual SOP_NodeCache *allocCache() const { return new GFE_BlockStopCondition_Cache(); }
+#endif
     virtual UT_StringHolder name() const { return SOP_FeE_BlockStopCondition_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms *parms) const
@@ -137,11 +147,14 @@ public:
     bool cookInputs(const InputParms& parms) const override
     {
         auto&& sopparms = parms.parms<SOP_FeE_BlockStopCondition_2_0Parms>();
-        if (!sopparms.getEnable())
-            return parms.inputs().cookInput(0);
+        NodeInputs& inputs = parms.inputs();
         
-        if (!parms.inputs().cookInput(1))
+        if (!sopparms.getEnable())
+            return inputs.cookInput(0);
+
+        if (!inputs.cookInput(1))
             return false;
+        
         const GA_Detail& inGeo1 = *parms.inputs().inputGeo(1).gdp();
         const GA_Attribute* const stopConditionAttrib = inGeo1.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
         
@@ -150,24 +163,11 @@ public:
         {
             const GA_AIFTuple* const aifTuple = stopConditionAttrib->getAIFTuple();
             if (aifTuple)
-            {
                 aifTuple->get(stopConditionAttrib, 0, stopCondition);
-            }
         }
         if (stopCondition) // stopCondition == 1 || stopCondition == 2
-        {
             return true;
-
-            
-        }
-        if (sopparms.getCondition())
-        {
-            return parms.inputs().cookInput(parms.inputs().hasInput(2) ? 2 : 0);
-        }
-        else
-        {
-            return parms.inputs().cookInput(0);
-        }
+        return inputs.cookInput((inputs.hasInput(2) && sopparms.getCondition()) ? 2 : 0);
     }
     /// This static data member automatically registers
     /// this verb class at library load time.
@@ -221,7 +221,7 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     // }
     if (stopCondition) // stopCondition == 1 || stopCondition == 2
     {
-        if (stopCondition==1)
+        if (stopCondition==__GFE_StopCondition_SecondValue)
         {
             //GA_Attribute* const outStopConditionAttrib = outGeo0.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
             //outStopConditionAttrib->bumpDataId();
@@ -236,7 +236,7 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         }
         else
         {
-            UT_ASSERT_MSG(stopCondition==2, "Unhandled Stop Condition");
+            UT_ASSERT_MSG(stopCondition == int8(__GFE_StopCondition_FirstValue), "Unhandled Stop Condition");
             
             outGeo0.replaceWith(inGeo1);
             //outGeo0.duplicate(inGeo1);
@@ -248,15 +248,16 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
             
             UT_ASSERT_P(aifTuple);
             
-            aifTuple->set(outStopConditionAttrib, 0, int32(1));
+            aifTuple->set(outStopConditionAttrib, 0, int32(__GFE_StopCondition_SecondValue));
             outStopConditionAttrib->bumpDataId();
-
-            //if (!sopcache->geo)
-            //{
-            //    sopcache->geo = new GU_Detail;
-            //    sopcache->geo->replaceWith(outGeo0);
-            //    sopcache->geo_h.allocateAndSet(sopcache->geo);
-            //}
+#if __GFE_StopCondition_UseCache
+            if (!sopcache->geo)
+            {
+                sopcache->geo = new GU_Detail;
+                sopcache->geo->replaceWith(outGeo0);
+                sopcache->geo_h.allocateAndSet(sopcache->geo);
+            }
+#endif
         }
         return;
     }
@@ -275,7 +276,7 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
             
         UT_ASSERT_P(aifTuple);
             
-        aifTuple->set(outStopConditionAttrib, 0, int32(2));
+        aifTuple->set(outStopConditionAttrib, 0, int32(__GFE_StopCondition_FirstValue));
     }
     else
     {
@@ -287,3 +288,6 @@ SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 }
 
 
+#undef __GFE_StopCondition_UseCache
+#undef __GFE_StopCondition_FirstValue
+#undef __GFE_StopCondition_SecondValue
