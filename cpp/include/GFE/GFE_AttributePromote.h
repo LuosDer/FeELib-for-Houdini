@@ -253,9 +253,9 @@ private:
         UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttrib_h](const GA_SplittableRange& r)
         {
             GA_PageHandleT<FLOAT_T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
-            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
+                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -278,9 +278,9 @@ private:
         UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttrib_h](const GA_SplittableRange& r)
         {
             GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(dstAttrib);
-            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
+                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
