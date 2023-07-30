@@ -82,3 +82,4 @@ FeE::splitPointsKeepEdgeGroup::1.0
 
 FeE::correctMeshWinding_volume::1.0
 FeE::correctMeshWinding_volume_throughout::1.0
+attribblend_fee

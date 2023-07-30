@@ -221,7 +221,7 @@ void connectivity()
 
     ::std::vector<GA_Offset> elemHeap;
     elemHeap.reserve(((1 << 11) - 1) & nelems); //SYSmin(1 << 10, nelems)
-    
+        
     ::std::vector<GA_Offset> classnumArray(nelems, GFE_INVALID_OFFSET);
         
         

@@ -12,168 +12,47 @@
 
 
 
-
-#include "GFE/GFE_BlockStopCondition.h"
-
-
-
 using namespace SOP_FeE_BlockStopCondition_2_0_Namespace;
 
 
 static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
+
     parm {
-        name    "group"
-        cppname "Group"
-        label   "Group"
-        type    string
-        default { "" }
-        parmtag { "script_action" "import soputils\nkwargs['geometrytype'] = kwargs['node'].parmTuple('groupType')\nkwargs['inputindex'] = 0\nsoputils.selectGroupParm(kwargs)" }
-        parmtag { "script_action_help" "Select geometry from an available viewport.\nShift-click to turn on Select Groups." }
-        parmtag { "script_action_icon" "BUTTONS_reselect" }
+        name    "Readme"
+        label   " "
+        type    label
+        size    1
+        default { "Remenber to delete Stop Condition Attrib in Detail Class after Block End" }
     }
     parm {
-        name    "groupType"
-        cppname "GroupType"
-        label   "Group Type"
-        type    ordinal
-        default { "guess" }
-        menu {
-            "guess"     "Guess from Group"
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-            "edge"      "Edge"
-        }
-    }
-    parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
-        type    ordinal
-        default { "prim" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-        }
-    }
-    parm {
-        name    "usePieceAttrib"
-        cppname "UsePieceAttrib"
-        label   "Use Piece Attribute"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-    }
-    parm {
-        name    "pieceAttrib"
-        cppname "PieceAttrib"
-        label   "Piece Attribute"
-        type    string
-        default { "name" }
-        disablewhen "{ usePieceAttrib == 0 }"
-    }
-    parm {
-        name    "enumPieceElem"
-        cppname "EnumPieceElem"
-        label   "Enum Piece Elem"
+        name    "enable"
+        cppname "Enable"
+        label   "Enable"
         type    toggle
         default { "1" }
-        disablewhen "{ usePieceAttrib == 0 }"
     }
-    // parm {
-    //     name    "pieceMode"
-    //     cppname "PieceMode"
-    //     label   "PieceMode"
-    //     type    ordinal
-    //     default { "elements" }
-    //     disablewhen "{ usePieceAttrib == 0 }"
-    //     menu {
-    //         "elements"  "Enumerate Piece Elements"
-    //         "pieces"    "Enumerate Pieces"
-    //     }
-    // }
-    parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
-        type    string
-        default { "index" }
-    }
-    parm {
-        name    "storageClass"
-        cppname "StorageClass"
-        label   "Storage Class"
-        type    ordinal
-        default { "int" }
-        menu {
-            "int"       "Integer"
-            "float"     "Float"
-            "string"    "String"
+    groupsimple {
+        name    "stopCondition_folder"
+        label   "Stop Condition"
+        hidewhen "{ enable == 0 }"
+        grouptag { "group_type" "simple" }
+
+        parm {
+            name    "stopConditionAttrib"
+            cppname "StopConditionAttrib"
+            label   "Stop Condition Attrib"
+            type    string
+            default { "stopCondition" }
         }
-    }
-
-    parm {
-        name    "firstIndex"
-        cppname "FirstIndex"
-        label   "First Index"
-        type    integer
-        default { 0 }
-        range   { -5 5 }
-    }
-
-    parm {
-        name    "negativeIndex"
-        cppname "NegativeIndex"
-        label   "Negative Index"
-        type    toggle
-        default { "off" }
-    }
-    parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Out as Offset"
-        type    toggle
-        default { "off" }
-    }
-    parm {
-        name    "prefix"
-        cppname "Prefix"
-        label   "Prefix"
-        type    string
-        default { "piece" }
-        disablewhen "{ storageClass != string }"
-        hidewhen "{ storageClass != string }"
-    }
-    parm {
-        name    "sufix"
-        cppname "Sufix"
-        label   "Sufix"
-        type    string
-        default { "" }
-        disablewhen "{ storageClass != string }"
-        hidewhen "{ storageClass != string }"
-    }
-
-
-    parm {
-        name    "subscribeRatio"
-        cppname "SubscribeRatio"
-        label   "Subscribe Ratio"
-        type    integer
-        default { 64 }
-        range   { 0! 256 }
-    }
-    parm {
-        name    "minGrainSize"
-        cppname "MinGrainSize"
-        label   "Min Grain Size"
-        type    intlog
-        default { 64 }
-        range   { 0! 2048 }
+        parm {
+            name    "condition"
+            cppname "Condition"
+            label   "Condition"
+            type    toggle
+            default { "0" }
+        }
     }
 }
 )THEDSFILE";
@@ -184,9 +63,7 @@ SOP_FeE_BlockStopCondition_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_BlockStopCondition_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
-        templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        
+        templ.setChoiceListPtr("stopConditionAttrib"_sh, &SOP_Node::detailAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -218,6 +95,24 @@ newSopOperator(OP_OperatorTable* table)
 
 
 
+class GFE_BlockStopCondition_Cache : public SOP_NodeCache
+{
+public:
+    GFE_BlockStopCondition_Cache()
+        : SOP_NodeCache()
+    {
+    }
+    
+    ~GFE_BlockStopCondition_Cache() {}
+    
+public:
+    GU_DetailHandle geo_h;
+    GU_Detail* geo = nullptr;
+    
+}; // End of Class GFE_BlockStopCondition_Cache
+
+
+
 class SOP_FeE_BlockStopCondition_2_0Verb : public SOP_NodeVerb
 {
 public:
@@ -225,9 +120,14 @@ public:
     virtual ~SOP_FeE_BlockStopCondition_2_0Verb() {}
 
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_BlockStopCondition_2_0Parms(); }
+    virtual SOP_NodeCache *allocCache() const { return new GFE_BlockStopCondition_Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_BlockStopCondition_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const
+    {
+        auto* sopparms = reinterpret_cast<const SOP_FeE_BlockStopCondition_2_0Parms*>(parms);
+        return sopparms->getEnable() ? COOK_GENERIC : COOK_PASSTHROUGH;
+    }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -236,15 +136,38 @@ public:
     
     bool cookInputs(const InputParms& parms) const override
     {
-        for (exint i = 0; i < parms.inputs().nInputs(); i++)
+        auto&& sopparms = parms.parms<SOP_FeE_BlockStopCondition_2_0Parms>();
+        if (!sopparms.getEnable())
+            return parms.inputs().cookInput(0);
+        
+        if (!parms.inputs().cookInput(1))
+            return false;
+        const GA_Detail& inGeo1 = *parms.inputs().inputGeo(1).gdp();
+        const GA_Attribute* const stopConditionAttrib = inGeo1.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
+        
+        int32 stopCondition = 0;
+        if (stopConditionAttrib)
         {
-            if (parms.inputs().hasInput(i))
+            const GA_AIFTuple* const aifTuple = stopConditionAttrib->getAIFTuple();
+            if (aifTuple)
             {
-                if (!parms.inputs().cookInput(i))
-                    return false;
+                aifTuple->get(stopConditionAttrib, 0, stopCondition);
             }
         }
-        return true;
+        if (stopCondition) // stopCondition == 1 || stopCondition == 2
+        {
+            return true;
+
+            
+        }
+        if (sopparms.getCondition())
+        {
+            return parms.inputs().cookInput(parms.inputs().hasInput(2) ? 2 : 0);
+        }
+        else
+        {
+            return parms.inputs().cookInput(0);
+        }
     }
     /// This static data member automatically registers
     /// this verb class at library load time.
@@ -265,92 +188,100 @@ SOP_FeE_BlockStopCondition_2_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopGroupType(const SOP_FeE_BlockStopCondition_2_0Parms::GroupType parmGroupType)
-{
-    using namespace SOP_FeE_BlockStopCondition_2_0Enums;
-    switch (parmGroupType)
-    {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
-static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_BlockStopCondition_2_0Parms::Class parmAttribClass)
-{
-    using namespace SOP_FeE_BlockStopCondition_2_0Enums;
-    switch (parmAttribClass)
-    {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-static GA_StorageClass
-sopStorageClass(const SOP_FeE_BlockStopCondition_2_0Parms::StorageClass parmStorageClass)
-{
-    using namespace SOP_FeE_BlockStopCondition_2_0Enums;
-    switch (parmStorageClass)
-    {
-    case StorageClass::INT:       return GA_STORECLASS_INT;        break;
-    case StorageClass::FLOAT:     return GA_STORECLASS_FLOAT;      break;
-    case StorageClass::STRING:    return GA_STORECLASS_STRING;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Storage Class!");
-    return GA_STORECLASS_INVALID;
-}
-
-
-
 
 
 void
 SOP_FeE_BlockStopCondition_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_BlockStopCondition_2_0Parms>();
-    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
-    //auto sopcache = (SOP_FeE_BlockStopCondition_2_0Cache*)cookparms.cache();
+    GU_Detail& outGeo0 = *cookparms.gdh().gdpNC();
+    //auto sopcache = (GFE_BlockStopCondition_Cache*)cookparms.cache();
     
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
-    const GA_Detail* const inGeo2 = cookparms.inputGeo(2);
-
-    //outGeo0.replaceWith(inGeo0);
-
-
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
-    UT_AutoInterrupt boss("Processing");
-    if (boss.wasInterrupted())
-        return;
-
+    //if (!sopparms.getEnable())
+    //    return outGeo0.replaceWith(*cookparms.inputGeo(0));
+        
+    const GU_Detail& inGeo1 = *cookparms.inputGeo(1);
     
-    GFE_BlockStopCondition blockStopCondition(outGeo0, inGeo0, inGeo1, inGeo2, cookparms);
-    if (sopparms.getUsePieceAttrib())
+    const GA_Attribute* const stopConditionAttrib = inGeo1.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
+        
+    int32 stopCondition = 0;
+    if (stopConditionAttrib)
     {
-        blockStopCondition.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
-        blockStopCondition.enumeratePieceElem = sopparms.getEnumPieceElem();
+        const GA_AIFTuple* const aifTuple = stopConditionAttrib->getAIFTuple();
+        if (aifTuple)
+        {
+            aifTuple->get(stopConditionAttrib, 0, stopCondition);
+        }
     }
-    blockStopCondition.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    // switch (stopCondition)
+    // {
+    // case 0: break;
+    // case 1: return outGeo0.replaceWith(*cookparms.inputGeo(2)); break;
+    // case 2: break;
+    // }
+    if (stopCondition) // stopCondition == 1 || stopCondition == 2
+    {
+        if (stopCondition==1)
+        {
+            //GA_Attribute* const outStopConditionAttrib = outGeo0.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
+            //outStopConditionAttrib->bumpDataId();
+#ifndef NDEBUG
+            const exint dataId0 = outGeo0.getUniqueId();
+            const exint dataId1 = inGeo1.getUniqueId();
+#endif
+            outGeo0.replaceWith(inGeo1);
+            //if (outGeo0.getUniqueId() != inGeo1.getUniqueId())
+            //    outGeo0.replaceWith(inGeo1);
+            //cookparms.gdh().allocateAndSet(const_cast<GU_Detail*>(cookparms.inputGeo(1)));
+        }
+        else
+        {
+            UT_ASSERT_MSG(stopCondition==2, "Unhandled Stop Condition");
+            
+            outGeo0.replaceWith(inGeo1);
+            //outGeo0.duplicate(inGeo1);
+            GA_Attribute* const outStopConditionAttrib = outGeo0.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
+            
+            UT_ASSERT_P(outStopConditionAttrib);
+            
+            const GA_AIFTuple* const aifTuple = outStopConditionAttrib->getAIFTuple();
+            
+            UT_ASSERT_P(aifTuple);
+            
+            aifTuple->set(outStopConditionAttrib, 0, int32(1));
+            outStopConditionAttrib->bumpDataId();
 
-    blockStopCondition.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    blockStopCondition.groupParser.setGroup(groupType, sopparms.getGroup());
-    blockStopCondition.computeAndBumpDataId();
+            //if (!sopcache->geo)
+            //{
+            //    sopcache->geo = new GU_Detail;
+            //    sopcache->geo->replaceWith(outGeo0);
+            //    sopcache->geo_h.allocateAndSet(sopcache->geo);
+            //}
+        }
+        return;
+    }
+    if (sopparms.getCondition())
+    {
+        outGeo0.replaceWith(*cookparms.inputGeo(cookparms.hasInput(2) ? 2 : 0));
+        GA_Attribute* outStopConditionAttrib = outGeo0.findAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib());
 
+        if (outStopConditionAttrib)
+            outStopConditionAttrib->bumpDataId(); 
+        else
+            outStopConditionAttrib = outGeo0.getAttributes().createTupleAttribute(GA_ATTRIB_DETAIL, sopparms.getStopConditionAttrib(), GA_STORE_INT8, 1, GA_Defaults(0));
+        UT_ASSERT_P(outStopConditionAttrib);
+            
+        const GA_AIFTuple* const aifTuple = outStopConditionAttrib->getAIFTuple();
+            
+        UT_ASSERT_P(aifTuple);
+            
+        aifTuple->set(outStopConditionAttrib, 0, int32(2));
+    }
+    else
+    {
+        UT_ASSERT_P(cookparms.inputGeo(0));
+        outGeo0.replaceWith(*cookparms.inputGeo(0));
+    }
     
 
 }
