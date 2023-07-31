@@ -9,13 +9,10 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
-
 #include "GFE/GFE_MeshTopology.h"
 #include "GFE/GFE_AttributeCast.h"
 #include "GFE/GFE_AttributePromote.h"
 #include "GFE/GFE_PackedArrayOfArrays.h"
-
-
 
 
 #if GFE_DEBUG_MODE
@@ -31,6 +28,7 @@ class GFE_Connectivity : public GFE_AttribFilter
 //#define GFE_TEMP_ConnectivityAttribName "__topo_GFE_ConnectivityAttrib"
 
 public:
+
 
 GFE_Connectivity(
     GFE_Detail* const geo,
