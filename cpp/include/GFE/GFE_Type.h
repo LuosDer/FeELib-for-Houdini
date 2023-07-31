@@ -180,6 +180,91 @@ enum class GFE_ScaleAxis
 };
 
 
+
+#define GFE_ForEachStorage1(Func, Storage)                     \
+        switch (Storage)                                       \
+        {                                                      \
+        case GA_STORE_INT8:   Func<int8    >();         break; \
+        case GA_STORE_INT16:  Func<int16   >();         break; \
+        case GA_STORE_INT32:  Func<int32   >();         break; \
+        case GA_STORE_INT64:  Func<int64   >();         break; \
+        case GA_STORE_REAL16: Func<fpreal16>();         break; \
+        case GA_STORE_REAL32: Func<fpreal32>();         break; \
+        case GA_STORE_REAL64: Func<fpreal64>();         break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Storage"); break; \
+        }                                                      \
+
+
+
+#define GFE_ForEachStorageVec(Func, Storage, Num)                         \
+        switch (Storage)                                                  \
+        {                                                                 \
+        case GA_STORE_INT32:  Func<UT_Vector##Num##T<int32   >>(); break; \
+        case GA_STORE_INT64:  Func<UT_Vector##Num##T<int64   >>(); break; \
+        case GA_STORE_REAL16: Func<UT_Vector##Num##T<fpreal16>>(); break; \
+        case GA_STORE_REAL32: Func<UT_Vector##Num##T<fpreal32>>(); break; \
+        case GA_STORE_REAL64: Func<UT_Vector##Num##T<fpreal64>>(); break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Storage");            break; \
+        }                                                                 \
+
+
+#define GFE_ForEachStorage2(Func, Storage)      \
+        GFE_ForEachStorageVec(Func, Storage, 2) \
+
+#define GFE_ForEachStorage3(Func, Storage)      \
+        GFE_ForEachStorageVec(Func, Storage, 3) \
+
+#define GFE_ForEachStorage4(Func, Storage)      \
+        GFE_ForEachStorageVec(Func, Storage, 4) \
+
+
+
+
+#define GFE_ForEachStorageTupleSizeVec(Func, Storage, TupleSize)  \
+        switch (TupleSize)                                        \
+        {                                                         \
+        case 1: GFE_ForEachStorage1(Func, Storage);        break; \
+        case 2: GFE_ForEachStorage2(Func, Storage);        break; \
+        case 3: GFE_ForEachStorage3(Func, Storage);        break; \
+        case 4: GFE_ForEachStorage4(Func, Storage);        break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break; \
+        }                                                         \
+
+
+
+/*
+
+template<typename _Ty, typename Body>
+#define GFEForEachStorageVec(const Body &body, const GA_Storage storage, const int num)
+{
+    switch (Storage)
+    {
+    case GA_STORE_INT32:  Func<UT_Vector##Num##T<int32   >>(); break;
+    case GA_STORE_INT64:  Func<UT_Vector##Num##T<int64   >>(); break;
+    case GA_STORE_REAL16: Func<UT_Vector##Num##T<fpreal16>>(); break;
+    case GA_STORE_REAL32: Func<UT_Vector##Num##T<fpreal32>>(); break;
+    case GA_STORE_REAL64: Func<UT_Vector##Num##T<fpreal64>>(); break;
+    default: UT_ASSERT_MSG(0, "Unhandled Storage");            break;
+    }
+}
+
+
+template<typename _Ty, typename Body>
+GFEForEachStorageTupleSizeVec(const Body &body, const GA_Storage storage, const int tupleSize)
+{
+    switch (tupleSize)
+    {
+    case 1: GFE_ForEachStorage1(body, storage);        break;
+    case 2: GFE_ForEachStorage2(body, storage);        break;
+    case 3: GFE_ForEachStorage3(body, storage);        break;
+    case 4: GFE_ForEachStorage4(body, storage);        break;
+    default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break;
+    }
+}
+
+*/
+
+
 namespace GFE_Type {
 
 //#ifndef fpreal16
