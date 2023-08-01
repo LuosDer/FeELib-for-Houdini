@@ -13,6 +13,12 @@
 #define __TEMP_GFE_InsertPoint_RestPosCompName "__TEMP_GFE_InsertPoint_RestPosCompName"
 
 
+/*
+    GFE_InsertPoint insertPoint(geo, cookparms);
+    insertPoint.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    insertPoint.compute();
+*/
+    
 class GFE_InsertPoint : public GFE_GeoFilter {
 
 
