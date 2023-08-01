@@ -102,7 +102,7 @@ private:
                     }
                 }
             }, subscribeRatio, minGrainSize);
-        }, scaleVariant, doNormalizeVariant);
+        }, scaleVariant, doNormalizeVariant, tupleSizeVariant, storeVariant);
     }
 
     

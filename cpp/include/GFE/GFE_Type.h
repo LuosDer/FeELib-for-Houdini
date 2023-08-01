@@ -1118,7 +1118,7 @@ bool_variant getBoolVariant(const bool v)
         
 
         template <int _TupleSize, GA_Storage _Store>
-        using storeTupleSizeValueType_t = storeTupleSizeValueType<_TupleSize, _Store>::type;
+        using storeTupleSizeValueType_t = typename storeTupleSizeValueType<_TupleSize, _Store>::type;
 
         
 } // End of namespace GFE_Type
