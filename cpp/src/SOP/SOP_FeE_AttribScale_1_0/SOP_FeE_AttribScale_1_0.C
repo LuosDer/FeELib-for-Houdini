@@ -78,17 +78,7 @@ static const char* theDsFile = R"THEDSFILE(
         label   "Uniform Scale"
         type    float
         default { 1 }
-        range   { -100 100 }
-    }
-
-
-    parm {
-        name    "kernel"
-        cppname "Kernel"
-        label   "Kernel"
-        type    integer
-        default { 0 }
-        range   { 0! 2 }
+        range   { -10 10 }
     }
 
 

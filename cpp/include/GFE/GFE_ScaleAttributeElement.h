@@ -9,6 +9,7 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "USRefl/USRefl.h"
 
 class GFE_ScaleAttribElement : public GFE_AttribFilter {
 
@@ -39,22 +40,6 @@ void
 }
 
 
-//#define GFE_ForEachStorage2(Storage, Func)                          \
-//        switch (Storage)                                            \
-//        {                                                           \
-//        case GA_STORE_INT8:   Func<UT_Vector2T<int8    >>(); break; \
-//        case GA_STORE_INT16:  Func<UT_Vector2T<int16   >>(); break; \
-//        case GA_STORE_INT32:  Func<UT_Vector2T<int32   >>(); break; \
-//        case GA_STORE_INT64:  Func<UT_Vector2T<int64   >>(); break; \
-//        case GA_STORE_REAL16: Func<UT_Vector2T<fpreal16>>(); break; \
-//        case GA_STORE_REAL32: Func<UT_Vector2T<fpreal32>>(); break; \
-//        case GA_STORE_REAL64: Func<UT_Vector2T<fpreal64>>(); break; \
-//        default: UT_ASSERT_MSG(0, "Unhandled Storage");      break; \
-//        }                                                           \
-
-
-
-
     
 private:
 
@@ -76,53 +61,10 @@ private:
             attrib = getOutAttribArray()[i];
             
             const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
+            
+            auto storageVariant = GFE_Type::attribStorageVariant(storage);
+            
             GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
-            /*
-            switch (attrib->getAIFTuple()->getTupleSize(attrib))
-            {
-            case 1:
-                switch (storage)
-                {
-                    case GA_STORE_INT8:   scaleAttribElement<int8>();     break;
-                    case GA_STORE_INT16:  scaleAttribElement<int16>();    break;
-                    case GA_STORE_INT32:  scaleAttribElement<int32>();    break;
-                    case GA_STORE_INT64:  scaleAttribElement<int64>();    break;
-                    case GA_STORE_REAL16: scaleAttribElement<fpreal16>(); break;
-                    case GA_STORE_REAL32: scaleAttribElement<fpreal32>(); break;
-                    case GA_STORE_REAL64: scaleAttribElement<fpreal64>(); break;
-                    default: break;
-                }
-            break;
-            case 2:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: scaleAttribElement<UT_Vector2T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: scaleAttribElement<UT_Vector2T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: scaleAttribElement<UT_Vector2T<fpreal64>>(); break;
-                    default: break;
-                }
-            break;
-            case 3:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: scaleAttribElement<UT_Vector3T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: scaleAttribElement<UT_Vector3T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: scaleAttribElement<UT_Vector3T<fpreal64>>(); break;
-                    default: break;
-                }
-            break;
-            case 4:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: scaleAttribElement<UT_Vector4T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: scaleAttribElement<UT_Vector4T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: scaleAttribElement<UT_Vector4T<fpreal64>>(); break;
-                    default: break;
-                }
-            break;
-            default: break;
-            }
-            */
         }
         return true;
     }

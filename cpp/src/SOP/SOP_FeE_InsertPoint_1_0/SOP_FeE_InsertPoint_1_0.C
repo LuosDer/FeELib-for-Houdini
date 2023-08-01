@@ -82,7 +82,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -210,12 +210,6 @@ SOP_FeE_InsertPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-    
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
-*/
     
     GFE_InsertPoint insertPoint(outGeo0, cookparms);
     insertPoint.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),

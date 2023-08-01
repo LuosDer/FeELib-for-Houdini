@@ -208,27 +208,60 @@ enum class GFE_ScaleAxis
         }                                                                 \
 
 
-#define GFE_ForEachStorage2(Func, Storage)      \
+#define GFE_ForEachStorageMtx(Func, Storage, Num)                         \
+        switch (Storage)                                                  \
+        {                                                                 \
+        case GA_STORE_INT32:  Func<UT_Matrix##Num##T<int32   >>(); break; \
+        case GA_STORE_INT64:  Func<UT_Matrix##Num##T<int64   >>(); break; \
+        case GA_STORE_REAL16: Func<UT_Matrix##Num##T<fpreal16>>(); break; \
+        case GA_STORE_REAL32: Func<UT_Matrix##Num##T<fpreal32>>(); break; \
+        case GA_STORE_REAL64: Func<UT_Matrix##Num##T<fpreal64>>(); break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Storage");            break; \
+        }                                                                 \
+
+
+#define GFE_ForEachStorageV2(Func, Storage)     \
         GFE_ForEachStorageVec(Func, Storage, 2) \
 
-#define GFE_ForEachStorage3(Func, Storage)      \
+#define GFE_ForEachStorageV3(Func, Storage)     \
         GFE_ForEachStorageVec(Func, Storage, 3) \
 
-#define GFE_ForEachStorage4(Func, Storage)      \
+#define GFE_ForEachStorageV4(Func, Storage)     \
         GFE_ForEachStorageVec(Func, Storage, 4) \
 
 
+#define GFE_ForEachStorageM2(Func, Storage)      \
+        GFE_ForEachStorageMtx(Func, Storage, 2)  \
+
+#define GFE_ForEachStorageM3(Func, Storage)      \
+        GFE_ForEachStorageMtx(Func, Storage, 3)  \
+
+#define GFE_ForEachStorageM4(Func, Storage)      \
+        GFE_ForEachStorageMtx(Func, Storage, 4)  \
 
 
-#define GFE_ForEachStorageTupleSizeVec(Func, Storage, TupleSize)  \
-        switch (TupleSize)                                        \
-        {                                                         \
-        case 1: GFE_ForEachStorage1(Func, Storage);        break; \
-        case 2: GFE_ForEachStorage2(Func, Storage);        break; \
-        case 3: GFE_ForEachStorage3(Func, Storage);        break; \
-        case 4: GFE_ForEachStorage4(Func, Storage);        break; \
-        default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break; \
-        }                                                         \
+
+
+#define GFE_ForEachStorageTupleSizeVec(Func, Storage, TupleSize)   \
+        switch (TupleSize)                                         \
+        {                                                          \
+        case 1: GFE_ForEachStorage1 (Func, Storage);       break;  \
+        case 2: GFE_ForEachStorageV2(Func, Storage);       break;  \
+        case 3: GFE_ForEachStorageV3(Func, Storage);       break;  \
+        case 4: GFE_ForEachStorageV4(Func, Storage);       break;  \
+        default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break;  \
+        }                                                          \
+
+#define GFE_ForEachStorageTupleSizeVecMtx(Func, Storage, TupleSize)   \
+        switch (TupleSize)                                            \
+        {                                                             \
+        case 1:  GFE_ForEachStorage1 (Func, Storage);     break;      \
+        case 4:  GFE_ForEachStorageM2(Func, Storage);     break;      \
+        case 9:  GFE_ForEachStorageM3(Func, Storage);     break;      \
+        case 16: GFE_ForEachStorageM4(Func, Storage);     break;      \
+        default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break;     \
+        }                                                             \
+
 
 
 
@@ -871,6 +904,85 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
 
 
 
+
+        
+template <GA_Storage _Val>
+using storage_constant = std::integral_constant<GA_Storage, _Val>;
+
+using store_invalid_type = storage_constant<GA_STORE_INVALID>;
+using store_b_type   = storage_constant<GA_STORE_BOOL>;
+using store_i8_type  = storage_constant<GA_STORE_INT8>;
+using store_i16_type = storage_constant<GA_STORE_INT16>;
+using store_i32_type = storage_constant<GA_STORE_INT32>;
+using store_i64_type = storage_constant<GA_STORE_INT64>;
+using store_f16_type = storage_constant<GA_STORE_REAL16>;
+using store_f32_type = storage_constant<GA_STORE_REAL32>;
+using store_f64_type = storage_constant<GA_STORE_REAL64>;
+using store_fs_type  = storage_constant<GA_STORE_STRING>;
+using store_fd_type  = storage_constant<GA_STORE_DICT>;
+
+
+
+std::variant<store_invalid_type,
+             store_b_type      ,
+             store_i8_type     ,
+             store_i16_type    ,
+             store_i32_type    ,
+             store_i64_type    ,
+             store_f16_type    ,
+             store_f32_type    ,
+             store_f64_type    ,
+             store_fs_type     ,
+             store_fd_type     >
+SYS_FORCE_INLINE attribStorageVariant(const GA_Storage v)
+{
+    switch (v)
+    {
+    case GA_STORE_INVALID: return storage_constant<GA_STORE_INVALID>{}; break;
+    case GA_STORE_INT8:    return storage_constant<GA_STORE_INT8>   {}; break;
+    case GA_STORE_INT16:   return storage_constant<GA_STORE_INT16>  {}; break;
+    case GA_STORE_INT32:   return storage_constant<GA_STORE_INT32>  {}; break;
+    case GA_STORE_INT64:   return storage_constant<GA_STORE_INT64>  {}; break;
+    case GA_STORE_REAL16:  return storage_constant<GA_STORE_REAL16> {}; break;
+    case GA_STORE_REAL32:  return storage_constant<GA_STORE_REAL32> {}; break;
+    case GA_STORE_REAL64:  return storage_constant<GA_STORE_REAL64> {}; break;
+    case GA_STORE_STRING:  return storage_constant<GA_STORE_STRING> {}; break;
+    case GA_STORE_DICT:    return storage_constant<GA_STORE_DICT>   {}; break;
+    default: break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Storage");
+    return storage_constant<GA_STORE_INVALID>{};
+}
+
+        
+SYS_FORCE_INLINE auto attribStorageVariant(const GA_Attribute& attrib)
+{ return attribStorageVariant(attrib.getAIFTuple()->getStorage(&attrib)); }
+
+SYS_FORCE_INLINE auto attribStorageVariant(const GA_Attribute* const attrib)
+{ UT_ASSERT_P(attrib); return attribStorageVariant(attrib->getAIFTuple()->getStorage(attrib)); }
+
+//std::variant<std::true_type, std::false_type>
+//attribOwnerVariant(const GA_AttributeOwner v)
+//{ return v ? std::true_type{} : std::false_type{}; }
+
+
+
+
+std::variant<std::true_type, std::false_type>
+boolVariant(const bool v)
+{ return (v ? std::true_type : std::false_type){}; }
+
+
+
+
+
+
+
+
+
+
+
+        
 
 } // End of namespace GFE_Type
 

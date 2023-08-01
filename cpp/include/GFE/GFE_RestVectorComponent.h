@@ -258,7 +258,7 @@ private:
     
     
     exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    exint minGrainSize   = 1024;
 
 #undef __TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME
     
