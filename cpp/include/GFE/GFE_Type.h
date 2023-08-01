@@ -905,85 +905,222 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
 
 
 
+
+
+
+
         
-template <GA_Storage _Val>
-using storage_constant = std::integral_constant<GA_Storage, _Val>;
+template <int _Val>
+using attrib_tuplesize_constant = std::integral_constant<int, _Val>;
 
-using store_invalid_type = storage_constant<GA_STORE_INVALID>;
-using store_b_type   = storage_constant<GA_STORE_BOOL>;
-using store_i8_type  = storage_constant<GA_STORE_INT8>;
-using store_i16_type = storage_constant<GA_STORE_INT16>;
-using store_i32_type = storage_constant<GA_STORE_INT32>;
-using store_i64_type = storage_constant<GA_STORE_INT64>;
-using store_f16_type = storage_constant<GA_STORE_REAL16>;
-using store_f32_type = storage_constant<GA_STORE_REAL32>;
-using store_f64_type = storage_constant<GA_STORE_REAL64>;
-using store_fs_type  = storage_constant<GA_STORE_STRING>;
-using store_fd_type  = storage_constant<GA_STORE_DICT>;
+using attrib_tuplesize_1_type  = attrib_tuplesize_constant<1>;
+using attrib_tuplesize_2_type  = attrib_tuplesize_constant<2>;
+using attrib_tuplesize_3_type  = attrib_tuplesize_constant<3>;
+using attrib_tuplesize_4_type  = attrib_tuplesize_constant<4>;
+using attrib_tuplesize_9_type  = attrib_tuplesize_constant<9>;
+using attrib_tuplesize_16_type = attrib_tuplesize_constant<16>;
 
 
-
-std::variant<store_invalid_type,
-             store_b_type      ,
-             store_i8_type     ,
-             store_i16_type    ,
-             store_i32_type    ,
-             store_i64_type    ,
-             store_f16_type    ,
-             store_f32_type    ,
-             store_f64_type    ,
-             store_fs_type     ,
-             store_fd_type     >
-SYS_FORCE_INLINE attribStorageVariant(const GA_Storage v)
+using attrib_tuplesize_variant = std::variant<attrib_tuplesize_1_type ,
+                                              attrib_tuplesize_2_type ,
+                                              attrib_tuplesize_3_type ,
+                                              attrib_tuplesize_4_type ,
+                                              attrib_tuplesize_9_type ,
+                                              attrib_tuplesize_16_type>;
+        
+SYS_FORCE_INLINE attrib_tuplesize_variant getAttribTupleSizeVariant(const int v)
 {
     switch (v)
     {
-    case GA_STORE_INVALID: return storage_constant<GA_STORE_INVALID>{}; break;
-    case GA_STORE_INT8:    return storage_constant<GA_STORE_INT8>   {}; break;
-    case GA_STORE_INT16:   return storage_constant<GA_STORE_INT16>  {}; break;
-    case GA_STORE_INT32:   return storage_constant<GA_STORE_INT32>  {}; break;
-    case GA_STORE_INT64:   return storage_constant<GA_STORE_INT64>  {}; break;
-    case GA_STORE_REAL16:  return storage_constant<GA_STORE_REAL16> {}; break;
-    case GA_STORE_REAL32:  return storage_constant<GA_STORE_REAL32> {}; break;
-    case GA_STORE_REAL64:  return storage_constant<GA_STORE_REAL64> {}; break;
-    case GA_STORE_STRING:  return storage_constant<GA_STORE_STRING> {}; break;
-    case GA_STORE_DICT:    return storage_constant<GA_STORE_DICT>   {}; break;
+    case 1:  return attrib_tuplesize_constant<1> {}; break;
+    case 2:  return attrib_tuplesize_constant<2> {}; break;
+    case 3:  return attrib_tuplesize_constant<3> {}; break;
+    case 4:  return attrib_tuplesize_constant<4> {}; break;
+    case 9:  return attrib_tuplesize_constant<9> {}; break;
+    case 16: return attrib_tuplesize_constant<16>{}; break;
     default: break;
     }
-    UT_ASSERT_MSG(0, "Unhandled Attrib Storage");
-    return storage_constant<GA_STORE_INVALID>{};
+    UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Size");
+    return attrib_tuplesize_constant<1>{};
 }
 
         
-SYS_FORCE_INLINE auto attribStorageVariant(const GA_Attribute& attrib)
-{ return attribStorageVariant(attrib.getAIFTuple()->getStorage(&attrib)); }
+SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute& attrib)
+{ return getAttribTupleSizeVariant(attrib.getTupleSize()); }
 
-SYS_FORCE_INLINE auto attribStorageVariant(const GA_Attribute* const attrib)
-{ UT_ASSERT_P(attrib); return attribStorageVariant(attrib->getAIFTuple()->getStorage(attrib)); }
-
-//std::variant<std::true_type, std::false_type>
-//attribOwnerVariant(const GA_AttributeOwner v)
-//{ return v ? std::true_type{} : std::false_type{}; }
+SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib)
+{ UT_ASSERT_P(attrib); return getAttribTupleSizeVariant(*attrib); }
 
 
 
+        
 
-std::variant<std::true_type, std::false_type>
-boolVariant(const bool v)
-{ return (v ? std::true_type : std::false_type){}; }
+        
+template <GA_Storage _Val>
+using attrib_store_constant = std::integral_constant<GA_Storage, _Val>;
+
+using attrib_store_invalid_type = attrib_store_constant<GA_STORE_INVALID>;
+using attrib_store_b_type       = attrib_store_constant<GA_STORE_BOOL>;
+using attrib_store_i8_type      = attrib_store_constant<GA_STORE_INT8>;
+using attrib_store_i16_type     = attrib_store_constant<GA_STORE_INT16>;
+using attrib_store_i32_type     = attrib_store_constant<GA_STORE_INT32>;
+using attrib_store_i64_type     = attrib_store_constant<GA_STORE_INT64>;
+using attrib_store_f16_type     = attrib_store_constant<GA_STORE_REAL16>;
+using attrib_store_f32_type     = attrib_store_constant<GA_STORE_REAL32>;
+using attrib_store_f64_type     = attrib_store_constant<GA_STORE_REAL64>;
+using attrib_store_fs_type      = attrib_store_constant<GA_STORE_STRING>;
+using attrib_store_fd_type      = attrib_store_constant<GA_STORE_DICT>;
 
 
 
+using attrib_store_variant = std::variant<attrib_store_invalid_type,
+                                          attrib_store_b_type      ,
+                                          attrib_store_i8_type     ,
+                                          attrib_store_i16_type    ,
+                                          attrib_store_i32_type    ,
+                                          attrib_store_i64_type    ,
+                                          attrib_store_f16_type    ,
+                                          attrib_store_f32_type    ,
+                                          attrib_store_f64_type    ,
+                                          attrib_store_fs_type     ,
+                                          attrib_store_fd_type     >;
+        
+SYS_FORCE_INLINE attrib_store_variant getAttribStorageVariant(const GA_Storage v)
+{
+    switch (v)
+    {
+    case GA_STORE_INVALID: return attrib_store_constant<GA_STORE_INVALID>{}; break;
+    case GA_STORE_INT8:    return attrib_store_constant<GA_STORE_INT8>   {}; break;
+    case GA_STORE_INT16:   return attrib_store_constant<GA_STORE_INT16>  {}; break;
+    case GA_STORE_INT32:   return attrib_store_constant<GA_STORE_INT32>  {}; break;
+    case GA_STORE_INT64:   return attrib_store_constant<GA_STORE_INT64>  {}; break;
+    case GA_STORE_REAL16:  return attrib_store_constant<GA_STORE_REAL16> {}; break;
+    case GA_STORE_REAL32:  return attrib_store_constant<GA_STORE_REAL32> {}; break;
+    case GA_STORE_REAL64:  return attrib_store_constant<GA_STORE_REAL64> {}; break;
+    case GA_STORE_STRING:  return attrib_store_constant<GA_STORE_STRING> {}; break;
+    case GA_STORE_DICT:    return attrib_store_constant<GA_STORE_DICT>   {}; break;
+    default: break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Storage");
+    return attrib_store_constant<GA_STORE_INVALID>{};
+}
 
+        
+SYS_FORCE_INLINE auto getAttribStorageVariant(const GA_Attribute& attrib)
+{ return getAttribStorageVariant(attrib.getAIFTuple()->getStorage(&attrib)); }
 
-
-
+SYS_FORCE_INLINE auto getAttribStorageVariant(const GA_Attribute* const attrib)
+{ UT_ASSERT_P(attrib); return getAttribStorageVariant(attrib->getAIFTuple()->getStorage(attrib)); }
 
 
 
 
         
 
+        
+        
+template <GA_AttributeOwner _Val>
+using attrib_owner_constant = std::integral_constant<GA_AttributeOwner, _Val>;
+
+using attrib_owner_invalid_type = attrib_owner_constant<GA_ATTRIB_INVALID>;
+using attrib_owner_prim_type    = attrib_owner_constant<GA_ATTRIB_PRIMITIVE>;
+using attrib_owner_point_type   = attrib_owner_constant<GA_ATTRIB_POINT>;
+using attrib_owner_vertex_type  = attrib_owner_constant<GA_ATTRIB_VERTEX>;
+using attrib_owner_detail_type  = attrib_owner_constant<GA_ATTRIB_DETAIL>;
+using attrib_owner_n_type       = attrib_owner_constant<GA_ATTRIB_OWNER_N>;
+
+        
+using attrib_owner_variant = std::variant<attrib_owner_invalid_type,
+                                          attrib_owner_prim_type   ,
+                                          attrib_owner_point_type  ,
+                                          attrib_owner_vertex_type ,
+                                          attrib_owner_detail_type ,
+                                          attrib_owner_n_type      >;
+
+        
+SYS_FORCE_INLINE attrib_owner_variant getAttribOwnerVariant(const GA_AttributeOwner v)
+{
+    switch (v)
+    {
+    case GA_ATTRIB_INVALID:   return attrib_owner_constant<GA_ATTRIB_INVALID  >{}; break;
+    case GA_ATTRIB_PRIMITIVE: return attrib_owner_constant<GA_ATTRIB_PRIMITIVE>{}; break;
+    case GA_ATTRIB_POINT:     return attrib_owner_constant<GA_ATTRIB_POINT    >{}; break;
+    case GA_ATTRIB_VERTEX:    return attrib_owner_constant<GA_ATTRIB_VERTEX   >{}; break;
+    case GA_ATTRIB_DETAIL:    return attrib_owner_constant<GA_ATTRIB_DETAIL   >{}; break;
+    case GA_ATTRIB_OWNER_N:   return attrib_owner_constant<GA_ATTRIB_OWNER_N  >{}; break;
+    default: break;
+    }
+    UT_ASSERT_MSG(0, "Unhandled Attrib Owner");
+    return attrib_owner_constant<GA_ATTRIB_INVALID>{};
+}
+
+SYS_FORCE_INLINE auto getAttribOwnerVariant(const GA_Attribute& attrib)
+{ return getAttribOwnerVariant(attrib.getOwner()); }
+
+SYS_FORCE_INLINE auto getAttribOwnerVariant(const GA_Attribute* const attrib)
+{ UT_ASSERT_P(attrib); return getAttribOwnerVariant(*attrib); }
+
+
+        
+using bool_variant = std::variant<std::true_type, std::false_type>;
+
+bool_variant getBoolVariant(const bool v)
+{
+    if (v)
+        return std::true_type{};
+    else
+        return std::false_type{};
+}
+
+
+
+
+
+
+
+
+        template <int _TupleSize, GA_Storage _Store>
+        struct storeTupleSizeValueType { using type = void; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_BOOL>   { using type = bool; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_INT8>   { using type = int8; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_INT16>  { using type = int16; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_INT32>  { using type = int32; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_INT64>  { using type = int64; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_REAL16> { using type = fpreal16; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_REAL32> { using type = fpreal32; };
+        template <>
+        struct storeTupleSizeValueType<1, GA_STORE_REAL64> { using type = fpreal64; };
+        
+#define __GFE_Type_SpecializationVec(NUM)\
+        template <>\
+        struct storeTupleSizeValueType<NUM, GA_STORE_INT32>  { using type = UT_Vector##NUM##T<int32>; };\
+        template <>\
+        struct storeTupleSizeValueType<NUM, GA_STORE_INT64>  { using type = UT_Vector##NUM##T<int64>; };\
+        template <>\
+        struct storeTupleSizeValueType<NUM, GA_STORE_REAL16> { using type = UT_Vector##NUM##T<fpreal16>; };\
+        template <>\
+        struct storeTupleSizeValueType<NUM, GA_STORE_REAL32> { using type = UT_Vector##NUM##T<fpreal32>; };\
+        template <>\
+        struct storeTupleSizeValueType<NUM, GA_STORE_REAL64> { using type = UT_Vector##NUM##T<fpreal64>; };\
+    
+        __GFE_Type_SpecializationVec(2)
+        __GFE_Type_SpecializationVec(3)
+        __GFE_Type_SpecializationVec(4)
+        
+#undef __GFE_Type_SpecializationVec
+        
+
+        template <int _TupleSize, GA_Storage _Store>
+        using storeTupleSizeValueType_t = storeTupleSizeValueType<_TupleSize, _Store>::type;
+
+        
 } // End of namespace GFE_Type
 
 

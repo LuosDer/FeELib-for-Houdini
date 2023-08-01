@@ -265,6 +265,15 @@ private:
     {
         UT_ASSERT_P(&srcAttrib->getDetail() == geoTmp);
         
+        auto storageVariant = GFE_Type::getAttribStorageVariant(attrib);
+        auto dstOwnerVariant = GFE_Type::getAttribOwnerVariant(dstAttrib);
+        auto srcOwnerVariant = GFE_Type::getAttribOwnerVariant(srcAttrib);
+        std::visit([&] (auto storageVariant, auto dstOwnerVariant, auto srcOwnerVariant, auto doNormalizeVariant)
+        {
+            scaleAttribElement<storageVariant, dstOwnerVariant, srcOwnerVariant>
+        },  storageVariant, dstOwnerVariant, srcOwnerVariant);
+
+        
         const GA_AIFTuple* const aifTuple = srcAttrib->getAIFTuple();
         if (aifTuple)
         {
