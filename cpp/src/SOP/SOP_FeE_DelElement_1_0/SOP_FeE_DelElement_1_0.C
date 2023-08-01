@@ -165,7 +165,11 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_DelElement_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_DelElement_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const
+    {
+        const auto* sopparms = reinterpret_cast<const SOP_FeE_DelElement_1_0Parms*>(parms);
+        return sopparms->getDelElement() ? COOK_GENERATOR : COOK_PASSTHROUGH;
+    }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -189,7 +193,7 @@ SOP_FeE_DelElement_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmGroupType)
+sopGroupType(const SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmGroupType)
 {
     using namespace SOP_FeE_DelElement_1_0Enums;
     switch (parmGroupType)
@@ -205,7 +209,7 @@ sopGroupType(SOP_FeE_DelElement_1_0Parms::DelElementGroupType parmGroupType)
 }
 
 static GA_Detail::GA_DestroyPointMode
-sopDelPointMode(SOP_FeE_DelElement_1_0Parms::DelElementPointMode parmDelPointMode)
+sopDelPointMode(const SOP_FeE_DelElement_1_0Parms::DelElementPointMode parmDelPointMode)
 {
     using namespace SOP_FeE_DelElement_1_0Enums;
     switch (parmDelPointMode)
@@ -219,7 +223,7 @@ sopDelPointMode(SOP_FeE_DelElement_1_0Parms::DelElementPointMode parmDelPointMod
 }
 
 static GFE_DelElementMethod
-sopDelElementMethod(SOP_FeE_DelElement_1_0Parms::DelElementMethod parmDelPointMode)
+sopDelElementMethod(const SOP_FeE_DelElement_1_0Parms::DelElementMethod parmDelPointMode)
 {
     using namespace SOP_FeE_DelElement_1_0Enums;
     switch (parmDelPointMode)
@@ -241,11 +245,11 @@ SOP_FeE_DelElement_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    if (!sopparms.getDelElement())
-    {
-        outGeo0.replaceWith(inGeo0);
-        return;
-    }
+    //if (!sopparms.getDelElement())
+    //{
+    //    outGeo0.replaceWith(inGeo0);
+    //    return;
+    //}
     
     outGeo0.clear();
     

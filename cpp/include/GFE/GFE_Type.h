@@ -24,27 +24,23 @@
 
 
 
-#define GFE_INVALID_OFFSET32 2147483647
-#define GFE_INVALID_OFFSET64 9223372036854775807
-
-
 #if 1
+    #if 1
+        static constexpr int32 GFE_INVALID_OFFSET32 = ::std::numeric_limits<int32>::max();
+        static constexpr int64 GFE_INVALID_OFFSET64 = ::std::numeric_limits<int64>::max();
 
-#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET32
-
+        //template<typename _SCALAR_T>
+        //static constexpr _SCALAR_T GFE_INVALID_OFFSET = ::std::numeric_limits<_SCALAR_T>::max();
+    #else
+        #define GFE_INVALID_OFFSET32 2147483647
+        #define GFE_INVALID_OFFSET64 9223372036854775807
+    #endif
 #else
-
-//#define GFE_INVALID_OFFSET numeric_limits<GA_Offset>::max()
-using GFE_INVALID_OFFSET = numeric_limits<GA_Offset>::max();
-
-#if GA_Offset == int64
-#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET64
-#else
-#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET32
+    #define GFE_INVALID_OFFSET32 -1
+    #define GFE_INVALID_OFFSET64 -1
 #endif
 
-#endif
-
+#define GFE_INVALID_OFFSET GFE_INVALID_OFFSET32
 
 
 
@@ -184,42 +180,133 @@ enum class GFE_ScaleAxis
 };
 
 
+
+#define GFE_ForEachStorage1(Func, Storage)                     \
+        switch (Storage)                                       \
+        {                                                      \
+        case GA_STORE_INT8:   Func<int8    >();         break; \
+        case GA_STORE_INT16:  Func<int16   >();         break; \
+        case GA_STORE_INT32:  Func<int32   >();         break; \
+        case GA_STORE_INT64:  Func<int64   >();         break; \
+        case GA_STORE_REAL16: Func<fpreal16>();         break; \
+        case GA_STORE_REAL32: Func<fpreal32>();         break; \
+        case GA_STORE_REAL64: Func<fpreal64>();         break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Storage"); break; \
+        }                                                      \
+
+
+
+#define GFE_ForEachStorageVec(Func, Storage, Num)                         \
+        switch (Storage)                                                  \
+        {                                                                 \
+        case GA_STORE_INT32:  Func<UT_Vector##Num##T<int32   >>(); break; \
+        case GA_STORE_INT64:  Func<UT_Vector##Num##T<int64   >>(); break; \
+        case GA_STORE_REAL16: Func<UT_Vector##Num##T<fpreal16>>(); break; \
+        case GA_STORE_REAL32: Func<UT_Vector##Num##T<fpreal32>>(); break; \
+        case GA_STORE_REAL64: Func<UT_Vector##Num##T<fpreal64>>(); break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Storage");            break; \
+        }                                                                 \
+
+
+#define GFE_ForEachStorage2(Func, Storage)      \
+        GFE_ForEachStorageVec(Func, Storage, 2) \
+
+#define GFE_ForEachStorage3(Func, Storage)      \
+        GFE_ForEachStorageVec(Func, Storage, 3) \
+
+#define GFE_ForEachStorage4(Func, Storage)      \
+        GFE_ForEachStorageVec(Func, Storage, 4) \
+
+
+
+
+#define GFE_ForEachStorageTupleSizeVec(Func, Storage, TupleSize)  \
+        switch (TupleSize)                                        \
+        {                                                         \
+        case 1: GFE_ForEachStorage1(Func, Storage);        break; \
+        case 2: GFE_ForEachStorage2(Func, Storage);        break; \
+        case 3: GFE_ForEachStorage3(Func, Storage);        break; \
+        case 4: GFE_ForEachStorage4(Func, Storage);        break; \
+        default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break; \
+        }                                                         \
+
+
+
+/*
+
+template<typename _Ty, typename Body>
+#define GFEForEachStorageVec(const Body &body, const GA_Storage storage, const int num)
+{
+    switch (Storage)
+    {
+    case GA_STORE_INT32:  Func<UT_Vector##Num##T<int32   >>(); break;
+    case GA_STORE_INT64:  Func<UT_Vector##Num##T<int64   >>(); break;
+    case GA_STORE_REAL16: Func<UT_Vector##Num##T<fpreal16>>(); break;
+    case GA_STORE_REAL32: Func<UT_Vector##Num##T<fpreal32>>(); break;
+    case GA_STORE_REAL64: Func<UT_Vector##Num##T<fpreal64>>(); break;
+    default: UT_ASSERT_MSG(0, "Unhandled Storage");            break;
+    }
+}
+
+
+template<typename _Ty, typename Body>
+GFEForEachStorageTupleSizeVec(const Body &body, const GA_Storage storage, const int tupleSize)
+{
+    switch (tupleSize)
+    {
+    case 1: GFE_ForEachStorage1(body, storage);        break;
+    case 2: GFE_ForEachStorage2(body, storage);        break;
+    case 3: GFE_ForEachStorage3(body, storage);        break;
+    case 4: GFE_ForEachStorage4(body, storage);        break;
+    default: UT_ASSERT_MSG(0, "Unhandled Tuple Size"); break;
+    }
+}
+
+*/
+
+
 namespace GFE_Type {
 
-// #ifndef fpreal16
-// #define fpreal16 float
-// #endif
+//#ifndef fpreal16
+//#define fpreal16 float
+//#endif
     
+// template <class _Ty>
+// _INLINE_VAR constexpr bool isScalar = ::std::is_same_v<_Ty, char>           ||
+//                                       ::std::is_same_v<_Ty, wchar_t>        ||
+//                                       ::std::is_same_v<_Ty, signed char>    ||
+//                                       ::std::is_same_v<_Ty, unsigned char>  ||
+//                                       ::std::is_same_v<_Ty, unsigned short> ||
+//                                       ::std::is_same_v<_Ty, short>          ||
+//                                       ::std::is_same_v<_Ty, unsigned int>   ||
+//                                       ::std::is_same_v<_Ty, int64>          ||
+//                                       ::std::is_same_v<_Ty, uint64>         ||
+//                                       ::std::is_same_v<_Ty, fpreal16>       ||
+//                                       ::std::is_same_v<_Ty, float>          ||
+//                                       ::std::is_same_v<_Ty, double>         ;
+
 template <class _Ty>
-_INLINE_VAR constexpr bool isScalar = std::is_same_v<_Ty, char>           ||
-                                      std::is_same_v<_Ty, wchar_t>        ||
-                                      std::is_same_v<_Ty, signed char>    ||
-                                      std::is_same_v<_Ty, unsigned char>  ||
-                                      std::is_same_v<_Ty, unsigned short> ||
-                                      std::is_same_v<_Ty, short>          ||
-                                      std::is_same_v<_Ty, unsigned int>   ||
-                                      std::is_same_v<_Ty, int64>          ||
-                                      std::is_same_v<_Ty, uint64>         ||
-                                      std::is_same_v<_Ty, fpreal16>       ||
-                                      std::is_same_v<_Ty, float>          ||
-                                      std::is_same_v<_Ty, double>         ;
+_INLINE_VAR constexpr bool isScalar = ::std::is_arithmetic_v<_Ty>      ||
+                                      ::std::is_same_v<_Ty, int64>     ||
+                                      ::std::is_same_v<_Ty, uint64>    ||
+                                      ::std::is_same_v<_Ty, fpreal16>  ;
 
 
     
-#define __GFE_SPECIALIZATION_IsVector(NUM)                                                                \
-template <class _Ty>                                                                                      \
-_INLINE_VAR constexpr bool isVector##NUM = std::is_same_v<_Ty, UT_Vector##NUM##T<char>           >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<wchar_t>        >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<signed char>    >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned char>  >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned short> >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<short>          >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned int>   >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<int64>          >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<uint64>         >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<fpreal16>       >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<float>          >||      \
-                                           std::is_same_v<_Ty, UT_Vector##NUM##T<double>         >;       \
+#define __GFE_SPECIALIZATION_IsVector(NUM)                                                                  \
+template <class _Ty>                                                                                        \
+_INLINE_VAR constexpr bool isVector##NUM = ::std::is_same_v<_Ty, UT_Vector##NUM##T<char>           >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<wchar_t>        >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<signed char>    >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned char>  >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned short> >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<short>          >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned int>   >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<int64>          >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<uint64>         >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<fpreal16>       >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<float>          >||      \
+                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<double>         >;       \
 
 __GFE_SPECIALIZATION_IsVector(2)
 __GFE_SPECIALIZATION_IsVector(3)
@@ -227,20 +314,20 @@ __GFE_SPECIALIZATION_IsVector(4)
 
 #undef  __GFE_SPECIALIZATION_IsVector
 
-#define __GFE_SPECIALIZATION_IsMatrix(NUM)                                                                \
-template <class _Ty>                                                                                      \
-_INLINE_VAR constexpr bool isMatrix##NUM = std::is_same_v<_Ty, UT_Matrix##NUM##T<char>           >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<wchar_t>        >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<signed char>    >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned char>  >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned short> >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<short>          >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned int>   >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<int64>          >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<uint64>         >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<fpreal16>       >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<float>          >||      \
-                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<double>         >;       \
+#define __GFE_SPECIALIZATION_IsMatrix(NUM)                                                                  \
+template <class _Ty>                                                                                        \
+_INLINE_VAR constexpr bool isMatrix##NUM = ::std::is_same_v<_Ty, UT_Matrix##NUM##T<char>           >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<wchar_t>        >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<signed char>    >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned char>  >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned short> >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<short>          >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned int>   >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<int64>          >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<uint64>         >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<fpreal16>       >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<float>          >||      \
+                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<double>         >;       \
 
 __GFE_SPECIALIZATION_IsMatrix(2)
 __GFE_SPECIALIZATION_IsMatrix(3)
@@ -251,9 +338,9 @@ __GFE_SPECIALIZATION_IsMatrix(4)
 
 
 template <class _Ty>
-_INLINE_VAR constexpr bool isVector = isVector<_Ty> ||
-                                      isVector<_Ty> ||
-                                      isVector<_Ty> ;
+_INLINE_VAR constexpr bool isVector = isVector2<_Ty> ||
+                                      isVector3<_Ty> ||
+                                      isVector4<_Ty> ;
 
 
 template <class _Ty>
@@ -273,21 +360,17 @@ _INLINE_VAR constexpr bool isVecMtx = isVector<_Ty> ||
                                       isMatrix<_Ty> ;
 
 
-template <bool judge, typename _T1, typename _T2>
-struct selectValueType {
-    using type = _T1;
-};
+template <bool judge, typename _Ty>
+struct select_value_type { using type = typename _Ty; };
 
-template <typename _T1, typename _T2>
-struct selectValueType<false, _T1, _T2> {
-    using type = _T2;
-};
+template <typename _Ty>
+struct select_value_type<false, _Ty> { using type = typename _Ty::value_type; };
     
-template <typename _T1>
-struct getValueType {
-    using type = selectValueType<isScalar<_T1>, _T1, typename _T1::value_type>;
-};
+template <typename _Ty>
+struct get_value_type { using type = typename select_value_type<isScalar<_Ty>, _Ty>::type; };
 
+template <class _Ty>
+using get_value_type_t = typename get_value_type<_Ty>::type;
     
 #ifndef GFE_TOPO_SCOPE
 
@@ -795,9 +878,11 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
 
 
 
+template<typename _Ty>
+using GFE_RWPageHandleT = GA_PageHandleT<_Ty, typename GFE_Type::get_value_type_t<_Ty>, true, true, GA_Attribute, GA_ATINumeric, GA_Detail>;
 
-
-
+template<typename _Ty>
+using GFE_ROPageHandleT = GA_PageHandleT<_Ty, typename GFE_Type::get_value_type_t<_Ty>, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail>;
 
 
 

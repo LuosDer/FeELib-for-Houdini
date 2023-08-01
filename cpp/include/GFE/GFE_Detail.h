@@ -778,12 +778,14 @@ SYS_FORCE_INLINE GA_Size primitiveIndexFromOffset(const GA_Offset elemoff) const
 
 
     
-    SYS_FORCE_INLINE void deletePrimitiveOffsets(const GA_Group* const group, const bool reverseGroup = false,
+    SYS_FORCE_INLINE void deletePrimitiveOffsets(
+        const GA_Group* const group, const bool reverseGroup = false,
         const bool withPoint = false
     )
     { deletePrimitiveOffsets(static_cast<const GA_PrimitiveGroup*>(group), reverseGroup, withPoint); }
     
-    SYS_FORCE_INLINE void deletePointOffsets(const GA_Group* const group, const bool reverseGroup = false,
+    SYS_FORCE_INLINE void deletePointOffsets(
+        const GA_Group* const group, const bool reverseGroup = false,
         const GA_DestroyPointMode mode = GA_LEAVE_PRIMITIVES,
         const bool guaranteeNoVertexReferences = false
     )

@@ -105,7 +105,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -216,7 +216,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
     //outGeo0.replaceWith(inGeo0);
 
-    const fpreal64 uniScale = sopparms.getUniScale();
+    const fpreal uniScale = sopparms.getUniScale();
     const bool doNormalize = sopparms.getNormalize();
 
     if (!doNormalize && uniScale==1.0)

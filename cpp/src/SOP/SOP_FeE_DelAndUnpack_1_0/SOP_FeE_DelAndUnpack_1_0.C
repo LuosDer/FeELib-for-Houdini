@@ -151,7 +151,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_DelAndUnpack_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_DelAndUnpack_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERATOR; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -175,10 +175,10 @@ SOP_FeE_DelAndUnpack_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_DelAndUnpack_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_DelAndUnpack_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_DelAndUnpack_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -191,7 +191,7 @@ sopGroupType(SOP_FeE_DelAndUnpack_1_0Parms::GroupType parmgrouptype)
 }
 
 static GFE_ElemTraversingMethod
-sopElemTraversingMethod(SOP_FeE_DelAndUnpack_1_0Parms::ElemTraversingMethod parmElemTraversingMethod)
+sopElemTraversingMethod(const SOP_FeE_DelAndUnpack_1_0Parms::ElemTraversingMethod parmElemTraversingMethod)
 {
     using namespace SOP_FeE_DelAndUnpack_1_0Enums;
     switch (parmElemTraversingMethod)
@@ -212,7 +212,7 @@ SOP_FeE_DelAndUnpack_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     //auto sopcache = (SOP_FeE_DelAndUnpack_1_0Cache*)cookparms.cache();
 
     const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
