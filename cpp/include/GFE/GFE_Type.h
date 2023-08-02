@@ -618,8 +618,13 @@ SYS_FORCE_INLINE static bool isPacked(const int id)
     SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const UT_StringRef& str1)
     { return stringEqual(str0, str1.c_str()); }
 
+    SYS_FORCE_INLINE static bool stringEqualP(const UT_StringRef& str0)
+    { return stringEqual(str0, "P"); }
     
-
+    SYS_FORCE_INLINE static bool stringEqualP(const char* const str0)
+    { return stringEqual(str0, "P"); }
+    
+    
     
 #if GFE_INVALID_OFFSET >= 0
     

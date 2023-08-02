@@ -109,6 +109,8 @@ private:
 
 #if GFE_DEBUG_MODE
         GA_StorageClass ga_StorageClass = attrib.getStorageClass();
+        GA_Precision gA_Precision = GFE_Attribute::getPrecision(attrib);
+        GA_Storage gA_Storage = GFE_Attribute::getStorage(attrib);
 #endif
         if (attrib.getStorageClass() == newStorageClass)
         {
@@ -139,7 +141,6 @@ private:
         else
         {
             const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, newPrecision);
-            //if (!detached && !attrib.isDetached() && attrib.getName() == newName)
             if (!detached && !attrib.isDetached() && GFE_Type::stringEqual(attrib.getName(), newName) == 0)
             {
                 GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
@@ -152,10 +153,17 @@ private:
             }
             else
             {
-                GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
-                    detached, attrib.getOwner(), newStorageClass, storage, newName);
-                
-                attribDuplicate(newAttrib, attrib);
+                GA_Attribute* newAttrib;
+                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                {
+                    geo->asGEO_Detail()->changePointAttributeStorage("P", storage);
+                    newAttrib = geo->getP();
+                }
+                else
+                {
+                    newAttrib = getOutAttribArray().findOrCreateTuple(detached, attrib.getOwner(), newStorageClass, storage, newName);
+                }
+                attribDuplicate(*newAttrib, attrib);
                 
                 if (delOrigin)
                     geo->destroyNonDetachedAttrib(attrib);
@@ -189,9 +197,9 @@ private:
         UTparallelFor(groupParser.getSplittableRange(attribRef), [&group, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -211,9 +219,9 @@ private:
         const GA_ROHandleS attrib_h(&attribRef);
         UTparallelFor(groupParser.getSplittableRange(attribRef), [&group, &attrib_h](const GA_SplittableRange& r)
         {
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -433,9 +441,9 @@ private:
         {
             GA_PageHandleT<SCALAR_T,     SCALAR_T,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -453,20 +461,16 @@ private:
 
 #if 0
     template<typename SCALAR_T_REF>
-    void
-        attribDuplicate<UT_StringHolder, SCALAR_T_REF>(
-            GA_Attribute& attrib,
-            const GA_Attribute& attribRef
-            )
+    void attribDuplicate<UT_StringHolder, SCALAR_T_REF>(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_RWHandleS attrib_h(&attrib);
         UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib_h, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attribRef_ph.setPage(start);
@@ -487,9 +491,9 @@ private:
             [this, &attrib_h, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attribRef_ph.setPage(start);
@@ -507,20 +511,16 @@ private:
 
 #if 0
     template<typename SCALAR_T>
-    void
-        attribDuplicate<SCALAR_T, UT_StringHolder>(
-            GA_Attribute& attrib,
-            const GA_Attribute& attribRef
-        )
+    void attribDuplicate<SCALAR_T, UT_StringHolder>(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_ROHandleS attribRef_h(&attribRef);
         UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib, &attribRef_h](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -541,9 +541,9 @@ private:
             [this, &attrib, &attribRef_h](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -595,8 +595,7 @@ private:
 
 
     // template<typename SCALAR_T>
-    // void
-    // attribDuplicate(
+    // void attribDuplicate(
     //     GA_Attribute& attrib,
     //     const GA_Attribute& attribRef
     // )
@@ -792,15 +791,14 @@ private:
     // }
 
     template<typename T>
-    void
-    setAttribValueTo1(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
+    void setAttribValueTo1(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
     {
         UTparallelFor(geoSplittableRange, [&attrib](const GA_SplittableRange& r)
         {
             GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(&attrib);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -814,8 +812,7 @@ private:
     }
 
     template<>
-    void
-    setAttribValueTo1<UT_StringHolder>(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
+    void setAttribValueTo1<UT_StringHolder>(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
     {
         const GA_RWHandleS attrib_h(&attrib);
         UTparallelFor(geoSplittableRange, [&attrib_h](const GA_SplittableRange& r)

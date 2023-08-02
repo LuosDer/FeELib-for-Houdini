@@ -154,19 +154,19 @@ public:
                : (attrib.isDetached() ? UT_StringHolder("") : attrib.getName());
     }
     
-    SYS_FORCE_INLINE const UT_StringHolder& getValidAttribName(const GA_ElementGroup& attrib)
+    SYS_FORCE_INLINE UT_StringHolder getValidAttribName(const GA_ElementGroup& attrib)
     { return getValidAttribName(reinterpret_cast<const GA_Group&>(attrib)); }
     
-    SYS_FORCE_INLINE const UT_StringHolder& getValidAttribName(const GA_PrimitiveGroup& attrib)
+    SYS_FORCE_INLINE UT_StringHolder getValidAttribName(const GA_PrimitiveGroup& attrib)
     { return getValidAttribName(reinterpret_cast<const GA_Group&>(attrib)); }
     
-    SYS_FORCE_INLINE const UT_StringHolder& getValidAttribName(const GA_PointGroup& attrib)
+    SYS_FORCE_INLINE UT_StringHolder getValidAttribName(const GA_PointGroup& attrib)
     { return getValidAttribName(reinterpret_cast<const GA_Group&>(attrib)); }
     
-    SYS_FORCE_INLINE const UT_StringHolder& getValidAttribName(const GA_VertexGroup& attrib)
+    SYS_FORCE_INLINE UT_StringHolder getValidAttribName(const GA_VertexGroup& attrib)
     { return getValidAttribName(reinterpret_cast<const GA_Group&>(attrib)); }
     
-    SYS_FORCE_INLINE const UT_StringHolder& getValidAttribName(const GA_EdgeGroup& attrib)
+    SYS_FORCE_INLINE UT_StringHolder getValidAttribName(const GA_EdgeGroup& attrib)
     { return getValidAttribName(reinterpret_cast<const GA_Group&>(attrib)); }
     
     SYS_FORCE_INLINE bool getIsValid()

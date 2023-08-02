@@ -151,7 +151,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -205,7 +205,7 @@ public:
     virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_AttribCast_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribCast_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
@@ -222,7 +222,7 @@ SOP_FeE_AttribCast_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribCast_1_0Parms::AttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_AttribCast_1_0Parms::AttribClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribCast_1_0Enums;
     switch (parmAttribClass)
@@ -238,7 +238,7 @@ sopAttribOwner(SOP_FeE_AttribCast_1_0Parms::AttribClass parmAttribClass)
 
 
 static GA_StorageClass
-sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType parmAttribType)
+sopStorageClass(const SOP_FeE_AttribCast_1_0Parms::AttribType parmAttribType)
 {
     using namespace SOP_FeE_AttribCast_1_0Enums;
     switch (parmAttribType)
@@ -254,7 +254,7 @@ sopStorageClass(SOP_FeE_AttribCast_1_0Parms::AttribType parmAttribType)
 
 
 static GA_Precision
-sopPrecision(SOP_FeE_AttribCast_1_0Parms::Precision parmPrecision)
+sopPrecision(const SOP_FeE_AttribCast_1_0Parms::Precision parmPrecision)
 {
     using namespace SOP_FeE_AttribCast_1_0Enums;
     switch (parmPrecision)
@@ -277,9 +277,9 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     auto&& sopparms = cookparms.parms<SOP_FeE_AttribCast_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());

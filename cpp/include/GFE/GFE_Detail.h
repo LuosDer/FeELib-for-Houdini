@@ -1096,7 +1096,7 @@ SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib, const UT_St
     
 bool forceRenameAttribute(GA_Attribute& attrib, const UT_StringRef& newName)
 {
-    if (attrib.isDetached())
+    if (attrib.isDetached() || GFE_Type::stringEqual(attrib.getName(), newName))
         return false;
     GA_Attribute* const existAttrib = findAttribute(attrib.getOwner(), newName);
     if (existAttrib)
