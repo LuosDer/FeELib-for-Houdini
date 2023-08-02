@@ -59,39 +59,35 @@ private:
         {
             attrib = getOutAttribArray()[i];
             
-            const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
+            scaleAttribElement();
             
-            GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
+            //const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
+            //GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
         }
         return true;
     }
 
 
-
     void scaleAttribElement()
     {
-        const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
-
-        
-        auto tupleSizeVariant = GFE_Type::getAttribTupleSizeVariant(attrib);
-        auto storeVariant = GFE_Type::getAttribStorageVariant(storage);
-        auto doNormalizeVariant = GFE_Type::getBoolVariant(doNormalize);
-        auto scaleVariant = GFE_Type::getBoolVariant(uniScale != 1.0);
-        
-        std::visit([this] (auto scaleVariant, auto doNormalizeVariant, auto tupleSizeVariant, auto storeVariant)
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
         {
-            UTparallelFor(groupParser.getSplittableRange(attrib), [=](const GA_SplittableRange& r)
+            auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);
+            auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+            auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+            std::visit([&] (auto scaleVariant, auto doNormalizeVariant, auto tupleTypeVariant)
             {
-                GFE_RWPageHandleT<GFE_Type::storeTupleSizeValueType_t<tupleSizeVariant, storeVariant>> attrib_ph(attrib);
+                using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+                GFE_RWPageHandleT<type> attrib_ph(attrib);
                 GA_Offset start, end;
-                for (GA_PageIterator pit = groupParser.getSplittableRange(attrib).beginPages(); !pit.atEnd(); ++pit)
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
                         attrib_ph.setPage(start);
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
-                            if constexpr (GFE_Type::isVector<GFE_Type::storeTupleSizeValueType_t<tupleSizeVariant, storeVariant>>)
+                            if constexpr (GFE_Type::isVector<type>)
                             {
                                 if constexpr (doNormalizeVariant)
                                     attrib_ph.value(elemoff).normalize();
@@ -101,24 +97,23 @@ private:
                         }
                     }
                 }
-            }, subscribeRatio, minGrainSize);
-        }, scaleVariant, doNormalizeVariant, tupleSizeVariant, storeVariant);
+            }, scaleVariant, doNormalizeVariant, tupleTypeVariant);
+        }, subscribeRatio, minGrainSize);
     }
-
     
+/*
     template<typename _Ty>
     void scaleAttribElement()
     {
-        auto doNormalizeVariant = GFE_Type::getBoolVariant(doNormalize);
-        auto scaleVariant = GFE_Type::getBoolVariant(uniScale != 1.0);
-        
-        std::visit([this] (auto scaleVariant, auto doNormalizeVariant)
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
         {
-            UTparallelFor(groupParser.getSplittableRange(attrib), [=](const GA_SplittableRange& r)
+            auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+            auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+            std::visit([&] (auto scaleVariant, auto doNormalizeVariant)
             {
                 GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
                 GA_Offset start, end;
-                for (GA_PageIterator pit = groupParser.getSplittableRange(attrib).beginPages(); !pit.atEnd(); ++pit)
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
                     for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                     {
@@ -135,10 +130,10 @@ private:
                         }
                     }
                 }
-            }, subscribeRatio, minGrainSize);
-        }, scaleVariant, doNormalizeVariant);
+            }, scaleVariant, doNormalizeVariant);
+        }, subscribeRatio, minGrainSize);
     }
-
+*/
 
 
 

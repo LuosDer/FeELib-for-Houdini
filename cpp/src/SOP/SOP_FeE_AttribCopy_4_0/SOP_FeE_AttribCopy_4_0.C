@@ -443,7 +443,7 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     attribCopy.appendGroups(sopparms.getCopyGroup());
     attribCopy.appendAttribs(sopparms.getCopyAttrib());
 
-    attribCopy.compute();
+    attribCopy.computeAndBumpDataId();
     attribCopy.visualizeOutGroup();
     
 }

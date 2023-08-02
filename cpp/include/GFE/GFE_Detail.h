@@ -17,6 +17,7 @@
 
 
 
+#include "GFE/GFE_Variant.h"
 #include "GFE/GFE_Group.h"
 #include "GFE/GFE_GroupUnion.h"
 #include "GFE/GFE_AttributeDelete.h"

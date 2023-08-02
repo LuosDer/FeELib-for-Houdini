@@ -67,7 +67,7 @@ private:
                 if (srcAttrib->getOwner() == dstAttribClass)
                     continue;
             
-                const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : srcAttrib->getName();
+                const UT_StringHolder& newName = newAttribNames.getValidAttribName(srcAttrib);
                 const bool detached = GFE_Type::isInvalid(newName);
                 
                 dstAttrib = getOutAttribArray().clone(detached, *srcAttrib, dstAttribClass, newName);
@@ -99,7 +99,7 @@ private:
                 if (srcGroup->classType() == dstGroupClass)
                     continue;
             
-                const UT_StringHolder& newName = newGroupNames.getIsValid() ? newGroupNames.getNext<UT_StringHolder>() : srcGroup->getName();
+                const UT_StringHolder& newName = newGroupNames.getValidAttribName(srcGroup);
                 const bool detached = GFE_Type::isInvalid(newName);
                 
                 dstGroup = getOutGroupArray().findOrCreate(detached, dstGroupClass, newName);
@@ -126,7 +126,112 @@ private:
     }
     
     
-    template<GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
+
+    void attribPromoteTuple()
+    {
+        if (geoRef0)
+        {
+            const GA_IndexMap& indexMap = srcAttrib->getIndexMap();
+            UTparallelFor(groupParser.getSplittableRange(dstAttrib), [this, &indexMap](const GA_SplittableRange& r)
+            {
+                auto dstOwnerVariant = GFE_Variant::getAttribOwnerVariant(dstAttrib);
+                auto srcOwnerVariant = GFE_Variant::getAttribOwnerVariant(srcAttrib);
+                auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vmVariant(*srcAttrib);
+                std::visit([&] (auto dstOwnerVariant, auto srcOwnerVariant, auto tupleTypeVariant)
+                {
+                    using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+                    if constexpr (GFE_Type::isTuple<type>)
+                    {
+                        const GA_ROHandleT<type> srcAttrib_h(srcAttrib);
+                        GFE_RWPageHandleT<type> attrib_ph(dstAttrib);
+                        GA_Offset start, end;
+                        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                        {
+                            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                            {
+                                attrib_ph.setPage(start);
+                                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                                {
+                                    const GA_Offset srcOff = geo->offsetPromote<dstOwnerVariant, srcOwnerVariant>(elemoff);
+                                    if (GFE_Type::isValidOffset(indexMap, srcOff))
+                                        attrib_ph.value(elemoff) = srcAttrib_h.get(srcOff);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const GA_Attribute& srcAttribRef = *srcAttrib;
+                        GA_Offset start, end;
+                        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                        {
+                            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                            {
+                                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                                {
+                                    const GA_Offset srcOff = geo->offsetPromote<dstOwnerVariant, srcOwnerVariant>(elemoff);
+                                    if (GFE_Type::isValidOffset(indexMap, srcOff))
+                                        dstAttrib->copy(elemoff, srcAttribRef, srcOff);
+                                }
+                            }
+                        }
+                    }
+                }, dstOwnerVariant, srcOwnerVariant, tupleTypeVariant);
+            }, subscribeRatio, minGrainSize);
+        }
+        else
+        {
+            UTparallelFor(groupParser.getSplittableRange(dstAttrib), [this](const GA_SplittableRange& r)
+            {
+                auto dstOwnerVariant = GFE_Variant::getAttribOwnerVariant(dstAttrib);
+                auto srcOwnerVariant = GFE_Variant::getAttribOwnerVariant(srcAttrib);
+                auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vmVariant(*srcAttrib);
+                std::visit([&] (auto dstOwnerVariant, auto srcOwnerVariant, auto tupleTypeVariant)
+                {
+                    using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+                    if constexpr (GFE_Type::isTuple<type>)
+                    {
+                        const GA_ROHandleT<type> srcAttrib_h(srcAttrib);
+                        GFE_RWPageHandleT<type> attrib_ph(dstAttrib);
+                        GA_Offset start, end;
+                        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                        {
+                            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                            {
+                                attrib_ph.setPage(start);
+                                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                                {
+                                    const GA_Offset srcOff = geo->offsetPromote<dstOwnerVariant, srcOwnerVariant>(elemoff);
+                                    if (GFE_Type::isValidOffset(srcOff))
+                                        attrib_ph.value(elemoff) = srcAttrib_h.get(srcOff);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const GA_Attribute& srcAttribRef = *srcAttrib;
+                        GA_Offset start, end;
+                        for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                        {
+                            for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                            {
+                                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                                {
+                                    const GA_Offset srcOff = geo->offsetPromote<dstOwnerVariant, srcOwnerVariant>(elemoff);
+                                    if (GFE_Type::isValidOffset(srcOff))
+                                        dstAttrib->copy(elemoff, srcAttribRef, srcOff);
+                                }
+                            }
+                        }
+                    }
+                }, dstOwnerVariant, srcOwnerVariant, tupleTypeVariant);
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+
+    
+    template<GA_AttributeOwner srcOwner, GA_AttributeOwner dstOwner>
     void attribPromote()
     {
         UT_ASSERT_P(&srcAttrib->getDetail() == geoTmp);
@@ -136,7 +241,7 @@ private:
     
         if (geoRef0)
         {
-            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(SrcOwner);
+            const GA_IndexMap& indexMapSrc = geoRef0->getIndexMap(srcOwner);
             UTparallelFor(groupParser.getSplittableRange<dstOwner>(), [this, &srcAttribRef, &indexMapSrc](const GA_SplittableRange& r)
             {
                 GA_Offset start, end;
@@ -144,7 +249,7 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset srcOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        const GA_Offset srcOff = geo->offsetPromote<dstOwner, srcOwner>(elemoff);
                         if (GFE_Type::isValidOffset(indexMapSrc, srcOff))
                             dstAttrib->copy(elemoff, srcAttribRef, srcOff);
                     }
@@ -160,7 +265,7 @@ private:
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset srcOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                        const GA_Offset srcOff = geo->offsetPromote<dstOwner, srcOwner>(elemoff);
                         if (GFE_Type::isValidOffset(srcOff))
                             dstAttrib->copy(elemoff, srcAttribRef, srcOff);
                     }
@@ -168,8 +273,11 @@ private:
             }, subscribeRatio, minGrainSize);
         }
     }
+
     
-    template<typename _Ty, GA_AttributeOwner SrcOwner, GA_AttributeOwner dstOwner>
+    /*
+    
+    template<typename _Ty, GA_AttributeOwner srcOwner, GA_AttributeOwner dstOwner>
     void attribPromote()
     {
         const GA_ROHandleT<_Ty> srcAttrib_h(srcAttrib);
@@ -188,7 +296,7 @@ private:
                         attrib_ph.setPage(start);
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
-                            const GA_Offset srcOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                            const GA_Offset srcOff = geo->offsetPromote<dstOwner, srcOwner>(elemoff);
                             if (GFE_Type::isValidOffset(indexMap, srcOff))
                                 attrib_ph.value(elemoff) = srcAttrib_h.get(srcOff);
                         }
@@ -209,7 +317,7 @@ private:
                         attrib_ph.setPage(start);
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
-                            const GA_Offset srcOff = geo->offsetPromote<dstOwner, SrcOwner>(elemoff);
+                            const GA_Offset srcOff = geo->offsetPromote<dstOwner, srcOwner>(elemoff);
                             if (GFE_Type::isValidOffset(srcOff))
                                 attrib_ph.value(elemoff) = srcAttrib_h.get(srcOff);
                         }
@@ -220,17 +328,17 @@ private:
     }
     
     
-    template<typename _Ty, GA_AttributeOwner SrcOwner>
+    template<typename _Ty, GA_AttributeOwner srcOwner>
     void attribPromote()
     {
         auto storageVariant = GFE_Type::attribStorageVariant();
         
         switch (dstAttrib->getOwner())
         {
-        case GA_ATTRIB_PRIMITIVE: attribPromote<_Ty, SrcOwner, GA_ATTRIB_PRIMITIVE>(); return; break;
-        case GA_ATTRIB_POINT:     attribPromote<_Ty, SrcOwner, GA_ATTRIB_POINT    >(); return; break;
-        case GA_ATTRIB_VERTEX:    attribPromote<_Ty, SrcOwner, GA_ATTRIB_VERTEX   >(); return; break;
-        case GA_ATTRIB_GLOBAL:    attribPromote<_Ty, SrcOwner, GA_ATTRIB_GLOBAL   >(); return; break;
+        case GA_ATTRIB_PRIMITIVE: attribPromote<_Ty, srcOwner, GA_ATTRIB_PRIMITIVE>(); return; break;
+        case GA_ATTRIB_POINT:     attribPromote<_Ty, srcOwner, GA_ATTRIB_POINT    >(); return; break;
+        case GA_ATTRIB_VERTEX:    attribPromote<_Ty, srcOwner, GA_ATTRIB_VERTEX   >(); return; break;
+        case GA_ATTRIB_GLOBAL:    attribPromote<_Ty, srcOwner, GA_ATTRIB_GLOBAL   >(); return; break;
         }
         UT_ASSERT_MSG(0, "Unhandled Dst Attrib Owner");
     }
@@ -248,37 +356,32 @@ private:
         UT_ASSERT_MSG(0, "Unhandled Src Attrib Owner");
     }
 
-    template<GA_AttributeOwner SrcOwner>
+*/
+    
+    template<GA_AttributeOwner srcOwner>
     void attribPromote()
     {
         switch (dstAttrib->getOwner())
         {
-        case GA_ATTRIB_PRIMITIVE: attribPromote<SrcOwner, GA_ATTRIB_PRIMITIVE>(); return; break;
-        case GA_ATTRIB_POINT:     attribPromote<SrcOwner, GA_ATTRIB_POINT    >(); return; break;
-        case GA_ATTRIB_VERTEX:    attribPromote<SrcOwner, GA_ATTRIB_VERTEX   >(); return; break;
-        case GA_ATTRIB_GLOBAL:    attribPromote<SrcOwner, GA_ATTRIB_GLOBAL   >(); return; break;
+        case GA_ATTRIB_PRIMITIVE: attribPromote<srcOwner, GA_ATTRIB_PRIMITIVE>(); return; break;
+        case GA_ATTRIB_POINT:     attribPromote<srcOwner, GA_ATTRIB_POINT    >(); return; break;
+        case GA_ATTRIB_VERTEX:    attribPromote<srcOwner, GA_ATTRIB_VERTEX   >(); return; break;
+        case GA_ATTRIB_GLOBAL:    attribPromote<srcOwner, GA_ATTRIB_GLOBAL   >(); return; break;
         }
         UT_ASSERT_MSG(0, "Unhandled Dst Attrib Owner");
     }
 
+    
     void attribPromote()
     {
         UT_ASSERT_P(&srcAttrib->getDetail() == geoTmp);
         
-        auto storageVariant = GFE_Type::getAttribStorageVariant(attrib);
-        auto dstOwnerVariant = GFE_Type::getAttribOwnerVariant(dstAttrib);
-        auto srcOwnerVariant = GFE_Type::getAttribOwnerVariant(srcAttrib);
-        std::visit([&] (auto storageVariant, auto dstOwnerVariant, auto srcOwnerVariant, auto doNormalizeVariant)
-        {
-            scaleAttribElement<storageVariant, dstOwnerVariant, srcOwnerVariant>
-        },  storageVariant, dstOwnerVariant, srcOwnerVariant);
-
-        
         const GA_AIFTuple* const aifTuple = srcAttrib->getAIFTuple();
         if (aifTuple)
         {
-            const GA_Storage storage = aifTuple->getStorage(srcAttrib);
-            GFE_ForEachStorageTupleSizeVecMtx(attribPromote, aifTuple->getStorage(srcAttrib), srcAttrib->getTupleSize())
+            attribPromoteTuple();
+            //const GA_Storage storage = aifTuple->getStorage(srcAttrib);
+            //GFE_ForEachStorageTupleSizeVecMtx(attribPromote, aifTuple->getStorage(srcAttrib), srcAttrib->getTupleSize())
         }
         else
         {

@@ -120,10 +120,8 @@ private:
             GA_Group* newAttrib;
             if (i >= sizeGroup)
             {
-                const UT_StringHolder& newName = newGroupNames.getIsValid() ?
-                                                 newGroupNames.getNext<UT_StringHolder>() :
-                                                 (groupRef.isDetached() ? UT_StringHolder("") : groupRef.getName());
-                const bool detached = !(newGroupNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
+                const UT_StringHolder& newName = newGroupNames.getValidAttribName(groupRef);
+                const bool detached = GFE_Type::isInvalid(newName);
             
                 newAttrib = detached ? nullptr : groupDst->find(newName);
                 if (newAttrib)
@@ -174,10 +172,8 @@ private:
             
             if (!newAttrib)
             {
-                const UT_StringHolder& newName = newAttribNames.getIsValid() ?
-                                                 newAttribNames.getNext<UT_StringHolder>() :
-                                                 (attribRef.isDetached() ? UT_StringHolder("") : attribRef.getName());
-                const bool detached = !(newAttribNames.getIsValid() && GFE_Type::isPublicAttribName(newName));
+                const UT_StringHolder& newName = newAttribNames.getValidAttribName(attribRef);
+                const bool detached = GFE_Type::isInvalid(newName);
 
                 newAttrib = detached ? nullptr : attribDst.findAttribute(ownerDst, newName);
                 if (newAttrib && !GFE_Type::checkTupleAttrib(newAttrib, attribRef.getStorageClass(), GA_STORE_INVALID, attribRef.getTupleSize()))
@@ -259,10 +255,8 @@ private:
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             const exint id = iDAttribRef.getOffset(elemoff);
-                            if (!indexMap_target.isOffsetActive(id) || indexMap_target.isOffsetVacant(id))
-                                continue;
-                            //attribNew.copy(id, attribRef, elemoff);
-                            attribNew.setElement(elemoff, attribRef.contains(id));
+                            if (GFE_Type::isValidOffset(indexMap_target, id))
+                                attribNew.setElement(elemoff, attribRef.contains(id));
                         }
                     }
                 }, subscribeRatio, minGrainSize);
@@ -277,10 +271,8 @@ private:
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             const exint id = iDAttribRef.getOffset(elemoff);
-                            if (!indexMap_target.isOffsetActive(id) || indexMap_target.isOffsetVacant(id))
-                                continue;
-                            //attribNew.copy(id, attribRef, elemoff);
-                            attribNew.setElement(id, attribRef.contains(elemoff));
+                            if (GFE_Type::isValidOffset(indexMap_target, id))
+                                attribNew.setElement(id, attribRef.contains(elemoff));
                         }
                     }
                 }, subscribeRatio, minGrainSize);
@@ -291,17 +283,20 @@ private:
             if (doCcopyFromSingleOff)
             {
                 const GA_Offset copyFromSingleOffTmp = copyFromSingleOff;
-                UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap_target, copyFromSingleOffTmp](const GA_SplittableRange& r)
+                if (GFE_Type::isValidOffset(indexMap_target, copyFromSingleOff))
                 {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                    UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap_target, copyFromSingleOffTmp](const GA_SplittableRange& r)
                     {
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        GA_Offset start, end;
+                        for (GA_Iterator it(r); it.blockAdvance(start, end); )
                         {
-                            attribNew.setElement(elemoff, attribRef.contains(copyFromSingleOffTmp));
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                attribNew.setElement(elemoff, attribRef.contains(copyFromSingleOffTmp));
+                            }
                         }
-                    }
-                }, subscribeRatio, minGrainSize);
+                    }, subscribeRatio, minGrainSize);
+                }
             }
             else
             {
@@ -313,9 +308,8 @@ private:
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             //attribNew.copy(elemoff, attribRef, elemoff);
-                            if (!indexMap_target.isOffsetActive(elemoff) || indexMap_target.isOffsetVacant(elemoff))
-                                continue;
-                            attribNew.setElement(elemoff, attribRef.contains(elemoff));
+                            if (GFE_Type::isValidOffset(indexMap_target, elemoff))
+                                attribNew.setElement(elemoff, attribRef.contains(elemoff));
                         }
                     }
                 }, subscribeRatio, minGrainSize);
@@ -359,9 +353,8 @@ private:
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             const exint id = iDAttribRef.getOffset(elemoff);
-                            if (!indexMap_target.isOffsetActive(id) || indexMap_target.isOffsetVacant(id))
-                                continue;
-                            attribNew.copy(elemoff, attribRef, id);
+                            if (GFE_Type::isValidOffset(indexMap_target, id))
+                                attribNew.copy(elemoff, attribRef, id);
                             //attribNew.set(elemoff, attribRef.contains(id));
                         }
                     }
@@ -377,9 +370,8 @@ private:
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             const exint id = iDAttribRef.getOffset(elemoff);
-                            if (!indexMap_target.isOffsetActive(id) || indexMap_target.isOffsetVacant(id))
-                                continue;
-                            attribNew.copy(id, attribRef, elemoff);
+                            if (GFE_Type::isValidOffset(indexMap_target, id))
+                                attribNew.copy(id, attribRef, elemoff);
                         }
                     }
                 }, subscribeRatio, minGrainSize);
@@ -390,17 +382,20 @@ private:
             if (doCcopyFromSingleOff)
             {
                 const GA_Offset copyFromSingleOffTmp = copyFromSingleOff;
-                UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, &indexMap_target, copyFromSingleOffTmp](const GA_SplittableRange& r)
+                if (GFE_Type::isValidOffset(indexMap_target, copyFromSingleOffTmp))
                 {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                    UTparallelFor(geoSplittableRange, [&attribNew, &attribRef, copyFromSingleOffTmp](const GA_SplittableRange& r)
                     {
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        GA_Offset start, end;
+                        for (GA_Iterator it(r); it.blockAdvance(start, end); )
                         {
-                            attribNew.copy(elemoff, attribRef, copyFromSingleOffTmp);
+                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                            {
+                                attribNew.copy(elemoff, attribRef, copyFromSingleOffTmp);
+                            }
                         }
-                    }
-                }, subscribeRatio, minGrainSize);
+                    }, subscribeRatio, minGrainSize);
+                }
             }
             else
             {
@@ -412,9 +407,8 @@ private:
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
                             //attribNew.copy(elemoff, attribRef, elemoff);
-                            if (!indexMap_target.isOffsetActive(elemoff) || indexMap_target.isOffsetVacant(elemoff))
-                                continue;
-                            attribNew.copy(elemoff, attribRef, elemoff);
+                            if (GFE_Type::isValidOffset(indexMap_target, elemoff))
+                                attribNew.copy(elemoff, attribRef, elemoff);
                         }
                     }
                 }, subscribeRatio, minGrainSize);
