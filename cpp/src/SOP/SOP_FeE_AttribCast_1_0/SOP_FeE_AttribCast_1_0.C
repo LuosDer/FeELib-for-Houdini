@@ -322,5 +322,6 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     attribCast.setComputeParm(sopparms.getDelOriginAttrib(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     attribCast.computeAndBumpDataId();
 
+    //outGeo0.destroyAttribute(GA_ATTRIB_POINT, "P");
     
 }

@@ -96,10 +96,9 @@ private:
             doCcopyFromSingleOff = copyFromSingleOff < indexMapDst.offsetSize() && !indexMapDst.isOffsetVacant(copyFromSingleOff);
         }
 
-        const GA_IndexMap& indexMap_runOver =
-            iDAttribInput || doCcopyFromSingleOff ?
-            geo->getIndexMap(ownerDst) :
-            geoRef0->getIndexMap(ownerSrc);
+        const GA_IndexMap& indexMap_runOver = iDAttribInput || doCcopyFromSingleOff
+                                            ? geo->getIndexMap(ownerDst)
+                                            : geoRef0->getIndexMap(ownerSrc);
 
         const GA_Range geoRange(indexMap_runOver);
         const GA_SplittableRange geoSplittableRange(geoRange);

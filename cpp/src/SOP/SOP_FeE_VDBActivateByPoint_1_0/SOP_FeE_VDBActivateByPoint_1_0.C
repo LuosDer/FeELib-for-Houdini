@@ -48,117 +48,6 @@ static const char *theDsFile = R"THEDSFILE(
             "edge"      "Edge"
         }
     }
-    parm {
-        name    "class"
-        cppname "Class"
-        label   "Class"
-        type    ordinal
-        default { "prim" }
-        menu {
-            "prim"      "Primitive"
-            "point"     "Point"
-            "vertex"    "Vertex"
-        }
-    }
-    parm {
-        name    "usePieceAttrib"
-        cppname "UsePieceAttrib"
-        label   "Use Piece Attribute"
-        type    toggle
-        nolabel
-        joinnext
-        default { "off" }
-    }
-    parm {
-        name    "pieceAttrib"
-        cppname "PieceAttrib"
-        label   "Piece Attribute"
-        type    string
-        default { "name" }
-        disablewhen "{ usePieceAttrib == 0 }"
-    }
-    parm {
-        name    "enumPieceElem"
-        cppname "EnumPieceElem"
-        label   "Enum Piece Elem"
-        type    toggle
-        default { "1" }
-        disablewhen "{ usePieceAttrib == 0 }"
-    }
-    // parm {
-    //     name    "pieceMode"
-    //     cppname "PieceMode"
-    //     label   "PieceMode"
-    //     type    ordinal
-    //     default { "elements" }
-    //     disablewhen "{ usePieceAttrib == 0 }"
-    //     menu {
-    //         "elements"  "Enumerate Piece Elements"
-    //         "pieces"    "Enumerate Pieces"
-    //     }
-    // }
-    parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
-        type    string
-        default { "index" }
-    }
-    parm {
-        name    "storageClass"
-        cppname "StorageClass"
-        label   "Storage Class"
-        type    ordinal
-        default { "int" }
-        menu {
-            "int"       "Integer"
-            "float"     "Float"
-            "string"    "String"
-        }
-    }
-
-    parm {
-        name    "firstIndex"
-        cppname "FirstIndex"
-        label   "First Index"
-        type    integer
-        default { 0 }
-        range   { -5 5 }
-    }
-
-    parm {
-        name    "negativeIndex"
-        cppname "NegativeIndex"
-        label   "Negative Index"
-        type    toggle
-        default { "off" }
-    }
-    parm {
-        name    "outAsOffset"
-        cppname "OutAsOffset"
-        label   "Out as Offset"
-        type    toggle
-        default { "off" }
-    }
-    parm {
-        name    "prefix"
-        cppname "Prefix"
-        label   "Prefix"
-        type    string
-        default { "piece" }
-        disablewhen "{ storageClass != string }"
-        hidewhen "{ storageClass != string }"
-    }
-    parm {
-        name    "sufix"
-        cppname "Sufix"
-        label   "Sufix"
-        type    string
-        default { "" }
-        disablewhen "{ storageClass != string }"
-        hidewhen "{ storageClass != string }"
-    }
-
 
     parm {
         name    "subscribeRatio"
@@ -173,7 +62,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -192,25 +81,25 @@ SOP_FeE_VDBActivateByPoint_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_VDBActivateByPoint_1_0::theSOPTypeName("FeE::enumerate::1.0"_sh);
+const UT_StringHolder SOP_FeE_VDBActivateByPoint_1_0::theSOPTypeName("FeE::vdbActivateByPoint::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
         SOP_FeE_VDBActivateByPoint_1_0::theSOPTypeName,
-        "FeE Enumerate",
+        "FeE VDB Activate by Point",
         SOP_FeE_VDBActivateByPoint_1_0::myConstructor,
         SOP_FeE_VDBActivateByPoint_1_0::buildTemplates(),
-        1,
-        1,
+        2,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
         1,
-        "Five elements Elf/Data/Enumerate");
+        "Five elements Elf/Volume/");
 
-    newOp->setIconName("SOP_enumerate");
+    newOp->setIconName("SOP_vdb");
     table->addOperator(newOp);
 
 }
@@ -232,13 +121,9 @@ public:
 
     virtual void cook(const CookParms &cookparms) const;
     
-    /// This static data member automatically registers
-    /// this verb class at library load time.
     static const SOP_NodeVerb::Register<SOP_FeE_VDBActivateByPoint_1_0Verb> theVerb;
 };
 
-// The static member variable definition has to be outside the class definition.
-// The declaration is inside the class.
 const SOP_NodeVerb::Register<SOP_FeE_VDBActivateByPoint_1_0Verb> SOP_FeE_VDBActivateByPoint_1_0Verb::theVerb;
 
 const SOP_NodeVerb *
@@ -267,34 +152,6 @@ sopGroupType(const SOP_FeE_VDBActivateByPoint_1_0Parms::GroupType parmGroupType)
     return GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_VDBActivateByPoint_1_0Parms::Class parmAttribClass)
-{
-    using namespace SOP_FeE_VDBActivateByPoint_1_0Enums;
-    switch (parmAttribClass)
-    {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-static GA_StorageClass
-sopStorageClass(const SOP_FeE_VDBActivateByPoint_1_0Parms::StorageClass parmStorageClass)
-{
-    using namespace SOP_FeE_VDBActivateByPoint_1_0Enums;
-    switch (parmStorageClass)
-    {
-    case StorageClass::INT:       return GA_STORECLASS_INT;        break;
-    case StorageClass::FLOAT:     return GA_STORECLASS_FLOAT;      break;
-    case StorageClass::STRING:    return GA_STORECLASS_STRING;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Storage Class!");
-    return GA_STORECLASS_INVALID;
-}
-
 
 
 
@@ -307,13 +164,11 @@ SOP_FeE_VDBActivateByPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     //auto sopcache = (SOP_FeE_VDBActivateByPoint_1_0Cache*)cookparms.cache();
 
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
     //outGeo0.replaceWith(inGeo0);
 
 
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
@@ -322,11 +177,11 @@ SOP_FeE_VDBActivateByPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
         return;
 
     
-    GFE_VDBActivateByPoint vdbActivateByPoint(outGeo0, cookparms);
-    vdbActivateByPoint.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    
+    GFE_VDBActivateByPoint vdbActivateByPoint(outGeo0, inGeo1, cookparms);
+    vdbActivateByPoint.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    vdbActivateByPoint.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
     vdbActivateByPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     vdbActivateByPoint.computeAndBumpDataId();
 

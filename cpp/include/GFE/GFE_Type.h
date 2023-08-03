@@ -584,8 +584,11 @@ SYS_FORCE_INLINE static VECTOR_T getZeroVector()
     else
         return VECTOR_T(0.0);
 }
+    
 
-
+SYS_FORCE_INLINE static bool isPoly(const int id)
+{ return id == GA_PRIMPOLY; } // 1
+    
 SYS_FORCE_INLINE static bool isHoudiniVolume(const int id)
 { return id == GA_PRIMVOLUME; } // 20
 
@@ -607,8 +610,18 @@ SYS_FORCE_INLINE static bool isPacked(const int id)
 
 
     SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const char* const str1)
-    { return strcmp(str0, str1) == 0; }
-
+#if GFE_DEBUG_MODE
+    {
+        //const char* const str01 = str0;
+        //const char* const str02 = str1;
+        //const bool equal0 = str0 == str1;
+        //const bool equal1 = strcmp(str0, str1) == 0;
+        return str0 == str1 || strcmp(str0, str1) == 0;
+    }
+#else
+    { return str0 == str1 || strcmp(str0, str1) == 0; }
+#endif
+    
     SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
     { return stringEqual(str0.c_str(), str1.c_str()); }
 

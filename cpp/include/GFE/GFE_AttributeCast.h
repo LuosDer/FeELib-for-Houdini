@@ -112,21 +112,21 @@ private:
         GA_Precision gA_Precision = GFE_Attribute::getPrecision(attrib);
         GA_Storage gA_Storage = GFE_Attribute::getStorage(attrib);
 #endif
-        if (attrib.getStorageClass() == newStorageClass)
+        if (attrib.getStorageClass() == newStorageClass
+            &&  (   newStorageClass == GA_STORECLASS_INVALID
+                 || newStorageClass == GA_STORECLASS_OTHER
+                 || GFE_Attribute::getPrecision(attrib) == newPrecision
+                )
+        )
         {
-            if (newStorageClass == GA_STORECLASS_INVALID || newStorageClass == GA_STORECLASS_OTHER)
+            if (!detached && !attrib.isDetached())
             {
-                if (!detached && !attrib.isDetached())
+                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                    GFE_Attribute::clone(*geo->getP(), attrib, subscribeRatio, minGrainSize);
+                else
                     geo->forceRenameAttribute(attrib, newName);
-                return;
             }
-            
-            if (GFE_Attribute::getPrecision(attrib) == newPrecision)
-            {
-                if (!detached && !attrib.isDetached())
-                    geo->forceRenameAttribute(attrib, newName);
-                return;
-            }
+            return;
         }
         
         if (newStorageClass == GA_STORECLASS_OTHER)
@@ -141,19 +141,25 @@ private:
         else
         {
             const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, newPrecision);
-            if (!detached && !attrib.isDetached() && GFE_Type::stringEqual(attrib.getName(), newName) == 0)
+            GA_Attribute* newAttrib;
+            if (!detached && !attrib.isDetached() && GFE_Type::stringEqual(attrib.getName(), newName))
             {
-                GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
-                    false, attrib.getOwner(), newStorageClass, storage, GFE_TEMP_ATTRIBCAST_ATTRIBNAME);
-                
-                attribDuplicate(newAttrib, attrib);
-
-                geo->destroyAttrib(attrib);
-                geo->renameAttrib(newAttrib, newName);
+                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                {
+                    geo->asGEO_Detail()->changePointAttributeStorage("P", storage);
+                    newAttrib = geo->getP();
+                }
+                else
+                {
+                    newAttrib = getOutAttribArray().findOrCreateTuple(false, attrib.getOwner(), newStorageClass, storage, GFE_TEMP_ATTRIBCAST_ATTRIBNAME);
+                    attribDuplicate(*newAttrib, attrib);
+                    
+                    geo->destroyAttrib(attrib);
+                    geo->renameAttrib(newAttrib, newName);
+                }
             }
             else
             {
-                GA_Attribute* newAttrib;
                 if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
                 {
                     geo->asGEO_Detail()->changePointAttributeStorage("P", storage);

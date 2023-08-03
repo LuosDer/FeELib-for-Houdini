@@ -20,32 +20,13 @@
 
 using namespace SOP_FeE_VolumeProject_1_0_Namespace;
 
-void
-newSopOperator(OP_OperatorTable *table)
-{
-	OP_Operator* newOp = new OP_Operator(
-		SOP_FeE_VolumeProject_1_0::theSOPTypeName,
-		"FeE Volume Project",
-		SOP_FeE_VolumeProject_1_0::myConstructor,
-		SOP_FeE_VolumeProject_1_0::buildTemplates(),
-		3,
-		4,
-		nullptr,
-		OP_FLAG_GENERATOR,
-		nullptr,
-		1,
-		"Five elements Elf/Data/Orient");
-
-	newOp->setIconName("SOP_uvtransform-2.0");
-	table->addOperator(newOp);
-}
-
 static const char *theDsFile = R"THEDSFILE(
 {
     name	volumefft
 
     parm {
 		name	"group"
+		cppname	"Group"
 		label	"Velocity Volumes"
 		type	string
 		default	{ "" }
@@ -54,7 +35,7 @@ static const char *theDsFile = R"THEDSFILE(
 		parmtag	{ "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-		name	"divgroup"
+		name	"divGroup"
 		cppname	"DivGroup"
 		label	"Divergence Volume"
 		type	string
@@ -74,7 +55,7 @@ static const char *theDsFile = R"THEDSFILE(
 		parmtag	{ "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-		name	"activegroup"
+		name	"activeGroup"
 		cppname	"ActiveGroup"
 		label	"Active Volume"
 		type	string
@@ -84,59 +65,59 @@ static const char *theDsFile = R"THEDSFILE(
 		parmtag	{ "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-		name	"lutcenter"
+		name	"lutCenter"
 		cppname "LUTCenter"
 		label	"LUT Center"
 		type	integer
 		default	{ 10 }
     }
     parm {
-		name	"lutrad"
+		name	"lutRad"
+		cppname "LUTRad"
 		label	"LUT Rad"
-		cppname	LUTRad
 		type	integer
 		default	{ 1 }
     }
     parm {
-		name	"lutmagic"
+		name	"lutMagic"
+		cppname "LUTMagic"
 		label	"LUT Magic"
-		cppname	LUTMagic
 		type	float
 		default	{ 1 }
     }
     parm {
-		name	"lutround"
+		name	"lutRound"
+		cppname "LUTRound"
 		label	"LUT Round Pattern"
-		cppname	LUTRound
 		type	toggle
 		default	{ "1" }
     }
     parm {
-		name	"domip"
+		name	"doMIP"
+		cppname "DoMIP"
 		label	"Do MIP MAP"
-		cppname	DoMIP
 		type 	toggle
 		default	{ "1" }
     }
     parm {
-		name	"mipby4"
+		name	"mipBy4"
+		cppname "MipBy4"
 		label	"Mip MAP by 4"
-		cppname	MipBy4
 		type 	toggle
 		default	{ "1" }
     }
     parm {
-		name	"mipmagic"
+		name	"mipMagic"
+		cppname "MIPMagic"
 		label	"MIP Magic"
-		cppname	MIPMagic
 		type	float
 		default	{ 1 }
     }
 
     parm {
-		name	"zeroinactive"
+		name	"zeroInactive"
+		cppname "ZeroInactive"
 		label	"Zero Inactive"
-		cppname	ZeroInactive
 		type	toggle
 		default	{ 0 }
     }
@@ -166,32 +147,35 @@ SOP_FeE_VolumeProject_1_0::buildTemplates()
     if (templ.justBuilt())
     {
 	templ.setChoiceListPtr("group", &SOP_Node::primGroupMenu);
-	templ.setChoiceListPtr("divgroup", &SOP_Node::primGroupMenu);
+	templ.setChoiceListPtr("divGroup", &SOP_Node::primGroupMenu);
     }
     return templ.templates();
 }
 
 
-OP_Node *
-SOP_FeE_VolumeProject_1_0::myConstructor(OP_Network *dad, const char *name, OP_Operator *op)
+
+const UT_StringHolder SOP_FeE_VolumeProject_1_0::theSOPTypeName("FeE::volumeProject::1.0"_sh);
+
+void
+newSopOperator(OP_OperatorTable *table)
 {
-    return new SOP_FeE_VolumeProject_1_0(dad, name, op);
+	OP_Operator* newOp = new OP_Operator(
+		SOP_FeE_VolumeProject_1_0::theSOPTypeName,
+		"FeE Volume Project",
+		SOP_FeE_VolumeProject_1_0::myConstructor,
+		SOP_FeE_VolumeProject_1_0::buildTemplates(),
+		3,
+		4,
+		nullptr,
+		OP_FLAG_GENERATOR,
+		nullptr,
+		1,
+		"Five elements Elf/Data/Orient");
+
+	newOp->setIconName("SOP_uvtransform-2.0");
+	table->addOperator(newOp);
 }
 
-SOP_FeE_VolumeProject_1_0::SOP_FeE_VolumeProject_1_0(OP_Network *dad, const char *name, OP_Operator *op)
-	: SOP_Node(dad, name, op)
-{
-}
-
-SOP_FeE_VolumeProject_1_0::~SOP_FeE_VolumeProject_1_0()
-{
-}
-
-OP_ERROR
-SOP_FeE_VolumeProject_1_0::cookMySop(OP_Context &context)
-{
-    return cookMyselfAsVerb(context);
-}
 
 class SOP_FeE_VolumeProject_1_0Verb : public SOP_NodeVerb
 {
@@ -202,7 +186,7 @@ public:
     virtual ~SOP_FeE_VolumeProject_1_0Verb() {}
 
     virtual SOP_NodeParms	*allocParms() const { return new SOP_FeE_VolumeProject_1_0Parms(); }
-    virtual UT_StringHolder	 name() const { return "FeE::volumeProject::1.0"_sh; }
+    virtual UT_StringHolder name() const { return SOP_FeE_VolumeProject_1_0::theSOPTypeName; }
 
     virtual CookMode		 cookMode(const SOP_NodeParms *parms)  const { return COOK_INPLACE; }
 
@@ -223,13 +207,21 @@ void
 SOP_FeE_VolumeProject_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
     auto&& sopparms = cookparms.parms<SOP_FeE_VolumeProject_1_0Parms>();
-    GA_Detail& geo = *cookparms.gdh().gdpNC();
+    GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
+	const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
+	const GA_Detail& inGeo2 = *cookparms.inputGeo(2);
+	const GA_Detail* const inGeo3 = cookparms.inputGeo(3);
 
 
 	
-	GFE_VolumeProject volumeProject(geo, cookparms);
+	GFE_VolumeProject volumeProject(outGeo0, inGeo1, inGeo2, inGeo3, cookparms);
 
+	volumeProject.groupParser    .setPrimitiveGroup(sopparms.getGroup());
+	volumeProject.groupParserRef0.setPrimitiveGroup(sopparms.getDivGroup());
+	volumeProject.groupParserRef1.setPrimitiveGroup(sopparms.getLUTGroup());
+	volumeProject.groupParserRef2.setPrimitiveGroup(sopparms.getActiveGroup());
+	
 	//volumeProject.groupParser.setGroup(groupType, sopparms.getGroup());
 	//volumeProject.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);
 	volumeProject.setComputeParm(
