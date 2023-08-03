@@ -2,17 +2,10 @@
 #include "SOP_FeE_VolumeProject_1_0.h"
 #include "SOP_FeE_VolumeProject_1_0.proto.h"
 
-#include <UT/UT_VoxelArray.h>
-#include <UT/UT_ParallelUtil.h>
-#include <UT/UT_StopWatch.h>
-
-#include <GU/GU_Detail.h>
-#include <GU/GU_PrimVolume.h>
-
-#include <PRM/PRM_Include.h>
-#include <PRM/PRM_TemplateBuilder.h>
-#include <UT/UT_DSOVersion.h>
-
+#include "GA/GA_Detail.h"
+#include "PRM/PRM_TemplateBuilder.h"
+#include "UT/UT_Interrupt.h"
+#include "UT/UT_DSOVersion.h"
 
 
 #include "GFE/GFE_VolumeProject.h"
@@ -45,7 +38,7 @@ static const char *theDsFile = R"THEDSFILE(
 		parmtag	{ "script_action_icon" "BUTTONS_reselect" }
     }
     parm {
-		name	"lutgroup"
+		name	"lutGroup"
 		cppname	"LUTGroup"
 		label	"LUT Volumes"
 		type	string

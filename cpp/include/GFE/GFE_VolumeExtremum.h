@@ -9,6 +9,8 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#include "UT/UT_VoxelArray.h"
+#include "GU/GU_PrimVolume.h"
 
 class GFE_VolumeExtremum : public GFE_AttribFilterWithRef0 {
 
@@ -60,15 +62,50 @@ private:
             
             scaleAttribElement();
             
-            //const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
-            //GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
         }
         return true;
     }
 
-
-    void scaleAttribElement()
+    VolumeExtremum
+    void volumeExtremum()
     {
+        UT_VoxelArrayF* vol;
+        UTparallelReduce(UT_BlockedRange(0, vol->numTiles()), [&](const UT_BlockedRange<exint> &r)
+        {
+            const exint curtile = r.begin();
+            UT_VoxelTileIteratorF vit;
+            vit.setLinearTile(curtile, vol);
+            for (vit.rewind(); !vit.atEnd(); vit.advance())
+            {
+                float delta = 0;
+                active->getValue(vit.x(), vit.y(), vit.z());
+                if (active &&  < 0.5)
+                {
+                    if (sopparms.getZeroInactive())
+                        vit.setValue(0);
+                    continue;
+                }
+            }
+        }
+        
+        UTparallelForEachNumber(vol->numTiles(), [&](const UT_BlockedRange<exint> &r)
+        {
+            const exint curtile = r.begin();
+            UT_VoxelTileIteratorF vit;
+            vit.setLinearTile(curtile, vol);
+            for (vit.rewind(); !vit.atEnd(); vit.advance())
+            {
+                float delta = 0;
+                active->getValue(vit.x(), vit.y(), vit.z());
+                if (active &&  < 0.5)
+                {
+                    if (sopparms.getZeroInactive())
+                        vit.setValue(0);
+                    continue;
+                }
+            }
+        }
+        
         UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
         {
             auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);

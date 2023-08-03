@@ -10,14 +10,16 @@
 
 
 
-#include "GFE/GFE_AttributeCast.h"
-#include "SOP/SOP_Enumerate.proto.h"
+#include "UT/UT_StopWatch.h"
+#include "UT/UT_VoxelArray.h"
+#include "GU/GU_PrimVolume.h"
 
-/*
+
+#if 0
     GFE_VolumeProject volumeProject(geo, cookparms);
     volumeProject.findOrCreateTuple(true, GA_ATTRIB_POINT);
     volumeProject.compute();
-*/
+#endif
     
 #define MIN_DIV 1e-8
 
@@ -101,7 +103,7 @@ private:
 	    //divgrp = nullptr;
 	    //if (sopparms.getDivGroup().isstring())
 	    //{
-		//	divgrp = gop.parsePrimitiveGroups(sopparms.getDivGroup(), GOP_Manager::GroupCreator(cookparms->inputGeo(1)), /*numok=*/true, /*ordered=*/true);
+		//	divgrp = gop.parsePrimitiveGroups(sopparms.getDivGroup(), GOP_Manager::GroupCreator(geoRef0), /*numok=*/true, /*ordered=*/true);
 		//	if (!divgrp)
 		//	{
 		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getDivGroup());
@@ -113,7 +115,7 @@ private:
 	    //lutgrp = nullptr;
 	    //if (sopparms.getLUTGroup().isstring())
 	    //{
-		//	lutgrp = gop.parsePrimitiveGroups(sopparms.getLUTGroup(), GOP_Manager::GroupCreator(cookparms->inputGeo(2)), /*numok=*/true, /*ordered=*/true);
+		//	lutgrp = gop.parsePrimitiveGroups(sopparms.getLUTGroup(), GOP_Manager::GroupCreator(geoRef1), /*numok=*/true, /*ordered=*/true);
 		//	if (!lutgrp)
 		//	{
 		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getLUTGroup());
@@ -124,7 +126,7 @@ private:
 	    //activegrp = nullptr;
 	    //if (sopparms.getActiveGroup().isstring())
 	    //{
-		//	activegrp = gop.parsePrimitiveGroups(sopparms.getActiveGroup(), GOP_Manager::GroupCreator(cookparms->inputGeo(3)), /*numok=*/true, /*ordered=*/true);
+		//	activegrp = gop.parsePrimitiveGroups(sopparms.getActiveGroup(), GOP_Manager::GroupCreator(geoRef2), /*numok=*/true, /*ordered=*/true);
 		//	if (!activegrp)
 		//	{
 		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getActiveGroup());
@@ -156,12 +158,10 @@ private:
 
 	    // Check to see if we have a dangling pair.
 	    if (numvel)
-	    {
 			cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched veloicty volume ignored; provide matching triples of velocity volumes.");
-	    }
 
 	    const GEO_Primitive	*cprim;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(cookparms->inputGeo(1), divgrp, cprim)
+	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geoRef0, divgrp, cprim)
 	    {
 			if (cprim->getTypeId() == GEO_PRIMVOLUME)
 			{
@@ -169,9 +169,9 @@ private:
 			}
 	    }
 
-	    if (cookparms->inputGeo(3))
+	    if (geoRef2)
 	    {
-			GA_FOR_ALL_OPT_GROUP_PRIMITIVES(cookparms->inputGeo(3), activegrp, cprim)
+			GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geoRef2, activegrp, cprim)
 			{
 			    if (cprim->getTypeId() == GEO_PRIMVOLUME)
 			    {
@@ -182,7 +182,7 @@ private:
 
 	    const GEO_PrimVolume* lut[3] = { 0, 0, 0 };
 	    int	numlut = 0;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(cookparms->inputGeo(2), lutgrp, cprim)
+	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geoRef1, lutgrp, cprim)
 	    {
 			if (cprim->getTypeId() == GEO_PRIMVOLUME)
 			{
@@ -200,9 +200,7 @@ private:
 	    }
 
 	    if (velx.size() != div.size())
-	    {
 			cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched sets of velocity and divergence volumes specified.  Unmatched ignored.");
-	    }
 
 
 	    if (active.size() && (active.size() != div.size()))
@@ -211,17 +209,16 @@ private:
 			return false;
 	    }
 
-	    int	npass = SYSmin(velx.size(), div.size());
+	    int	npass = std::min(velx.size(), div.size());
 
 
     	UT_Interrupt* boss = UTgetInterrupt();
+    	if (boss->opInterrupt())
+			return false;
 	    for (int pass = 0; pass < npass; pass++)
 	    {
-			if (boss->opInterrupt())
-			    break;
-
-			UT_VoxelArrayReadHandleF divh = div(pass)->getVoxelHandle();
-			UT_VoxelArrayReadHandleF activeh;
+	    	UT_VoxelArrayReadHandleF activeh;
+			UT_VoxelArrayReadHandleF divh  = div(pass)->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutxh = lut[0]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutyh = lut[1]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutzh = lut[2]->getVoxelHandle();
@@ -242,30 +239,30 @@ private:
 			sop_applyVelLUT(&*vyh, &*divh, activev, &*lutyh, vely(pass)->getVoxelSize());
 			sop_applyVelLUT(&*vzh, &*divh, activev, &*lutzh, velz(pass)->getVoxelSize());
 	    	
-			if (sopparms.getDoMIP())
-			{
-			    UT_Array<UT_VoxelArrayV4*> pos_mip, neg_mip;
+			if (!sopparms.getDoMIP())
+				continue;
+			
+		    UT_Array<UT_VoxelArrayV4*> pos_mip, neg_mip;
 
-			    sop_buildMipMap(pos_mip, neg_mip, div(pass));
+		    sop_buildMipMap(pos_mip, neg_mip, div(pass));
 
-			    if (sopparms.getMipBy4())
-			    {
-					sop_applyMipMap4(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
-					sop_applyMipMap4(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
-					sop_applyMipMap4(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
-			    }
-			    else
-			    {
-					sop_applyMipMap(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
-					sop_applyMipMap(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
-					sop_applyMipMap(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
-			    }
+		    if (sopparms.getMipBy4())
+		    {
+				sop_applyMipMap4(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
+				sop_applyMipMap4(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
+				sop_applyMipMap4(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
+		    }
+		    else
+		    {
+				sop_applyMipMap(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
+				sop_applyMipMap(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
+				sop_applyMipMap(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
+		    }
 
-			    for (auto && map : pos_mip)
-					delete map;
-			    for (auto && map : neg_mip)
-					delete map;
-			}
+		    for (auto && map : pos_mip)
+				delete map;
+		    for (auto && map : neg_mip)
+				delete map;
 	    }
     	
         return true;
@@ -329,14 +326,11 @@ private:
 			    float delta = 0;
 			    int	rad = sopparms.getLUTRad();
 
-			    if (active)
+			    if (active && active->getValue(vit.x(), vit.y(), vit.z()) < 0.5)
 			    {
-				    if (active->getValue(vit.x(), vit.y(), vit.z()) < 0.5)
-				    {
-					    if (sopparms.getZeroInactive())
-						    vit.setValue(0);
-					    continue;
-				    }
+				    if (sopparms.getZeroInactive())
+					    vit.setValue(0);
+				    continue;
 			    }
 
 			    int radzmin = -rad;
@@ -413,14 +407,11 @@ private:
 		});
     	//}, subscribeRatio, minGrainSize);
 
-	    UTdebugPrintCd(none,"Apply LUT Time:", watch.stop());
+	    UTdebugPrintCd(none, "Apply LUT Time:", watch.stop());
 	}
 
 
-	void sop_buildMipMap(
-		UT_Array<UT_VoxelArrayV4*>& pos_mip,
-		UT_Array<UT_VoxelArrayV4*>& neg_mip,
-		const GEO_PrimVolume* div)
+	void sop_buildMipMap(UT_Array<UT_VoxelArrayV4*>& pos_mip, UT_Array<UT_VoxelArrayV4*>& neg_mip, const GEO_PrimVolume* div)
 	{
 	    UT_StopWatch watch;
 	    watch.start();
@@ -514,7 +505,7 @@ private:
 	    // repeatedly decimate until it disappears.
 	    while (1)
 	    {
-			UT_VoxelArrayV4		*old_pos, *old_neg;
+			UT_VoxelArrayV4 *old_pos, *old_neg;
 			old_pos = pos_mip.last();
 			old_neg = neg_mip.last();
 
@@ -575,7 +566,7 @@ private:
 			}
 	    }
 
-	    UTdebugPrintCd(none,"Build MipMap time:", watch.stop());
+	    UTdebugPrintCd(none, "Build MipMap time:", watch.stop());
 	    UTdebugPrintCd(none, "Build div mip map, levels", pos_mip.entries());
 	}
 		

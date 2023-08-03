@@ -28,10 +28,6 @@
     
 class GFE_VDBActivateByPoint : public GFE_AttribFilterWithRef0 {
 
-#define __TEMP_GFE_VDBActivateByPoint_GroupName       "__TEMP_GFE_VDBActivateByPoint_Group"
-#define __TEMP_GFE_VDBActivateByPoint_PieceAttribName "__TEMP_GFE_VDBActivateByPoint_PieceAttrib"
-#define __TEMP_GFE_VDBActivateByPoint_OutAttribName   "__TEMP_GFE_VDBActivateByPoint_OutAttrib"
-    
 
 public:
     using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
@@ -89,8 +85,7 @@ private:
         openvdb::FloatGrid::Accessor vdb_access = vdbPtr->getAccessor();
 
         // get a reference to transformation of the grid
-        //openvdb::v9_1_sesi::math::Transform vdbGridXform;
-        //const openvdb::math::Transform& vdbGridXform = vdbPtr->transform();
+        const openvdb::math::Transform& vdbGridXform = vdbPtr->transform();
 
         GFE_ROPageHandleT<UT_Vector3D> posRef0_ph(geoRef0->getP());
         GA_Offset start, end;
@@ -104,9 +99,9 @@ private:
                     UT_Vector3D& pos = posRef0_ph.value(elemoff);
                     
                     // create openvdb vector with values from houdini's vector, transform it from world space to vdb's index space (based on vdb's transformation) and activate voxel at point position
-                    //const openvdb::Vec3d vdbpos(pos[0], pos[1], pos[2]);
-                    //const openvdb::Coord coord(vdbGridXform.worldToIndexCellCentered(vdbpos));
-                    //vdb_access.setValueOn(coord);
+                    const openvdb::Vec3d vdbpos(pos[0], pos[1], pos[2]);
+                    const openvdb::Coord coord(vdbGridXform.worldToIndexCellCentered(vdbpos));
+                    vdb_access.setValueOn(coord);
                 }
             }
         }
