@@ -91,6 +91,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         template <GFE_NumericTupleType _Val>
         using numeric_tuple_type_constant = std::integral_constant<GFE_NumericTupleType, _Val>;
 
+    
         using numeric_tuple_type_int8_type     = numeric_tuple_type_constant<GFE_NumericTupleType::int8>;
         using numeric_tuple_type_int16_type    = numeric_tuple_type_constant<GFE_NumericTupleType::int16>;
         using numeric_tuple_type_int32_type    = numeric_tuple_type_constant<GFE_NumericTupleType::int32>;
@@ -98,7 +99,8 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         using numeric_tuple_type_float16_type  = numeric_tuple_type_constant<GFE_NumericTupleType::fpreal16>;
         using numeric_tuple_type_float32_type  = numeric_tuple_type_constant<GFE_NumericTupleType::fpreal32>;
         using numeric_tuple_type_float64_type  = numeric_tuple_type_constant<GFE_NumericTupleType::fpreal64>;
-        
+        using numeric_tuple_type_str_type      = numeric_tuple_type_constant<GFE_NumericTupleType::UT_StringHolder>;
+    
 #define __GFE_Variant_SpecializationVec(NUM)\
         using numeric_tuple_type_v##NUM##int32_type    = numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector##NUM##I>;\
         using numeric_tuple_type_v##NUM##int64_type    = numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector##NUM##L>;\
@@ -123,35 +125,24 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         
 #undef __GFE_Variant_SpecializationMtx
 
+    using numeric_tuple_type_s_variant = std::variant<numeric_tuple_type_str_type>;
 
-
-    using numeric_tuple_type_1_variant = std::variant<numeric_tuple_type_int8_type   ,
+    using numeric_tuple_type_i_variant = std::variant<numeric_tuple_type_int8_type   ,
                                                       numeric_tuple_type_int16_type  ,
                                                       numeric_tuple_type_int32_type  ,
-                                                      numeric_tuple_type_int64_type  ,
-                                                      numeric_tuple_type_float16_type,
+                                                      numeric_tuple_type_int64_type  >;
+
+    using numeric_tuple_type_is_variant = typename variant_concat_t<numeric_tuple_type_i_variant, numeric_tuple_type_f_variant>;
+
+    using numeric_tuple_type_f_variant = std::variant<numeric_tuple_type_float16_type,
                                                       numeric_tuple_type_float32_type,
                                                       numeric_tuple_type_float64_type>;
-
     
-#define __GFE_Variant_SpecializationVec(NUM)\
-        using numeric_tuple_type_v##NUM##_variant = std::variant<numeric_tuple_type_v##NUM##int32_type  ,  \
-                                                                 numeric_tuple_type_v##NUM##int64_type  ,  \
-                                                                 numeric_tuple_type_v##NUM##float16_type,  \
-                                                                 numeric_tuple_type_v##NUM##float32_type,  \
-                                                                 numeric_tuple_type_v##NUM##float64_type>; \
-    
-        __GFE_Variant_SpecializationVec(2)
-        __GFE_Variant_SpecializationVec(3)
-        __GFE_Variant_SpecializationVec(4)
-        
-#undef __GFE_Variant_SpecializationVec
-
+    using numeric_tuple_type_if_variant = typename variant_concat_t<numeric_tuple_type_i_variant, numeric_tuple_type_f_variant>;
     
 #define __GFE_Variant_SpecializationVecF(NUM)\
-        using numeric_tuple_type_v##NUM##f_variant = std::variant<numeric_tuple_type_v##NUM##float16_type,  \
-                                                                 numeric_tuple_type_v##NUM##float32_type,   \
-                                                                 numeric_tuple_type_v##NUM##float64_type>;  \
+        using numeric_tuple_type_v##NUM##i_variant = std::variant<numeric_tuple_type_v##NUM##int32_type,  \
+                                                                  numeric_tuple_type_v##NUM##int64_type>; \
     
         __GFE_Variant_SpecializationVecF(2)
         __GFE_Variant_SpecializationVecF(3)
@@ -159,6 +150,29 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         
 #undef __GFE_Variant_SpecializationVecF
         
+    
+    
+#define __GFE_Variant_SpecializationVecF(NUM)\
+        using numeric_tuple_type_v##NUM##f_variant = std::variant<numeric_tuple_type_v##NUM##float16_type,  \
+                                                                  numeric_tuple_type_v##NUM##float32_type,  \
+                                                                  numeric_tuple_type_v##NUM##float64_type>; \
+    
+        __GFE_Variant_SpecializationVecF(2)
+        __GFE_Variant_SpecializationVecF(3)
+        __GFE_Variant_SpecializationVecF(4)
+        
+#undef __GFE_Variant_SpecializationVecF
+        
+    
+#define __GFE_Variant_SpecializationVec(NUM)\
+        using numeric_tuple_type_v##NUM##_variant = typename variant_concat_t<numeric_tuple_type_v##NUM##i_variant, numeric_tuple_type_v##NUM##f_variant>;
+    
+        __GFE_Variant_SpecializationVec(2)
+        __GFE_Variant_SpecializationVec(3)
+        __GFE_Variant_SpecializationVec(4)
+        
+#undef __GFE_Variant_SpecializationVec
+
     
 
     
@@ -175,11 +189,10 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
     //using numeric_tuple_type_v_variant   = typename variant_concat_t<numeric_tuple_type_v2_variant, numeric_tuple_type_v3_variant, numeric_tuple_type_v4_variant>;
     //using numeric_tuple_type_m_variant   = typename variant_concat_t<numeric_tuple_type_m2_variant, numeric_tuple_type_m3_variant, numeric_tuple_type_m4_variant>;
-    using numeric_tuple_type_v_variant   = typename variant_concat_t<variant_concat_t<numeric_tuple_type_v2_variant, numeric_tuple_type_v3_variant>, numeric_tuple_type_v4_variant>;
-    using numeric_tuple_type_m_variant   = typename variant_concat_t<variant_concat_t<numeric_tuple_type_m2_variant, numeric_tuple_type_m3_variant>, numeric_tuple_type_m4_variant>;
-    using numeric_tuple_type_1v_variant  = typename variant_concat_t<numeric_tuple_type_1_variant,  numeric_tuple_type_v_variant>;
-    using numeric_tuple_type_1vm_variant = typename variant_concat_t<numeric_tuple_type_1v_variant, numeric_tuple_type_m_variant>;
-    using numeric_tuple_type_variant     = typename numeric_tuple_type_1vm_variant;
+    using numeric_tuple_type_v_variant    = typename variant_concat_t<variant_concat_t<numeric_tuple_type_v2_variant, numeric_tuple_type_v3_variant>, numeric_tuple_type_v4_variant>;
+    using numeric_tuple_type_m_variant    = typename variant_concat_t<variant_concat_t<numeric_tuple_type_m2_variant, numeric_tuple_type_m3_variant>, numeric_tuple_type_m4_variant>;
+    using numeric_tuple_type_ifv_variant  = typename variant_concat_t<numeric_tuple_type_if_variant,  numeric_tuple_type_v_variant>;
+    using numeric_tuple_type_ifvm_variant = typename variant_concat_t<numeric_tuple_type_ifv_variant, numeric_tuple_type_m_variant>;
 
 
         
@@ -228,7 +241,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
     
-    numeric_tuple_type_1_variant getNumericTupleType1Variant(const GFE_NumericTupleType v)
+    numeric_tuple_type_is_variant getNumericTupleTypeISVariant(const GFE_NumericTupleType v)
     {
         switch (v)
         {
@@ -239,7 +252,18 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         return numeric_tuple_type_constant<GFE_NumericTupleType::float32>{};
     }
     
-    numeric_tuple_type_v3_variant getNumericTupleTypev3Variant(const GFE_NumericTupleType v)
+    numeric_tuple_type_if_variant getNumericTupleTypeIFVariant(const GFE_NumericTupleType v)
+    {
+        switch (v)
+        {
+            __GFE_Variant_Specialization1
+            default:  break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");
+        return numeric_tuple_type_constant<GFE_NumericTupleType::float32>{};
+    }
+    
+    numeric_tuple_type_v3_variant getNumericTupleTypeV3Variant(const GFE_NumericTupleType v)
     {
         switch (v)
         {
@@ -261,7 +285,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector3F>{};
     }
     
-    numeric_tuple_type_1v_variant getNumericTupleType1vVariant(const GFE_NumericTupleType v)
+    numeric_tuple_type_ifv_variant getNumericTupleType1vVariant(const GFE_NumericTupleType v)
     {
         switch (v)
         {
@@ -273,7 +297,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         return numeric_tuple_type_constant<GFE_NumericTupleType::float32>{};
     }
 
-    numeric_tuple_type_1vm_variant getNumericTupleType1vmVariant(const GFE_NumericTupleType v)
+    numeric_tuple_type_ifvm_variant getNumericTupleType1vmVariant(const GFE_NumericTupleType v)
     {
         switch (v)
         {

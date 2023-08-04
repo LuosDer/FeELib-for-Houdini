@@ -90,6 +90,16 @@ enum class GFE_NumericTupleType
     __GFE_Type_SpecializationMtx(3)
     __GFE_Type_SpecializationMtx(4)
     
+    string,
+    dict,
+    int32Array,
+    int64Array,
+    fpreal32Array,
+    fpreal64Array,
+    dictArray,
+
+    
+    
     //UT_Vector2I,
     //UT_Vector2i = UT_Vector2I,
     //UT_Vector2L,
@@ -124,6 +134,10 @@ enum class GFE_NumericTupleType
     float16 = fpreal16,
     float32 = fpreal32,
     float64 = fpreal64,
+    UT_StringHolder = string,
+    dictHolder = dict,
+    UT_OptionsHolderArray = dictArray,
+    
     
 }; // End of Class Enum Class GFE_NumericTupleType
 
