@@ -135,10 +135,10 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
 #define __GFE_Variant_SpecializationVec(NUM)\
-        using numeric_tuple_type_v##NUM##_variant = std::variant<numeric_tuple_type_v##NUM##int32_type  , \
-                                                                 numeric_tuple_type_v##NUM##int64_type  , \
-                                                                 numeric_tuple_type_v##NUM##float16_type, \
-                                                                 numeric_tuple_type_v##NUM##float32_type, \
+        using numeric_tuple_type_v##NUM##_variant = std::variant<numeric_tuple_type_v##NUM##int32_type  ,  \
+                                                                 numeric_tuple_type_v##NUM##int64_type  ,  \
+                                                                 numeric_tuple_type_v##NUM##float16_type,  \
+                                                                 numeric_tuple_type_v##NUM##float32_type,  \
                                                                  numeric_tuple_type_v##NUM##float64_type>; \
     
         __GFE_Variant_SpecializationVec(2)
@@ -146,8 +146,22 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         __GFE_Variant_SpecializationVec(4)
         
 #undef __GFE_Variant_SpecializationVec
-        
 
+    
+#define __GFE_Variant_SpecializationVecF(NUM)\
+        using numeric_tuple_type_v##NUM##f_variant = std::variant<numeric_tuple_type_v##NUM##float16_type,  \
+                                                                 numeric_tuple_type_v##NUM##float32_type,   \
+                                                                 numeric_tuple_type_v##NUM##float64_type>;  \
+    
+        __GFE_Variant_SpecializationVecF(2)
+        __GFE_Variant_SpecializationVecF(3)
+        __GFE_Variant_SpecializationVecF(4)
+        
+#undef __GFE_Variant_SpecializationVecF
+        
+    
+
+    
 #define __GFE_Variant_SpecializationMtx(NUM)\
         using numeric_tuple_type_m##NUM##_variant = std::variant<numeric_tuple_type_m##NUM##float32_type,  \
                                                                  numeric_tuple_type_m##NUM##float64_type>; \
@@ -189,6 +203,12 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         case GFE_NumericTupleType::UT_Vector##NUM##D: return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector##NUM##D>{}; break;\
     
         
+#define __GFE_Variant_SpecializationVecF(NUM)\
+        case GFE_NumericTupleType::UT_Vector##NUM##H: return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector##NUM##H>{}; break;\
+        case GFE_NumericTupleType::UT_Vector##NUM##F: return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector##NUM##F>{}; break;\
+        case GFE_NumericTupleType::UT_Vector##NUM##D: return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector##NUM##D>{}; break;\
+
+    
 #define __GFE_Variant_SpecializationV\
         __GFE_Variant_SpecializationVec(2)\
         __GFE_Variant_SpecializationVec(3)\
@@ -217,6 +237,28 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         }
         UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");
         return numeric_tuple_type_constant<GFE_NumericTupleType::float32>{};
+    }
+    
+    numeric_tuple_type_v3_variant getNumericTupleTypev3Variant(const GFE_NumericTupleType v)
+    {
+        switch (v)
+        {
+            __GFE_Variant_SpecializationVec(3)
+            default:  break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");
+        return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector3F>{};
+    }
+    
+    numeric_tuple_type_v3f_variant getNumericTupleTypev3fVariant(const GFE_NumericTupleType v)
+    {
+        switch (v)
+        {
+            __GFE_Variant_SpecializationVecF(3)
+            default:  break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");
+        return numeric_tuple_type_constant<GFE_NumericTupleType::UT_Vector3F>{};
     }
     
     numeric_tuple_type_1v_variant getNumericTupleType1vVariant(const GFE_NumericTupleType v)
@@ -253,7 +295,13 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
     SYS_FORCE_INLINE auto getNumericTupleType1Variant(const GA_Attribute& attrib)
     { return getNumericTupleType1Variant(GFE_Type::getNumericTupleType(attrib)); }
-
+    
+    SYS_FORCE_INLINE auto getNumericTupleTypev3Variant(const GA_Attribute& attrib)
+    { return getNumericTupleTypev3Variant(GFE_Type::getNumericTupleType(attrib)); }
+    
+    SYS_FORCE_INLINE auto getNumericTupleTypev3fVariant(const GA_Attribute& attrib)
+    { return getNumericTupleTypev3fVariant(GFE_Type::getNumericTupleType(attrib)); }
+    
     SYS_FORCE_INLINE auto getNumericTupleType1vVariant(const GA_Attribute& attrib)
     { return getNumericTupleType1vVariant(GFE_Type::getNumericTupleType(attrib)); }
 

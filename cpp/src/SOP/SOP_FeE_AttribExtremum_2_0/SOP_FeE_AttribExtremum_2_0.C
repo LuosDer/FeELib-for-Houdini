@@ -10,7 +10,7 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_AttribExtremum.h"
+#include "GFE/GFE_AttributeExtremum.h"
 
 
 using namespace SOP_FeE_AttribExtremum_2_0_Namespace;
@@ -63,24 +63,31 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "Attrib"
         label   "Attrib"
         type    string
-        default { "N" }
+        default { "" }
     }
     parm {
-        name    "normalize"
-        cppname "Normalize"
-        label   "Normalize"
+        name    "outAttribMin"
+        cppname "OutAttribMin"
+        label   "Out Attrib Min"
         type    toggle
         default { "1" }
     }
     parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
-        type    float
-        default { 1 }
-        range   { -10 10 }
+        name    "attribMinName"
+        cppname "AttribMinName"
+        label   "Attrib Min Name"
+        type    string
+        default { "min" }
+        disablewhen "{ outAttribMin == 0 }"
     }
 
+    parm {
+        name    "outAsOffset"
+        cppname "OutAsOffset"
+        label   "Out as Offset"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -208,22 +215,21 @@ SOP_FeE_AttribExtremum_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     
     //outGeo0.replaceWith(inGeo0);
 
-    const bool doNormalize = sopparms.getNormalize();
-
-    if (!doNormalize && uniScale==1.0)
-        return;
-
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
     GFE_AttribExtremum attribExtremum(outGeo0, inGeo1, cookparms);
     
-    attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
-    attribExtremum.getOutAttribArray().appends(attribClass, sopparms.getAttribName());
-    attribExtremum.setComputeParm(doNormalize, uniScale,
+    attribExtremum.setComputeParm(sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    attribExtremum.setAttrib(attribClass, sopparms.getAttrib());
+    
+    attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
+    
     attribExtremum.computeAndBumpDataId();
+
 
 
 }

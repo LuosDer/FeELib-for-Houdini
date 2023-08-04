@@ -16,11 +16,12 @@
 //#include "GEO/GEO_Primitive.h"
 //#include "GU/GU_Primitive.h"
 #include "GU/GU_PrimPoly.h"
-//#include "GU/GU_PrimitiveFactory.h"
 
-//#include "GEO/GEO_PrimVDB.h"
-//class GEO_PrimPoly;
+class GU_PrimPoly;
 class GEO_PrimVDB;
+class GU_PrimVDB;
+class GEO_PrimVolume;
+class GU_PrimVolume;
 
 
 
@@ -54,16 +55,16 @@ public:
 
 
     
-    SYS_FORCE_INLINE bool isPoly(const GA_Offset primoff)
+    SYS_FORCE_INLINE bool isPoly(const GA_Offset primoff) const
     { return GFE_Type::isPoly(getPrimitiveTypeId(primoff)); }
     
-    SYS_FORCE_INLINE bool isHoudiniVolume(const GA_Offset primoff)
+    SYS_FORCE_INLINE bool isHoudiniVolume(const GA_Offset primoff) const
     { return GFE_Type::isHoudiniVolume(getPrimitiveTypeId(primoff)); }
     
-    SYS_FORCE_INLINE bool isVDB(const GA_Offset primoff)
+    SYS_FORCE_INLINE bool isVDB(const GA_Offset primoff) const
     { return GFE_Type::isVDB(getPrimitiveTypeId(primoff)); }
     
-    SYS_FORCE_INLINE bool isVolume(const GA_Offset primoff)
+    SYS_FORCE_INLINE bool isVolume(const GA_Offset primoff) const
     { return isHoudiniVolume(primoff) || isVDB(primoff); }
 
 
@@ -77,7 +78,7 @@ public:
     SYS_FORCE_INLINE GA_Offset getFirstElement() const
     { return GFE_DetailBase::getFirstElement(getIndexMap(_Owner)); }
 
-    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_PrimitiveGroup* const geoPrimGroup)
+    SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset elemoff = geoPrimGroup
                                 ? GFE_Group::getFirstElement(*geoPrimGroup)
@@ -86,24 +87,53 @@ public:
         return isInvalidOffset<GA_ATTRIB_PRIMITIVE>(elemoff) ? GFE_INVALID_OFFSET : elemoff;
     }
 
-
     
-    SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup)
+    SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset volumeoff = getFirstElement(geoPrimGroup);
         return isVolume(volumeoff) ? volumeoff : GFE_INVALID_OFFSET;
     }
 
+    SYS_FORCE_INLINE GA_Offset getFirstHoudiniVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup) const
+    {
+        const GA_Offset volumeoff = getFirstElement(geoPrimGroup);
+        return isHoudiniVolume(volumeoff) ? volumeoff : GFE_INVALID_OFFSET;
+    }
+
+    SYS_FORCE_INLINE void getVectorHoudiniVolumePrimitive(GEO_PrimVolume const ** vvol, const GA_PrimitiveGroup* const geoPrimGroup) const
+    {
+        int8 idx = 0;
+        const GEO_Primitive* prim;
+	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(this, geoPrimGroup, prim)
+	    {
+			if (prim->getTypeId() == GEO_PRIMVOLUME)
+			{
+			    vvol[idx++] = reinterpret_cast<const GEO_PrimVolume*>(prim);
+
+			    if (idx == 3)
+					break;
+			}
+	    }
+    }
+
+
+    
 #if 0
     const GA_Offset vdboff = geo->getFirstVDBoff(groupParser.getPrimitiveGroup());
 #endif
-    SYS_FORCE_INLINE GA_Offset getFirstVDBoff(const GA_PrimitiveGroup* const geoPrimGroup)
+    SYS_FORCE_INLINE GA_Offset getFirstVDBoff(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset vdboff = getFirstElement(geoPrimGroup);
         return isVDB(vdboff) ? vdboff : GFE_INVALID_OFFSET;
     }
 
     
+    SYS_FORCE_INLINE const GEO_PrimVolume* getFirstHoudiniVolumePrimitive(const GA_PrimitiveGroup* const geoPrimGroup) const
+    {
+        const GA_Offset voloff = getFirstHoudiniVolumeoff(geoPrimGroup);
+        return getPrimitiveT<const GEO_PrimVolume*>(voloff);
+    }
+
 
     
     template<GA_AttributeOwner _Owner>
@@ -136,27 +166,37 @@ public:
 
 
     
-    SYS_FORCE_INLINE GEO_Primitive* getGEOPrimitive(const GA_Offset primoff)
+//#define _GFE_Specialization(class)\
+
+    template<typename _TClass>
+    SYS_FORCE_INLINE _TClass getPrimitiveT(const GA_Offset primoff)
     {
         UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
-        return reinterpret_cast<GEO_Primitive*>(getPrimitive(primoff));
+        if constexpr      (std::is_same_v<_TClass, GEO_PrimPoly*>   || std::is_same_v<_TClass, GU_PrimPoly*>)
+            UT_ASSERT_P(isPoly(primoff));
+        else if constexpr (std::is_same_v<_TClass, GEO_PrimVolume*> || std::is_same_v<_TClass, GU_PrimVolume*>)
+            UT_ASSERT_P(isVolume(primoff));
+        else if constexpr (std::is_same_v<_TClass, GEO_PrimVDB*>    || std::is_same_v<_TClass, GU_PrimVDB*>)
+            UT_ASSERT_P(isVDB(primoff));
+        
+        return reinterpret_cast<_TClass>(getPrimitive(primoff));
     }
     
-    SYS_FORCE_INLINE GEO_PrimPoly* getGEOPrimPoly(const GA_Offset primoff)
+    template<typename _TClass>
+    SYS_FORCE_INLINE _TClass getPrimitiveT(const GA_Offset primoff) const
     {
         UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
-        UT_ASSERT_P(isPoly(primoff));
-        return reinterpret_cast<GEO_PrimPoly*>(getPrimitive(primoff));
+        if constexpr      (std::is_same_v<std::remove_const_t<_TClass>, GEO_PrimPoly*>   || std::is_same_v<std::remove_const_t<_TClass>, GU_PrimPoly*>)
+            UT_ASSERT_P(isPoly(primoff));
+        else if constexpr (std::is_same_v<std::remove_const_t<_TClass>, GEO_PrimVolume*> || std::is_same_v<std::remove_const_t<_TClass>, GU_PrimVolume*>)
+            UT_ASSERT_P(isVolume(primoff));
+        else if constexpr (std::is_same_v<std::remove_const_t<_TClass>, GEO_PrimVDB*>    || std::is_same_v<std::remove_const_t<_TClass>, GU_PrimVDB*>)
+            UT_ASSERT_P(isVDB(primoff));
+        
+        return reinterpret_cast<_TClass>(getPrimitive(primoff));
     }
-
-    SYS_FORCE_INLINE GEO_PrimVDB* getVDBPrimitive(const GA_Offset primoff)
-    {
-        UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
-        UT_ASSERT_P(isVDB(primoff));
-        return reinterpret_cast<GEO_PrimVDB*>(getPrimitive(primoff));
-    }
-
-
+    
+    
     
     //SYS_FORCE_INLINE GEO_Primitive createGEOPrimitive(const GA_Offset primoff)
     //{
@@ -183,7 +223,7 @@ public:
         
     
     SYS_FORCE_INLINE GA_Size stealVertex(const GA_Offset primoff, const GA_Offset vtxoff, const GA_Offset insertBeforeVtx = GA_INVALID_OFFSET)
-    { return getGEOPrimPoly(primoff)->stealVertex(vtxoff, insertBeforeVtx); }
+    { return getPrimitiveT<GEO_PrimPoly*>(primoff)->stealVertex(vtxoff, insertBeforeVtx); }
 
     
     /// Clear all the points/primitives out of this detail

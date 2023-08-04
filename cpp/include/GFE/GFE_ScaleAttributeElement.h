@@ -70,6 +70,43 @@ private:
 
     void scaleAttribElement()
     {
+        auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);
+        auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+        auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+        std::visit([&] (auto scaleVariant, auto doNormalizeVariant, auto tupleTypeVariant)
+        {
+            using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+            scaleAttribElement<type, doNormalizeVariant, scaleVariant>();
+        }, scaleVariant, doNormalizeVariant, tupleTypeVariant);
+    }
+
+    template<typename _Ty, bool _normalize, bool _scale>
+    void scaleAttribElement()
+    {
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
+        {
+            GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if constexpr (_normalize && GFE_Type::isVector<_Ty>)
+                            attrib_ph.value(elemoff).normalize();
+                        if constexpr (_scale)
+                            attrib_ph.value(elemoff) *= uniScale;
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    
+/*
+    void scaleAttribElement()
+    {
         UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
         {
             auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);
@@ -100,7 +137,7 @@ private:
             }, scaleVariant, doNormalizeVariant, tupleTypeVariant);
         }, subscribeRatio, minGrainSize);
     }
-    
+    */
 /*
     template<typename _Ty>
     void scaleAttribElement()

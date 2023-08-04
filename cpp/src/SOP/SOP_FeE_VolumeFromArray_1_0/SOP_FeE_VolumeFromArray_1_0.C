@@ -46,7 +46,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -60,7 +60,7 @@ SOP_FeE_VolumeFromArray_1_0::buildTemplates()
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
         
-        templ.setChoiceListPtr("arrayAttrib"_sh, &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("arrayAttrib"_sh, &SOP_Node::detailAttribMenu);
     }
     return templ.templates();
 }
@@ -76,7 +76,7 @@ newSopOperator(OP_OperatorTable* table)
         SOP_FeE_VolumeFromArray_1_0::myConstructor,
         SOP_FeE_VolumeFromArray_1_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
@@ -124,54 +124,6 @@ SOP_FeE_VolumeFromArray_1_0::cookVerb() const
 
 
 
-static GA_GroupType
-sopGroupType(const SOP_FeE_VolumeFromArray_1_0Parms::GroupType parmGroupType)
-{
-    using namespace SOP_FeE_VolumeFromArray_1_0Enums;
-    switch (parmGroupType)
-    {
-    case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
-    case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
-    case GroupType::POINT:     return GA_GROUP_POINT;      break;
-    case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
-    case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
-    return GA_GROUP_INVALID;
-}
-
-static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_VolumeFromArray_1_0Parms::Class parmAttribClass)
-{
-    using namespace SOP_FeE_VolumeFromArray_1_0Enums;
-    switch (parmAttribClass)
-    {
-    case Class::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case Class::POINT:     return GA_ATTRIB_POINT;      break;
-    case Class::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-static GA_StorageClass
-sopStorageClass(const SOP_FeE_VolumeFromArray_1_0Parms::StorageClass parmStorageClass)
-{
-    using namespace SOP_FeE_VolumeFromArray_1_0Enums;
-    switch (parmStorageClass)
-    {
-    case StorageClass::INT:       return GA_STORECLASS_INT;        break;
-    case StorageClass::FLOAT:     return GA_STORECLASS_FLOAT;      break;
-    case StorageClass::STRING:    return GA_STORECLASS_STRING;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Storage Class!");
-    return GA_STORECLASS_INVALID;
-}
-
-
-
-
-
 void
 SOP_FeE_VolumeFromArray_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
@@ -180,36 +132,26 @@ SOP_FeE_VolumeFromArray_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
     //auto sopcache = (SOP_FeE_VolumeFromArray_1_0Cache*)cookparms.cache();
 
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
     //outGeo0.replaceWith(inGeo0);
 
-
-
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
-    const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
-    const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    if (sopparms.getUsePieceAttrib())
-    {
-        enumerate.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
-        enumerate.enumeratePieceElem = sopparms.getEnumPieceElem();
-    }
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
-    enumerate.prefix = sopparms.getPrefix();
-    enumerate.sufix  = sopparms.getSufix();
+    GFE_VolumeFromArray volumeFromArray(outGeo0, inGeo1, cookparms);
+    if (inGeo1)
+        volumeFromArray.getRef0AttribArray().appends(GA_ATTRIB_DETAIL, sopparms.getArrayAttrib());
+    else
+        volumeFromArray.getInAttribArray().appends(GA_ATTRIB_DETAIL, sopparms.getArrayAttrib());
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
-    enumerate.computeAndBumpDataId();
+    volumeFromArray.setComputeParm(
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    
+    volumeFromArray.computeAndBumpDataId();
 
     
 

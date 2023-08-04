@@ -26,15 +26,11 @@ public:
 
 void
     setComputeParm(
-        const bool doNormalize = true,
-        const fpreal uniScale = 1.0,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
 {
     setHasComputed();
-    this->doNormalize = doNormalize;
-    this->uniScale = uniScale;
     this->subscribeRatio = subscribeRatio;
     this->minGrainSize   = minGrainSize;
 }
@@ -46,65 +42,197 @@ private:
     virtual bool
         computeCore() override
     {
-        if (!getOutAttribArray().size())
+        if (!getVolumeArray().size())
             return false;
 
-        if (!doNormalize && uniScale==1.0)
-            return true;
-        
-        if (groupParser.isEmpty())
-            return true;
-
-        const size_t size = getOutAttribArray().size();
+        const size_t size = getVolumeArray().size();
         for (size_t i = 0; i < size; i++)
         {
-            attrib = getOutAttribArray()[i];
+            primVol = getVolumeArray()[i];
             
-            scaleAttribElement();
+            volumeExtremum();
             
         }
         return true;
     }
 
-    VolumeExtremum
+
+
+
+    
+    template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
+    class ComputeVolumeExtremum
+    {
+    public:
+        ComputeVolumeExtremum(const GU_PrimVolume* const vol)
+            : myVol(vol)
+            , myMin(GFE_Type::numeric_limits<_Ty>::max())
+            , myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            , myMinElemoff(GFE_INVALID_OFFSET)
+            , myMaxElemoff(GFE_INVALID_OFFSET)
+        {}
+        ComputeVolumeExtremum(ComputeVolumeExtremum& src, UT_Split)
+            : myVol(src.myVol)
+            , myMin(GFE_Type::numeric_limits<_Ty>::max())
+            , myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            , myMinElemoff(GFE_INVALID_OFFSET)
+            , myMaxElemoff(GFE_INVALID_OFFSET)
+        {}
+        void operator()(const UT_BlockedRange& r)
+        {
+            if constexpr (!_Min && !_Max && !_MinElemoff && !_MaxElemoff)
+                return;
+            
+        
+            UT_VoxelArrayF* vol;
+            UTparallelReduce(UT_BlockedRange(0, vol->numTiles()), [&](const UT_BlockedRange<exint> &r)
+            {
+                const exint curtile = r.begin();
+                UT_VoxelTileIteratorF vit;
+                vit.setLinearTile(curtile, vol);
+                for (vit.rewind(); !vit.atEnd(); vit.advance())
+                {
+                    float delta = 0;
+                    active->getValue(vit.x(), vit.y(), vit.z());
+                    if (active &&  < 0.5)
+                    {
+                        if (sopparms.getZeroInactive())
+                            vit.setValue(0);
+                        continue;
+                    }
+                }
+            }
+        
+            UT_ASSERT_MSG(r.getOwner() == myAttrib->getOwner(), "not same owner");
+            GFE_ROPageHandleT<_Ty> attrib_ph(myAttrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+
+                    if constexpr ((_Min || _MinElemoff) && (_Max || _MaxElemoff))
+                    {
+                        if (attrib_ph.value(start) < myMin)
+                        {
+                            myMin = attrib_ph.value(start);
+                            if constexpr (_MinElemoff)
+                                myMinElemoff = start;
+                        }
+                        if (attrib_ph.value(start) > myMax)
+                        {
+                            myMax = attrib_ph.value(start);
+                            if constexpr (_MaxElemoff)
+                                myMaxElemoff = start;
+                        }
+                        for (GA_Offset elemoff = start+1; elemoff < end; ++elemoff)
+                        {
+                            if (attrib_ph.value(start) < myMin)
+                            {
+                                myMin = attrib_ph.value(start);
+                                if constexpr (_MinElemoff)
+                                    myMinElemoff = elemoff;
+                            }
+                            if (attrib_ph.value(start) > myMax)
+                            {
+                                myMax = attrib_ph.value(start);
+                                if constexpr (_MaxElemoff)
+                                    myMaxElemoff = elemoff;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            if constexpr (_Min || _MinElemoff)
+                            {
+                                if (attrib_ph.value(start) < myMin)
+                                {
+                                    myMin = attrib_ph.value(start);
+                                    if constexpr (_MinElemoff)
+                                        myMinElemoff = elemoff;
+                                }
+                            }
+                            if constexpr (_Max || _MaxElemoff)
+                            {
+                                if (attrib_ph.value(start) > myMax)
+                                {
+                                    myMax = attrib_ph.value(start);
+                                    if constexpr (_MaxElemoff)
+                                        myMaxElemoff = elemoff;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        SYS_FORCE_INLINE void join(const ComputeVolumeExtremum& other)
+        {
+            if constexpr (_Min || _MinElemoff)
+            {
+                if (other.myMin < myMin)
+                {
+                    myMin = other.myMin;
+                    if constexpr (_MinElemoff)
+                        myMinElemoff = other.myMinElemoff;
+                }
+            }
+            if constexpr (_Max || _MaxElemoff)
+            {
+                if (other.myMax > myMax)
+                {
+                    myMax = other.myMax;
+                    if constexpr (_MaxElemoff)
+                        myMaxElemoff = other.myMaxElemoff;
+                }
+            }
+        }
+        SYS_FORCE_INLINE _Ty getMin() const
+        { return myMin; }
+        SYS_FORCE_INLINE _Ty getMax() const
+        { return myMax; }
+        //SYS_FORCE_INLINE GA_Offset getMinElemoff() const
+        //{ return myMinElemoff; }
+        //SYS_FORCE_INLINE GA_Offset getMaxElemoff() const
+        //{ return myMaxElemoff; }
+    private:
+        _Ty myMin;
+        _Ty myMax;
+        GA_Offset myMinElemoff;
+        GA_Offset myMaxElemoff;
+        const GU_PrimVolume* const myVol;
+    }; // End of Class ComputeVolumeExtremum
+
+
+    
+    template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
+    static void computeAttribExtremum(
+        const GU_PrimVolume* const primVol,
+        _Ty& min,
+        _Ty& max,
+        GA_Offset& minElemoff,
+        GA_Offset& maxElemoff,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize   = 1024
+    )
+    {
+        UT_VoxelArrayHandleF& vol = primVol->getVoxelHandle();
+        ComputeVolumeExtremum<_Ty, _Min, _Max, _MinElemoff, _MaxElemoff> body(attrib);
+        UTparallelReduce(UT_BlockedRange(0, vol.numTiles()), body, subscribeRatio, minGrainSize);
+        min = body.getMin();
+        max = body.getMax();
+        minElemoff = body.getMinElemoff();
+        maxElemoff = body.getMaxElemoff();
+    }
+
+    
     void volumeExtremum()
     {
-        UT_VoxelArrayF* vol;
-        UTparallelReduce(UT_BlockedRange(0, vol->numTiles()), [&](const UT_BlockedRange<exint> &r)
-        {
-            const exint curtile = r.begin();
-            UT_VoxelTileIteratorF vit;
-            vit.setLinearTile(curtile, vol);
-            for (vit.rewind(); !vit.atEnd(); vit.advance())
-            {
-                float delta = 0;
-                active->getValue(vit.x(), vit.y(), vit.z());
-                if (active &&  < 0.5)
-                {
-                    if (sopparms.getZeroInactive())
-                        vit.setValue(0);
-                    continue;
-                }
-            }
-        }
-        
-        UTparallelForEachNumber(vol->numTiles(), [&](const UT_BlockedRange<exint> &r)
-        {
-            const exint curtile = r.begin();
-            UT_VoxelTileIteratorF vit;
-            vit.setLinearTile(curtile, vol);
-            for (vit.rewind(); !vit.atEnd(); vit.advance())
-            {
-                float delta = 0;
-                active->getValue(vit.x(), vit.y(), vit.z());
-                if (active &&  < 0.5)
-                {
-                    if (sopparms.getZeroInactive())
-                        vit.setValue(0);
-                    continue;
-                }
-            }
-        }
+        computeAttribExtremum(primVol, )
+
         
         UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
         {
@@ -174,12 +302,9 @@ private:
 
 
 public:
-    bool doNormalize = true;
-    fpreal uniScale = 1.0;
 
 private:
-    GA_Attribute* attrib;
-    GA_Attribute* refattrib;
+    GU_PrimVolume* primVol;
 
     
     exint subscribeRatio = 64;

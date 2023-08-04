@@ -26,11 +26,6 @@
 
 class GFE_VolumeProject : public GFE_AttribFilterWithRef2 {
 
-#define __TEMP_GFE_VolumeProject_GroupName       "__TEMP_GFE_VolumeProject_Group"
-#define __TEMP_GFE_VolumeProject_PieceAttribName "__TEMP_GFE_VolumeProject_PieceAttrib"
-#define __TEMP_GFE_VolumeProject_OutAttribName   "__TEMP_GFE_VolumeProject_OutAttrib"
-    
-
 public:
     using GFE_AttribFilterWithRef2::GFE_AttribFilterWithRef2;
 
@@ -55,11 +50,11 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
+	    if (getOutAttribArray().isEmpty())
+	    	return false;
 
-        if (groupParser.isEmpty())
-            return true;
+    	if (groupParser.isEmpty())
+    		return true;
         
 
 
@@ -67,141 +62,113 @@ private:
 		
 
     	const GA_PrimitiveGroup* velgrp    = groupParser    .getPrimitiveGroup();
-    	const GA_PrimitiveGroup* divgrp    = groupParserRef0.getPrimitiveGroup();
-    	const GA_PrimitiveGroup* lutgrp    = groupParserRef1.getPrimitiveGroup();
-    	const GA_PrimitiveGroup* activegrp = groupParserRef2.getPrimitiveGroup();
-	    cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
+    	cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
 
 
 
     	
-	    UT_Array<GEO_PrimVolume*> velx, vely, velz;
-	    UT_Array<const GEO_PrimVolume*> div;
-	    UT_Array<const GEO_PrimVolume*> active;
+    	UT_Array<GEO_PrimVolume*> velx, vely, velz;
+    	UT_Array<const GEO_PrimVolume*> div;
+    	UT_Array<const GEO_PrimVolume*> active;
 
     	
     	//const GA_PrimitiveGroup* velgrp;
     	//const GA_PrimitiveGroup* divgrp;
     	//const GA_PrimitiveGroup* lutgrp;
     	//const GA_PrimitiveGroup* activegrp;
-	    //GOP_Manager gop;
-		//
-	    //velgrp = nullptr;
-	    //if (sopparms.getGroup().isstring())
-	    //{
-		//	velgrp = gop.parsePrimitiveGroups(sopparms.getGroup(), GOP_Manager::GroupCreator(geo->asGEO_Detail(), false), /*numok=*/true, /*ordered=*/true);
-		//	if (!velgrp)
-		//	{
-		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getGroup());
-		//	    return false;
-		//	}
-	    //}
-	    ////notifyGroupParmListeners(cookparms->getNode(), 0, -1, geo, velgrp);
-	    //cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
-		//
+    	//GOP_Manager gop;
     	//
-	    //divgrp = nullptr;
-	    //if (sopparms.getDivGroup().isstring())
-	    //{
-		//	divgrp = gop.parsePrimitiveGroups(sopparms.getDivGroup(), GOP_Manager::GroupCreator(geoRef0), /*numok=*/true, /*ordered=*/true);
-		//	if (!divgrp)
-		//	{
-		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getDivGroup());
-		//	    return false;
-		//	}
-	    //}
-		//
+    	//velgrp = nullptr;
+    	//if (sopparms.getGroup().isstring())
+    	//{
+    	//	velgrp = gop.parsePrimitiveGroups(sopparms.getGroup(), GOP_Manager::GroupCreator(geo->asGEO_Detail(), false), /*numok=*/true, /*ordered=*/true);
+    	//	if (!velgrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getGroup());
+    	//	    return false;
+    	//	}
+    	//}
+    	////notifyGroupParmListeners(cookparms->getNode(), 0, -1, geo, velgrp);
+    	//cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
     	//
-	    //lutgrp = nullptr;
-	    //if (sopparms.getLUTGroup().isstring())
-	    //{
-		//	lutgrp = gop.parsePrimitiveGroups(sopparms.getLUTGroup(), GOP_Manager::GroupCreator(geoRef1), /*numok=*/true, /*ordered=*/true);
-		//	if (!lutgrp)
-		//	{
-		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getLUTGroup());
-		//	    return false;
-		//	}
-	    //}
-		//
-	    //activegrp = nullptr;
-	    //if (sopparms.getActiveGroup().isstring())
-	    //{
-		//	activegrp = gop.parsePrimitiveGroups(sopparms.getActiveGroup(), GOP_Manager::GroupCreator(geoRef2), /*numok=*/true, /*ordered=*/true);
-		//	if (!activegrp)
-		//	{
-		//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getActiveGroup());
-		//	    return false;
-		//	}
-	    //}
+    	//
+    	//divgrp = nullptr;
+    	//if (sopparms.getDivGroup().isstring())
+    	//{
+    	//	divgrp = gop.parsePrimitiveGroups(sopparms.getDivGroup(), GOP_Manager::GroupCreator(geoRef0), /*numok=*/true, /*ordered=*/true);
+    	//	if (!divgrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getDivGroup());
+    	//	    return false;
+    	//	}
+    	//}
+    	//
+    	//
+    	//lutgrp = nullptr;
+    	//if (sopparms.getLUTGroup().isstring())
+    	//{
+    	//	lutgrp = gop.parsePrimitiveGroups(sopparms.getLUTGroup(), GOP_Manager::GroupCreator(geoRef1), /*numok=*/true, /*ordered=*/true);
+    	//	if (!lutgrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getLUTGroup());
+    	//	    return false;
+    	//	}
+    	//}
+    	//
+    	//activegrp = nullptr;
+    	//if (sopparms.getActiveGroup().isstring())
+    	//{
+    	//	activegrp = gop.parsePrimitiveGroups(sopparms.getActiveGroup(), GOP_Manager::GroupCreator(geoRef2), /*numok=*/true, /*ordered=*/true);
+    	//	if (!activegrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getActiveGroup());
+    	//	    return false;
+    	//	}
+    	//}
 
-	    GEO_PrimVolume* vel[3] = {0, 0, 0};
+    	GEO_PrimVolume* vel[3] = {0, 0, 0};
 
-	    // Each velocity triple is collated.
-	    GEO_Primitive* prim;
-	    int	numvel = 0;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geo, velgrp, prim)
-	    {
-			if (prim->getTypeId() == GEO_PRIMVOLUME)
-			{
-			    vel[numvel++] = (GEO_PrimVolume*)prim;
+    	// Each velocity triple is collated.
+    	GEO_Primitive* prim;
+    	int	numvel = 0;
+    	GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geo, velgrp, prim)
+    	{
+    		if (prim->getTypeId() == GEO_PRIMVOLUME)
+    		{
+    			vel[numvel++] = (GEO_PrimVolume*)prim;
 
-			    if (numvel == 3)
-			    {
-					// Complete set
-					velx.append(vel[0]);
-					vely.append(vel[1]);
-					velz.append(vel[2]);
-					numvel = 0;
-			    }
-			}
-	    }
+    			if (numvel == 3)
+    			{
+    				// Complete set
+    				velx.append(vel[0]);
+    				vely.append(vel[1]);
+    				velz.append(vel[2]);
+    				numvel = 0;
+    			}
+    		}
+    	}
 
-	    // Check to see if we have a dangling pair.
-	    if (numvel)
-			cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched veloicty volume ignored; provide matching triples of velocity volumes.");
+    	// Check to see if we have a dangling pair.
+    	if (numvel)
+    		cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched veloicty volume ignored; provide matching triples of velocity volumes.");
 
-	    const GEO_Primitive	*cprim;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geoRef0, divgrp, cprim)
-	    {
-			if (cprim->getTypeId() == GEO_PRIMVOLUME)
-			{
-			    div.append(reinterpret_cast<const GEO_PrimVolume*>(cprim));
-			}
-	    }
-
+    	
+		div.append(geoRef0->getFirstHoudiniVolumePrimitive(groupParserRef0.getPrimitiveGroup()));
+	    
+    	const GEO_PrimVolume* lut[3] = { 0, 0, 0 };
+    	geoRef1->getVectorHoudiniVolumePrimitive(lut, groupParserRef1.getPrimitiveGroup());
+    	
 	    if (geoRef2)
-	    {
-			GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geoRef2, activegrp, cprim)
-			{
-			    if (cprim->getTypeId() == GEO_PRIMVOLUME)
-			    {
-					active.append(reinterpret_cast<const GEO_PrimVolume*>(cprim));
-			    }
-			}
-	    }
-
-	    const GEO_PrimVolume* lut[3] = { 0, 0, 0 };
-	    int	numlut = 0;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geoRef1, lutgrp, cprim)
-	    {
-			if (cprim->getTypeId() == GEO_PRIMVOLUME)
-			{
-			    lut[numlut++] = reinterpret_cast<const GEO_PrimVolume*>(cprim);
-
-			    if (numlut == 3)
-					break;
-			}
-	    }
-
-	    if (numlut < 3)
-	    {
-			cookparms->sopAddError(SOP_MESSAGE, "Insufficient lut volume specified.");
-			return false;
-	    }
+			active.append(geoRef2->getFirstHoudiniVolumePrimitive(groupParserRef2.getPrimitiveGroup()));
+    	
+    	if (!lut[2])
+    	{
+    		cookparms->sopAddError(SOP_MESSAGE, "Insufficient lut volume specified.");
+    		return false;
+    	}
 
 	    if (velx.size() != div.size())
 			cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched sets of velocity and divergence volumes specified.  Unmatched ignored.");
-
 
 	    if (active.size() && (active.size() != div.size()))
 	    {
@@ -212,22 +179,19 @@ private:
 	    int	npass = std::min(velx.size(), div.size());
 
 
-    	UT_Interrupt* boss = UTgetInterrupt();
-    	if (boss->opInterrupt())
-			return false;
 	    for (int pass = 0; pass < npass; pass++)
 	    {
 	    	UT_VoxelArrayReadHandleF activeh;
-			UT_VoxelArrayReadHandleF divh  = div(pass)->getVoxelHandle();
+			UT_VoxelArrayReadHandleF divh  = div[pass]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutxh = lut[0]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutyh = lut[1]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutzh = lut[2]->getVoxelHandle();
 
-			UT_VoxelArrayWriteHandleF vxh = velx(pass)->getVoxelWriteHandle();
-			UT_VoxelArrayWriteHandleF vyh = vely(pass)->getVoxelWriteHandle();
-			UT_VoxelArrayWriteHandleF vzh = velz(pass)->getVoxelWriteHandle();
+			UT_VoxelArrayWriteHandleF vxh = velx[pass]->getVoxelWriteHandle();
+			UT_VoxelArrayWriteHandleF vyh = vely[pass]->getVoxelWriteHandle();
+			UT_VoxelArrayWriteHandleF vzh = velz[pass]->getVoxelWriteHandle();
 
-			const UT_VoxelArrayF *activev = 0;
+			const UT_VoxelArrayF* activev = 0;
 			if (pass < active.size())
 			{
 			    activeh = active(pass)->getVoxelHandle();
@@ -235,9 +199,9 @@ private:
 			}
 
 			// First, we apply our LUT approximation for the near field.
-			sop_applyVelLUT(&*vxh, &*divh, activev, &*lutxh, velx(pass)->getVoxelSize());
-			sop_applyVelLUT(&*vyh, &*divh, activev, &*lutyh, vely(pass)->getVoxelSize());
-			sop_applyVelLUT(&*vzh, &*divh, activev, &*lutzh, velz(pass)->getVoxelSize());
+			sop_applyVelLUT(&*vxh, &*divh, activev, &*lutxh, velx[pass]->getVoxelSize());
+			sop_applyVelLUT(&*vyh, &*divh, activev, &*lutyh, vely[pass]->getVoxelSize());
+			sop_applyVelLUT(&*vzh, &*divh, activev, &*lutzh, velz[pass]->getVoxelSize());
 	    	
 			if (!sopparms.getDoMIP())
 				continue;
@@ -1058,11 +1022,6 @@ private:
 
 private:
 
-#undef __TEMP_GFE_VolumeProject_GroupName
-#undef __TEMP_GFE_VolumeProject_PieceAttribName
-#undef __TEMP_GFE_VolumeProject_OutAttribName
-
-    
 }; // End of class GFE_VolumeProject
 
 

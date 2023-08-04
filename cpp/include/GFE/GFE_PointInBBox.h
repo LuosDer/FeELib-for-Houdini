@@ -118,15 +118,9 @@ private:
     	//bbox.enlargeFloats(enlargeBBox);
     	
     	groupSetter = getOutGroupArray()[0];
+
+    	pointInBBox();
     	
-        const GA_Storage storage = posAttrib->getAIFTuple()->getStorage(posAttrib);
-    	switch (storage)
-    	{
-    	case GA_STORE_REAL16: pointInBBox<UT_Vector3T<fpreal16>>(); break;
-    	case GA_STORE_REAL32: pointInBBox<UT_Vector3T<fpreal32>>(); break;
-    	case GA_STORE_REAL64: pointInBBox<UT_Vector3T<fpreal64>>(); break;
-    	default: break;
-    	}
     	
     	if (doDelGroupElement)
     		delGroupElement();
@@ -135,12 +129,36 @@ private:
     }
 
 
-	template<typename VECTOR_T>
+    	
 	void pointInBBox()
     {
-    	UTparallelFor(groupParser.getPointSplittableRange(), [this](const GA_SplittableRange& r)
+    	auto tupleTypeVariant = GFE_Variant::getNumericTupleTypev3fVariant(*posAttrib);
+    	auto xMinVariant = GFE_Variant::getBoolVariant(xMin);
+    	auto xMaxVariant = GFE_Variant::getBoolVariant(xMax);
+    	auto yMinVariant = GFE_Variant::getBoolVariant(yMin);
+    	auto yMaxVariant = GFE_Variant::getBoolVariant(yMax);
+    	auto zMinVariant = GFE_Variant::getBoolVariant(zMin);
+    	auto zMaxVariant = GFE_Variant::getBoolVariant(zMax);
+    		
+    	std::visit([&] (auto tupleTypeVariant,
+						auto xMinVariant,
+						auto xMaxVariant,
+						auto yMinVariant,
+						auto yMaxVariant,
+						auto zMinVariant,
+						auto zMaxVariant)
 		{
-			GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> pos_ph(posAttrib);
+			using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+			pointInBBox<type, xMinVariant, xMaxVariant, yMinVariant, yMaxVariant, zMinVariant, zMaxVariant>();
+		}, tupleTypeVariant, xMinVariant, xMaxVariant, yMinVariant, yMaxVariant, zMinVariant, zMaxVariant);
+    }
+
+	template<typename _Ty, bool xMin, bool xMax, bool yMin, bool yMax, bool zMin, bool zMax>
+	void pointInBBox()
+    {
+    	UTparallelFor(groupParser.getSplittableRange(posAttrib), [this](const GA_SplittableRange& r)
+		{
+			GFE_ROPageHandleT<_Ty> pos_ph(posAttrib);
 			for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
 			{
 				GA_Offset start, end;
@@ -150,20 +168,26 @@ private:
 					for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
 					{
 						uint8 numInLimit = 0;
-						if (xMin && pos_ph.value(elemoff)[0] >= bbox.xmin())
-							++numInLimit;
-						if (xMax && pos_ph.value(elemoff)[0] <= bbox.xmax())
-							++numInLimit;
-						if (yMin && pos_ph.value(elemoff)[1] >= bbox.ymin())
-							++numInLimit;
-						if (yMax && pos_ph.value(elemoff)[1] <= bbox.ymax())
-							++numInLimit;
-						if (zMin && pos_ph.value(elemoff)[2] >= bbox.zmin())
-							++numInLimit;
-						if (zMax && pos_ph.value(elemoff)[2] <= bbox.zmax())
-							++numInLimit;
-						
-    					groupSetter.set(elemoff, numInLimit >= numInBoundMin);
+						if constexpr (xMin)
+							if (pos_ph.value(elemoff)[0] >= bbox.xmin())
+								++numInLimit;
+						if constexpr (xMax)
+							if (xMax && pos_ph.value(elemoff)[0] <= bbox.xmax())
+								++numInLimit;
+						if constexpr (yMin)
+							if (yMin && pos_ph.value(elemoff)[1] >= bbox.ymin())
+								++numInLimit;
+						if constexpr (yMax)
+							if (yMax && pos_ph.value(elemoff)[1] <= bbox.ymax())
+								++numInLimit;
+						if constexpr (zMin)
+							if (zMin && pos_ph.value(elemoff)[2] >= bbox.zmin())
+								++numInLimit;
+						if constexpr (zMax)
+							if (zMax && pos_ph.value(elemoff)[2] <= bbox.zmax())
+								++numInLimit;
+							
+						groupSetter.set(elemoff, numInLimit >= numInBoundMin);
 					}
 				}
 			}

@@ -209,22 +209,18 @@ SOP_FeE_VolumeExtremum_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     
     //outGeo0.replaceWith(inGeo0);
 
-    const bool doNormalize = sopparms.getNormalize();
-
-    if (!doNormalize && uniScale==1.0)
-        return;
 
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
-    GFE_AttribExtremum attribExtremum(outGeo0, inGeo1, cookparms);
+    GFE_VolumeExtremum volumeExtremum(outGeo0, inGeo1, cookparms);
     
-    attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
-    attribExtremum.getOutAttribArray().appends(attribClass, sopparms.getAttribName());
-    attribExtremum.setComputeParm(doNormalize, uniScale,
+    volumeExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
+    volumeExtremum.getOutAttribArray().appends(attribClass, sopparms.getAttribName());
+    volumeExtremum.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    attribExtremum.computeAndBumpDataId();
+    volumeExtremum.computeAndBumpDataId();
 
 
 }

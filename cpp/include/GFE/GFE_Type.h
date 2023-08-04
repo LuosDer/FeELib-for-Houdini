@@ -1087,6 +1087,12 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
 
 
 
+    template <class _Ty>
+    using numeric_limits = std::numeric_limits<get_value_type_t<_Ty>>;
+
+
+
+
 
 } // End of namespace GFE_Type
 
@@ -1099,10 +1105,6 @@ using GFE_RWPageHandleT = GA_PageHandleT<_Ty, typename GFE_Type::get_value_type_
 
 template<typename _Ty>
 using GFE_ROPageHandleT = GA_PageHandleT<_Ty, typename GFE_Type::get_value_type_t<_Ty>, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail>;
-
-
-
-
 
 
 

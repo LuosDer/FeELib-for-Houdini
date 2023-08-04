@@ -220,7 +220,7 @@ SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     GFE_ScaleAttribElement scaleAttribElement(outGeo0, cookparms);
     
     scaleAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
-    scaleAttribElement.getOutAttribArray().appends(attribClass, sopparms.getAttribName());
+    scaleAttribElement.getOutAttribArray().appends(attribClass, sopparms.getAttrib());
     scaleAttribElement.setComputeParm(doNormalize, uniScale,
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     scaleAttribElement.computeAndBumpDataId();
