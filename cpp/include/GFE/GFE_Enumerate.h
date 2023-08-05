@@ -97,7 +97,9 @@ private:
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
+            
             enumAttrib = getOutAttribArray()[i];
+            auto Varient = GFE_Variant::getNumericTupleType1Variant();
             // const GA_Storage storage = enumAttrib->getAIFTuple()->getStorage(enumAttrib);
             const GA_AIFTuple* const aifTuple = enumAttrib->getAIFTuple();
             if (aifTuple)
@@ -243,16 +245,46 @@ private:
 
 
     
-    template<typename T>
+    template<typename T, bool _outAsOffset, bool _negativeIndex, bool _OutAsOffset>
+    void enumerate()
+    {
+        UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
+        {
+            GFE_RWPageHandleT<T> attrib_ph(enumAttrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    //const GA_Offset baseOff = start - GAgetPageOff(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        attrib_ph.value(elemoff) = firstIndex + elemoff;
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+    
+    template<typename _Ty>
     void enumerate()
     {
         UT_ASSERT_P(enumAttrib);
+        
+        auto outAsOffsetVarient = GFE_Variant::getBoolVariant(outAsOffset);
+        auto negativeIndexVarient = GFE_Variant::getBoolVariant(negativeIndex);
+        
+        std::visit([&] (auto outAsOffsetVarient, auto negativeIndexVarient)
+            {
+            enumerate<_Ty, outAsOffsetVarient, negativeIndexVarient>();
+    }, );
         const GA_SplittableRange geoSplittableRange0(groupParser.getRange(enumAttrib));
         if(outAsOffset)
         {
             UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
             {
-                GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
+                GFE_RWPageHandleT<T> attrib_ph(enumAttrib);
                 GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {

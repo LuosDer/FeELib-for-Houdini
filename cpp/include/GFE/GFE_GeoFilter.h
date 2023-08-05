@@ -13,6 +13,7 @@
 #include "GFE/GFE_AttributeArray.h"
 #include "GFE/GFE_GroupParser.h"
 #include "GFE/GFE_NodeVerb.h"
+#include "GFE/GFE_VolumeArray.h"
 
 
 
@@ -28,6 +29,7 @@ public:
         //, geoConst(geo)
         , cookparms(cookparms)
         , groupParser(geo, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
 
@@ -39,6 +41,7 @@ public:
         //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
         , cookparms(cookparms)
         , groupParser(geo, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
     
@@ -50,6 +53,7 @@ public:
         //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
         , cookparms(cookparms)
         , groupParser(*geo, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
     
@@ -61,6 +65,7 @@ public:
         //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
         , cookparms(&cookparms)
         , groupParser(geo, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
 
@@ -75,6 +80,7 @@ public:
         , geoSrc(geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc ? geoSrc : geo, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
 
@@ -87,6 +93,7 @@ public:
         , geoSrc(&geoSrc)
         , cookparms(&cookparms)
         , groupParser(geoSrc, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
 
@@ -99,6 +106,7 @@ public:
         , geoSrc(&geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
 
@@ -111,6 +119,7 @@ public:
         , geoSrc(geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc ? *geoSrc : geo, gop, cookparms)
+        , volumeArray(geo, cookparms)
     {
     }
 
@@ -227,6 +236,13 @@ public:
     { if (GFE_Type::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); UT_ASSERT_P(posAttrib); }
 
 
+    
+    SYS_FORCE_INLINE GFE_VolumeArray& getVolumeArray()
+    { return volumeArray; }
+
+    SYS_FORCE_INLINE const GFE_VolumeArray& getVolumeArray() const
+    { return volumeArray; }
+
 private:
 
     virtual bool computeCore()
@@ -274,7 +290,7 @@ protected:
     SYS_FORCE_INLINE void setHasComputed(const bool inHasComputed = false)
     { hasComputed = inHasComputed; }
 
-
+    
 public:
     GFE_GroupParser groupParser;
     bool outTopoAttrib = true;
@@ -290,6 +306,7 @@ protected:
     GA_Attribute* posAttribNonConst = nullptr;
     
     GOP_Manager gop;
+    GFE_VolumeArray volumeArray;
 
 private:
     //bool outTopoAttrib = true;
@@ -425,9 +442,9 @@ public:
     { return ref0AttribArray; }
     SYS_FORCE_INLINE GFE_RefGroupArray& getRef0GroupArray()
     { return ref0GroupArray; }
-    SYS_FORCE_INLINE ::std::vector<const GA_Attribute*>& getRef0AttribArrayRef()
+    SYS_FORCE_INLINE std::vector<const GA_Attribute*>& getRef0AttribArrayRef()
     { return ref0AttribArray.ref(); }
-    SYS_FORCE_INLINE ::std::vector<const GA_Group*>& getRef0GroupArrayRef()
+    SYS_FORCE_INLINE std::vector<const GA_Group*>& getRef0GroupArrayRef()
     { return ref0GroupArray.ref(); }
 
 
@@ -582,9 +599,9 @@ public:                                                                         
     { return ref##NUM##AttribArray; }                                                                                               \
     SYS_FORCE_INLINE GFE_RefGroupArray& getRef##NUM##GroupArray()                                                                   \
     { return ref##NUM##GroupArray; }                                                                                                \
-    SYS_FORCE_INLINE ::std::vector<const GA_Attribute*>& getRef##NUM##AttribArrayRef()                                              \
+    SYS_FORCE_INLINE std::vector<const GA_Attribute*>& getRef##NUM##AttribArrayRef()                                              \
     { return ref##NUM##AttribArray.ref(); }                                                                                         \
-    SYS_FORCE_INLINE ::std::vector<const GA_Group*>& getRef##NUM##GroupArrayRef()                                                   \
+    SYS_FORCE_INLINE std::vector<const GA_Group*>& getRef##NUM##GroupArrayRef()                                                   \
     { return ref##NUM##GroupArray.ref(); }                                                                                          \
                                                                                                                                     \
                                                                                                                                     \
@@ -911,10 +928,10 @@ SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
 SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
 { return outGroupArray; }
 
-SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getOutAttribArrayRef()
+SYS_FORCE_INLINE std::vector<GA_Attribute*>& getOutAttribArrayRef()
 { return outAttribArray.ref(); }
 
-SYS_FORCE_INLINE ::std::vector<GA_Group*>& getOutGroupArrayRef()
+SYS_FORCE_INLINE std::vector<GA_Group*>& getOutGroupArrayRef()
 { return outGroupArray.ref(); }
 
 
@@ -925,10 +942,10 @@ SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
 SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
 { return outGroupArray; }
 
-SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getOutAttribArrayRef() const
+SYS_FORCE_INLINE const std::vector<GA_Attribute*>& getOutAttribArrayRef() const
 { return outAttribArray.ref(); }
 
-SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getOutGroupArrayRef() const
+SYS_FORCE_INLINE const std::vector<GA_Group*>& getOutGroupArrayRef() const
 { return outGroupArray.ref(); }
 
 
@@ -951,10 +968,10 @@ public:
     bool delUnusedPoint = true;
     
 private:
-    //::std::vector<GA_AttributeUPtr> attribUPtrArray;
-    //::std::vector<GA_Attribute*> attribArray;
-    //::std::vector<GA_GroupUPtr> groupUPtrArray;
-    //::std::vector<GA_Group*> groupArray;
+    //std::vector<GA_AttributeUPtr> attribUPtrArray;
+    //std::vector<GA_Attribute*> attribArray;
+    //std::vector<GA_GroupUPtr> groupUPtrArray;
+    //std::vector<GA_Group*> groupArray;
     GFE_AttributeArray outAttribArray;
     GFE_GroupArray outGroupArray;
 
@@ -1051,10 +1068,10 @@ public:
     SYS_FORCE_INLINE GFE_GroupArray& getInGroupArray()
     { return inGroupArray; }
     
-    SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& getInAttribArrayRef()
+    SYS_FORCE_INLINE std::vector<GA_Attribute*>& getInAttribArrayRef()
     { return inAttribArray.ref(); }
     
-    SYS_FORCE_INLINE ::std::vector<GA_Group*>& getInGroupArrayRef()
+    SYS_FORCE_INLINE std::vector<GA_Group*>& getInGroupArrayRef()
     { return inGroupArray.ref(); }
 
     SYS_FORCE_INLINE const GFE_AttributeArray& getInAttribArray() const
@@ -1063,10 +1080,10 @@ public:
     SYS_FORCE_INLINE const GFE_GroupArray& getInGroupArray() const
     { return inGroupArray; }
     
-    SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& getInAttribArrayRef() const
+    SYS_FORCE_INLINE const std::vector<GA_Attribute*>& getInAttribArrayRef() const
     { return inAttribArray.ref(); }
     
-    SYS_FORCE_INLINE const ::std::vector<GA_Group*>& getInGroupArrayRef() const
+    SYS_FORCE_INLINE const std::vector<GA_Group*>& getInGroupArrayRef() const
     { return inGroupArray.ref(); }
 
 

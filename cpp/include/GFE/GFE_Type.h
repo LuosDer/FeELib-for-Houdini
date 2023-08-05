@@ -26,11 +26,11 @@
 
 #if 1
     #if 1
-        static constexpr int32 GFE_INVALID_OFFSET32 = ::std::numeric_limits<int32>::max();
-        static constexpr int64 GFE_INVALID_OFFSET64 = ::std::numeric_limits<int64>::max();
+        static constexpr int32 GFE_INVALID_OFFSET32 = std::numeric_limits<int32>::max();
+        static constexpr int64 GFE_INVALID_OFFSET64 = std::numeric_limits<int64>::max();
 
         //template<typename _SCALAR_T>
-        //static constexpr _SCALAR_T GFE_INVALID_OFFSET = ::std::numeric_limits<_SCALAR_T>::max();
+        //static constexpr _SCALAR_T GFE_INVALID_OFFSET = std::numeric_limits<_SCALAR_T>::max();
     #else
         #define GFE_INVALID_OFFSET32 2147483647
         #define GFE_INVALID_OFFSET64 9223372036854775807
@@ -56,6 +56,96 @@
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
+
+
+
+#define __GFE_Type_SpecializationVec(NUM)\
+        UT_Vector##NUM##I,\
+        UT_Vector##NUM##i = UT_Vector##NUM##I,\
+        UT_Vector##NUM##L,\
+        UT_Vector##NUM##H,\
+        UT_Vector##NUM##F,\
+        UT_Vector##NUM##D,\
+    
+
+#define __GFE_Type_SpecializationMtx(NUM)\
+        UT_Matrix##NUM##F,\
+        UT_Matrix##NUM##D,\
+    
+enum class GFE_NumericTupleType
+{
+    int8,
+    int16,
+    int32,
+    int64,
+    fpreal16,
+    fpreal32,
+    fpreal64,
+    
+    __GFE_Type_SpecializationVec(2)
+    __GFE_Type_SpecializationVec(3)
+    __GFE_Type_SpecializationVec(4)
+    
+    __GFE_Type_SpecializationMtx(2)
+    __GFE_Type_SpecializationMtx(3)
+    __GFE_Type_SpecializationMtx(4)
+    
+    string,
+    dict,
+    int32Array,
+    int64Array,
+    fpreal32Array,
+    fpreal64Array,
+    dictArray,
+
+    
+    
+    //UT_Vector2I,
+    //UT_Vector2i = UT_Vector2I,
+    //UT_Vector2L,
+    //UT_Vector2H,
+    //UT_Vector2F,
+    //UT_Vector2D,
+    //
+    //UT_Vector3I,
+    //UT_Vector3i = UT_Vector3I,
+    //UT_Vector3L,
+    //UT_Vector3H,
+    //UT_Vector3F,
+    //UT_Vector3D,
+    //
+    //UT_Vector4I,
+    //UT_Vector4i = UT_Vector4I,
+    //UT_Vector4L,
+    //UT_Vector4H,
+    //UT_Vector4F,
+    //UT_Vector4D,
+    //
+    //UT_Matrix2F,
+    //UT_Matrix2D,
+    //
+    //UT_Matrix3F,
+    //UT_Matrix3D,
+    //
+    //UT_Matrix4F,
+    //UT_Matrix4D,
+    
+    invalid = -1,
+    float16 = fpreal16,
+    float32 = fpreal32,
+    float64 = fpreal64,
+    UT_StringHolder = string,
+    dictHolder = dict,
+    UT_OptionsHolderArray = dictArray,
+    
+    
+}; // End of Class Enum Class GFE_NumericTupleType
+
+
+#undef __GFE_Type_SpecializationVec
+#undef __GFE_Type_SpecializationMtx
+
+
 
 enum class GFE_AttribMergeMethod
 {
@@ -305,41 +395,45 @@ namespace GFE_Type {
 //#endif
     
 // template <class _Ty>
-// _INLINE_VAR constexpr bool isScalar = ::std::is_same_v<_Ty, char>           ||
-//                                       ::std::is_same_v<_Ty, wchar_t>        ||
-//                                       ::std::is_same_v<_Ty, signed char>    ||
-//                                       ::std::is_same_v<_Ty, unsigned char>  ||
-//                                       ::std::is_same_v<_Ty, unsigned short> ||
-//                                       ::std::is_same_v<_Ty, short>          ||
-//                                       ::std::is_same_v<_Ty, unsigned int>   ||
-//                                       ::std::is_same_v<_Ty, int64>          ||
-//                                       ::std::is_same_v<_Ty, uint64>         ||
-//                                       ::std::is_same_v<_Ty, fpreal16>       ||
-//                                       ::std::is_same_v<_Ty, float>          ||
-//                                       ::std::is_same_v<_Ty, double>         ;
+// _INLINE_VAR constexpr bool isScalar = std::is_same_v<_Ty, char>           ||
+//                                       std::is_same_v<_Ty, wchar_t>        ||
+//                                       std::is_same_v<_Ty, signed char>    ||
+//                                       std::is_same_v<_Ty, unsigned char>  ||
+//                                       std::is_same_v<_Ty, unsigned short> ||
+//                                       std::is_same_v<_Ty, short>          ||
+//                                       std::is_same_v<_Ty, unsigned int>   ||
+//                                       std::is_same_v<_Ty, int64>          ||
+//                                       std::is_same_v<_Ty, uint64>         ||
+//                                       std::is_same_v<_Ty, fpreal16>       ||
+//                                       std::is_same_v<_Ty, float>          ||
+//                                       std::is_same_v<_Ty, double>         ;
 
 template <class _Ty>
-_INLINE_VAR constexpr bool isScalar = ::std::is_arithmetic_v<_Ty>      ||
-                                      ::std::is_same_v<_Ty, int64>     ||
-                                      ::std::is_same_v<_Ty, uint64>    ||
-                                      ::std::is_same_v<_Ty, fpreal16>  ;
+_INLINE_VAR constexpr bool isStringHolder = std::is_same_v<_Ty, UT_StringHolder>;
+
+
+template <class _Ty>
+_INLINE_VAR constexpr bool isScalar = std::is_arithmetic_v<_Ty>      ||
+                                      std::is_same_v<_Ty, int64>     ||
+                                      std::is_same_v<_Ty, uint64>    ||
+                                      std::is_same_v<_Ty, fpreal16>  ;
 
 
     
 #define __GFE_SPECIALIZATION_IsVector(NUM)                                                                  \
 template <class _Ty>                                                                                        \
-_INLINE_VAR constexpr bool isVector##NUM = ::std::is_same_v<_Ty, UT_Vector##NUM##T<char>           >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<wchar_t>        >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<signed char>    >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned char>  >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned short> >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<short>          >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned int>   >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<int64>          >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<uint64>         >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<fpreal16>       >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<float>          >||      \
-                                           ::std::is_same_v<_Ty, UT_Vector##NUM##T<double>         >;       \
+_INLINE_VAR constexpr bool isVector##NUM = std::is_same_v<_Ty, UT_Vector##NUM##T<char>           >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<wchar_t>        >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<signed char>    >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned char>  >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned short> >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<short>          >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned int>   >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<int64>          >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<uint64>         >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<fpreal16>       >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<float>          >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<double>         >;       \
 
 __GFE_SPECIALIZATION_IsVector(2)
 __GFE_SPECIALIZATION_IsVector(3)
@@ -349,18 +443,18 @@ __GFE_SPECIALIZATION_IsVector(4)
 
 #define __GFE_SPECIALIZATION_IsMatrix(NUM)                                                                  \
 template <class _Ty>                                                                                        \
-_INLINE_VAR constexpr bool isMatrix##NUM = ::std::is_same_v<_Ty, UT_Matrix##NUM##T<char>           >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<wchar_t>        >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<signed char>    >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned char>  >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned short> >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<short>          >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned int>   >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<int64>          >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<uint64>         >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<fpreal16>       >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<float>          >||      \
-                                           ::std::is_same_v<_Ty, UT_Matrix##NUM##T<double>         >;       \
+_INLINE_VAR constexpr bool isMatrix##NUM = std::is_same_v<_Ty, UT_Matrix##NUM##T<char>           >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<wchar_t>        >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<signed char>    >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned char>  >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned short> >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<short>          >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<unsigned int>   >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<int64>          >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<uint64>         >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<fpreal16>       >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<float>          >||      \
+                                           std::is_same_v<_Ty, UT_Matrix##NUM##T<double>         >;       \
 
 __GFE_SPECIALIZATION_IsMatrix(2)
 __GFE_SPECIALIZATION_IsMatrix(3)
@@ -393,6 +487,13 @@ _INLINE_VAR constexpr bool isVecMtx = isVector<_Ty> ||
                                       isMatrix<_Ty> ;
 
 
+template <class _Ty>
+_INLINE_VAR constexpr bool isTuple = isScalar<_Ty> ||
+                                     isVecMtx<_Ty> ;
+
+
+    
+    
 template <bool judge, typename _Ty>
 struct select_value_type { using type = typename _Ty; };
 
@@ -497,8 +598,11 @@ SYS_FORCE_INLINE static VECTOR_T getZeroVector()
     else
         return VECTOR_T(0.0);
 }
+    
 
-
+SYS_FORCE_INLINE static bool isPoly(const int id)
+{ return id == GA_PRIMPOLY; } // 1
+    
 SYS_FORCE_INLINE static bool isHoudiniVolume(const int id)
 { return id == GA_PRIMVOLUME; } // 20
 
@@ -519,7 +623,35 @@ SYS_FORCE_INLINE static bool isPacked(const int id)
 { return isPackedGeometry(id) || isPackedFragment(id); }
 
 
+    SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const char* const str1)
+#if GFE_DEBUG_MODE
+    {
+        //const char* const str01 = str0;
+        //const char* const str02 = str1;
+        //const bool equal0 = str0 == str1;
+        //const bool equal1 = strcmp(str0, str1) == 0;
+        return str0 == str1 || strcmp(str0, str1) == 0;
+    }
+#else
+    { return str0 == str1 || strcmp(str0, str1) == 0; }
+#endif
+    
+    SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
+    { return stringEqual(str0.c_str(), str1.c_str()); }
 
+    SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const char* const str1)
+    { return stringEqual(str0.c_str(), str1); }
+
+    SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const UT_StringRef& str1)
+    { return stringEqual(str0, str1.c_str()); }
+
+    SYS_FORCE_INLINE static bool stringEqualP(const UT_StringRef& str0)
+    { return stringEqual(str0, "P"); }
+    
+    SYS_FORCE_INLINE static bool stringEqualP(const char* const str0)
+    { return stringEqual(str0, "P"); }
+    
+    
     
 #if GFE_INVALID_OFFSET >= 0
     
@@ -564,7 +696,7 @@ SYS_FORCE_INLINE static bool isInvalid(const UT_StringRef& str)
 { return !str.isstring() || str.length() <= 0; }
 
 SYS_FORCE_INLINE static bool isPublicAttribName(const UT_StringRef& attribName)
-{ return isValid(attribName) && strcmp(attribName.c_str(), "P") != 0; }
+{ return isValid(attribName) && stringEqual(attribName, "P"); }
 
 SYS_FORCE_INLINE static bool isPublicAttribName(const char* const attribName)
 { return attribName && strcmp(attribName, "P") != 0; }
@@ -765,14 +897,11 @@ SYS_FORCE_INLINE static UT_Vector3T<fpreal32> axisDirF(const GFE_Axis axis)
     
 SYS_FORCE_INLINE static UT_Vector3T<fpreal64> axisDirD(const GFE_Axis axis)
 { return axisDir<UT_Vector3T<fpreal64>>(axis); }
-    
-SYS_FORCE_INLINE static bool stringEqual(const char* const str0, const char* const str1)
-{ return strcmp(str0, str1) == 0; }
 
-SYS_FORCE_INLINE static bool stringEqual(const UT_StringRef& str0, const UT_StringRef& str1)
-{ return stringEqual(str0.c_str(), str1.c_str()); }
 
-    
+
+
+        
 static bool isAttribTypeEqual(const GA_Attribute* const attrib0, const GA_Attribute* const attrib1)
 {
     UT_ASSERT_P(attrib0);
@@ -899,90 +1028,85 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
 { return !isValidPosAttrib(posAttrib); }
 
 
-
-
-
-
-
-
-        
-template <GA_Storage _Val>
-using storage_constant = std::integral_constant<GA_Storage, _Val>;
-
-using store_invalid_type = storage_constant<GA_STORE_INVALID>;
-using store_b_type   = storage_constant<GA_STORE_BOOL>;
-using store_i8_type  = storage_constant<GA_STORE_INT8>;
-using store_i16_type = storage_constant<GA_STORE_INT16>;
-using store_i32_type = storage_constant<GA_STORE_INT32>;
-using store_i64_type = storage_constant<GA_STORE_INT64>;
-using store_f16_type = storage_constant<GA_STORE_REAL16>;
-using store_f32_type = storage_constant<GA_STORE_REAL32>;
-using store_f64_type = storage_constant<GA_STORE_REAL64>;
-using store_fs_type  = storage_constant<GA_STORE_STRING>;
-using store_fd_type  = storage_constant<GA_STORE_DICT>;
-
-
-
-std::variant<store_invalid_type,
-             store_b_type      ,
-             store_i8_type     ,
-             store_i16_type    ,
-             store_i32_type    ,
-             store_i64_type    ,
-             store_f16_type    ,
-             store_f32_type    ,
-             store_f64_type    ,
-             store_fs_type     ,
-             store_fd_type     >
-SYS_FORCE_INLINE attribStorageVariant(const GA_Storage v)
-{
-    switch (v)
+    GFE_NumericTupleType getNumericTupleType(const int tupleSize, const GA_Storage store)
     {
-    case GA_STORE_INVALID: return storage_constant<GA_STORE_INVALID>{}; break;
-    case GA_STORE_INT8:    return storage_constant<GA_STORE_INT8>   {}; break;
-    case GA_STORE_INT16:   return storage_constant<GA_STORE_INT16>  {}; break;
-    case GA_STORE_INT32:   return storage_constant<GA_STORE_INT32>  {}; break;
-    case GA_STORE_INT64:   return storage_constant<GA_STORE_INT64>  {}; break;
-    case GA_STORE_REAL16:  return storage_constant<GA_STORE_REAL16> {}; break;
-    case GA_STORE_REAL32:  return storage_constant<GA_STORE_REAL32> {}; break;
-    case GA_STORE_REAL64:  return storage_constant<GA_STORE_REAL64> {}; break;
-    case GA_STORE_STRING:  return storage_constant<GA_STORE_STRING> {}; break;
-    case GA_STORE_DICT:    return storage_constant<GA_STORE_DICT>   {}; break;
-    default: break;
+        switch (tupleSize)
+        {
+        case 1:
+            switch (store)
+            {
+            case GA_STORE_INT8:   return GFE_NumericTupleType::int8;     break;
+            case GA_STORE_INT16:  return GFE_NumericTupleType::int16;    break;
+            case GA_STORE_INT32:  return GFE_NumericTupleType::int32;    break;
+            case GA_STORE_INT64:  return GFE_NumericTupleType::int64;    break;
+            case GA_STORE_REAL16: return GFE_NumericTupleType::fpreal16; break;
+            case GA_STORE_REAL32: return GFE_NumericTupleType::fpreal32; break;
+            case GA_STORE_REAL64: return GFE_NumericTupleType::fpreal64; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        case 2:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_NumericTupleType::UT_Vector2I; break;
+            case GA_STORE_INT64:  return GFE_NumericTupleType::UT_Vector2L; break;
+            case GA_STORE_REAL16: return GFE_NumericTupleType::UT_Vector2H; break;
+            case GA_STORE_REAL32: return GFE_NumericTupleType::UT_Vector2F; break;
+            case GA_STORE_REAL64: return GFE_NumericTupleType::UT_Vector2D; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        case 3:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_NumericTupleType::UT_Vector3I; break;
+            case GA_STORE_INT64:  return GFE_NumericTupleType::UT_Vector3L; break;
+            case GA_STORE_REAL16: return GFE_NumericTupleType::UT_Vector3H; break;
+            case GA_STORE_REAL32: return GFE_NumericTupleType::UT_Vector3F; break;
+            case GA_STORE_REAL64: return GFE_NumericTupleType::UT_Vector3D; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        case 4:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_NumericTupleType::UT_Vector4I; break;
+            case GA_STORE_INT64:  return GFE_NumericTupleType::UT_Vector4L; break;
+            case GA_STORE_REAL16: return GFE_NumericTupleType::UT_Vector4H; break;
+            case GA_STORE_REAL32: return GFE_NumericTupleType::UT_Vector4F; break;
+            case GA_STORE_REAL64: return GFE_NumericTupleType::UT_Vector4D; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        default: UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Size"); break;
+        }
+        return GFE_NumericTupleType::invalid;
     }
-    UT_ASSERT_MSG(0, "Unhandled Attrib Storage");
-    return storage_constant<GA_STORE_INVALID>{};
-}
-
-        
-SYS_FORCE_INLINE auto attribStorageVariant(const GA_Attribute& attrib)
-{ return attribStorageVariant(attrib.getAIFTuple()->getStorage(&attrib)); }
-
-SYS_FORCE_INLINE auto attribStorageVariant(const GA_Attribute* const attrib)
-{ UT_ASSERT_P(attrib); return attribStorageVariant(attrib->getAIFTuple()->getStorage(attrib)); }
-
-//std::variant<std::true_type, std::false_type>
-//attribOwnerVariant(const GA_AttributeOwner v)
-//{ return v ? std::true_type{} : std::false_type{}; }
 
 
-
-
-std::variant<std::true_type, std::false_type>
-boolVariant(const bool v)
-{ return (v ? std::true_type : std::false_type){}; }
+    SYS_FORCE_INLINE GFE_NumericTupleType getNumericTupleType(const GA_Attribute* const attrib)
+    {
+        UT_ASSERT_P(attrib);
+        UT_ASSERT_P(attrib->getAIFTuple());
+        return getNumericTupleType(attrib->getTupleSize(), attrib->getAIFTuple()->getStorage(attrib));
+    }
+    
+    SYS_FORCE_INLINE GFE_NumericTupleType getNumericTupleType(const GA_Attribute& attrib)
+    {
+        UT_ASSERT_P(attrib.getAIFTuple());
+        return getNumericTupleType(attrib.getTupleSize(), attrib.getAIFTuple()->getStorage(&attrib));
+    }
+    
 
 
 
 
+    template <class _Ty>
+    using numeric_limits = std::numeric_limits<get_value_type_t<_Ty>>;
 
 
 
 
-
-
-
-        
 
 } // End of namespace GFE_Type
 
@@ -995,10 +1119,6 @@ using GFE_RWPageHandleT = GA_PageHandleT<_Ty, typename GFE_Type::get_value_type_
 
 template<typename _Ty>
 using GFE_ROPageHandleT = GA_PageHandleT<_Ty, typename GFE_Type::get_value_type_t<_Ty>, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail>;
-
-
-
-
 
 
 

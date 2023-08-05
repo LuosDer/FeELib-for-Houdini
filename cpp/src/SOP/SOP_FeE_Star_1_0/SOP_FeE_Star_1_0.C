@@ -86,40 +86,43 @@ static const char *theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
-        name    "divs"      // Internal parameter name
-        label   "Divisions" // Descriptive parameter name for user interface
+        name    "divs"
+        cppname "Divs"
+        label   "Divisions"
         type    integer
-        default { "5" }     // Default for this parameter on new nodes
-        range   { 2! 50 }   // The value is prevented from going below 2 at all.
-                            // The UI slider goes up to 50, but the value can go higher.
-        export  all         // This makes the parameter show up in the toolbox
-                            // above the viewport when it's in the node's state.
+        default { "5" }
+        range   { 2! 50 }
+        export all
     }
     parm {
         name    "rad"
+        cppname "Rad"
         label   "Radius"
         type    vector2
-        size    2           // 2 components in a vector2
-        default { "1" "0.3" } // Outside and inside radius defaults
+        size    2
+        default { "1" "0.3" }
     }
     parm {
-        name    "nradius"
+        name    "nRadius"
+        cppname "NRadius"
         label   "Allow Negative Radius"
         type    toggle
         default { "0" }
     }
     parm {
-        name    "t"
+        name    "center"
+        cppname "Center"
         label   "Center"
         type    vector
-        size    3           // 3 components in a vector
+        size    3
         default { "0" "0" "0" }
     }
     parm {
-        name    "orient"
+        name    "orientation"
+        cppname "Orientation"
         label   "Orientation"
         type    ordinal
-        default { "0" }     // Default to first entry in menu, "xy"
+        default { "0" }
         menu    {
             "xy"    "XY Plane"
             "yz"    "YZ Plane"
@@ -235,61 +238,40 @@ SOP_FeE_Star_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     // Everything after this is just to figure out what to write to P and write it.
 
-    const SOP_FeE_Star_1_0Parms::Orient plane = sopparms.getOrient();
-    const bool allow_negative_radius = sopparms.getNradius();
+    const bool allow_negative_radius = sopparms.getNRadius();
 
-    const UT_Vector3 center = sopparms.getT();
+    const UT_Vector3 center = sopparms.getCenter();
 
-    int xcoord, ycoord, zcoord;
-    switch (plane)
-    {
-        case SOP_FeE_Star_1_0Parms::Orient::XY:         // XY Plane
-            xcoord = 0;
-            ycoord = 1;
-            zcoord = 2;
-        break;
-        case SOP_FeE_Star_1_0Parms::Orient::YZ:         // YZ Plane
-            xcoord = 1;
-            ycoord = 2;
-            zcoord = 0;
-        break;
-        case SOP_FeE_Star_1_0Parms::Orient::ZX:         // XZ Plane
-            xcoord = 0;
-            ycoord = 2;
-            zcoord = 1;
-        break;
-    }
 
     // Start the interrupt scope
     UT_AutoInterrupt boss("Building Star");
     if (boss.wasInterrupted())
         return;
 
-    const float tinc = M_PI*2 / (float)npoints;
-    const float outer_radius = sopparms.getRad().x();
-    const float inner_radius = sopparms.getRad().y();
+    const fpreal tinc = M_PI * 2.0 / static_cast<fpreal>(npoints);
+    const fpreal outer_radius = sopparms.getRad().x();
+    const fpreal inner_radius = sopparms.getRad().y();
     
-    // Now, set all the points of the polygon
+    const SOP_FeE_Star_1_0Parms::Orientation plane = sopparms.getOrientation();
+    
     for (exint i = 0; i < npoints; i++)
     {
-        // Check to see if the user has interrupted us...
-        if (boss.wasInterrupted())
-            break;
-
-        const float angle = (float)i * tinc;
-        const bool odd = (i & 1);
-        float rad = odd ? inner_radius : outer_radius;
+        const fpreal angle = tinc * static_cast<fpreal>(npoints);
+        const bool odd = i & 1;
+        fpreal rad = odd ? inner_radius : outer_radius;
         if (!allow_negative_radius && rad < 0)
             rad = 0;
 
-        UT_Vector3 pos(SYScos(angle)*rad, SYSsin(angle)*rad, 0);
-        // Put the circle in the correct plane.
-        pos = UT_Vector3(pos(xcoord), pos(ycoord), pos(zcoord));
-        // Move the circle to be centred at the correct position.
+        UT_Vector3T<fpreal> pos;
+        switch (plane)
+        {
+        case SOP_FeE_Star_1_0Parms::Orientation::XY: pos = UT_Vector3T<fpreal>(std::cos(angle), std::sin(angle), 0); break;
+        case SOP_FeE_Star_1_0Parms::Orientation::YZ: pos = UT_Vector3T<fpreal>(std::sin(angle), 0, std::cos(angle)); break;
+        case SOP_FeE_Star_1_0Parms::Orientation::ZX: pos = UT_Vector3T<fpreal>(std::cos(angle), 0, std::sin(angle)); break;
+        }
+        pos *= rad;
         pos += center;
 
-        // Since we created a contiguous block of point offsets,
-        // we can just add i to start_ptoff to find this point offset.
         const GA_Offset ptoff = start_ptoff + i;
         geo.setPos3(ptoff, pos);
     }

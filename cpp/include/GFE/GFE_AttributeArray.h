@@ -177,7 +177,7 @@ public:
     SYS_FORCE_INLINE void clear()
     { attribArray.clear(); attribUPtrArray.clear(); }
 
-    SYS_FORCE_INLINE ::std::vector<GA_Attribute*>::size_type size() const
+    SYS_FORCE_INLINE std::vector<GA_Attribute*>::size_type size() const
     { return attribArray.size(); }
 
     void reset(GA_Detail* const inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
@@ -1028,10 +1028,10 @@ void bumpDataId() const
     }
 }
 
-SYS_FORCE_INLINE ::std::vector<GA_Attribute*>& ref()
+SYS_FORCE_INLINE std::vector<GA_Attribute*>& ref()
 { return attribArray; }
 
-SYS_FORCE_INLINE const ::std::vector<GA_Attribute*>& ref() const
+SYS_FORCE_INLINE const std::vector<GA_Attribute*>& ref() const
 { return attribArray; }
 
 
@@ -1134,8 +1134,8 @@ protected:
     const SOP_NodeVerb::CookParms* cookparms;
 
 private:
-    ::std::vector<GA_AttributeUPtr> attribUPtrArray;
-    ::std::vector<GA_Attribute*> attribArray;
+    std::vector<GA_AttributeUPtr> attribUPtrArray;
+    std::vector<GA_Attribute*> attribArray;
 
     friend class GFE_AttribFilter;
     friend class GFE_AttribCreateFilter;
@@ -1371,7 +1371,7 @@ public:
         groupUPtrArray.clear();
     }
     
-    SYS_FORCE_INLINE ::std::vector<GA_Group*>::size_type size() const
+    SYS_FORCE_INLINE std::vector<GA_Group*>::size_type size() const
     { return groupArray.size(); }
 
     SYS_FORCE_INLINE GA_Group* last() const
@@ -1655,10 +1655,10 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE ::std::vector<GA_Group*>& ref()
+    SYS_FORCE_INLINE std::vector<GA_Group*>& ref()
     { return groupArray; }
 
-    SYS_FORCE_INLINE const ::std::vector<GA_Group*>& ref() const
+    SYS_FORCE_INLINE const std::vector<GA_Group*>& ref() const
     { return groupArray; }
 
 
@@ -1677,8 +1677,8 @@ protected:
     const SOP_NodeVerb::CookParms* cookparms;
 
 private:
-    ::std::vector<GA_GroupUPtr> groupUPtrArray;
-    ::std::vector<GA_Group*> groupArray;
+    std::vector<GA_GroupUPtr> groupUPtrArray;
+    std::vector<GA_Group*> groupArray;
 
     friend class GFE_AttribFilter;
     friend class GFE_AttribCreateFilter;
@@ -1760,7 +1760,7 @@ public:
         attribUPtrArray.clear();
     }
 
-    SYS_FORCE_INLINE ::std::vector<GA_Attribute*>::size_type size() const
+    SYS_FORCE_INLINE std::vector<GA_Attribute*>::size_type size() const
     { return attribArray.size(); }
 
     SYS_FORCE_INLINE void reset(
@@ -2224,7 +2224,7 @@ public:
         groupUPtrArray.clear();
     }
 
-    SYS_FORCE_INLINE ::std::vector<GA_Group*>::size_type size() const
+    SYS_FORCE_INLINE std::vector<GA_Group*>::size_type size() const
     { return groupArray.size(); }
 
     SYS_FORCE_INLINE const GA_Group* last()
@@ -2329,7 +2329,7 @@ public:
 
 
 
-    SYS_FORCE_INLINE ::std::vector<const GA_Group*>& ref()
+    SYS_FORCE_INLINE std::vector<const GA_Group*>& ref()
     { return groupArray; }
 
 
@@ -2343,8 +2343,8 @@ protected:
     const SOP_NodeVerb::CookParms* cookparms;
 
 private:
-    ::std::vector<GA_GroupUPtr> groupUPtrArray;
-    ::std::vector<const GA_Group*> groupArray;
+    std::vector<GA_GroupUPtr> groupUPtrArray;
+    std::vector<const GA_Group*> groupArray;
 
     friend class GFE_GeoFilterRef0;
     friend class GFE_GeoFilterRef1;

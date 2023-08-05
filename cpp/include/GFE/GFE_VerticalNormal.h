@@ -9,6 +9,12 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#if 0
+    GFE_VerticalNormal verticalNormal(geo, cookparms);
+    verticalNormal.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    verticalNormal.compute();
+#endif
+
 
 class GFE_VerticalNormal : public GFE_AttribFilter {
 

@@ -263,7 +263,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -275,10 +275,9 @@ SOP_FeE_PointInBBox_2_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_PointInBBox_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        //templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        templ.setChoiceListPtr("posAttrib"_sh, &SOP_Node::pointAttribReplaceMenu);
+        //templ.setChoiceListPtr("group"_sh,        &SOP_Node::groupMenu);
+        templ.setChoiceListPtr("posAttrib"_sh,    &SOP_Node::pointAttribReplaceMenu);
         templ.setChoiceListPtr("posAttribRef"_sh, &SOP_Node::pointAttribReplaceMenu);
-        
     }
     return templ.templates();
 }
@@ -319,12 +318,10 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_PointInBBox_2_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_PointInBBox_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
-    /// This static data member automatically registers
-    /// this verb class at library load time.
     static const SOP_NodeVerb::Register<SOP_FeE_PointInBBox_2_0Verb> theVerb;
 };
 
@@ -344,7 +341,7 @@ SOP_FeE_PointInBBox_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_PointInBBox_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_PointInBBox_2_0Enums;
     switch (parmGroupType)
@@ -361,7 +358,7 @@ sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupType parmGroupType)
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupTypeRef parmGroupType)
+sopGroupType(const SOP_FeE_PointInBBox_2_0Parms::GroupTypeRef parmGroupType)
 {
     using namespace SOP_FeE_PointInBBox_2_0Enums;
     switch (parmGroupType)
@@ -378,10 +375,10 @@ sopGroupType(SOP_FeE_PointInBBox_2_0Parms::GroupTypeRef parmGroupType)
 
 
 static GFE_GroupMergeType
-sopGroupMergeType(SOP_FeE_PointInBBox_2_0Parms::GroupMergeType groupMergeType)
+sopGroupMergeType(const SOP_FeE_PointInBBox_2_0Parms::GroupMergeType parmGroupMergeType)
 {
     using namespace SOP_FeE_PointInBBox_2_0Enums;
-    switch (groupMergeType)
+    switch (parmGroupMergeType)
     {
     case GroupMergeType::REPLACE:     return GFE_GroupMergeType::Replace;    break;
     case GroupMergeType::UNION:       return GFE_GroupMergeType::Union;      break;
@@ -399,10 +396,10 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_PointInBBox_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     const GFE_GroupMergeType groupMergeType = sopGroupMergeType(sopparms.getGroupMergeType());
 
@@ -455,7 +452,6 @@ SOP_FeE_PointInBBox_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
     pointInBBox.computeAndBumpDataId();
     pointInBBox.delOrVisualizeGroup();
 
-    
     
 }
 

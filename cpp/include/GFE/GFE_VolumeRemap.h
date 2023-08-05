@@ -9,15 +9,16 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+
+
+#include "GFE/GFE_VolumeExtremum.h"
+
 /*
     GFE_VolumeRemap volumeRemap(geo, cookparms);
     volumeRemap.findOrCreateTuple(true, GA_ATTRIB_POINT);
     volumeRemap.compute();
 */
 
-
-#include "GU/GU_PrimVolume.h"
-//#include "UT/UT_VoxelArray.h"
     
 class GFE_VolumeRemap : public GFE_AttribFilter {
 
@@ -32,17 +33,11 @@ public:
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
-            const exint minGrainSize   = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
@@ -53,125 +48,14 @@ private:
     virtual bool
         computeCore() override
     {
-        const GFE_Detail* geoSrcTmp = geoSrc ? geoSrc : geo;
         
-        volumeoff = geoSrcTmp->getFirstVolumeoff(groupParser.getPrimitiveGroup());
-        if (GFE_Type::isInvalidOffset(volumeoff))
-        {
-            geo->clearElement();
-            return true;
-        }
 
+        GFE_VolumeExtremum volumeExtremum(geo, nullptr, cookparms);
+    
+        volumeExtremum.getVolumeArray().appends(attribClass, sopparms.getAttribName());
+        volumeExtremum.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+        volumeExtremum.computeAndBumpDataId();
 
-        GU_DetailHandle geoTemp_h;
-        //GU_Detail* geoTemp;
-        if (geoSrc)
-        {
-            const GA_Size numpt = geo->getNumPoints();
-            if (numpt < numVoxel)
-            {
-                geo->appendPointBlock(numVoxel - numpt);
-            }
-            else
-            {
-                const GA_IndexMap& indexMap = geo->getPointMap();
-                //if (indexMap.isTrivialMap())
-                //{
-                //}
-                bool flag = false;
-                GA_Offset start, end;
-                for (GA_Iterator it(GA_Range(indexMap, nullptr)); it.fullBlockAdvance(start, end); )
-                {
-                    if (flag)
-                    {
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            geo->deletePointOffsetOnly(elemoff);
-                        }
-                    }
-                    
-                    if (indexMap.indexFromOffset(end-1) < numVoxel)
-                        continue;
-
-                    UT_ASSERT_P(GFE_Type::isValidOffset(indexMap, numVoxel));
-                    
-                    flag = true;
-                    for (GA_Offset elemoff = indexMap.offsetFromIndex(numVoxel); elemoff < end; ++elemoff)
-                    {
-                        geo->deletePointOffsetOnly(elemoff);
-                    }
-                    //if (indexMap.indexFromOffset(start) >= numVoxel)
-                    //{
-                    //    flag = true;
-                    //    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    //    {
-                    //        geo->deletePointOffsetOnly(elemoff);
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    for (GA_Offset elemoff = indexMap.offsetFromIndex(numVoxel); elemoff < end; ++elemoff)
-                    //    {
-                    //        geo->deletePointOffsetOnly(elemoff);
-                    //    }
-                    //}
-                }
-            }
-        }
-        else
-        {
-            geoTemp_h = GFE_DetailBase::newDetail(geo);
-            geoSrcTmp = reinterpret_cast<GA_Detail*>(geoTemp_h.gdpNC());
-            
-            geo->clear();
-            geo->appendPointBlock(numVoxel);
-        }
-        UT_ASSERT_P(geo->getNumPoints() == numVoxel);
-        
-        
-        
-        GU_PrimVolume volume(geoSrcTmp, volumeoff);
-
-        
-        GA_Size numVoxel;
-        int rx, ry, rz;
-        if (geoSrcTmp->isVDB(volumeoff))
-        {
-        }
-        else
-        {
-            volume.getRes(rx, ry, rz);
-            numVoxel = rx * ry * rz;
-        }
-        
-        UT_VoxelArrayWriteHandleF vox_wh = volume.getVoxelWriteHandle();
-
-        // Resize the array.
-        vox_wh->size(rx, ry, rz);
-
-        for (int z = 0; z < rz; z++)
-        {
-            for (int y = 0; y < ry; y++)
-            {
-                for (int x = 0; x < rx; x++)
-                {
-                    float v = 1;
-                    vox_wh->setValue(x, y, z, v);
-                }
-            }
-        }
-
-        
-        UT_VoxelArrayF* vox = vox_wh->getValues();
-        int x, y, z;
-        float total = 0.0;
-        for (z = 0; z < vox->getZRes(); z++)
-            for (y = 0; y < vox->getYRes(); y++)
-                for (x = 0; x < vox->getXRes(); x++)
-                    total += (*vox)(x, y, z);
-
-        
-        return true;
     }
 
 

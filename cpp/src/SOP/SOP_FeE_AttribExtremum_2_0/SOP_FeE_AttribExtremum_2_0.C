@@ -1,7 +1,7 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_AttribScale_1_0.h"
-#include "SOP_FeE_AttribScale_1_0.proto.h"
+#include "SOP_FeE_AttribExtremum_2_0.h"
+#include "SOP_FeE_AttribExtremum_2_0.proto.h"
 
 
 #include "GA/GA_Detail.h"
@@ -10,10 +10,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_ScaleAttributeElement.h"
+#include "GFE/GFE_AttributeExtremum.h"
 
 
-using namespace SOP_FeE_AttribScale_1_0_Namespace;
+using namespace SOP_FeE_AttribExtremum_2_0_Namespace;
 
 
 
@@ -63,24 +63,31 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "Attrib"
         label   "Attrib"
         type    string
-        default { "N" }
+        default { "" }
     }
     parm {
-        name    "normalize"
-        cppname "Normalize"
-        label   "Normalize"
+        name    "outAttribMin"
+        cppname "OutAttribMin"
+        label   "Out Attrib Min"
         type    toggle
         default { "1" }
     }
     parm {
-        name    "uniScale"
-        cppname "UniScale"
-        label   "Uniform Scale"
-        type    float
-        default { 1 }
-        range   { -10 10 }
+        name    "attribMinName"
+        cppname "AttribMinName"
+        label   "Attrib Min Name"
+        type    string
+        default { "min" }
+        disablewhen "{ outAttribMin == 0 }"
     }
 
+    parm {
+        name    "outAsOffset"
+        cppname "OutAsOffset"
+        label   "Out as Offset"
+        type    toggle
+        default { "0" }
+    }
 
     parm {
         name    "subscribeRatio"
@@ -102,9 +109,9 @@ static const char* theDsFile = R"THEDSFILE(
 )THEDSFILE";
 
 PRM_Template*
-SOP_FeE_AttribScale_1_0::buildTemplates()
+SOP_FeE_AttribExtremum_2_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_AttribScale_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_AttribExtremum_2_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
@@ -113,59 +120,59 @@ SOP_FeE_AttribScale_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_AttribScale_1_0::theSOPTypeName("FeE::attribScale::1.0"_sh);
+const UT_StringHolder SOP_FeE_AttribExtremum_2_0::theSOPTypeName("FeE::attribExtremum::2.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_AttribScale_1_0::theSOPTypeName,
-        "FeE Attribute Scale",
-        SOP_FeE_AttribScale_1_0::myConstructor,
-        SOP_FeE_AttribScale_1_0::buildTemplates(),
+        SOP_FeE_AttribExtremum_2_0::theSOPTypeName,
+        "FeE Attribute Extremum",
+        SOP_FeE_AttribExtremum_2_0::myConstructor,
+        SOP_FeE_AttribExtremum_2_0::buildTemplates(),
         1,
-        1,
+        2,
         nullptr,
         OP_FLAG_GENERATOR,
         nullptr,
         1,
         "Five elements Elf/Attribute");
 
-    newOp->setIconName("SOP_attribcreate-2.0");
+    newOp->setIconName("VOP_max");
     table->addOperator(newOp);
 }
 
-class SOP_FeE_AttribScale_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_AttribExtremum_2_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_AttribScale_1_0Verb() {}
-    virtual ~SOP_FeE_AttribScale_1_0Verb() {}
+    SOP_FeE_AttribExtremum_2_0Verb() {}
+    virtual ~SOP_FeE_AttribExtremum_2_0Verb() {}
 
-    virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_AttribScale_1_0Parms(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_AttribScale_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_AttribExtremum_2_0Parms(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_AttribExtremum_2_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
-    static const SOP_NodeVerb::Register<SOP_FeE_AttribScale_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_AttribExtremum_2_0Verb> theVerb;
 };
 
-const SOP_NodeVerb::Register<SOP_FeE_AttribScale_1_0Verb> SOP_FeE_AttribScale_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_AttribExtremum_2_0Verb> SOP_FeE_AttribExtremum_2_0Verb::theVerb;
 
 const SOP_NodeVerb*
-SOP_FeE_AttribScale_1_0::cookVerb() const
+SOP_FeE_AttribExtremum_2_0::cookVerb() const
 {
-    return SOP_FeE_AttribScale_1_0Verb::theVerb.get();
+    return SOP_FeE_AttribExtremum_2_0Verb::theVerb.get();
 }
 
 
 
 
 static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_AttribScale_1_0Parms::AttribClass parmAttribClass)
+sopAttribOwner(const SOP_FeE_AttribExtremum_2_0Parms::AttribClass parmAttribClass)
 {
-    using namespace SOP_FeE_AttribScale_1_0Enums;
+    using namespace SOP_FeE_AttribExtremum_2_0Enums;
     switch (parmAttribClass)
     {
     case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
@@ -179,9 +186,9 @@ sopAttribOwner(const SOP_FeE_AttribScale_1_0Parms::AttribClass parmAttribClass)
 
 
 static GA_GroupType
-sopGroupType(const SOP_FeE_AttribScale_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_AttribExtremum_2_0Parms::GroupType parmGroupType)
 {
-    using namespace SOP_FeE_AttribScale_1_0Enums;
+    using namespace SOP_FeE_AttribExtremum_2_0Enums;
     switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
@@ -198,32 +205,31 @@ sopGroupType(const SOP_FeE_AttribScale_1_0Parms::GroupType parmGroupType)
 
 
 void
-SOP_FeE_AttribScale_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_AttribExtremum_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_AttribScale_1_0Parms>();
+    auto &&sopparms = cookparms.parms<SOP_FeE_AttribExtremum_2_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-
+    const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
+    
     //outGeo0.replaceWith(inGeo0);
-
-    const fpreal uniScale = sopparms.getUniScale();
-    const bool doNormalize = sopparms.getNormalize();
-
-    if (!doNormalize && uniScale==1.0)
-        return;
 
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
-    GFE_ScaleAttribElement scaleAttribElement(outGeo0, cookparms);
+    GFE_AttribExtremum attribExtremum(outGeo0, inGeo1, cookparms);
     
-    scaleAttribElement.groupParser.setGroup(groupType, sopparms.getGroup());
-    scaleAttribElement.getOutAttribArray().appends(attribClass, sopparms.getAttrib());
-    scaleAttribElement.setComputeParm(doNormalize, uniScale,
+    attribExtremum.setComputeParm(sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-    scaleAttribElement.computeAndBumpDataId();
+    
+    attribExtremum.setAttrib(attribClass, sopparms.getAttrib());
+    
+    attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
+    
+    attribExtremum.computeAndBumpDataId();
+
 
 
 }

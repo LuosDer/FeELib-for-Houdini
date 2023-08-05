@@ -89,6 +89,7 @@ houdini_sop_add_library_std( FILES
     #SOP_FeE_AttribCopyFast_1_0
     SOP_FeE_AttribDel_2_0
     SOP_FeE_AttribDuplicate_1_0
+    SOP_FeE_AttribExtremum_2_0
     SOP_FeE_AttribInterpRay_2_0
     SOP_FeE_AttribNormalize_2_0
     SOP_FeE_AttribOut_1_0
@@ -200,6 +201,8 @@ houdini_sop_add_library_std( FILES
     SOP_FeE_UVTileSize_1_0
     SOP_FeE_VDBActivateByPoint_1_0
     SOP_FeE_VerticalNormal_1_0
+    SOP_FeE_VolumeClear_1_0
+    SOP_FeE_VolumeExtremum_1_0
     SOP_FeE_VolumeFromArray_1_0
     SOP_FeE_VolumeNormalize_1_0
     SOP_FeE_VolumeProject_1_0

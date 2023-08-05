@@ -211,22 +211,17 @@ SOP_FeE_VerticalNormal_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     if (boss.wasInterrupted())
         return;
     
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
-*/
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
-    enumerate.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
+    GFE_VerticalNormal verticalNormal(outGeo0, cookparms);
+    verticalNormal.setComputeParm(sopparms.getFirstIndex(), sopparms.getNegativeIndex(), sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
-    enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
+    verticalNormal.groupParser.setGroup(groupType, sopparms.getGroup());
 
     
-    enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
+    verticalNormal.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
 
-    enumerate.computeAndBumpDataId();
+    verticalNormal.computeAndBumpDataId();
     
 
 }

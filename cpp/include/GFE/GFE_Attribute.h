@@ -1095,11 +1095,11 @@ static GA_Attribute* findNormal3D(
 
 
     
-template<typename _SCALAR_T>
+template<typename _Ty>
 class ComputeAttribSum
 {
 public:
-    ComputeAttribSum(const GA_ROHandleT<_SCALAR_T>& attrib_h)
+    ComputeAttribSum(const GA_ROHandleT<_Ty>& attrib_h)
         : attrib_h(attrib_h)
         , mySum(0)
     {}
@@ -1110,7 +1110,7 @@ public:
     void operator()(const GA_SplittableRange& r)
     {
         UT_ASSERT_MSG(r.getOwner() == attrib_h->getOwner(), "not same owner");
-        GA_PageHandleT<_SCALAR_T, _SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib_h.getAttribute());
+        GA_PageHandleT<_Ty, _Ty, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attrib_h.getAttribute());
         GA_Offset start, end;
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
@@ -1126,19 +1126,19 @@ public:
     }
     SYS_FORCE_INLINE void join(const ComputeAttribSum& other)
     { mySum += other.mySum; }
-    SYS_FORCE_INLINE _SCALAR_T getSum() const
+    SYS_FORCE_INLINE _Ty getSum() const
     { return mySum; }
 private:
-    _SCALAR_T mySum;
-    const GA_ROHandleT<_SCALAR_T>& attrib_h;
+    _Ty mySum;
+    const GA_ROHandleT<_Ty>& attrib_h;
 }; // End of Class ComputeAttribSum
 
 
 
 
-    template<typename _SCALAR_T>
-    _SCALAR_T computeAttribSum(
-        const GA_ROHandleT<_SCALAR_T>& attrib_h,
+    template<typename _Ty>
+    _Ty computeAttribSum(
+        const GA_ROHandleT<_Ty>& attrib_h,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
@@ -1149,9 +1149,9 @@ private:
         return body.getSum();
     }
     
-    template<typename _SCALAR_T>
-    SYS_FORCE_INLINE _SCALAR_T computeAttribSum(
-        const GA_ROHandleT<_SCALAR_T>& attrib_h,
+    template<typename _Ty>
+    SYS_FORCE_INLINE _Ty computeAttribSum(
+        const GA_ROHandleT<_Ty>& attrib_h,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
@@ -1160,145 +1160,234 @@ private:
         //const GA_Range range(group->getIndexMap(), group);
         //const GA_SplittableRange splittableRange(range);
         const GA_SplittableRange splittableRange(GA_Range(attrib_h->getIndexMap(), group));
-        return computeAttribSum<_SCALAR_T>(attrib_h, splittableRange, subscribeRatio, minGrainSize);
+        return computeAttribSum<_Ty>(attrib_h, splittableRange, subscribeRatio, minGrainSize);
     }
 
 
 
     
-    template<typename _SCALAR_T>
-    class ComputeAttribExtreme
+    template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
+    class ComputeAttribExtremum
     {
     public:
-        ComputeAttribExtreme(const GA_Attribute* const attrib)
+        ComputeAttribExtremum(const GA_Attribute* const attrib)
             : myAttrib(attrib)
-            , myMin(::std::numeric_limits<_SCALAR_T>::max())
-            , myMax(::std::numeric_limits<_SCALAR_T>::lowest())
+            , myMin(GFE_Type::numeric_limits<_Ty>::max())
+            , myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            , myMinElemoff(GFE_INVALID_OFFSET)
+            , myMaxElemoff(GFE_INVALID_OFFSET)
         {}
-        ComputeAttribExtreme(ComputeAttribExtreme& src, UT_Split)
+        ComputeAttribExtremum(ComputeAttribExtremum& src, UT_Split)
             : myAttrib(src.myAttrib)
-            , myMin(::std::numeric_limits<_SCALAR_T>::max())
-            , myMax(::std::numeric_limits<_SCALAR_T>::lowest())
+            , myMin(GFE_Type::numeric_limits<_Ty>::max())
+            , myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            , myMinElemoff(GFE_INVALID_OFFSET)
+            , myMaxElemoff(GFE_INVALID_OFFSET)
         {}
         void operator()(const GA_SplittableRange& r)
         {
+            if constexpr (!_Min && !_Max && !_MinElemoff && !_MaxElemoff)
+                return;
+            
             UT_ASSERT_MSG(r.getOwner() == myAttrib->getOwner(), "not same owner");
-            GA_PageHandleT<_SCALAR_T, _SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(myAttrib);
+            GFE_ROPageHandleT<_Ty> attrib_ph(myAttrib);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
-                    
-                    if (attrib_ph.value(start) < myMin)
-                        myMin = attrib_ph.value(start);
-                    if (attrib_ph.value(start) > myMax)
-                        myMax = attrib_ph.value(start);
-                    
-                    for (GA_Offset elemoff = start+1; elemoff < end; ++elemoff)
+
+                    if constexpr ((_Min || _MinElemoff) && (_Max || _MaxElemoff))
                     {
-                        if (attrib_ph.value(elemoff) < myMin)
-                            myMin = attrib_ph.value(elemoff);
-                        else if (attrib_ph.value(elemoff) > myMax)
-                            myMax = attrib_ph.value(elemoff);
+                        if (attrib_ph.value(start) < myMin)
+                        {
+                            myMin = attrib_ph.value(start);
+                            if constexpr (_MinElemoff)
+                                myMinElemoff = start;
+                        }
+                        if (attrib_ph.value(start) > myMax)
+                        {
+                            myMax = attrib_ph.value(start);
+                            if constexpr (_MaxElemoff)
+                                myMaxElemoff = start;
+                        }
+                        for (GA_Offset elemoff = start+1; elemoff < end; ++elemoff)
+                        {
+                            if (attrib_ph.value(start) < myMin)
+                            {
+                                myMin = attrib_ph.value(start);
+                                if constexpr (_MinElemoff)
+                                    myMinElemoff = elemoff;
+                            }
+                            if (attrib_ph.value(start) > myMax)
+                            {
+                                myMax = attrib_ph.value(start);
+                                if constexpr (_MaxElemoff)
+                                    myMaxElemoff = elemoff;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            if constexpr (_Min || _MinElemoff)
+                            {
+                                if (attrib_ph.value(start) < myMin)
+                                {
+                                    myMin = attrib_ph.value(start);
+                                    if constexpr (_MinElemoff)
+                                        myMinElemoff = elemoff;
+                                }
+                            }
+                            if constexpr (_Max || _MaxElemoff)
+                            {
+                                if (attrib_ph.value(start) > myMax)
+                                {
+                                    myMax = attrib_ph.value(start);
+                                    if constexpr (_MaxElemoff)
+                                        myMaxElemoff = elemoff;
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        SYS_FORCE_INLINE void join(const ComputeAttribExtreme& other)
+        SYS_FORCE_INLINE void join(const ComputeAttribExtremum& other)
         {
-            if (other.myMin < myMin)
-                myMin = other.myMin;
-            if (other.myMax > myMax)
-                myMax = other.myMax;
+            if constexpr (_Min || _MinElemoff)
+            {
+                if (other.myMin < myMin)
+                {
+                    myMin = other.myMin;
+                    if constexpr (_MinElemoff)
+                        myMinElemoff = other.myMinElemoff;
+                }
+            }
+            if constexpr (_Max || _MaxElemoff)
+            {
+                if (other.myMax > myMax)
+                {
+                    myMax = other.myMax;
+                    if constexpr (_MaxElemoff)
+                        myMaxElemoff = other.myMaxElemoff;
+                }
+            }
         }
-        SYS_FORCE_INLINE _SCALAR_T getMin() const
+        SYS_FORCE_INLINE _Ty getMin() const
         { return myMin; }
-        SYS_FORCE_INLINE _SCALAR_T getMax() const
+        SYS_FORCE_INLINE _Ty getMax() const
         { return myMax; }
+        SYS_FORCE_INLINE GA_Offset getMinElemoff() const
+        { return myMinElemoff; }
+        SYS_FORCE_INLINE GA_Offset getMaxElemoff() const
+        { return myMaxElemoff; }
     private:
-        _SCALAR_T myMin;
-        _SCALAR_T myMax;
+        _Ty myMin;
+        _Ty myMax;
+        GA_Offset myMinElemoff;
+        GA_Offset myMaxElemoff;
         const GA_Attribute* const myAttrib;
-    }; // End of Class ComputeAttribExtreme
+    }; // End of Class ComputeAttribExtremum
 
 
 
+    
 
-    template<typename _SCALAR_T>
-    void computeAttribExtreme(
+    template<typename _Ty>
+    _Ty computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        _SCALAR_T& min,
-        _SCALAR_T& max,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
     {
-        ComputeAttribExtreme<_SCALAR_T> body(attrib);
+        ComputeAttribExtremum<_Ty, true, false> body(attrib);
+        UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
+        return body.getMin();
+    }
+    
+    template<typename _Ty>
+    _Ty computeAttribMax(
+        const GA_Attribute* const attrib,
+        const GA_SplittableRange& splittableRange,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize   = 1024
+    )
+    {
+        ComputeAttribExtremum<_Ty, false, true> body(attrib);
+        UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
+        return body.getMax();
+    }
+    
+    template<typename _Ty>
+    void computeAttribExtremum(
+        const GA_Attribute* const attrib,
+        const GA_SplittableRange& splittableRange,
+        _Ty& min,
+        _Ty& max,
+        const exint subscribeRatio = 64,
+        const exint minGrainSize   = 1024
+    )
+    {
+        ComputeAttribExtremum<_Ty, true, true> body(attrib);
         UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
         min = body.getMin();
         min = body.getMax();
     }
     
-
-    template<typename _SCALAR_T>
-    _SCALAR_T computeAttribMin(
+    template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
+    static void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
+        _Ty& min,
+        _Ty& max,
+        GA_Offset& minElemoff,
+        GA_Offset& maxElemoff,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
     {
-        ComputeAttribExtreme<_SCALAR_T> body(attrib);
+        ComputeAttribExtremum<_Ty, _Min, _Max, _MinElemoff, _MaxElemoff> body(attrib);
         UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
-        return body.getMin();
+        min = body.getMin();
+        max = body.getMax();
+        minElemoff = body.getMinElemoff();
+        maxElemoff = body.getMaxElemoff();
     }
     
-    template<typename _SCALAR_T>
-    _SCALAR_T computeAttribMax(
-        const GA_Attribute* const attrib,
-        const GA_SplittableRange& splittableRange,
-        const exint subscribeRatio = 64,
-        const exint minGrainSize   = 1024
-    )
-    {
-        ComputeAttribExtreme<_SCALAR_T> body(attrib);
-        UTparallelReduce(splittableRange, body, subscribeRatio, minGrainSize);
-        return body.getMax();
-    }
-    
-    template<typename _SCALAR_T>
-    SYS_FORCE_INLINE _SCALAR_T computeAttribMin(
+    template<typename _Ty>
+    SYS_FORCE_INLINE _Ty computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
     {
-        return computeAttribMin<_SCALAR_T>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
+        return computeAttribMin<_Ty>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
     }
-    template<typename _SCALAR_T>
-    SYS_FORCE_INLINE _SCALAR_T computeAttribMax(
+    template<typename _Ty>
+    SYS_FORCE_INLINE _Ty computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
     {
-        return computeAttribMax<_SCALAR_T>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
+        return computeAttribMax<_Ty>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
     }
 
-    template<typename _SCALAR_T>
-    SYS_FORCE_INLINE _SCALAR_T computeAttribExtreme(
+    template<typename _Ty>
+    SYS_FORCE_INLINE _Ty computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
     {
-        return computeAttribExtreme<_SCALAR_T>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
+        return computeAttribExtremum<_Ty>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
     }
 
 

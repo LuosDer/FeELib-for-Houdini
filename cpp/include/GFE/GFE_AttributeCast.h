@@ -24,23 +24,23 @@ public:
     void setComputeParm(
         const bool delOrigin = true,
         const exint subscribeRatio = 64,
-        const exint minGrainSize = 64
+        const exint minGrainSize   = 1024
     )
     {
         setHasComputed();
         this->delOrigin = delOrigin;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
     void setDestinationAttribute(const GA_Attribute& inAttrib)
     {
         newStorageClass = inAttrib.getStorageClass();
-        if(inAttrib.getAIFTuple())
+        if (inAttrib.getAIFTuple())
         {
             newPrecision = GFE_Type::precisionFromStorage(inAttrib.getAIFTuple()->getStorage(&inAttrib));
         }
-        else if(inAttrib.getAIFNumericArray())
+        else if (inAttrib.getAIFNumericArray())
         {
             newPrecision = GFE_Type::precisionFromStorage(inAttrib.getAIFNumericArray()->getStorage(&inAttrib));
         }
@@ -105,56 +105,73 @@ private:
     void attribCast(GA_Attribute& attrib)
     {
         const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
-        const bool detached = !GFE_Type::isPublicAttribName(newName);
+        const bool detached = GFE_Type::isInvalid(newName);
 
-        if (attrib.getStorageClass() == newStorageClass)
+#if GFE_DEBUG_MODE
+        GA_StorageClass ga_StorageClass = attrib.getStorageClass();
+        GA_Precision gA_Precision = GFE_Attribute::getPrecision(attrib);
+        GA_Storage gA_Storage = GFE_Attribute::getStorage(attrib);
+#endif
+        if (attrib.getStorageClass() == newStorageClass
+            &&  (   newStorageClass == GA_STORECLASS_INVALID
+                 || newStorageClass == GA_STORECLASS_OTHER
+                 || GFE_Attribute::getPrecision(attrib) == newPrecision
+                )
+        )
         {
-            if (newStorageClass == GA_STORECLASS_INVALID || newStorageClass == GA_STORECLASS_OTHER)
+            if (!detached && !attrib.isDetached())
             {
-                if (!detached && !attrib.isDetached())
+                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                    GFE_Attribute::clone(*geo->getP(), attrib, subscribeRatio, minGrainSize);
+                else
                     geo->forceRenameAttribute(attrib, newName);
-                return;
             }
-            
-            if (GFE_Attribute::getPrecision(attrib) == newPrecision)
-            {
-                if (!detached && !attrib.isDetached())
-                    geo->forceRenameAttribute(attrib, newName);
-                return;
-            }
+            return;
         }
         
-        if(newStorageClass == GA_STORECLASS_OTHER)
+        if (newStorageClass == GA_STORECLASS_OTHER)
         {
             GA_Group& newAttrib = *getOutGroupArray().findOrCreate(detached, attrib.getOwner(), newName);
             
             attribDuplicate(newAttrib, attrib);
 
-            if(delOrigin)
+            if (delOrigin)
                 geo->destroyNonDetachedAttrib(attrib);
         }
         else
         {
             const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, newPrecision);
-            //if(!detached && !attrib.isDetached() && attrib.getName() == newName)
-            if(!detached && !attrib.isDetached() && strcmp(attrib.getName().c_str(), newName.c_str()) == 0)
+            GA_Attribute* newAttrib;
+            if (!detached && !attrib.isDetached() && GFE_Type::stringEqual(attrib.getName(), newName))
             {
-                GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
-                    false, attrib.getOwner(), newStorageClass, storage, GFE_TEMP_ATTRIBCAST_ATTRIBNAME);
-                
-                attribDuplicate(newAttrib, attrib);
-
-                geo->destroyAttrib(attrib);
-                geo->renameAttrib(newAttrib, newName);
+                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                {
+                    geo->asGEO_Detail()->changePointAttributeStorage("P", storage);
+                    newAttrib = geo->getP();
+                }
+                else
+                {
+                    newAttrib = getOutAttribArray().findOrCreateTuple(false, attrib.getOwner(), newStorageClass, storage, GFE_TEMP_ATTRIBCAST_ATTRIBNAME);
+                    attribDuplicate(*newAttrib, attrib);
+                    
+                    geo->destroyAttrib(attrib);
+                    geo->renameAttrib(newAttrib, newName);
+                }
             }
             else
             {
-                GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
-                    detached, attrib.getOwner(), newStorageClass, storage, newName);
+                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                {
+                    geo->asGEO_Detail()->changePointAttributeStorage("P", storage);
+                    newAttrib = geo->getP();
+                }
+                else
+                {
+                    newAttrib = getOutAttribArray().findOrCreateTuple(detached, attrib.getOwner(), newStorageClass, storage, newName);
+                }
+                attribDuplicate(*newAttrib, attrib);
                 
-                attribDuplicate(newAttrib, attrib);
-                
-                if(delOrigin)
+                if (delOrigin)
                     geo->destroyNonDetachedAttrib(attrib);
             }
         }
@@ -164,15 +181,15 @@ private:
     {
         const GA_AttributeOwner attribClass = GFE_Type::attributeOwner_groupType(group.classType());
         
-        const UT_StringHolder& newName = newGroupNames.getIsValid() ? newGroupNames.getNext<UT_StringHolder>() : group.getName();
-        const bool detached = !GFE_Type::isPublicAttribName(newName);
+        const UT_StringHolder& newName = newGroupNames.getValidAttribName(group);
+        const bool detached = GFE_Type::isInvalid(newName);
         
         GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
             detached, attribClass, newStorageClass, GA_STORE_INVALID, newName);
         
         attribDuplicate(newAttrib, group);
         
-        if(delOrigin)
+        if (delOrigin)
             geo->destroyElementGroup(&group);
     }
     
@@ -183,12 +200,12 @@ private:
     template<typename T>
     void attribDuplicate(GA_ElementGroup& group, const GA_Attribute& attribRef)
     {
-        UTparallelFor(groupParser.getSplittableRange(attribRef.getOwner()), [&group, &attribRef](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getSplittableRange(attribRef), [&group, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attrib_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -206,11 +223,11 @@ private:
     void attribDuplicate<UT_StringHolder>(GA_ElementGroup& group, const GA_Attribute& attribRef)
     {
         const GA_ROHandleS attrib_h(&attribRef);
-        UTparallelFor(groupParser.getSplittableRange(attribRef.getOwner()), [&group, &attrib_h](const GA_SplittableRange& r)
+        UTparallelFor(groupParser.getSplittableRange(attribRef), [&group, &attrib_h](const GA_SplittableRange& r)
         {
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
@@ -231,8 +248,8 @@ private:
         case GA_STORECLASS_INT:
             switch (newPrecision)
             {
-            case GA_PRECISION_8: attribDuplicate<int8>(group, attribRef); break;
-            case GA_PRECISION_16: attribDuplicate<int8>(group, attribRef); break;
+            case GA_PRECISION_8:  attribDuplicate<int8> (group, attribRef); break;
+            case GA_PRECISION_16: attribDuplicate<int8> (group, attribRef); break;
             case GA_PRECISION_32: attribDuplicate<int16>(group, attribRef); break;
             case GA_PRECISION_64: attribDuplicate<int32>(group, attribRef); break;
             default:         break;
@@ -425,14 +442,14 @@ private:
     template<typename SCALAR_T, typename SCALAR_T_REF>
     void attribDuplicate(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
-        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+        UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T,     SCALAR_T,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -450,43 +467,39 @@ private:
 
 #if 0
     template<typename SCALAR_T_REF>
-    void
-        attribDuplicate<UT_StringHolder, SCALAR_T_REF>(
-            GA_Attribute& attrib,
-            const GA_Attribute& attribRef
-            )
+    void attribDuplicate<UT_StringHolder, SCALAR_T_REF>(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_RWHandleS attrib_h(&attrib);
-        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+        UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib_h, &attribRef](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    attribRef_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attribRef_ph.setPage(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            attrib_h.set(elemoff, scalarConvert<UT_StringHolder, SCALAR_T_REF>(attribRef_ph.value(elemoff)));
-                        }
+                        attrib_h.set(elemoff, scalarConvert<UT_StringHolder, SCALAR_T_REF>(attribRef_ph.value(elemoff)));
                     }
                 }
-            }, subscribeRatio, minGrainSize);
+            }
+        }, subscribeRatio, minGrainSize);
     }
 #else
     template<typename SCALAR_T_REF>
     void attribDuplicateString(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_RWHandleS attrib_h(&attrib);
-        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+        UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib_h, &attribRef](const GA_SplittableRange& r)
         {
             GA_PageHandleT<SCALAR_T_REF, SCALAR_T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(&attribRef);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attribRef_ph.setPage(start);
@@ -504,53 +517,49 @@ private:
 
 #if 0
     template<typename SCALAR_T>
-    void
-        attribDuplicate<SCALAR_T, UT_StringHolder>(
-            GA_Attribute& attrib,
-            const GA_Attribute& attribRef
-        )
+    void attribDuplicate<SCALAR_T, UT_StringHolder>(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_ROHandleS attribRef_h(&attribRef);
-        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+        UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib, &attribRef_h](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.setPage(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            attrib_ph.value(elemoff) = scalarConvert<SCALAR_T, UT_StringHolder>(attribRef_h.get(elemoff));
-                        }
+                        attrib_ph.value(elemoff) = scalarConvert<SCALAR_T, UT_StringHolder>(attribRef_h.get(elemoff));
                     }
                 }
-            }, subscribeRatio, minGrainSize);
+            }
+        }, subscribeRatio, minGrainSize);
     }
 #else
     template<typename SCALAR_T>
     void attribDuplicateFromString(GA_Attribute& attrib, const GA_Attribute& attribRef)
     {
         const GA_ROHandleS attribRef_h(&attribRef);
-        UTparallelFor(groupParser.getSplittableRange(attrib.getOwner()),
+        UTparallelFor(groupParser.getSplittableRange(attrib),
             [this, &attrib, &attribRef_h](const GA_SplittableRange& r)
+        {
+            GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_PageHandleT<SCALAR_T, SCALAR_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(&attrib);
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    attrib_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.setPage(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            attrib_ph.value(elemoff) = scalarConvertFromString<SCALAR_T>(attribRef_h.get(elemoff));
-                        }
+                        attrib_ph.value(elemoff) = scalarConvertFromString<SCALAR_T>(attribRef_h.get(elemoff));
                     }
                 }
-            }, subscribeRatio, minGrainSize);
+            }
+        }, subscribeRatio, minGrainSize);
     }
 
 
@@ -592,8 +601,7 @@ private:
 
 
     // template<typename SCALAR_T>
-    // void
-    // attribDuplicate(
+    // void attribDuplicate(
     //     GA_Attribute& attrib,
     //     const GA_Attribute& attribRef
     // )
@@ -625,14 +633,14 @@ private:
         GA_Storage storageRef;
         if (aifTuple)
             storageRef = aifTuple->getStorage(&attribRef);
-        else if(attribRef.getAIFStringTuple())
+        else if (attribRef.getAIFStringTuple())
             storageRef = GA_STORE_STRING;
         else
             UT_ASSERT_MSG(0, "impossible");
             
 
         aifTuple = attrib.getAIFTuple();
-        if(aifTuple)
+        if (aifTuple)
         {
             switch (aifTuple->getStorage(&attrib))
             {
@@ -789,15 +797,14 @@ private:
     // }
 
     template<typename T>
-    void
-    setAttribValueTo1(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
+    void setAttribValueTo1(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
     {
         UTparallelFor(geoSplittableRange, [&attrib](const GA_SplittableRange& r)
         {
             GA_PageHandleScalar<GA_Offset>::RWType attrib_ph(&attrib);
+            GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                GA_Offset start, end;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
@@ -811,8 +818,7 @@ private:
     }
 
     template<>
-    void
-    setAttribValueTo1<UT_StringHolder>(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
+    void setAttribValueTo1<UT_StringHolder>(GA_Attribute& attrib, const GA_SplittableRange& geoSplittableRange)
     {
         const GA_RWHandleS attrib_h(&attrib);
         UTparallelFor(geoSplittableRange, [&attrib_h](const GA_SplittableRange& r)
@@ -854,7 +860,7 @@ private:
     //UT_String newGroupNames;
 
     exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    exint minGrainSize   = 1024;
 
 
 #undef GFE_TEMP_ATTRIBCAST_ATTRIBNAME

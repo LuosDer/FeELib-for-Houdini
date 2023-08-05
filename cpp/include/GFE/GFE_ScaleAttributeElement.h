@@ -9,7 +9,6 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
-#include "USRefl/USRefl.h"
 
 class GFE_ScaleAttribElement : public GFE_AttribFilter {
 
@@ -60,17 +59,28 @@ private:
         {
             attrib = getOutAttribArray()[i];
             
-            const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
+            scaleAttribElement();
             
-            auto storageVariant = GFE_Type::attribStorageVariant(storage);
-            
-            GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
+            //const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
+            //GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
         }
         return true;
     }
 
 
-    template<typename _Ty>
+    void scaleAttribElement()
+    {
+        auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);
+        auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+        auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+        std::visit([&] (auto scaleVariant, auto doNormalizeVariant, auto tupleTypeVariant)
+        {
+            using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+            scaleAttribElement<type, doNormalizeVariant, scaleVariant>();
+        }, scaleVariant, doNormalizeVariant, tupleTypeVariant);
+    }
+
+    template<typename _Ty, bool _normalize, bool _scale>
     void scaleAttribElement()
     {
         UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
@@ -84,18 +94,83 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        if constexpr (GFE_Type::isVector<_Ty>)
-                        {
-                            if (doNormalize)
-                                attrib_ph.value(elemoff).normalize();
-                        }
-                        attrib_ph.value(elemoff) *= uniScale;
+                        if constexpr (_normalize && GFE_Type::isVector<_Ty>)
+                            attrib_ph.value(elemoff).normalize();
+                        if constexpr (_scale)
+                            attrib_ph.value(elemoff) *= uniScale;
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
-
+    
+/*
+    void scaleAttribElement()
+    {
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
+        {
+            auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);
+            auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+            auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+            std::visit([&] (auto scaleVariant, auto doNormalizeVariant, auto tupleTypeVariant)
+            {
+                using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+                GFE_RWPageHandleT<type> attrib_ph(attrib);
+                GA_Offset start, end;
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            if constexpr (GFE_Type::isVector<type>)
+                            {
+                                if constexpr (doNormalizeVariant)
+                                    attrib_ph.value(elemoff).normalize();
+                            }
+                            if constexpr (scaleVariant)
+                                attrib_ph.value(elemoff) *= uniScale;
+                        }
+                    }
+                }
+            }, scaleVariant, doNormalizeVariant, tupleTypeVariant);
+        }, subscribeRatio, minGrainSize);
+    }
+    */
+/*
+    template<typename _Ty>
+    void scaleAttribElement()
+    {
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
+        {
+            auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+            auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+            std::visit([&] (auto scaleVariant, auto doNormalizeVariant)
+            {
+                GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
+                GA_Offset start, end;
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            if constexpr (GFE_Type::isVector<_Ty>)
+                            {
+                                if constexpr (doNormalizeVariant)
+                                    attrib_ph.value(elemoff).normalize();
+                            }
+                            if constexpr (scaleVariant)
+                                attrib_ph.value(elemoff) *= uniScale;
+                        }
+                    }
+                }
+            }, scaleVariant, doNormalizeVariant);
+        }, subscribeRatio, minGrainSize);
+    }
+*/
 
 
 

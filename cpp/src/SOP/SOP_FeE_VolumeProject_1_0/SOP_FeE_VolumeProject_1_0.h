@@ -29,7 +29,7 @@ namespace SOP_FeE_VolumeProject_1_0_Namespace {
 		SOP_FeE_VolumeProject_1_0(OP_Network *net, const char *name, OP_Operator *op)
 			: SOP_Node(net, name, op)
 		{
-			mySopFlags.setManagesDataIDs(true);
+			//mySopFlags.setManagesDataIDs(true);
 		}
     
 		~SOP_FeE_VolumeProject_1_0() override {}

@@ -10,42 +10,33 @@
 
 
 
-#include "GFE/GFE_AttributeCast.h"
-#include "SOP/SOP_Enumerate.proto.h"
+#include "UT/UT_StopWatch.h"
+#include "UT/UT_VoxelArray.h"
+#include "GU/GU_PrimVolume.h"
 
-/*
+
+#if 0
     GFE_VolumeProject volumeProject(geo, cookparms);
     volumeProject.findOrCreateTuple(true, GA_ATTRIB_POINT);
     volumeProject.compute();
-*/
+#endif
     
 #define MIN_DIV 1e-8
 
 
-class GFE_VolumeProject : public GFE_AttribFilter {
-
-#define __TEMP_GFE_VolumeProject_GroupName       "__TEMP_GFE_VolumeProject_Group"
-#define __TEMP_GFE_VolumeProject_PieceAttribName "__TEMP_GFE_VolumeProject_PieceAttrib"
-#define __TEMP_GFE_VolumeProject_OutAttribName   "__TEMP_GFE_VolumeProject_OutAttrib"
-    
+class GFE_VolumeProject : public GFE_AttribFilterWithRef2 {
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using GFE_AttribFilterWithRef2::GFE_AttribFilterWithRef2;
 
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
@@ -59,182 +50,148 @@ private:
     virtual bool
         computeCore() override
     {
-        if (getOutAttribArray().isEmpty())
-            return false;
+	    if (getOutAttribArray().isEmpty())
+	    	return false;
 
-        if (groupParser.isEmpty())
-            return true;
+    	if (groupParser.isEmpty())
+    		return true;
         
 
 
-    	auto&& sopparms = cookparms.parms<SOP_FeE_VolumeProject_1_0Parms>();
+    	auto&& sopparms = cookparms->parms<SOP_FeE_VolumeProject_1_0Parms>();
 		
-	    const GA_PrimitiveGroup* velgrp;
-	    const GA_PrimitiveGroup* divgrp;
-	    const GA_PrimitiveGroup* lutgrp;
-	    const GA_PrimitiveGroup* activegrp;
-	    UT_Array<GEO_PrimVolume*> velx, vely, velz;
-	    UT_Array<const GEO_PrimVolume*> div;
-	    UT_Array<const GEO_PrimVolume*> active;
-	    GOP_Manager gop;
 
-	    velgrp = nullptr;
-	    if (sopparms.getGroup().isstring())
-	    {
-			velgrp = gop.parsePrimitiveGroups(sopparms.getGroup(), 
-												GOP_Manager::GroupCreator(gdp, false),
-												/*numok=*/true,
-												/*ordered=*/true);
-			if (!velgrp)
-			{
-			    cookparms.sopAddWarning(SOP_ERR_BADGROUP, sopparms.getGroup());
-			    return;
-			}
-	    }
-	    notifyGroupParmListeners(cookparms.getNode(), 0, -1, gdp, velgrp);
-	    cookparms.selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
+    	const GA_PrimitiveGroup* velgrp    = groupParser    .getPrimitiveGroup();
+    	cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
 
-	    divgrp = nullptr;
-	    if (sopparms.getDivGroup().isstring())
-	    {
-			divgrp = gop.parsePrimitiveGroups(sopparms.getDivGroup(), 
-												GOP_Manager::GroupCreator(cookparms.inputGeo(1)),
-												/*numok=*/true,
-												/*ordered=*/true);
-			if (!divgrp)
-			{
-			    cookparms.sopAddWarning(SOP_ERR_BADGROUP, sopparms.getDivGroup());
-			    return;
-			}
-	    }
 
-	    lutgrp = nullptr;
-	    if (sopparms.getLUTGroup().isstring())
-	    {
-			divgrp = gop.parsePrimitiveGroups(sopparms.getLUTGroup(), 
-				GOP_Manager::GroupCreator(cookparms.inputGeo(2)),
-				/*numok=*/true,
-				/*ordered=*/true);
-			if (!lutgrp)
-			{
-			    cookparms.sopAddWarning(SOP_ERR_BADGROUP, sopparms.getLUTGroup());
-			    return;
-			}
-	    }
 
-	    activegrp = nullptr;
-	    if (sopparms.getActiveGroup().isstring())
-	    {
-			activegrp = gop.parsePrimitiveGroups(sopparms.getActiveGroup(), 
-													GOP_Manager::GroupCreator(cookparms.inputGeo(3)),
-													/*numok=*/true,
-													/*ordered=*/true);
-			if (!activegrp)
-			{
-			    cookparms.sopAddWarning(SOP_ERR_BADGROUP, sopparms.getActiveGroup());
-			    return;
-			}
-	    }
+    	
+    	UT_Array<GEO_PrimVolume*> velx, vely, velz;
+    	UT_Array<const GEO_PrimVolume*> div;
+    	UT_Array<const GEO_PrimVolume*> active;
 
-	    GEO_PrimVolume* vel[3] = {0, 0, 0};
+    	
+    	//const GA_PrimitiveGroup* velgrp;
+    	//const GA_PrimitiveGroup* divgrp;
+    	//const GA_PrimitiveGroup* lutgrp;
+    	//const GA_PrimitiveGroup* activegrp;
+    	//GOP_Manager gop;
+    	//
+    	//velgrp = nullptr;
+    	//if (sopparms.getGroup().isstring())
+    	//{
+    	//	velgrp = gop.parsePrimitiveGroups(sopparms.getGroup(), GOP_Manager::GroupCreator(geo->asGEO_Detail(), false), /*numok=*/true, /*ordered=*/true);
+    	//	if (!velgrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getGroup());
+    	//	    return false;
+    	//	}
+    	//}
+    	////notifyGroupParmListeners(cookparms->getNode(), 0, -1, geo, velgrp);
+    	//cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
+    	//
+    	//
+    	//divgrp = nullptr;
+    	//if (sopparms.getDivGroup().isstring())
+    	//{
+    	//	divgrp = gop.parsePrimitiveGroups(sopparms.getDivGroup(), GOP_Manager::GroupCreator(geoRef0), /*numok=*/true, /*ordered=*/true);
+    	//	if (!divgrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getDivGroup());
+    	//	    return false;
+    	//	}
+    	//}
+    	//
+    	//
+    	//lutgrp = nullptr;
+    	//if (sopparms.getLUTGroup().isstring())
+    	//{
+    	//	lutgrp = gop.parsePrimitiveGroups(sopparms.getLUTGroup(), GOP_Manager::GroupCreator(geoRef1), /*numok=*/true, /*ordered=*/true);
+    	//	if (!lutgrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getLUTGroup());
+    	//	    return false;
+    	//	}
+    	//}
+    	//
+    	//activegrp = nullptr;
+    	//if (sopparms.getActiveGroup().isstring())
+    	//{
+    	//	activegrp = gop.parsePrimitiveGroups(sopparms.getActiveGroup(), GOP_Manager::GroupCreator(geoRef2), /*numok=*/true, /*ordered=*/true);
+    	//	if (!activegrp)
+    	//	{
+    	//	    cookparms->sopAddWarning(SOP_ERR_BADGROUP, sopparms.getActiveGroup());
+    	//	    return false;
+    	//	}
+    	//}
 
-	    // Each velocity triple is collated.
-	    GEO_Primitive* prim;
-	    int	numvel = 0;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(gdp, velgrp, prim)
-	    {
-			if (prim->getTypeId() == GEO_PRIMVOLUME)
-			{
-			    vel[numvel++] = (GEO_PrimVolume*)prim;
+    	GEO_PrimVolume* vel[3] = {0, 0, 0};
 
-			    if (numvel == 3)
-			    {
-					// Complete set
-					velx.append(vel[0]);
-					vely.append(vel[1]);
-					velz.append(vel[2]);
-					numvel = 0;
-			    }
-			}
-	    }
+    	// Each velocity triple is collated.
+    	GEO_Primitive* prim;
+    	int	numvel = 0;
+    	GA_FOR_ALL_OPT_GROUP_PRIMITIVES(geo, velgrp, prim)
+    	{
+    		if (prim->getTypeId() == GEO_PRIMVOLUME)
+    		{
+    			vel[numvel++] = (GEO_PrimVolume*)prim;
 
-	    // Check to see if we have a dangling pair.
-	    if (numvel)
-	    {
-			cookparms.sopAddWarning(SOP_MESSAGE, "Unmatched veloicty volume ignored; provide matching triples of velocity volumes.");
-	    }
+    			if (numvel == 3)
+    			{
+    				// Complete set
+    				velx.append(vel[0]);
+    				vely.append(vel[1]);
+    				velz.append(vel[2]);
+    				numvel = 0;
+    			}
+    		}
+    	}
 
-	    const GEO_Primitive	*cprim;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(cookparms.inputGeo(1), divgrp, cprim)
-	    {
-			if (cprim->getTypeId() == GEO_PRIMVOLUME)
-			{
-			    div.append((const GEO_PrimVolume *) cprim);
-			}
-	    }
+    	// Check to see if we have a dangling pair.
+    	if (numvel)
+    		cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched veloicty volume ignored; provide matching triples of velocity volumes.");
 
-	    if (cookparms.inputGeo(3))
-	    {
-			GA_FOR_ALL_OPT_GROUP_PRIMITIVES(cookparms.inputGeo(3), activegrp, cprim)
-			{
-			    if (cprim->getTypeId() == GEO_PRIMVOLUME)
-			    {
-					active.append((const GEO_PrimVolume *) cprim);
-			    }
-			}
-	    }
-
-	    const GEO_PrimVolume* lut[3] = { 0, 0, 0 };
-	    int	numlut = 0;
-	    GA_FOR_ALL_OPT_GROUP_PRIMITIVES(cookparms.inputGeo(2), lutgrp, cprim)
-	    {
-			if (cprim->getTypeId() == GEO_PRIMVOLUME)
-			{
-			    lut[numlut++] = (const GEO_PrimVolume *) cprim;
-
-			    if (numlut == 3)
-					break;
-			}
-	    }
-
-	    if (numlut < 3)
-	    {
-			cookparms.sopAddError(SOP_MESSAGE, "Insufficient lut volume specified.");
-			return;
-	    }
+    	
+		div.append(geoRef0->getFirstHoudiniVolumePrimitive(groupParserRef0.getPrimitiveGroup()));
+	    
+    	const GEO_PrimVolume* lut[3] = { 0, 0, 0 };
+    	geoRef1->getVectorHoudiniVolumePrimitive(lut, groupParserRef1.getPrimitiveGroup());
+    	
+	    if (geoRef2)
+			active.append(geoRef2->getFirstHoudiniVolumePrimitive(groupParserRef2.getPrimitiveGroup()));
+    	
+    	if (!lut[2])
+    	{
+    		cookparms->sopAddError(SOP_MESSAGE, "Insufficient lut volume specified.");
+    		return false;
+    	}
 
 	    if (velx.size() != div.size())
-	    {
-			cookparms.sopAddWarning(SOP_MESSAGE, "Unmatched sets of velocity and divergence volumes specified.  Unmatched ignored.");
-	    }
-
+			cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched sets of velocity and divergence volumes specified.  Unmatched ignored.");
 
 	    if (active.size() && (active.size() != div.size()))
 	    {
-			cookparms.sopAddError(SOP_MESSAGE, "Unmatched sets of divergence and active volumes specified.  Abandoning.");
-			return;
+			cookparms->sopAddError(SOP_MESSAGE, "Unmatched sets of divergence and active volumes specified.  Abandoning.");
+			return false;
 	    }
 
-	    int	npass = SYSmin(velx.size(), div.size());
+	    int	npass = std::min(velx.size(), div.size());
 
 
-    	UT_Interrupt* boss = UTgetInterrupt();
 	    for (int pass = 0; pass < npass; pass++)
 	    {
-			if (boss->opInterrupt())
-			    break;
-
-			UT_VoxelArrayReadHandleF divh = div(pass)->getVoxelHandle();
-			UT_VoxelArrayReadHandleF activeh;
+	    	UT_VoxelArrayReadHandleF activeh;
+			UT_VoxelArrayReadHandleF divh  = div[pass]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutxh = lut[0]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutyh = lut[1]->getVoxelHandle();
 			UT_VoxelArrayReadHandleF lutzh = lut[2]->getVoxelHandle();
 
-			UT_VoxelArrayWriteHandleF vxh = velx(pass)->getVoxelWriteHandle();
-			UT_VoxelArrayWriteHandleF vyh = vely(pass)->getVoxelWriteHandle();
-			UT_VoxelArrayWriteHandleF vzh = velz(pass)->getVoxelWriteHandle();
+			UT_VoxelArrayWriteHandleF vxh = velx[pass]->getVoxelWriteHandle();
+			UT_VoxelArrayWriteHandleF vyh = vely[pass]->getVoxelWriteHandle();
+			UT_VoxelArrayWriteHandleF vzh = velz[pass]->getVoxelWriteHandle();
 
-			const UT_VoxelArrayF *activev = 0;
+			const UT_VoxelArrayF* activev = 0;
 			if (pass < active.size())
 			{
 			    activeh = active(pass)->getVoxelHandle();
@@ -242,46 +199,34 @@ private:
 			}
 
 			// First, we apply our LUT approximation for the near field.
-			sop_applyVelLUT(cookparms, &*vxh, &*divh, activev, &*lutxh, velx(pass)->getVoxelSize());
-			sop_applyVelLUT(cookparms, &*vyh, &*divh, activev, &*lutyh, vely(pass)->getVoxelSize());
-			sop_applyVelLUT(cookparms, &*vzh, &*divh, activev, &*lutzh, velz(pass)->getVoxelSize());
+			sop_applyVelLUT(&*vxh, &*divh, activev, &*lutxh, velx[pass]->getVoxelSize());
+			sop_applyVelLUT(&*vyh, &*divh, activev, &*lutyh, vely[pass]->getVoxelSize());
+			sop_applyVelLUT(&*vzh, &*divh, activev, &*lutzh, velz[pass]->getVoxelSize());
 	    	
-			if (sopparms.getDoMIP())
-			{
-			    UT_Array<UT_VoxelArrayV4*> pos_mip, neg_mip;
+			if (!sopparms.getDoMIP())
+				continue;
+			
+		    UT_Array<UT_VoxelArrayV4*> pos_mip, neg_mip;
 
-			    sop_buildMipMap(pos_mip, neg_mip, div(pass));
+		    sop_buildMipMap(pos_mip, neg_mip, div(pass));
 
-			    if (sopparms.getMipBy4())
-			    {
-					sop_applyMipMap4(cookparms, 0,
-								   velx(pass), &*vxh, activev,
-								   pos_mip, neg_mip);
-					sop_applyMipMap4(cookparms, 1,
-								   vely(pass), &*vyh, activev,
-								   pos_mip, neg_mip);
-					sop_applyMipMap4(cookparms, 2,
-								   velz(pass), &*vzh, activev,
-								   pos_mip, neg_mip);
-			    }
-			    else
-			    {
-					sop_applyMipMap(cookparms, 0,
-								   velx(pass), &*vxh, activev,
-								   pos_mip, neg_mip);
-					sop_applyMipMap(cookparms, 1,
-								   vely(pass), &*vyh, activev,
-								   pos_mip, neg_mip);
-					sop_applyMipMap(cookparms, 2,
-								   velz(pass), &*vzh, activev,
-								   pos_mip, neg_mip);
-			    }
+		    if (sopparms.getMipBy4())
+		    {
+				sop_applyMipMap4(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
+				sop_applyMipMap4(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
+				sop_applyMipMap4(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
+		    }
+		    else
+		    {
+				sop_applyMipMap(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
+				sop_applyMipMap(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
+				sop_applyMipMap(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
+		    }
 
-			    for (auto && map : pos_mip)
-					delete map;
-			    for (auto && map : neg_mip)
-					delete map;
-			}
+		    for (auto && map : pos_mip)
+				delete map;
+		    for (auto && map : neg_mip)
+				delete map;
 	    }
     	
         return true;
@@ -298,7 +243,7 @@ private:
 		UT_Vector3 voxelsize
 	)
 	{
-	    auto&& sopparms = cookparms.parms<SOP_FeE_VolumeProject_1_0Parms>();
+	    auto&& sopparms = cookparms->parms<SOP_FeE_VolumeProject_1_0Parms>();
 	    bool doround = sopparms.getLUTRound();
 
 	    UT_StopWatch watch;
@@ -307,37 +252,37 @@ private:
 	    // Verify lut is big enough.
 	    if (sopparms.getLUTCenter() - sopparms.getLUTRad() < 0)
 	    {
-			cookparms.sopAddError(SOP_MESSAGE, "LUT range invalid");
+			cookparms->sopAddError(SOP_MESSAGE, "LUT range invalid");
 			return;
 	    }
 	    if (sopparms.getLUTCenter() + sopparms.getLUTRad() >= SYSmax(lut->getXRes(), lut->getYRes(), lut->getZRes()) )
 	    {
-			cookparms.sopAddError(SOP_MESSAGE, "LUT range exceeds provided table");
+			cookparms->sopAddError(SOP_MESSAGE, "LUT range exceeds provided table");
 			return;
 	    }
 	    if (sopparms.getLUTCenter() - sopparms.getLUTRad() < 0)
 	    {
-			cookparms.sopAddError(SOP_MESSAGE, "LUT range exceeds provided table");
+			cookparms->sopAddError(SOP_MESSAGE, "LUT range exceeds provided table");
 			return;
 	    }
 
-	    int		divxres = div->getXRes();
-	    int		divyres = div->getYRes();
-	    int		divzres = div->getZRes();
+	    int	divxres = div->getXRes();
+	    int	divyres = div->getYRes();
+	    int	divzres = div->getZRes();
 
 	    // Assume our lookup table is built with unit-sized voxels.
 	    // Then it has the update value for unit voxels, so we need
 	    // to divide by our voxel size.
 	    // Correspondingly, we divide by 3 for 3 dimensions we sum divergence
 	    // in to build our correction matrix.
-	    float	lutmagic = sopparms.getLUTMagic();
+	    float lutmagic = sopparms.getLUTMagic();
 
 	    lutmagic /= voxelsize.x();
 	    lutmagic /= 3;
 
 	    UTparallelForEachNumber(static_cast<exint>(vel->numTiles()), [&](const UT_BlockedRange<exint> &r)
 	    {
-		    exint curtile = r.begin();
+		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorF vit;
 		    vit.setLinearTile(curtile, vel);
 		    for (vit.rewind(); !vit.atEnd(); vit.advance())
@@ -345,14 +290,11 @@ private:
 			    float delta = 0;
 			    int	rad = sopparms.getLUTRad();
 
-			    if (active)
+			    if (active && active->getValue(vit.x(), vit.y(), vit.z()) < 0.5)
 			    {
-				    if (active->getValue(vit.x(), vit.y(), vit.z()) < 0.5)
-				    {
-					    if (sopparms.getZeroInactive())
-						    vit.setValue(0);
-					    continue;
-				    }
+				    if (sopparms.getZeroInactive())
+					    vit.setValue(0);
+				    continue;
 			    }
 
 			    int radzmin = -rad;
@@ -426,21 +368,19 @@ private:
 			    if (delta)
 				    vit.setValue(vit.getValue() - delta);
 		    }
-	    }, subscribeRatio, minGrainSize);
+		});
+    	//}, subscribeRatio, minGrainSize);
 
-	    UTdebugPrintCd(none,"Apply LUT Time:", watch.stop());
+	    UTdebugPrintCd(none, "Apply LUT Time:", watch.stop());
 	}
 
 
-	void sop_buildMipMap(
-		UT_Array<UT_VoxelArrayV4 *> &pos_mip,
-		UT_Array<UT_VoxelArrayV4 *> &neg_mip,
-		const GEO_PrimVolume *div)
+	void sop_buildMipMap(UT_Array<UT_VoxelArrayV4*>& pos_mip, UT_Array<UT_VoxelArrayV4*>& neg_mip, const GEO_PrimVolume* div)
 	{
-	    UT_StopWatch		watch;
+	    UT_StopWatch watch;
 	    watch.start();
 
-	    UT_VoxelArrayReadHandleF	divh = div->getVoxelHandle();
+	    UT_VoxelArrayReadHandleF divh = div->getVoxelHandle();
 
 	    const UT_VoxelArrayF* div_vox = &*divh;
 	    GEO_PrimVolumeXform	divxform = div->getIndexSpaceTransform(*div_vox);
@@ -458,15 +398,16 @@ private:
 	    neg = neg_mip(0);
 
 	    pos->size((div_vox->getXRes()+1) / 2,
-		      (div_vox->getYRes()+1) / 2,
-		      (div_vox->getZRes()+1) / 2);
+			      (div_vox->getYRes()+1) / 2,
+			      (div_vox->getZRes()+1) / 2);
+    	
 	    neg->size((div_vox->getXRes()+1) / 2,
-		      (div_vox->getYRes()+1) / 2,
-		      (div_vox->getZRes()+1) / 2);
+			      (div_vox->getYRes()+1) / 2,
+			      (div_vox->getZRes()+1) / 2);
 
 	    UTparallelForEachNumber(static_cast<exint>(pos->numTiles()), [&](const UT_BlockedRange<exint> &r)
 	    {
-		    exint curtile = r.begin();
+		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorV4 vit;
 		    vit.setLinearTile(curtile, pos);
 		    for (vit.rewind(); !vit.atEnd(); vit.advance())
@@ -520,14 +461,15 @@ private:
 			    pos->setValue(vit.x(), vit.y(), vit.z(), pos_v);
 			    neg->setValue(vit.x(), vit.y(), vit.z(), neg_v);
 		    }
-	    }, subscribeRatio, minGrainSize);
+		});
+    	//}, subscribeRatio, minGrainSize);
 
 	    // We've now built mip-map level 0, which is half the res of
 	    // the incoming div but is of v4 dipole format.  We now
 	    // repeatedly decimate until it disappears.
 	    while (1)
 	    {
-			UT_VoxelArrayV4		*old_pos, *old_neg;
+			UT_VoxelArrayV4 *old_pos, *old_neg;
 			old_pos = pos_mip.last();
 			old_neg = neg_mip.last();
 
@@ -588,12 +530,12 @@ private:
 			}
 	    }
 
-	    UTdebugPrintCd(none,"Build MipMap time:", watch.stop());
+	    UTdebugPrintCd(none, "Build MipMap time:", watch.stop());
 	    UTdebugPrintCd(none, "Build div mip map, levels", pos_mip.entries());
 	}
 		
 	void sop_applyMipMap(
-		int axis,
+		const int axis,
 		GEO_PrimVolume* prim_vel,
 		UT_VoxelArrayF* vel, 
 		const UT_VoxelArrayF* active,
@@ -601,15 +543,15 @@ private:
 		const UT_Array<UT_VoxelArrayV4*>& neg_mip
 	)
 	{
-	    auto&& sopparms = cookparms.parms<SOP_FeE_VolumeProject_1_0Parms>();
+	    auto&& sopparms = cookparms->parms<SOP_FeE_VolumeProject_1_0Parms>();
 
 	    UT_StopWatch		watch;
 	    watch.start();
 
 	    GEO_PrimVolumeXform		velxform = prim_vel->getIndexSpaceTransform(*vel);
 
-	    float		mipmagic = sopparms.getMIPMagic();
-	    mipmagic = 1 / mipmagic;
+	    float mipmagic = sopparms.getMIPMagic();
+	    mipmagic = 1.0 / mipmagic;
 
 	    UT_Vector3	voxelsize = prim_vel->getVoxelSize();
 
@@ -617,11 +559,10 @@ private:
 	    mipmagic *= voxelsize.x();
 	    mipmagic /= 4 * M_PI;
 
-	    UTparallelForEachNumber((exint)vel->numTiles(), 
-		    [&](const UT_BlockedRange<exint> &r)
+	    UTparallelForEachNumber((exint)vel->numTiles(), [&](const UT_BlockedRange<exint> &r)
 	    {
-			exint				curtile = r.begin();
-			UT_VoxelTileIteratorF		vit;
+			const exint curtile = r.begin();
+			UT_VoxelTileIteratorF vit;
 			vit.setLinearTile(curtile, vel);
 			for (vit.rewind(); !vit.atEnd(); vit.advance())
 			{
@@ -812,7 +753,8 @@ private:
 			    if (delta)
 					vit.setValue(vit.getValue() + delta);
 			}
-	    }, subscribeRatio, minGrainSize);
+		});
+    	//}, subscribeRatio, minGrainSize);
 
 	    UTdebugPrintCd(none,"MipMap Time:", watch.stop());
 	}
@@ -825,7 +767,7 @@ private:
 		const UT_Array<UT_VoxelArrayV4*>& pos_mip,
 		const UT_Array<UT_VoxelArrayV4*>& neg_mip)
 	{
-	    auto&& sopparms = cookparms.parms<SOP_FeE_VolumeProject_1_0Parms>();
+	    auto&& sopparms = cookparms->parms<SOP_FeE_VolumeProject_1_0Parms>();
 
 	    GEO_PrimVolumeXform velxform = prim_vel->getIndexSpaceTransform(*vel);
 
@@ -850,7 +792,7 @@ private:
 
 	    UTparallelForEachNumber(static_cast<exint>(vel->numTiles()), [&](const UT_BlockedRange<exint> &r)
 	    {
-		    exint curtile = r.begin();
+		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorF vit;
 		    vit.setLinearTile(curtile, vel);
 		    for (vit.rewind(); !vit.atEnd(); vit.advance())
@@ -1060,7 +1002,8 @@ private:
 			    if (delta)
 				    vit.setValue(vit.getValue() + delta);
 		    }
-	    }, subscribeRatio, minGrainSize);
+	    });
+	    //}, subscribeRatio, minGrainSize);
 
 	    UTdebugPrintCd(none,"MipMap4 Time:", watch.stop());
 	}
@@ -1079,11 +1022,6 @@ private:
 
 private:
 
-#undef __TEMP_GFE_VolumeProject_GroupName
-#undef __TEMP_GFE_VolumeProject_PieceAttribName
-#undef __TEMP_GFE_VolumeProject_OutAttribName
-
-    
 }; // End of class GFE_VolumeProject
 
 

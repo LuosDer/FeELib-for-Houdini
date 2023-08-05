@@ -9,6 +9,12 @@
 #include "GFE/GFE_GeoFilter.h"
 
 
+#if 0
+    GFE_GroupFillByEnum groupFillByEnum(geo, cookparms);
+    groupFillByEnum.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    groupFillByEnum.compute();
+#endif
+    
 
 class GFE_GroupFillByEnum : public GFE_AttribFilter {
 
