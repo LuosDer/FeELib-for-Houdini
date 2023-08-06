@@ -70,14 +70,14 @@ private:
 
     void scaleAttribElement()
     {
-        auto tupleTypeVariant = GFE_Variant::getNumericTupleType1vVariant(*attrib);
+        auto storageVarient = GFE_Variant::getAttribStorageVariantIFV(*attrib);
         auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
         auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
-        std::visit([&] (auto scaleVariant, auto doNormalizeVariant, auto tupleTypeVariant)
+        std::visit([&] (auto storageVarient, auto scaleVariant, auto doNormalizeVariant)
         {
-            using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+            using type = typename GFE_Variant::getAttribStorage_t<storageVarient>;
             scaleAttribElement<type, doNormalizeVariant, scaleVariant>();
-        }, scaleVariant, doNormalizeVariant, tupleTypeVariant);
+        }, storageVarient, scaleVariant, doNormalizeVariant);
     }
 
     template<typename _Ty, bool _normalize, bool _scale>

@@ -72,7 +72,21 @@
         UT_Matrix##NUM##F,\
         UT_Matrix##NUM##D,\
     
-enum class GFE_NumericTupleType
+
+#define __GFE_Type_SpecializationVecArray(NUM)\
+        UT_Vector##NUM##IArray,\
+        UT_Vector##NUM##iArray = UT_Vector##NUM##IArray,\
+        UT_Vector##NUM##LArray,\
+        UT_Vector##NUM##HArray,\
+        UT_Vector##NUM##FArray,\
+        UT_Vector##NUM##DArray,\
+    
+
+#define __GFE_Type_SpecializationMtxArray(NUM)\
+        UT_Matrix##NUM##FArray,\
+        UT_Matrix##NUM##DArray,\
+    
+enum class GFE_AttribStorage
 {
     int8,
     int16,
@@ -96,9 +110,18 @@ enum class GFE_NumericTupleType
     int64Array,
     fpreal32Array,
     fpreal64Array,
+
+    __GFE_Type_SpecializationVecArray(2)
+    __GFE_Type_SpecializationVecArray(3)
+    __GFE_Type_SpecializationVecArray(4)
+    
+    __GFE_Type_SpecializationMtxArray(2)
+    __GFE_Type_SpecializationMtxArray(3)
+    __GFE_Type_SpecializationMtxArray(4)
+    
+    stringArray,
     dictArray,
 
-    
     
     //UT_Vector2I,
     //UT_Vector2i = UT_Vector2I,
@@ -135,11 +158,14 @@ enum class GFE_NumericTupleType
     float32 = fpreal32,
     float64 = fpreal64,
     UT_StringHolder = string,
+    float32Array = fpreal32Array,
+    float64Array = fpreal64Array,
+    UT_StringHolderArray = stringArray,
     dictHolder = dict,
     UT_OptionsHolderArray = dictArray,
     
     
-}; // End of Class Enum Class GFE_NumericTupleType
+}; // End of Class Enum Class GFE_AttribStorage
 
 
 #undef __GFE_Type_SpecializationVec
@@ -1028,77 +1054,149 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
 { return !isValidPosAttrib(posAttrib); }
 
 
-    GFE_NumericTupleType getNumericTupleType(const int tupleSize, const GA_Storage store)
+    GFE_AttribStorage getAttribStorageTuple(const int tupleSize, const GA_Storage store)
     {
         switch (tupleSize)
         {
         case 1:
             switch (store)
             {
-            case GA_STORE_INT8:   return GFE_NumericTupleType::int8;     break;
-            case GA_STORE_INT16:  return GFE_NumericTupleType::int16;    break;
-            case GA_STORE_INT32:  return GFE_NumericTupleType::int32;    break;
-            case GA_STORE_INT64:  return GFE_NumericTupleType::int64;    break;
-            case GA_STORE_REAL16: return GFE_NumericTupleType::fpreal16; break;
-            case GA_STORE_REAL32: return GFE_NumericTupleType::fpreal32; break;
-            case GA_STORE_REAL64: return GFE_NumericTupleType::fpreal64; break;
+            case GA_STORE_INT8:   return GFE_AttribStorage::int8;     break;
+            case GA_STORE_INT16:  return GFE_AttribStorage::int16;    break;
+            case GA_STORE_INT32:  return GFE_AttribStorage::int32;    break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::int64;    break;
+            case GA_STORE_REAL16: return GFE_AttribStorage::fpreal16; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::fpreal32; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::fpreal64; break;
             default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
             }
         break;
         case 2:
             switch (store)
             {
-            case GA_STORE_INT32:  return GFE_NumericTupleType::UT_Vector2I; break;
-            case GA_STORE_INT64:  return GFE_NumericTupleType::UT_Vector2L; break;
-            case GA_STORE_REAL16: return GFE_NumericTupleType::UT_Vector2H; break;
-            case GA_STORE_REAL32: return GFE_NumericTupleType::UT_Vector2F; break;
-            case GA_STORE_REAL64: return GFE_NumericTupleType::UT_Vector2D; break;
+            case GA_STORE_INT32:  return GFE_AttribStorage::UT_Vector2I; break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::UT_Vector2L; break;
+            case GA_STORE_REAL16: return GFE_AttribStorage::UT_Vector2H; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::UT_Vector2F; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::UT_Vector2D; break;
             default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
             }
         break;
         case 3:
             switch (store)
             {
-            case GA_STORE_INT32:  return GFE_NumericTupleType::UT_Vector3I; break;
-            case GA_STORE_INT64:  return GFE_NumericTupleType::UT_Vector3L; break;
-            case GA_STORE_REAL16: return GFE_NumericTupleType::UT_Vector3H; break;
-            case GA_STORE_REAL32: return GFE_NumericTupleType::UT_Vector3F; break;
-            case GA_STORE_REAL64: return GFE_NumericTupleType::UT_Vector3D; break;
+            case GA_STORE_INT32:  return GFE_AttribStorage::UT_Vector3I; break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::UT_Vector3L; break;
+            case GA_STORE_REAL16: return GFE_AttribStorage::UT_Vector3H; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::UT_Vector3F; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::UT_Vector3D; break;
             default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
             }
         break;
         case 4:
             switch (store)
             {
-            case GA_STORE_INT32:  return GFE_NumericTupleType::UT_Vector4I; break;
-            case GA_STORE_INT64:  return GFE_NumericTupleType::UT_Vector4L; break;
-            case GA_STORE_REAL16: return GFE_NumericTupleType::UT_Vector4H; break;
-            case GA_STORE_REAL32: return GFE_NumericTupleType::UT_Vector4F; break;
-            case GA_STORE_REAL64: return GFE_NumericTupleType::UT_Vector4D; break;
+            case GA_STORE_INT32:  return GFE_AttribStorage::UT_Vector4I; break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::UT_Vector4L; break;
+            case GA_STORE_REAL16: return GFE_AttribStorage::UT_Vector4H; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::UT_Vector4F; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::UT_Vector4D; break;
             default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
             }
         break;
         default: UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Size"); break;
         }
-        return GFE_NumericTupleType::invalid;
+        return GFE_AttribStorage::invalid;
+    }
+
+    GFE_AttribStorage getAttribStorageArray(const int tupleSize, const GA_Storage store)
+    {
+        switch (tupleSize)
+        {
+        case 1:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_AttribStorage::int32Array;    break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::int64Array;    break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::fpreal32Array; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::fpreal64Array; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        case 2:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_AttribStorage::UT_Vector2IArray; break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::UT_Vector2LArray; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::UT_Vector2FArray; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::UT_Vector2DArray; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        case 3:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_AttribStorage::UT_Vector3IArray; break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::UT_Vector3LArray; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::UT_Vector3FArray; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::UT_Vector3DArray; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        case 4:
+            switch (store)
+            {
+            case GA_STORE_INT32:  return GFE_AttribStorage::UT_Vector4IArray; break;
+            case GA_STORE_INT64:  return GFE_AttribStorage::UT_Vector4LArray; break;
+            case GA_STORE_REAL32: return GFE_AttribStorage::UT_Vector4FArray; break;
+            case GA_STORE_REAL64: return GFE_AttribStorage::UT_Vector4DArray; break;
+            default: UT_ASSERT_MSG(0, "Unhandled Attrib Storage"); break;
+            }
+        break;
+        default: UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Size"); break;
+        }
+        return GFE_AttribStorage::invalid;
     }
 
 
-    SYS_FORCE_INLINE GFE_NumericTupleType getNumericTupleType(const GA_Attribute* const attrib)
+    
+    GFE_AttribStorage getAttribStorage(const GA_Attribute& attrib)
     {
-        UT_ASSERT_P(attrib);
-        UT_ASSERT_P(attrib->getAIFTuple());
-        return getNumericTupleType(attrib->getTupleSize(), attrib->getAIFTuple()->getStorage(attrib));
+        const GA_AIFTuple* const aifTuple = attrib.getAIFTuple();
+        if (aifTuple)
+            return getAttribStorageTuple(attrib.getTupleSize(), aifTuple->getStorage(&attrib));
+        
+        //const GA_AIFStringTuple* const aifStrTuple = attrib.getAIFStringTuple();
+        if (attrib.getAIFStringTuple())
+            return GFE_AttribStorage::string;
+        
+        //const GA_AIFSharedDictTuple* const aifDictTuple = attrib.getAIFSharedDictTuple();
+        if (attrib.getAIFSharedDictTuple())
+            return GFE_AttribStorage::dict;
+
+        const GA_AIFNumericArray* const aifNumArray = attrib.getAIFNumericArray();
+        if (aifNumArray)
+            return getAttribStorageArray(attrib.getTupleSize(), aifNumArray->getStorage(&attrib));
+        
+        //const GA_AIFSharedDictArray* const aifDictArray = attrib.getAIFSharedDictArray();
+        if (attrib.getAIFSharedDictArray())
+            return GFE_AttribStorage::dictArray;
+        
+        //const GA_AIFSharedStringArray* const aifStrArray = attrib.getAIFSharedStringArray();
+        if (attrib.getAIFSharedStringArray())
+            return GFE_AttribStorage::stringArray;
+        
+        return GFE_AttribStorage::invalid;
     }
     
-    SYS_FORCE_INLINE GFE_NumericTupleType getNumericTupleType(const GA_Attribute& attrib)
-    {
-        UT_ASSERT_P(attrib.getAIFTuple());
-        return getNumericTupleType(attrib.getTupleSize(), attrib.getAIFTuple()->getStorage(&attrib));
-    }
-    
+    SYS_FORCE_INLINE GFE_AttribStorage getAttribStorage(const GA_Attribute* const attrib)
+    { UT_ASSERT_P(attrib); return getAttribStorage(*attrib); }
 
 
+
+
+    template <class _Ty>
+    using numeric_limits = std::numeric_limits<get_value_type_t<_Ty>>;
 
 
     template <class _Ty>
