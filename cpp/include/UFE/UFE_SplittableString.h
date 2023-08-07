@@ -4,7 +4,7 @@
 #ifndef __UFE_SplittableString_h__
 #define __UFE_SplittableString_h__
 
-//#include "GFE/UFE_SplittableString.h"
+#include "UFE/UFE_SplittableString.h"
 
 
 class UFE_SplittableString {

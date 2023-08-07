@@ -13,13 +13,14 @@ list( APPEND CMAKE_PREFIX_PATH "$ENV{HFS19.5}/toolkit/cmake" )
 find_package( Houdini REQUIRED )
 
 
-# set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}   -DOPENVDB_3_ABI_COMPATIBLE")
-# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DOPENVDB_3_ABI_COMPATIBLE")
-
 # set(CMAKE_CXX_FLAGS_DEBUG "-DOPENVDB_3_ABI_COMPATIBLE")
 # set(CMAKE_CXX_FLAGS_MINSIZEREL "-DOPENVDB_3_ABI_COMPATIBLE")
 # set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DOPENVDB_3_ABI_COMPATIBLE")
 # set(CMAKE_CXX_FLAGS_RELEASE "-DOPENVDB_3_ABI_COMPATIBLE")
+
+
+
+
 
 # function ( houdini_sop_add_library_std )
 #     cmake_parse_arguments( H_LIBRARY "" "OUTPUT_VAR;API" "FILES" ${ARGN} )
@@ -34,9 +35,6 @@ find_package( Houdini REQUIRED )
 #             "../src/SOP/${library_name}/${library_name}.C"
 #             "../src/SOP/${library_name}/${library_name}.h"
 #         )
-#         # export CMAKE_CXX_FLAGS = "-DOPENVDB_3_ABI_COMPATIBLE"
-
-        
 #         # Link against the Houdini libraries, and add required include directories and
 #         # compile definitions.
 #         target_link_libraries( ${library_name} Houdini )
@@ -51,40 +49,48 @@ find_package( Houdini REQUIRED )
 #         houdini_configure_target( ${library_name} )
     
 #     endforeach ()
+
 # endfunction ()
+
+
 
 
 function ( houdini_sop_add_library_std )
     cmake_parse_arguments( H_LIBRARY "" "OUTPUT_VAR;API" "FILES" ${ARGN} )
 
+    set( HDK_FeELib_SOP_Files )
     foreach ( library_name ${H_LIBRARY_FILES} )
     
         # Code generation for the embedded DS file in ${library_name}.C.
         houdini_generate_proto_headers( FILES "../src/SOP/${library_name}/${library_name}.C" )
         
         # Add a library and its source files.
-        # add_library( ${library_name} SHARED
-        add_library( HDK_FeELib_Project SHARED
-            "../src/SOP/${library_name}/${library_name}.C"
-            "../src/SOP/${library_name}/${library_name}.h"
-        )
-        # export CMAKE_CXX_FLAGS = "-DOPENVDB_3_ABI_COMPATIBLE"
+        list(APPEND HDK_FeELib_SOP_Files "../src/SOP/${library_name}/${library_name}.C")
+        list(APPEND HDK_FeELib_SOP_Files "../src/SOP/${library_name}/${library_name}.h")
+    
     endforeach ()
 
+    message(${HDK_FeELib_SOP_Files})
+    add_library(HDK_FeELib_SOP SHARED
+        ${HDK_FeELib_SOP_Files}
+    )
 
     # Link against the Houdini libraries, and add required include directories and
     # compile definitions.
-    target_link_libraries( HDK_FeELib_Project Houdini )
+    target_link_libraries( HDK_FeELib_SOP Houdini )
     
     # Include ${CMAKE_CURRENT_BINARY_DIR} for the generated header.
-    target_include_directories( HDK_FeELib_Project PRIVATE
+    target_include_directories( HDK_FeELib_SOP PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         "../include"
     )
     
     # Sets several common target properties, such as the library's output directory.
-    houdini_configure_target( HDK_FeELib_Project )
+    houdini_configure_target( HDK_FeELib_SOP )
+
+
 endfunction ()
+
 
 
 
@@ -125,8 +131,8 @@ endfunction ()
 
 
 houdini_sop_add_library_std( FILES
-    SOP_FeE_AttribBlend_1_0
-    SOP_FeE_VDBActivateByPoint_1_0
+    SOP_FeE_AttribCast_1_0
+    SOP_FeE_AttribCopy_4_0
 )
 
 

@@ -1,5 +1,6 @@
 
 //#define UT_ASSERT_LEVEL 3
+
 #include "SOP_FeE_VDBActivateByPoint_1_0.h"
 
 
@@ -74,9 +75,7 @@ SOP_FeE_VDBActivateByPoint_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_VDBActivateByPoint_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
         templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        
     }
     return templ.templates();
 }
@@ -101,7 +100,6 @@ newSopOperator(OP_OperatorTable* table)
 
     newOp->setIconName("SOP_vdb");
     table->addOperator(newOp);
-
 }
 
 

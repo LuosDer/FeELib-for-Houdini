@@ -8,10 +8,25 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-
-
 #include "UFE/UFE_SplittableString.h"
 #include "GFE/GFE_OffsetAttribute.h"
+
+#if 0
+    GFE_AttribCopy attribCopy(geo, geoTmp, cookparms);
+    attribCopy.ownerSrc = GA_ATTRIB_PRIMITIVE;
+    attribCopy.ownerDst = GA_ATTRIB_POINT;
+    attribCopy.attribMergeType = GFE_AttribMergeType::Set;
+    attribCopy.iDAttribInput = true;
+    attribCopy.setOffsetAttrib(*srcElemoffAttrib, true);
+    
+    attribCopy.getRef0GroupArray ().appends(attribCopy.ownerSrc, pattern);
+    attribCopy.getRef0AttribArray().appends(attribCopy.ownerSrc, pattern);
+    attribCopy.appendGroups ("*");
+    attribCopy.appendAttribs("*");
+    
+    attribCopy.compute();
+#endif
+
 
 class GFE_AttribCopy : public GFE_AttribFilterWithRef0 {
 
