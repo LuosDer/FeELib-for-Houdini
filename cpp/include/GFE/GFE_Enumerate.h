@@ -32,17 +32,17 @@ public:
 
     void
         setComputeParm(
-            const GA_Size firstIndex   = 0,
-            const bool negativeIndex   = false,
-            const bool outAsOffset     = true,
+            const GA_Size firstIndex = 0,
+            const bool negativeIndex = false,
+            const bool outAsOffset   = true,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
-        this->firstIndex     = firstIndex;
-        this->negativeIndex  = negativeIndex;
-        this->outAsOffset    = outAsOffset;
+        this->firstIndex    = firstIndex;
+        this->negativeIndex = negativeIndex;
+        this->outAsOffset   = outAsOffset;
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
@@ -56,7 +56,9 @@ public:
         const UT_StringRef& attribName = ""
     )
     {
+#if GFE_DEBUG_MODE
         outAttribName = attribName.c_str();
+#endif
         return getOutAttribArray().findOrCreateTuple(detached, owner,
             storageClass, storage, __TEMP_GFE_Enumerate_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         
@@ -93,39 +95,100 @@ private:
             return true;
         }
         
-        
-        const size_t size = getOutAttribArray().size();
-        for (size_t i = 0; i < size; i++)
-        {
-            
-            enumAttrib = getOutAttribArray()[i];
-            auto Varient = GFE_Variant::getNumericTupleType1Variant();
-            // const GA_Storage storage = enumAttrib->getAIFTuple()->getStorage(enumAttrib);
-            const GA_AIFTuple* const aifTuple = enumAttrib->getAIFTuple();
-            if (aifTuple)
-            {
-                switch (aifTuple->getStorage(enumAttrib))
-                {
-                case GA_STORE_INT16:  enumerate<int16>();    break;
-                case GA_STORE_INT32:  enumerate<int32>();    break;
-                case GA_STORE_INT64:  enumerate<int64>();    break;
-                case GA_STORE_REAL16: enumerate<fpreal16>(); break;
-                case GA_STORE_REAL32: enumerate<fpreal32>(); break;
-                case GA_STORE_REAL64: enumerate<fpreal64>(); break;
-                default: break;
-                }
-            }
-            else
-            {
-                const GA_AIFStringTuple* const aifStrTuple = enumAttrib->getAIFStringTuple();
-                if (aifStrTuple)
-                {
-                    enumerate<UT_StringHolder>();
-                }
-            }
-        }
+        enumAttrib = getOutAttribArray()[0];
+        enumerate();
         geo->forceRenameAttribute(enumAttrib, outAttribName);
+        // const size_t size = getOutAttribArray().size();
+        // for (size_t i = 0; i < size; i++)
+        // {
+        //     enumAttrib = getOutAttribArray()[i];
+        //     enumerate();
+        //     geo->forceRenameAttribute(enumAttrib, outAttribName);
+        // }
         return true;
+    }
+
+
+
+    
+    template<typename _Ty, bool _outAsOffset, bool _negativeIndex>
+    void enumerate()
+    {
+        if constexpr (GFE_Type::isStringHolder<_Ty>)
+        {
+            const GA_RWHandleS attrib_h(enumAttrib);
+            UTparallelFor(groupParser.getSplittableRange(enumAttrib), [this, &attrib_h](const GA_SplittableRange& r)
+            {
+                char buffer[100];
+                GA_Offset start, end;
+                for (GA_Iterator it(r); it.blockAdvance(start, end); )
+                {
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if constexpr (_outAsOffset)
+                        {
+                            std::to_string();
+                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex + elemoff, sufix);
+                        }
+                        else if constexpr (_negativeIndex)
+                        {
+                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex - enumAttrib->getIndexMap().indexFromOffset(elemoff), sufix);
+                        }
+                        else
+                        {
+                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex + enumAttrib->getIndexMap().indexFromOffset(elemoff), sufix);
+                        }
+                        attrib_h.set(elemoff, buffer);
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+        else if constexpr (GFE_Type::isScalar<_Ty>)
+        {
+            UTparallelFor(groupParser.getSplittableRange(enumAttrib), [this](const GA_SplittableRange& r)
+            {
+                GFE_RWPageHandleT<_Ty> attrib_ph(enumAttrib);
+                GA_Offset start, end;
+                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+                {
+                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                    {
+                        attrib_ph.setPage(start);
+                        //const GA_Offset baseOff = start - GAgetPageOff(start);
+                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                        {
+                            if constexpr (_outAsOffset)
+                            {
+                                attrib_ph.value(elemoff) = firstIndex + elemoff;
+                            }
+                            else if constexpr (_negativeIndex)
+                            {
+                                attrib_ph.value(elemoff) = firstIndex - enumAttrib->getIndexMap().indexFromOffset(elemoff);
+                            }
+                            else
+                            {
+                                attrib_ph.value(elemoff) = firstIndex + enumAttrib->getIndexMap().indexFromOffset(elemoff);
+                            }
+                        }
+                    }
+                }
+            }, subscribeRatio, minGrainSize);
+        }
+    }
+    
+    void enumerate()
+    {
+        UT_ASSERT_P(enumAttrib);
+        
+        auto storageVarient = GFE_Variant::getAttribStorageVariantIS(*enumAttrib);
+        auto outAsOffsetVarient   = GFE_Variant::getBoolVariant(outAsOffset);
+        auto negativeIndexVarient = GFE_Variant::getBoolVariant(negativeIndex);
+        
+        std::visit([&] (auto storageVarient, auto outAsOffsetVarient, auto negativeIndexVarient)
+        {
+            using type = typename GFE_Variant::getAttribStorage_t<storageVarient>;
+            enumerate<type, outAsOffsetVarient, negativeIndexVarient>();
+        }, storageVarient, outAsOffsetVarient, negativeIndexVarient);
     }
 
 
@@ -139,7 +202,6 @@ private:
         const GA_AttributeOwner owner = enumAttrib->getOwner();
         
         UT_ASSERT_MSG(pieceAttrib->getOwner() == owner, "not same owner");
-
         
         GA_ElementGroup* elemGroup = nullptr;
         const GA_Group* const group = groupParser.getGroup(pieceAttrib);
@@ -243,170 +305,6 @@ private:
         getOutAttribArray().set(attribCast.getOutAttribArray());
     }
 
-
-    
-    template<typename T, bool _outAsOffset, bool _negativeIndex, bool _OutAsOffset>
-    void enumerate()
-    {
-        UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
-        {
-            GFE_RWPageHandleT<T> attrib_ph(enumAttrib);
-            GA_Offset start, end;
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    attrib_ph.setPage(start);
-                    //const GA_Offset baseOff = start - GAgetPageOff(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attrib_ph.value(elemoff) = firstIndex + elemoff;
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-    
-    template<typename _Ty>
-    void enumerate()
-    {
-        UT_ASSERT_P(enumAttrib);
-        
-        auto outAsOffsetVarient = GFE_Variant::getBoolVariant(outAsOffset);
-        auto negativeIndexVarient = GFE_Variant::getBoolVariant(negativeIndex);
-        
-        std::visit([&] (auto outAsOffsetVarient, auto negativeIndexVarient)
-            {
-            enumerate<_Ty, outAsOffsetVarient, negativeIndexVarient>();
-    }, );
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(enumAttrib));
-        if(outAsOffset)
-        {
-            UTparallelFor(geoSplittableRange0, [this](const GA_SplittableRange& r)
-            {
-                GFE_RWPageHandleT<T> attrib_ph(enumAttrib);
-                GA_Offset start, end;
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-                {
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                    {
-                        attrib_ph.setPage(start);
-                        //const GA_Offset baseOff = start - GAgetPageOff(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            attrib_ph.value(elemoff) = firstIndex + elemoff;
-                        }
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        }
-        else
-        {
-            const GA_IndexMap& indexMap = enumAttrib->getIndexMap();
-            if (negativeIndex)
-            {
-                UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
-                {
-                    GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                    GA_Offset start, end;
-                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-                    {
-                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                        {
-                            attrib_ph.setPage(start);
-                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                            {
-                                attrib_ph.value(elemoff) = firstIndex - indexMap.indexFromOffset(elemoff);
-                            }
-                        }
-                    }
-                }, subscribeRatio, minGrainSize);
-            }
-            else
-            {
-                UTparallelFor(geoSplittableRange0, [this, &indexMap](const GA_SplittableRange& r)
-                {
-                    GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(enumAttrib);
-                    GA_Offset start, end;
-                    for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-                    {
-                        for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                        {
-                            attrib_ph.setPage(start);
-                            for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                            {
-                                attrib_ph.value(elemoff) = firstIndex + indexMap.indexFromOffset(elemoff);
-                            }
-                        }
-                    }
-                }, subscribeRatio, minGrainSize);
-            }
-        }
-    }
-
-
-    template<>
-    void enumerate<UT_StringHolder>()
-    {
-        UT_ASSERT_P(enumAttrib);
-
-        const GA_RWHandleS attrib_h(enumAttrib);
-        const GA_SplittableRange geoSplittableRange0(groupParser.getRange(enumAttrib->getOwner()));
-        if(outAsOffset)
-        {
-            UTparallelFor(geoSplittableRange0, [this, &attrib_h](const GA_SplittableRange& r)
-            {
-                GA_Offset start, end;
-                for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                {
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        char buffer[100];
-                        sprintf(buffer, "%s%I64d%s", prefix, firstIndex+elemoff, sufix);
-                        attrib_h.set(elemoff, buffer);
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        }
-        else
-        {
-            const GA_IndexMap& indexMap = enumAttrib->getIndexMap();
-            if(negativeIndex)
-            {
-                UTparallelFor(geoSplittableRange0, [this, &attrib_h, &indexMap](const GA_SplittableRange& r)
-                {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                    {
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            char buffer[100];
-                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex-indexMap.indexFromOffset(elemoff), sufix);
-                            attrib_h.set(elemoff, buffer);
-                        }
-                    }
-                }, subscribeRatio, minGrainSize);
-            }
-            else
-            {
-                UTparallelFor(geoSplittableRange0, [this, &attrib_h, &indexMap](const GA_SplittableRange& r)
-                {
-                    GA_Offset start, end;
-                    for (GA_Iterator it(r); it.blockAdvance(start, end); )
-                    {
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            char buffer[100];
-                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex+indexMap.indexFromOffset(elemoff), sufix);
-                            attrib_h.set(elemoff, buffer);
-                        }
-                    }
-                }, subscribeRatio, minGrainSize);
-            }
-        }
-    }
-
-    
 
 
 public:

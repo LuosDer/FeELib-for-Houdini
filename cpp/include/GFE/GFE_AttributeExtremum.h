@@ -83,7 +83,7 @@ private:
     {
         if (attrib->getAIFTuple())
         {
-            auto tupleTypeVariant = GFE_Variant::getNumericTupleType1Variant(*attrib);
+            auto tupleTypeVariant = GFE_Variant::getAttribStorageVariantIFVM(*attrib);
             auto outAttribMinVariant = GFE_Variant::getBoolVariant(outAttribMin);
             auto outAttribMaxVariant = GFE_Variant::getBoolVariant(outAttribMax);
             auto outAttribMinElemnumVariant = GFE_Variant::getBoolVariant(outAttribMinElemnum);
@@ -94,7 +94,7 @@ private:
                             auto outAttribMinElemnumVariant,
                             auto outAttribMaxElemnumVariant)
             {
-                using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+                using type = typename GFE_Variant::getAttribStorage_t<tupleTypeVariant>;
                 
                 type min;
                 type max;
