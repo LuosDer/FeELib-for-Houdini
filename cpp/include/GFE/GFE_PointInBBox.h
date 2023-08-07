@@ -132,7 +132,7 @@ private:
     	
 	void pointInBBox()
     {
-    	auto tupleTypeVariant = GFE_Variant::getNumericTupleTypev3fVariant(*posAttrib);
+    	auto storageVariant = GFE_Variant::getAttribStorageVariantV3F(*posAttrib);
     	auto xMinVariant = GFE_Variant::getBoolVariant(xMin);
     	auto xMaxVariant = GFE_Variant::getBoolVariant(xMax);
     	auto yMinVariant = GFE_Variant::getBoolVariant(yMin);
@@ -140,7 +140,7 @@ private:
     	auto zMinVariant = GFE_Variant::getBoolVariant(zMin);
     	auto zMaxVariant = GFE_Variant::getBoolVariant(zMax);
     		
-    	std::visit([&] (auto tupleTypeVariant,
+    	std::visit([&] (auto storageVariant,
 						auto xMinVariant,
 						auto xMaxVariant,
 						auto yMinVariant,
@@ -148,9 +148,9 @@ private:
 						auto zMinVariant,
 						auto zMaxVariant)
 		{
-			using type = typename GFE_Variant::get_numeric_tuple_type_t<tupleTypeVariant>;
+			using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
 			pointInBBox<type, xMinVariant, xMaxVariant, yMinVariant, yMaxVariant, zMinVariant, zMaxVariant>();
-		}, tupleTypeVariant, xMinVariant, xMaxVariant, yMinVariant, yMaxVariant, zMinVariant, zMaxVariant);
+		}, storageVariant, xMinVariant, xMaxVariant, yMinVariant, yMaxVariant, zMinVariant, zMaxVariant);
     }
 
 	template<typename _Ty, bool xMin, bool xMax, bool yMin, bool yMax, bool zMin, bool zMax>

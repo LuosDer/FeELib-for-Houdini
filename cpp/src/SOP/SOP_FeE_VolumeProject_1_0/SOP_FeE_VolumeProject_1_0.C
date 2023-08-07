@@ -163,9 +163,9 @@ newSopOperator(OP_OperatorTable *table)
 		OP_FLAG_GENERATOR,
 		nullptr,
 		1,
-		"Five elements Elf/Data/Orient");
+        "Five elements Elf/Filter/Volume");
 
-	newOp->setIconName("SOP_uvtransform-2.0");
+	newOp->setIconName("volumeanalysis");
 	table->addOperator(newOp);
 }
 

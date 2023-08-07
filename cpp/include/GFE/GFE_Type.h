@@ -44,6 +44,15 @@
 
 
 
+#ifndef GFE_TOPO_SCOPE
+
+#if 0
+#define GFE_TOPO_SCOPE GFE_SCOPE_PRIVATE
+#else
+#define GFE_TOPO_SCOPE GA_SCOPE_PUBLIC
+#endif
+
+#endif
 
 
 
@@ -295,6 +304,25 @@ enum class GFE_ScaleAxis
     Invalid = -1,
 };
 
+#if 0
+    GFE_GPUComputeMethod gpuComputeMethod = GFE_GPUComputeMethod::Cuda;
+    switch(gpuComputeMethod)
+    {
+    case GFE_GPUComputeMethod::CPU:    ; break;
+    case GFE_GPUComputeMethod::Cuda:   ; break;
+    case GFE_GPUComputeMethod::OpenCL: ; break;
+    }
+
+#endif
+
+enum class GFE_GPUComputeMethod
+{
+    CPU,
+    CUDA,
+    OpenCL,
+    Invalid = -1,
+};
+
 
 
 #define GFE_ForEachStorage1(Func, Storage)                     \
@@ -416,6 +444,8 @@ GFEForEachStorageTupleSizeVec(const Body &body, const GA_Storage storage, const 
 
 namespace GFE_Type {
 
+
+
 //#ifndef fpreal16
 //#define fpreal16 float
 //#endif
@@ -446,8 +476,8 @@ _INLINE_VAR constexpr bool isScalar = std::is_arithmetic_v<_Ty>      ||
 
 
     
-#define __GFE_SPECIALIZATION_IsVector(NUM)                                                                  \
-template <class _Ty>                                                                                        \
+#define __GFE_SPECIALIZATION_IsVector(NUM)                                                                \
+template <class _Ty>                                                                                      \
 _INLINE_VAR constexpr bool isVector##NUM = std::is_same_v<_Ty, UT_Vector##NUM##T<char>           >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<wchar_t>        >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<signed char>    >||      \
@@ -455,6 +485,7 @@ _INLINE_VAR constexpr bool isVector##NUM = std::is_same_v<_Ty, UT_Vector##NUM##T
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned short> >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<short>          >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned int>   >||      \
+                                           std::is_same_v<_Ty, UT_Vector##NUM##T<int>            >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<int64>          >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<uint64>         >||      \
                                            std::is_same_v<_Ty, UT_Vector##NUM##T<fpreal16>       >||      \
@@ -467,8 +498,45 @@ __GFE_SPECIALIZATION_IsVector(4)
 
 #undef  __GFE_SPECIALIZATION_IsVector
 
-#define __GFE_SPECIALIZATION_IsMatrix(NUM)                                                                  \
-template <class _Ty>                                                                                        \
+
+
+    
+#define __GFE_SPECIALIZATION_IsVectorI(NUM)                                                                  \
+template <class _Ty>                                                                                         \
+_INLINE_VAR constexpr bool isVector##NUM##I = std::is_same_v<_Ty, UT_Vector##NUM##T<char>           >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<wchar_t>        >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<signed char>    >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned char>  >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned short> >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<short>          >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<unsigned int>   >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<int>            >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<int64>          >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<uint64>         >;       \
+
+__GFE_SPECIALIZATION_IsVectorI(2)
+__GFE_SPECIALIZATION_IsVectorI(3)
+__GFE_SPECIALIZATION_IsVectorI(4)
+
+#undef  __GFE_SPECIALIZATION_IsVectorI
+
+
+    
+#define __GFE_SPECIALIZATION_IsVectorF(NUM)                                                                  \
+template <class _Ty>                                                                                         \
+_INLINE_VAR constexpr bool isVector##NUM##F = std::is_same_v<_Ty, UT_Vector##NUM##T<fpreal16>       >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<float>          >||      \
+                                              std::is_same_v<_Ty, UT_Vector##NUM##T<double>         >;       \
+
+__GFE_SPECIALIZATION_IsVectorF(2)
+__GFE_SPECIALIZATION_IsVectorF(3)
+__GFE_SPECIALIZATION_IsVectorF(4)
+
+#undef  __GFE_SPECIALIZATION_IsVectorF
+
+    
+#define __GFE_SPECIALIZATION_IsMatrix(NUM)                                                                \
+template <class _Ty>                                                                                      \
 _INLINE_VAR constexpr bool isMatrix##NUM = std::is_same_v<_Ty, UT_Matrix##NUM##T<char>           >||      \
                                            std::is_same_v<_Ty, UT_Matrix##NUM##T<wchar_t>        >||      \
                                            std::is_same_v<_Ty, UT_Matrix##NUM##T<signed char>    >||      \
@@ -495,6 +563,16 @@ _INLINE_VAR constexpr bool isVector = isVector2<_Ty> ||
                                       isVector3<_Ty> ||
                                       isVector4<_Ty> ;
 
+template <class _Ty>
+_INLINE_VAR constexpr bool isVectorF = isVector2F<_Ty> ||
+                                       isVector3F<_Ty> ||
+                                       isVector4F<_Ty> ;
+
+template <class _Ty>
+_INLINE_VAR constexpr bool isVectorI = isVector2I<_Ty> ||
+                                       isVector3I<_Ty> ||
+                                       isVector4I<_Ty> ;
+
 
 template <class _Ty>
 _INLINE_VAR constexpr bool isMatrix34 = isMatrix3<_Ty> ||
@@ -518,6 +596,88 @@ _INLINE_VAR constexpr bool isTuple = isScalar<_Ty> ||
                                      isVecMtx<_Ty> ;
 
 
+
+    
+
+
+    namespace detail
+    {
+        template <class _Ty>
+        class numeric_limits : public std::numeric_limits<_Ty> {};
+    
+        template <>
+        class numeric_limits<fpreal16> : public std::_Num_float_base {
+        public:
+            _NODISCARD static constexpr float(min)() noexcept {
+                return H_REAL16_NRM_MIN;
+            }
+
+            _NODISCARD static constexpr float(max)() noexcept {
+                return H_REAL16_MAX;
+            }
+
+            _NODISCARD static constexpr float lowest() noexcept {
+                return -(max)();
+            }
+
+            _NODISCARD static constexpr float epsilon() noexcept {
+                return H_REAL16_EPSILON;
+            }
+
+            _NODISCARD static constexpr float round_error() noexcept {
+                return fpreal(0.5);
+            }
+
+            _NODISCARD static constexpr float denorm_min() noexcept {
+                return H_REAL16_MIN;
+            }
+
+            _NODISCARD static constexpr float infinity() noexcept {
+                return __builtin_huge_valf();
+            }
+
+            _NODISCARD static constexpr float quiet_NaN() noexcept {
+                return __builtin_nanf("0");
+            }
+
+            _NODISCARD static constexpr float signaling_NaN() noexcept {
+                return __builtin_nansf("1");
+            }
+
+            static constexpr int digits         = FLT_MANT_DIG;
+            static constexpr int digits10       = FLT_DIG;
+            static constexpr int max_digits10   = 9;
+            static constexpr int max_exponent   = FLT_MAX_EXP;
+            static constexpr int max_exponent10 = FLT_MAX_10_EXP;
+            static constexpr int min_exponent   = FLT_MIN_EXP;
+            static constexpr int min_exponent10 = FLT_MIN_10_EXP;
+        };
+
+        
+    
+        template<typename _Ty>
+        SYS_FORCE_INLINE static _Ty getZeroVector()
+        {
+            if constexpr(GFE_Type::isVector4<_Ty>)
+                return _Ty(0, 0, 0, 0);
+            else
+                return _Ty(0.0);
+        }
+    
+        template<typename _Ty>
+        SYS_FORCE_INLINE static _Ty getZeroScalar()
+        {
+            if constexpr(std::is_floating_point_v<_Ty>)
+                return _Ty(0.0);
+            else
+                return _Ty(0);
+        }
+    
+    } // End of Namespace detail
+    
+
+
+
     
     
 template <bool judge, typename _Ty>
@@ -532,17 +692,12 @@ struct get_value_type { using type = typename select_value_type<isScalar<_Ty>, _
 template <class _Ty>
 using get_value_type_t = typename get_value_type<_Ty>::type;
     
-#ifndef GFE_TOPO_SCOPE
-
-#if 0
-#define GFE_TOPO_SCOPE GFE_SCOPE_PRIVATE
-#else
-#define GFE_TOPO_SCOPE GA_SCOPE_PUBLIC
-#endif
-
-#endif
 
     
+    template <class _Ty>
+    class numeric_limits : public detail::numeric_limits<get_value_type_t<_Ty>> {};
+
+
 
     //SYS_FORCE_INLINE static GA_PageNum getNumPage(const GA_Offset v)
     //{ return GA_PageNum(v >> GA_PAGE_BITS); }
@@ -616,13 +771,13 @@ using get_value_type_t = typename get_value_type<_Ty>::type;
     
     
     
-template<typename VECTOR_T>
-SYS_FORCE_INLINE static VECTOR_T getZeroVector()
+template<typename _Ty>
+SYS_FORCE_INLINE static _Ty getZero()
 {
-    if constexpr(VECTOR_T::tuple_size == 4)
-        return VECTOR_T(0, 0, 0, 0);
+    if constexpr(GFE_Type::isVector<_Ty>)
+        return detail::getZeroVector<_Ty>();
     else
-        return VECTOR_T(0.0);
+        return detail::getZeroScalar<_Ty>();
 }
     
 
@@ -1191,17 +1346,6 @@ SYS_FORCE_INLINE static bool isInvalidPosAttrib(const GA_Attribute* const posAtt
     
     SYS_FORCE_INLINE GFE_AttribStorage getAttribStorage(const GA_Attribute* const attrib)
     { UT_ASSERT_P(attrib); return getAttribStorage(*attrib); }
-
-
-
-
-    template <class _Ty>
-    using numeric_limits = std::numeric_limits<get_value_type_t<_Ty>>;
-
-
-    template <class _Ty>
-    using numeric_limits = std::numeric_limits<get_value_type_t<_Ty>>;
-
 
 
 

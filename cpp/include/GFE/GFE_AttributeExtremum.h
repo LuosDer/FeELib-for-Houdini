@@ -8,7 +8,19 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
+#if 0
+    GFE_AttribExtremum attribExtremum(geo, inGeo1, cookparms);
+    
+    attribExtremum.outas(sopparms.getOutAsOffset(),
+        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+        
+    attribExtremum.setAttrib(attribClass, sopparms.getAttrib());
+        
+    attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
+        
+    attribExtremum.computeAndBumpDataId();
 
+#endif
 
 class GFE_AttribExtremum : public GFE_AttribFilterWithRef0 {
 
@@ -81,32 +93,32 @@ private:
 
     void attribExtremum()
     {
-        if (attrib->getAIFTuple())
+        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+        if (!GFE_Variant::isAttribStorageIFV(attribStorage))
+            return;
+        auto storageVariant = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
+        auto outAttribMinVariant = GFE_Variant::getBoolVariant(outAttribMin);
+        auto outAttribMaxVariant = GFE_Variant::getBoolVariant(outAttribMax);
+        auto outAttribMinElemnumVariant = GFE_Variant::getBoolVariant(outAttribMinElemnum);
+        auto outAttribMaxElemnumVariant = GFE_Variant::getBoolVariant(outAttribMaxElemnum);
+        std::visit([&] (auto storageVariant,
+                        auto outAttribMinVariant,
+                        auto outAttribMaxVariant,
+                        auto outAttribMinElemnumVariant,
+                        auto outAttribMaxElemnumVariant)
         {
-            auto tupleTypeVariant = GFE_Variant::getAttribStorageVariantIFVM(*attrib);
-            auto outAttribMinVariant = GFE_Variant::getBoolVariant(outAttribMin);
-            auto outAttribMaxVariant = GFE_Variant::getBoolVariant(outAttribMax);
-            auto outAttribMinElemnumVariant = GFE_Variant::getBoolVariant(outAttribMinElemnum);
-            auto outAttribMaxElemnumVariant = GFE_Variant::getBoolVariant(outAttribMaxElemnum);
-            std::visit([&] (auto tupleTypeVariant,
-                            auto outAttribMinVariant,
-                            auto outAttribMaxVariant,
-                            auto outAttribMinElemnumVariant,
-                            auto outAttribMaxElemnumVariant)
-            {
-                using type = typename GFE_Variant::getAttribStorage_t<tupleTypeVariant>;
+            using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
                 
-                type min;
-                type max;
-                GFE_Attribute::computeAttribExtremum<type,
-                                                     outAttribMinVariant,
-                                                     outAttribMaxVariant,
-                                                     outAttribMinElemnumVariant,
-                                                     outAttribMaxElemnumVariant>
-                    (attrib, groupParser.getSplittableRange(attrib), min, max, attribMinElemoff, attribMaxElemoff, subscribeRatio, minGrainSize);
+            type min;
+            type max;
+            GFE_Attribute::computeAttribExtremum<type,
+                                                 outAttribMinVariant,
+                                                 outAttribMaxVariant,
+                                                 outAttribMinElemnumVariant,
+                                                 outAttribMaxElemnumVariant>
+                (attrib, groupParser.getSplittableRange(attrib), min, max, attribMinElemoff, attribMaxElemoff, subscribeRatio, minGrainSize);
                 
-            }, tupleTypeVariant, outAttribMinVariant, outAttribMaxVariant, outAttribMinElemnumVariant, outAttribMaxElemnumVariant);
-        }
+        }, storageVariant, outAttribMinVariant, outAttribMaxVariant, outAttribMinElemnumVariant, outAttribMaxElemnumVariant);
     }
     
 

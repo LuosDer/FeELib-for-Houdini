@@ -61,7 +61,7 @@ using attribTupleSizeConstant4  = attribTupleSizeConstant<4>;
 using attribTupleSizeConstant9  = attribTupleSizeConstant<9>;
 using attribTupleSizeConstant16 = attribTupleSizeConstant<16>;
     
-using attribTupleSizeVariant = std::variant<attribTupleSizeConstant1 ,
+using attribTupleSizeVariant = std::variant<   attribTupleSizeConstant1 ,
                                             attribTupleSizeConstant2 ,
                                             attribTupleSizeConstant3 ,
                                             attribTupleSizeConstant4 ,
@@ -91,7 +91,6 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute& attrib)
 SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib)
 { UT_ASSERT_P(attrib); return getAttribTupleSizeVariant(*attrib); }
 
-
     
 #define __GFE_Variant_CreateMacroStorage(MacroName) \
         MacroName(I)                                \
@@ -99,6 +98,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         MacroName(S)                                \
         MacroName(IF)                               \
         MacroName(IS)                               \
+        MacroName(FVF)                              \
         MacroName(V2)                               \
         MacroName(V3)                               \
         MacroName(V4)                               \
@@ -153,14 +153,14 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         
 #undef __GFE_Variant_SpecializationConstantM
 
-    using attribStorageVariantS = std::variant<attribStorageConstantS>;
+    using attribStorageVariantS = std::variant<   attribStorageConstantS>;
 
-    using attribStorageVariantI = std::variant<attribStorageConstantI8 ,
+    using attribStorageVariantI = std::variant<   attribStorageConstantI8 ,
                                                attribStorageConstantI16,
                                                attribStorageConstantI32,
                                                attribStorageConstantI64>;
 
-    using attribStorageVariantF = std::variant<attribStorageConstantF16,
+    using attribStorageVariantF = std::variant<   attribStorageConstantF16,
                                                attribStorageConstantF32,
                                                attribStorageConstantF64>;
     
@@ -168,8 +168,10 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
     using attribStorageVariantIS = typename variant_concat_t<attribStorageVariantI, attribStorageVariantS>;
 
+    
+    
 #define __GFE_Variant_SpecializationConstantVI(NUM)                                           \
-        using attribStorageVariantV##NUM##I = std::variant<attribStorageConstantV##NUM##I32,  \
+        using attribStorageVariantV##NUM##I = std::variant<   attribStorageConstantV##NUM##I32,  \
                                                            attribStorageConstantV##NUM##I64>; \
     
         __GFE_Variant_SpecializationConstantVI(2)
@@ -180,7 +182,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
 #define __GFE_Variant_SpecializationConstantVF(NUM) \
-        using attribStorageVariantV##NUM##F = std::variant<attribStorageConstantV##NUM##F16,  \
+        using attribStorageVariantV##NUM##F = std::variant<   attribStorageConstantV##NUM##F16,  \
                                                            attribStorageConstantV##NUM##F32,  \
                                                            attribStorageConstantV##NUM##F64>; \
     
@@ -202,7 +204,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
 #define __GFE_Variant_SpecializationConstantM(NUM)\
-        using attribStorageVariantM##NUM## = std::variant<attribStorageConstantM##NUM##F32,  \
+        using attribStorageVariantM##NUM## = std::variant<   attribStorageConstantM##NUM##F32,  \
                                                           attribStorageConstantM##NUM##F64>; \
     
         __GFE_Variant_SpecializationConstantM(2)
@@ -217,6 +219,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     using attribStorageVariantV    = typename variant_concat_t<variant_concat_t<attribStorageVariantV2, attribStorageVariantV3>, attribStorageVariantV4>;
     using attribStorageVariantM    = typename variant_concat_t<variant_concat_t<attribStorageVariantM2, attribStorageVariantM3>, attribStorageVariantM4>;
     using attribStorageVariantVF   = typename variant_concat_t<variant_concat_t<attribStorageVariantV2F, attribStorageVariantV3F>, attribStorageVariantV4F>;
+    using attribStorageVariantFVF  = typename variant_concat_t<attribStorageVariantF, attribStorageVariantVF>;
     using attribStorageVariantVI   = typename variant_concat_t<variant_concat_t<attribStorageVariantV2I, attribStorageVariantV3I>, attribStorageVariantV4I>;
     using attribStorageVariantIFV  = typename variant_concat_t<attribStorageVariantIF,  attribStorageVariantV>;
     using attribStorageVariantVM   = typename variant_concat_t<attribStorageVariantV,   attribStorageVariantM>;
@@ -227,100 +230,205 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
 
-#define __GFE_Variant_SpecializationSwitchS\
+#define __GFE_Variant_SpecializationSwitchVariantS\
         case GFE_AttribStorage::string:   return attribStorageConstant<GFE_AttribStorage::string>  {}; break;\
 
-#define __GFE_Variant_SpecializationSwitchI\
+#define __GFE_Variant_SpecializationSwitchVariantI\
         case GFE_AttribStorage::int8:     return attribStorageConstant<GFE_AttribStorage::int8>    {}; break;\
         case GFE_AttribStorage::int16:    return attribStorageConstant<GFE_AttribStorage::int16>   {}; break;\
         case GFE_AttribStorage::int32:    return attribStorageConstant<GFE_AttribStorage::int32>   {}; break;\
         case GFE_AttribStorage::int64:    return attribStorageConstant<GFE_AttribStorage::int64>   {}; break;\
     
-#define __GFE_Variant_SpecializationSwitchF\
+#define __GFE_Variant_SpecializationSwitchVariantF\
         case GFE_AttribStorage::fpreal16: return attribStorageConstant<GFE_AttribStorage::fpreal16>{}; break;\
         case GFE_AttribStorage::fpreal32: return attribStorageConstant<GFE_AttribStorage::fpreal32>{}; break;\
         case GFE_AttribStorage::fpreal64: return attribStorageConstant<GFE_AttribStorage::fpreal64>{}; break;\
 
-#define __GFE_Variant_SpecializationSwitchVIN(NUM)\
+#define __GFE_Variant_SpecializationSwitchVariantVIN(NUM)\
         case GFE_AttribStorage::UT_Vector##NUM##I: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##I>{}; break;\
         case GFE_AttribStorage::UT_Vector##NUM##L: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##L>{}; break;\
 
-#define __GFE_Variant_SpecializationSwitchVFN(NUM)\
+#define __GFE_Variant_SpecializationSwitchVariantVFN(NUM)\
         case GFE_AttribStorage::UT_Vector##NUM##H: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##H>{}; break;\
         case GFE_AttribStorage::UT_Vector##NUM##F: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##F>{}; break;\
         case GFE_AttribStorage::UT_Vector##NUM##D: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##D>{}; break;\
 
-#define __GFE_Variant_SpecializationSwitchVN(NUM)   \
-        __GFE_Variant_SpecializationSwitchVIN(NUM)  \
-        __GFE_Variant_SpecializationSwitchVFN(NUM)  \
+#define __GFE_Variant_SpecializationSwitchVariantVN(NUM)   \
+        __GFE_Variant_SpecializationSwitchVariantVIN(NUM)  \
+        __GFE_Variant_SpecializationSwitchVariantVFN(NUM)  \
     
 
-#define __GFE_Variant_SpecializationSwitchMN(NUM) \
+#define __GFE_Variant_SpecializationSwitchVariantMN(NUM) \
         case GFE_AttribStorage::UT_Matrix##NUM##F: return attribStorageConstant<GFE_AttribStorage::UT_Matrix##NUM##F>{}; break;\
         case GFE_AttribStorage::UT_Matrix##NUM##D: return attribStorageConstant<GFE_AttribStorage::UT_Matrix##NUM##D>{}; break;\
 
     
-#define __GFE_Variant_SpecializationSwitchVI       \
-        __GFE_Variant_SpecializationSwitchVIN(2)   \
-        __GFE_Variant_SpecializationSwitchVIN(3)   \
-        __GFE_Variant_SpecializationSwitchVIN(4)   \
+#define __GFE_Variant_SpecializationSwitchVariantVI       \
+        __GFE_Variant_SpecializationSwitchVariantVIN(2)   \
+        __GFE_Variant_SpecializationSwitchVariantVIN(3)   \
+        __GFE_Variant_SpecializationSwitchVariantVIN(4)   \
 
     
-#define __GFE_Variant_SpecializationSwitchVF       \
-        __GFE_Variant_SpecializationSwitchVFN(2)   \
-        __GFE_Variant_SpecializationSwitchVFN(3)   \
-        __GFE_Variant_SpecializationSwitchVFN(4)   \
+#define __GFE_Variant_SpecializationSwitchVariantVF       \
+        __GFE_Variant_SpecializationSwitchVariantVFN(2)   \
+        __GFE_Variant_SpecializationSwitchVariantVFN(3)   \
+        __GFE_Variant_SpecializationSwitchVariantVFN(4)   \
 
     
-#define __GFE_Variant_SpecializationSwitchV2I __GFE_Variant_SpecializationSwitchVIN(2)
-#define __GFE_Variant_SpecializationSwitchV3I __GFE_Variant_SpecializationSwitchVIN(3)
-#define __GFE_Variant_SpecializationSwitchV4I __GFE_Variant_SpecializationSwitchVIN(4)
-
-#define __GFE_Variant_SpecializationSwitchV2F __GFE_Variant_SpecializationSwitchVFN(2)
-#define __GFE_Variant_SpecializationSwitchV3F __GFE_Variant_SpecializationSwitchVFN(3)
-#define __GFE_Variant_SpecializationSwitchV4F __GFE_Variant_SpecializationSwitchVFN(4)
+#define __GFE_Variant_SpecializationSwitchVariantFVF      \
+        __GFE_Variant_SpecializationSwitchVariantF        \
+        __GFE_Variant_SpecializationSwitchVariantVF       \
 
     
-#define __GFE_Variant_SpecializationSwitchIF \
-        __GFE_Variant_SpecializationSwitchI  \
-        __GFE_Variant_SpecializationSwitchF  \
+#define __GFE_Variant_SpecializationSwitchVariantV2I __GFE_Variant_SpecializationSwitchVariantVIN(2)
+#define __GFE_Variant_SpecializationSwitchVariantV3I __GFE_Variant_SpecializationSwitchVariantVIN(3)
+#define __GFE_Variant_SpecializationSwitchVariantV4I __GFE_Variant_SpecializationSwitchVariantVIN(4)
+
+#define __GFE_Variant_SpecializationSwitchVariantV2F __GFE_Variant_SpecializationSwitchVariantVFN(2)
+#define __GFE_Variant_SpecializationSwitchVariantV3F __GFE_Variant_SpecializationSwitchVariantVFN(3)
+#define __GFE_Variant_SpecializationSwitchVariantV4F __GFE_Variant_SpecializationSwitchVariantVFN(4)
+
+    
+#define __GFE_Variant_SpecializationSwitchVariantIF \
+        __GFE_Variant_SpecializationSwitchVariantI  \
+        __GFE_Variant_SpecializationSwitchVariantF  \
         
-#define __GFE_Variant_SpecializationSwitchIS \
-        __GFE_Variant_SpecializationSwitchI  \
-        __GFE_Variant_SpecializationSwitchS  \
+#define __GFE_Variant_SpecializationSwitchVariantIS \
+        __GFE_Variant_SpecializationSwitchVariantI  \
+        __GFE_Variant_SpecializationSwitchVariantS  \
         
-#define __GFE_Variant_SpecializationSwitchV      \
-        __GFE_Variant_SpecializationSwitchVN(2)  \
-        __GFE_Variant_SpecializationSwitchVN(3)  \
-        __GFE_Variant_SpecializationSwitchVN(4)  \
+#define __GFE_Variant_SpecializationSwitchVariantV      \
+        __GFE_Variant_SpecializationSwitchVariantVN(2)  \
+        __GFE_Variant_SpecializationSwitchVariantVN(3)  \
+        __GFE_Variant_SpecializationSwitchVariantVN(4)  \
 
-#define __GFE_Variant_SpecializationSwitchV2 __GFE_Variant_SpecializationSwitchVN(2)
-#define __GFE_Variant_SpecializationSwitchV3 __GFE_Variant_SpecializationSwitchVN(3)
-#define __GFE_Variant_SpecializationSwitchV4 __GFE_Variant_SpecializationSwitchVN(4)
+#define __GFE_Variant_SpecializationSwitchVariantV2 __GFE_Variant_SpecializationSwitchVariantVN(2)
+#define __GFE_Variant_SpecializationSwitchVariantV3 __GFE_Variant_SpecializationSwitchVariantVN(3)
+#define __GFE_Variant_SpecializationSwitchVariantV4 __GFE_Variant_SpecializationSwitchVariantVN(4)
 
-#define __GFE_Variant_SpecializationSwitchM      \
-        __GFE_Variant_SpecializationSwitchMN(2)  \
-        __GFE_Variant_SpecializationSwitchMN(3)  \
-        __GFE_Variant_SpecializationSwitchMN(4)  \
+#define __GFE_Variant_SpecializationSwitchVariantM      \
+        __GFE_Variant_SpecializationSwitchVariantMN(2)  \
+        __GFE_Variant_SpecializationSwitchVariantMN(3)  \
+        __GFE_Variant_SpecializationSwitchVariantMN(4)  \
 
-#define __GFE_Variant_SpecializationSwitchM2 __GFE_Variant_SpecializationSwitchMN(2)
-#define __GFE_Variant_SpecializationSwitchM3 __GFE_Variant_SpecializationSwitchMN(3)
-#define __GFE_Variant_SpecializationSwitchM4 __GFE_Variant_SpecializationSwitchMN(4)
+#define __GFE_Variant_SpecializationSwitchVariantM2 __GFE_Variant_SpecializationSwitchVariantMN(2)
+#define __GFE_Variant_SpecializationSwitchVariantM3 __GFE_Variant_SpecializationSwitchVariantMN(3)
+#define __GFE_Variant_SpecializationSwitchVariantM4 __GFE_Variant_SpecializationSwitchVariantMN(4)
 
-#define __GFE_Variant_SpecializationSwitchVM    \
-        __GFE_Variant_SpecializationSwitchV     \
-        __GFE_Variant_SpecializationSwitchM     \
+#define __GFE_Variant_SpecializationSwitchVariantVM    \
+        __GFE_Variant_SpecializationSwitchVariantV     \
+        __GFE_Variant_SpecializationSwitchVariantM     \
 
-#define __GFE_Variant_SpecializationSwitchIFV   \
-        __GFE_Variant_SpecializationSwitchIF    \
-        __GFE_Variant_SpecializationSwitchV     \
+#define __GFE_Variant_SpecializationSwitchVariantIFV   \
+        __GFE_Variant_SpecializationSwitchVariantIF    \
+        __GFE_Variant_SpecializationSwitchVariantV     \
         
-#define __GFE_Variant_SpecializationSwitchIFVM  \
-        __GFE_Variant_SpecializationSwitchIFV   \
-        __GFE_Variant_SpecializationSwitchM     \
+#define __GFE_Variant_SpecializationSwitchVariantIFVM  \
+        __GFE_Variant_SpecializationSwitchVariantIFV   \
+        __GFE_Variant_SpecializationSwitchVariantM     \
 
 
 
+
+
+    
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueS\
+        case GFE_AttribStorage::string:   return true; break;\
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueI\
+        case GFE_AttribStorage::int8:     return true; break;\
+        case GFE_AttribStorage::int16:    return true; break;\
+        case GFE_AttribStorage::int32:    return true; break;\
+        case GFE_AttribStorage::int64:    return true; break;\
+    
+#define __GFE_Variant_SpecializationSwitchVariantTrueF\
+        case GFE_AttribStorage::fpreal16: return true; break;\
+        case GFE_AttribStorage::fpreal32: return true; break;\
+        case GFE_AttribStorage::fpreal64: return true; break;\
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueVIN(NUM)\
+        case GFE_AttribStorage::UT_Vector##NUM##I: return true; break;\
+        case GFE_AttribStorage::UT_Vector##NUM##L: return true; break;\
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueVFN(NUM)\
+        case GFE_AttribStorage::UT_Vector##NUM##H: return true; break;\
+        case GFE_AttribStorage::UT_Vector##NUM##F: return true; break;\
+        case GFE_AttribStorage::UT_Vector##NUM##D: return true; break;\
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueVN(NUM)   \
+        __GFE_Variant_SpecializationSwitchVariantTrueVIN(NUM)  \
+        __GFE_Variant_SpecializationSwitchVariantTrueVFN(NUM)  \
+    
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueMN(NUM) \
+        case GFE_AttribStorage::UT_Matrix##NUM##F: return true; break;\
+        case GFE_AttribStorage::UT_Matrix##NUM##D: return true; break;\
+
+    
+#define __GFE_Variant_SpecializationSwitchVariantTrueVI       \
+        __GFE_Variant_SpecializationSwitchVariantTrueVIN(2)   \
+        __GFE_Variant_SpecializationSwitchVariantTrueVIN(3)   \
+        __GFE_Variant_SpecializationSwitchVariantTrueVIN(4)   \
+
+    
+#define __GFE_Variant_SpecializationSwitchVariantTrueVF       \
+        __GFE_Variant_SpecializationSwitchVariantTrueVFN(2)   \
+        __GFE_Variant_SpecializationSwitchVariantTrueVFN(3)   \
+        __GFE_Variant_SpecializationSwitchVariantTrueVFN(4)   \
+
+    
+#define __GFE_Variant_SpecializationSwitchVariantTrueFVF      \
+        __GFE_Variant_SpecializationSwitchVariantTrueF        \
+        __GFE_Variant_SpecializationSwitchVariantTrueVF       \
+
+    
+#define __GFE_Variant_SpecializationSwitchVariantTrueV2I __GFE_Variant_SpecializationSwitchVariantTrueVIN(2)
+#define __GFE_Variant_SpecializationSwitchVariantTrueV3I __GFE_Variant_SpecializationSwitchVariantTrueVIN(3)
+#define __GFE_Variant_SpecializationSwitchVariantTrueV4I __GFE_Variant_SpecializationSwitchVariantTrueVIN(4)
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueV2F __GFE_Variant_SpecializationSwitchVariantTrueVFN(2)
+#define __GFE_Variant_SpecializationSwitchVariantTrueV3F __GFE_Variant_SpecializationSwitchVariantTrueVFN(3)
+#define __GFE_Variant_SpecializationSwitchVariantTrueV4F __GFE_Variant_SpecializationSwitchVariantTrueVFN(4)
+
+    
+#define __GFE_Variant_SpecializationSwitchVariantTrueIF \
+        __GFE_Variant_SpecializationSwitchVariantTrueI  \
+        __GFE_Variant_SpecializationSwitchVariantTrueF  \
+        
+#define __GFE_Variant_SpecializationSwitchVariantTrueIS \
+        __GFE_Variant_SpecializationSwitchVariantTrueI  \
+        __GFE_Variant_SpecializationSwitchVariantTrueS  \
+        
+#define __GFE_Variant_SpecializationSwitchVariantTrueV      \
+        __GFE_Variant_SpecializationSwitchVariantTrueVN(2)  \
+        __GFE_Variant_SpecializationSwitchVariantTrueVN(3)  \
+        __GFE_Variant_SpecializationSwitchVariantTrueVN(4)  \
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueV2 __GFE_Variant_SpecializationSwitchVariantTrueVN(2)
+#define __GFE_Variant_SpecializationSwitchVariantTrueV3 __GFE_Variant_SpecializationSwitchVariantTrueVN(3)
+#define __GFE_Variant_SpecializationSwitchVariantTrueV4 __GFE_Variant_SpecializationSwitchVariantTrueVN(4)
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueM      \
+        __GFE_Variant_SpecializationSwitchVariantTrueMN(2)  \
+        __GFE_Variant_SpecializationSwitchVariantTrueMN(3)  \
+        __GFE_Variant_SpecializationSwitchVariantTrueMN(4)  \
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueM2 __GFE_Variant_SpecializationSwitchVariantTrueMN(2)
+#define __GFE_Variant_SpecializationSwitchVariantTrueM3 __GFE_Variant_SpecializationSwitchVariantTrueMN(3)
+#define __GFE_Variant_SpecializationSwitchVariantTrueM4 __GFE_Variant_SpecializationSwitchVariantTrueMN(4)
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueVM    \
+        __GFE_Variant_SpecializationSwitchVariantTrueV     \
+        __GFE_Variant_SpecializationSwitchVariantTrueM     \
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueIFV   \
+        __GFE_Variant_SpecializationSwitchVariantTrueIF    \
+        __GFE_Variant_SpecializationSwitchVariantTrueV     \
+        
+#define __GFE_Variant_SpecializationSwitchVariantTrueIFVM  \
+        __GFE_Variant_SpecializationSwitchVariantTrueIFV   \
+        __GFE_Variant_SpecializationSwitchVariantTrueM     \
 
 
 
@@ -330,14 +438,14 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
             return attribStorageConstant<GFE_AttribStorage::STORAGE1>{};                                                                  \
 
 
-    
+    //attribStorageVariantI
     
 #define __GFE_Variant_SpecializationGetAttribStorageVariant(STORAGE)                                                              \
         attribStorageVariant##STORAGE getAttribStorageVariant##STORAGE(const GFE_AttribStorage v)                                 \
         {                                                                                                                         \
             switch (v)                                                                                                            \
             {                                                                                                                     \
-                __GFE_Variant_SpecializationSwitch##STORAGE                                                                       \
+                __GFE_Variant_SpecializationSwitchVariant##STORAGE                                                                \
                 default:  break;                                                                                                  \
             }                                                                                                                     \
             UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");                                                                      \
@@ -373,11 +481,26 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         }                                                                                                                         \
 
     __GFE_Variant_CreateMacroStorage(__GFE_Variant_SpecializationGetAttribStorageVariant)
-    
-#undef __GFE_Variant_SpecializationGetAttribStorageVariant
 
-#undef __GFE_Variant_SpecializationReturnStorageConstantReflection
+
+#define __GFE_Variant_SpecializationIsAttribStorage(STORAGE)                                                                      \
+        bool isAttribStorage##STORAGE(const GFE_AttribStorage v)                                                                  \
+        {                                                                                                                         \
+            switch (v)                                                                                                            \
+            {                                                                                                                     \
+                __GFE_Variant_SpecializationSwitchVariantTrue##STORAGE                                                            \
+            }                                                                                                                     \
+            return false;                                                                                                         \
+        }                                                                                                                         \
+
+    __GFE_Variant_CreateMacroStorage(__GFE_Variant_SpecializationIsAttribStorage)
+
+
+
     
+#undef __GFE_Variant_SpecializationIsAttribStorage
+#undef __GFE_Variant_SpecializationGetAttribStorageVariant
+#undef __GFE_Variant_SpecializationReturnStorageConstantReflection
 #undef __GFE_Variant_SpecializationGetAttribStorageVariant
 
     
@@ -391,28 +514,80 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
 
     
-#undef __GFE_Variant_SpecializationSwitchI
-#undef __GFE_Variant_SpecializationSwitchF
-#undef __GFE_Variant_SpecializationSwitchS
-#undef __GFE_Variant_SpecializationSwitchV
-#undef __GFE_Variant_SpecializationSwitchM
+#undef __GFE_Variant_SpecializationSwitchVariantI
+#undef __GFE_Variant_SpecializationSwitchVariantF
+#undef __GFE_Variant_SpecializationSwitchVariantS
+#undef __GFE_Variant_SpecializationSwitchVariantV
+#undef __GFE_Variant_SpecializationSwitchVariantM
     
-#undef __GFE_Variant_SpecializationSwitchIF
-#undef __GFE_Variant_SpecializationSwitchIS
-#undef __GFE_Variant_SpecializationSwitchV2F
-#undef __GFE_Variant_SpecializationSwitchV3F
-#undef __GFE_Variant_SpecializationSwitchV4F
-#undef __GFE_Variant_SpecializationSwitchVF
+#undef __GFE_Variant_SpecializationSwitchVariantIF
+#undef __GFE_Variant_SpecializationSwitchVariantIS
+#undef __GFE_Variant_SpecializationSwitchVariantV2F
+#undef __GFE_Variant_SpecializationSwitchVariantV3F
+#undef __GFE_Variant_SpecializationSwitchVariantV4F
+#undef __GFE_Variant_SpecializationSwitchVariantVF
     
-#undef __GFE_Variant_SpecializationSwitchV2I
-#undef __GFE_Variant_SpecializationSwitchV3I
-#undef __GFE_Variant_SpecializationSwitchV4I
-#undef __GFE_Variant_SpecializationSwitchVI
+#undef __GFE_Variant_SpecializationSwitchVariantV2I
+#undef __GFE_Variant_SpecializationSwitchVariantV3I
+#undef __GFE_Variant_SpecializationSwitchVariantV4I
+#undef __GFE_Variant_SpecializationSwitchVariantVI
     
-#undef __GFE_Variant_SpecializationSwitchIFV
-#undef __GFE_Variant_SpecializationSwitchIFVM
+#undef __GFE_Variant_SpecializationSwitchVariantIFV
+#undef __GFE_Variant_SpecializationSwitchVariantIFVM
 
+    
+#undef __GFE_Variant_SpecializationSwitchVariantV2
+#undef __GFE_Variant_SpecializationSwitchVariantV3
+#undef __GFE_Variant_SpecializationSwitchVariantV4
+#undef __GFE_Variant_SpecializationSwitchVariantVN
+    
+#undef __GFE_Variant_SpecializationSwitchVariantM2
+#undef __GFE_Variant_SpecializationSwitchVariantM3
+#undef __GFE_Variant_SpecializationSwitchVariantM4
+#undef __GFE_Variant_SpecializationSwitchVariantMN
+    
+#undef __GFE_Variant_SpecializationSwitchVariantVM
+#undef __GFE_Variant_SpecializationSwitchVariantVFN
+#undef __GFE_Variant_SpecializationSwitchVariantVIN
         
+
+
+
+#undef __GFE_Variant_SpecializationSwitchVariantTrueI
+#undef __GFE_Variant_SpecializationSwitchVariantTrueF
+#undef __GFE_Variant_SpecializationSwitchVariantTrueS
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV
+#undef __GFE_Variant_SpecializationSwitchVariantTrueM
+    
+#undef __GFE_Variant_SpecializationSwitchVariantTrueIF
+#undef __GFE_Variant_SpecializationSwitchVariantTrueIS
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV2F
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV3F
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV4F
+#undef __GFE_Variant_SpecializationSwitchVariantTrueVF
+    
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV2I
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV3I
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV4I
+#undef __GFE_Variant_SpecializationSwitchVariantTrueVI
+    
+#undef __GFE_Variant_SpecializationSwitchVariantTrueIFV
+#undef __GFE_Variant_SpecializationSwitchVariantTrueIFVM
+
+    
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV2
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV3
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV4
+#undef __GFE_Variant_SpecializationSwitchVariantTrueVN
+    
+#undef __GFE_Variant_SpecializationSwitchVariantTrueM2
+#undef __GFE_Variant_SpecializationSwitchVariantTrueM3
+#undef __GFE_Variant_SpecializationSwitchVariantTrueM4
+#undef __GFE_Variant_SpecializationSwitchVariantTrueMN
+    
+#undef __GFE_Variant_SpecializationSwitchVariantTrueVM
+#undef __GFE_Variant_SpecializationSwitchVariantTrueVFN
+#undef __GFE_Variant_SpecializationSwitchVariantTrueVIN
 
 /*
          

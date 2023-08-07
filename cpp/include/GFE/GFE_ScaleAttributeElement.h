@@ -67,10 +67,16 @@ private:
         return true;
     }
 
+    
+
 
     void scaleAttribElement()
     {
-        auto storageVarient = GFE_Variant::getAttribStorageVariantIFV(*attrib);
+        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+        if (!GFE_Variant::isAttribStorageIFV(attribStorage))
+            return;
+        auto storageVarient = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
+        
         auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
         auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
         std::visit([&] (auto storageVarient, auto scaleVariant, auto doNormalizeVariant)

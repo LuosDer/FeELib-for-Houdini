@@ -157,7 +157,6 @@ SOP_FeE_PointGenPerElem_1_0::buildTemplates()
         templ.setChoiceListPtr("srcElemoffAttribName"_sh, &SOP_Node::pointAttribReplaceMenu);
         templ.setChoiceListPtr("keepSrcElemAttrib"_sh, &SOP_Node::allAttribMenu);
         templ.setChoiceListPtr("keepSrcElemGroup"_sh, &SOP_Node::allGroupMenu);
-        
     }
     return templ.templates();
 }
@@ -221,7 +220,7 @@ SOP_FeE_PointGenPerElem_1_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_PointGenPerElem_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_PointGenPerElem_1_0Enums;
     switch (parmGroupType)
@@ -237,7 +236,7 @@ sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::GroupType parmGroupType)
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_PointGenPerElem_1_0Parms::ElementClass parmElementClass)
+sopGroupType(const SOP_FeE_PointGenPerElem_1_0Parms::ElementClass parmElementClass)
 {
     using namespace SOP_FeE_PointGenPerElem_1_0Enums;
     switch (parmElementClass)

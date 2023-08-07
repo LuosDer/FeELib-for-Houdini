@@ -25,10 +25,31 @@ enum class GFE_CurveUVMethod
     WorldArcLength,
 };
 
-
+    
 class GFE_CurveUV : public GFE_AttribFilter {
 
 public:
+    using MethodVariant = std::variant<std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::LocalAverage  >,
+                                       std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::LocalArcLength>,
+                                       std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::WorldAverage  >,
+                                       std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::WorldArcLength>>;
+
+    static MethodVariant getMethodVariant(const GFE_CurveUVMethod curveUVMethod)
+    {
+        switch (curveUVMethod)
+        {
+        case GFE_CurveUVMethod::LocalAverage:   return std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::LocalAverage  >{}; break;
+        case GFE_CurveUVMethod::LocalArcLength: return std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::LocalArcLength>{}; break;
+        case GFE_CurveUVMethod::WorldAverage:   return std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::WorldAverage  >{}; break;
+        case GFE_CurveUVMethod::WorldArcLength: return std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::WorldArcLength>{}; break;
+        }
+        UT_ASSERT_MSG(0, "Unhandled Curve UV Method");
+        return std::integral_constant<GFE_CurveUVMethod, GFE_CurveUVMethod::LocalAverage>{};
+    }
+
+
+
+    
     using GFE_AttribFilter::GFE_AttribFilter;
 
     ~GFE_CurveUV()
@@ -46,12 +67,12 @@ public:
     //SYS_FORCE_INLINE GA_Attribute*
     //    findOrCreateUV(
     //        const bool detached = false,
-    //        const GA_AttributeOwner uvAttribClass = GA_ATTRIB_VERTEX,
+    //        const GA_AttributeOwner attribClass = GA_ATTRIB_VERTEX,
     //        const GA_Storage storage = GA_STORE_INVALID,
     //        const UT_StringHolder& name = "uv",
     //        const int tuple_size = 3
     //    )
-    //{ return getOutAttribArray().findOrCreateUV(detached, uvAttribClass, storage, name, tuple_size); }
+    //{ return getOutAttribArray().findOrCreateUV(detached, attribClass, storage, name, tuple_size); }
 
     void
         setComputeParm(
@@ -69,7 +90,6 @@ public:
 
 private:
 
-    // can not use in parallel unless for each GA_Detail
     virtual bool
         computeCore() override
     {
@@ -79,65 +99,49 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        if (!posAttrib)
-            posAttrib = geo->getP();
-
-        uvAttrib = getOutAttribArray()[0];
-        const GA_Storage storage = uvAttrib->getAIFTuple()->getStorage(uvAttrib);
-        switch (uvAttrib->getAIFTuple()->getTupleSize(uvAttrib))
-        {
-        case 2:
-            switch (storage)
-            {
-            case GA_STORE_REAL16: curveUV<UT_Vector2T<fpreal16>>(); break;
-            case GA_STORE_REAL32: curveUV<UT_Vector2T<fpreal32>>(); break;
-            default:
-            case GA_STORE_REAL64: curveUV<UT_Vector2T<fpreal64>>(); break;
-            }
-        break;
-        case 3:
-            switch (storage)
-            {
-            case GA_STORE_REAL16: curveUV<UT_Vector3T<fpreal16>>(); break;
-            case GA_STORE_REAL32: curveUV<UT_Vector3T<fpreal32>>(); break;
-            default:
-            case GA_STORE_REAL64: curveUV<UT_Vector3T<fpreal64>>(); break;
-            }
-        break;
-        case 4:
-            switch (storage)
-            {
-            case GA_STORE_REAL16: curveUV<UT_Vector4T<fpreal16>>(); break;
-            case GA_STORE_REAL32: curveUV<UT_Vector4T<fpreal32>>(); break;
-            default:
-            case GA_STORE_REAL64: curveUV<UT_Vector4T<fpreal64>>(); break;
-            }
-        break;
-        default: break;
-        }
-
+        setValidConstPosAttrib();
+        
+        attrib = getOutAttribArray()[0];
+        curveUV();
 
         return true;
     }
-
-
-    template<typename VECTOR_T>
+    
     void curveUV()
     {
-        using value_type = typename VECTOR_T::value_type;
+        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+        if (!GFE_Variant::isAttribStorageFVF(attribStorage))
+            return;
+        auto storageVariant = GFE_Variant::getAttribStorageVariantFVF(attribStorage);
+        auto methodVariant = getMethodVariant(curveUVMethod);
+        //auto outAttribMaxVariant = GFE_Variant::getBoolVariant(outAttribMax);
+        std::visit([&] (auto storageVariant,
+                        auto methodVariant)
+        {
+            using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+            curveUV<type, methodVariant>();
+        }, storageVariant, methodVariant);
+    }
+    
+    template<typename _Ty, GFE_CurveUVMethod _TCurveUVMethod>
+    void curveUV()
+    {
+        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
+        
+        const GA_RWHandleT<_Ty> uv_h(attrib);
 
-        const GA_RWHandleT<VECTOR_T> uv_h(uvAttrib);
-
-        const bool isPointAttrib = uvAttrib->getOwner() == GA_ATTRIB_POINT;
-        const GA_AttributeOwner owner = uvAttrib->getOwner();
+        const bool isPointAttrib = attrib->getOwner() == GA_ATTRIB_POINT;
+        //const GA_AttributeOwner owner = attrib->getOwner();
 
         const GA_ROHandleT<UT_Vector3T<value_type>> pos_h(posAttrib);
 
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
         {
+            constexpr bool isScalar = GFE_Type::isScalar<_Ty>;
             UT_Array<value_type> uvs;
-            //VECTOR_T uv(0.0);
-            VECTOR_T uv;
+            GA_Size lastIndex;
+            value_type dist, p;
+            _Ty uv;
             UT_Vector3T<value_type> pos, pos_prev;
             GA_Offset ptoff, vtxoff;
             GA_Offset start, end;
@@ -146,26 +150,156 @@ private:
                 for (GA_Offset primoff = start; primoff < end; ++primoff)
                 {
                     const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
-                    
                     const GA_Size numvtx = vertices.size();
                     if (numvtx < 2)
                         continue;
                     
-                    value_type dist = 0;
-                    uv = GFE_Type::getZeroVector<VECTOR_T>();
-#if 1
-                    switch (curveUVMethod)
+                    uv = GFE_Type::getZero<_Ty>();
+
+                    if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalAverage)
                     {
-                    case GFE_CurveUVMethod::LocalAverage:
+                        dist = 1.0 / (numvtx - 1);
+                    }
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalArcLength)
+                    {
+                        dist = 0;
+                        uvs.setSize(numvtx);
+                        ptoff = geo->vertexPoint(vertices[0]);
+                        pos_prev = pos_h.get(ptoff);
+                    }
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldAverage)
+                    {
+                        ptoff = geo->vertexPoint(vertices[0]);
+                        pos_prev = pos_h.get(ptoff);
+                    }
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldArcLength)
+                    {
+                        ptoff = geo->vertexPoint(vertices[0]);
+                        pos_prev = pos_h.get(ptoff);
+                    }
+
+                    
+                    for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
+                    {
+                        if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalAverage)
+                        {
+                            vtxoff = vertices[vtxpnum];
+                            if constexpr (isScalar)
+                                uv += dist;
+                            else
+                                uv[0] += dist;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                        }
+                        else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalArcLength)
+                        {
+                            for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
+                            {
+                                vtxoff = vertices[vtxpnum];
+                                ptoff = geo->vertexPoint(vtxoff);
+                                pos = pos_h.get(ptoff);
+                                dist += pos.distance(pos_prev);
+                                uvs[vtxpnum] = dist;
+                                pos_prev = pos;
+                            }
+                            GA_Size lastIndex = numvtx - 1;
+                            value_type p = uvs[lastIndex];
+                            for (GA_Size vtxpnum = 1; vtxpnum < lastIndex; vtxpnum++)
+                            {
+                                vtxoff = vertices[vtxpnum];
+                                if constexpr (isScalar)
+                                    uv = uvs[vtxpnum] / p;
+                                else
+                                    uv[0] = uvs[vtxpnum] / p;
+                                uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                            }
+                            vtxoff = vertices[lastIndex];
+                            if constexpr (isScalar)
+                                uv = 1.0;
+                            else
+                                uv[0] = 1.0;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                        }
+                        else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldAverage)
+                        {
+                            vtxoff = vertices[vtxpnum];
+                            ptoff = geo->vertexPoint(vtxoff);
+                            pos = pos_h.get(ptoff);
+                            dist += pos.distance(pos_prev);
+                            pos_prev = pos;
+                        }
+                        else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldArcLength)
+                        {
+                            vtxoff = vertices[vtxpnum];
+                            ptoff = geo->vertexPoint(vtxoff);
+                            pos = pos_h.get(ptoff);
+                            if constexpr (isScalar)
+                                uv += pos.distance(pos_prev);
+                            else
+                                uv[0] += pos.distance(pos_prev);
+                            uv_h.set(isPointAttrib ? ptoff : vtxoff, 0, uv);
+                            pos_prev = pos;
+                        }
+                    }
+
+                    if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalArcLength)
+                    {
+                        lastIndex = numvtx - 1;
+                        p = uvs[lastIndex];
+                    }
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldAverage)
+                    {
+                        lastIndex = numvtx;
+                        dist /= (numvtx - 1);
+                    }
+                    else
+                    {
+                        lastIndex = numvtx;
+                    }
+                    for (GA_Size vtxpnum = 1; vtxpnum < lastIndex; vtxpnum++)
+                    {
+                        if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalArcLength)
+                        {
+                            vtxoff = vertices[vtxpnum];
+                            if constexpr (isScalar)
+                                uv = uvs[vtxpnum] / p;
+                            else
+                                uv[0] = uvs[vtxpnum] / p;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                        }
+                        else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldAverage)
+                        {
+                            vtxoff = vertices[vtxpnum];
+                            if constexpr (isScalar)
+                                uv += dist;
+                            else
+                                uv[0] += dist;
+                            uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                        }
+                    }
+                    if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalArcLength)
+                    {
+                        vtxoff = vertices[lastIndex];
+                        if constexpr (isScalar)
+                            uv = 1.0;
+                        else
+                            uv[0] = 1.0;
+                        uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
+                    }
+                    /*
+                    if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalAverage)
+                    {
                         dist = 1.0 / (numvtx - 1);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
                             vtxoff = vertices[vtxpnum];
-                            uv[0] += dist;
+                            if constexpr (isScalar)
+                                uv += dist;
+                            else
+                                uv[0] += dist;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
-                    break;
-                    case GFE_CurveUVMethod::LocalArcLength:
+                    }
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::LocalArcLength)
                     {
                         uvs.setSize(numvtx);
                         ptoff = geo->vertexPoint(vertices[0]);
@@ -184,15 +318,21 @@ private:
                         for (GA_Size vtxpnum = 1; vtxpnum < lastIndex; vtxpnum++)
                         {
                             vtxoff = vertices[vtxpnum];
-                            uv[0] = uvs[vtxpnum] / p;
+                            if constexpr (isScalar)
+                                uv = uvs[vtxpnum] / p;
+                            else
+                                uv[0] = uvs[vtxpnum] / p;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
                         vtxoff = vertices[lastIndex];
-                        uv[0] = 1.0;
+                        if constexpr (isScalar)
+                            uv = 1.0;
+                        else
+                            uv[0] = 1.0;
                         uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                     }
-                    break;
-                    case GFE_CurveUVMethod::WorldAverage:
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldAverage)
+                    {
                         ptoff = geo->vertexPoint(vertices[0]);
                         pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
@@ -207,11 +347,15 @@ private:
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
                         {
                             vtxoff = vertices[vtxpnum];
-                            uv[0] += dist;
+                            if constexpr (isScalar)
+                                uv += dist;
+                            else
+                                uv[0] += dist;
                             uv_h.set(isPointAttrib ? geo->vertexPoint(vtxoff) : vtxoff, 0, uv);
                         }
-                    break;
-                    case GFE_CurveUVMethod::WorldArcLength:
+                    }
+                    else if constexpr (_TCurveUVMethod == GFE_CurveUVMethod::WorldArcLength)
+                    {
                         ptoff = geo->vertexPoint(vertices[0]);
                         pos_prev = pos_h.get(ptoff);
                         for (GA_Size vtxpnum = 1; vtxpnum < numvtx; vtxpnum++)
@@ -219,34 +363,15 @@ private:
                             vtxoff = vertices[vtxpnum];
                             ptoff = geo->vertexPoint(vtxoff);
                             pos = pos_h.get(ptoff);
-                            uv[0] += pos.distance(pos_prev);
+                            if constexpr (isScalar)
+                                uv += pos.distance(pos_prev);
+                            else
+                                uv[0] += pos.distance(pos_prev);
                             uv_h.set(isPointAttrib ? ptoff : vtxoff, 0, uv);
                             pos_prev = pos;
                         }
-                    break;
-                    default: UT_ASSERT_MSG(0, "Unhandled curveUVMethod"); break;
                     }
-#else
-                    GEO_Curve* GEO_Curve0 = static_cast<GEO_Curve*>(geo->getPrimitive(primoff));
-
-                    bool success = false;
-                    switch (curveUVMethod)
-                    {
-                    case GFE_CurveUVMethod::LocalAverage:
-                        success = GEO_Curve0->uniformTexture(uv_h, isPointAttrib);
-                        break;
-                    case GFE_CurveUVMethod::LocalArcLength:
-                        success = GEO_Curve0->chordLenTexture(uv_h, isPointAttrib);
-                        break;
-                    case GFE_CurveUVMethod::WorldArcLength:
-                        success = GEO_Curve0->grevilleTexture(uv_h, isPointAttrib);
-                        break;
-                    default:
-                        UT_ASSERT_MSG(0, "unhandled curveUVMethod");
-                        break;
-                    }
-                    UT_ASSERT_P(success);
-#endif
+                    */
                 }
             }
         }, subscribeRatio, minGrainSize);
@@ -260,7 +385,7 @@ public:
 
 private:
 
-    GA_Attribute* uvAttrib;
+    GA_Attribute* attrib;
 
     
     exint subscribeRatio = 64;

@@ -13,12 +13,70 @@
 #include "GA/GA_Detail.h"
 
 
+namespace GFE_Math {
 
-class GFE_Math {
+    namespace detail
+    {
+        template<typename FLOAT_T>
+        SYS_FORCE_INLINE static FLOAT_T numDistance2(const FLOAT_T val0, const FLOAT_T val1)
+        { return pow(val0 > val1 ? val0 - val1 : val1 - val0, 2); }
 
-public:
+        template<typename VECTOR_T>
+        SYS_FORCE_INLINE static typename VECTOR_T::value_type vectorDistance2(const VECTOR_T& val0, const VECTOR_T& val1)
+        { return val0.distance(val1); }
+
+        
+        //template<typename _Ty>
+        //SYS_FORCE_INLINE static GFE_Type::get_value_type_t<_Ty> lengthVec(const _Ty& val)
+        //{
+        //    using value_type = typename GFE_Type::get_value_type_t<_Ty>;
+        //    if constexpr (GFE_Type::isVector<_Ty>)
+        //        return val.length();
+        //    else
+        //        return val;
+        //}
+        //
+        //template<typename _Ty>
+        //SYS_FORCE_INLINE static _Ty lengthScalar(const _Ty val)
+        //{
+        //    if constexpr (GFE_Type::isScalar<_Ty>)
+        //        return val;
+        //    else
+        //        return val;
+        //}
+
+    } // End of Namespace detail
     
 
+
+    
+    template<typename _Ty>
+    SYS_FORCE_INLINE static GFE_Type::get_value_type_t<_Ty> length(const _Ty& val)
+    {
+        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
+        if constexpr (GFE_Type::isVector<_Ty>)
+            return val.length();
+            //return detail::lengthVec(val);
+        //else if constexpr (GFE_Type::isMatrix<_Ty>)
+        //    return detail::lengthMtx(val);
+        else if constexpr (GFE_Type::isScalar<_Ty>)
+            return value_type(val);
+            
+            //return detail::lengthScalar(val);
+    }
+
+    
+    template<typename _Ty>
+    SYS_FORCE_INLINE static GFE_Type::get_value_type_t<_Ty> length2(const _Ty& val)
+    {
+        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
+        if constexpr (GFE_Type::isVector<_Ty>)
+            return val.length2();
+        else if constexpr (GFE_Type::isScalar<_Ty>)
+            return value_type(val) * value_type(val);
+            
+        //return detail::lengthScalar(val);
+    }
     
     template<typename _Ty>
     SYS_FORCE_INLINE static _Ty lerp(const _Ty v0, const _Ty v1, const fpreal bias)
@@ -80,35 +138,35 @@ public:
 
 
     
-template<typename T>
-SYS_FORCE_INLINE static T radians(const T degrees)
+template<typename _Ty>
+SYS_FORCE_INLINE static _Ty radians(const _Ty degrees)
 { return degrees * PI / 180; }
 
-template<typename T>
-SYS_FORCE_INLINE static T degrees(const T radians)
+template<typename _Ty>
+SYS_FORCE_INLINE static _Ty degrees(const _Ty radians)
 { return radians * 180 / PI; }
 
 
-template<typename T>
-SYS_FORCE_INLINE static typename T::value_type tupleDistance2(const T& val0, const T& val1)
+template<typename _Ty>
+SYS_FORCE_INLINE static typename _Ty::value_type tupleDistance2(const _Ty& val0, const _Ty& val1)
 {
-    if constexpr(::std::is_same_v<T, int8> ||
-                 ::std::is_same_v<T, int16> ||
-                 ::std::is_same_v<T, int32> ||
-                 ::std::is_same_v<T, int64> ||
-                 ::std::is_same_v<T, fpreal16> ||
-                 ::std::is_same_v<T, fpreal32> ||
-                 ::std::is_same_v<T, fpreal64> )
+    if constexpr(::std::is_same_v<_Ty, int8> ||
+                 ::std::is_same_v<_Ty, int16> ||
+                 ::std::is_same_v<_Ty, int32> ||
+                 ::std::is_same_v<_Ty, int64> ||
+                 ::std::is_same_v<_Ty, fpreal16> ||
+                 ::std::is_same_v<_Ty, fpreal32> ||
+                 ::std::is_same_v<_Ty, fpreal64> )
     {
-        return numDistance2(val0, val1);
+        return detail::numDistance2(val0, val1);
     }
     else
-        return vectorDistance2(val0, val1);
+        return detail::vectorDistance2(val0, val1);
 }
     
 #define __GFE_Math_FUNC_tupleDistance2(TYPE)                                   \
 SYS_FORCE_INLINE static TYPE tupleDistance2(const TYPE val0, const TYPE val1)  \
-{ return numDistance2(val0, val1); }                                           \
+{ return detail::numDistance2(val0, val1); }                                   \
 
 __GFE_Math_FUNC_tupleDistance2(int8);
 __GFE_Math_FUNC_tupleDistance2(int16);
@@ -120,19 +178,6 @@ __GFE_Math_FUNC_tupleDistance2(fpreal64);
     
 #undef __GFE_Math_FUNC_tupleDistance2
     
-private:
-    
-
-    template<typename FLOAT_T>
-    SYS_FORCE_INLINE static FLOAT_T numDistance2(const FLOAT_T val0, const FLOAT_T val1)
-    { return pow(val0 > val1 ? val0 - val1 : val1 - val0, 2); }
-
-    template<typename VECTOR_T>
-    SYS_FORCE_INLINE static typename VECTOR_T::value_type vectorDistance2(const VECTOR_T& val0, const VECTOR_T& val1)
-    { return val0.distance(val1); }
-
-public:
-
     
 template<typename FLOAT_T>
 static UT_Vector3T<FLOAT_T> blendDir(const UT_Vector3T<FLOAT_T>& dir0, const UT_Vector3T<FLOAT_T>& dir1, const FLOAT_T blend)
@@ -176,11 +221,11 @@ SYS_FORCE_INLINE static fpreal vlerp<fpreal, fpreal>(const fpreal a, const fprea
 #define GFE_MATH_ReverseROC 1
 
 
-template<typename T>
-SYS_FORCE_INLINE static T distToLine(
-        const UT_Vector3T<T>& pos,
-        const UT_Vector3T<T>& pos0,
-        const UT_Vector3T<T>& pos1)
+template<typename _Ty>
+SYS_FORCE_INLINE static _Ty distToLine(
+        const UT_Vector3T<_Ty>& pos,
+        const UT_Vector3T<_Ty>& pos0,
+        const UT_Vector3T<_Ty>& pos1)
 { return sqrt(length2(cross(pos0 - pos, pos1 - pos)) / distance2(pos0, pos1)); }
 
 
@@ -193,23 +238,23 @@ SYS_FORCE_INLINE static T distToLine(
 
 
 
-template<typename T>
-SYS_FORCE_INLINE static T distToLine(
-    const UT_Vector3T<T>& dir0,
-    const UT_Vector3T<T>& dir1,
-    const UT_Vector3T<T>& pos0,
-    const UT_Vector3T<T>& pos1)
+template<typename _Ty>
+SYS_FORCE_INLINE static _Ty distToLine(
+    const UT_Vector3T<_Ty>& dir0,
+    const UT_Vector3T<_Ty>& dir1,
+    const UT_Vector3T<_Ty>& pos0,
+    const UT_Vector3T<_Ty>& pos1)
 { return sqrt(length2(cross(dir0, dir1)) / distance2(pos0, pos1)); }
 
 
-template<typename T>
-static T circleRadius3Point(
-    const UT_Vector3T<T>& pos0,
-    const UT_Vector3T<T>& pos1,
-    const UT_Vector3T<T>& pos2
+template<typename _Ty>
+static _Ty circleRadius3Point(
+    const UT_Vector3T<_Ty>& pos0,
+    const UT_Vector3T<_Ty>& pos1,
+    const UT_Vector3T<_Ty>& pos2
 )
 {
-    const T x1 = pos0[0],
+    const _Ty x1 = pos0[0],
             x2 = pos1[0],
             x3 = pos2[0],
             y1 = pos0[1],
@@ -219,22 +264,22 @@ static T circleRadius3Point(
             z2 = pos1[2],
             z3 = pos2[2];
 
-    const T a1 =  (y1 * z2 - y2 * z1 - y1 * z3 + y3 * z1 + y2 * z3 - y3 * z2),
+    const _Ty a1 =  (y1 * z2 - y2 * z1 - y1 * z3 + y3 * z1 + y2 * z3 - y3 * z2),
             b1 = -(x1 * z2 - x2 * z1 - x1 * z3 + x3 * z1 + x2 * z3 - x3 * z2),
             c1 =  (x1 * y2 - x2 * y1 - x1 * y3 + x3 * y1 + x2 * y3 - x3 * y2),
             d1 = -(x1 * y2 * z3 - x1 * y3 * z2 - x2 * y1 * z3 + x2 * y3 * z1 + x3 * y1 * z2 - x3 * y2 * z1);
 
-    const T a2 = 2 * (x2 - x1),
+    const _Ty a2 = 2 * (x2 - x1),
             b2 = 2 * (y2 - y1),
             c2 = 2 * (z2 - z1),
             d2 = x1 * x1 + y1 * y1 + z1 * z1 - x2 * x2 - y2 * y2 - z2 * z2;
 
-    const T a3 = 2 * (x3 - x1),
+    const _Ty a3 = 2 * (x3 - x1),
             b3 = 2 * (y3 - y1),
             c3 = 2 * (z3 - z1),
             d3 = x1 * x1 + y1 * y1 + z1 * z1 - x3 * x3 - y3 * y3 - z3 * z3;
 
-    UT_Vector3T<T> circleCenter;
+    UT_Vector3T<_Ty> circleCenter;
     circleCenter[0] = -(b1 * c2 * d3 - b1 * c3 * d2 - b2 * c1 * d3 + b2 * c3 * d1 + b3 * c1 * d2 - b3 * c2 * d1)
                      / (a1 * b2 * c3 - a1 * b3 * c2 - a2 * b1 * c3 + a2 * b3 * c1 + a3 * b1 * c2 - a3 * b2 * c1);
     circleCenter[1] = (a1 * c2 * d3 - a1 * c3 * d2 - a2 * c1 * d3 + a2 * c3 * d1 + a3 * c1 * d2 - a3 * c2 * d1)
@@ -341,7 +386,7 @@ static bool pointInTriangleT1(
 #define pointInTriangleD pointInTriangleT<fpreal64>
 #define pointInTriangleR pointInTriangleT<fpreal>
     
-}; // End of class GFE_Math
+} // End of Namespace GFE_Math
 
 
 

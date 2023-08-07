@@ -1,7 +1,7 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_VolumeClear_1_0.h"
-#include "SOP_FeE_VolumeClear_1_0.proto.h"
+#include "SOP_FeE_VolumeBlur_1_0.h"
+#include "SOP_FeE_VolumeBlur_1_0.proto.h"
 
 
 #include "GA/GA_Detail.h"
@@ -10,10 +10,10 @@
 #include "UT/UT_DSOVersion.h"
 
 
-#include "GFE/GFE_VolumeClear.h"
+#include "GFE/GFE_VolumeBlur.h"
 
 
-using namespace SOP_FeE_VolumeClear_1_0_Namespace;
+using namespace SOP_FeE_VolumeBlur_1_0_Namespace;
 
 
 
@@ -72,9 +72,9 @@ static const char* theDsFile = R"THEDSFILE(
 )THEDSFILE";
 
 PRM_Template*
-SOP_FeE_VolumeClear_1_0::buildTemplates()
+SOP_FeE_VolumeBlur_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_VolumeClear_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_VolumeBlur_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("name#"_sh, &SOP_Node::namedVolumesMenu);
@@ -82,16 +82,16 @@ SOP_FeE_VolumeClear_1_0::buildTemplates()
     return templ.templates();
 }
 
-const UT_StringHolder SOP_FeE_VolumeClear_1_0::theSOPTypeName("FeE::volumeClear::1.0"_sh);
+const UT_StringHolder SOP_FeE_VolumeBlur_1_0::theSOPTypeName("FeE::volumeBlur::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_VolumeClear_1_0::theSOPTypeName,
-        "FeE Volume Clear",
-        SOP_FeE_VolumeClear_1_0::myConstructor,
-        SOP_FeE_VolumeClear_1_0::buildTemplates(),
+        SOP_FeE_VolumeBlur_1_0::theSOPTypeName,
+        "FeE Volume Blur",
+        SOP_FeE_VolumeBlur_1_0::myConstructor,
+        SOP_FeE_VolumeBlur_1_0::buildTemplates(),
         1,
         1,
         nullptr,
@@ -100,32 +100,32 @@ newSopOperator(OP_OperatorTable* table)
         1,
         "Five elements Elf/Filter/Volume");
 
-    newOp->setIconName("SOP_heightfield_layerclear");
+    newOp->setIconName("SOP_heightfield_blur");
     table->addOperator(newOp);
 }
 
-class SOP_FeE_VolumeClear_1_0Verb : public SOP_NodeVerb
+class SOP_FeE_VolumeBlur_1_0Verb : public SOP_NodeVerb
 {
 public:
-    SOP_FeE_VolumeClear_1_0Verb() {}
-    virtual ~SOP_FeE_VolumeClear_1_0Verb() {}
+    SOP_FeE_VolumeBlur_1_0Verb() {}
+    virtual ~SOP_FeE_VolumeBlur_1_0Verb() {}
 
-    virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_VolumeClear_1_0Parms(); }
-    virtual UT_StringHolder name() const { return SOP_FeE_VolumeClear_1_0::theSOPTypeName; }
+    virtual SOP_NodeParms* allocParms() const { return new SOP_FeE_VolumeBlur_1_0Parms(); }
+    virtual UT_StringHolder name() const { return SOP_FeE_VolumeBlur_1_0::theSOPTypeName; }
 
     virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
-    static const SOP_NodeVerb::Register<SOP_FeE_VolumeClear_1_0Verb> theVerb;
+    static const SOP_NodeVerb::Register<SOP_FeE_VolumeBlur_1_0Verb> theVerb;
 };
 
-const SOP_NodeVerb::Register<SOP_FeE_VolumeClear_1_0Verb> SOP_FeE_VolumeClear_1_0Verb::theVerb;
+const SOP_NodeVerb::Register<SOP_FeE_VolumeBlur_1_0Verb> SOP_FeE_VolumeBlur_1_0Verb::theVerb;
 
 const SOP_NodeVerb*
-SOP_FeE_VolumeClear_1_0::cookVerb() const
+SOP_FeE_VolumeBlur_1_0::cookVerb() const
 {
-    return SOP_FeE_VolumeClear_1_0Verb::theVerb.get();
+    return SOP_FeE_VolumeBlur_1_0Verb::theVerb.get();
 }
 
 
@@ -134,12 +134,12 @@ SOP_FeE_VolumeClear_1_0::cookVerb() const
 
 
 void
-SOP_FeE_VolumeClear_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
+SOP_FeE_VolumeBlur_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 {
-    auto &&sopparms = cookparms.parms<SOP_FeE_VolumeClear_1_0Parms>();
+    auto &&sopparms = cookparms.parms<SOP_FeE_VolumeBlur_1_0Parms>();
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
-    using NumVolumeClear = SOP_FeE_VolumeClear_1_0Parms::NumVolumeClear;
+    using NumVolumeClear = SOP_FeE_VolumeBlur_1_0Parms::NumVolumeClear;
     
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     //const GA_Detail* const inGeo1 = cookparms.inputGeo(1);
@@ -148,7 +148,7 @@ SOP_FeE_VolumeClear_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) cons
 
 
 
-    GFE_VolumeClear volumeClear(outGeo0, cookparms);
+    GFE_VolumeBlur volumeClear(outGeo0, cookparms);
 
 #if GFE_VolumeClear_Kernel
     volumeClear.setKernel(sopparms.getKernel());
