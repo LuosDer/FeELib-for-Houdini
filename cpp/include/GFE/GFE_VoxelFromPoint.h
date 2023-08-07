@@ -1,30 +1,21 @@
 
 #pragma once
 
-#ifndef __GFE_Enumerate_h__
-#define __GFE_Enumerate_h__
+#ifndef __GFE_VoxelFromPoint_h__
+#define __GFE_VoxelFromPoint_h__
 
-#include "GFE/GFE_Enumerate.h"
+#include "GFE/GFE_VoxelFromPoint.h"
 
 #include "GFE/GFE_GeoFilter.h"
 
 
-
-#include "GFE/GFE_AttributeCast.h"
-#include "SOP/SOP_Enumerate.proto.h"
-
 /*
-    GFE_Enumerate enumerate(geo, cookparms);
-    enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
-    enumerate.compute();
+    GFE_VoxelFromPoint voxelFromPoint(geo, cookparms);
+    voxelFromPoint.findOrCreateTuple(true, GA_ATTRIB_POINT);
+    voxelFromPoint.compute();
 */
     
-class GFE_Enumerate : public GFE_AttribFilter {
-
-#define __TEMP_GFE_Enumerate_GroupName       "__TEMP_GFE_Enumerate_Group"
-#define __TEMP_GFE_Enumerate_PieceAttribName "__TEMP_GFE_Enumerate_PieceAttrib"
-#define __TEMP_GFE_Enumerate_OutAttribName   "__TEMP_GFE_Enumerate_OutAttrib"
-    
+class GFE_VoxelFromPoint : public GFE_AttribFilter {
 
 public:
     using GFE_AttribFilter::GFE_AttribFilter;
@@ -58,7 +49,7 @@ public:
     {
         outAttribName = attribName.c_str();
         return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, __TEMP_GFE_Enumerate_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
+            storageClass, storage, __TEMP_GFE_VoxelFromPoint_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
         
         // if (pieceAttrib && !detached && !pieceAttrib->isDetached() && GFE_Type::stringEqual(pieceAttrib->getName(), attribName))
         // {
@@ -68,13 +59,6 @@ public:
         // {
         // }
     }
-
-    SYS_FORCE_INLINE GA_Attribute* findOrCreateTuple(
-        const bool detached,
-        const GA_AttributeOwner owner,
-        const UT_StringRef& attribName
-    )
-    { return findOrCreateTuple(detached, owner, GA_STORECLASS_INT, GA_STORE_INVALID, attribName); }
 
 private:
 
@@ -145,9 +129,9 @@ private:
         {
             if (group->isDetached())
             {
-                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_Enumerate_GroupName);
+                elemGroup = geo->createElementGroup(pieceAttrib->getOwner(), __TEMP_GFE_VoxelFromPoint_GroupName);
                 elemGroup->combine(group);
-                enumParms.setGroup(__TEMP_GFE_Enumerate_GroupName);
+                enumParms.setGroup(__TEMP_GFE_VoxelFromPoint_GroupName);
             }
             else
             {
@@ -162,8 +146,8 @@ private:
         GA_Attribute* namedPieceAttrib = nullptr;
         if (pieceAttrib->isDetached())
         {
-            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_Enumerate_PieceAttribName);
-            enumParms.setPieceAttrib(__TEMP_GFE_Enumerate_PieceAttribName);
+            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_VoxelFromPoint_PieceAttribName);
+            enumParms.setPieceAttrib(__TEMP_GFE_VoxelFromPoint_PieceAttribName);
             //namedPieceAttrib->bumpDataId();
         }
         else
@@ -186,11 +170,11 @@ private:
         //GA_Attribute* outAttrib = nullptr;
         //if (enumAttrib->isDetached() || GFE_Type::stringEqual(enumAttrib->getName(), pieceAttrib->getName()))
         
-        enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        enumParms.setAttribname(__TEMP_GFE_VoxelFromPoint_OutAttribName);
         // if (enumAttrib->isDetached() || enumAttrib == pieceAttrib)
         // {
-        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_Enumerate_OutAttribName);
-        //     enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
+        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_VoxelFromPoint_OutAttribName);
+        //     enumParms.setAttribname(__TEMP_GFE_VoxelFromPoint_OutAttribName);
         // }
         // else
         // {
@@ -227,7 +211,7 @@ private:
         
         enumVerb->cook(enumCookparms);
         
-        attribCast.getInAttribArray().set(owner, __TEMP_GFE_Enumerate_OutAttribName);
+        attribCast.getInAttribArray().set(owner, __TEMP_GFE_VoxelFromPoint_OutAttribName);
         if (attribCast.newStorageClass == GA_STORECLASS_STRING)
         {
             attribCast.prefix = prefix;
@@ -402,12 +386,12 @@ private:
     SOP_EnumerateParms enumParms;
     const SOP_NodeVerb* const enumVerb = SOP_NodeVerb::lookupVerb("enumerate");
 
-#undef __TEMP_GFE_Enumerate_GroupName
-#undef __TEMP_GFE_Enumerate_PieceAttribName
-#undef __TEMP_GFE_Enumerate_OutAttribName
+#undef __TEMP_GFE_VoxelFromPoint_GroupName
+#undef __TEMP_GFE_VoxelFromPoint_PieceAttribName
+#undef __TEMP_GFE_VoxelFromPoint_OutAttribName
 
     
-}; // End of class GFE_Enumerate
+}; // End of class GFE_VoxelFromPoint
 
 
 

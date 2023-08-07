@@ -43,10 +43,10 @@ namespace SOP_FeE_VolumeProject_1_0_Namespace {
 		{
 			switch (idx)
 			{
-			case 0:     return "Volume";
-			case 1:     return "Volume";
-			case 2:     return "Volume";
-			case 3:     return "Volume";
+			case 0:     return "Velocity Volume";
+			case 1:     return "Divergence Volume";
+			case 2:     return "LUT Volume";
+			case 3:     return "Acive Volume";
 			default:    return "Invalid Source";
 			}
 		}

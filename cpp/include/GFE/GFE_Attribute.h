@@ -4,6 +4,7 @@
 #ifndef __GFE_Attribute_h__
 #define __GFE_Attribute_h__
 
+#include "GFE_Math.h"
 #include "GFE/GFE_Attribute.h"
 
 
@@ -1169,26 +1170,26 @@ private:
     template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
     class ComputeAttribExtremum
     {
+    using value_type = typename GFE_Type::get_value_type_t<_Ty>;
     public:
         ComputeAttribExtremum(const GA_Attribute* const attrib)
             : myAttrib(attrib)
-            , myMin(GFE_Type::numeric_limits<_Ty>::max())
-            , myMax(GFE_Type::numeric_limits<_Ty>::lowest())
-            , myMinElemoff(GFE_INVALID_OFFSET)
-            , myMaxElemoff(GFE_INVALID_OFFSET)
+            //, myMin(GFE_Type::numeric_limits<_Ty>::max())
+            //, myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            //, myMinElemoff(GFE_INVALID_OFFSET)
+            //, myMaxElemoff(GFE_INVALID_OFFSET)
         {}
         ComputeAttribExtremum(ComputeAttribExtremum& src, UT_Split)
             : myAttrib(src.myAttrib)
-            , myMin(GFE_Type::numeric_limits<_Ty>::max())
-            , myMax(GFE_Type::numeric_limits<_Ty>::lowest())
-            , myMinElemoff(GFE_INVALID_OFFSET)
-            , myMaxElemoff(GFE_INVALID_OFFSET)
+            //, myMin(GFE_Type::numeric_limits<_Ty>::max())
+            //, myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            //, myMinElemoff(GFE_INVALID_OFFSET)
+            //, myMaxElemoff(GFE_INVALID_OFFSET)
         {}
         void operator()(const GA_SplittableRange& r)
         {
             if constexpr (!_Min && !_Max && !_MinElemoff && !_MaxElemoff)
                 return;
-            
             UT_ASSERT_MSG(r.getOwner() == myAttrib->getOwner(), "not same owner");
             GFE_ROPageHandleT<_Ty> attrib_ph(myAttrib);
             GA_Offset start, end;
@@ -1200,29 +1201,31 @@ private:
 
                     if constexpr ((_Min || _MinElemoff) && (_Max || _MaxElemoff))
                     {
-                        if (attrib_ph.value(start) < myMin)
+                        const value_type length = GFE_Math::length(attrib_ph.value(start));
+                        if (length < myMin)
                         {
-                            myMin = attrib_ph.value(start);
+                            myMin = length;
                             if constexpr (_MinElemoff)
                                 myMinElemoff = start;
                         }
-                        if (attrib_ph.value(start) > myMax)
+                        if (length > myMax)
                         {
-                            myMax = attrib_ph.value(start);
+                            myMax = length;
                             if constexpr (_MaxElemoff)
                                 myMaxElemoff = start;
                         }
                         for (GA_Offset elemoff = start+1; elemoff < end; ++elemoff)
                         {
-                            if (attrib_ph.value(start) < myMin)
+                            const value_type length = GFE_Math::length(attrib_ph.value(elemoff));
+                            if (length < myMin)
                             {
-                                myMin = attrib_ph.value(start);
+                                myMin = length;
                                 if constexpr (_MinElemoff)
                                     myMinElemoff = elemoff;
                             }
-                            if (attrib_ph.value(start) > myMax)
+                            if (length > myMax)
                             {
-                                myMax = attrib_ph.value(start);
+                                myMax = length;
                                 if constexpr (_MaxElemoff)
                                     myMaxElemoff = elemoff;
                             }
@@ -1230,22 +1233,24 @@ private:
                     }
                     else
                     {
+                        
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
+                            const value_type length = GFE_Math::length(attrib_ph.value(elemoff));
                             if constexpr (_Min || _MinElemoff)
                             {
-                                if (attrib_ph.value(start) < myMin)
+                                if (length < myMin)
                                 {
-                                    myMin = attrib_ph.value(start);
+                                    myMin = length;
                                     if constexpr (_MinElemoff)
                                         myMinElemoff = elemoff;
                                 }
                             }
                             if constexpr (_Max || _MaxElemoff)
                             {
-                                if (attrib_ph.value(start) > myMax)
+                                if (length > myMax)
                                 {
-                                    myMax = attrib_ph.value(start);
+                                    myMax = length;
                                     if constexpr (_MaxElemoff)
                                         myMaxElemoff = elemoff;
                                 }
@@ -1276,19 +1281,19 @@ private:
                 }
             }
         }
-        SYS_FORCE_INLINE _Ty getMin() const
+        SYS_FORCE_INLINE value_type getMin() const
         { return myMin; }
-        SYS_FORCE_INLINE _Ty getMax() const
+        SYS_FORCE_INLINE value_type getMax() const
         { return myMax; }
         SYS_FORCE_INLINE GA_Offset getMinElemoff() const
         { return myMinElemoff; }
         SYS_FORCE_INLINE GA_Offset getMaxElemoff() const
         { return myMaxElemoff; }
     private:
-        _Ty myMin;
-        _Ty myMax;
-        GA_Offset myMinElemoff;
-        GA_Offset myMaxElemoff;
+        value_type myMin = GFE_Type::numeric_limits<_Ty>::max();
+        value_type myMax = GFE_Type::numeric_limits<_Ty>::lowest();
+        GA_Offset myMinElemoff = GFE_INVALID_OFFSET;
+        GA_Offset myMaxElemoff = GFE_INVALID_OFFSET;
         const GA_Attribute* const myAttrib;
     }; // End of Class ComputeAttribExtremum
 
@@ -1339,6 +1344,7 @@ private:
     }
     
     template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
+        //std::enable_if<_Min || _Max || _MinElemoff || _MaxElemoff>>
     static void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,

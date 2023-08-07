@@ -95,15 +95,15 @@ private:
             return true;
         }
         
-        enumAttrib = getOutAttribArray()[0];
+        attrib = getOutAttribArray()[0];
         enumerate();
-        geo->forceRenameAttribute(enumAttrib, outAttribName);
+        geo->forceRenameAttribute(attrib, outAttribName);
         // const size_t size = getOutAttribArray().size();
         // for (size_t i = 0; i < size; i++)
         // {
-        //     enumAttrib = getOutAttribArray()[i];
+        //     attrib = getOutAttribArray()[i];
         //     enumerate();
-        //     geo->forceRenameAttribute(enumAttrib, outAttribName);
+        //     geo->forceRenameAttribute(attrib, outAttribName);
         // }
         return true;
     }
@@ -116,8 +116,8 @@ private:
     {
         if constexpr (GFE_Type::isStringHolder<_Ty>)
         {
-            const GA_RWHandleS attrib_h(enumAttrib);
-            UTparallelFor(groupParser.getSplittableRange(enumAttrib), [this, &attrib_h](const GA_SplittableRange& r)
+            const GA_RWHandleS attrib_h(attrib);
+            UTparallelFor(groupParser.getSplittableRange(attrib), [this, &attrib_h](const GA_SplittableRange& r)
             {
                 char buffer[100];
                 GA_Offset start, end;
@@ -127,16 +127,16 @@ private:
                     {
                         if constexpr (_outAsOffset)
                         {
-                            std::to_string();
+                            //std::to_string();
                             sprintf(buffer, "%s%I64d%s", prefix, firstIndex + elemoff, sufix);
                         }
                         else if constexpr (_negativeIndex)
                         {
-                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex - enumAttrib->getIndexMap().indexFromOffset(elemoff), sufix);
+                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex - attrib->getIndexMap().indexFromOffset(elemoff), sufix);
                         }
                         else
                         {
-                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex + enumAttrib->getIndexMap().indexFromOffset(elemoff), sufix);
+                            sprintf(buffer, "%s%I64d%s", prefix, firstIndex + attrib->getIndexMap().indexFromOffset(elemoff), sufix);
                         }
                         attrib_h.set(elemoff, buffer);
                     }
@@ -145,9 +145,9 @@ private:
         }
         else if constexpr (GFE_Type::isScalar<_Ty>)
         {
-            UTparallelFor(groupParser.getSplittableRange(enumAttrib), [this](const GA_SplittableRange& r)
+            UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
             {
-                GFE_RWPageHandleT<_Ty> attrib_ph(enumAttrib);
+                GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
                 GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
@@ -163,11 +163,11 @@ private:
                             }
                             else if constexpr (_negativeIndex)
                             {
-                                attrib_ph.value(elemoff) = firstIndex - enumAttrib->getIndexMap().indexFromOffset(elemoff);
+                                attrib_ph.value(elemoff) = firstIndex - attrib->getIndexMap().indexFromOffset(elemoff);
                             }
                             else
                             {
-                                attrib_ph.value(elemoff) = firstIndex + enumAttrib->getIndexMap().indexFromOffset(elemoff);
+                                attrib_ph.value(elemoff) = firstIndex + attrib->getIndexMap().indexFromOffset(elemoff);
                             }
                         }
                     }
@@ -178,9 +178,10 @@ private:
     
     void enumerate()
     {
-        UT_ASSERT_P(enumAttrib);
+        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+        if (!GFE_Variant::isAttribStorageIS(attribStorage)) return;
+        auto storageVarient = GFE_Variant::getAttribStorageVariantIS(attribStorage);
         
-        auto storageVarient = GFE_Variant::getAttribStorageVariantIS(*enumAttrib);
         auto outAsOffsetVarient   = GFE_Variant::getBoolVariant(outAsOffset);
         auto negativeIndexVarient = GFE_Variant::getBoolVariant(negativeIndex);
         
@@ -194,12 +195,12 @@ private:
 
     void enumerateSideFX()
     {
-        enumAttrib = getOutAttribArray()[0];
+        attrib = getOutAttribArray()[0];
         
         UT_ASSERT_P(pieceAttrib);
-        UT_ASSERT_P(enumAttrib);
+        UT_ASSERT_P(attrib);
         
-        const GA_AttributeOwner owner = enumAttrib->getOwner();
+        const GA_AttributeOwner owner = attrib->getOwner();
         
         UT_ASSERT_MSG(pieceAttrib->getOwner() == owner, "not same owner");
         
@@ -241,24 +242,24 @@ private:
         case GA_ATTRIB_PRIMITIVE: enumGroupType = SOP_EnumerateEnums::GroupType::PRIMITIVE; break;
         case GA_ATTRIB_POINT:     enumGroupType = SOP_EnumerateEnums::GroupType::POINT;     break;
         case GA_ATTRIB_VERTEX:    enumGroupType = SOP_EnumerateEnums::GroupType::VERTEX;    break;
-        default: UT_ASSERT_P("unhandled enumAttrib class"); break;
+        default: UT_ASSERT_P("unhandled attrib class"); break;
         }
         enumParms.setGroupType(enumGroupType);
         enumParms.setUsePieceAttrib(true);
         enumParms.setPieceMode(enumeratePieceElem ? SOP_EnumerateEnums::PieceMode::ELEMENTS : SOP_EnumerateEnums::PieceMode::PIECES);
 
         //GA_Attribute* outAttrib = nullptr;
-        //if (enumAttrib->isDetached() || GFE_Type::stringEqual(enumAttrib->getName(), pieceAttrib->getName()))
+        //if (attrib->isDetached() || GFE_Type::stringEqual(attrib->getName(), pieceAttrib->getName()))
         
         enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
-        // if (enumAttrib->isDetached() || enumAttrib == pieceAttrib)
+        // if (attrib->isDetached() || attrib == pieceAttrib)
         // {
-        //     //outAttrib = GFE_Attribute::clone(geo, enumAttrib, __TEMP_GFE_Enumerate_OutAttribName);
+        //     //outAttrib = GFE_Attribute::clone(geo, attrib, __TEMP_GFE_Enumerate_OutAttribName);
         //     enumParms.setAttribname(__TEMP_GFE_Enumerate_OutAttribName);
         // }
         // else
         // {
-        //     enumParms.setAttribname(enumAttrib->getName());
+        //     enumParms.setAttribname(attrib->getName());
         // }
 
         
@@ -285,9 +286,9 @@ private:
         const auto enumCookparms = GFE_NodeVerb::newCookParms(cookparms, enumParms, nodeCache, &destgdh, &inputgdh);
         
         GFE_AttribCast attribCast(geo, cookparms);
-        attribCast.newStorageClass = enumAttrib->getStorageClass();
-        attribCast.newPrecision    = GFE_Attribute::getPrecision(enumAttrib);
-        attribCast.newAttribNames  = enumAttrib->isDetached() ? "" : outAttribName;
+        attribCast.newStorageClass = attrib->getStorageClass();
+        attribCast.newPrecision    = GFE_Attribute::getPrecision(attrib);
+        attribCast.newAttribNames  = attrib->isDetached() ? "" : outAttribName;
         
         enumVerb->cook(enumCookparms);
         
@@ -320,7 +321,7 @@ public:
     
 private:
     const char* outAttribName = nullptr;
-    GA_Attribute* enumAttrib;
+    GA_Attribute* attrib;
     
     
     exint subscribeRatio = 64;

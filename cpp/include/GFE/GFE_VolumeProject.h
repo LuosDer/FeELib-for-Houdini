@@ -43,7 +43,8 @@ public:
 
 	
 	SYS_FORCE_INLINE void bumpDataId() const override
-    { geo->bumpAllDataIds(); }
+    { geo->getPrimitiveList().bumpDataId(); }
+	//{ geo->bumpAllDataIds(); }
 	
 private:
 
@@ -61,7 +62,7 @@ private:
     	auto&& sopparms = cookparms->parms<SOP_FeE_VolumeProject_1_0Parms>();
 		
 
-    	const GA_PrimitiveGroup* velgrp    = groupParser    .getPrimitiveGroup();
+    	const GA_PrimitiveGroup* velgrp = groupParser.getPrimitiveGroup();
     	cookparms->selectInputGroup(velgrp, GA_GROUP_PRIMITIVE);
 
 
@@ -147,25 +148,28 @@ private:
     			}
     		}
     	}
-
     	// Check to see if we have a dangling pair.
     	if (numvel)
     		cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched veloicty volume ignored; provide matching triples of velocity volumes.");
 
     	
 		div.append(geoRef0->getFirstHoudiniVolumePrimitive(groupParserRef0.getPrimitiveGroup()));
-	    
+
+    	
     	const GEO_PrimVolume* lut[3] = { 0, 0, 0 };
     	geoRef1->getVectorHoudiniVolumePrimitive(lut, groupParserRef1.getPrimitiveGroup());
-    	
-	    if (geoRef2)
-			active.append(geoRef2->getFirstHoudiniVolumePrimitive(groupParserRef2.getPrimitiveGroup()));
-    	
     	if (!lut[2])
     	{
     		cookparms->sopAddError(SOP_MESSAGE, "Insufficient lut volume specified.");
     		return false;
     	}
+
+    	
+	    if (geoRef2)
+			active.append(geoRef2->getFirstHoudiniVolumePrimitive(groupParserRef2.getPrimitiveGroup()));
+
+
+
 
 	    if (velx.size() != div.size())
 			cookparms->sopAddWarning(SOP_MESSAGE, "Unmatched sets of velocity and divergence volumes specified.  Unmatched ignored.");
@@ -177,8 +181,6 @@ private:
 	    }
 
 	    int	npass = std::min(velx.size(), div.size());
-
-
 	    for (int pass = 0; pass < npass; pass++)
 	    {
 	    	UT_VoxelArrayReadHandleF activeh;
@@ -194,33 +196,33 @@ private:
 			const UT_VoxelArrayF* activev = 0;
 			if (pass < active.size())
 			{
-			    activeh = active(pass)->getVoxelHandle();
+			    activeh = active[pass]->getVoxelHandle();
 			    activev = &*activeh;
 			}
 
 			// First, we apply our LUT approximation for the near field.
-			sop_applyVelLUT(&*vxh, &*divh, activev, &*lutxh, velx[pass]->getVoxelSize());
-			sop_applyVelLUT(&*vyh, &*divh, activev, &*lutyh, vely[pass]->getVoxelSize());
-			sop_applyVelLUT(&*vzh, &*divh, activev, &*lutzh, velz[pass]->getVoxelSize());
+			applyVelLUT(&*vxh, &*divh, activev, &*lutxh, velx[pass]->getVoxelSize());
+			applyVelLUT(&*vyh, &*divh, activev, &*lutyh, vely[pass]->getVoxelSize());
+			applyVelLUT(&*vzh, &*divh, activev, &*lutzh, velz[pass]->getVoxelSize());
 	    	
 			if (!sopparms.getDoMIP())
 				continue;
 			
 		    UT_Array<UT_VoxelArrayV4*> pos_mip, neg_mip;
 
-		    sop_buildMipMap(pos_mip, neg_mip, div(pass));
+		    buildMipMap(pos_mip, neg_mip, div[pass]);
 
 		    if (sopparms.getMipBy4())
 		    {
-				sop_applyMipMap4(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
-				sop_applyMipMap4(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
-				sop_applyMipMap4(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
+				applyMipMap4(0, velx[pass], &*vxh, activev, pos_mip, neg_mip);
+				applyMipMap4(1, vely[pass], &*vyh, activev, pos_mip, neg_mip);
+				applyMipMap4(2, velz[pass], &*vzh, activev, pos_mip, neg_mip);
 		    }
 		    else
 		    {
-				sop_applyMipMap(0, velx(pass), &*vxh, activev, pos_mip, neg_mip);
-				sop_applyMipMap(1, vely(pass), &*vyh, activev, pos_mip, neg_mip);
-				sop_applyMipMap(2, velz(pass), &*vzh, activev, pos_mip, neg_mip);
+				applyMipMap(0, velx[pass], &*vxh, activev, pos_mip, neg_mip);
+				applyMipMap(1, vely[pass], &*vyh, activev, pos_mip, neg_mip);
+				applyMipMap(2, velz[pass], &*vzh, activev, pos_mip, neg_mip);
 		    }
 
 		    for (auto && map : pos_mip)
@@ -235,7 +237,7 @@ private:
 
 
 		
-	void sop_applyVelLUT(
+	void applyVelLUT(
 		UT_VoxelArrayF* vel,
 		const UT_VoxelArrayF* div,
 		const UT_VoxelArrayF* active,
@@ -280,7 +282,7 @@ private:
 	    lutmagic /= voxelsize.x();
 	    lutmagic /= 3;
 
-	    UTparallelForEachNumber(static_cast<exint>(vel->numTiles()), [&](const UT_BlockedRange<exint> &r)
+	    UTparallelForEachNumber(vel->numTiles(), [&](const UT_BlockedRange<exint> &r)
 	    {
 		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorF vit;
@@ -375,7 +377,7 @@ private:
 	}
 
 
-	void sop_buildMipMap(UT_Array<UT_VoxelArrayV4*>& pos_mip, UT_Array<UT_VoxelArrayV4*>& neg_mip, const GEO_PrimVolume* div)
+	void buildMipMap(UT_Array<UT_VoxelArrayV4*>& pos_mip, UT_Array<UT_VoxelArrayV4*>& neg_mip, const GEO_PrimVolume* div)
 	{
 	    UT_StopWatch watch;
 	    watch.start();
@@ -534,7 +536,7 @@ private:
 	    UTdebugPrintCd(none, "Build div mip map, levels", pos_mip.entries());
 	}
 		
-	void sop_applyMipMap(
+	void applyMipMap(
 		const int axis,
 		GEO_PrimVolume* prim_vel,
 		UT_VoxelArrayF* vel, 
@@ -555,7 +557,7 @@ private:
 
 	    UT_Vector3	voxelsize = prim_vel->getVoxelSize();
 
-	    // See sop_applyMipMap4 for derivation.
+	    // See applyMipMap4 for derivation.
 	    mipmagic *= voxelsize.x();
 	    mipmagic /= 4 * M_PI;
 
@@ -759,7 +761,7 @@ private:
 	    UTdebugPrintCd(none,"MipMap Time:", watch.stop());
 	}
 		
-	void sop_applyMipMap4(
+	void applyMipMap4(
 		int axis,
 		GEO_PrimVolume* prim_vel,
 		UT_VoxelArrayF* vel, 

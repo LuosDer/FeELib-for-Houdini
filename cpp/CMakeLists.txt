@@ -13,6 +13,11 @@ list( APPEND CMAKE_PREFIX_PATH "$ENV{HFSLatest}/toolkit/cmake" )
 find_package( Houdini REQUIRED )
 
 
+# set(CMAKE_CXX_FLAGS_DEBUG "-DOPENVDB_3_ABI_COMPATIBLE")
+# set(CMAKE_CXX_FLAGS_MINSIZEREL "-DOPENVDB_3_ABI_COMPATIBLE")
+# set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DOPENVDB_3_ABI_COMPATIBLE")
+# set(CMAKE_CXX_FLAGS_RELEASE "-DOPENVDB_3_ABI_COMPATIBLE")
+
 function ( houdini_sop_add_library_std )
     cmake_parse_arguments( H_LIBRARY "" "OUTPUT_VAR;API" "FILES" ${ARGN} )
 
@@ -26,6 +31,12 @@ function ( houdini_sop_add_library_std )
             "./src/SOP/${library_name}/${library_name}.C"
             "./src/SOP/${library_name}/${library_name}.h"
         )
+        # export CMAKE_CXX_FLAGS = "-DOPENVDB_3_ABI_COMPATIBLE"
+
+        # set(CMAKE_CXX_FLAGS_DEBUG "-DOPENVDB_3_ABI_COMPATIBLE")
+        # set(CMAKE_CXX_FLAGS_MINSIZEREL "-DOPENVDB_3_ABI_COMPATIBLE")
+        # set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DOPENVDB_3_ABI_COMPATIBLE")
+        # set(CMAKE_CXX_FLAGS_RELEASE "-DOPENVDB_3_ABI_COMPATIBLE")
         
         # Link against the Houdini libraries, and add required include directories and
         # compile definitions.
@@ -82,141 +93,149 @@ endfunction ()
 
 # houdini_sop_add_library_std( FILES ${HDK_FEELIB_FILE_NAMES} )
 
+
 houdini_sop_add_library_std( FILES
-    SOP_FeE_AttribBlend_1_0
-    SOP_FeE_AttribCast_1_0
-    SOP_FeE_AttribCopy_4_0
-    #SOP_FeE_AttribCopyFast_1_0
-    SOP_FeE_AttribDel_2_0
-    SOP_FeE_AttribDuplicate_1_0
-    SOP_FeE_AttribExtremum_2_0
-    SOP_FeE_AttribInterpRay_2_0
-    SOP_FeE_AttribNormalize_2_0
-    SOP_FeE_AttribOut_1_0
-    SOP_FeE_AttribPromote_1_0
-    SOP_FeE_AttribRemap_1_0
-    SOP_FeE_AttribScale_1_0
-    #SOP_FeE_AttribSetToDefault_1_0
-    SOP_FeE_AttribValReplace_1_0
-    SOP_FeE_BezierCurveInsertPoint_1_0
-    SOP_FeE_BlockStopCondition_2_0
-    SOP_FeE_Carve_1_0
-    SOP_FeE_Clip_1_0
-    SOP_FeE_Connectivity_1_0
-    SOP_FeE_ConvertLine_1_0
-    SOP_FeE_ConvexPoly_1_0
-    SOP_FeE_Cook_1_0
-    SOP_FeE_CornerPoint_1_0
-    SOP_FeE_CullingByVolume2DTrace_1_0
-    SOP_FeE_CurveDirSoftBlend_1_0
-    SOP_FeE_CurveExpand2d_3_0
-    SOP_FeE_CurveExtendedLine_3_0
-    SOP_FeE_CurveSetExpand2d_3_0
-    SOP_FeE_CurveSubtractMesh_1_0
-    SOP_FeE_CurveUV_1_0
-    SOP_FeE_DelAllAttribGroup_1_0
-    SOP_FeE_DelAndUnpack_1_0
-    SOP_FeE_DelaunayTriangulate_1_0
-    SOP_FeE_DelElement_1_0
-    SOP_FeE_DelVertex_1_0
-    SOP_FeE_DirCross_2_0
-    SOP_FeE_DissolveEdge_1_0
-    SOP_FeE_Dynamesh_1_0
-    SOP_FeE_EdgeGroupTransfer_3_0
-    SOP_FeE_EnumCombine_1_0
-    SOP_FeE_Enumerate_1_0
-    SOP_FeE_EnumPromote_1_0
-    SOP_FeE_ExtendCurve_1_0
-    SOP_FeE_ExtendCurveStraight_1_0
-    SOP_FeE_ExtractPoint_1_0
-    SOP_FeE_ExtremeElem_1_0
-    SOP_FeE_ExtrudeBorder2D_1_0
-    SOP_FeE_FitOrthoPlane_1_0
-    SOP_FeE_FlatEdge_2_0
-    SOP_FeE_Fuse_1_0
-    SOP_FeE_GroupAttribBoundary_1_0
-    SOP_FeE_GroupCombine_1_0
-    SOP_FeE_GroupConvexPoint_1_0
-    SOP_FeE_GroupCurveEnds_2_0
-    SOP_FeE_GroupElemByDir_1_0
-    SOP_FeE_GroupExpand_1_0
-    SOP_FeE_GroupFillByEnum_1_0
-    SOP_FeE_GroupLoopedPrim_1_0
-    SOP_FeE_GroupMeshByWinding_1_0
-    SOP_FeE_GroupOverlapEdge_1_0
-    SOP_FeE_GroupOneNebPoint_1_0
-    SOP_FeE_GroupPolyByWinding_1_0
-    SOP_FeE_GroupRandomElem_1_0
-    SOP_FeE_GroupReverse_1_0
-    SOP_FeE_GroupUnshared_1_0
-    SOP_FeE_GroupVis_2_0
-    SOP_FeE_HasGroup_1_0
-    SOP_FeE_HeightFieldProject_2_0
-    SOP_FeE_InlinePoint_1_0
-    SOP_FeE_InsertPoint_1_0
-    SOP_FeE_InsertPointEdge_1_0
-    SOP_FeE_Intersection_1_0
-    SOP_FeE_JoinCurve_2_0
-    SOP_FeE_KuhnMunkres_2_0
-    SOP_FeE_MatchAxis_1_0
-    SOP_FeE_MatchBBox_2_0
-    SOP_FeE_MatchDir2D_1_0
-    SOP_FeE_MatchDirOrient_1_0
-    SOP_FeE_MatchQuadrant_1_0
-    SOP_FeE_Measure_3_0
-    SOP_FeE_MeshTopology_1_0
-    SOP_FeE_MiniSurf_1_0
-    SOP_FeE_Normal2D_1_0
-    SOP_FeE_OffsetAttribToIndex_1_0
-    SOP_FeE_OffsetVertexOrder_2_0
-    SOP_FeE_OnPoly_1_0
-    SOP_FeE_OrientAlongCurve_1_0
-    SOP_FeE_PointFromVoxel_1_0
-    SOP_FeE_PointGenPerElem_1_0
-    SOP_FeE_PointInBBox_2_0
-    SOP_FeE_PointInMesh_WN_2_0
-    SOP_FeE_PolyCut_3_0
-    SOP_FeE_PolyExpand2DSimple_2_0
-    SOP_FeE_PolyInsertPoint_1_0
-    SOP_FeE_PolyReduce2D_4_0
-    SOP_FeE_Ray_1_0
-    SOP_FeE_RayPrim_1_0
-    SOP_FeE_RestDir2D_1_0
-    SOP_FeE_RestVectorComponent_1_0
-    SOP_FeE_SetVectorComponent_1_0
-    SOP_FeE_Skin_1_0
-    SOP_FeE_SkinIntersectCurve_2_0
-    SOP_FeE_SkinPiece_4_0
-    SOP_FeE_SmallPiece_1_0
-    # SOP_FeE_Split_2_0
-    SOP_FeE_SplitPoint_1_0
-    SOP_FeE_Star_1_0
-    SOP_FeE_Symmetrise_1_0
-    SOP_FeE_Triangulate2D_2_0
-    SOP_FeE_UnpackByGroup_1_0
-    SOP_FeE_UVGridify_1_0
-    SOP_FeE_UVRectify_2_0
-    SOP_FeE_UVScaletoWorldSize_0_5
-    SOP_FeE_UVScaletoWorldSize_3_0
-    SOP_FeE_UVTileSize_1_0
     SOP_FeE_VDBActivateByPoint_1_0
-    SOP_FeE_VerticalNormal_1_0
-    SOP_FeE_VolumeClear_1_0
-    SOP_FeE_VolumeExtremum_1_0
-    SOP_FeE_VolumeFromArray_1_0
-    SOP_FeE_VolumeNormalize_1_0
-    SOP_FeE_VolumeProject_1_0
-    SOP_FeE_VolumeRemap_1_0
-    SOP_FeE_VoxelFromPoint_1_0
-    SOP_FeE_WindingNumber_1_0
-    SOP_FeE_XformByAttrib_1_0
 )
 
 
-houdini_dm_add_library_std( FILES
-    DM_InfoHook
-    DM_LightBloomHook
-)
+
+# houdini_sop_add_library_std( FILES
+#     SOP_FeE_AttribBlend_1_0
+#     SOP_FeE_AttribCast_1_0
+#     SOP_FeE_AttribCopy_4_0
+#     #SOP_FeE_AttribCopyFast_1_0
+#     SOP_FeE_AttribDel_2_0
+#     SOP_FeE_AttribDuplicate_1_0
+#     SOP_FeE_AttribExtremum_2_0
+#     SOP_FeE_AttribInterpRay_2_0
+#     SOP_FeE_AttribNormalize_2_0
+#     SOP_FeE_AttribOut_1_0
+#     SOP_FeE_AttribPromote_1_0
+#     SOP_FeE_AttribRemap_1_0
+#     SOP_FeE_AttribScale_1_0
+#     #SOP_FeE_AttribSetToDefault_1_0
+#     SOP_FeE_AttribValReplace_1_0
+#     SOP_FeE_BezierCurveInsertPoint_1_0
+#     SOP_FeE_BlockStopCondition_2_0
+#     SOP_FeE_Carve_1_0
+#     SOP_FeE_Clip_1_0
+#     SOP_FeE_Connectivity_1_0
+#     SOP_FeE_ConvertLine_1_0
+#     SOP_FeE_ConvexPoly_1_0
+#     SOP_FeE_Cook_1_0
+#     SOP_FeE_CornerPoint_1_0
+#     SOP_FeE_CullingByVolume2DTrace_1_0
+#     SOP_FeE_CurveDirSoftBlend_1_0
+#     SOP_FeE_CurveExpand2d_3_0
+#     SOP_FeE_CurveExtendedLine_3_0
+#     SOP_FeE_CurveSetExpand2d_3_0
+#     SOP_FeE_CurveSubtractMesh_1_0
+#     SOP_FeE_CurveUV_1_0
+#     SOP_FeE_DelAllAttribGroup_1_0
+#     SOP_FeE_DelAndUnpack_1_0
+#     SOP_FeE_DelaunayTriangulate_1_0
+#     SOP_FeE_DelElement_1_0
+#     SOP_FeE_DelVertex_1_0
+#     SOP_FeE_DirCross_2_0
+#     SOP_FeE_DissolveEdge_1_0
+#     SOP_FeE_Dynamesh_1_0
+#     SOP_FeE_EdgeGroupTransfer_3_0
+#     SOP_FeE_EnumCombine_1_0
+#     SOP_FeE_Enumerate_1_0
+#     SOP_FeE_EnumPromote_1_0
+#     SOP_FeE_ExtendCurve_1_0
+#     SOP_FeE_ExtendCurveStraight_1_0
+#     SOP_FeE_ExtractPoint_1_0
+#     SOP_FeE_ExtremeElem_1_0
+#     SOP_FeE_ExtrudeBorder2D_1_0
+#     SOP_FeE_FitOrthoPlane_1_0
+#     SOP_FeE_FlatEdge_2_0
+#     SOP_FeE_Fuse_1_0
+#     SOP_FeE_GroupAttribBoundary_1_0
+#     SOP_FeE_GroupCombine_1_0
+#     SOP_FeE_GroupConvexPoint_1_0
+#     SOP_FeE_GroupCurveEnds_2_0
+#     SOP_FeE_GroupElemByDir_1_0
+#     SOP_FeE_GroupExpand_1_0
+#     SOP_FeE_GroupFillByEnum_1_0
+#     SOP_FeE_GroupLoopedPrim_1_0
+#     SOP_FeE_GroupMeshByWinding_1_0
+#     SOP_FeE_GroupOverlapEdge_1_0
+#     SOP_FeE_GroupOneNebPoint_1_0
+#     SOP_FeE_GroupPolyByWinding_1_0
+#     SOP_FeE_GroupRandomElem_1_0
+#     SOP_FeE_GroupReverse_1_0
+#     SOP_FeE_GroupUnshared_1_0
+#     SOP_FeE_GroupVis_2_0
+#     SOP_FeE_HasGroup_1_0
+#     SOP_FeE_HeightFieldProject_2_0
+#     SOP_FeE_InlinePoint_1_0
+#     SOP_FeE_InsertPoint_1_0
+#     SOP_FeE_InsertPointEdge_1_0
+#     SOP_FeE_Intersection_1_0
+#     SOP_FeE_JoinCurve_2_0
+#     SOP_FeE_KuhnMunkres_2_0
+#     SOP_FeE_MatchAxis_1_0
+#     SOP_FeE_MatchBBox_2_0
+#     SOP_FeE_MatchDir2D_1_0
+#     SOP_FeE_MatchDirOrient_1_0
+#     SOP_FeE_MatchQuadrant_1_0
+#     SOP_FeE_Measure_3_0
+#     SOP_FeE_MeshTopology_1_0
+#     SOP_FeE_MiniSurf_1_0
+#     SOP_FeE_Normal2D_1_0
+#     SOP_FeE_OffsetAttribToIndex_1_0
+#     SOP_FeE_OffsetVertexOrder_2_0
+#     SOP_FeE_OnPoly_1_0
+#     SOP_FeE_OrientAlongCurve_1_0
+#     SOP_FeE_PointFromVoxel_1_0
+#     SOP_FeE_PointGenPerElem_1_0
+#     SOP_FeE_PointInBBox_2_0
+#     SOP_FeE_PointInMesh_WN_2_0
+#     SOP_FeE_PolyCut_3_0
+#     SOP_FeE_PolyExpand2DSimple_2_0
+#     SOP_FeE_PolyInsertPoint_1_0
+#     SOP_FeE_PolyReduce2D_4_0
+#     SOP_FeE_Ray_1_0
+#     SOP_FeE_RayPrim_1_0
+#     SOP_FeE_RestDir2D_1_0
+#     SOP_FeE_RestVectorComponent_1_0
+#     SOP_FeE_SetVectorComponent_1_0
+#     SOP_FeE_Skin_1_0
+#     SOP_FeE_SkinIntersectCurve_2_0
+#     SOP_FeE_SkinPiece_4_0
+#     SOP_FeE_SmallPiece_1_0
+#     # SOP_FeE_Split_2_0
+#     SOP_FeE_SplitPoint_1_0
+#     SOP_FeE_Star_1_0
+#     SOP_FeE_Symmetrise_1_0
+#     SOP_FeE_Triangulate2D_2_0
+#     SOP_FeE_UnpackByGroup_1_0
+#     SOP_FeE_UVGridify_1_0
+#     SOP_FeE_UVRectify_2_0
+#     SOP_FeE_UVScaletoWorldSize_0_5
+#     SOP_FeE_UVScaletoWorldSize_3_0
+#     SOP_FeE_UVTileSize_1_0
+#     SOP_FeE_VDBActivateByPoint_1_0
+#     SOP_FeE_VerticalNormal_1_0
+#     SOP_FeE_VolumeBlur_1_0
+#     SOP_FeE_VolumeClear_1_0
+#     SOP_FeE_VolumeExtremum_1_0
+#     SOP_FeE_VolumeFromArray_1_0
+#     SOP_FeE_VolumeNormalize_1_0
+#     SOP_FeE_VolumeProject_1_0
+#     SOP_FeE_VolumeRemap_1_0
+#     SOP_FeE_VoxelFromPoint_1_0
+#     SOP_FeE_WindingNumber_1_0
+#     SOP_FeE_XformByAttrib_1_0
+# )
+
+
+# houdini_dm_add_library_std( FILES
+#     DM_InfoHook
+#     DM_LightBloomHook
+# )
 
 
 

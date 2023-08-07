@@ -83,7 +83,7 @@ private:
             if constexpr (!_Min && !_Max && !_MinElemoff && !_MaxElemoff)
                 return;
             
-        
+            UT_Vector3i
             UT_VoxelArrayF* vol;
             UTparallelReduce(UT_BlockedRange(0, vol->numTiles()), [&](const UT_BlockedRange<exint> &r)
             {

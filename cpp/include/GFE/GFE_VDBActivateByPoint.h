@@ -71,7 +71,7 @@ private:
             cookparms->sopAddError(SOP_MESSAGE, "First input must contain a VDB!");
             return false;
         }
-        GEO_PrimVDB* const vdbPrim = geo->getVDBPrimitive(vdboff);
+        GEO_PrimVDB* const vdbPrim = geo->getPrimitiveT<GEO_PrimVDB*>(vdboff);
         UT_ASSERT_P(vdbPrim);
 
         // volume primitives in different nodes in Houdini by default share the same volume tree (for memory optimization) this will make sure that we will have our own deep copy of volume tree which we can write to 

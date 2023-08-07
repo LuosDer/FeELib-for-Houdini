@@ -8,6 +8,9 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
+#include "GFE/GFE_AttribExtremum.h"
+#include "GFE/GFE_AttributeRemap.h"
+
 
 class GFE_AttribNormalize : public GFE_AttribFilter {
 
@@ -54,56 +57,18 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        const ::std::vector<GA_Attribute*>::size_type size = getOutAttribArray().size();
-        for (size_t i = 0; i < size; i++)
-        {
-            attribPtr = getOutAttribArray()[i];
-            
-            const GA_Storage storage = attribPtr->getAIFTuple()->getStorage(attribPtr);
-            switch (attribPtr->getAIFTuple()->getTupleSize(attribPtr))
-            {
-            case 1:
-                switch (storage)
-                {
-                    case GA_STORE_INT8:   scaleNumericAttribElement<int8>();     break;
-                    case GA_STORE_INT16:  scaleNumericAttribElement<int16>();    break;
-                    case GA_STORE_INT32:  scaleNumericAttribElement<int32>();    break;
-                    case GA_STORE_INT64:  scaleNumericAttribElement<int64>();    break;
-                    case GA_STORE_REAL16: scaleNumericAttribElement<fpreal16>(); break;
-                    case GA_STORE_REAL32: scaleNumericAttribElement<fpreal32>(); break;
-                    case GA_STORE_REAL64: scaleNumericAttribElement<fpreal64>(); break;
-                    default: break;
-                }
-            case 2:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: scaleVectorAttribElement<UT_Vector2T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: scaleVectorAttribElement<UT_Vector2T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: scaleVectorAttribElement<UT_Vector2T<fpreal64>>(); break;
-                    default: break;
-                }
-                break;
-            case 3:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: scaleVectorAttribElement<UT_Vector3T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: scaleVectorAttribElement<UT_Vector3T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: scaleVectorAttribElement<UT_Vector3T<fpreal64>>(); break;
-                    default: break;
-                }
-                break;
-            case 4:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: scaleVectorAttribElement<UT_Vector4T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: scaleVectorAttribElement<UT_Vector4T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: scaleVectorAttribElement<UT_Vector4T<fpreal64>>(); break;
-                    default: break;
-                }
-                break;
-            default: break;
-            }
-        }
+        
+        GFE_AttribExtremum attribExtremum(geo, inGeo1, cookparms);
+    
+        attribExtremum.outas(sopparms.getOutAsOffset(),
+            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+        
+        attribExtremum.setAttrib(attribClass, sopparms.getAttrib());
+        
+        attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
+        
+        attribExtremum.computeAndBumpDataId();
+        
         return true;
     }
 
