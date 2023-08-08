@@ -282,7 +282,7 @@ private:
 	    lutmagic /= voxelsize.x();
 	    lutmagic /= 3;
 
-	    UTparallelForEachNumber(vel->numTiles(), [&](const UT_BlockedRange<exint> &r)
+	    UTparallelForEachNumber(vel->numTiles(), [&](const UT_BlockedRange<int> &r)
 	    {
 		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorF vit;
@@ -407,7 +407,7 @@ private:
 			      (div_vox->getYRes()+1) / 2,
 			      (div_vox->getZRes()+1) / 2);
 
-	    UTparallelForEachNumber(static_cast<exint>(pos->numTiles()), [&](const UT_BlockedRange<exint> &r)
+	    UTparallelForEachNumber(pos->numTiles(), [&](const UT_BlockedRange<int> &r)
 	    {
 		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorV4 vit;
@@ -561,7 +561,7 @@ private:
 	    mipmagic *= voxelsize.x();
 	    mipmagic /= 4 * M_PI;
 
-	    UTparallelForEachNumber((exint)vel->numTiles(), [&](const UT_BlockedRange<exint> &r)
+	    UTparallelForEachNumber(vel->numTiles(), [&](const UT_BlockedRange<int> &r)
 	    {
 			const exint curtile = r.begin();
 			UT_VoxelTileIteratorF vit;
@@ -792,7 +792,7 @@ private:
 	    UT_StopWatch watch;
 	    watch.start();
 
-	    UTparallelForEachNumber(static_cast<exint>(vel->numTiles()), [&](const UT_BlockedRange<exint> &r)
+	    UTparallelForEachNumber(vel->numTiles(), [&](const UT_BlockedRange<int> &r)
 	    {
 		    const exint curtile = r.begin();
 		    UT_VoxelTileIteratorF vit;

@@ -68,9 +68,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "uvAttribName"
-        cppname "UVAttribName"
-        label   "UV Attribute Name"
+        name    "uvAttrib"
+        cppname "UVAttrib"
+        label   "UV Attribute"
         type    string
         default { "uv" }
     }
@@ -224,7 +224,7 @@ SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -346,8 +346,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     if (!doUVScalex && !doUVScaley && !doUVScalez)
         return;
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttribNames();
-    if (!geo0AttribNames.isstring())
+    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttrib();
+    if (GFE_Type::isInvalid(geo0AttribNames))
         return;
 
     UT_AutoInterrupt boss("Processing");

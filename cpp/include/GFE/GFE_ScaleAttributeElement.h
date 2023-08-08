@@ -75,15 +75,14 @@ private:
         const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
         if (!GFE_Variant::isAttribStorageIFV(attribStorage))
             return;
-        auto storageVarient = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
-        
+        auto storageVariant = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
         auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
         auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
-        std::visit([&] (auto storageVarient, auto scaleVariant, auto doNormalizeVariant)
+        std::visit([&] (auto storageVariant, auto scaleVariant, auto doNormalizeVariant)
         {
-            using type = typename GFE_Variant::getAttribStorage_t<storageVarient>;
+            using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
             scaleAttribElement<type, doNormalizeVariant, scaleVariant>();
-        }, storageVarient, scaleVariant, doNormalizeVariant);
+        }, storageVariant, scaleVariant, doNormalizeVariant);
     }
 
     template<typename _Ty, bool _normalize, bool _scale>

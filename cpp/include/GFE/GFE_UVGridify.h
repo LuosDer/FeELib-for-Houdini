@@ -65,62 +65,41 @@ private:
         const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
-            uvAttrib = getOutAttribArray()[i];
-            const GA_Storage storage = uvAttrib->getAIFTuple()->getStorage(uvAttrib);
-            switch (uvAttrib->getTupleSize())
+            attrib = getOutAttribArray()[i];
+            
+            const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+            if (!GFE_Variant::isAttribStorageVF(attribStorage))
+                continue;
+            auto storageVariant = GFE_Variant::getAttribStorageVariantVF(attribStorage);
+            auto isPointAttribVariant = GFE_Variant::getBoolVariant(attrib->getOwner() == GA_ATTRIB_POINT);
+            std::visit([&] (auto storageVariant, auto isPointAttribVariant)
             {
-            case 2:
-                switch (storage)
-                {
-                case GA_STORE_REAL16: uvGridify<UT_Vector2T<fpreal16>>(); break;
-                case GA_STORE_REAL32: uvGridify<UT_Vector2T<fpreal32>>(); break;
-                case GA_STORE_REAL64: uvGridify<UT_Vector2T<fpreal64>>(); break;
-                default: break;
-                }
-            break;
-            case 3:
-                switch (storage)
-                {
-                case GA_STORE_REAL16: uvGridify<UT_Vector3T<fpreal16>>(); break;
-                case GA_STORE_REAL32: uvGridify<UT_Vector3T<fpreal32>>(); break;
-                case GA_STORE_REAL64: uvGridify<UT_Vector3T<fpreal64>>(); break;
-                default: break;
-                }
-            break;
-            case 4:
-                switch (storage)
-                {
-                case GA_STORE_REAL16: uvGridify<UT_Vector4T<fpreal16>>(); break;
-                case GA_STORE_REAL32: uvGridify<UT_Vector4T<fpreal32>>(); break;
-                case GA_STORE_REAL64: uvGridify<UT_Vector4T<fpreal64>>(); break;
-                default: break;
-                }
-            break;
-            default: break;
-            }
+                using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+                uvGridify<type, isPointAttribVariant>();
+            }, storageVariant, isPointAttribVariant);
+            
         }
         return true;
     }
 
 
-    template<typename VECTOR_T>
+    template<typename _Ty, bool isPointAttrib>
     void uvGridify()
     {
-        using value_type = typename VECTOR_T::value_type;
-        using POS_VECTOR_T = UT_Vector3T<value_type>;
+        using value_type = typename _Ty::value_type;
+        using _Tpos = UT_Vector3T<value_type>;
 
         
-        const GA_RWHandleT<VECTOR_T> uv_h(uvAttrib);
-        const GA_ROHandleT<POS_VECTOR_T> pos_h(posAttrib);
-        const bool isPointAttrib = uvAttrib->getOwner() == GA_ATTRIB_POINT;
+        const GA_RWHandleT<_Ty> uv_h(attrib);
+        const GA_ROHandleT<_Tpos> pos_h(posAttrib);
         
-        vtxPointRef = geo->getTopology().getPointRef();
-        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h, isPointAttrib](const GA_SplittableRange& r)
+        pointRef = geo->getTopology().getPointRef();
+        UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &uv_h, &pos_h](const GA_SplittableRange& r)
         {
             value_type scale;
             bool scaleIdx = true;
+            _Ty uv(GFE_Type::getZero<_Ty>());
             
-            VECTOR_T uv(GFE_Type::getZeroVector<VECTOR_T>());
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
             {
@@ -134,7 +113,7 @@ private:
                     switch (rowsOrColsNumMethod)
                     {
                     case GFE_UVGridify::RowColMethod::Uniform:
-                        rows = (GA_Size)ceil(numvtx / 4.0);
+                        rows = GA_Size(std::ceil(numvtx / 4.0));
                         cols = (numvtx - rows - rows) / 2;
                         break;
                     case GFE_UVGridify::RowColMethod::Rows:
@@ -149,21 +128,21 @@ private:
                         UT_ASSERT_MSG(0, "Unhandled rowsOrColsNumMethod");
                         break;
                     }
-                    rows = SYSmax(rows, 0);
-                    cols = SYSmax(cols, 0);
+                    rows = std::max(rows, GA_Size(0));
+                    cols = std::max(cols, GA_Size(0));
 
 
                     if (!uniScale)
                     {
                         if (numvtx > rows + rows + cols && numvtx > 2)
                         {
-                            const POS_VECTOR_T& pos0 = pos_h.get(vtxPointRef->getLink(vertices[0]));
-                            const POS_VECTOR_T& pos1 = pos_h.get(vtxPointRef->getLink(vertices[rows]));
-                            const POS_VECTOR_T& pos2 = pos_h.get(vtxPointRef->getLink(vertices[rows + cols]));
-                            //GA_Offset a = vtxPointRef->getLink(vertices[rows + cols + rows]);
+                            const _Tpos& pos0 = pos_h.get(pointRef->getLink(vertices[0]));
+                            const _Tpos& pos1 = pos_h.get(pointRef->getLink(vertices[rows]));
+                            const _Tpos& pos2 = pos_h.get(pointRef->getLink(vertices[rows + cols]));
+                            //GA_Offset a = pointRef->getLink(vertices[rows + cols + rows]);
                             //GA_Offset b = geo->vertexPoint(a);
-                            //const POS_VECTOR_T& pos3 = pos_h.get(b);
-                            const POS_VECTOR_T& pos3 = pos_h.get(geo->vertexPoint(vtxPointRef->getLink(vertices[rows + cols + rows]));
+                            //const _Tpos& pos3 = pos_h.get(b);
+                            const _Tpos& pos3 = pos_h.get(geo->vertexPoint(pointRef->getLink(vertices[rows + cols + rows])));
                             const value_type dist0 = pos0.distance(pos1);
                             const value_type dist1 = pos1.distance(pos2);
                             const value_type dist2 = pos2.distance(pos3);
@@ -190,7 +169,7 @@ private:
                         uv[0] = tmpI==0 ? 0 : fpreal(vtxpnum) / tmpI;
                         uv[1] = 1;
 
-                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify<_Ty, isPointAttrib>(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx);
                     }
                     for (; vtxpnum < rows + cols; vtxpnum++)
                     {
@@ -198,7 +177,7 @@ private:
                         uv[0] = 1;
                         uv[1] = tmpI==0 ? 1 : 1 - (float(vtxpnum - rows) / tmpI);
 
-                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify<_Ty, isPointAttrib>(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx);
                     }
                     const GA_Size numvtx_preCols = numvtx - cols;
                     for (; vtxpnum < numvtx_preCols; vtxpnum++)
@@ -207,7 +186,7 @@ private:
                         uv[0] = tmpI == 0 ? 1 : (1 - float(tmpI) / (numvtx - rows - cols - cols - 1));
                         uv[1] = 0;
 
-                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify<_Ty, isPointAttrib>(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx);
                     }
                     for (; vtxpnum < numvtx; vtxpnum++)
                     {
@@ -215,26 +194,23 @@ private:
                         uv[0] = 0;
                         uv[1] = tmpI==0 ? 1 : (1 - float(numvtx - vtxpnum - (rows == 0)) / tmpI);
 
-                        uvGridify(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx, isPointAttrib);
+                        uvGridify<_Ty, isPointAttrib>(vertices, uv_h, uv, primoff, vtxpnum, scale, scaleIdx);
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
+    
 
-
-
-
-    template<typename VECTOR_T>
+    template<typename _Ty, bool isPointAttrib>
     SYS_FORCE_INLINE void uvGridify(
         const GA_OffsetListRef& vertices,
-        const GA_RWHandleT<VECTOR_T>& uv_h,
-        VECTOR_T& uv,
+        const GA_RWHandleT<_Ty>& uv_h,
+        _Ty& uv,
         const GA_Offset primoff,
         const GA_Size vtxpnum,
-        const typename VECTOR_T::value_type scale,
-        const bool scaleIdx,
-        const bool isPointAttrib
+        const typename _Ty::value_type scale,
+        const bool scaleIdx
     )
     {
         if (reverseUVu)
@@ -248,7 +224,7 @@ private:
         
         GA_Offset elemoff = vertices[vtxpnum];
         if (isPointAttrib)
-            elemoff = vtxPointRef->getLink(elemoff);
+            elemoff = pointRef->getLink(elemoff);
         uv_h.set(elemoff, uv);
     }
 
@@ -263,9 +239,9 @@ public:
     bool uniScale = false;
 
 private:
-    GA_Attribute* uvAttrib = nullptr;
+    GA_Attribute* attrib = nullptr;
     
-    const GA_ATITopology* vtxPointRef;
+    const GA_ATITopology* pointRef;
     
     exint subscribeRatio = 64;
     exint minGrainSize = 64;

@@ -91,16 +91,11 @@ private:
 
 	SYS_FORCE_INLINE void unpackPrim(const GA_Offset primoff)
 	{
-    	
     	if (GFE_Type::isPacked(geoSrcTmp->getPrimitiveTypeId(primoff)))
     	{
-	        //reinterpret_cast<const GU_PrimPacked*>(geoSrcTmp->getPrimitive(primoff))->unpack(geoGU);
-    		GU_PackedImpl packedImpl;
-    		GU_PrimPacked packed(&packedImpl, geoSrcTmp, primoff);
-    		packed.unpack(*geo->asGU_Detail());
+    		const GU_PrimPacked* packed = geoSrcTmp->getPrimitiveT<const GU_PrimPacked*>(primoff);
+    		packed->unpack(*geo->asGU_Detail());
     	}
-		//GA_Primitive* const prim = geoSrcTmp->getPrimitive(primoff);
-		//GU_PrimPacked* const primPacked = static_cast<GU_PrimPacked*>(prim);
 	}
 	
 	void unpackByGroup_Custom()
@@ -185,7 +180,7 @@ public:
 	
 private:
 	
-	const GA_Detail* geoSrcTmp;
+	const GFE_Detail* geoSrcTmp;
 	
 	
     //exint subscribeRatio = 64;

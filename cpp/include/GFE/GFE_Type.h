@@ -587,13 +587,17 @@ _INLINE_VAR constexpr bool isMatrix = isMatrix2<_Ty> ||
 
 
 template <class _Ty>
-_INLINE_VAR constexpr bool isVecMtx = isVector<_Ty> ||
-                                      isMatrix<_Ty> ;
+_INLINE_VAR constexpr bool isVM = isVector<_Ty> ||
+                                  isMatrix<_Ty> ;
 
 
 template <class _Ty>
-_INLINE_VAR constexpr bool isTuple = isScalar<_Ty> ||
-                                     isVecMtx<_Ty> ;
+_INLINE_VAR constexpr bool isIFVM = isScalar<_Ty> ||
+                                     isVM<_Ty> ;
+
+template <class _Ty>
+_INLINE_VAR constexpr bool isTuple = isIFVM<_Ty> ||
+                                     isVM<_Ty> ;
 
 
 

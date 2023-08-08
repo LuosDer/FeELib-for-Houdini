@@ -83,6 +83,15 @@ static const char* theDsFile = R"THEDSFILE(
         disablewhen "{ minimumDist == 1 }"
     }
 
+    parm {
+        name    "interpAttrib"
+        cppname "InterpAttrib"
+        label   "Interp Attrib"
+        type    string
+        default { "P" }
+    }
+
+
 
     parm {
         name    "kernel"
@@ -107,7 +116,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -173,22 +182,6 @@ SOP_FeE_AttribInterpRay_2_0::cookVerb() const
 
 
 
-static GA_AttributeOwner
-sopAttribOwner(const SOP_FeE_AttribInterpRay_2_0Parms::AttribClass parmAttribClass)
-{
-    using namespace SOP_FeE_AttribInterpRay_2_0Enums;
-    switch (parmAttribClass)
-    {
-    case AttribClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
-    case AttribClass::POINT:     return GA_ATTRIB_POINT;      break;
-    case AttribClass::VERTEX:    return GA_ATTRIB_VERTEX;     break;
-    case AttribClass::DETAIL:    return GA_ATTRIB_DETAIL;     break;
-    }
-    UT_ASSERT_MSG(0, "Unhandled Geo0 Class type!");
-    return GA_ATTRIB_INVALID;
-}
-
-
 static GA_GroupType
 sopGroupType(const SOP_FeE_AttribInterpRay_2_0Parms::GroupType parmGroupType)
 {
@@ -219,21 +212,12 @@ SOP_FeE_AttribInterpRay_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) 
 
     //outGeo0.replaceWith(inGeo0);
 
-
-
-
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
 
-
-std::vector<int> a(10);
-    a.reserve(100);
-    const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getAttribClass());
-    const UT_StringHolder& geo0AttribName = sopparms.getAttribName();
-
     GFE_AttribInterpRay attribInterpRay(outGeo0, &inGeo1, &cookparms);
-    attribInterpRay.getOutAttribArray().findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
-    attribInterpRay.setComputeParm(sopparms.getMaxDist(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    attribInterpRay.getOutAttribArray().appendPoints(sopparms.getInterpAttrib());
+    attribInterpRay.setComputeParm(sopparms.getMinimumDist(), sopparms.getMaxDist(), sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     attribInterpRay.groupParser.setGroup(groupType, sopparms.getGroup());
     attribInterpRay.computeAndBumpDataId();

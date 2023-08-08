@@ -13,6 +13,17 @@
 #include "GFE/GFE_RestVectorComponent.h"
 
 
+    
+#if 0
+        GFE_SetVectorComponent setVectorComponent(geo, nullptr, cookparms);
+        setVectorComponent.comp = comp;
+        setVectorComponent.getOutAttribArray().set(posAttribNonConst);
+        setVectorComponent.setRefAttrib();
+        //setVectorComponent.setRestAttrib("");
+        setVectorComponent.compute();
+        UT_ASSERT_P(!setVectorComponent.getRestAttrib().isEmpty());
+#endif
+
 class GFE_SetVectorComponent : public GFE_AttribFilterWithRef0 {
 
 public:
@@ -38,7 +49,6 @@ public:
         , restVecComp(geo, nullptr, cookparms)
     {
     }
-
     
     void
         setComputeParm(
@@ -101,9 +111,9 @@ public:
 
 
     
-    // SYS_FORCE_INLINE void setRestAttrib(GA_Attribute* const attribPtr)
+    // SYS_FORCE_INLINE void setRestAttrib(GA_Attribute* const attrib)
     // {
-    //     attribRestPtr = attribPtr;
+    //     attribRestPtr = attrib;
     //     UT_ASSERT(getOutAttribArray().isEmpty() ? 1 : attribRestPtr->getOwner() == getOutAttribArray()[0]->getOwner());
     // }
     // SYS_FORCE_INLINE GA_Attribute* setRestAttrib(const UT_StringHolder& attribPattern)
@@ -160,12 +170,12 @@ private:
         const size_t len = getOutAttribArray().size();
         for (size_t i = 0; i < len; ++i)
         {
-            attribPtr = getOutAttribArray()[i];
-            UT_ASSERT_P(attribPtr);
+            attrib = getOutAttribArray()[i];
+            UT_ASSERT_P(attrib);
 
             if (rest)
             {
-                restVecComp.setRestAttrib(attribPtr);
+                restVecComp.setRestAttrib(attrib);
                 restVecComp.compute();
             }
             
@@ -173,13 +183,13 @@ private:
             {
                 if (geoRef0)
                 {
-                    attribRef = geoRef0->findAttribute(attribPtr->getOwner(), refAttribNames.getNext<UT_StringHolder>());
+                    attribRef = geoRef0->findAttribute(attrib->getOwner(), refAttribNames.getNext<UT_StringHolder>());
                     if (attribRef && !attribRef->getAIFTuple())
                         attribRef = nullptr;
                 }
                 else
                 {
-                    attribRefPtrNonConst = geo->findAttribute(attribPtr->getOwner(), refAttribNames.getNext<UT_StringHolder>());
+                    attribRefPtrNonConst = geo->findAttribute(attrib->getOwner(), refAttribNames.getNext<UT_StringHolder>());
                     if (attribRefPtrNonConst && !attribRefPtrNonConst->getAIFTuple())
                         attribRefPtrNonConst = nullptr;
                     
@@ -187,237 +197,124 @@ private:
                 }
             }
             
-            const GA_AIFTuple* const aifTuple = attribPtr->getAIFTuple();
+            const GA_AIFTuple* const aifTuple = attrib->getAIFTuple();
             if (!aifTuple)
                 continue;
 
-            const int tupleSize = attribPtr->getTupleSize();
+            const int tupleSize = attrib->getTupleSize();
             if (comp >= tupleSize)
                 continue;
-            
-            const GA_Storage storage = aifTuple->getStorage(attribPtr);
-            switch (tupleSize)
+
+            if (attribRef)
             {
-            case 1:
-                switch (storage)
+                UT_ASSERT_P(attribRef->getAIFTuple());
+                const int tupleSizeRef = attribRef->getTupleSize();
+                if (comp >= tupleSizeRef && tupleSizeRef >= 2)
+                    continue;
+            }
+
+            const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+            if (!GFE_Variant::isAttribStorageFVF(attribStorage))
+                continue;
+            auto storageVariant = GFE_Variant::getAttribStorageVariantFVF(attribStorage);
+            
+            if (attribRef)
+            {
+                const GFE_AttribStorage attribStorageRef = GFE_Type::getAttribStorage(attribRef);
+                if (!GFE_Variant::isAttribStorageFVF(attribStorageRef))
+                    continue;
+                auto storageRefVariant = GFE_Variant::getAttribStorageVariantFVF(attribStorageRef);
+            
+                std::visit([&] (auto storageVariant, auto storageRefVariant)
                 {
-                case GA_STORE_REAL16: setFloat<fpreal16>(); break;
-                case GA_STORE_REAL32: setFloat<fpreal32>(); break;
-                case GA_STORE_REAL64: setFloat<fpreal64>(); break;
-                default: break;
-                }
-            break;
-            case 2:
-                switch (storage)
+                    using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+                    using type_ref = typename GFE_Variant::getAttribStorage_t<storageRefVariant>;
+                    setVectorComponent<type, type_ref>();
+                }, storageVariant, storageRefVariant);
+            }
+            else
+            {
+                std::visit([&] (auto storageVariant)
                 {
-                case GA_STORE_REAL16: setVectorComponent<UT_Vector2T<fpreal16>>(); break;
-                case GA_STORE_REAL32: setVectorComponent<UT_Vector2T<fpreal32>>(); break;
-                case GA_STORE_REAL64: setVectorComponent<UT_Vector2T<fpreal64>>(); break;
-                default: break;
-                }
-            break;
-            case 3:
-                switch (storage)
-                {
-                case GA_STORE_REAL16: setVectorComponent<UT_Vector3T<fpreal16>>(); break;
-                case GA_STORE_REAL32: setVectorComponent<UT_Vector3T<fpreal32>>(); break;
-                case GA_STORE_REAL64: setVectorComponent<UT_Vector3T<fpreal64>>(); break;
-                default: break;
-                }
-            break;
-            case 4:
-                switch (storage)
-                {
-                case GA_STORE_REAL16: setVectorComponent<UT_Vector4T<fpreal16>>(); break;
-                case GA_STORE_REAL32: setVectorComponent<UT_Vector4T<fpreal32>>(); break;
-                case GA_STORE_REAL64: setVectorComponent<UT_Vector4T<fpreal64>>(); break;
-                default: break;
-                }
-            break;
-            default:break;
+                    using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+                    setVectorComponent<type>();
+                }, storageVariant);
             }
         }
         
         if (delRefAttrib && !geoRef0 && attribRefPtrNonConst)
             geo->destroyAttrib(attribRefPtrNonConst);
+        
         return true;
     }
 
-    template<typename T>
+
+    
+    template<typename _Ty>
     void setVectorComponent()
     {
-        using value_type = typename T::value_type;
-        if (attribRef)
+        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
+        const value_type attribVal = attribValF;
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this, attribVal](const GA_SplittableRange& r)
         {
-            // const GA_AIFTuple* const aifTuple = attribRef->getAIFTuple();
-            UT_ASSERT_P(attribRef->getAIFTuple());
-
-            const int tupleSize = attribRef->getTupleSize();
-            if (comp >= tupleSize && tupleSize >= 2)
-                return;
-            
-            const GA_Storage storage = attribRef->getAIFTuple()->getStorage(attribRef);
-            switch (tupleSize)
-            {
-            case 1:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: setVectorComponentByRefAttrib_FLOAT<T, fpreal16>(); break;
-                    case GA_STORE_REAL32: setVectorComponentByRefAttrib_FLOAT<T, fpreal32>(); break;
-                    case GA_STORE_REAL64: setVectorComponentByRefAttrib_FLOAT<T, fpreal64>(); break;
-                    default: break;
-                }
-            break;
-            case 2:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: setVectorComponentByRefAttrib<T, UT_Vector2T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: setVectorComponentByRefAttrib<T, UT_Vector2T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: setVectorComponentByRefAttrib<T, UT_Vector2T<fpreal64>>(); break;
-                    default: break;
-                }
-            break;
-            case 3:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: setVectorComponentByRefAttrib<T, UT_Vector3T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: setVectorComponentByRefAttrib<T, UT_Vector3T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: setVectorComponentByRefAttrib<T, UT_Vector3T<fpreal64>>(); break;
-                    default: break;
-                }
-            break;
-            case 4:
-                switch (storage)
-                {
-                    case GA_STORE_REAL16: setVectorComponentByRefAttrib<T, UT_Vector4T<fpreal16>>(); break;
-                    case GA_STORE_REAL32: setVectorComponentByRefAttrib<T, UT_Vector4T<fpreal32>>(); break;
-                    case GA_STORE_REAL64: setVectorComponentByRefAttrib<T, UT_Vector4T<fpreal64>>(); break;
-                    default: break;
-                }
-            break;
-            default:
-            break;
-            }
-        }
-        else
-        {
-            const value_type attribVal = attribValF;
-            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, attribVal](const GA_SplittableRange& r)
-            {
-                GA_PageHandleT<T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-                GA_Offset start, end;
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-                {
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                    {
-                        attrib_ph.setPage(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            attrib_ph.value(elemoff)[comp] = attribVal;
-                        }
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        }
-    }
-
-    template<typename T, typename T_REF>
-    void setVectorComponentByRefAttrib()
-    {
-        UT_ASSERT_P(attribRef);
-        UT_ASSERT(attribPtr->getOwner() == attribRef->getOwner());
-        UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
-        {
-            GA_PageHandleT<T,     typename T::value_type,     true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            GA_PageHandleT<T_REF, typename T_REF::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
+            GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     attrib_ph.setPage(start);
-                    attribRef_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.value(elemoff)[comp] = attribRef_ph.value(elemoff)[comp];
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-    
-    template<typename T, typename T_REF>
-    void setVectorComponentByRefAttrib_FLOAT()
-    {
-        UT_ASSERT_P(attribRef);
-        UT_ASSERT(attribPtr->getOwner() == attribRef->getOwner());
-        UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
-        {
-            GA_PageHandleT<T, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            GA_PageHandleT<T_REF, T_REF, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
-            GA_Offset start, end;
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    attrib_ph.setPage(start);
-                    attribRef_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attrib_ph.value(elemoff)[comp] = attribRef_ph.value(elemoff);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-    
-    template<typename T>
-    void setFloat()
-    {
-        if (attribRef)
-        {
-            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
-            {
-                GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-                GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRef);
-                GA_Offset start, end;
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-                {
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                    {
-                        attrib_ph.setPage(start);
-                        attribRef_ph.setPage(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
-                            attrib_ph.value(elemoff) = attribRef_ph.value(elemoff);
-                        }
-                    }
-                }
-            }, subscribeRatio, minGrainSize);
-        }
-        else
-        {
-            const T attribVal = static_cast<const T>(attribValF);
-            UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, attribVal](const GA_SplittableRange& r)
-            {
-                GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-                GA_Offset start, end;
-                for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-                {
-                    for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                    {
-                        attrib_ph.setPage(start);
-                        for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                        {
+                        if constexpr (GFE_Type::isScalar<_Ty>)
                             attrib_ph.value(elemoff) = attribVal;
-                        }
+                        else
+                            attrib_ph.value(elemoff)[comp] = attribVal;
                     }
                 }
-            }, subscribeRatio, minGrainSize);
-        }
+            }
+        }, subscribeRatio, minGrainSize);
     }
 
+
+    template<typename _Ty, typename _T_REF>
+    void setVectorComponent()
+    {
+        using value_type_ref = typename GFE_Type::get_value_type_t<_T_REF>;
+        UT_ASSERT_P(attribRef);
+        UT_ASSERT(attrib->getOwner() == attribRef->getOwner());
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
+        {
+            GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
+            GFE_ROPageHandleT<_T_REF> attribRef_ph(attribRef);
+            GA_Offset start, end;
+            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
+            {
+                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
+                {
+                    attrib_ph.setPage(start);
+                    attribRef_ph.setPage(start);
+                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
+                    {
+                        if constexpr (GFE_Type::isScalar<_Ty>)
+                            attrib_ph.value(elemoff) = getPageHandleComp<_T_REF, value_type_ref>(attribRef_ph, elemoff);
+                        else
+                            attrib_ph.value(elemoff)[comp] = getPageHandleComp<_T_REF, value_type_ref>(attribRef_ph, elemoff);
+                    }
+                }
+            }
+        }, subscribeRatio, minGrainSize);
+    }
+
+
+    template<typename _Ty, typename value_type>
+    SYS_FORCE_INLINE value_type getPageHandleComp(GFE_ROPageHandleT<_Ty>& attrib_ph, const GA_Offset elemoff) const
+    {
+        if constexpr (GFE_Type::isScalar<_Ty>)
+            return attrib_ph.get(elemoff);
+        else
+            return attrib_ph.get(elemoff)[comp];
+    }
 
 public:
     UFE_SplittableString refAttribNames;
@@ -431,7 +328,7 @@ public:
 
 private:
 
-    GA_Attribute* attribPtr;
+    GA_Attribute* attrib;
     const GA_Attribute* attribRef = nullptr;
     GA_Attribute* attribRefPtrNonConst = nullptr;
     //GA_Attribute* attribRestPtr;

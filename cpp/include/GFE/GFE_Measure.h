@@ -102,28 +102,28 @@ GFE_MEASUREMESH_FUNC_SPECIALIZATION(computeMeshVolume)
 #undef GFE_MEASUREMESH_FUNC_SPECIALIZATION
 
     
-    template<typename FLOAT_T>
-    FLOAT_T computeMeshPerimeter()
+    template<typename _Ty>
+    _Ty computeMeshPerimeter()
     {
-        ComputePerimeter<FLOAT_T> body(geo, posAttrib);
+        ComputePerimeter<_Ty> body(geo, posAttrib);
         UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
         return body.getSum();
     }
 
-    template<typename FLOAT_T>
-    FLOAT_T computeMeshArea()
+    template<typename _Ty>
+    _Ty computeMeshArea()
     {
-        ComputeArea<FLOAT_T> body(geo, posAttrib);
+        ComputeArea<_Ty> body(geo, posAttrib);
         UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
         return body.getSum();
     }
 
-    template<typename FLOAT_T>
-    FLOAT_T computeMeshVolume()
+    template<typename _Ty>
+    _Ty computeMeshVolume()
     {
-        const UT_BoundingBoxT<FLOAT_T>& geoBBox = geo->stdBoundingBox<FLOAT_T>(geo->getPointRange(), posAttrib);
-        const UT_Vector3T<FLOAT_T>& bboxCenter = geoBBox.center();
-        ComputeVolume<FLOAT_T> body(geo, bboxCenter);
+        const UT_BoundingBoxT<_Ty>& geoBBox = geo->stdBoundingBox<_Ty>(geo->getPointRange(), posAttrib);
+        const UT_Vector3T<_Ty>& bboxCenter = geoBBox.center();
+        ComputeVolume<_Ty> body(geo, bboxCenter);
         UTparallelReduce(groupParser.getPrimitiveSplittableRange(), body, subscribeRatio, minGrainSize);
         return body.getSum();
     }
@@ -205,8 +205,8 @@ private:
 
     //GU_Detail::compute3DArea(const GA_Offset primoff)
 
-    template<typename FLOAT_T>
-    FLOAT_T computePerimeter(const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h, const GA_Offset primoff)
+    template<typename _Ty>
+    _Ty computePerimeter(const GA_ROHandleT<UT_Vector3T<_Ty>>& pos_h, const GA_Offset primoff)
     {
         //const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
         //const GA_Size numvtx = vertices.size();
@@ -216,7 +216,7 @@ private:
 
         //const bool closed = vertices.getExtraFlag();
         const bool closed = geo->getPrimitiveClosedFlag(primoff);
-        FLOAT_T pSum = 0.0;
+        _Ty pSum = 0.0;
 
         switch (geo->getPrimitiveTypeId(primoff))
         {
@@ -228,7 +228,7 @@ private:
             return 0.0;
         }
         
-        UT_Vector3T<FLOAT_T> pos0, pos1, dir;
+        UT_Vector3T<_Ty> pos0, pos1, dir;
         switch (pos_h->getOwner())
         {
         case GA_ATTRIB_VERTEX:
@@ -259,8 +259,8 @@ private:
 
     
 
-    template<typename FLOAT_T>
-    FLOAT_T computeArea(const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h, const GA_Offset primoff)
+    template<typename _Ty>
+    _Ty computeArea(const GA_ROHandleT<UT_Vector3T<_Ty>>& pos_h, const GA_Offset primoff)
     {
         //const GA_OffsetListRef& vertices = geo->getPrimitiveVertexList(primoff);
 
@@ -286,7 +286,7 @@ private:
 
         const GA_AttributeOwner attribOwner = pos_h.getAttribute()->getOwner();
 
-        UT_Vector3T<FLOAT_T> pos0, pos1, pos2;
+        UT_Vector3T<_Ty> pos0, pos1, pos2;
 
         switch (attribOwner)
         {
@@ -303,9 +303,9 @@ private:
         default:
             return 0.0;
         }
-        //UT_Vector3T<FLOAT_T>& pos1 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[0]));
-        //UT_Vector3T<FLOAT_T>& pos1 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[1]));
-        //UT_Vector3T<FLOAT_T>& pos2 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[2]));
+        //UT_Vector3T<_Ty>& pos1 = geo->getPos3T<_Ty>(geo->vertexPoint(vertices[0]));
+        //UT_Vector3T<_Ty>& pos1 = geo->getPos3T<_Ty>(geo->vertexPoint(vertices[1]));
+        //UT_Vector3T<_Ty>& pos2 = geo->getPos3T<_Ty>(geo->vertexPoint(vertices[2]));
 
         //GA_Offset ptoff0 = geo->vertexPoint(geo->getPrimitiveVertexOffset(primoff, 0));
 
@@ -314,8 +314,8 @@ private:
         case 3: return heronsFormula(pos0, pos1, pos2); break;
         case 4:
         {
-            //UT_Vector3T<FLOAT_T> pos3 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[3]));
-            UT_Vector3T<FLOAT_T> pos3;
+            //UT_Vector3T<_Ty> pos3 = geo->getPos3T<_Ty>(geo->vertexPoint(vertices[3]));
+            UT_Vector3T<_Ty> pos3;
             switch (attribOwner)
             {
             case GA_ATTRIB_VERTEX: pos3 = pos_h.get(geo->primVertex(primoff, 3)); break;
@@ -328,17 +328,17 @@ private:
         default: UT_ASSERT_MSG(0, "unhandled numvtx"); break;
         }
 
-        const UT_Vector3T<FLOAT_T>& dir0 = pos1 - pos0;
-        const UT_Vector3T<FLOAT_T>& dir1 = pos2 - pos1;
-        const UT_Vector3T<FLOAT_T>& crossdir0B = cross(dir0, dir1);
-        FLOAT_T lengthdir0B = crossdir0B.length();
+        const UT_Vector3T<_Ty>& dir0 = pos1 - pos0;
+        const UT_Vector3T<_Ty>& dir1 = pos2 - pos1;
+        const UT_Vector3T<_Ty>& crossdir0B = cross(dir0, dir1);
+        _Ty lengthdir0B = crossdir0B.length();
         lengthdir0B = 1.0 / lengthdir0B;
-        const FLOAT_T cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
-        const FLOAT_T cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
-        const FLOAT_T cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
+        const _Ty cosnx = ((pos1[1] - pos0[1]) * (pos2[2] - pos0[2]) - (pos2[1] - pos0[1]) * (pos1[2] - pos0[2])) * lengthdir0B;
+        const _Ty cosny = ((pos2[0] - pos0[0]) * (pos1[2] - pos0[2]) - (pos1[0] - pos0[0]) * (pos2[2] - pos0[2])) * lengthdir0B;
+        const _Ty cosnz = ((pos1[0] - pos0[0]) * (pos2[1] - pos0[1]) - (pos2[0] - pos0[0]) * (pos1[1] - pos0[1])) * lengthdir0B;
 
-        FLOAT_T areaSum = 0.0;
-        //pos0 = geo->getPos3T<FLOAT_T>(geo->vertexPoint(vertices[numvtx - 1]));
+        _Ty areaSum = 0.0;
+        //pos0 = geo->getPos3T<_Ty>(geo->vertexPoint(vertices[numvtx - 1]));
         switch (attribOwner)
         {
         case GA_ATTRIB_VERTEX:
@@ -372,8 +372,8 @@ private:
 
 
     
-    // template<typename FLOAT_T>
-    // FLOAT_T computeVolume(const UT_Vector3T<FLOAT_T>& bboxCenter, const GA_Offset primoff)
+    // template<typename _Ty>
+    // _Ty computeVolume(const UT_Vector3T<_Ty>& bboxCenter, const GA_Offset primoff)
     // {
     //     const GEO_Hull* const prim = static_cast<const GEO_Hull*>(geo->getPrimitive(primoff));
     //     return prim->calcVolume(bboxCenter);
@@ -381,13 +381,13 @@ private:
 
 
 #define GFE_MEASUREPRIM_FUNC_SPECIALIZATION(FUNC_NAME);                                                                              \
-        template<typename FLOAT_T, typename POS_FLOAT_T>                                                                             \
+        template<typename _Ty, typename POS_FLOAT_T>                                                                             \
         void FUNC_NAME()                                                                                                             \
         {                                                                                                                            \
             const GA_ROHandleT<UT_Vector3T<POS_FLOAT_T>> pos_h(posAttrib);                                                           \
             UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &pos_h](const GA_SplittableRange& r)                     \
             {                                                                                                                        \
-                GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);      \
+                GA_PageHandleT<_Ty, _Ty, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);      \
                 GA_Offset start, end;                                                                                                \
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)                                                      \
                 {                                                                                                                    \
@@ -411,14 +411,14 @@ GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
 #undef GFE_MEASUREPRIM_FUNC_SPECIALIZATION
 
     
-template<typename FLOAT_T>
+template<typename _Ty>
 void computeVolume()
 {
-    const UT_BoundingBoxT<FLOAT_T>& geoBBox = geo->stdBoundingBox<FLOAT_T>(geo->getPointRange(), posAttrib);
+    const UT_BoundingBoxT<_Ty>& geoBBox = geo->stdBoundingBox<_Ty>(geo->getPointRange(), posAttrib);
     const UT_Vector3T<fpreal32> bboxCenter(geoBBox.center());
     UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, &bboxCenter](const GA_SplittableRange& r)
     {
-        GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);
+        GA_PageHandleT<_Ty, _Ty, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(measureAttrib);
         GA_Offset start, end;
         for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
         {
@@ -429,7 +429,7 @@ void computeVolume()
                 {
                     const GEO_Hull* const prim = static_cast<const GEO_Hull*>(geo->getPrimitive(elemoff));
                     measure_ph.value(elemoff) = prim->calcVolume(bboxCenter);
-                    //measure_ph.value(elemoff) = computeVolume<FLOAT_T>(elemoff);
+                    //measure_ph.value(elemoff) = computeVolume<_Ty>(elemoff);
                 }
             }
         }
@@ -490,10 +490,10 @@ GFE_MEASUREPRIM_FUNC_SPECIALIZATION(computeArea)
     
 
 // #define GFE_MEASUREMESH_FUNC_SPECIALIZATION(FUNC_NAME);             \
-//         template<typename FLOAT_T>                                  \
+//         template<typename _Ty>                                  \
 //         void FUNC_NAME()                                            \
 //         {                                                           \
-//             const GA_RWHandleT<FLOAT_T> measure_h(measureAttrib);   \
+//             const GA_RWHandleT<_Ty> measure_h(measureAttrib);   \
 //             measure_h.set(0, FUNC_NAME());                          \
 //         }                                                           \
 //
@@ -705,20 +705,20 @@ computePerimeter##T(                                                            
 
 
 
-    template<typename FLOAT_T>
+    template<typename _Ty>
     static void
         computePerimeter(
             const GA_Detail* const geo,
-            const GA_RWHandleT<FLOAT_T>& p_h,
+            const GA_RWHandleT<_Ty>& p_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
-            const exint minGrainSize = 1024
+            const exint minGrainSize   = 1024
         )
     {
         //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
         UTparallelFor(GA_SplittableRange(geo->getPrimitiveRange(geoPrimGroup)), [geo, &p_h](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(p_h.getAttribute());
+            GA_PageHandleT<_Ty, _Ty, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(p_h.getAttribute());
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -727,7 +727,7 @@ computePerimeter##T(                                                            
                     measure_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        measure_ph.value(elemoff) = computePerimeter<T>(geo, elemoff);
+                        measure_ph.value(elemoff) = computePerimeter<_Ty>(geo, elemoff);
                     }
                 }
             }
@@ -754,11 +754,11 @@ computePerimeter##T(                                                            
 
 
 
-    template<typename FLOAT_T, typename T1>
+    template<typename _Ty, typename T1>
     static void
         computePerimeter(
             const GA_Detail* const geo,
-            const GA_RWHandleT<FLOAT_T>& p_h,
+            const GA_RWHandleT<_Ty>& p_h,
             const GA_ROHandleT<UT_Vector3T<T1>>& pos_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
@@ -768,7 +768,7 @@ computePerimeter##T(                                                            
         //GU_Measure::computePerimeter(*geo, p_h, geoPrimGroup);
         UTparallelFor(GA_SplittableRange(geo->getPrimitiveRange(geoPrimGroup)), [geo, &p_h, &pos_h](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<FLOAT_T, FLOAT_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(p_h.getAttribute());
+            GA_PageHandleT<_Ty, _Ty, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> measure_ph(p_h.getAttribute());
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -1298,19 +1298,19 @@ SYS_FORCE_INLINE
         return body.getSum();
     }
 
-    template<typename FLOAT_T>
-    static FLOAT_T
+    template<typename _Ty>
+    static _Ty
         computeMeshVolume(
             const GA_Detail* const geo,
             //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
-            const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h,
+            const GA_ROHandleT<UT_Vector3T<_Ty>>& pos_h,
             const GA_PrimitiveGroup* const geoPrimGroup = nullptr,
             const exint subscribeRatio = 16,
             const exint minGrainSize = 1024
         )
     {
-        const UT_BoundingBoxT<FLOAT_T>& geoBBox = static_cast<const GFE_Detail*>(geo)->stdBoundingBox<FLOAT_T>(geo->getPointRange(), pos_h.getAttribute());
-        const UT_Vector3T<FLOAT_T>& bboxCenter = geoBBox.center();
+        const UT_BoundingBoxT<_Ty>& geoBBox = static_cast<const GFE_Detail*>(geo)->stdBoundingBox<_Ty>(geo->getPointRange(), pos_h.getAttribute());
+        const UT_Vector3T<_Ty>& bboxCenter = geoBBox.center();
 
         ComputeVolume body(geo, bboxCenter);
         const GA_SplittableRange geoSplittableRange(geo->getPrimitiveRange(geoPrimGroup));
@@ -1319,8 +1319,8 @@ SYS_FORCE_INLINE
     }
 
 
-    template<typename FLOAT_T>
-    static FLOAT_T
+    template<typename _Ty>
+    static _Ty
         computeMeshVolume(
             const GA_Detail* const geo,
             //const GA_AttributeOwner posAttribOwner = GA_ATTRIB_PRIMITIVE,
@@ -1330,7 +1330,7 @@ SYS_FORCE_INLINE
             const exint minGrainSize = 1024
         )
     {
-        const UT_BoundingBoxT<FLOAT_T>& geoBBox = static_cast<const GFE_Detail*>(geo)->stdBoundingBox<FLOAT_T>(geo->getPointRange(), posAttrib);
+        const UT_BoundingBoxT<_Ty>& geoBBox = static_cast<const GFE_Detail*>(geo)->stdBoundingBox<_Ty>(geo->getPointRange(), posAttrib);
         const UT_Vector3T<fpreal32>& bboxCenter = geoBBox.center();
 
         ComputeVolume body(geo, bboxCenter);
@@ -1435,11 +1435,11 @@ public:
 private:
     
     
-    template<typename FLOAT_T>
+    template<typename _Ty>
     class ComputePerimeter
     {
     public:
-        ComputePerimeter(const GA_Detail* const a, const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& b)
+        ComputePerimeter(const GA_Detail* const a, const GA_ROHandleT<UT_Vector3T<_Ty>>& b)
             : myGeo(a)
             , pos_h(b)
             , mySum(0)
@@ -1456,28 +1456,28 @@ private:
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    mySum += computePerimeter<FLOAT_T>(myGeo, elemoff, pos_h);
+                    mySum += computePerimeter<_Ty>(myGeo, elemoff, pos_h);
                 }
             }
         }
         SYS_FORCE_INLINE void join(const ComputePerimeter& other)
         { mySum += other.mySum; }
-        SYS_FORCE_INLINE FLOAT_T getSum() const
+        SYS_FORCE_INLINE _Ty getSum() const
         { return mySum; }
     private:
-        FLOAT_T mySum;
+        _Ty mySum;
         const GA_Detail* const myGeo;
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h;
+        const GA_ROHandleT<UT_Vector3T<_Ty>>& pos_h;
     }; // End of Class ComputePerimeter
 
 
 
     
-    template<typename FLOAT_T>
+    template<typename _Ty>
     class ComputeArea
     {
     public:
-        ComputeArea(const GA_Detail* const a, const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& b)
+        ComputeArea(const GA_Detail* const a, const GA_ROHandleT<UT_Vector3T<_Ty>>& b)
             : myGeo(a)
             , pos_h(b)
             , mySum(0)
@@ -1494,26 +1494,26 @@ private:
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    mySum += computeArea<FLOAT_T>(myGeo, elemoff, pos_h);
+                    mySum += computeArea<_Ty>(myGeo, elemoff, pos_h);
                 }
             }
         }
         SYS_FORCE_INLINE void join(const ComputeArea& other)
         { mySum += other.mySum; }
-        SYS_FORCE_INLINE FLOAT_T getSum() const
+        SYS_FORCE_INLINE _Ty getSum() const
         { return mySum; }
     private:
-        FLOAT_T mySum;
+        _Ty mySum;
         const GA_Detail* const myGeo;
-        const GA_ROHandleT<UT_Vector3T<FLOAT_T>>& pos_h;
+        const GA_ROHandleT<UT_Vector3T<_Ty>>& pos_h;
     }; // End of Class ComputeArea
     
     
-    template<typename FLOAT_T>
+    template<typename _Ty>
     class ComputeVolume
     {
     public:
-        ComputeVolume(const GA_Detail* const a, const UT_Vector3T<FLOAT_T>& b)
+        ComputeVolume(const GA_Detail* const a, const UT_Vector3T<_Ty>& b)
             : myGeo(a)
             , myBBoxCenter(b)
             , mySum(0)
@@ -1537,12 +1537,12 @@ private:
         }
         SYS_FORCE_INLINE void join(const ComputeVolume& other)
         { mySum += other.mySum; }
-        SYS_FORCE_INLINE FLOAT_T getSum() const
+        SYS_FORCE_INLINE _Ty getSum() const
         { return mySum; }
     private:
-        FLOAT_T mySum;
+        _Ty mySum;
         const GA_Detail* const myGeo;
-        const UT_Vector3T<FLOAT_T>& myBBoxCenter;
+        const UT_Vector3T<_Ty>& myBBoxCenter;
     }; // End of Class ComputeVolume
 
 

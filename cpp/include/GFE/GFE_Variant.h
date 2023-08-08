@@ -110,6 +110,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         MacroName(V4F)                              \
         MacroName(VI)                               \
         MacroName(VF)                               \
+        MacroName(V)                                \
         MacroName(VM)                               \
         MacroName(IFV)                              \
         MacroName(IFVM)                             \
@@ -535,6 +536,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 #undef __GFE_Variant_SpecializationSwitchVariantIFV
 #undef __GFE_Variant_SpecializationSwitchVariantIFVM
 
+#undef __GFE_Variant_SpecializationSwitchVariantFVF
     
 #undef __GFE_Variant_SpecializationSwitchVariantV2
 #undef __GFE_Variant_SpecializationSwitchVariantV3
@@ -569,16 +571,17 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV2I
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV3I
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV4I
-#undef __GFE_Variant_SpecializationSwitchVariantTrueVI
     
 #undef __GFE_Variant_SpecializationSwitchVariantTrueIFV
 #undef __GFE_Variant_SpecializationSwitchVariantTrueIFVM
 
+#undef __GFE_Variant_SpecializationSwitchVariantTrueFVF
     
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV2
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV3
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV4
 #undef __GFE_Variant_SpecializationSwitchVariantTrueVN
+#undef __GFE_Variant_SpecializationSwitchVariantTrueV
     
 #undef __GFE_Variant_SpecializationSwitchVariantTrueM2
 #undef __GFE_Variant_SpecializationSwitchVariantTrueM3
@@ -653,7 +656,6 @@ SYS_FORCE_INLINE auto getAttribStorageVariant(const GA_Attribute* const attrib)
 
 
 
-
     
 
         
@@ -682,10 +684,9 @@ SYS_FORCE_INLINE attribOwnerVariantPPVD getAttribOwnerVariant(const GA_Attribute
     case GA_ATTRIB_POINT:     return attribOwnerConstant<GA_ATTRIB_POINT    >{}; break;
     case GA_ATTRIB_VERTEX:    return attribOwnerConstant<GA_ATTRIB_VERTEX   >{}; break;
     case GA_ATTRIB_DETAIL:    return attribOwnerConstant<GA_ATTRIB_DETAIL   >{}; break;
-    default: break;
     }
     UT_ASSERT_MSG(0, "Unhandled Attrib Owner");
-    return attribOwnerConstant<GA_ATTRIB_PRIMITIVE>{};
+    return attribOwnerConstant<GA_ATTRIB_POINT>{};
 }
 
 SYS_FORCE_INLINE auto getAttribOwnerVariant(const GA_Attribute& attrib)

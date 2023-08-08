@@ -140,7 +140,7 @@ public:
     //     return !isInvalid();
     // }
     
-    SYS_FORCE_INLINE const UT_StringHolder& getValidAttribName(const GA_Attribute& attrib)
+    SYS_FORCE_INLINE UT_StringHolder getValidAttribName(const GA_Attribute& attrib)
     {
         return getIsValid()
                ? getNext<UT_StringHolder>()

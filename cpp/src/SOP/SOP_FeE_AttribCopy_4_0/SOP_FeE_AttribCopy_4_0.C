@@ -21,7 +21,7 @@ using namespace SOP_FeE_AttribCopy_4_0_Namespace;
 
 
 
-static const char *theDsFile = R"THEDSFILE(
+static const char *SOP_FeE_AttribCopy_4_0_theDsFile = R"THEDSFILE(
 {
     name        parameters
 
@@ -242,7 +242,7 @@ static const char *theDsFile = R"THEDSFILE(
 PRM_Template*
 SOP_FeE_AttribCopy_4_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_AttribCopy_4_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_AttribCopy_4_0.C"_sh, SOP_FeE_AttribCopy_4_0_theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);

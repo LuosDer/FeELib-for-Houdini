@@ -28,7 +28,7 @@ public:
             const bool minimumDist = true,
             const fpreal maxDist = 1e10,
             const exint subscribeRatio = 64,
-            const exint minGrainSize   = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
@@ -167,7 +167,7 @@ private:
     GA_AttributeRefMap attribRefmap;
     
     exint subscribeRatio = 64;
-    exint minGrainSize = 64;
+    exint minGrainSize   = 1024;
 
 }; // End of class GFE_AttributeInterpRay
 

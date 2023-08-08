@@ -712,8 +712,8 @@ private:
             {
                 UTparallelFor(groupParser.getSplittableRange(attribPtr), [this](const GA_SplittableRange& r)
                 {
-                    GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-                    GA_PageHandleT<MATRIX_T, typename MATRIX_T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> xform_ph(xformAttrib);
+                    GFE_RWPageHandleT<_TMatrix> attrib_ph(attribPtr);
+                    GFE_ROPageHandleT<_TMatrix> xform_ph(xformAttrib);
                     GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
@@ -744,7 +744,7 @@ private:
                 const GA_ROHandleT<MATRIX_T> xform_h(xformAttrib);
                 UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform_h, &indexMap](const GA_SplittableRange& r)
                 {
-                    GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+                    GFE_RWPageHandleT<_TMatrix> attrib_ph(attribPtr);
                     GA_Offset start, end;
                     for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                     {
@@ -820,7 +820,7 @@ private:
     {
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GFE_RWPageHandleT<_TMatrix> attrib_ph(attribPtr);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -871,7 +871,7 @@ private:
     {
         UTparallelFor(groupParser.getSplittableRange(attribPtr), [this, &xform](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<_TMatrix, typename _TMatrix::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GFE_RWPageHandleT<_TMatrix> attrib_ph(attribPtr);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -902,7 +902,7 @@ private:
     void xformMatrixByMatrix()
     {
         if(xformByXform4)
-            xformMatrixByMatrix<_TMatrix, UT_Matrix4T<GFE_Type::getValueType<_TMatrix>>>(xform4);
+            xformMatrixByMatrix<_TMatrix, UT_Matrix4T<GFE_Type::get_value_type_t<_TMatrix>>>(xform4);
             //xformMatrixByMatrix<_TMatrix, UT_Matrix4T<typename _TMatrix::value_type>>(xform4);
         else
             xformMatrixByMatrix<_TMatrix, UT_Matrix3T<typename _TMatrix::value_type>>(xform3);
@@ -914,23 +914,17 @@ private:
     void xformVectorByAttrib()
     {
         if (xformAttrib->getAIFTuple()->getTupleSize(xformAttrib) == 16)
+        {
             switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
             {
-            //case GA_STORE_INT16:  xformVectorByAttrib<_TMatrix, UT_Matrix4T<int16>>();           break;
-            //case GA_STORE_INT32:  xformVectorByAttrib<_TMatrix, UT_Matrix4T<int32>>();           break;
-            //case GA_STORE_INT64:  xformVectorByAttrib<_TMatrix, UT_Matrix4T<int64>>();           break;
-            //case GA_STORE_REAL16: xformVectorByAttrib<_TMatrix, UT_Matrix4T<fpreal16>>();        break;
             case GA_STORE_REAL32: xformVectorByAttrib<_TMatrix, UT_Matrix4T<fpreal32>>();        break;
             case GA_STORE_REAL64: xformVectorByAttrib<_TMatrix, UT_Matrix4T<fpreal64>>();        break;
             default: break;
             }
+        }
         else
             switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
             {
-            //case GA_STORE_INT16:  xformVectorByAttrib<_TMatrix, UT_Matrix3T<int16>>();           break;
-            //case GA_STORE_INT32:  xformVectorByAttrib<_TMatrix, UT_Matrix3T<int32>>();           break;
-            //case GA_STORE_INT64:  xformVectorByAttrib<_TMatrix, UT_Matrix3T<int64>>();           break;
-            //case GA_STORE_REAL16: xformVectorByAttrib<_TMatrix, UT_Matrix3T<fpreal16>>();        break;
             case GA_STORE_REAL32: xformVectorByAttrib<_TMatrix, UT_Matrix3T<fpreal32>>();        break;
             case GA_STORE_REAL64: xformVectorByAttrib<_TMatrix, UT_Matrix3T<fpreal64>>();        break;
             default: break;
@@ -969,42 +963,25 @@ private:
                 default: break;
                 }
             }
-                         
         }
         else
+        {
             switch (xformAttrib->getAIFTuple()->getStorage(xformAttrib))
             {
-            //case GA_STORE_INT16:  xformMatrixByAttrib<_TMatrix, UT_Matrix3T<int16>>();           break;
-            //case GA_STORE_INT32:  xformMatrixByAttrib<_TMatrix, UT_Matrix3T<int32>>();           break;
-            //case GA_STORE_INT64:  xformMatrixByAttrib<_TMatrix, UT_Matrix3T<int64>>();           break;
-            //case GA_STORE_REAL16: xformMatrixByAttrib<_TMatrix, UT_Matrix3T<fpreal16>>();        break;
             case GA_STORE_REAL32: xformMatrixByAttrib<_TMatrix, UT_Matrix3T<fpreal32>>();        break;
             case GA_STORE_REAL64: xformMatrixByAttrib<_TMatrix, UT_Matrix3T<fpreal64>>();        break;
             default: break;
             }
-                
+        }
     }
     
 
     template <typename _TMatrix>
     void xform()
     {
-    
-        //GFE_Type::getValueType<_TMatrix>>
+        using value_type = typename _TMatrix::value_type;
         if (xformAttrib && attribPtr->getOwner() != GA_ATTRIB_DETAIL && xformAttrib->getOwner() != GA_ATTRIB_DETAIL)
         {
-            //if constexpr(std::is_same_v<_TMatrix, UT_Matrix3T<int16>>    ||
-            //             std::is_same_v<_TMatrix, UT_Matrix3T<int32>>    ||
-            //             std::is_same_v<_TMatrix, UT_Matrix3T<int64>>    ||
-            //             std::is_same_v<_TMatrix, UT_Matrix3T<fpreal16>> ||
-            //             std::is_same_v<_TMatrix, UT_Matrix3T<fpreal32>> ||
-            //             std::is_same_v<_TMatrix, UT_Matrix3T<fpreal64>> ||
-            //             std::is_same_v<_TMatrix, UT_Matrix4T<int16>>    ||
-            //             std::is_same_v<_TMatrix, UT_Matrix4T<int32>>    ||
-            //             std::is_same_v<_TMatrix, UT_Matrix4T<int64>>    ||
-            //             std::is_same_v<_TMatrix, UT_Matrix4T<fpreal16>> ||
-            //             std::is_same_v<_TMatrix, UT_Matrix4T<fpreal32>> ||
-            //             std::is_same_v<_TMatrix, UT_Matrix4T<fpreal64>> )
             if constexpr(GFE_Type::isMatrix34<_TMatrix>)
             {
                 xformMatrixByAttrib<_TMatrix>();
@@ -1045,50 +1022,22 @@ private:
             
             if (xformByXform4)
             {
-                // if      constexpr(std::is_same_v<_TMatrix, UT_Vector2T<int8>>    );
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<int8>>    );
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<int16>>   );
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<int32>>   );
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<int64>>   );
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<fpreal16>>);
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<fpreal32>>);
-                // else if constexpr(std::is_same_v<_TMatrix, UT_Vector2T<fpreal64> );
-                
-                if      constexpr(std::is_same_v<_TMatrix, UT_Matrix3T<fpreal16>>);
-                else if constexpr(std::is_same_v<_TMatrix, UT_Matrix3T<fpreal32>>);
-                else if constexpr(std::is_same_v<_TMatrix, UT_Matrix3T<fpreal64>>);
-                else
-                    value *= UT_Matrix4T<typename _TMatrix::value_type>(xform4);
+                if constexpr (GFE_Type::isMatrix4<_TMatrix>);
+                    value *= UT_Matrix4T<value_type>(xform4);
             }
             else
-                value *= UT_Matrix3T<typename _TMatrix::value_type>(xform3);
+                value *= UT_Matrix3T<value_type>(xform3);
             
             attrib_h.set(0, value);
         }
         else
         {
-            if constexpr(std::is_same_v<_TMatrix, UT_Matrix3T<int16>>    ||
-                         std::is_same_v<_TMatrix, UT_Matrix3T<int32>>    ||
-                         std::is_same_v<_TMatrix, UT_Matrix3T<int64>>    ||
-                         std::is_same_v<_TMatrix, UT_Matrix3T<fpreal16>> ||
-                         std::is_same_v<_TMatrix, UT_Matrix3T<fpreal32>> ||
-                         std::is_same_v<_TMatrix, UT_Matrix3T<fpreal64>> ||
-                         std::is_same_v<_TMatrix, UT_Matrix4T<int16>>    ||
-                         std::is_same_v<_TMatrix, UT_Matrix4T<int32>>    ||
-                         std::is_same_v<_TMatrix, UT_Matrix4T<int64>>    ||
-                         std::is_same_v<_TMatrix, UT_Matrix4T<fpreal16>> ||
-                         std::is_same_v<_TMatrix, UT_Matrix4T<fpreal32>> ||
-                         std::is_same_v<_TMatrix, UT_Matrix4T<fpreal64>> )
+            if constexpr(GFE_Type::isMatrix<_TMatrix>)
             {
                 if (xformByXform4)
                 {
                     
-                    if constexpr(std::is_same_v<_TMatrix, UT_Matrix3T<int16>>    ||
-                                 std::is_same_v<_TMatrix, UT_Matrix3T<int32>>    ||
-                                 std::is_same_v<_TMatrix, UT_Matrix3T<int64>>    ||
-                                 std::is_same_v<_TMatrix, UT_Matrix3T<fpreal16>> ||
-                                 std::is_same_v<_TMatrix, UT_Matrix3T<fpreal32>> ||
-                                 std::is_same_v<_TMatrix, UT_Matrix3T<fpreal64>> )
+                    if constexpr (GFE_Type::isMatrix3<_TMatrix>)
                     {
                         xformMatrixByMatrix<_TMatrix, UT_Matrix3T<typename _TMatrix::value_type>>(UT_Matrix3T<typename _TMatrix::value_type>(xform4));
                     }
@@ -1115,24 +1064,24 @@ private:
     
     void checkXformAttrib()
     {
-        if (xformAttrib)
-        {
-            const GA_AIFTuple* const aifTuple = xformAttrib->getAIFTuple();
+        if (!xformAttrib)
+            return;
+    
+        const GA_AIFTuple* const aifTuple = xformAttrib->getAIFTuple();
 
-            if (!aifTuple)
-            {
-                xformAttrib = nullptr;
-                xformAttribNonConst = nullptr;
-                return;
-            }
-            
-            const int tupleSize = aifTuple->getTupleSize(xformAttrib);
-            if (tupleSize != 9 && tupleSize != 16)
-            {
-                xformAttrib = nullptr;
-                xformAttribNonConst = nullptr;
-                return;
-            }
+        if (!aifTuple)
+        {
+            xformAttrib = nullptr;
+            xformAttribNonConst = nullptr;
+            return;
+        }
+        
+        const int tupleSize = aifTuple->getTupleSize(xformAttrib);
+        if (tupleSize != 9 && tupleSize != 16)
+        {
+            xformAttrib = nullptr;
+            xformAttribNonConst = nullptr;
+            return;
         }
     }
 
@@ -1159,7 +1108,7 @@ private:
     bool xformByXform4 = false;
     
     exint subscribeRatio = 64;
-    exint minGrainSize = 1024;
+    exint minGrainSize   = 1024;
 
 
 }; // End of class GFE_XformByAttrib

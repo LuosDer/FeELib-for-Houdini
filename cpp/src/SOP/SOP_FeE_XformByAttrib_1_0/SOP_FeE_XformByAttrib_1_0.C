@@ -135,7 +135,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 4096 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
