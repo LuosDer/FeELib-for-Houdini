@@ -6,6 +6,7 @@
 *.exp
 *.lib
 *.pdb
+*.dll
 
 **/__pycache__
 
