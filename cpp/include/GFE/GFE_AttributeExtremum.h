@@ -108,33 +108,85 @@ private:
                         auto outAttribMaxElemnumVariant)
         {
             using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+            using value_type = typename GFE_Type::get_value_type_t<type>;
                 
-            type min;
-            type max;
+            value_type minVal;
+            value_type maxVal;
             GFE_Attribute::computeAttribExtremum<type,
                                                  outAttribMinVariant,
                                                  outAttribMaxVariant,
                                                  outAttribMinElemnumVariant,
                                                  outAttribMaxElemnumVariant>
-                (attrib, groupParser.getSplittableRange(attrib), min, max, attribMinElemoff, attribMaxElemoff, subscribeRatio, minGrainSize);
-                
+                (attrib, groupParser.getSplittableRange(attrib), minVal, maxVal, attribMinElemoff, attribMaxElemoff, subscribeRatio, minGrainSize);
+
+            if constexpr (std::is_floating_point_v<type>)
+            {
+                min.f = minVal;
+                max.f = maxVal;
+            }
+            else
+            {
+                min.i = minVal;
+                max.i = maxVal;
+            }
+            if constexpr (outAttribMinVariant)
+                setAttribValue(attribMin, minVal);
+            if constexpr (outAttribMaxVariant)
+                setAttribValue(attribMax, maxVal);
+            if constexpr (outAttribMinElemnumVariant)
+                setAttribValue(attribMinElemnum, attribMinElemoff);
+            if constexpr (outAttribMaxElemnumVariant)
+                setAttribValue(attribMaxElemnum, attribMaxElemoff);
         }, storageVariant, outAttribMinVariant, outAttribMaxVariant, outAttribMinElemnumVariant, outAttribMaxElemnumVariant);
     }
+
+    template<typename _Ty>
+    void setAttribValue(GA_Attribute* const attrib, const _Ty val)
+    {
+        UT_ASSERT_P(attrib);
+        const GA_AIFTuple* const aIFTuple = attrib->getAIFTuple();
+        if (attrib && aIFTuple)
+        {
+            aIFTuple->set(attrib, 0, val);
+        }
+    }
+
+
+    //union minU
+    //{
+    //    fpreal f;
+    //    exint  i;
+    //};
+    //union maxU
+    //{
+    //    fpreal f;
+    //    exint  i;
+    //};
+
     
-
-
 public:
     bool outAttribMin = false;
     bool outAttribMax = false;
     bool outAttribMinElemnum = false;
     bool outAttribMaxElemnum = false;
-    bool outAsOffset = true;
     
+    bool outAsOffset = true;
+
+    //minU min;
+    //maxU max;
+    std::variant<fpreal, exint> min;
+    std::variant<fpreal, exint> max;
+    GA_Attribute* attribMin = nullptr;
+    GA_Attribute* attribMax = nullptr;
+    GA_Attribute* attribMinElemnum = nullptr;
+    GA_Attribute* attribMaxElemnum = nullptr;
+    //const char* outAttribMinAttribName = nullptr;
+    //const char* outAttribMaxAttribName = nullptr;
+    //const char* outAttribMinElemnumAttribName = nullptr;
+    //const char* outAttribMaxElemnumAttribName = nullptr;
 
 private:
     const GA_Attribute* attrib = nullptr;
-    GA_Attribute* attribMin = nullptr;
-    GA_Attribute* attribMax = nullptr;
     GA_Offset attribMinElemoff = GFE_INVALID_OFFSET;
     GA_Offset attribMaxElemoff = GFE_INVALID_OFFSET;
     

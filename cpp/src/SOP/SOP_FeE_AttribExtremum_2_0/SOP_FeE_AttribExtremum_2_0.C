@@ -80,6 +80,52 @@ static const char* theDsFile = R"THEDSFILE(
         default { "min" }
         disablewhen "{ outAttribMin == 0 }"
     }
+    parm {
+        name    "outAttribMax"
+        cppname "OutAttribMax"
+        label   "Out Attrib Max"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "attribMaxName"
+        cppname "AttribMaxName"
+        label   "Attrib Min Name"
+        type    string
+        default { "min" }
+        disablewhen "{ outAttribMax == 0 }"
+    }
+
+    parm {
+        name    "outAttribMinElemnum"
+        cppname "OutAttribMinElemnum"
+        label   "Out Attrib Min Elemnum"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "attribMinElemnumName"
+        cppname "AttribMinElemnumName"
+        label   "Attrib Min Elemnum Name"
+        type    string
+        default { "min" }
+        disablewhen "{ outAttribMinElemnum == 0 }"
+    }
+    parm {
+        name    "outAttribMaxElemnum"
+        cppname "OutAttribMaxElemnum"
+        label   "Out Attrib Max Elemnum"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "attribMaxElemnumName"
+        cppname "AttribMaxElemnumName"
+        label   "Attrib Max Elemnum Name"
+        type    string
+        default { "min" }
+        disablewhen "{ outAttribMaxElemnum == 0 }"
+    }
 
     parm {
         name    "outAsOffset"
@@ -220,7 +266,10 @@ SOP_FeE_AttribExtremum_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
 
 
     GFE_AttribExtremum attribExtremum(outGeo0, inGeo1, cookparms);
-    
+    attribExtremum.outAttribMin = sopparms.getOutAttribMin();
+    attribExtremum.outAttribMax = sopparms.getOutAttribMax();
+    attribExtremum.outAttribMinElemnum = sopparms.getOutAttribMinElemnum();
+    attribExtremum.outAttribMaxElemnum = sopparms.getOutAttribMaxElemnum();
     attribExtremum.setComputeParm(sopparms.getOutAsOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
     
@@ -231,6 +280,6 @@ SOP_FeE_AttribExtremum_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) c
     attribExtremum.computeAndBumpDataId();
 
 
-
+ 
 }
 

@@ -8,7 +8,7 @@
 
 #include "GFE/GFE_GeoFilter.h"
 
-#include "GFE/GFE_AttribExtremum.h"
+#include "GFE/GFE_AttributeExtremum.h"
 #include "GFE/GFE_AttributeRemap.h"
 
 
@@ -30,7 +30,7 @@ void
         const bool doNormalize = true,
         const fpreal64 uniScale = 1.0,
         const exint subscribeRatio = 64,
-        const exint minGrainSize = 64
+        const exint minGrainSize   = 1024
     )
 {
     setHasComputed();
@@ -58,7 +58,7 @@ private:
             return true;
 
         
-        GFE_AttribExtremum attribExtremum(geo, inGeo1, cookparms);
+        GFE_AttribExtremum attribExtremum(geo, nullptr, cookparms);
     
         attribExtremum.outas(sopparms.getOutAsOffset(),
             sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());

@@ -1302,7 +1302,7 @@ private:
     
 
     template<typename _Ty>
-    _Ty computeAttribMin(
+    typename GFE_Type::get_value_type_t<_Ty> computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
@@ -1315,7 +1315,7 @@ private:
     }
     
     template<typename _Ty>
-    _Ty computeAttribMax(
+    typename GFE_Type::get_value_type_t<_Ty> computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
@@ -1331,8 +1331,8 @@ private:
     void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        _Ty& min,
-        _Ty& max,
+        typename GFE_Type::get_value_type_t<_Ty>& min,
+        typename GFE_Type::get_value_type_t<_Ty>& max,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
@@ -1348,8 +1348,8 @@ private:
     static void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        _Ty& min,
-        _Ty& max,
+        typename GFE_Type::get_value_type_t<_Ty>& min,
+        typename GFE_Type::get_value_type_t<_Ty>& max,
         GA_Offset& minElemoff,
         GA_Offset& maxElemoff,
         const exint subscribeRatio = 64,
@@ -1365,7 +1365,7 @@ private:
     }
     
     template<typename _Ty>
-    SYS_FORCE_INLINE _Ty computeAttribMin(
+    SYS_FORCE_INLINE typename GFE_Type::get_value_type_t<_Ty> computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1375,7 +1375,7 @@ private:
         return computeAttribMin<_Ty>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
     }
     template<typename _Ty>
-    SYS_FORCE_INLINE _Ty computeAttribMax(
+    SYS_FORCE_INLINE typename GFE_Type::get_value_type_t<_Ty> computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1386,7 +1386,7 @@ private:
     }
 
     template<typename _Ty>
-    SYS_FORCE_INLINE _Ty computeAttribExtremum(
+    SYS_FORCE_INLINE typename GFE_Type::get_value_type_t<_Ty> computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,

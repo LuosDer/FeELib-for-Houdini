@@ -34,7 +34,7 @@ void
     this->doNormalize = doNormalize;
     this->uniScale = uniScale;
     this->subscribeRatio = subscribeRatio;
-    this->minGrainSize = minGrainSize;
+    this->minGrainSize   = minGrainSize;
 }
 
 
@@ -54,7 +54,7 @@ private:
         if (groupParser.isEmpty())
             return true;
 
-        const ::std::vector<GA_Attribute*>::size_type size = getOutAttribArray().size();
+        const size_t size = getOutAttribArray().size();
         for (size_t i = 0; i < size; i++)
         {
             attribPtr = getOutAttribArray()[i];
