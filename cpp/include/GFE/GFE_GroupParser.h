@@ -1,25 +1,29 @@
 
 #pragma once
 
-#ifndef __GFE_GroupParser_h__
-#define __GFE_GroupParser_h__
+#ifndef __GroupParser_h__
+#define __GroupParser_h__
 
-#include "GFE/GFE_GroupParser.h"
+#include <GFE/GroupParser.h>
 
-#include "GA/GA_SplittableRange.h"
-#include "SOP/SOP_NodeVerb.h"
-
-
-#include "GFE/GFE_Detail.h"
-
-#include "GFE/GFE_GroupUnion.h"
+#include <GA/GA_SplittableRange.h>
+#include <SOP/SOP_NodeVerb.h>
 
 
-class GFE_GroupParser {
+#include <GFE/GFE_Detail.h>
+
+#include <GFE/GFE_GroupUnion.h>
+
+
+_GFE_BEGIN
+
+
+
+class GroupParser {
 
 public:
 
-    GFE_GroupParser(
+    GroupParser(
         const GFE_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -33,7 +37,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         GFE_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -47,7 +51,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         GA_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -61,7 +65,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
@@ -75,7 +79,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -89,7 +93,7 @@ public:
     {
     }
 
-    GFE_GroupParser(
+    GroupParser(
         GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
@@ -102,7 +106,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -115,7 +119,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
@@ -128,7 +132,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -141,7 +145,7 @@ public:
     {
     }
 
-    ~GFE_GroupParser()
+    ~GroupParser()
     {
         //delGroup();
     }
@@ -155,7 +159,7 @@ public:
             //geoNonconst->destroyGroup(geoGroup);
     }
 
-    void copy(const GFE_GroupParser& groupParser)
+    void copy(const GroupParser& groupParser)
     {
         geo = groupParser.geo;
         cookparms = groupParser.cookparms;
@@ -261,7 +265,7 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void setGroup(const GFE_GroupParser& groupParser)
+    SYS_FORCE_INLINE void setGroup(const GroupParser& groupParser)
     { groupParser.getHasGroup() ? setGroup(groupParser.getGroup()) : clear(); }
 
     
@@ -971,9 +975,9 @@ private:
     //GA_EdgeGroupUPtr      geoEdgeGroupUPtr;
 
 
-    friend class GFE_GeoFilter;
+    friend class GeoFilter;
     
-}; // End of class GFE_GroupParser
+}; // End of class GroupParser
 
 
 
@@ -983,48 +987,8 @@ private:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-namespace GFE_GroupParser_Namespace {
-//namespace GFE_GroupParser {
+namespace GroupParser_Namespace {
+//namespace GroupParser {
 
 
 
@@ -1314,25 +1278,13 @@ parseEdgeGroupDetached(
 {
     return static_cast<const GA_EdgeGroup*>(parseGroupDetached(cookparms, geo, GA_GROUP_EDGE, groupName, gop));
 }
+    
+
+} // End of namespace GroupParser_Namespace
 
 
 
+_GFE_END
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-} // End of namespace GFE_GroupParser_Namespace
 
 #endif

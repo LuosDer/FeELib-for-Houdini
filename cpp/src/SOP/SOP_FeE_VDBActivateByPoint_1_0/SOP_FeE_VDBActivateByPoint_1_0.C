@@ -6,15 +6,11 @@
 
 #include "SOP_FeE_VDBActivateByPoint_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
 
 
 
 
-#include "GFE/GFE_VDBActivateByPoint.h"
+#include <GFE/GFE_VDBActivateByPoint.h>
 
 
 

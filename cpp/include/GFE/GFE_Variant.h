@@ -4,7 +4,7 @@
 #ifndef __GFE_Variant_h__
 #define __GFE_Variant_h__
 
-#include "GFE/GFE_Variant.h"
+#include "GFE/Variant.h"
 
 
 #include "GA/GA_Detail.h"
@@ -14,8 +14,10 @@
 #include "GFE/GFE_Type.h"
 
 
+_GFE_BEGIN
 
-namespace GFE_Variant {
+
+namespace Variant {
 
 
     template <typename _Ty0, typename... _Ty1>
@@ -776,13 +778,13 @@ using get_owner_t = typename get_owner<_Ty>::type;
 */
 
 
-} // End of namespace GFE_Variant
+} // End of namespace Variant
 
 
 
 
 
-
+_GFE_END
 
 
 

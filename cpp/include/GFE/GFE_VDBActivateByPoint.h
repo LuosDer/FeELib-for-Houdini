@@ -10,22 +10,26 @@
 
 
 
-#include "GU/GU_PrimVDB.h"
-#include "openvdb/openvdb.h"
+#include <GU/GU_PrimVDB.h>
+#include <openvdb/openvdb.h>
 
-//#include "openvdb/tools/ChangeBackground.h"
-//#include "openvdb/tools/Interpolation.h"
+//#include <openvdb/tools/ChangeBackground.h>
+//#include <openvdb/tools/Interpolation.h>
 
 
 
-//https://github.com/jtomori/VDB_activate_from_points/blob/master/src/vdb_activate_from_points.C
 
-/*
+#if 0
+
     GFE_VDBActivateByPoint vdbActivateByPoint(geo, cookparms);
     vdbActivateByPoint.findOrCreateTuple(true, GA_ATTRIB_POINT);
     vdbActivateByPoint.compute();
-*/
-    
+
+#endif
+
+
+_GFE_BEGIN
+
 class GFE_VDBActivateByPoint : public GFE_AttribFilterWithRef0 {
 
 
@@ -51,16 +55,8 @@ private:
     {
         if (groupParser.isEmpty())
             return true;
-            
-        // we must lock our inputs before we try to access their geometry, OP_AutoLockInputs will automatically unlock our inputs when we return
-        //OP_AutoLockInputs inputs(this);
-        //if (inputs.lock(context) >= UT_ERROR_ABORT)
-        //    return error();
+
         
-        // check for interrupt - interrupt scope closes automatically when 'progress' is destructed.
-        UT_AutoInterrupt progress("Activating voxels...");
-
-
 #if GFE_DEBUG_MODE
         GA_Size numpt_debug = geoRef0->getNumPoints();
 #endif
@@ -121,15 +117,11 @@ private:
 
 private:
     
-#undef __TEMP_GFE_VDBActivateByPoint_GroupName
-#undef __TEMP_GFE_VDBActivateByPoint_PieceAttribName
-#undef __TEMP_GFE_VDBActivateByPoint_OutAttribName
-
     
 }; // End of class GFE_VDBActivateByPoint
 
 
-
+_GFE_END
 
 
 #endif

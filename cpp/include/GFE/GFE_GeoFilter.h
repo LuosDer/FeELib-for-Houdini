@@ -5,17 +5,25 @@
 #define __GFE_GeoFilter_h__
 
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GFE_GeoFilter.h>
 
 
 
-#include "GFE/GFE_Detail.h"
-#include "GFE/GFE_AttributeArray.h"
-#include "GFE/GFE_GroupParser.h"
-#include "GFE/GFE_NodeVerb.h"
-#include "GFE/GFE_VolumeArray.h"
+
+#include <GA/GA_Detail.h>
+#include <PRM/PRM_TemplateBuilder.h>
+#include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
 
 
+#include <GFE/GFE_Detail.h>
+#include <GFE/GFE_AttributeArray.h>
+#include <GFE/GroupParser.h>
+#include <GFE/GFE_NodeVerb.h>
+#include <GFE/GFE_VolumeArray.h>
+
+
+_GFE_BEGIN
 
 class GFE_GeoFilter {
 
@@ -160,7 +168,7 @@ public:
     // { return outTopoAttrib; }
     
 
-    GFE_GroupParser& getGroupParser()
+    GroupParser& getGroupParser()
     { return groupParser; }
     
     SYS_FORCE_INLINE void compute()
@@ -292,7 +300,7 @@ protected:
 
     
 public:
-    GFE_GroupParser groupParser;
+    GroupParser groupParser;
     bool outTopoAttrib = true;
 
 protected:
@@ -436,7 +444,7 @@ public:
 
 
     
-    // SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
+    // SYS_FORCE_INLINE GroupParser& getRef0GroupParser()
     // { return groupParserRef0; }
     SYS_FORCE_INLINE GFE_RefAttributeArray& getRef0AttribArray()
     { return ref0AttribArray; }
@@ -469,7 +477,7 @@ private:
 
 
 public:
-    GFE_GroupParser groupParserRef0;
+    GroupParser groupParserRef0;
 
 protected:
     const GFE_Detail* geoRef0;
@@ -631,7 +639,7 @@ private:                                                                        
                                                                                                                                     \
                                                                                                                                     \
 public:                                                                                                                             \
-    GFE_GroupParser groupParserRef##NUM;                                                                                            \
+    GroupParser groupParserRef##NUM;                                                                                            \
     const GA_Attribute* posRef##NUM##Attrib = nullptr;                                                                              \
                                                                                                                                     \
 protected:                                                                                                                          \
@@ -1773,6 +1781,9 @@ public:
 
 }; // End of class GFE_AttribFilterWithRef2
 
+
+
+_GFE_END
 
 
 #endif
