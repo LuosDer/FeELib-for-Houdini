@@ -5,15 +5,15 @@
 
 #include "SOP_FeE_AttribValReplace_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
+#include <GA/GA_Detail.h>
+#include <PRM/PRM_TemplateBuilder.h>
+#include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
 
 
 
 
-#include "GFE/GFE_AttributeValueReplace.h"
+#include <GFE/GFE_AttributeValueReplace.h>
 
 
 
@@ -358,7 +358,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_AttribValReplace_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribValReplace_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -456,9 +456,9 @@ SOP_FeE_AttribValReplace_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms)
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_AttribValReplace_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
 

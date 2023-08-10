@@ -4,19 +4,19 @@
 #ifndef __GFE_Carve_h__
 #define __GFE_Carve_h__
 
-#include "GFE/GFE_Carve.h"
+#include <GFE/GFE_Carve.h>
 
-#include "GFE/GFE_GeoFilter.h"
-
-
+#include <GFE/GFE_GeoFilter.h>
 
 
 
-#include "GFE/GFE_Attribute.h"
-#include "GFE/GFE_CurveUV.h"
-#include "GFE/GFE_DeleteVertex.h"
-#include "GFE/GFE_Enumerate.h"
-#include "GFE/GFE_Math.h"
+
+
+#include <GFE/Attribute.h>
+#include <GFE/GFE_CurveUV.h>
+#include <GFE/GFE_DeleteVertex.h>
+#include <GFE/GFE_Enumerate.h>
+#include <GFE/GFE_Math.h>
 
 enum class GFE_CarveSpace {
     CustomAttrib,

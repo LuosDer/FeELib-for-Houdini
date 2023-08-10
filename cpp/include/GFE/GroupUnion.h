@@ -4,7 +4,7 @@
 #ifndef __GFE_GroupUnion_h__
 #define __GFE_GroupUnion_h__
 
-#include <GFE/GFE_GroupUnion.h>
+#include <GFE/GroupUnion.h>
 
 
 #include <GA/GA_Detail.h>
@@ -12,16 +12,10 @@
 #include <GA/GA_PageHandle.h>
 #include <GA/GA_PageIterator.h> // SOP_FeE_GroupPolyByWinding_1_0 can not compile with out this .h
 
-#include <GFE/GFE_Type.h>
-#include <GFE/GFE_DetailBase.h>
-
-
-
+#include <GFE/Type.h>
+#include <GFE/GeometryBase.h>
 
 _GFE_BEGIN
-
-
-
 namespace GroupUnion {
 
     
@@ -64,7 +58,7 @@ namespace GroupUnion {
             }
             for (GA_EdgeGroup::const_iterator it = edgeGroupRef->begin(); !it.atEnd(); ++it)
             {
-                group.setElement(GFE_DetailBase::edgeVertex(geo, *it), true);
+                group.setElement(gfe::GeoBase::edgeVertex(geo, *it), true);
             }
         }
         
@@ -92,7 +86,7 @@ namespace GroupUnion {
                 GA_Offset ptoff1 = it->p1();
                 GA_Size vtxpnum_next;
                 GA_Offset primPoint_next;
-                for (GA_Offset vtxoff = geo.pointVertex(it->p0()); GFE_Type::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
+                for (GA_Offset vtxoff = geo.pointVertex(it->p0()); gfe::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
                 {
                     const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
                     const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
@@ -125,55 +119,6 @@ namespace GroupUnion {
         }
     } // End of Namespace detail
     
-
-
-    
-    /////////////////////////// Utility For Group Pointer //////////////////////////
-    
-    template<typename GROUP_T, typename GROUP_REF_T>
-    SYS_FORCE_INLINE static void groupUnion(
-        GROUP_T* const group, const GROUP_REF_T* const groupRef,
-        const bool reverse = false,
-        const exint subscribeRatio = 64, const exint minGrainSize = 1024)
-    { UT_ASSERT_P(group); groupUnion(*group, groupRef, reverse, subscribeRatio, minGrainSize); }
-    
-    template<typename GROUP_T, typename GROUP_REF_T>
-    SYS_FORCE_INLINE static void groupUnion(
-        GROUP_T& group, const GROUP_REF_T* const groupRef,
-        const bool reverse = false,
-        const exint subscribeRatio = 64, const exint minGrainSize = 1024)
-    {
-        if (groupRef)
-            groupUnion(group, *groupRef, reverse, subscribeRatio, minGrainSize);
-        else if (!reverse)
-            group.addAll();
-    }
-
-#define GroupUnion_FUNC_SPECILIZATION(GroupType)                                                                      \
-SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, const bool reverse = false) \
-{                                                                                                                         \
-    if (groupRef)                                                                                                         \
-        groupUnion(group, *groupRef, reverse);                                                                            \
-    else if (!reverse)                                                                                                    \
-        group.addAll();                                                                                                   \
-}                                                                                                                         \
-
-    GroupUnion_FUNC_SPECILIZATION(GA_PrimitiveGroup);
-    GroupUnion_FUNC_SPECILIZATION(GA_PointGroup);
-    GroupUnion_FUNC_SPECILIZATION(GA_VertexGroup);
-    
-#undef GroupUnion_FUNC_SPECILIZATION
-
-    template<typename GROUP_T>
-    SYS_FORCE_INLINE static void groupUnion(GROUP_T& group, const GA_EdgeGroup* const groupRef, const bool reverse = false)
-    {
-        if (groupRef)
-            groupUnion(group, *groupRef, reverse);
-        else if (!reverse)
-            group->addAll();
-    }
-
-
 
 
     
@@ -234,6 +179,56 @@ SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GroupType* co
         }
     }
 
+#define __GroupUnion_FUNC_SPECILIZATION(GroupType)                                                                                \
+        SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GroupType* const groupRef, const bool reverse = false) \
+        {                                                                                                                         \
+            if (groupRef)                                                                                                         \
+                groupUnion(group, *groupRef, reverse);                                                                            \
+            else if (!reverse)                                                                                                    \
+                group.addAll();                                                                                                   \
+        }                                                                                                                         \
+
+    __GroupUnion_FUNC_SPECILIZATION(GA_PrimitiveGroup);
+    __GroupUnion_FUNC_SPECILIZATION(GA_PointGroup);
+    __GroupUnion_FUNC_SPECILIZATION(GA_VertexGroup);
+    
+#undef __GroupUnion_FUNC_SPECILIZATION
+
+
+    
+    /////////////////////////// Utility For Group Pointer //////////////////////////
+    
+    template<typename GROUP_T>
+    SYS_FORCE_INLINE static void groupUnion(GROUP_T& group, const GA_EdgeGroup* const groupRef, const bool reverse = false)
+    {
+        if (groupRef)
+            groupUnion(group, *groupRef, reverse);
+        else if (!reverse)
+            group->addAll();
+    }
+    
+    template<typename GROUP_T, typename GROUP_REF_T>
+    SYS_FORCE_INLINE static void groupUnion(
+        GROUP_T& group, const GROUP_REF_T* const groupRef,
+        const bool reverse = false,
+        const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+    {
+        if (groupRef)
+            groupUnion(group, *groupRef, reverse, subscribeRatio, minGrainSize);
+        else if (!reverse)
+            group.addAll();
+    }
+    
+    template<typename GROUP_T, typename GROUP_REF_T>
+    SYS_FORCE_INLINE static void groupUnion(
+        GROUP_T* const group, const GROUP_REF_T* const groupRef,
+        const bool reverse = false,
+        const exint subscribeRatio = 64, const exint minGrainSize = 1024)
+    { UT_ASSERT_P(group); groupUnion(*group, groupRef, reverse, subscribeRatio, minGrainSize); }
+    
+
+
+    
     
 
 
@@ -242,7 +237,7 @@ SYS_FORCE_INLINE static void groupUnion(GA_EdgeGroup& group, const GroupType* co
     /////////////////////////// Same Type //////////////////////////
 
     
-#define GroupUnion_FUNC_SPECILIZATION(GroupType)                         \
+#define __GroupUnion_FUNC_SPECILIZATION(GroupType)                           \
 SYS_FORCE_INLINE static void groupUnion(                                     \
     GroupType& group, const GroupType& groupRef,                             \
     const bool reverse = false,                                              \
@@ -253,11 +248,11 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
         group.toggleEntries();                                               \
 }                                                                            \
 
-    GroupUnion_FUNC_SPECILIZATION(GA_PrimitiveGroup);
-    GroupUnion_FUNC_SPECILIZATION(GA_PointGroup);
-    GroupUnion_FUNC_SPECILIZATION(GA_VertexGroup);
+    __GroupUnion_FUNC_SPECILIZATION(GA_PrimitiveGroup);
+    __GroupUnion_FUNC_SPECILIZATION(GA_PointGroup);
+    __GroupUnion_FUNC_SPECILIZATION(GA_VertexGroup);
     
-#undef GroupUnion_FUNC_SPECILIZATION
+#undef __GroupUnion_FUNC_SPECILIZATION
     
     static void groupUnion(GA_EdgeGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
     {
@@ -311,7 +306,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); gfe::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                     {
                         group.setElement(geo.vertexPrimitive(vtxoff_next), true);
                     }
@@ -443,7 +438,7 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
             {
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                    for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); gfe::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                     {
                         group.setElement(vtxoff_next, true);
                     }
@@ -466,7 +461,6 @@ SYS_FORCE_INLINE static void groupUnion(                                     \
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
     /////////////////////////////////////// Very Slow //////////////////////////////////////////
 
-public:
 
     template<GA_AttributeOwner _ConnectElemType>
     static void groupUnion(GA_VertexGroup& group, const GA_EdgeGroup& groupRef, const bool reverse = false)
@@ -570,12 +564,12 @@ public:
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
                 GA_Offset pt_next;
-                for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); GFE_Type::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
+                for (GA_Offset vtxoff_next = geo.pointVertex(elemoff); gfe::isValidOffset(vtxoff_next); vtxoff_next = geo.vertexToNextVertex(vtxoff_next))
                 {
                     const GA_Offset primoff = geo.vertexPrimitive(vtxoff_next);
                     const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
                     const GA_Size numvtx = vertices.size();
-                    const GA_Size vtxpnum = GFE_DetailBase::vertexPrimIndex(vertices, vtxoff_next);
+                    const GA_Size vtxpnum = gfe::GeoBase::vertexPrimIndex(vertices, vtxoff_next);
 
                     if (vtxpnum == 0)
                     {
@@ -614,16 +608,17 @@ public:
     {
         const GA_Detail& geo = group.getDetail();
         const GA_ATITopology& pointRef = *geo.getTopology().getPointRef();
-#if GFE_DEBUG_MODE
-        GA_Size a = groupRef.computeGroupEntries();
-        a = a;
-#endif
+        if constexpr (gfe::Core::DEBUG_MODE)
+        {
+            GA_Size a = groupRef.computeGroupEntries();
+            a = a;
+        }
         GA_Offset start, end;
         for (GA_Iterator it(GA_Range(groupRef, reverse)); it.fullBlockAdvance(start, end); )
         {
             for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
             {
-                const GA_Offset dstpt = GFE_DetailBase::vertexPointDst(geo, elemoff);
+                const GA_Offset dstpt = gfe::GeoBase::vertexPointDst(geo, elemoff);
                 group.add(pointRef.getLink(elemoff), dstpt);
             }
         }
@@ -837,8 +832,5 @@ public:
 
 
 }; // End of Namespace GroupUnion
-
 _GFE_END
-
-
 #endif

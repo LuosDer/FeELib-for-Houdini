@@ -4,87 +4,85 @@
 #ifndef __GFE_Math_h__
 #define __GFE_Math_h__
 
-#include <GFE/GFE_Math.h>
+#include <GFE/Math.h>
 
 
 
-#include <GFE/GFE_Type.h>
+#include <GFE/Core.h>
+#include <GFE/Type.h>
+#include <GFE/TypeTraits.h>
 
-#include <GA/GA_Detail.h>
 
-#include <variant>
+#include <ufe.h>
 
-namespace GFE_Math {
+_GFE_BEGIN
+inline namespace Math {
 
     namespace detail
     {
-        template<typename FLOAT_T>
-        SYS_FORCE_INLINE static FLOAT_T numDistance2(const FLOAT_T val0, const FLOAT_T val1)
-        { return pow(val0 > val1 ? val0 - val1 : val1 - val0, 2); }
-
-        template<typename VECTOR_T>
-        SYS_FORCE_INLINE static typename VECTOR_T::value_type vectorDistance2(const VECTOR_T& val0, const VECTOR_T& val1)
-        { return val0.distance(val1); }
-
-        
-        //template<typename _Ty>
-        //SYS_FORCE_INLINE static GFE_Type::get_value_type_t<_Ty> lengthVec(const _Ty& val)
-        //{
-        //    using value_type = typename GFE_Type::get_value_type_t<_Ty>;
-        //    if constexpr (GFE_Type::isVector<_Ty>)
-        //        return val.length();
-        //    else
-        //        return val;
-        //}
-        //
-        //template<typename _Ty>
-        //SYS_FORCE_INLINE static _Ty lengthScalar(const _Ty val)
-        //{
-        //    if constexpr (GFE_Type::isScalar<_Ty>)
-        //        return val;
-        //    else
-        //        return val;
-        //}
-
+    
+        template<typename _Ty>
+        SYS_FORCE_INLINE static _Ty getZeroVector()
+        {
+            if constexpr(gfe::isVector4<_Ty>)
+                return _Ty(0, 0, 0, 0);
+            else
+                return _Ty(0.0);
+        }
+    
+        template<typename _Ty>
+        SYS_FORCE_INLINE static _Ty getZeroScalar()
+        {
+            if constexpr(std::is_floating_point_v<_Ty>)
+                return _Ty(0.0);
+            else
+                return _Ty(0);
+        }
+    
     } // End of Namespace detail
     
-
-
+    
     
     template<typename _Ty>
-    SYS_FORCE_INLINE static GFE_Type::get_value_type_t<_Ty> length(const _Ty& val)
+    SYS_FORCE_INLINE static _Ty getZero()
     {
-        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
-        if constexpr (GFE_Type::isVector<_Ty>)
+        if constexpr(gfe::TypeTraits::isVector<_Ty>)
+            return detail::getZeroVector<_Ty>();
+        else
+            return detail::getZeroScalar<_Ty>();
+    }
+    
+    
+    
+    template<typename _Ty>
+    SYS_FORCE_INLINE static gfe::TypeTraits::get_value_type_t<_Ty> length(const _Ty& val)
+    {
+        using value_type = typename gfe::TypeTraits::get_value_type_t<_Ty>;
+        if constexpr (gfe::TypeTraits::isVector<_Ty>)
             return val.length();
-            //return detail::lengthVec(val);
+        //return detail::lengthVec(val);
         //else if constexpr (GFE_Type::isMatrix<_Ty>)
         //    return detail::lengthMtx(val);
-        else if constexpr (GFE_Type::isScalar<_Ty>)
+        else if constexpr (gfe::TypeTraits::isScalar<_Ty>)
             return value_type(val);
             
-            //return detail::lengthScalar(val);
+        //return detail::lengthScalar(val);
     }
 
     
     template<typename _Ty>
-    SYS_FORCE_INLINE static GFE_Type::get_value_type_t<_Ty> length2(const _Ty& val)
+    SYS_FORCE_INLINE static gfe::TypeTraits::get_value_type_t<_Ty> length2(const _Ty& val)
     {
-        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
-        if constexpr (GFE_Type::isVector<_Ty>)
+        using value_type = typename gfe::TypeTraits::get_value_type_t<_Ty>;
+        if constexpr (gfe::TypeTraits::isVector<_Ty>)
             return val.length2();
-        else if constexpr (GFE_Type::isScalar<_Ty>)
+        else if constexpr (gfe::TypeTraits::isScalar<_Ty>)
             return value_type(val) * value_type(val);
             
         //return detail::lengthScalar(val);
     }
-    
-    template<typename _Ty>
-    SYS_FORCE_INLINE static _Ty lerp(const _Ty& v0, const _Ty& v1, const fpreal bias)
-    {
-        std::
-        return v0 * (1.0 - bias) + v1 * bias;
-    }
+
+
     
     template<typename _TScalar>
     static int8 minidx(const UT_Vector3T<_TScalar>& arg)
@@ -140,49 +138,6 @@ namespace GFE_Math {
     }
 
 
-
-    
-template<typename _Ty>
-SYS_FORCE_INLINE static _Ty radians(const _Ty degrees)
-{ return degrees * PI / 180; }
-
-template<typename _Ty>
-SYS_FORCE_INLINE static _Ty degrees(const _Ty radians)
-{ return radians * 180 / PI; }
-
-
-template<typename _Ty>
-SYS_FORCE_INLINE static typename _Ty::value_type tupleDistance2(const _Ty& val0, const _Ty& val1)
-{
-    if constexpr(::std::is_same_v<_Ty, int8> ||
-                 ::std::is_same_v<_Ty, int16> ||
-                 ::std::is_same_v<_Ty, int32> ||
-                 ::std::is_same_v<_Ty, int64> ||
-                 ::std::is_same_v<_Ty, fpreal16> ||
-                 ::std::is_same_v<_Ty, fpreal32> ||
-                 ::std::is_same_v<_Ty, fpreal64> )
-    {
-        return detail::numDistance2(val0, val1);
-    }
-    else
-        return detail::vectorDistance2(val0, val1);
-}
-    
-#define __GFE_Math_FUNC_tupleDistance2(TYPE)                                   \
-SYS_FORCE_INLINE static TYPE tupleDistance2(const TYPE val0, const TYPE val1)  \
-{ return detail::numDistance2(val0, val1); }                                   \
-
-__GFE_Math_FUNC_tupleDistance2(int8);
-__GFE_Math_FUNC_tupleDistance2(int16);
-__GFE_Math_FUNC_tupleDistance2(int32);
-__GFE_Math_FUNC_tupleDistance2(int64);
-__GFE_Math_FUNC_tupleDistance2(fpreal16);
-__GFE_Math_FUNC_tupleDistance2(fpreal32);
-__GFE_Math_FUNC_tupleDistance2(fpreal64);
-    
-#undef __GFE_Math_FUNC_tupleDistance2
-    
-    
 template<typename FLOAT_T>
 static UT_Vector3T<FLOAT_T> blendDir(const UT_Vector3T<FLOAT_T>& dir0, const UT_Vector3T<FLOAT_T>& dir1, const FLOAT_T blend)
 {
@@ -191,36 +146,6 @@ static UT_Vector3T<FLOAT_T> blendDir(const UT_Vector3T<FLOAT_T>& dir0, const UT_
     q = UT_QuaternionT<FLOAT_T>(0,0,0,1).interpolate(q, blend);
     return q.rotate(dir0);
 }
-
-template<typename VECTOR_T, typename T_value_type>
-SYS_FORCE_INLINE static VECTOR_T vlerp(const VECTOR_T a, const VECTOR_T b, const T_value_type t)
-{ return lerp(a, b, t); }
-
-template<>
-SYS_FORCE_INLINE static int16 vlerp<int16, fpreal16>(const int16 a, const int16 b, const fpreal16 t)
-{ return a + (b - a) * t; }
-
-template<>
-SYS_FORCE_INLINE static int vlerp<int, fpreal32>(const int a, const int b, const fpreal32 t)
-{ return a + (b - a) * t; }
-
-template<>
-SYS_FORCE_INLINE static int64 vlerp<int64, fpreal64>(const int64 a, const int64 b, const fpreal64 t)
-{ return a + (b - a) * t; }
-
-template<>
-SYS_FORCE_INLINE static fpreal16 vlerp<fpreal16, fpreal16>(const fpreal16 a, const fpreal16 b, const fpreal16 t)
-{ return a + (b - a) * t; }
-
-template<>
-SYS_FORCE_INLINE static fpreal32 vlerp<fpreal32, fpreal32>(const fpreal32 a, const fpreal32 b, const fpreal32 t)
-{ return SYSlerp(a, b, t); }
-
-template<>
-SYS_FORCE_INLINE static fpreal vlerp<fpreal, fpreal>(const fpreal a, const fpreal b, const fpreal t)
-{ return SYSlerp(a, b, t); }
-
-
 
 #define GFE_MATH_ReverseROC 1
 
@@ -389,9 +314,17 @@ static bool pointInTriangleT1(
 #define pointInTriangleF pointInTriangleT<fpreal32>
 #define pointInTriangleD pointInTriangleT<fpreal64>
 #define pointInTriangleR pointInTriangleT<fpreal>
-    
-} // End of Namespace GFE_Math
 
+
+
+
+
+
+
+
+    
+} // End of Namespace Math
+_GFE_END
 
 
 #endif

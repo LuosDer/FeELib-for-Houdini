@@ -4,31 +4,20 @@
 #ifndef __GFE_Attribute_h__
 #define __GFE_Attribute_h__
 
-#include <GFE/GFE_Attribute.h>
-
-
-
+#include <GFE/Attribute.h>
 
 #include <GA/GA_Detail.h>
 #include <GA/GA_SplittableRange.h> // SOP_FeE_HasGroup_1_0 can not compile without this header
-
 #include <GA/GA_PageHandle.h> 
 #include <GA/GA_PageIterator.h> // SOP_FeE_HasGroup_1_0 can not compile without this header
-
-
 #include <GA/GA_AttributeFilter.h>
-
-
 
 #include <GFE/Math.h>
 #include <GFE/Type.h>
 
 
 _GFE_BEGIN
-
-
-
-namespace Attribute {
+inline namespace Attribute {
 
     
 enum class PieceAttribSearchOrder
@@ -55,8 +44,6 @@ enum class NormalSearchOrder
     Global = Detail,
     Invalid = -1,
 };
-
-
 
 
 
@@ -121,7 +108,7 @@ static void computeIndexAttrib(GA_Attribute& attrib, const GA_SplittableRange* c
 static GA_AttributeUPtr createDetachedIndexAttrib(GA_Detail& geo, const GA_AttributeOwner owner, const GA_SplittableRange* const srange = nullptr, const GA_Index startIndex = 0)
 {
     //GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, gfe::Type::getPreferredStorageI(geo), 1, GA_Defaults(GFE_INVALID_OFFSET));
-    GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, GA_STORE_INT64, 1, GA_Defaults(GFE_INVALID_OFFSET64));
+    GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, GA_STORE_INT64, 1, GA_Defaults(gfe::INVALID_OFFSET));
     computeIndexAttrib(*attribUPtr.get(), srange, startIndex);
     return attribUPtr;
 }
@@ -538,66 +525,66 @@ SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute* const attr
 
     
     
-static GFE_NormalSearchOrder toNormalSearchOrder(const GA_GroupType groupType)
+static gfe::NormalSearchOrder toNormalSearchOrder(const GA_GroupType groupType)
 {
     switch (groupType)
     {
-    case GA_GROUP_PRIMITIVE: return GFE_NormalSearchOrder::Primitive; break;
-    case GA_GROUP_POINT:     return GFE_NormalSearchOrder::Point;     break;
-    case GA_GROUP_VERTEX:    return GFE_NormalSearchOrder::Vertex;    break;
-    case GA_GROUP_N:         return GFE_NormalSearchOrder::All;       break;
-    case GA_GROUP_INVALID:   return GFE_NormalSearchOrder::Invalid;   break;
+    case GA_GROUP_PRIMITIVE: return gfe::NormalSearchOrder::Primitive; break;
+    case GA_GROUP_POINT:     return gfe::NormalSearchOrder::Point;     break;
+    case GA_GROUP_VERTEX:    return gfe::NormalSearchOrder::Vertex;    break;
+    case GA_GROUP_N:         return gfe::NormalSearchOrder::All;       break;
+    case GA_GROUP_INVALID:   return gfe::NormalSearchOrder::Invalid;   break;
     }
-    return GFE_NormalSearchOrder::Invalid;
+    return gfe::NormalSearchOrder::Invalid;
 }
-SYS_FORCE_INLINE static GFE_NormalSearchOrder toNormalSearchOrder(const GA_Group& group)
+SYS_FORCE_INLINE static gfe::NormalSearchOrder toNormalSearchOrder(const GA_Group& group)
 { return toNormalSearchOrder(group.classType()); }
     
-SYS_FORCE_INLINE static GFE_NormalSearchOrder toNormalSearchOrder(const GA_Group* const group)
+SYS_FORCE_INLINE static gfe::NormalSearchOrder toNormalSearchOrder(const GA_Group* const group)
 { UT_ASSERT_P(group); return toNormalSearchOrder(*group); }
 
 
     
-static GFE_NormalSearchOrder toNormalSearchOrder(const GA_AttributeOwner owner)
+static gfe::NormalSearchOrder toNormalSearchOrder(const GA_AttributeOwner owner)
 {
     switch (owner)
     {
-    case GA_ATTRIB_PRIMITIVE: return GFE_NormalSearchOrder::Primitive; break;
-    case GA_ATTRIB_POINT:     return GFE_NormalSearchOrder::Point;     break;
-    case GA_ATTRIB_VERTEX:    return GFE_NormalSearchOrder::Vertex;    break;
-    case GA_ATTRIB_DETAIL:    return GFE_NormalSearchOrder::Detail;    break;
-    case GA_ATTRIB_OWNER_N:   return GFE_NormalSearchOrder::All;       break;
-    case GA_ATTRIB_INVALID:   return GFE_NormalSearchOrder::Invalid;   break;
+    case GA_ATTRIB_PRIMITIVE: return gfe::NormalSearchOrder::Primitive; break;
+    case GA_ATTRIB_POINT:     return gfe::NormalSearchOrder::Point;     break;
+    case GA_ATTRIB_VERTEX:    return gfe::NormalSearchOrder::Vertex;    break;
+    case GA_ATTRIB_DETAIL:    return gfe::NormalSearchOrder::Detail;    break;
+    case GA_ATTRIB_OWNER_N:   return gfe::NormalSearchOrder::All;       break;
+    case GA_ATTRIB_INVALID:   return gfe::NormalSearchOrder::Invalid;   break;
     }
-    return GFE_NormalSearchOrder::Invalid;
+    return gfe::NormalSearchOrder::Invalid;
 }
 
-static GA_AttributeOwner toOwner(const GFE_NormalSearchOrder normalSearchOrder)
+static GA_AttributeOwner toOwner(const gfe::NormalSearchOrder normalSearchOrder)
 {
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::Primitive:   return GA_ATTRIB_PRIMITIVE; break;
-    case GFE_NormalSearchOrder::Point:       return GA_ATTRIB_POINT;     break;
-    case GFE_NormalSearchOrder::Vertex:      return GA_ATTRIB_VERTEX;    break;
-    case GFE_NormalSearchOrder::Detail:      return GA_ATTRIB_DETAIL;    break;
-    case GFE_NormalSearchOrder::PointVertex: return GA_ATTRIB_VERTEX;    break;
-    case GFE_NormalSearchOrder::All:         return GA_ATTRIB_OWNER_N;   break;
-    case GFE_NormalSearchOrder::Invalid:     return GA_ATTRIB_INVALID;   break;
+    case gfe::NormalSearchOrder::Primitive:   return GA_ATTRIB_PRIMITIVE; break;
+    case gfe::NormalSearchOrder::Point:       return GA_ATTRIB_POINT;     break;
+    case gfe::NormalSearchOrder::Vertex:      return GA_ATTRIB_VERTEX;    break;
+    case gfe::NormalSearchOrder::Detail:      return GA_ATTRIB_DETAIL;    break;
+    case gfe::NormalSearchOrder::PointVertex: return GA_ATTRIB_VERTEX;    break;
+    case gfe::NormalSearchOrder::All:         return GA_ATTRIB_OWNER_N;   break;
+    case gfe::NormalSearchOrder::Invalid:     return GA_ATTRIB_INVALID;   break;
     }
     return GA_ATTRIB_INVALID;
 }
 
-static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOrder)
+static GA_AttributeOwner toValidOwner(const gfe::NormalSearchOrder normalSearchOrder)
 {
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::Primitive:   return GA_ATTRIB_PRIMITIVE;  break;
-    case GFE_NormalSearchOrder::Point:       return GA_ATTRIB_POINT;      break;
-    case GFE_NormalSearchOrder::Vertex:      return GA_ATTRIB_VERTEX;     break;
-    case GFE_NormalSearchOrder::Detail:      return GA_ATTRIB_DETAIL;     break;
-    case GFE_NormalSearchOrder::PointVertex: return GA_ATTRIB_VERTEX;     break;
-    case GFE_NormalSearchOrder::All:         return GA_ATTRIB_VERTEX;     break;
-    case GFE_NormalSearchOrder::Invalid:     return GA_ATTRIB_VERTEX;     break;
+    case gfe::NormalSearchOrder::Primitive:   return GA_ATTRIB_PRIMITIVE;  break;
+    case gfe::NormalSearchOrder::Point:       return GA_ATTRIB_POINT;      break;
+    case gfe::NormalSearchOrder::Vertex:      return GA_ATTRIB_VERTEX;     break;
+    case gfe::NormalSearchOrder::Detail:      return GA_ATTRIB_DETAIL;     break;
+    case gfe::NormalSearchOrder::PointVertex: return GA_ATTRIB_VERTEX;     break;
+    case gfe::NormalSearchOrder::All:         return GA_ATTRIB_VERTEX;     break;
+    case gfe::NormalSearchOrder::Invalid:     return GA_ATTRIB_VERTEX;     break;
     default:                                 return GA_ATTRIB_VERTEX;     break;
     }
 }
@@ -621,7 +608,7 @@ static GA_AttributeOwner toValidOwner(const GFE_NormalSearchOrder normalSearchOr
 
 static GA_Attribute* findPieceAttrib(
     GA_Detail& geo,
-    const GFE_PieceAttribSearchOrder pieceAttribSearchOrder,
+    const gfe::PieceAttribSearchOrder pieceAttribSearchOrder,
     const UT_StringRef& pieceAttribName
 )
 {
@@ -629,22 +616,22 @@ static GA_Attribute* findPieceAttrib(
 
     switch (pieceAttribSearchOrder)
     {
-    case GFE_PieceAttribSearchOrder::Primitive:  attribPtr = geo.findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::Point:      attribPtr = geo.findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::Vertex:     attribPtr = geo.findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
-    case GFE_PieceAttribSearchOrder::PrimPoint:
+    case gfe::PieceAttribSearchOrder::Primitive:  attribPtr = geo.findAttribute(GA_ATTRIB_PRIMITIVE, pieceAttribName); break;
+    case gfe::PieceAttribSearchOrder::Point:      attribPtr = geo.findAttribute(GA_ATTRIB_POINT,     pieceAttribName); break;
+    case gfe::PieceAttribSearchOrder::Vertex:     attribPtr = geo.findAttribute(GA_ATTRIB_VERTEX,    pieceAttribName); break;
+    case gfe::PieceAttribSearchOrder::PrimPoint:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT };
         attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
-    case GFE_PieceAttribSearchOrder::PointPrim:
+    case gfe::PieceAttribSearchOrder::PointPrim:
     {
         GA_AttributeOwner searchOrder[2] = { GA_ATTRIB_POINT, GA_ATTRIB_PRIMITIVE };
         attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 2);
     }
         break;
-    case GFE_PieceAttribSearchOrder::All:
+    case gfe::PieceAttribSearchOrder::All:
     {
         GA_AttributeOwner searchOrder[3] = { GA_ATTRIB_PRIMITIVE, GA_ATTRIB_POINT, GA_ATTRIB_VERTEX };
         attribPtr = geo.findAttribute(pieceAttribName, searchOrder, 3);
@@ -688,9 +675,7 @@ static bool forceRenameAttribute(
 
 
 SYS_FORCE_INLINE static bool forceRenameAttribute(GA_Attribute& attrib,const UT_StringRef& newName)
-{
-    return forceRenameAttribute(attrib.getDetail(), attrib, newName);
-}
+{ return forceRenameAttribute(attrib.getDetail(), attrib, newName); }
 
 
 
@@ -992,7 +977,7 @@ findOrCreateUVAttributePointVertex(
 static const GA_Attribute*
 findNormal3D(
     const GA_Detail& geo,
-    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::Invalid,
+    const gfe::NormalSearchOrder normalSearchOrder = gfe::NormalSearchOrder::Invalid,
     const UT_StringRef& normal3DAttribName = "N"
 )
 {
@@ -1002,26 +987,24 @@ findNormal3D(
     const GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::Primitive:
+    case gfe::NormalSearchOrder::Primitive:
         normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::Point:
+    case gfe::NormalSearchOrder::Point:
         normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::Vertex:
+    case gfe::NormalSearchOrder::Vertex:
         normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::Detail:
+    case gfe::NormalSearchOrder::Detail:
         normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
         break;
-    case GFE_NormalSearchOrder::PointVertex:
+    case gfe::NormalSearchOrder::PointVertex:
         normal3DAttrib = geo.findPointAttribute(normal3DAttribName);
         if (!normal3DAttrib)
-        {
             normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
-        }
         break;
-    case GFE_NormalSearchOrder::All:
+    case gfe::NormalSearchOrder::All:
         normal3DAttrib = geo.findPrimitiveAttribute(normal3DAttribName);
         if (!normal3DAttrib)
         {
@@ -1030,14 +1013,12 @@ findNormal3D(
             {
                 normal3DAttrib = geo.findVertexAttribute(normal3DAttribName);
                 if (!normal3DAttrib)
-                {
                     normal3DAttrib = geo.findGlobalAttribute(normal3DAttribName);
-                }
             }
         }
         break;
     default:
-        UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder");
+        UT_ASSERT_MSG(0, "unhandled gfe::NormalSearchOrder");
         break;
     }
     return normal3DAttrib;
@@ -1046,7 +1027,7 @@ findNormal3D(
 
 static GA_Attribute* findNormal3D(
     GA_Detail& geo,
-    const GFE_NormalSearchOrder normalSearchOrder = GFE_NormalSearchOrder::Invalid,
+    const gfe::NormalSearchOrder normalSearchOrder = gfe::NormalSearchOrder::Invalid,
     const UT_StringRef& name = "N"
 )
 {
@@ -1056,16 +1037,16 @@ static GA_Attribute* findNormal3D(
     GA_Attribute* normal3DAttrib = nullptr;
     switch (normalSearchOrder)
     {
-    case GFE_NormalSearchOrder::Primitive:   normal3DAttrib = geo.findPrimitiveAttribute(name); break;
-    case GFE_NormalSearchOrder::Point:       normal3DAttrib = geo.findPointAttribute    (name); break;
-    case GFE_NormalSearchOrder::Vertex:      normal3DAttrib = geo.findVertexAttribute   (name); break;
-    case GFE_NormalSearchOrder::Detail:      normal3DAttrib = geo.findGlobalAttribute   (name); break;
-    case GFE_NormalSearchOrder::PointVertex:
+    case gfe::NormalSearchOrder::Primitive:   normal3DAttrib = geo.findPrimitiveAttribute(name); break;
+    case gfe::NormalSearchOrder::Point:       normal3DAttrib = geo.findPointAttribute    (name); break;
+    case gfe::NormalSearchOrder::Vertex:      normal3DAttrib = geo.findVertexAttribute   (name); break;
+    case gfe::NormalSearchOrder::Detail:      normal3DAttrib = geo.findGlobalAttribute   (name); break;
+    case gfe::NormalSearchOrder::PointVertex:
         normal3DAttrib = geo.findPointAttribute(name);
         if (!normal3DAttrib)
             normal3DAttrib = geo.findVertexAttribute(name);
     break;
-    case GFE_NormalSearchOrder::All:
+    case gfe::NormalSearchOrder::All:
         normal3DAttrib = geo.findPrimitiveAttribute(name);
         if (!normal3DAttrib)
         {
@@ -1078,7 +1059,7 @@ static GA_Attribute* findNormal3D(
             }
         }
     break;
-    default: UT_ASSERT_MSG(0, "unhandled GFE_NormalSearchOrder"); break;
+    default: UT_ASSERT_MSG(0, "unhandled gfe::NormalSearchOrder"); break;
     }
     return normal3DAttrib;
 }
@@ -1172,7 +1153,7 @@ private:
     template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
     class ComputeAttribExtremum
     {
-    using value_type = typename gfe::Type::get_value_type_t<_Ty>;
+    using value_type = typename gfe::TypeTraits::get_value_type_t<_Ty>;
     public:
         ComputeAttribExtremum(const GA_Attribute* const attrib)
             : myAttrib(attrib)
@@ -1193,7 +1174,7 @@ private:
             if constexpr (!_Min && !_Max && !_MinElemoff && !_MaxElemoff)
                 return;
             UT_ASSERT_MSG(r.getOwner() == myAttrib->getOwner(), "not same owner");
-            GFE_ROPageHandleT<_Ty> attrib_ph(myAttrib);
+            gfe::ROPageHandleT<_Ty> attrib_ph(myAttrib);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -1203,7 +1184,7 @@ private:
 
                     if constexpr ((_Min || _MinElemoff) && (_Max || _MaxElemoff))
                     {
-                        const value_type length = GFE_Math::length(attrib_ph.value(start));
+                        const value_type length = gfe::length(attrib_ph.value(start));
                         if (length < myMin)
                         {
                             myMin = length;
@@ -1218,7 +1199,7 @@ private:
                         }
                         for (GA_Offset elemoff = start+1; elemoff < end; ++elemoff)
                         {
-                            const value_type length = GFE_Math::length(attrib_ph.value(elemoff));
+                            const value_type length = gfe::length(attrib_ph.value(elemoff));
                             if (length < myMin)
                             {
                                 myMin = length;
@@ -1238,7 +1219,7 @@ private:
                         
                         for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                         {
-                            const value_type length = GFE_Math::length(attrib_ph.value(elemoff));
+                            const value_type length = gfe::length(attrib_ph.value(elemoff));
                             if constexpr (_Min || _MinElemoff)
                             {
                                 if (length < myMin)
@@ -1304,7 +1285,7 @@ private:
     
 
     template<typename _Ty>
-    typename gfe::Type::get_value_type_t<_Ty> computeAttribMin(
+    typename gfe::TypeTraits::get_value_type_t<_Ty> computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
@@ -1317,7 +1298,7 @@ private:
     }
     
     template<typename _Ty>
-    typename gfe::Type::get_value_type_t<_Ty> computeAttribMax(
+    typename gfe::TypeTraits::get_value_type_t<_Ty> computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
@@ -1333,8 +1314,8 @@ private:
     void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        typename gfe::Type::get_value_type_t<_Ty>& min,
-        typename gfe::Type::get_value_type_t<_Ty>& max,
+        typename gfe::TypeTraits::get_value_type_t<_Ty>& min,
+        typename gfe::TypeTraits::get_value_type_t<_Ty>& max,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
@@ -1350,8 +1331,8 @@ private:
     static void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        typename gfe::Type::get_value_type_t<_Ty>& min,
-        typename gfe::Type::get_value_type_t<_Ty>& max,
+        typename gfe::TypeTraits::get_value_type_t<_Ty>& min,
+        typename gfe::TypeTraits::get_value_type_t<_Ty>& max,
         GA_Offset& minElemoff,
         GA_Offset& maxElemoff,
         const exint subscribeRatio = 64,
@@ -1367,7 +1348,7 @@ private:
     }
     
     template<typename _Ty>
-    SYS_FORCE_INLINE typename gfe::Type::get_value_type_t<_Ty> computeAttribMin(
+    SYS_FORCE_INLINE typename gfe::TypeTraits::get_value_type_t<_Ty> computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1377,7 +1358,7 @@ private:
         return computeAttribMin<_Ty>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
     }
     template<typename _Ty>
-    SYS_FORCE_INLINE typename gfe::Type::get_value_type_t<_Ty> computeAttribMax(
+    SYS_FORCE_INLINE typename gfe::TypeTraits::get_value_type_t<_Ty> computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1388,7 +1369,7 @@ private:
     }
 
     template<typename _Ty>
-    SYS_FORCE_INLINE typename gfe::Type::get_value_type_t<_Ty> computeAttribExtremum(
+    SYS_FORCE_INLINE typename gfe::TypeTraits::get_value_type_t<_Ty> computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,

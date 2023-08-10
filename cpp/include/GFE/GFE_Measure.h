@@ -4,17 +4,24 @@
 #ifndef __GFE_Measure_h__
 #define __GFE_Measure_h__
 
-#include "GFE/GFE_Measure.h"
+#include <GFE/GFE_Measure.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
+#include <GEO/GEO_Hull.h>
 
+#include <GFE/Bound.h>
 
-#include "GFE/GFE_Bound.h"
-#include "GEO/GEO_Hull.h"
+#if 0
+        gfel::Measure measure(geo, cookparms);
+        measure.measureType = measureType;
+        measure.groupParser.setGroup(groupParser);
+        measureAttrib = measure.findOrCreateTuple(false);
+        measure.compute();
+#endif
 
-
-enum class GFE_MeasureType
+_GFEL_BEGIN
+enum class MeasureType
 {
     Perimeter,
     Area,
@@ -24,19 +31,15 @@ enum class GFE_MeasureType
     MeshVolume,
 };
 
-
-
-
-
-class GFE_Measure : public GFE_AttribFilter {
+class Measure : public AttribFilter {
 
 public:
 
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using AttribFilter::AttribFilter;
 
     void
         setComputeParm(
-            const GFE_MeasureType measureType = GFE_MeasureType::Area,
+            const MeasureType measureType = MeasureType::Area,
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 1024
         )
@@ -54,18 +57,18 @@ public:
     )
     {
         //getOutAttribArray().clear();
-        const GA_AttributeOwner owner = measureType < GFE_MeasureType::MeshPerimeter ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_DETAIL;
+        const GA_AttributeOwner owner = measureType < MeasureType::MeshPerimeter ? GA_ATTRIB_PRIMITIVE : GA_ATTRIB_DETAIL;
         if (!detached && (!attribName.isstring() || attribName.length()==0) )
         {
             const char* measureName;
             switch (measureType)
             {
-            case GFE_MeasureType::Perimeter:     measureName = "__topo_perimeter";     break;
-            case GFE_MeasureType::Area:          measureName = "__topo_area";          break;
-            case GFE_MeasureType::Volume:        measureName = "__topo_volume";        break;
-            case GFE_MeasureType::MeshPerimeter: measureName = "__topo_meshPerimeter"; break;
-            case GFE_MeasureType::MeshArea:      measureName = "__topo_meshArea";      break;
-            case GFE_MeasureType::MeshVolume:    measureName = "__topo_meshVolume";    break;
+            case MeasureType::Perimeter:     measureName = "__topo_perimeter";     break;
+            case MeasureType::Area:          measureName = "__topo_area";          break;
+            case MeasureType::Volume:        measureName = "__topo_volume";        break;
+            case MeasureType::MeshPerimeter: measureName = "__topo_meshPerimeter"; break;
+            case MeasureType::MeshArea:      measureName = "__topo_meshArea";      break;
+            case MeasureType::MeshVolume:    measureName = "__topo_meshVolume";    break;
             default: break;
             }
             return getOutAttribArray().findOrCreateTuple(false,    owner, GA_STORECLASS_FLOAT, storage, measureName);
@@ -150,32 +153,32 @@ private:
 #if 1
         switch (measureType)
         {
-        case GFE_MeasureType::Perimeter:     computePerimeter();           break;
-        case GFE_MeasureType::Area:          computeArea();                break;
-        case GFE_MeasureType::Volume:        computeVolume();              break;
-        case GFE_MeasureType::MeshPerimeter: computeMeshPerimeterAttrib(); break;
-        case GFE_MeasureType::MeshArea:      computeMeshAreaAttrib();      break;
-        case GFE_MeasureType::MeshVolume:    computeMeshVolumeAttrib();    break;
+        case MeasureType::Perimeter:     computePerimeter();           break;
+        case MeasureType::Area:          computeArea();                break;
+        case MeasureType::Volume:        computeVolume();              break;
+        case MeasureType::MeshPerimeter: computeMeshPerimeterAttrib(); break;
+        case MeasureType::MeshArea:      computeMeshAreaAttrib();      break;
+        case MeasureType::MeshVolume:    computeMeshVolumeAttrib();    break;
         }
 #else
         switch (measureType)
         {
-        case GFE_MeasureType::Perimeter:
+        case MeasureType::Perimeter:
             computePerimeter(geo, measureAttrib, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
-        case GFE_MeasureType::Area:
+        case MeasureType::Area:
             computeArea(geo, measureAttrib, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
-        case GFE_MeasureType::Volume:
+        case MeasureType::Volume:
             computeMeshVolume(geo, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
-        case GFE_MeasureType::MeshPerimeter:
+        case MeasureType::MeshPerimeter:
             computeMeshVolume(geo, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
-        case GFE_MeasureType::MeshArea:
+        case MeasureType::MeshArea:
             computeMeshVolume(geo, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
-        case GFE_MeasureType::MeshVolume:
+        case MeasureType::MeshVolume:
             computeMeshVolume(geo, posAttrib, primGroup, subscribeRatio, minGrainSize);
             break;
         default:
@@ -1551,7 +1554,7 @@ private:
 
 
 public:
-    GFE_MeasureType measureType = GFE_MeasureType::Area;
+    MeasureType measureType = MeasureType::Area;
 
     
 private:
@@ -1560,22 +1563,6 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;
     
-}; // End of Class GFE_Measure
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}; // End of Class Measure
+_GFEL_END
 #endif

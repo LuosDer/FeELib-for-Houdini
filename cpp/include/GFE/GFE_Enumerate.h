@@ -4,22 +4,21 @@
 #ifndef __GFE_Enumerate_h__
 #define __GFE_Enumerate_h__
 
-#include "GFE/GFE_Enumerate.h"
+#include <GFE/GFE_Enumerate.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
+#include <GFE/GFE_AttributeCast.h>
+#include <SOP/SOP_Enumerate.proto.h>
 
-
-#include "GFE/GFE_AttributeCast.h"
-#include "SOP/SOP_Enumerate.proto.h"
-
-/*
-    GFE_Enumerate enumerate(geo, cookparms);
+#if 0
+    Enumerate enumerate(geo, cookparms);
     enumerate.findOrCreateTuple(true, GA_ATTRIB_POINT);
     enumerate.compute();
-*/
-    
-class GFE_Enumerate : public GFE_AttribFilter {
+#endif
+
+_GFEL_BEGIN
+class Enumerate : public AttribFilter {
 
 #define __TEMP_GFE_Enumerate_GroupName       "__TEMP_GFE_Enumerate_Group"
 #define __TEMP_GFE_Enumerate_PieceAttribName "__TEMP_GFE_Enumerate_PieceAttrib"
@@ -27,7 +26,7 @@ class GFE_Enumerate : public GFE_AttribFilter {
     
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using AttribFilter::AttribFilter;
 
 
     void
@@ -60,7 +59,7 @@ public:
         outAttribName = attribName.c_str();
 #endif
         return getOutAttribArray().findOrCreateTuple(detached, owner,
-            storageClass, storage, __TEMP_GFE_Enumerate_OutAttribName, 1, GA_Defaults(GFE_INVALID_OFFSET));
+            storageClass, storage, __TEMP_GFE_Enumerate_OutAttribName, 1, GA_Defaults(gfe::INVALID_OFFSET));
         
         // if (pieceAttrib && !detached && !pieceAttrib->isDetached() && GFE_Type::stringEqual(pieceAttrib->getName(), attribName))
         // {
@@ -114,7 +113,7 @@ private:
     template<typename _Ty, bool _outAsOffset, bool _negativeIndex>
     void enumerate()
     {
-        if constexpr (GFE_Type::isStringHolder<_Ty>)
+        if constexpr (gfe::isStringHolder<_Ty>)
         {
             const GA_RWHandleS attrib_h(attrib);
             UTparallelFor(groupParser.getSplittableRange(attrib), [this, &attrib_h](const GA_SplittableRange& r)
@@ -143,11 +142,11 @@ private:
                 }
             }, subscribeRatio, minGrainSize);
         }
-        else if constexpr (GFE_Type::isScalar<_Ty>)
+        else if constexpr (gfe::isScalar<_Ty>)
         {
             UTparallelFor(groupParser.getSplittableRange(attrib), [this](const GA_SplittableRange& r)
             {
-                GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
+                gfe::RWPageHandleT<_Ty> attrib_ph(attrib);
                 GA_Offset start, end;
                 for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
                 {
@@ -178,16 +177,16 @@ private:
     
     void enumerate()
     {
-        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
-        if (!GFE_Variant::isAttribStorageIS(attribStorage)) return;
-        auto storageVarient = GFE_Variant::getAttribStorageVariantIS(attribStorage);
+        const gfe::AttribStorage attribStorage = gfe::Type::getAttribStorage(attrib);
+        if (!gfe::Variant::isAttribStorageIS(attribStorage)) return;
+        auto storageVarient = gfe::Variant::getAttribStorageVariantIS(attribStorage);
         
-        auto outAsOffsetVarient   = GFE_Variant::getBoolVariant(outAsOffset);
-        auto negativeIndexVarient = GFE_Variant::getBoolVariant(negativeIndex);
+        auto outAsOffsetVarient   = gfe::Variant::getBoolVariant(outAsOffset);
+        auto negativeIndexVarient = gfe::Variant::getBoolVariant(negativeIndex);
         
         std::visit([&] (auto storageVarient, auto outAsOffsetVarient, auto negativeIndexVarient)
         {
-            using type = typename GFE_Variant::getAttribStorage_t<storageVarient>;
+            using type = typename gfe::Variant::getAttribStorage_t<storageVarient>;
             enumerate<type, outAsOffsetVarient, negativeIndexVarient>();
         }, storageVarient, outAsOffsetVarient, negativeIndexVarient);
     }
@@ -227,7 +226,7 @@ private:
         GA_Attribute* namedPieceAttrib = nullptr;
         if (pieceAttrib->isDetached())
         {
-            namedPieceAttrib = GFE_Attribute::clone(geo, pieceAttrib, __TEMP_GFE_Enumerate_PieceAttribName);
+            namedPieceAttrib = gfe::Attribute::clone(geo, pieceAttrib, __TEMP_GFE_Enumerate_PieceAttribName);
             enumParms.setPieceAttrib(__TEMP_GFE_Enumerate_PieceAttribName);
             //namedPieceAttrib->bumpDataId();
         }
@@ -283,11 +282,11 @@ private:
         inputgdh.emplace_back(input_h);
         
         SOP_NodeCache* const nodeCache = enumVerb->allocCache();
-        const auto enumCookparms = GFE_NodeVerb::newCookParms(cookparms, enumParms, nodeCache, &destgdh, &inputgdh);
+        const auto enumCookparms = gfe::NodeVerb::newCookParms(cookparms, enumParms, nodeCache, &destgdh, &inputgdh);
         
-        GFE_AttribCast attribCast(geo, cookparms);
+        gfe::AttribCast attribCast(geo, cookparms);
         attribCast.newStorageClass = attrib->getStorageClass();
-        attribCast.newPrecision    = GFE_Attribute::getPrecision(attrib);
+        attribCast.newPrecision    = gfe::Attribute::getPrecision(attrib);
         attribCast.newAttribNames  = attrib->isDetached() ? "" : outAttribName;
         
         enumVerb->cook(enumCookparms);
@@ -338,10 +337,6 @@ private:
 #undef __TEMP_GFE_Enumerate_OutAttribName
 
     
-}; // End of class GFE_Enumerate
-
-
-
-
-
+}; // End of class Enumerate
+_GFEL_END
 #endif

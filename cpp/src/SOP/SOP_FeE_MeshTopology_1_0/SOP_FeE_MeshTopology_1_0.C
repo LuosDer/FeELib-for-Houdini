@@ -1,22 +1,12 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_MeshTopology_1_0.h"
 
+#include "SOP_FeE_MeshTopology_1_0.h"
 #include "SOP_FeE_MeshTopology_1_0.proto.h"
 
-
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-#include "GFE/GFE_MeshTopology.h"
-
-
+#include <GFE/GFE_MeshTopology.h>
 
 using namespace SOP_FeE_MeshTopology_1_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -433,18 +423,18 @@ SOP_FeE_MeshTopology_1_0::cookVerb() const
 
 
 
-static GFE_OutArrayType
+static gfe::OutArrayType
 sopOutArrayType(const SOP_FeE_MeshTopology_1_0Parms::OutArrayType parmGroupType)
 {
     using namespace SOP_FeE_MeshTopology_1_0Enums;
     switch (parmGroupType)
     {
-    case OutArrayType::ATTRIB:     return GFE_OutArrayType::Attrib; break;
-    case OutArrayType::PACKED:     return GFE_OutArrayType::Packed; break;
-    case OutArrayType::GEO:        return GFE_OutArrayType::Geo;    break;
+    case OutArrayType::ATTRIB:     return gfe::OutArrayType::Attrib; break;
+    case OutArrayType::PACKED:     return gfe::OutArrayType::Packed; break;
+    case OutArrayType::GEO:        return gfe::OutArrayType::Geo;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled Group Type!");
-    return GFE_OutArrayType::Attrib;
+    return gfe::OutArrayType::Attrib;
 }
 
 static GA_GroupType
@@ -502,17 +492,17 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
     const UT_StringHolder& primPrimPointAttribName               = sopparms.getPrimPrimPointAttribName();
     const UT_StringHolder& vertexVertexPrimPrevAttribName        = sopparms.getVertexVertexPrimPrevAttribName();
 
-    calVertexPrimIndex            = calVertexPrimIndex            && GFE_Type::isValid(vertexPrimIndexAttribName);
-    calVertexVertexPrim           = calVertexVertexPrim           && (GFE_Type::isValid(vertexVertexPrimPrevAttribName) || GFE_Type::isValid(vertexVertexPrimNextAttribName));
-    calVertexPointDst             = calVertexPointDst             && GFE_Type::isValid(vertexPointDstAttribName);
-    calVertexNextEquiv            = calVertexNextEquiv            && GFE_Type::isValid(vertexNextEquivAttribName);
-    calVertexNextEquivNoLoop      = calVertexNextEquivNoLoop      && GFE_Type::isValid(vertexNextEquivNoLoopAttribName);
-    calVertexNextEquivGroup       = calVertexNextEquivGroup       && GFE_Type::isValid(vertexNextEquivGroupName);
-    calVertexNextEquivNoLoopGroup = calVertexNextEquivNoLoopGroup && GFE_Type::isValid(vertexNextEquivNoLoopGroupName);
-    calPointPointEdge             = calPointPointEdge             && GFE_Type::isValid(pointPointEdgeAttribName);
-    calPointPointPrim             = calPointPointPrim             && GFE_Type::isValid(pointPointPrimAttribName);
-    calPrimPrimEdge               = calPrimPrimEdge               && GFE_Type::isValid(primPrimEdgeAttribName);
-    calPrimPrimPoint              = calPrimPrimPoint              && GFE_Type::isValid(primPrimPointAttribName);
+    calVertexPrimIndex            = calVertexPrimIndex            && gfe::isValid(vertexPrimIndexAttribName);
+    calVertexVertexPrim           = calVertexVertexPrim           && (gfe::isValid(vertexVertexPrimPrevAttribName) || gfe::isValid(vertexVertexPrimNextAttribName));
+    calVertexPointDst             = calVertexPointDst             && gfe::isValid(vertexPointDstAttribName);
+    calVertexNextEquiv            = calVertexNextEquiv            && gfe::isValid(vertexNextEquivAttribName);
+    calVertexNextEquivNoLoop      = calVertexNextEquivNoLoop      && gfe::isValid(vertexNextEquivNoLoopAttribName);
+    calVertexNextEquivGroup       = calVertexNextEquivGroup       && gfe::isValid(vertexNextEquivGroupName);
+    calVertexNextEquivNoLoopGroup = calVertexNextEquivNoLoopGroup && gfe::isValid(vertexNextEquivNoLoopGroupName);
+    calPointPointEdge             = calPointPointEdge             && gfe::isValid(pointPointEdgeAttribName);
+    calPointPointPrim             = calPointPointPrim             && gfe::isValid(pointPointPrimAttribName);
+    calPrimPrimEdge               = calPrimPrimEdge               && gfe::isValid(primPrimEdgeAttribName);
+    calPrimPrimPoint              = calPrimPrimPoint              && gfe::isValid(primPrimPointAttribName);
 #else
     UT_StringHolder& pointPointEdgeAttribName;
     UT_StringHolder& pointPointPrimAttribName;
@@ -574,7 +564,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GFE_OutArrayType outArrayType = sopOutArrayType(sopparms.getOutArrayType());
+    const gfe::OutArrayType outArrayType = sopOutArrayType(sopparms.getOutArrayType());
 
 
     UT_AutoInterrupt boss("Processing");
@@ -582,7 +572,7 @@ SOP_FeE_MeshTopology_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) con
         return;
 
     
-    GFE_MeshTopology meshTopology(outGeo0, &cookparms);
+    gfe::MeshTopology meshTopology(outGeo0, &cookparms);
 
 #if __GFE_MeshTopology_TestSpped
     meshTopology.setKernel(sopparms.getKernel());

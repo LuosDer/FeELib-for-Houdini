@@ -4,77 +4,81 @@
 #ifndef __UFE_SplittableString_h__
 #define __UFE_SplittableString_h__
 
-#include "UFE/UFE_SplittableString.h"
+#include <UFE/SplittableString.h>
 
+#include <UFE/Core.h>
 
-class UFE_SplittableString {
+class UT_StringHolder;
+
+_UFE_BEGIN
+class SplittableString {
 
 public:
-    UFE_SplittableString()
+    SplittableString()
         : sep(" ")
     {
     }
     
-    UFE_SplittableString(const char* const fullStr, const char* const sep = " ")
+    SplittableString(const char* const fullStr, const char* const sep = " ")
         : fullStr(fullStr)
         , sep(sep)
     {
     }
     
-    UFE_SplittableString(const ::std::string&& fullStr, const char* const sep = " ")
+    SplittableString(const ::std::string&& fullStr, const char* const sep = " ")
         : fullStr(::std::move(fullStr))
         , sep(sep)
     {
     }
     
-    UFE_SplittableString(const ::std::string& fullStr, const char* const sep = " ")
+    SplittableString(const ::std::string& fullStr, const char* const sep = " ")
         : fullStr(fullStr)
         , sep(sep)
     {
     }
     
-    ~UFE_SplittableString()
+    ~SplittableString()
     {
     }
 
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Group& attribPtr)
+    SYS_FORCE_INLINE SplittableString &operator=(const GA_Group& attribPtr)
     {
         set(attribPtr.isDetached() ? "" : attribPtr.getName().c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Group* const attribPtr)
+    SYS_FORCE_INLINE SplittableString &operator=(const GA_Group* const attribPtr)
     {
         UT_ASSERT_P(attribPtr);
         set(attribPtr->isDetached() ? "" : attribPtr->getName().c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Attribute& attribPtr)
+    SYS_FORCE_INLINE SplittableString &operator=(const GA_Attribute& attribPtr)
     {
         set(attribPtr.isDetached() ? "" : attribPtr.getName().c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const GA_Attribute* const attribPtr)
+    SYS_FORCE_INLINE SplittableString &operator=(const GA_Attribute* const attribPtr)
     {
         UT_ASSERT_P(attribPtr);
         set(attribPtr->isDetached() ? "" : attribPtr->getName().c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const UT_StringRef& s)
+    SYS_FORCE_INLINE SplittableString &operator=(const UT_StringRef& s)
     {
         set(s.c_str());
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(const char* const s)
+    SYS_FORCE_INLINE SplittableString &operator=(const char* const s)
     {
         set(s);
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(UFE_SplittableString &s)
+    SYS_FORCE_INLINE SplittableString &operator=(SplittableString &s)
     {
         set(s.fullStr);
         return *this;
     }
-    SYS_FORCE_INLINE UFE_SplittableString &operator=(UFE_SplittableString &&s)
+    SYS_FORCE_INLINE SplittableString &operator=(SplittableString &&s)
     {
         set(::std::move(s).fullStr);
         return *this;
@@ -316,8 +320,8 @@ private:
     bool isValid = false;
     bool shouldComputeIsValid = true;
     
-}; // End of class UFE_SplittableString
-
+}; // End of class SplittableString
+_UFE_END
 
 
 

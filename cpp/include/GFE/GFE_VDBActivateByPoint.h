@@ -4,11 +4,9 @@
 #ifndef __GFE_VDBActivateByPoint_h__
 #define __GFE_VDBActivateByPoint_h__
 
-#include "GFE/GFE_VDBActivateByPoint.h"
+#include <GFE/GFE_VDBActivateByPoint.h>
 
-#include "GFE/GFE_GeoFilter.h"
-
-
+#include <GFE/GeoFilter.h>
 
 #include <GU/GU_PrimVDB.h>
 #include <openvdb/openvdb.h>
@@ -21,20 +19,18 @@
 
 #if 0
 
-    GFE_VDBActivateByPoint vdbActivateByPoint(geo, cookparms);
+    gfe::VDBActivateByPoint vdbActivateByPoint(geo, cookparms);
     vdbActivateByPoint.findOrCreateTuple(true, GA_ATTRIB_POINT);
     vdbActivateByPoint.compute();
 
 #endif
 
-
-_GFE_BEGIN
-
-class GFE_VDBActivateByPoint : public GFE_AttribFilterWithRef0 {
+_GFEL_BEGIN
+class VDBActivateByPoint : public AttribFilterWithRef0 {
 
 
 public:
-    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
+    using AttribFilterWithRef0::AttribFilterWithRef0;
 
 
     void
@@ -62,7 +58,7 @@ private:
 #endif
 
         const GA_Offset vdboff = geo->getFirstVDBoff(groupParser.getPrimitiveGroup());
-        if (GFE_Type::isInvalidOffset(vdboff))
+        if (gfe::isInvalidOffset(vdboff))
         {
             cookparms->sopAddError(SOP_MESSAGE, "First input must contain a VDB!");
             return false;
@@ -83,7 +79,7 @@ private:
         // get a reference to transformation of the grid
         const openvdb::math::Transform& vdbGridXform = vdbPtr->transform();
 
-        GFE_ROPageHandleT<UT_Vector3D> posRef0_ph(geoRef0->getP());
+        gfe::ROPageHandleT<UT_Vector3D> posRef0_ph(geoRef0->getP());
         GA_Offset start, end;
         for (GA_PageIterator pit = groupParserRef0.getPointSplittableRange().beginPages(); !pit.atEnd(); ++pit)
         {
@@ -118,10 +114,6 @@ private:
 private:
     
     
-}; // End of class GFE_VDBActivateByPoint
-
-
-_GFE_END
-
-
+}; // End of class VDBActivateByPoint
+_GFEL_END
 #endif

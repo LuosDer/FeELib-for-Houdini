@@ -4,33 +4,24 @@
 #ifndef __GFE_UVScaletoWorldSize_h__
 #define __GFE_UVScaletoWorldSize_h__
 
-#include "GFE/GFE_UVScaletoWorldSize.h"
+#include <GFE/GFE_UVScaletoWorldSize.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
+#include <GU/GU_Promote.h>
 
+#include <GFE/GFE_Connectivity.h>
+#include <GFE/GFE_Measure.h>
 
-
-#include "GU/GU_Promote.h"
-
-
-#include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_Measure.h"
-//#include "GFE/GFE_Attribute.h"
-//#include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_GroupPromote.h"
-//#include "GFE/GFE_Range.h"
-
-
-
-class GFE_UVScaletoWorldSize : public GFE_AttribFilter {
+_GFEL_BEGIN
+class UVScaletoWorldSize : public AttribFilter {
 
 //#define GFE_UVScaletoWorldSize_AreaAttribName   "__area_GFE_UVScaletoWorldSize"
 //#define GFE_UVScaletoWorldSize_AreaUVAttribName "__areaUV_GFE_UVScaletoWorldSize"
 
 public:
 
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using AttribFilter::AttribFilter;
     
 
     void
@@ -233,6 +224,6 @@ private:
     
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;
-}; // End of Class GFE_UVScaletoWorldSize
-
+}; // End of Class UVScaletoWorldSize
+_GFEL_END
 #endif

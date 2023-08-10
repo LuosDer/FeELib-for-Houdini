@@ -4,24 +4,19 @@
 #ifndef __GFE_OffsetVertexOrder_h__
 #define __GFE_OffsetVertexOrder_h__
 
-#include "GFE/GFE_OffsetVertexOrder.h"
+#include <GFE/GFE_OffsetVertexOrder.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
-
-
-class GFE_OffsetVertexOrder : public GFE_AttribFilter {
-
-
+_GFEL_BEGIN
+class OffsetVertexOrder : public AttribFilter {
 
 public:
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using AttribFilter::AttribFilter;
 
-    ~GFE_OffsetVertexOrder()
+    ~OffsetVertexOrder()
     {
     }
-
-    
 
     SYS_FORCE_INLINE void setOffsetAttrib(const UT_StringRef& attribName)
     {
@@ -53,7 +48,7 @@ public:
             const bool delUnusedPoint = true,
             const bool delOffsetAttrib = false,
             const exint subscribeRatio = 64,
-            const exint minGrainSize = 64
+            const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
@@ -63,7 +58,7 @@ public:
         this->delUnusedPoint = delUnusedPoint;
         this->delOffsetAttrib = delOffsetAttrib;
         this->subscribeRatio = subscribeRatio;
-        this->minGrainSize = minGrainSize;
+        this->minGrainSize   = minGrainSize;
     }
 
     
@@ -867,17 +862,9 @@ private:
     bool bumpVertexDataId;
 
     exint subscribeRatio = 64;
-    exint minGrainSize = 64;
+    exint minGrainSize   = 1024;
 
 
-}; // End of Class GFE_OffsetVertexOrder
-
-
-
-
-
-
-
-
-
+}; // End of Class OffsetVertexOrder
+_GFEL_END
 #endif

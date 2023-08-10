@@ -4,23 +4,35 @@
 #ifndef __GFE_AttributeCast_h__
 #define __GFE_AttributeCast_h__
 
-#include "GFE/GFE_AttributeCast.h"
+#include <GFE/GFE_AttributeCast.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
+#include <UFE/SplittableString.h>
 
+#if 0
+        gfe::AttribCast attribCast(geo, cookparms);
+        attribCast.getInAttribArray().set(outAttrib);
+        attribCast.newStorageClass = enumAttrib->getStorageClass();
+        attribCast.newPrecision    = gfe::Attribute::getPrecision(enumAttrib);
+        if (attribCast.newStorageClass == GA_STORECLASS_STRING)
+        {
+            attribCast.prefix = prefix;
+            attribCast.sufix  = sufix;
+        }
+        attribCast.newAttribNames = sopparms.getNewAttribName();
+        attribCast.compute();
+#endif
 
-#include "UFE/UFE_SplittableString.h"
-
-class GFE_AttribCast : public GFE_AttribCreateFilter {
+_GFEL_BEGIN
+class AttribCast : public AttribCreateFilter {
     
 #define GFE_TEMP_ATTRIBCAST_ATTRIBNAME "__GFE_TEMP_ATTRIBCAST_ATTRIBNAME"
     
 public:
 
-    using GFE_AttribCreateFilter::GFE_AttribCreateFilter;
-
-
+    using AttribCreateFilter::AttribCreateFilter;
+    
     void setComputeParm(
         const bool delOrigin = true,
         const exint subscribeRatio = 64,
@@ -38,11 +50,11 @@ public:
         newStorageClass = inAttrib.getStorageClass();
         if (inAttrib.getAIFTuple())
         {
-            newPrecision = GFE_Type::precisionFromStorage(inAttrib.getAIFTuple()->getStorage(&inAttrib));
+            newPrecision = gfe::precisionFromStorage(inAttrib.getAIFTuple()->getStorage(&inAttrib));
         }
         else if (inAttrib.getAIFNumericArray())
         {
-            newPrecision = GFE_Type::precisionFromStorage(inAttrib.getAIFNumericArray()->getStorage(&inAttrib));
+            newPrecision = gfe::precisionFromStorage(inAttrib.getAIFNumericArray()->getStorage(&inAttrib));
         }
         else
         {
@@ -105,24 +117,24 @@ private:
     void attribCast(GA_Attribute& attrib)
     {
         const UT_StringHolder& newName = newAttribNames.getIsValid() ? newAttribNames.getNext<UT_StringHolder>() : attrib.getName();
-        const bool detached = GFE_Type::isInvalid(newName);
+        const bool detached = gfe::isInvalid(newName);
 
 #if GFE_DEBUG_MODE
         GA_StorageClass ga_StorageClass = attrib.getStorageClass();
-        GA_Precision gA_Precision = GFE_Attribute::getPrecision(attrib);
-        GA_Storage gA_Storage = GFE_Attribute::getStorage(attrib);
+        GA_Precision gA_Precision = gfe::Attribute::getPrecision(attrib);
+        GA_Storage gA_Storage = gfe::Attribute::getStorage(attrib);
 #endif
         if (attrib.getStorageClass() == newStorageClass
             &&  (   newStorageClass == GA_STORECLASS_INVALID
                  || newStorageClass == GA_STORECLASS_OTHER
-                 || GFE_Attribute::getPrecision(attrib) == newPrecision
+                 || gfe::Attribute::getPrecision(attrib) == newPrecision
                 )
         )
         {
             if (!detached && !attrib.isDetached())
             {
-                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
-                    GFE_Attribute::clone(*geo->getP(), attrib, subscribeRatio, minGrainSize);
+                if (attrib.getOwner() == GA_ATTRIB_POINT && gfe::stringEqualP(newName))
+                    gfe::Attribute::clone(*geo->getP(), attrib, subscribeRatio, minGrainSize);
                 else
                     geo->forceRenameAttribute(attrib, newName);
             }
@@ -140,11 +152,11 @@ private:
         }
         else
         {
-            const GA_Storage storage = GFE_Type::getPreferredStorage(newStorageClass, newPrecision);
+            const GA_Storage storage = gfe::getPreferredStorage(newStorageClass, newPrecision);
             GA_Attribute* newAttrib;
-            if (!detached && !attrib.isDetached() && GFE_Type::stringEqual(attrib.getName(), newName))
+            if (!detached && !attrib.isDetached() && gfe::stringEqual(attrib.getName(), newName))
             {
-                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                if (attrib.getOwner() == GA_ATTRIB_POINT && gfe::stringEqualP(newName))
                 {
                     geo->asGEO_Detail()->changePointAttributeStorage("P", storage);
                     newAttrib = geo->getP();
@@ -160,7 +172,7 @@ private:
             }
             else
             {
-                if (attrib.getOwner() == GA_ATTRIB_POINT && GFE_Type::stringEqualP(newName))
+                if (attrib.getOwner() == GA_ATTRIB_POINT && gfe::stringEqualP(newName))
                 {
                     geo->asGEO_Detail()->changePointAttributeStorage("P", storage);
                     newAttrib = geo->getP();
@@ -179,10 +191,10 @@ private:
 
     void attribCast(GA_ElementGroup& group)
     {
-        const GA_AttributeOwner attribClass = GFE_Type::attributeOwner_groupType(group.classType());
+        const GA_AttributeOwner attribClass = gfe::attributeOwner_groupType(group.classType());
         
         const UT_StringHolder& newName = newGroupNames.getValidAttribName(group);
-        const bool detached = GFE_Type::isInvalid(newName);
+        const bool detached = gfe::isInvalid(newName);
         
         GA_Attribute& newAttrib = *getOutAttribArray().findOrCreateTuple(
             detached, attribClass, newStorageClass, GA_STORE_INVALID, newName);
@@ -844,8 +856,8 @@ public:
     GA_Precision newPrecision = GA_PRECISION_INVALID;
     bool delOrigin = true;
 
-    UFE_SplittableString newAttribNames;
-    UFE_SplittableString newGroupNames;
+    ufe::SplittableString newAttribNames;
+    ufe::SplittableString newGroupNames;
 
     const char* prefix = "";
     const char* sufix  = "";
@@ -865,11 +877,6 @@ private:
 
 #undef GFE_TEMP_ATTRIBCAST_ATTRIBNAME
     
-}; // End of class GFE_AttribCast
-
-
-
-
-
-
+}; // End of class AttribCast
+_GFEL_END
 #endif

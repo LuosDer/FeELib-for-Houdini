@@ -8,10 +8,14 @@
 
 
 
-#include <UFE_Math.h>
+#include <UFE/Core.h>
+#include <UFE/Math.h>
+#include <UFE/TypeTraits.h>
 
-
-
-
+_UFE_BEGIN
+    using namespace ufe::Core;
+    using namespace ufe::Math;
+    using namespace ufe::TypeTraits;
+_UFE_END
 
 #endif

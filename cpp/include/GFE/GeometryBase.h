@@ -1,19 +1,16 @@
 
 #pragma once
 
-#ifndef __GFE_DetailBase_h__
-#define __GFE_DetailBase_h__
+#ifndef __GFE_GeometryBase_h__
+#define __GFE_GeometryBase_h__
 
-#include "GFE/GFE_DetailBase.h"
+#include <GFE/GeometryBase.h>
 
-#include "GA/GA_Detail.h"
+#include <GA/GA_Detail.h>
+#include <GFE/Type.h>
 
-
-
-//#include "GFE/GFE_Group.h"
-#include "GFE/GFE_Type.h"
-
-namespace GFE_DetailBase {
+_GFE_BEGIN
+namespace GeoBase {
 
 
 
@@ -63,7 +60,7 @@ namespace GFE_DetailBase {
             if (vertices[vtxpnum] == vtxoff)
                 return vtxpnum;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
     
     SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_PrimitiveList& primList, const GA_Offset primoff, const GA_Offset vtxoff)
@@ -83,7 +80,7 @@ namespace GFE_DetailBase {
         const bool isEnd = vtxpnum_next == vertices.size();
         return vertices.isClosed() || !isEnd
                ? vertices[isEnd ? 0 : vtxpnum_next]
-               : GFE_INVALID_OFFSET;
+               : gfe::INVALID_OFFSET;
     }
     
     static GA_Offset vertexPointDst(const GA_Detail& geo, const GA_Offset primoff, const GA_Size vtxpnum)
@@ -93,7 +90,7 @@ namespace GFE_DetailBase {
         const bool isEnd = vtxpnum_next == vertices.size();
         return vertices.isClosed() || !isEnd
                ? geo.vertexPoint(vertices[isEnd ? 0 : vtxpnum_next])
-               : GFE_INVALID_OFFSET;
+               : gfe::INVALID_OFFSET;
     }
 
     SYS_FORCE_INLINE static GA_Offset vertexNext(const GA_Detail& geo, const GA_Offset vtxoff)
@@ -113,7 +110,7 @@ namespace GFE_DetailBase {
     static GA_Offset edgeVertexSub(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
     {
         GA_Offset primPoint_next;
-        for (GA_Offset vtxoff = geo.pointVertex(ptoff0); GFE_Type::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
+        for (GA_Offset vtxoff = geo.pointVertex(ptoff0); gfe::isValidOffset(vtxoff); vtxoff = geo.vertexToNextVertex(vtxoff))
         {
             const GA_Offset primoff = geo.vertexPrimitive(vtxoff);
             const GA_OffsetListRef& vertices = geo.getPrimitiveVertexList(primoff);
@@ -142,13 +139,13 @@ namespace GFE_DetailBase {
                 }
             }
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
     static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Offset ptoff0, const GA_Offset ptoff1)
     {
         GA_Offset result = edgeVertexSub(geo, ptoff0, ptoff1);
-        return GFE_Type::isValidOffset(result) ? edgeVertexSub(geo, ptoff1, ptoff0) : result;
+        return gfe::isValidOffset(result) ? edgeVertexSub(geo, ptoff1, ptoff0) : result;
     }
 
     SYS_FORCE_INLINE static GA_Offset edgeVertex(const GA_Detail& geo, const GA_Edge& edge)
@@ -164,7 +161,7 @@ namespace GFE_DetailBase {
 
 
 SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_IndexMap& indexMap)
-{ return indexMap.offsetSize() > 0 ? indexMap.offsetFromIndex(0) : GFE_INVALID_OFFSET; }
+{ return indexMap.offsetSize() > 0 ? indexMap.offsetFromIndex(0) : gfe::INVALID_OFFSET; }
 
 // SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_IndexMap& indexMap, const GA_ElementGroup* const group)
 // { return group ? GFE_Group::getFirstElement(*group) : getFirstElement(indexMap); }
@@ -188,8 +185,8 @@ SYS_FORCE_INLINE static GA_Offset getFirstElement(const GA_Detail* const geo)
 
 
     
-} // End of namespace GFE_DetailBase
-
+} // End of namespace GeoBase
+_GFE_END
 
 
 

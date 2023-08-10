@@ -4,30 +4,29 @@
 #ifndef __GFE_UVGridify_h__
 #define __GFE_UVGridify_h__
 
-#include "GFE/GFE_UVGridify.h"
+#include <GFE/GFE_UVGridify.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
-
-
-class GFE_UVGridify : public GFE_AttribFilter {
+_GFEL_BEGIN
+class UVGridify : public AttribFilter {
 
 public:
 
-    enum RowColMethod
+    enum class RowColMethod
     {
         Uniform,
         Rows,
         Columns,
     };
 
+    using AttribFilter::AttribFilter;
 
 
-    using GFE_AttribFilter::GFE_AttribFilter;
 
     void
         setComputeParm(
-            const GFE_UVGridify::RowColMethod rowsOrColsNumMethod = GFE_UVGridify::RowColMethod::Uniform,
+            const UVGridify::RowColMethod rowsOrColsNumMethod = UVGridify::RowColMethod::Uniform,
             const GA_Size rowsOrColsNum = 2,
             const bool reverseUVu = false,
             const bool reverseUVv = false,
@@ -67,14 +66,14 @@ private:
         {
             attrib = getOutAttribArray()[i];
             
-            const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
-            if (!GFE_Variant::isAttribStorageVF(attribStorage))
+            const gfe::AttribStorage attribStorage = gfe::Type::getAttribStorage(attrib);
+            if (!gfe::Variant::isAttribStorageVF(attribStorage))
                 continue;
-            auto storageVariant = GFE_Variant::getAttribStorageVariantVF(attribStorage);
-            auto isPointAttribVariant = GFE_Variant::getBoolVariant(attrib->getOwner() == GA_ATTRIB_POINT);
+            auto storageVariant = gfe::Variant::getAttribStorageVariantVF(attribStorage);
+            auto isPointAttribVariant = gfe::Variant::getBoolVariant(attrib->getOwner() == GA_ATTRIB_POINT);
             std::visit([&] (auto storageVariant, auto isPointAttribVariant)
             {
-                using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+                using type = typename gfe::Variant::getAttribStorage_t<storageVariant>;
                 uvGridify<type, isPointAttribVariant>();
             }, storageVariant, isPointAttribVariant);
             
@@ -98,7 +97,7 @@ private:
         {
             value_type scale;
             bool scaleIdx = true;
-            _Ty uv(GFE_Type::getZero<_Ty>());
+            _Ty uv(gfe::Math::getZero<_Ty>());
             
             GA_Offset start, end;
             for (GA_Iterator it(r); it.blockAdvance(start, end); )
@@ -112,15 +111,15 @@ private:
                     GA_Size rows, cols;
                     switch (rowsOrColsNumMethod)
                     {
-                    case GFE_UVGridify::RowColMethod::Uniform:
+                    case UVGridify::RowColMethod::Uniform:
                         rows = GA_Size(std::ceil(numvtx / 4.0));
                         cols = (numvtx - rows - rows) / 2;
                         break;
-                    case GFE_UVGridify::RowColMethod::Rows:
+                    case UVGridify::RowColMethod::Rows:
                         rows = rowsOrColsNum - 1;
                         cols = (numvtx - rows - rows) / 2;
                         break;
-                    case GFE_UVGridify::RowColMethod::Columns:
+                    case UVGridify::RowColMethod::Columns:
                         cols = rowsOrColsNum - 1;
                         rows = (numvtx - cols - cols) / 2;
                         break;
@@ -232,7 +231,7 @@ private:
 
     
 public:
-    GFE_UVGridify::RowColMethod rowsOrColsNumMethod = GFE_UVGridify::RowColMethod::Uniform;
+    UVGridify::RowColMethod rowsOrColsNumMethod = UVGridify::RowColMethod::Uniform;
     GA_Size rowsOrColsNum = 2;
     bool reverseUVu = false;
     bool reverseUVv = false;
@@ -244,12 +243,8 @@ private:
     const GA_ATITopology* pointRef;
     
     exint subscribeRatio = 64;
-    exint minGrainSize = 64;
+    exint minGrainSize   = 1024;
     
-}; // End of Class GFE_UVGridify
-
-
-
-
-
+}; // End of Class UVGridify
+_GFEL_END
 #endif

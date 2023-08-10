@@ -5,13 +5,14 @@
 #include "SOP_FeE_KuhnMunkres_2_0.proto.h"
 
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
+#include <GA/GA_Detail.h>
+#include <PRM/PRM_TemplateBuilder.h>
+#include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
 
 
-#include "GFE/GFE_KuhnMunkres.h"
+#include <gfe.h>
+//#include <GFE/GFE_KuhnMunkres.h>
 
 using namespace SOP_FeE_KuhnMunkres_2_0_Namespace;
 
@@ -173,7 +174,7 @@ SOP_FeE_KuhnMunkres_2_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_KuhnMunkres_2_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_KuhnMunkres_2_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_KuhnMunkres_2_0Enums;
     switch (parmgrouptype)

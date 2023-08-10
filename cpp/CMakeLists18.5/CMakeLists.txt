@@ -32,7 +32,7 @@ if (1)
             target_link_libraries( ${library_name} Houdini )
 
 
-            if ( 0 )
+            if ( 1 )
                 set( lib_path "custom/houdini/dsolib/openvdb_sesi.lib" )
                 set( base_target_name "openvdb_sesi" )
                 set( target_name ${_houdini_install_root}/${lib_path} )

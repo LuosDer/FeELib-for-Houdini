@@ -1,25 +1,11 @@
 
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_OffsetVertexOrder_2_0.h"
-
-
 #include "SOP_FeE_OffsetVertexOrder_2_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-
-#include "GFE/GFE_OffsetVertexOrder.h"
-
-
-
+#include <GFE/GFE_OffsetVertexOrder.h>
 
 using namespace SOP_FeE_OffsetVertexOrder_2_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -156,7 +142,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_OffsetVertexOrder_2_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_OffsetVertexOrder_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -187,37 +173,30 @@ SOP_FeE_OffsetVertexOrder_2_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_OffsetVertexOrder_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
     
-    
 
-
-    GFE_OffsetVertexOrder offsetVertexOrder(outGeo0, &cookparms);
+    gfe::OffsetVertexOrder offsetVertexOrder(outGeo0, &cookparms);
 
     offsetVertexOrder.setComputeParm(sopparms.getOffset(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
 
     if (sopparms.getUseOffsetAttrib())
-    {
         offsetVertexOrder.setOffsetAttrib(sopparms.getOffsetAttrib());
-    }
+    
     offsetVertexOrder.setComputeParm(sopparms.getOffset(), sopparms.getTreatLoopedPrimAsClosed(),
         sopparms.getDelOffsetAttrib(), sopparms.getDelUnusedPoint(),
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
     
-
     offsetVertexOrder.groupParser.setPrimitiveGroup(sopparms.getPrimGroup());
-
+    
     offsetVertexOrder.computeAndBumpDataId();
-
-
 }
 
 

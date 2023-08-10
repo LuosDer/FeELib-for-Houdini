@@ -10,15 +10,11 @@
 #include <SOP/SOP_NodeVerb.h>
 
 
-#include <GFE/GFE_Detail.h>
-
-#include <GFE/GFE_GroupUnion.h>
+#include <GFE/Geometry.h>
+#include <GFE/GroupUnion.h>
 
 
 _GFE_BEGIN
-
-
-
 class GroupParser {
 
 public:
@@ -396,7 +392,7 @@ public:
         case GA_GROUP_VERTEX:
             return static_cast<const GA_ElementGroup*>(geoGroup)->getIndexMap().indexSize();
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
     GA_Size entries() const
@@ -410,7 +406,7 @@ public:
             return static_cast<const GA_ElementGroup*>(geoGroup)->entries(); break;
         case GA_GROUP_EDGE: return static_cast<const GA_EdgeGroup*>(geoGroup)->entries(); break;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
 #else
@@ -423,7 +419,7 @@ public:
         case GA_GROUP_POINT:     return static_cast<const GA_PointGroup*    >(geoGroup)->getIndexMap().indexSize(); break;
         case GA_GROUP_VERTEX:    return static_cast<const GA_VertexGroup*   >(geoGroup)->getIndexMap().indexSize(); break;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
     GA_Size entries() const
@@ -436,7 +432,7 @@ public:
         case GA_GROUP_VERTEX:    return static_cast<const GA_VertexGroup*   >(geoGroup)->entries(); break;
         case GA_GROUP_EDGE:      return static_cast<const GA_EdgeGroup*     >(geoGroup)->entries(); break;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 #endif
     
@@ -757,7 +753,7 @@ private:
     { return geo->getIndexMap(attribOwner); }
 
     SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_GroupType groupType) const
-    { return getIndexMap(GFE_Type::attributeOwner_groupType(groupType)); }
+    { return getIndexMap(gfe::Type::attributeOwner_groupType(groupType)); }
 
         
     SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_Attribute& attrib) const
@@ -827,7 +823,7 @@ private:
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        gfe::GroupUnion::groupUnion(newGroup, group);
         //if (groupType == GA_GROUP_EDGE)
         //    GFE_GroupUnion::groupUnion(static_cast<GA_EdgeGroup&>(*newGroup), group);
         //else
@@ -1280,11 +1276,7 @@ parseEdgeGroupDetached(
 }
     
 
-} // End of namespace GroupParser_Namespace
-
-
+} // End of Namespace GroupParser_Namespace
 
 _GFE_END
-
-
 #endif

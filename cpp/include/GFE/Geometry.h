@@ -1,17 +1,12 @@
 
 #pragma once
 
-#ifndef __GFE_Detail_h__
-#define __GFE_Detail_h__
+#ifndef __GFE_Geometry_h__
+#define __GFE_Geometry_h__
 
-#include <GFE/GFE_Detail.h>
-
-
-
-#include <GFE/GFE_Core.h>
+#include <GFE/Geometry.h>
 
 #include <GA/GA_Detail.h>
-
 #include <GA/GA_PageHandle.h>
 #include <GA/GA_PageIterator.h>
 
@@ -19,36 +14,33 @@
 //#include <GU/GU_Primitive.h>
 #include <GU/GU_PrimPoly.h>
 
+#include <GFE/Variant.h>
+#include <GFE/Group.h>
+#include <GFE/GroupUnion.h>
+#include <GFE/AttributeDelete.h>
+#include <GFE/GeometryBase.h>
 
-#include <GFE/GFE_Variant.h>
-#include <GFE/GFE_Group.h>
-#include <GFE/GFE_GroupUnion.h>
-#include <GFE/GFE_AttributeDelete.h>
-
-
-
+class GEO_PrimPoly;
 class GU_PrimPoly;
 class GEO_PrimVDB;
 class GU_PrimVDB;
 class GEO_PrimVolume;
 class GU_PrimVolume;
 
-
-
+#define __GFE_Geometry_Inherited_From_GU_Detail 1
 
 
 _GFE_BEGIN
-
-
-
-#define GFE_Detail_InheritedFrom_GU_Detail 1
-
-#if GFE_Detail_InheritedFrom_GU_Detail
-class GFE_Detail : public GU_Detail
+#ifdef __GFE_Geometry_Inherited_From_GU_Detail
+    class Geometry : public GU_Detail {
+    public:
+        using GU_Detail::GU_Detail;
 #else
-class GFE_Detail : public GA_Detail
+    class Geometry : public GA_Detail {
+    public:
+        using GA_Detail::GA_Detail;
 #endif
-{
+
 
 public:
     
@@ -65,13 +57,13 @@ public:
 
     
     SYS_FORCE_INLINE bool isPoly(const GA_Offset primoff) const
-    { return GFE_Type::isPoly(getPrimitiveTypeId(primoff)); }
+    { return gfe::isPoly(getPrimitiveTypeId(primoff)); }
     
     SYS_FORCE_INLINE bool isHoudiniVolume(const GA_Offset primoff) const
-    { return GFE_Type::isHoudiniVolume(getPrimitiveTypeId(primoff)); }
+    { return gfe::isHoudiniVolume(getPrimitiveTypeId(primoff)); }
     
     SYS_FORCE_INLINE bool isVDB(const GA_Offset primoff) const
-    { return GFE_Type::isVDB(getPrimitiveTypeId(primoff)); }
+    { return gfe::isVDB(getPrimitiveTypeId(primoff)); }
     
     SYS_FORCE_INLINE bool isVolume(const GA_Offset primoff) const
     { return isHoudiniVolume(primoff) || isVDB(primoff); }
@@ -81,32 +73,32 @@ public:
     
 
     SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_AttributeOwner owner) const
-    { return GFE_DetailBase::getFirstElement(getIndexMap(owner)); }
+    { return gfe::GeoBase::getFirstElement(getIndexMap(owner)); }
 
     template<GA_AttributeOwner _Owner>
     SYS_FORCE_INLINE GA_Offset getFirstElement() const
-    { return GFE_DetailBase::getFirstElement(getIndexMap(_Owner)); }
+    { return gfe::GeoBase::getFirstElement(getIndexMap(_Owner)); }
 
     SYS_FORCE_INLINE GA_Offset getFirstElement(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset elemoff = geoPrimGroup
-                                ? GFE_Group::getFirstElement(*geoPrimGroup)
-                                : GFE_DetailBase::getFirstElement<GA_ATTRIB_PRIMITIVE>(this);
+                                ? gfe::Group::getFirstElement(*geoPrimGroup)
+                                : gfe::GeoBase::getFirstElement<GA_ATTRIB_PRIMITIVE>(this);
         
-        return isInvalidOffset<GA_ATTRIB_PRIMITIVE>(elemoff) ? GFE_INVALID_OFFSET : elemoff;
+        return isInvalidOffset<GA_ATTRIB_PRIMITIVE>(elemoff) ? gfe::INVALID_OFFSET : elemoff;
     }
 
     
     SYS_FORCE_INLINE GA_Offset getFirstVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset volumeoff = getFirstElement(geoPrimGroup);
-        return isVolume(volumeoff) ? volumeoff : GFE_INVALID_OFFSET;
+        return isVolume(volumeoff) ? volumeoff : gfe::INVALID_OFFSET;
     }
 
     SYS_FORCE_INLINE GA_Offset getFirstHoudiniVolumeoff(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset volumeoff = getFirstElement(geoPrimGroup);
-        return isHoudiniVolume(volumeoff) ? volumeoff : GFE_INVALID_OFFSET;
+        return isHoudiniVolume(volumeoff) ? volumeoff : gfe::INVALID_OFFSET;
     }
 
     SYS_FORCE_INLINE void getVectorHoudiniVolumePrimitive(GEO_PrimVolume const ** vvol, const GA_PrimitiveGroup* const geoPrimGroup) const
@@ -133,7 +125,7 @@ public:
     SYS_FORCE_INLINE GA_Offset getFirstVDBoff(const GA_PrimitiveGroup* const geoPrimGroup) const
     {
         const GA_Offset vdboff = getFirstElement(geoPrimGroup);
-        return isVDB(vdboff) ? vdboff : GFE_INVALID_OFFSET;
+        return isVDB(vdboff) ? vdboff : gfe::INVALID_OFFSET;
     }
 
     
@@ -147,30 +139,30 @@ public:
     
     template<GA_AttributeOwner _Owner>
     SYS_FORCE_INLINE bool isInvalidOffset(const GA_Offset elemoff) const
-    { return GFE_Type::isInvalidOffset(getIndexMap(_Owner), elemoff); }
+    { return gfe::isInvalidOffset(getIndexMap(_Owner), elemoff); }
 
     SYS_FORCE_INLINE bool isInvalidOffset(const GA_AttributeOwner owner, const GA_Offset elemoff) const
-    { return GFE_Type::isInvalidOffset(getIndexMap(owner), elemoff); }
+    { return gfe::isInvalidOffset(getIndexMap(owner), elemoff); }
 
     
     SYS_FORCE_INLINE void setValidPosAttrib(GA_Attribute*& attrib)
-    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
+    { if (gfe::isInvalidPosAttrib(attrib)) attrib = getP(); }
     
     SYS_FORCE_INLINE void setValidPosAttrib(const GA_Attribute*& attrib)
-    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
+    { if (gfe::isInvalidPosAttrib(attrib)) attrib = getP(); }
 
     SYS_FORCE_INLINE void setValidPosAttrib(const GA_Attribute*& attrib) const
-    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = getP(); }
+    { if (gfe::isInvalidPosAttrib(attrib)) attrib = getP(); }
 
      
     SYS_FORCE_INLINE static void setValidPosAttrib(GA_Detail* const geo, GA_Attribute*& attrib)
-    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
+    { if (gfe::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
     
     SYS_FORCE_INLINE static void setValidPosAttrib(GA_Detail* const geo, const GA_Attribute*& attrib)
-    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
+    { if (gfe::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
 
     SYS_FORCE_INLINE static void setValidPosAttrib(const GA_Detail* const geo, const GA_Attribute*& attrib)
-    { if (GFE_Type::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
+    { if (gfe::isInvalidPosAttrib(attrib)) attrib = geo->getP(); }
 
 
 
@@ -180,7 +172,7 @@ public:
     template<typename _TClass>
     SYS_FORCE_INLINE _TClass getPrimitiveT(const GA_Offset primoff)
     {
-        UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
+        UT_ASSERT_P(gfe::isValidOffset(getPrimitiveMap(), primoff));
         if constexpr      (std::is_same_v<_TClass, GEO_PrimPoly*>   || std::is_same_v<_TClass, GU_PrimPoly*>)
             UT_ASSERT_P(isPoly(primoff));
         else if constexpr (std::is_same_v<_TClass, GEO_PrimVolume*> || std::is_same_v<_TClass, GU_PrimVolume*>)
@@ -194,7 +186,7 @@ public:
     template<typename _TClass>
     SYS_FORCE_INLINE _TClass getPrimitiveT(const GA_Offset primoff) const
     {
-        UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
+        UT_ASSERT_P(gfe::isValidOffset(getPrimitiveMap(), primoff));
         if constexpr      (std::is_same_v<std::remove_const_t<_TClass>, GEO_PrimPoly*>   || std::is_same_v<std::remove_const_t<_TClass>, GU_PrimPoly*>)
             UT_ASSERT_P(isPoly(primoff));
         else if constexpr (std::is_same_v<std::remove_const_t<_TClass>, GEO_PrimVolume*> || std::is_same_v<std::remove_const_t<_TClass>, GU_PrimVolume*>)
@@ -209,13 +201,13 @@ public:
     
     //SYS_FORCE_INLINE GEO_Primitive createGEOPrimitive(const GA_Offset primoff)
     //{
-    //    UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
+    //    UT_ASSERT_P(gfe::isValidOffset(getPrimitiveMap(), primoff));
     //    return GEO_Primitive(this, primoff);
     //}
     //
     //SYS_FORCE_INLINE GEO_PrimPoly createGEOPrimPoly(const GA_Offset primoff)
     //{
-    //    UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
+    //    UT_ASSERT_P(gfe::isValidOffset(getPrimitiveMap(), primoff));
     //    UT_ASSERT_P(isPoly(primoff));
     //    return GU_PrimPoly(this, primoff);
     //    
@@ -223,7 +215,7 @@ public:
     //
     //SYS_FORCE_INLINE GEO_PrimVDB createVDBPrimitive(const GA_Offset primoff)
     //{
-    //    UT_ASSERT_P(GFE_Type::isValidOffset(getPrimitiveMap(), primoff));
+    //    UT_ASSERT_P(gfe::isValidOffset(getPrimitiveMap(), primoff));
     //    UT_ASSERT_P(isVDB(primoff));
     //    return GEO_PrimVDB(this->asGEO_Detail(), primoff);
     //}
@@ -254,22 +246,22 @@ public:
 
     
     SYS_FORCE_INLINE bool isUsedPoint(const GA_Offset ptoff) const
-    { return GFE_Type::isValidOffset(pointVertex(ptoff)); }
+    { return gfe::isValidOffset(pointVertex(ptoff)); }
 
     SYS_FORCE_INLINE bool isUnusedPoint(const GA_Offset ptoff) const
-    { return GFE_Type::isInvalidOffset(pointVertex(ptoff)); }
+    { return gfe::isInvalidOffset(pointVertex(ptoff)); }
 
 
     
     SYS_FORCE_INLINE bool isPacked(const GA_Offset primoff) const
-    { return GFE_Type::isPacked(getPrimitiveTypeId(primoff)); }
+    { return gfe::isPacked(getPrimitiveTypeId(primoff)); }
 
 
 
 
 
     
-#if GFE_Detail_InheritedFrom_GU_Detail
+#if __GFE_Geometry_Inherited_From_GU_Detail
     
     SYS_FORCE_INLINE GA_Detail* asGA_Detail()
     { return reinterpret_cast<GA_Detail*>(this); }
@@ -357,7 +349,7 @@ public:
     {
         const GA_EdgeGroupUPtr edgeGroupUPtr = createDetachedEdgeGroup();
         GA_EdgeGroup& edgeGroup = *edgeGroupUPtr.get();
-        GFE_GroupUnion::groupUnion(edgeGroup, group);
+        gfe::GroupUnion::groupUnion(edgeGroup, group);
         asGU_Detail()->dissolveEdges(edgeGroup,
             delInlinePoint, inlineTol, delUnusedPoint, bridgeMode, delDegenerateBridge, boundaryCurves);
     }
@@ -433,7 +425,7 @@ public:
                 return elemoffFrom;
         }
         else
-            return GFE_INVALID_OFFSET;
+            return gfe::INVALID_OFFSET;
     }
 
 
@@ -486,15 +478,15 @@ public:
 private:
     
     SYS_FORCE_INLINE GA_Offset edgeVertexSub(const GA_Offset ptoff0, const GA_Offset ptoff1) const
-    { return GFE_DetailBase::edgeVertexSub(*this, ptoff0, ptoff1); }
+    { return gfe::GeoBase::edgeVertexSub(*this, ptoff0, ptoff1); }
     
 public:
     
     SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Offset ptoff0, const GA_Offset ptoff1) const
-    { return GFE_DetailBase::edgeVertex(*this, ptoff0, ptoff1); }
+    { return gfe::GeoBase::edgeVertex(*this, ptoff0, ptoff1); }
     
     SYS_FORCE_INLINE GA_Offset edgeVertex(const GA_Edge& edge) const
-    { return GFE_DetailBase::edgeVertex(*this, edge); }
+    { return gfe::GeoBase::edgeVertex(*this, edge); }
     
     
 
@@ -565,28 +557,28 @@ SYS_FORCE_INLINE void delStdAttribute(
     const char* vertexAttribPattern,
     const char* detailAttribPattern
 )
-{ GFE_AttributeDelete::delStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern); }
+{ gfe::AttributeDelete::delStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern); }
 SYS_FORCE_INLINE void keepStdAttribute(
     const char* primAttribPattern,
     const char* pointAttribPattern,
     const char* vertexAttribPattern,
     const char* detailAttribPattern
 )
-{ GFE_AttributeDelete::keepStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern); }
+{ gfe::AttributeDelete::keepStdAttribute(getAttributes(), primAttribPattern, pointAttribPattern, vertexAttribPattern, detailAttribPattern); }
 
 
 
 SYS_FORCE_INLINE void groupToggle(const GA_GroupType groupType, const char* groupName)
-{ GFE_Group::groupToggle(*getGroupTable(groupType), groupName); }
+{ gfe::Group::groupToggle(*getGroupTable(groupType), groupName); }
 
 SYS_FORCE_INLINE void delStdGroup(const GA_GroupType groupType, const char* groupPattern)
-{ GFE_Group::delStdGroup(*getGroupTable(groupType), groupPattern); }
+{ gfe::Group::delStdGroup(*getGroupTable(groupType), groupPattern); }
 
 SYS_FORCE_INLINE void keepStdGroup(const GA_GroupType groupType, const char* keepGroupPattern)
-{ GFE_Group::keepStdGroup(*getGroupTable(groupType), keepGroupPattern); }
+{ gfe::Group::keepStdGroup(*getGroupTable(groupType), keepGroupPattern); }
 
 SYS_FORCE_INLINE void keepStdAttribute(const GA_AttributeOwner attribOwner, const char* keepGroupPattern)
-{ GFE_AttributeDelete::keepStdAttribute(getAttributes(), attribOwner, keepGroupPattern); }
+{ gfe::AttributeDelete::keepStdAttribute(getAttributes(), attribOwner, keepGroupPattern); }
 
 void delStdGroup(
     const char* primGroupPattern,
@@ -667,22 +659,22 @@ void keepStdGroup(
 
         
 SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_OffsetListRef& vertices, const GA_Offset vtxoff)
-{ return GFE_DetailBase::vertexPrimIndex(vertices, vtxoff); }
+{ return gfe::GeoBase::vertexPrimIndex(vertices, vtxoff); }
         
 SYS_FORCE_INLINE static GA_Size vertexPrimIndex(const GA_PrimitiveList& primList, const GA_Offset primoff, const GA_Offset vtxoff)
-{ return GFE_DetailBase::vertexPrimIndex(primList, primoff, vtxoff); }
+{ return gfe::GeoBase::vertexPrimIndex(primList, primoff, vtxoff); }
     
 SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset primoff, const GA_Offset vtxoff)
-{ return GFE_DetailBase::vertexPrimIndex(*this, primoff, vtxoff); }
+{ return gfe::GeoBase::vertexPrimIndex(*this, primoff, vtxoff); }
 
 SYS_FORCE_INLINE GA_Size vertexPrimIndex(const GA_Offset vtxoff)
-{ return GFE_DetailBase::vertexPrimIndex(*this, vtxoff); }
+{ return gfe::GeoBase::vertexPrimIndex(*this, vtxoff); }
 
 SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset primoff, const GA_Size vtxpnum)
-{ return GFE_DetailBase::vertexPointDst(*this, primoff, vtxpnum); }
+{ return gfe::GeoBase::vertexPointDst(*this, primoff, vtxpnum); }
 
 SYS_FORCE_INLINE GA_Offset vertexPointDst(const GA_Offset vtxoff)
-{ return GFE_DetailBase::vertexPointDst(*this, vtxoff); }
+{ return gfe::GeoBase::vertexPointDst(*this, vtxoff); }
 
         
 
@@ -758,7 +750,7 @@ GA_Size getNumElements(const GA_AttributeOwner attribClass) const
     case GA_ATTRIB_POINT:     return getNumPoints();     break;
     case GA_ATTRIB_VERTEX:    return getNumVertices();   break;
     }
-    return GFE_INVALID_OFFSET;
+    return gfe::INVALID_OFFSET;
 }
 
 GA_Size getNumElements(const GA_GroupType groupType) const
@@ -769,7 +761,7 @@ GA_Size getNumElements(const GA_GroupType groupType) const
     case GA_GROUP_POINT:     return getNumPoints();     break;
     case GA_GROUP_VERTEX:    return getNumVertices();   break;
     }
-    return GFE_INVALID_OFFSET;
+    return gfe::INVALID_OFFSET;
 }
 
 SYS_FORCE_INLINE GA_Size getNumElements(const GA_Attribute* const attrib) const
@@ -1063,13 +1055,13 @@ SYS_FORCE_INLINE GA_Precision getPreferredPrecision(const GA_Precision precision
 { return precision == GA_PRECISION_INVALID ? getPreferredPrecision() : precision; }
     
 SYS_FORCE_INLINE GA_Storage getPreferredStorageI() const
-{ return GFE_Type::getPreferredStorageI(getPreferredPrecision()); }
+{ return gfe::getPreferredStorageI(getPreferredPrecision()); }
 
 SYS_FORCE_INLINE GA_Storage getPreferredStorageF() const
-{ return GFE_Type::getPreferredStorageF(getPreferredPrecision()); }
+{ return gfe::getPreferredStorageF(getPreferredPrecision()); }
 
 SYS_FORCE_INLINE GA_Storage getPreferredStorage(const GA_StorageClass storageClass) const
-{ return GFE_Type::getPreferredStorage(storageClass, getPreferredPrecision()); }
+{ return gfe::getPreferredStorage(storageClass, getPreferredPrecision()); }
 
 SYS_FORCE_INLINE GA_Storage getPreferredStorage(const GA_Storage storage = GA_STORE_INVALID) const
 { return storage == GA_STORE_INVALID ? getPreferredStorage(storage) : storage; }
@@ -1181,7 +1173,7 @@ void attribBumpDataId(const GA_AttributeOwner owner, const char* const pattern)
 }
 
 SYS_FORCE_INLINE void groupBumpDataId(const GA_GroupType groupType, const char* const groupPattern)
-{ return GFE_Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
+{ return gfe::Group::groupBumpDataId(*getGroupTable(groupType), groupPattern); }
 
     
 SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute& attrib, const UT_StringRef& newName)
@@ -1195,7 +1187,7 @@ SYS_FORCE_INLINE bool renameAttrib(const GA_Attribute* const attrib, const UT_St
     
 bool forceRenameAttribute(GA_Attribute& attrib, const UT_StringRef& newName)
 {
-    if (attrib.isDetached() || GFE_Type::stringEqual(attrib.getName(), newName))
+    if (attrib.isDetached() || gfe::stringEqual(attrib.getName(), newName))
         return false;
     GA_Attribute* const existAttrib = findAttribute(attrib.getOwner(), newName);
     if (existAttrib)
@@ -1242,10 +1234,10 @@ SYS_FORCE_INLINE bool forceRenameAttribute(const GA_AttributeOwner owner, const 
 
     
 SYS_FORCE_INLINE GA_GroupType attributeOwner_groupType(const GA_AttributeOwner attribOwner) const
-{ return GFE_Type::attributeOwner_groupType(attribOwner); }  
+{ return gfe::attributeOwner_groupType(attribOwner); }  
 
 SYS_FORCE_INLINE GA_AttributeOwner attributeOwner_groupType(const GA_GroupType groupType) const
-{ return GFE_Type::attributeOwner_groupType(groupType); }
+{ return gfe::attributeOwner_groupType(groupType); }
 
 
 
@@ -1913,7 +1905,7 @@ public:
                 
                 for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                 {
-                    for (GA_Offset promoff = pointVertex(elemoff); GFE_Type::isValidOffset(promoff); promoff = vertexToNextVertex(promoff))
+                    for (GA_Offset promoff = pointVertex(elemoff); gfe::isValidOffset(promoff); promoff = vertexToNextVertex(promoff))
                     {
                         group.setElement(promoff, false);
                     }
@@ -1955,11 +1947,7 @@ private:
     }
 
 
-}; // End of Class GFE_Detail
-
-
-
-
+}; // End of Class Geometry
+using GFE_Detail = Geometry;
 _GFE_END
-
 #endif

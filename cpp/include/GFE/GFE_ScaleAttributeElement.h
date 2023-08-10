@@ -5,8 +5,9 @@
 #define __GFE_ScaleAttributeElement_h__
 
 #include "GFE/GFE_ScaleAttributeElement.h"
+#include <GFE/GFE_ScaleAttributeElement.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GFE_GeoFilter.h>
 
 
 
@@ -61,29 +62,23 @@ private:
             
             scaleAttribElement();
             
-            //const GA_Storage storage = attrib->getAIFTuple()->getStorage(attrib);
-            //GFE_ForEachStorageTupleSizeVec(scaleAttribElement, storage, attrib->getAIFTuple()->getTupleSize(attrib))
+            const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
+            if (!GFE_Variant::isAttribStorageIFV(attribStorage))
+                return;
+            auto storageVariant = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
+            auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
+            auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
+            std::visit([&] (auto storageVariant, auto scaleVariant, auto doNormalizeVariant)
+            {
+                using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+                scaleAttribElement<type, doNormalizeVariant, scaleVariant>();
+            }, storageVariant, scaleVariant, doNormalizeVariant);
         }
         return true;
     }
 
     
 
-
-    void scaleAttribElement()
-    {
-        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attrib);
-        if (!GFE_Variant::isAttribStorageIFV(attribStorage))
-            return;
-        auto storageVariant = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
-        auto doNormalizeVariant = GFE_Variant::getBoolVariant(doNormalize);
-        auto scaleVariant = GFE_Variant::getBoolVariant(uniScale != 1.0);
-        std::visit([&] (auto storageVariant, auto scaleVariant, auto doNormalizeVariant)
-        {
-            using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
-            scaleAttribElement<type, doNormalizeVariant, scaleVariant>();
-        }, storageVariant, scaleVariant, doNormalizeVariant);
-    }
 
     template<typename _Ty, bool _normalize, bool _scale>
     void scaleAttribElement()

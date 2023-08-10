@@ -1,22 +1,12 @@
 
 //#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_Measure_3_0.h"
 
+#include "SOP_FeE_Measure_3_0.h"
 #include "SOP_FeE_Measure_3_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-
-#include "GFE/GFE_Measure.h"
-
+#include <GFE/GFE_Measure.h>
 
 using namespace SOP_FeE_Measure_3_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -96,7 +86,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -165,7 +155,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_Measure_3_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_Measure_3_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -185,7 +175,7 @@ SOP_FeE_Measure_3_0::cookVerb() const
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_Measure_3_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Measure_3_0Enums;
     switch (parmGroupType)
@@ -201,21 +191,21 @@ sopGroupType(SOP_FeE_Measure_3_0Parms::GroupType parmGroupType)
 }
 
 
-static GFE_MeasureType
-sopMeasureType(SOP_FeE_Measure_3_0Parms::MeasureType parmMeasureType)
+static _gfel::MeasureType
+sopMeasureType(const SOP_FeE_Measure_3_0Parms::MeasureType parmMeasureType)
 {
     using namespace SOP_FeE_Measure_3_0Enums;
     switch (parmMeasureType)
     {
-    case MeasureType::PERIMETER:          return GFE_MeasureType::Perimeter;       break;
-    case MeasureType::AREA:               return GFE_MeasureType::Area;            break;
-    case MeasureType::VOLUME:             return GFE_MeasureType::Volume;          break;
-    case MeasureType::MESHPERIMETER:      return GFE_MeasureType::MeshPerimeter;   break;
-    case MeasureType::MESHAREA:           return GFE_MeasureType::MeshArea;        break;
-    case MeasureType::MESHVOLUME:         return GFE_MeasureType::MeshVolume;      break;
+    case MeasureType::PERIMETER:          return _gfel::MeasureType::Perimeter;       break;
+    case MeasureType::AREA:               return _gfel::MeasureType::Area;            break;
+    case MeasureType::VOLUME:             return _gfel::MeasureType::Volume;          break;
+    case MeasureType::MESHPERIMETER:      return _gfel::MeasureType::MeshPerimeter;   break;
+    case MeasureType::MESHAREA:           return _gfel::MeasureType::MeshArea;        break;
+    case MeasureType::MESHVOLUME:         return _gfel::MeasureType::MeshVolume;      break;
     }
     UT_ASSERT_MSG(0, "Unhandled GFE Measure Type!");
-    return GFE_MeasureType::Area;
+    return _gfel::MeasureType::Area;
 }
 
 
@@ -227,28 +217,22 @@ SOP_FeE_Measure_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_Measure_3_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& measureAttribName = sopparms.getMeasureAttribName();
     if (!measureAttribName.isstring())
         return;
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-    const GFE_MeasureType measureType = sopMeasureType(sopparms.getMeasureType());
+    const _gfel::MeasureType measureType = sopMeasureType(sopparms.getMeasureType());
 
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-/*
-        GFE_Measure measure(geo, cookparms);
-        measure.measureType = measureType;
-        measure.groupParser.setGroup(groupParser);
-        measureAttrib = measure.findOrCreateTuple(false);
-        measure.compute();
- */
-    GFE_Measure measure(outGeo0, cookparms);
+    
+    _gfel::Measure measure(outGeo0, cookparms);
     measure.groupParser.setGroup(groupType, sopparms.getGroup());
     measure.setPositionAttrib(sopparms.getPosAttrib());
     measure.setComputeParm(measureType,

@@ -2,21 +2,11 @@
 //#define UT_ASSERT_LEVEL 3
 
 #include "SOP_FeE_VDBActivateByPoint_1_0.h"
-
-
 #include "SOP_FeE_VDBActivateByPoint_1_0.proto.h"
-
-
-
-
 
 #include <GFE/GFE_VDBActivateByPoint.h>
 
-
-
-
 using namespace SOP_FeE_VDBActivateByPoint_1_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -172,10 +162,10 @@ SOP_FeE_VDBActivateByPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     
     
-    GFE_VDBActivateByPoint vdbActivateByPoint(outGeo0, inGeo1, cookparms);
+    gfe::VDBActivateByPoint vdbActivateByPoint(outGeo0, inGeo1, cookparms);
     vdbActivateByPoint.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    
     vdbActivateByPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     vdbActivateByPoint.computeAndBumpDataId();
 

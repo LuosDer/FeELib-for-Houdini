@@ -4,7 +4,7 @@
 #ifndef __GFE_KuhnMunkres_h__
 #define __GFE_KuhnMunkres_h__
 
-#include "GFE/GFE_KuhnMunkres.h"
+#include <GFE/GFE_KuhnMunkres.h>
 
 #include <GFE/GFE_GeoFilter.h>
 

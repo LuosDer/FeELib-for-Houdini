@@ -4,21 +4,14 @@
 #ifndef __GFE_Variant_h__
 #define __GFE_Variant_h__
 
-#include "GFE/Variant.h"
+#include <GFE/Variant.h>
 
-
-#include "GA/GA_Detail.h"
-
-
-
-#include "GFE/GFE_Type.h"
+#include <GFE/Type.h>
 
 
 _GFE_BEGIN
-
-
-namespace Variant {
-
+inline namespace Variant {
+    using namespace gfe::EnumClass;
 
     template <typename _Ty0, typename... _Ty1>
     struct variant_concat { using type = void; };
@@ -28,13 +21,13 @@ namespace Variant {
 
     //template <typename... _Ty0, typename... _Ty1>
     //struct variant_concat<std::variant<_Ty0...>, _Ty1...> { using type = std::variant<_Ty0..., _Ty1...>; };
-    
+
     template <typename... _Ty0, typename... _Ty1>
     struct variant_concat<std::variant<_Ty0...>, std::variant<_Ty1...>> { using type = std::variant<_Ty0..., _Ty1...>; };
-    
+
     //template <typename... _Ty0, typename... _Ty1, typename... _Ty2>
     //struct variant_concat<std::variant<_Ty0...>, std::variant<_Ty1...>, std::variant<_Ty2...>> { using type = std::variant<_Ty0..., _Ty1..., _Ty2...>; };
-    
+
     template <typename... _Ty0, typename... _Ty1>
     using variant_concat_t = typename variant_concat<_Ty0..., _Ty1...>::type;
 
@@ -43,7 +36,7 @@ namespace Variant {
 
     template<typename _Ty, typename _TVarient>
     struct isVariantMember;
-    
+
     template<typename _Ty, typename... _TVarientMember>
     struct isVariantMember<_Ty, std::variant<_TVarientMember...>> : public std::disjunction<std::is_same<_Ty, _TVarientMember>...> {};
 
@@ -100,6 +93,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         MacroName(S)                                \
         MacroName(IF)                               \
         MacroName(IS)                               \
+        MacroName(IFS)                              \
         MacroName(FVF)                              \
         MacroName(V2)                               \
         MacroName(V3)                               \
@@ -120,24 +114,24 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
     
-    template <GFE_AttribStorage _Val>
-    using attribStorageConstant = std::integral_constant<GFE_AttribStorage, _Val>;
+    template <gfe::AttribStorage _Val>
+    using attribStorageConstant = std::integral_constant<gfe::AttribStorage, _Val>;
     
-    using attribStorageConstantI8   = attribStorageConstant<GFE_AttribStorage::int8>;
-    using attribStorageConstantI16  = attribStorageConstant<GFE_AttribStorage::int16>;
-    using attribStorageConstantI32  = attribStorageConstant<GFE_AttribStorage::int32>;
-    using attribStorageConstantI64  = attribStorageConstant<GFE_AttribStorage::int64>;
-    using attribStorageConstantF16  = attribStorageConstant<GFE_AttribStorage::fpreal16>;
-    using attribStorageConstantF32  = attribStorageConstant<GFE_AttribStorage::fpreal32>;
-    using attribStorageConstantF64  = attribStorageConstant<GFE_AttribStorage::fpreal64>;
-    using attribStorageConstantS    = attribStorageConstant<GFE_AttribStorage::string>;
+    using attribStorageConstantI8   = attribStorageConstant<gfe::AttribStorage::Int8>;
+    using attribStorageConstantI16  = attribStorageConstant<gfe::AttribStorage::Int16>;
+    using attribStorageConstantI32  = attribStorageConstant<gfe::AttribStorage::Int32>;
+    using attribStorageConstantI64  = attribStorageConstant<gfe::AttribStorage::Int64>;
+    using attribStorageConstantF16  = attribStorageConstant<gfe::AttribStorage::Float16>;
+    using attribStorageConstantF32  = attribStorageConstant<gfe::AttribStorage::Float32>;
+    using attribStorageConstantF64  = attribStorageConstant<gfe::AttribStorage::Float64>;
+    using attribStorageConstantS    = attribStorageConstant<gfe::AttribStorage::String>;
     
 #define __GFE_Variant_SpecializationConstantV(NUM)\
-        using attribStorageConstantV##NUM##I32  = attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##I>;\
-        using attribStorageConstantV##NUM##I64  = attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##L>;\
-        using attribStorageConstantV##NUM##F16  = attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##H>;\
-        using attribStorageConstantV##NUM##F32  = attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##F>;\
-        using attribStorageConstantV##NUM##F64  = attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##D>;\
+        using attribStorageConstantV##NUM##I32  = attribStorageConstant<gfe::AttribStorage::Vector##NUM##I>;\
+        using attribStorageConstantV##NUM##I64  = attribStorageConstant<gfe::AttribStorage::Vector##NUM##L>;\
+        using attribStorageConstantV##NUM##F16  = attribStorageConstant<gfe::AttribStorage::Vector##NUM##H>;\
+        using attribStorageConstantV##NUM##F32  = attribStorageConstant<gfe::AttribStorage::Vector##NUM##F>;\
+        using attribStorageConstantV##NUM##F64  = attribStorageConstant<gfe::AttribStorage::Vector##NUM##D>;\
     
         __GFE_Variant_SpecializationConstantV(2)
         __GFE_Variant_SpecializationConstantV(3)
@@ -147,8 +141,8 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         
 
 #define __GFE_Variant_SpecializationConstantM(NUM)\
-        using attribStorageConstantM##NUM##F32 = attribStorageConstant<GFE_AttribStorage::UT_Matrix##NUM##F>;\
-        using attribStorageConstantM##NUM##F64 = attribStorageConstant<GFE_AttribStorage::UT_Matrix##NUM##D>;\
+        using attribStorageConstantM##NUM##F32 = attribStorageConstant<gfe::AttribStorage::Matrix##NUM##F>;\
+        using attribStorageConstantM##NUM##F64 = attribStorageConstant<gfe::AttribStorage::Matrix##NUM##D>;\
     
         __GFE_Variant_SpecializationConstantM(2)
         __GFE_Variant_SpecializationConstantM(3)
@@ -167,15 +161,16 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
                                                attribStorageConstantF32,
                                                attribStorageConstantF64>;
     
-    using attribStorageVariantIF = typename variant_concat_t<attribStorageVariantI, attribStorageVariantF>;
+    using attribStorageVariantIF  = typename variant_concat_t<attribStorageVariantI, attribStorageVariantF>;
     
-    using attribStorageVariantIS = typename variant_concat_t<attribStorageVariantI, attribStorageVariantS>;
+    using attribStorageVariantIS  = typename variant_concat_t<attribStorageVariantI, attribStorageVariantS>;
+    using attribStorageVariantIFS = typename variant_concat_t<attribStorageVariantIF, attribStorageVariantS>;
 
     
     
-#define __GFE_Variant_SpecializationConstantVI(NUM)                                           \
+#define __GFE_Variant_SpecializationConstantVI(NUM)                                              \
         using attribStorageVariantV##NUM##I = std::variant<   attribStorageConstantV##NUM##I32,  \
-                                                           attribStorageConstantV##NUM##I64>; \
+                                                           attribStorageConstantV##NUM##I64>;    \
     
         __GFE_Variant_SpecializationConstantVI(2)
         __GFE_Variant_SpecializationConstantVI(3)
@@ -186,8 +181,8 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
 #define __GFE_Variant_SpecializationConstantVF(NUM) \
         using attribStorageVariantV##NUM##F = std::variant<   attribStorageConstantV##NUM##F16,  \
-                                                           attribStorageConstantV##NUM##F32,  \
-                                                           attribStorageConstantV##NUM##F64>; \
+                                                           attribStorageConstantV##NUM##F32,     \
+                                                           attribStorageConstantV##NUM##F64>;    \
     
         __GFE_Variant_SpecializationConstantVF(2)
         __GFE_Variant_SpecializationConstantVF(3)
@@ -234,27 +229,27 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
 
 #define __GFE_Variant_SpecializationSwitchVariantS\
-        case GFE_AttribStorage::string:   return attribStorageConstant<GFE_AttribStorage::string>  {}; break;\
+        case gfe::AttribStorage::String:   return attribStorageConstant<gfe::AttribStorage::String>  {}; break;\
 
 #define __GFE_Variant_SpecializationSwitchVariantI\
-        case GFE_AttribStorage::int8:     return attribStorageConstant<GFE_AttribStorage::int8>    {}; break;\
-        case GFE_AttribStorage::int16:    return attribStorageConstant<GFE_AttribStorage::int16>   {}; break;\
-        case GFE_AttribStorage::int32:    return attribStorageConstant<GFE_AttribStorage::int32>   {}; break;\
-        case GFE_AttribStorage::int64:    return attribStorageConstant<GFE_AttribStorage::int64>   {}; break;\
+        case gfe::AttribStorage::Int8:     return attribStorageConstant<gfe::AttribStorage::Int8>    {}; break;\
+        case gfe::AttribStorage::Int16:    return attribStorageConstant<gfe::AttribStorage::Int16>   {}; break;\
+        case gfe::AttribStorage::Int32:    return attribStorageConstant<gfe::AttribStorage::Int32>   {}; break;\
+        case gfe::AttribStorage::Int64:    return attribStorageConstant<gfe::AttribStorage::Int64>   {}; break;\
     
 #define __GFE_Variant_SpecializationSwitchVariantF\
-        case GFE_AttribStorage::fpreal16: return attribStorageConstant<GFE_AttribStorage::fpreal16>{}; break;\
-        case GFE_AttribStorage::fpreal32: return attribStorageConstant<GFE_AttribStorage::fpreal32>{}; break;\
-        case GFE_AttribStorage::fpreal64: return attribStorageConstant<GFE_AttribStorage::fpreal64>{}; break;\
+        case gfe::AttribStorage::Float16: return attribStorageConstant<gfe::AttribStorage::Float16>{}; break;\
+        case gfe::AttribStorage::Float32: return attribStorageConstant<gfe::AttribStorage::Float32>{}; break;\
+        case gfe::AttribStorage::Float64: return attribStorageConstant<gfe::AttribStorage::Float64>{}; break;\
 
 #define __GFE_Variant_SpecializationSwitchVariantVIN(NUM)\
-        case GFE_AttribStorage::UT_Vector##NUM##I: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##I>{}; break;\
-        case GFE_AttribStorage::UT_Vector##NUM##L: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##L>{}; break;\
+        case gfe::AttribStorage::Vector##NUM##I: return attribStorageConstant<gfe::AttribStorage::Vector##NUM##I>{}; break;\
+        case gfe::AttribStorage::Vector##NUM##L: return attribStorageConstant<gfe::AttribStorage::Vector##NUM##L>{}; break;\
 
 #define __GFE_Variant_SpecializationSwitchVariantVFN(NUM)\
-        case GFE_AttribStorage::UT_Vector##NUM##H: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##H>{}; break;\
-        case GFE_AttribStorage::UT_Vector##NUM##F: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##F>{}; break;\
-        case GFE_AttribStorage::UT_Vector##NUM##D: return attribStorageConstant<GFE_AttribStorage::UT_Vector##NUM##D>{}; break;\
+        case gfe::AttribStorage::Vector##NUM##H: return attribStorageConstant<gfe::AttribStorage::Vector##NUM##H>{}; break;\
+        case gfe::AttribStorage::Vector##NUM##F: return attribStorageConstant<gfe::AttribStorage::Vector##NUM##F>{}; break;\
+        case gfe::AttribStorage::Vector##NUM##D: return attribStorageConstant<gfe::AttribStorage::Vector##NUM##D>{}; break;\
 
 #define __GFE_Variant_SpecializationSwitchVariantVN(NUM)   \
         __GFE_Variant_SpecializationSwitchVariantVIN(NUM)  \
@@ -262,8 +257,8 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
 
 #define __GFE_Variant_SpecializationSwitchVariantMN(NUM) \
-        case GFE_AttribStorage::UT_Matrix##NUM##F: return attribStorageConstant<GFE_AttribStorage::UT_Matrix##NUM##F>{}; break;\
-        case GFE_AttribStorage::UT_Matrix##NUM##D: return attribStorageConstant<GFE_AttribStorage::UT_Matrix##NUM##D>{}; break;\
+        case gfe::AttribStorage::Matrix##NUM##F: return attribStorageConstant<gfe::AttribStorage::Matrix##NUM##F>{}; break;\
+        case gfe::AttribStorage::Matrix##NUM##D: return attribStorageConstant<gfe::AttribStorage::Matrix##NUM##D>{}; break;\
 
     
 #define __GFE_Variant_SpecializationSwitchVariantVI       \
@@ -299,6 +294,10 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 #define __GFE_Variant_SpecializationSwitchVariantIS \
         __GFE_Variant_SpecializationSwitchVariantI  \
         __GFE_Variant_SpecializationSwitchVariantS  \
+        
+#define __GFE_Variant_SpecializationSwitchVariantIFS \
+        __GFE_Variant_SpecializationSwitchVariantIF  \
+        __GFE_Variant_SpecializationSwitchVariantS   \
         
 #define __GFE_Variant_SpecializationSwitchVariantV      \
         __GFE_Variant_SpecializationSwitchVariantVN(2)  \
@@ -336,37 +335,37 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
     
 
-#define __GFE_Variant_SpecializationSwitchVariantTrueS\
-        case GFE_AttribStorage::string:   return true; break;\
+#define __GFE_Variant_SpecializationSwitchVariantTrueS        \
+        case gfe::AttribStorage::String:   return true; break; \
 
-#define __GFE_Variant_SpecializationSwitchVariantTrueI\
-        case GFE_AttribStorage::int8:     return true; break;\
-        case GFE_AttribStorage::int16:    return true; break;\
-        case GFE_AttribStorage::int32:    return true; break;\
-        case GFE_AttribStorage::int64:    return true; break;\
-    
-#define __GFE_Variant_SpecializationSwitchVariantTrueF\
-        case GFE_AttribStorage::fpreal16: return true; break;\
-        case GFE_AttribStorage::fpreal32: return true; break;\
-        case GFE_AttribStorage::fpreal64: return true; break;\
+#define __GFE_Variant_SpecializationSwitchVariantTrueI        \
+        case gfe::AttribStorage::Int8:     return true; break; \
+        case gfe::AttribStorage::Int16:    return true; break; \
+        case gfe::AttribStorage::Int32:    return true; break; \
+        case gfe::AttribStorage::Int64:    return true; break; \
 
-#define __GFE_Variant_SpecializationSwitchVariantTrueVIN(NUM)\
-        case GFE_AttribStorage::UT_Vector##NUM##I: return true; break;\
-        case GFE_AttribStorage::UT_Vector##NUM##L: return true; break;\
+#define __GFE_Variant_SpecializationSwitchVariantTrueF        \
+        case gfe::AttribStorage::Float16: return true; break; \
+        case gfe::AttribStorage::Float32: return true; break; \
+        case gfe::AttribStorage::Float64: return true; break; \
 
-#define __GFE_Variant_SpecializationSwitchVariantTrueVFN(NUM)\
-        case GFE_AttribStorage::UT_Vector##NUM##H: return true; break;\
-        case GFE_AttribStorage::UT_Vector##NUM##F: return true; break;\
-        case GFE_AttribStorage::UT_Vector##NUM##D: return true; break;\
+#define __GFE_Variant_SpecializationSwitchVariantTrueVIN(NUM)          \
+        case gfe::AttribStorage::Vector##NUM##I: return true; break; \
+        case gfe::AttribStorage::Vector##NUM##L: return true; break; \
+
+#define __GFE_Variant_SpecializationSwitchVariantTrueVFN(NUM)          \
+        case gfe::AttribStorage::Vector##NUM##H: return true; break; \
+        case gfe::AttribStorage::Vector##NUM##F: return true; break; \
+        case gfe::AttribStorage::Vector##NUM##D: return true; break; \
 
 #define __GFE_Variant_SpecializationSwitchVariantTrueVN(NUM)   \
         __GFE_Variant_SpecializationSwitchVariantTrueVIN(NUM)  \
         __GFE_Variant_SpecializationSwitchVariantTrueVFN(NUM)  \
     
 
-#define __GFE_Variant_SpecializationSwitchVariantTrueMN(NUM) \
-        case GFE_AttribStorage::UT_Matrix##NUM##F: return true; break;\
-        case GFE_AttribStorage::UT_Matrix##NUM##D: return true; break;\
+#define __GFE_Variant_SpecializationSwitchVariantTrueMN(NUM)           \
+        case gfe::AttribStorage::Matrix##NUM##F: return true; break; \
+        case gfe::AttribStorage::Matrix##NUM##D: return true; break; \
 
     
 #define __GFE_Variant_SpecializationSwitchVariantTrueVI       \
@@ -403,6 +402,10 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
         __GFE_Variant_SpecializationSwitchVariantTrueI  \
         __GFE_Variant_SpecializationSwitchVariantTrueS  \
         
+#define __GFE_Variant_SpecializationSwitchVariantTrueIFS \
+        __GFE_Variant_SpecializationSwitchVariantTrueIF  \
+        __GFE_Variant_SpecializationSwitchVariantTrueS   \
+        
 #define __GFE_Variant_SpecializationSwitchVariantTrueV      \
         __GFE_Variant_SpecializationSwitchVariantTrueVN(2)  \
         __GFE_Variant_SpecializationSwitchVariantTrueVN(3)  \
@@ -436,58 +439,58 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
 
 
     
-#define __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, STORAGE1)                                                    \
-        else if constexpr (isVariantMember<attribStorageConstant<GFE_AttribStorage::STORAGE1>, attribStorageVariant##STORAGE>::value)     \
-            return attribStorageConstant<GFE_AttribStorage::STORAGE1>{};                                                                  \
+#define __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, STORAGE1)                                                \
+        else if constexpr (isVariantMember<attribStorageConstant<gfe::AttribStorage::STORAGE1>, attribStorageVariant##STORAGE>::value)     \
+            return attribStorageConstant<gfe::AttribStorage::STORAGE1>{};                                                                  \
 
 
     //attribStorageVariantI
     
-#define __GFE_Variant_SpecializationGetAttribStorageVariant(STORAGE)                                                              \
-        attribStorageVariant##STORAGE getAttribStorageVariant##STORAGE(const GFE_AttribStorage v)                                 \
-        {                                                                                                                         \
-            switch (v)                                                                                                            \
-            {                                                                                                                     \
-                __GFE_Variant_SpecializationSwitchVariant##STORAGE                                                                \
-                default:  break;                                                                                                  \
-            }                                                                                                                     \
-            UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");                                                                      \
-        if constexpr (0)                                                                                                          \
-            return attribStorageConstant<GFE_AttribStorage::invalid>{};                                                           \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, int32)                                               \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, int64)                                               \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, float32)                                             \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, float64)                                             \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector2F)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector3F)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector4F)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Matrix2F)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Matrix3F)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Matrix4F)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector2I)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector3I)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector4I)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, string)                                              \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, dict)                                                \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, int32Array)                                          \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, int64Array)                                          \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, fpreal32Array)                                       \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, fpreal64Array)                                       \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector2FArray)                                    \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector3FArray)                                    \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Vector4FArray)                                    \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Matrix2FArray)                                    \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Matrix3FArray)                                    \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, UT_Matrix4FArray)                                    \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, stringArray)                                         \
-        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, dictArray)                                           \
-        }                                                                                                                         \
+#define __GFE_Variant_SpecializationGetAttribStorageVariant(STORAGE)                                                           \
+        attribStorageVariant##STORAGE getAttribStorageVariant##STORAGE(const gfe::AttribStorage v)                                  \
+        {                                                                                                                      \
+            switch (v)                                                                                                         \
+            {                                                                                                                  \
+                __GFE_Variant_SpecializationSwitchVariant##STORAGE                                                             \
+                default:  break;                                                                                               \
+            }                                                                                                                  \
+            UT_ASSERT_MSG(0, "Unhandled Attrib Tuple Type");                                                                   \
+        if constexpr (0)                                                                                                       \
+            return attribStorageConstant<gfe::AttribStorage::Invalid>{};                                                            \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Int32)                                            \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Int64)                                            \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Float32)                                          \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Float64)                                          \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector2F)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector3F)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector4F)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Matrix2F)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Matrix3F)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Matrix4F)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector2I)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector3I)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector4I)                                         \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, String)                                           \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Dict)                                             \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Int32Array)                                       \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Int64Array)                                       \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Fpreal32Array)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Fpreal64Array)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector2FArray)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector3FArray)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Vector4FArray)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Matrix2FArray)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Matrix3FArray)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, Matrix4FArray)                                    \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, StringArray)                                      \
+        __GFE_Variant_SpecializationReturnStorageConstantReflection(STORAGE, DictArray)                                        \
+        }                                                                                                                      \
 
     __GFE_Variant_CreateMacroStorage(__GFE_Variant_SpecializationGetAttribStorageVariant)
 
 
 #define __GFE_Variant_SpecializationIsAttribStorage(STORAGE)                                                                      \
-        bool isAttribStorage##STORAGE(const GFE_AttribStorage v)                                                                  \
+        bool isAttribStorage##STORAGE(const gfe::AttribStorage v)                                                                      \
         {                                                                                                                         \
             switch (v)                                                                                                            \
             {                                                                                                                     \
@@ -509,7 +512,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
 #define __GFE_Variant_SpecializationGetAttribStorageVariant(STORAGE)                       \
         SYS_FORCE_INLINE auto getAttribStorageVariant##STORAGE(const GA_Attribute& attrib) \
-        { return getAttribStorageVariant##STORAGE(GFE_Type::getAttribStorage(attrib)); }   \
+        { return getAttribStorageVariant##STORAGE(gfe::Type::getAttribStorage(attrib)); }   \
     
     __GFE_Variant_CreateMacroStorage(__GFE_Variant_SpecializationGetAttribStorageVariant)
     
@@ -525,6 +528,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
 #undef __GFE_Variant_SpecializationSwitchVariantIF
 #undef __GFE_Variant_SpecializationSwitchVariantIS
+#undef __GFE_Variant_SpecializationSwitchVariantIFS
 #undef __GFE_Variant_SpecializationSwitchVariantV2F
 #undef __GFE_Variant_SpecializationSwitchVariantV3F
 #undef __GFE_Variant_SpecializationSwitchVariantV4F
@@ -565,6 +569,7 @@ SYS_FORCE_INLINE auto getAttribTupleSizeVariant(const GA_Attribute* const attrib
     
 #undef __GFE_Variant_SpecializationSwitchVariantTrueIF
 #undef __GFE_Variant_SpecializationSwitchVariantTrueIS
+#undef __GFE_Variant_SpecializationSwitchVariantTrueIFS
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV2F
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV3F
 #undef __GFE_Variant_SpecializationSwitchVariantTrueV4F
@@ -719,23 +724,38 @@ boolVariant getBoolVariant(const bool v)
 
 
     
-    template <GFE_AttribStorage _Ty>
+    template <gfe::AttribStorage _Ty>
     struct getAttribStorage { using type = void; };
 
-    template <> struct getAttribStorage<GFE_AttribStorage::int8>     { using type = int8; };
-    template <> struct getAttribStorage<GFE_AttribStorage::int16>    { using type = int16; };
-    template <> struct getAttribStorage<GFE_AttribStorage::int32>    { using type = int32; };
-    template <> struct getAttribStorage<GFE_AttribStorage::int64>    { using type = int64; };
-    template <> struct getAttribStorage<GFE_AttribStorage::fpreal16> { using type = fpreal16; };
-    template <> struct getAttribStorage<GFE_AttribStorage::fpreal32> { using type = fpreal32; };
-    template <> struct getAttribStorage<GFE_AttribStorage::fpreal64> { using type = fpreal64; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Int8>     { using type = int8; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Int16>    { using type = int16; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Int32>    { using type = int32; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Int64>    { using type = int64; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Float16> { using type = fpreal16; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Float32> { using type = fpreal32; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Float64> { using type = fpreal64; };
+        
+    template <> struct getAttribStorage<gfe::AttribStorage::String>   { using type = UT_StringHolder; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Dict>     { using type = UT_OptionsHolder; };
 
+
+        
+    template <> struct getAttribStorage<gfe::AttribStorage::Int32Array>    { using type = UT_ValArray<int32>; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Int64Array>    { using type = UT_ValArray<int64>; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Float32Array>  { using type = UT_ValArray<fpreal32>; };
+    template <> struct getAttribStorage<gfe::AttribStorage::Float64Array>  { using type = UT_ValArray<fpreal64>; };
+
+
+        
+    template <> struct getAttribStorage<gfe::AttribStorage::StringArray>   { using type = UT_StringArray; };
+    template <> struct getAttribStorage<gfe::AttribStorage::DictArray>     { using type = UT_Array<UT_OptionsHolder>; };
+        
 #define __GFE_Variant_SpecializationGetAttribStorageV(NUM)\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Vector##NUM##I> { using type = UT_Vector##NUM##i; };\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Vector##NUM##L> { using type = UT_Vector##NUM##I; };\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Vector##NUM##H> { using type = UT_Vector##NUM##H; };\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Vector##NUM##F> { using type = UT_Vector##NUM##F; };\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Vector##NUM##D> { using type = UT_Vector##NUM##D; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##I> { using type = UT_Vector##NUM##i; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##L> { using type = UT_Vector##NUM##I; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##H> { using type = UT_Vector##NUM##H; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##F> { using type = UT_Vector##NUM##F; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##D> { using type = UT_Vector##NUM##D; };\
     
         __GFE_Variant_SpecializationGetAttribStorageV(2)
         __GFE_Variant_SpecializationGetAttribStorageV(3)
@@ -744,8 +764,8 @@ boolVariant getBoolVariant(const bool v)
 #undef __GFE_Variant_SpecializationGetAttribStorageV
         
 #define __GFE_Variant_SpecializationGetAttribStorageM(NUM)\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Matrix##NUM##F> { using type = UT_Matrix##NUM##F; };\
-    template <> struct getAttribStorage<GFE_AttribStorage::UT_Matrix##NUM##D> { using type = UT_Matrix##NUM##D; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Matrix##NUM##F> { using type = UT_Matrix##NUM##F; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Matrix##NUM##D> { using type = UT_Matrix##NUM##D; };\
     
         __GFE_Variant_SpecializationGetAttribStorageM(2)
         __GFE_Variant_SpecializationGetAttribStorageM(3)
@@ -753,7 +773,35 @@ boolVariant getBoolVariant(const bool v)
         
 #undef __GFE_Variant_SpecializationGetAttribStorageM
 
-template <GFE_AttribStorage _Ty>
+        
+#define __GFE_Variant_SpecializationGetAttribStorageVArray(NUM)\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##IArray> { using type = UT_ValArray<UT_Vector##NUM##i>; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##LArray> { using type = UT_ValArray<UT_Vector##NUM##I>; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##HArray> { using type = UT_ValArray<UT_Vector##NUM##H>; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##FArray> { using type = UT_ValArray<UT_Vector##NUM##F>; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Vector##NUM##DArray> { using type = UT_ValArray<UT_Vector##NUM##D>; };\
+    
+        __GFE_Variant_SpecializationGetAttribStorageVArray(2)
+        __GFE_Variant_SpecializationGetAttribStorageVArray(3)
+        __GFE_Variant_SpecializationGetAttribStorageVArray(4)
+        
+#undef __GFE_Variant_SpecializationGetAttribStorageVArray
+
+        
+#define __GFE_Variant_SpecializationGetAttribStorageMArray(NUM)\
+    template <> struct getAttribStorage<gfe::AttribStorage::Matrix##NUM##FArray> { using type = UT_ValArray<UT_Matrix##NUM##F>; };\
+    template <> struct getAttribStorage<gfe::AttribStorage::Matrix##NUM##DArray> { using type = UT_ValArray<UT_Matrix##NUM##D>; };\
+    
+        __GFE_Variant_SpecializationGetAttribStorageMArray(2)
+        __GFE_Variant_SpecializationGetAttribStorageMArray(3)
+        __GFE_Variant_SpecializationGetAttribStorageMArray(4)
+        
+#undef __GFE_Variant_SpecializationGetAttribStorageMArray
+
+
+
+        
+template <gfe::AttribStorage _Ty>
 using getAttribStorage_t = typename getAttribStorage<_Ty>::type;
 
 
@@ -779,16 +827,5 @@ using get_owner_t = typename get_owner<_Ty>::type;
 
 
 } // End of namespace Variant
-
-
-
-
-
 _GFE_END
-
-
-
-
-
-
 #endif

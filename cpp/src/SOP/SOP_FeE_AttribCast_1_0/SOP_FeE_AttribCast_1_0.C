@@ -1,19 +1,12 @@
+
 //#define UT_ASSERT_LEVEL 3
+
 #include "SOP_FeE_AttribCast_1_0.h"
 #include "SOP_FeE_AttribCast_1_0.proto.h"
 
-
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-#include "GFE/GFE_AttributeCast.h"
-
+#include <GFE/GFE_AttributeCast.h>
 
 using namespace SOP_FeE_AttribCast_1_0_Namespace;
-
 
 static const char* theDsFile = R"THEDSFILE(
 {
@@ -278,29 +271,12 @@ SOP_FeE_AttribCast_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
 
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-
     //outGeo0.replaceWith(inGeo0);
 
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     //const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-/*
-
-        GFE_AttribCast attribCast(geo, cookparms);
-        attribCast.getInAttribArray().set(outAttrib);
-        attribCast.newStorageClass = enumAttrib->getStorageClass();
-        attribCast.newPrecision    = GFE_Attribute::getPrecision(enumAttrib);
-        if (attribCast.newStorageClass == GA_STORECLASS_STRING)
-        {
-            attribCast.prefix = prefix;
-            attribCast.sufix  = sufix;
-        }
-        attribCast.newAttribNames = sopparms.getNewAttribName();
-        attribCast.compute();
- 
- */
-    
-    GFE_AttribCast attribCast(outGeo0, cookparms);
+    gfe::AttribCast attribCast(outGeo0, cookparms);
     attribCast.getInAttribArray().set(geo0AttribClass, sopparms.getAttribName());
     attribCast.getInGroupArray() .set(geo0AttribClass, sopparms.getGroupName());
 

@@ -58,27 +58,33 @@ private:
             return true;
 
         
+        attrib = getOutAttribArray()[0];
+
+        
         GFE_AttribExtremum attribExtremum(geo, nullptr, cookparms);
-    
-        attribExtremum.outas(sopparms.getOutAsOffset(),
-            sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-        
-        attribExtremum.setAttrib(attribClass, sopparms.getAttrib());
-        
-        attribExtremum.groupParser.setGroup(groupType, sopparms.getGroup());
-        
-        attribExtremum.computeAndBumpDataId();
+        attribExtremum.outAttribMin = true;
+        attribExtremum.outAttribMax = true;
+        attribExtremum.outAttribMinElemnum = true;
+        attribExtremum.outAttribMaxElemnum = true;
+        attribExtremum.outAsOffset = true;
+        attribExtremum.setAttrib(attrib);
+        attribExtremum.groupParser.setGroup(groupParser);
+        attribExtremum.compute();
+
         
         return true;
     }
 
 
-    template<typename VECTOR_T>
-    void scaleVectorAttribElement()
+    template<typename _Ty, bool doScale>
+    void attribNormalize()
     {
-        UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
+        using value_type = GFE_Type::get_value_type_t<_Ty>;
+        
+        const value_type uniScaleTmp = value_type(uniScale);
+        UTparallelFor(groupParser.getSplittableRange(attrib), [this, uniScaleTmp](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
+            GFE_RWPageHandleT<_Ty> attrib_ph(attrib);
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
                 GA_Offset start, end;
@@ -87,61 +93,14 @@ private:
                     attrib_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        if (doNormalize)
+                        if constexpr (doScale)
                             attrib_ph.value(elemoff).normalize();
-                        attrib_ph.value(elemoff) *= uniScale;
+                        attrib_ph.value(elemoff) *= uniScaleTmp;
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
-
-
-    template<typename SCALE_T>
-    void scaleNumericAttribElement()
-    {
-        UTparallelFor(groupParser.getSplittableRange(attribPtr->getOwner()), [this](const GA_SplittableRange& r)
-        {
-            GA_PageHandleT<SCALE_T, SCALE_T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                GA_Offset start, end;
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    attrib_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attrib_ph.value(elemoff) *= uniScale;
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
-
-
-
-    #if SYS_VERSION_MAJOR_INT > 19 || ( SYS_VERSION_MAJOR_INT == 19 && SYS_VERSION_MINOR_INT == 5 )
-    
-    template<typename VECTOR_T>
-    void scaleVectorAttribElement1()
-    {
-        GAparallelForEachPage(groupParser.getRange(attribPtr->getOwner()), true, [this](GA_PageIterator pit)
-        {
-            GA_PageHandleT<VECTOR_T, typename VECTOR_T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribPtr);
-            GAforEachPageBlock(pit, [&attrib_ph, this](GA_Offset start, GA_Offset end)
-            {
-                attrib_ph.setPage(start);
-                for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                {
-                    if (doNormalize)
-                        attrib_ph.value(elemoff).normalize();
-                    attrib_ph.value(elemoff) *= uniScale;
-                }
-            });
-        });
-    }
-    
-    #endif
 
 
 
@@ -150,8 +109,7 @@ public:
     fpreal64 uniScale = 1;
 
 private:
-    GA_Attribute* attribPtr;
-    GA_Attribute* refAttribPtr;
+    GA_Attribute* attrib;
 
     
     exint subscribeRatio = 64;

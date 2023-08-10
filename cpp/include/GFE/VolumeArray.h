@@ -4,14 +4,13 @@
 #ifndef __GFE_VolumeArray_h__
 #define __GFE_VolumeArray_h__
 
+#include <GFE/VolumeArray.h>
+
 #include <GU/GU_PrimVolume.h>
 
-#include "GFE/GFE_VolumeArray.h"
+#include <GFE/Geometry.h>
 
-#include "GA/GA_Detail.h"
-
-
-#include "GFE/GFE_Type.h"
+//class GU_PrimVolume;
 
 //for (std::vector<GU_PrimVolume*>::iterator it = volumeArray.ref().begin(); it != volumeArray.ref().end(); ++it) {
 //    GU_PrimVolume* ptr = *it;
@@ -27,11 +26,11 @@
 //}
 
 
-
-class GFE_VolumeArray
-{
+_GFE_BEGIN
+class VolumeArray {
+    
 public:
-    GFE_VolumeArray(
+    VolumeArray(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -41,7 +40,7 @@ public:
         volumeArray.reserve(16);
     }
 
-    GFE_VolumeArray(
+    VolumeArray(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
@@ -51,7 +50,7 @@ public:
         volumeArray.reserve(16);
     }
 
-    GFE_VolumeArray(
+    VolumeArray(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -61,7 +60,7 @@ public:
         volumeArray.reserve(16);
     }
 
-    GFE_VolumeArray(
+    VolumeArray(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
@@ -71,7 +70,7 @@ public:
         volumeArray.reserve(16);
     }
 
-    ~GFE_VolumeArray()
+    ~VolumeArray()
     {
     }
 
@@ -94,7 +93,7 @@ public:
     void destroy(const size_t i)
     {
         UT_ASSERT_P(i < volumeArray.size());
-        geo->destroyPrimitive(*volumeArray[i]);
+        geo->destroyPrimitive(reinterpret_cast<GA_Primitive&>(*volumeArray[i]));
         erase(i);
     }
     
@@ -103,7 +102,7 @@ public:
         const size_t sizeAttrib = volumeArray.size();
         for (size_t i = 0; i < sizeAttrib; ++i)
         {
-            geo->destroyPrimitive(*volumeArray[i]);
+            geo->destroyPrimitive(reinterpret_cast<GA_Primitive&>(*volumeArray[i]));
         }
         volumeArray.clear();
     }
@@ -146,7 +145,7 @@ public:
 
     //GU_PrimVolume* set(const GA_AttributeOwner attribClass, const UT_StringRef& attribPattern)
     //{
-    //    if (GFE_Type::isInvalid(attribPattern))
+    //    if (gfe::isInvalid(attribPattern))
     //        return nullptr;
     //
     //    GU_PrimVolume* const attribPtr = geo->byname(attribClass, attribPattern);
@@ -203,7 +202,7 @@ public:
     }
     
     
-    void append(const GFE_VolumeArray& involumeArray)
+    void append(const VolumeArray& involumeArray)
     {
         const size_t size = involumeArray.size();
         for (size_t i = 0; i < size; ++i)
@@ -212,7 +211,7 @@ public:
         }
     }
     
-    SYS_FORCE_INLINE void set(const GFE_VolumeArray& involumeArray)
+    SYS_FORCE_INLINE void set(const VolumeArray& involumeArray)
     { clear(); append(involumeArray); }
     
     SYS_FORCE_INLINE void append(GU_PrimVolume* const attrib)
@@ -223,7 +222,7 @@ public:
 
     GU_PrimVolume* append(const char* const name, const char* const nameAttribName = "name")
     {
-        if (GFE_Type::isInvalid(name))
+        if (gfe::isInvalid(name))
             return nullptr;
         GU_PrimVolume* const vol = reinterpret_cast<GU_PrimVolume*>(geo->asGEO_Detail()->findPrimitiveByName(name, GEO_PrimTypeCompat::GEOPRIMVOLUME, nameAttribName));
         append(vol);
@@ -253,7 +252,7 @@ public:
     
     void appends(const char* const name, const char* const nameAttribName = "name")
     {
-        if (GFE_Type::isInvalid(name))
+        if (gfe::isInvalid(name))
             return;
         
         UT_Array<GEO_Primitive*> prims;
@@ -338,7 +337,7 @@ findOrCreate(
 //     const GA_AttributeOptions* const attribute_options = nullptr
 // )
 // {
-//     const GA_Storage storage = GFE_Type::getPreferredStorage(precision, storageClass);
+//     const GA_Storage storage = gfe::getPreferredStorage(precision, storageClass);
 //     return findOrCreate(detached, owner, storageClass, storage, attribName, tupleSize, defaults, emplaceBack, create_args, attribute_options);
 // }
 
@@ -350,7 +349,7 @@ SYS_FORCE_INLINE GU_PrimVolume*
         const UT_StringRef& attribName = "",
         const bool emplaceBack = true
 )
-{ return findOrCreate(detached, owner, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(GFE_INVALID_OFFSET), emplaceBack); }
+{ return findOrCreate(detached, owner, GA_STORECLASS_INT, storage, attribName, 1, GA_Defaults(gfe::INVALID_OFFSET), emplaceBack); }
 
 
 
@@ -395,15 +394,6 @@ private:
 
     friend class GFE_GeoFilter;
 
-}; // End of class GFE_VolumeArray
-
-
-
-
-
-
-
-
-
-
+}; // End of class VolumeArray
+_GFE_END
 #endif

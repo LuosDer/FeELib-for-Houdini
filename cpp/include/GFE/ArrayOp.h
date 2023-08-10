@@ -1,16 +1,15 @@
 
 #pragma once
 
-#ifndef __GFE_Array_h__
-#define __GFE_Array_h__
+#ifndef __GFE_ArrayOp_h__
+#define __GFE_ArrayOp_h__
 
-#include "GFE/GFE_Array.h"
+#include <GFE/ArrayOp.h>
 
-#include "GA/GA_Detail.h"
+#include <GA/GA_Detail.h>
 
-namespace GFE_Array {
-
-
+_GFE_BEGIN
+namespace ArrayOp {
 
 template<typename _ArrayT, typename _ArrayValueType>
 static GA_Size appendSorted(_ArrayT& arr, const _ArrayValueType val)
@@ -126,26 +125,25 @@ static GA_Size appendSorted(GA_OffsetList& arr, const GA_Offset val)
 template<typename _ArrayT, typename _ArrayValueType>
 SYS_FORCE_INLINE static void uniqueAppendSorted(_ArrayT& arr, const _ArrayValueType val)
 {
-    if (arr.uniqueSortedFind(val) == GFE_FIND_INVALID_INDEX)
-        GFE_Array::appendSorted(arr, val);
+    if (arr.uniqueSortedFind(val) == gfe::FIND_INVALID_INDEX)
+        ArrayOp::appendSorted(arr, val);
 }
 
 template<>
 SYS_FORCE_INLINE static void uniqueAppendSorted(UT_ValArray<GA_Offset>& arr, const GA_Offset val)
 {
-    if (arr.uniqueSortedFind(val) == GFE_FIND_INVALID_INDEX)
-        GFE_Array::appendSorted(arr, val);
+    if (arr.uniqueSortedFind(val) == gfe::FIND_INVALID_INDEX)
+        ArrayOp::appendSorted(arr, val);
 }
 
 template<>
 SYS_FORCE_INLINE static void uniqueAppendSorted(GA_OffsetList& arr, const GA_Offset val)
 {
-    if (arr.findSorted(val) == GFE_FIND_INVALID_INDEX)
-        GFE_Array::appendSorted(arr, val);
+    if (arr.findSorted(val) == gfe::FIND_INVALID_INDEX)
+        ArrayOp::appendSorted(arr, val);
 }
 
     
-
 
 template<typename T>
 std::vector<int> argsort(const std::vector<T>& inArray)
@@ -175,9 +173,6 @@ UT_Array<int> argsort_UT_Array(const UT_Array<T>& inArray)
     return indexs;
 }
 
-
-
-
 //UT_Array<int> argsort_UT_Array(const UT_Array<fpreal>& inArray)
 //{
 //    UT_Array<int> indexs(inArray.size());
@@ -191,15 +186,6 @@ UT_Array<int> argsort_UT_Array(const UT_Array<T>& inArray)
 //}
 
 
-
-
-
-
-
-
-
-
-
-} // End of namespace GFE_Array
-
+} // End of namespace ArrayOp
+_GFE_END
 #endif

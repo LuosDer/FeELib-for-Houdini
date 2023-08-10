@@ -4,17 +4,12 @@
 #ifndef __GFE_Group_h__
 #define __GFE_Group_h__
 
-#include "GFE/GFE_Group.h"
+#include <GFE/Group.h>
+
+#include <GFE/Type.h>
 
 
-
-#include "GA/GA_Detail.h"
-#include "GA/GA_SplittableRange.h"
-
-
-#include "GFE/GFE_Type.h"
-
-
+_GFE_BEGIN
 class GFE_GroupSetter
 {
 public:
@@ -53,16 +48,16 @@ public:
     { return !isValid(); }
 
     
-    SYS_FORCE_INLINE void setParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
+    SYS_FORCE_INLINE void setParm(const gfe::EnumClass::GroupMergeType groupMergeType, const bool reverseGroup = false)
     { this->groupMergeType = groupMergeType; this->reverseGroup = reverseGroup; }
 
-    SYS_FORCE_INLINE void setParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace)
+    SYS_FORCE_INLINE void setParm(const bool reverseGroup, const gfe::EnumClass::GroupMergeType groupMergeType = gfe::EnumClass::GroupMergeType::Replace)
     { setParm(groupMergeType, reverseGroup); }
 
-    SYS_FORCE_INLINE void setComputeParm(const GFE_GroupMergeType groupMergeType, const bool reverseGroup = false)
+    SYS_FORCE_INLINE void setComputeParm(const gfe::EnumClass::GroupMergeType groupMergeType, const bool reverseGroup = false)
     { setParm(groupMergeType, reverseGroup); }
 
-    SYS_FORCE_INLINE void setComputeParm(const bool reverseGroup, const GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace)
+    SYS_FORCE_INLINE void setComputeParm(const bool reverseGroup, const gfe::EnumClass::GroupMergeType groupMergeType = gfe::EnumClass::GroupMergeType::Replace)
     { setParm(groupMergeType, reverseGroup); }
     
     
@@ -127,9 +122,9 @@ public:
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:     b |=  elementGroup->contains(elemoff); break;
-        case GFE_GroupMergeType::Intersect: b &=  elementGroup->contains(elemoff); break;
-        case GFE_GroupMergeType::Subtract:  b &= !elementGroup->contains(elemoff); break;
+        case gfe::EnumClass::GroupMergeType::Union:     b |=  elementGroup->contains(elemoff); break;
+        case gfe::EnumClass::GroupMergeType::Intersect: b &=  elementGroup->contains(elemoff); break;
+        case gfe::EnumClass::GroupMergeType::Subtract:  b &= !elementGroup->contains(elemoff); break;
         }
         elementGroup->setElement(elemoff, b);
     }
@@ -145,10 +140,10 @@ public:
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:     b |=  edgeGroup->contains(elemoff0, elemoff1); break;
-        case GFE_GroupMergeType::Intersect: b &=  edgeGroup->contains(elemoff0, elemoff1); break;
-        case GFE_GroupMergeType::Subtract:  b &= !edgeGroup->contains(elemoff0, elemoff1); break;
-        // case GFE_GroupMergeType::Replace: break;
+        case gfe::EnumClass::GroupMergeType::Union:     b |=  edgeGroup->contains(elemoff0, elemoff1); break;
+        case gfe::EnumClass::GroupMergeType::Intersect: b &=  edgeGroup->contains(elemoff0, elemoff1); break;
+        case gfe::EnumClass::GroupMergeType::Subtract:  b &= !edgeGroup->contains(elemoff0, elemoff1); break;
+        // case gfe::EnumClass::GroupMergeType::Replace: break;
         default: break;
         }
         if (b)
@@ -166,10 +161,10 @@ public:
         
         switch (groupMergeType)
         {
-        case GFE_GroupMergeType::Union:     b |=  edgeGroup->contains(edge); break;
-        case GFE_GroupMergeType::Intersect: b &=  edgeGroup->contains(edge); break;
-        case GFE_GroupMergeType::Subtract:  b &= !edgeGroup->contains(edge); break;
-        // case GFE_GroupMergeType::Replace:
+        case gfe::EnumClass::GroupMergeType::Union:     b |=  edgeGroup->contains(edge); break;
+        case gfe::EnumClass::GroupMergeType::Intersect: b &=  edgeGroup->contains(edge); break;
+        case gfe::EnumClass::GroupMergeType::Subtract:  b &= !edgeGroup->contains(edge); break;
+        // case gfe::EnumClass::GroupMergeType::Replace:
         //default: break;
         }
         if (b)
@@ -181,7 +176,7 @@ public:
     
 public:
     
-    GFE_GroupMergeType groupMergeType = GFE_GroupMergeType::Replace;
+    gfe::EnumClass::GroupMergeType groupMergeType = gfe::EnumClass::GroupMergeType::Replace;
     bool reverseGroup = false;
 
     
@@ -207,7 +202,7 @@ private:
 
 
 
-namespace GFE_Group {
+namespace Group {
 
     
 
@@ -225,14 +220,14 @@ namespace GFE_Group {
                     return elemoff;
             }
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::Core::INVALID_OFFSET;
     }
 
 
 
     
 SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group& group)
-{ return GFE_Type::attributeOwner_groupType(group.classType()); }
+{ return gfe::Type::attributeOwner_groupType(group.classType()); }
 
 SYS_FORCE_INLINE static GA_AttributeOwner getOwner(const GA_Group* const group)
 { return group ? getOwner(*group) : GA_ATTRIB_INVALID; }
@@ -663,7 +658,7 @@ SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
 // )
 // {
 //     UT_ASSERT_P(groupType != GA_GROUP_EDGE);
-//     return geo.findElementGroup(GFE_Type::attributeOwner_groupType(groupType), groupName);
+//     return geo.findElementGroup(gfe::Type::attributeOwner_groupType(groupType), groupName);
 // }
 
 // SYS_FORCE_INLINE static const GA_ElementGroup*
@@ -674,7 +669,7 @@ SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
 // )
 // {
 //     UT_ASSERT_P(groupType != GA_GROUP_EDGE);
-//     return geo.findElementGroup(GFE_Type::attributeOwner_groupType(groupType), groupName);
+//     return geo.findElementGroup(gfe::Type::attributeOwner_groupType(groupType), groupName);
 // }
 // 
 // 
@@ -716,7 +711,7 @@ SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
 //     if (!group)
 //         return GA_Range();
 //
-//     const GA_AttributeOwner attribOwner = GFE_Type::attributeOwner_groupType(group->classType());
+//     const GA_AttributeOwner attribOwner = gfe::Type::attributeOwner_groupType(group->classType());
 //     return GA_Range(geo.getIndexMap(attribOwner), group);
 // }
 //
@@ -732,10 +727,6 @@ SYS_FORCE_INLINE static bool groupIsEmpty(const GA_Group& group)
 
 
 
-} // End of namespace GFE_Group
-
-
-
-
-
+} // End of namespace Group
+_GFE_END
 #endif

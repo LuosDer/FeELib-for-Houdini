@@ -1,19 +1,12 @@
-//#define UT_ASSERT_LEVEL 3
-#include "SOP_FeE_AttribDel_2_0.h"
 
+//#define UT_ASSERT_LEVEL 3
+
+#include "SOP_FeE_AttribDel_2_0.h"
 #include "SOP_FeE_AttribDel_2_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-#include "GFE/GFE_Detail.h"
-
+#include <GFE/GeoFilter.h>
 
 using namespace SOP_FeE_AttribDel_2_0_Namespace;
-
 
 static const char* theDsFile = R"THEDSFILE(
 {
@@ -261,7 +254,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_AttribDel_2_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribDel_2_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms* parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms& cookparms) const;
 
@@ -291,19 +284,15 @@ SOP_FeE_AttribDel_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_AttribDel_2_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
-
-    outGeo0.replaceWith(inGeo0);
-
-
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //outGeo0.replaceWith(inGeo0);
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
 
-
-    GFE_Detail& outGFE0 = static_cast<GFE_Detail&>(outGeo0);
-
-
+    auto& outGFE0 = static_cast<gfe::GFE_Detail&>(outGeo0);
+    
     const UT_StringHolder& allPattern = "*";
     const UT_StringHolder& delPrimAttrib   = sopparms.getDoDelPrimAttrib()   ? sopparms.getDelPrimAttrib()   : allPattern;
     const UT_StringHolder& delPointAttrib  = sopparms.getDoDelPointAttrib()  ? sopparms.getDelPointAttrib()  : allPattern;
@@ -318,7 +307,5 @@ SOP_FeE_AttribDel_2_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     const UT_StringHolder& delVertexGroup = sopparms.getDoDelVertexGroup() ? sopparms.getDelVertexGroup() : allPattern;
     const UT_StringHolder& delEdgeGroup   = sopparms.getDoDelEdgeGroup()   ? sopparms.getDelEdgeGroup()   : allPattern;
     outGFE0.delStdGroup(delPrimGroup, delPointGroup, delVertexGroup, delEdgeGroup);
-
-
 }
 
