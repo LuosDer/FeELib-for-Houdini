@@ -284,7 +284,7 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ign
         targetParmTemplateGroup = targetNode.parmTemplateGroup()
         # copyParmTemplates = []
         for sourceParmTemplate in sourceParmTemplateGroup.parmTemplates():
-            if ignoreInvisibleParms and  sourceParmTemplate.isHidden():
+            if ignoreInvisibleParms and sourceParmTemplate.isHidden():
                 continue
             sourceParmTemplateName = sourceParmTemplate.name()
             targetParmTemplate = targetParmTemplateGroup.find(sourceParmTemplateName)
@@ -335,6 +335,8 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ign
                 parentFolder.removeMultiParmInstance(0)
             for idx in range(0, parmVal):
                 parentFolder.insertMultiParmInstance(idx)
+            if sourceParmTemplate.type() == hou.parmTemplateType.Folder and sourceParmTemplate.folderType() == hou.folderType.MultiparmBlock:
+                sourceParmTemplate.set
             '''
             try:
                 parmVal = parm.evalAsInt()
@@ -367,8 +369,12 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ign
         sourceparm = sourceNode.parm(targetparm.name())
         if sourceparm is None:
             continue
-        targetparm.deleteAllKeyframes()
-        targetparm.setFromParm(sourceparm)
+        sourceParmTemplate = sourceparm.parmTemplate()
+        if sourceParmTemplate.type() == hou.parmTemplateType.Folder and sourceParmTemplate.folderType() == hou.folderType.MultiparmBlock:
+            targetparm.setExpression(sourceparm.expression(), sourceparm.expressionLanguage())
+        else:
+            targetparm.deleteAllKeyframes()
+            targetparm.setFromParm(sourceparm)
         '''
         try:
             sourceparm = sourceNode.parm(targetparm.name())
@@ -521,7 +527,7 @@ def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
 hou.Node.changeAllSubNodeTypeMatchesType = changeAllSubNodeTypeMatchesType
 
 
-def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False, debugMode = 0):
+def convertSubnet(node: hou.Node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False, debugMode = 0):
     if not isinstance(node, hou.Node):
         raise TypeError('invalid node', node)
 
@@ -594,7 +600,7 @@ def convertSubnet(node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilt
         nulls = []
 
         ###算出nulls列表的所有元素，后面有用
-        for idx in range(4, nInputs):
+        for idx in ran-ge(4, nInputs):
             if len(inputConnectors[idx]) == 0:
                 # 说明没有连
                 nulls.append(None)
@@ -979,11 +985,11 @@ def convert_All_FeENode_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX
             convertSubnet(child, ignoreUnlock = ignoreUnlock, ignore_SideFX_HDA = ignore_SideFX_HDA, nodeFilterFunc = nodeFilterFunc, convertFeENode = True, detectName = detectName, detectPath = detectPath, debugMode = debugMode)
 
 
-def convert_All_HDA_to_Subnet(inputNodes, ignoreUnlock = True, ignore_SideFX_HDA = True, displayConfirmation = False, debugMode = 0):
+def convert_All_HDA_to_Subnet(inputNodes: hou.Node, ignoreUnlock = True, ignore_SideFX_HDA = True, displayConfirmation = False, debugMode = 0):
     if displayConfirmation:
         fee_Utils.displayConfirmation(prevText = 'plz backup HIP before do this\n建议先备份HIP')
 
-    def nodeFilter_allNode(node):
+    def nodeFilter_allNode(node: hou.Node):
         if isinstance(node, hou.Node):
             if node.type().definition():
                 return True

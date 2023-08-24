@@ -90,10 +90,19 @@ FeE::delAllAttribsGroups
 volumeclear_fee
 
 
+FeE::matchPolyWinding_fast
+correctPolyWinding_fee
+FeE::matchPolyWinding::1.0
+
+FeE::correctMeshWinding_WN
 
 
 
+FeE::groupByDir_fast
+FeE::groupByDir::1.0
 
+
+FeE::matchDirOrient
 
 
 
