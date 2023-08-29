@@ -606,33 +606,69 @@ DEFINEFUNCv(FUNCargsort)
 
 
 
-function
-int minidx(
-    const vector arg;
-    ) {
-    int idx = 0;
-    float val = arg[idx];
-    for (int i = 1; i < 3; ++i) {
-        if ( arg[i] >= val ) continue;
-        idx = i;
-        val = arg[idx];
+function int minidx(const vector arg;)
+{
+    int idx;
+    if ( arg[1] > arg[0] )
+    {
+        if ( arg[2] > arg[1] )
+            idx = 0;
+        else if ( arg[2] > arg[0] )
+            idx = 0;
+        else
+            idx = 2;
+    }
+    else
+    {
+        if ( arg[2] > arg[0] )
+            idx = 1;
+        else if ( arg[2] > arg[1] )
+            idx = 1;
+        else
+            idx = 2;
     }
     return idx;
 }
-function
-int minidx(
-    const vector arg;
-    export float val;
-    ) {
-    int idx = 0;
+
+function int minidx(const vector arg; export float val;)
+{
+    int idx;
+    if ( arg[1] > arg[0] )
+    {
+        if ( arg[2] > arg[1] )
+            idx = 0;
+        else if ( arg[2] > arg[0] )
+            idx = 0;
+        else
+            idx = 2;
+    }
+    else
+    {
+        if ( arg[2] > arg[0] )
+            idx = 1;
+        else if ( arg[2] > arg[1] )
+            idx = 1;
+        else
+            idx = 2;
+    }
     val = arg[idx];
-    for (int i = 1; i < 3; ++i) {
-        if ( arg[i] >= val ) continue;
-        idx = i;
-        val = arg[idx];
-    }
     return idx;
 }
+
+//function
+//int minidx(
+//    const vector arg;
+//    export float val;
+//    ) {
+//    int idx = 0;
+//    val = arg[idx];
+//    for (int i = 1; i < 3; ++i) {
+//        if ( arg[i] >= val ) continue;
+//        idx = i;
+//        val = arg[idx];
+//    }
+//    return idx;
+//}
 
 
 function
