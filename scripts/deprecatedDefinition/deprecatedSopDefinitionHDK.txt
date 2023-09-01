@@ -106,5 +106,5 @@ FeE::matchDirOrient
 
 
 
-
-
+FeE::inlinePoints::2.0
+FeE::inlinePoints
