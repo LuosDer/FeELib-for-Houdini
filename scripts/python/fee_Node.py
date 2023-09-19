@@ -371,7 +371,10 @@ def copyParms_NodetoNode(sourceNode, targetNode, copyNoneExistParms = False, ign
             continue
         sourceParmTemplate = sourceparm.parmTemplate()
         if sourceParmTemplate.type() == hou.parmTemplateType.Folder and sourceParmTemplate.folderType() == hou.folderType.MultiparmBlock:
-            targetparm.setExpression(sourceparm.expression(), sourceparm.expressionLanguage())
+            try:
+                targetparm.setExpression(sourceparm.expression(), sourceparm.expressionLanguage())
+            except:
+                pass
         else:
             targetparm.deleteAllKeyframes()
             targetparm.setFromParm(sourceparm)
