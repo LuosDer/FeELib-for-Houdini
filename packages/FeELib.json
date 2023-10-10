@@ -236,6 +236,7 @@
                     "$FeELib/otls/Operation/Merge",
                     "$FeELib/otls/Operation/Update",
                     "$FeELib/otls/POP/Trail",
+                    "$FeELib/otls/TOP",
                     "$FeELib/otls/Topo/Artificial",
                     "$FeELib/otls/Topo/Blast",
                     "$FeELib/otls/Topo/Culling",
