@@ -4,11 +4,10 @@
 # reload(fee_Node)
 
 import hou
-
-
 import fee_Utils
 import fee_HDA
-
+# from importlib import reload
+# reload(fee_HDA)
 
 def convertNodeTuple(node):
     if isinstance(node, hou.Node):
@@ -80,6 +79,7 @@ hou.Node.isEqual_networkChildren = isEqual_networkChildren
 
 
 def changeNodeType_keepIO(node, targetNodeType, keep_parms = True):
+    # print(targetNodeType)
     if not isinstance(targetNodeType, str):
         raise TypeError('targetNodeType must be string', targetNodeType)
     
@@ -529,6 +529,10 @@ def changeAllSubNodeTypeMatchesType(node, changeNodeTypeDict):
 
 hou.Node.changeAllSubNodeTypeMatchesType = changeAllSubNodeTypeMatchesType
 
+def change_nodeTypeName_namespace(nodeTypeName: str, target_namespace: str) -> str:
+    nodeTypeNameComponents = fee_HDA.splitTypeNametoNameComponents(nodeTypeName)
+    nodeTypeNameComponents[1] = target_namespace
+    return fee_HDA.combineNameComponents(nodeTypeNameComponents)
 
 def convertSubnet(node: hou.Node, ignoreUnlock = False, ignore_SideFX_HDA = True, nodeFilterFunc = None, convertFeENode = False, detectName = True, detectPath = False, debugMode = 0):
     if not isinstance(node, hou.Node):
@@ -543,6 +547,9 @@ def convertSubnet(node: hou.Node, ignoreUnlock = False, ignore_SideFX_HDA = True
 
     defi = nodeType.definition()
     if defi is None:
+        if fee_HDA.isFeENode(nodeType, detectName, detectPath):
+            targetNodeTypeName = change_nodeTypeName_namespace(nodeTypeName, "Custom")
+            changeNodeType_keepIO(node, targetNodeTypeName)
         return False
 
     if ignoreUnlock and not node.matchesCurrentDefinition():
@@ -603,7 +610,7 @@ def convertSubnet(node: hou.Node, ignoreUnlock = False, ignore_SideFX_HDA = True
         nulls = []
 
         ###算出nulls列表的所有元素，后面有用
-        for idx in ran-ge(4, nInputs):
+        for idx in range(4, nInputs):
             if len(inputConnectors[idx]) == 0:
                 # 说明没有连
                 nulls.append(None)

@@ -51,7 +51,7 @@ hou.HDADefinition.convertNodeType = convertNodeType
 
 
 
-def splitTypeNametoNameComponents(nodeTypeName):
+def splitTypeNametoNameComponents(nodeTypeName) -> list:
     ### FeE::attrib_fee::0.1 --> ['', 'FeE', 'attrib_fee', '0.1']
     ### print(fee_HDA.splitTypeNametoNameComponents("FeE::attrib_fee::0.1"))
     if not isinstance(nodeTypeName, str):
@@ -104,10 +104,10 @@ def splitTypeNametoNameComponents(nodeTypeName):
     
     listlen = len(nodeTypeName)
     
-    return tuple(nameComponents)
+    return nameComponents
 
 
-def trimNodeTypeName(nodeTypeName):
+def trimNodeTypeName(nodeTypeName) -> str:
     ### FeE::attrib_fee::0.1 --> attrib_fee
     if not isinstance(nodeTypeName, str):
         raise ValueError()
@@ -122,7 +122,7 @@ def trimNodeTypeName(nodeTypeName):
     raise ValueError()
 
 
-def trimFeENodeName(nodeTypeName):
+def trimFeENodeName(nodeTypeName) -> str:
     ### FeE::attrib_fee::0.1 --> attrib
     ### attrib_fee::0.1 --> attrib
     if isinstance(nodeTypeName, str):
@@ -144,7 +144,7 @@ def trimFeENodeName(nodeTypeName):
     return nodeTypeName
 
 
-def combineNameComponents(nameComponents):
+def combineNameComponents(nameComponents) -> str:
     ### ['', 'FeE', 'attrib_fee', '0.1'] --> FeE::attrib_fee::0.1
     ### print(fee_HDA.combineNameComponents(['', 'FeE', 'attrib_fee', '0.1']))
     import copy
@@ -201,7 +201,7 @@ def findFeENodeType(inputNodeTypeName, nodeTypeCategory = hou.sopNodeTypeCategor
         raise TypeError('must be string')
     
     # nodeTypeName = inputNodeTypeName
-    nameComponents = list(splitTypeNametoNameComponents(inputNodeTypeName))
+    nameComponents = splitTypeNametoNameComponents(inputNodeTypeName)
 
     nameComponents[1] = 'FeE'
     if nameComponents[2].endswith('_fee'):
@@ -241,7 +241,7 @@ def readDeprecatedNodeSub(deprecatedNodeList, env, deprecatedFileName):
 
 
 
-def readDeprecatedNode():
+def readDeprecatedNode() -> list:
     deprecatedNodeList = []
 
     readDeprecatedNodeSub(deprecatedNodeList, 'FeELib',            None)
@@ -278,7 +278,7 @@ def readDeprecatedNode():
     return deprecatedNodeList
 
 
-def readNeedHideNode():
+def readNeedHideNode() -> list:
     deprecatedNodeList = []
     pathFeELib = hou.getenv('FeELib')
     if pathFeELib is not None:
@@ -308,25 +308,25 @@ def readNeedHideNode():
 
 
 
-def isUnlockedHDA(node):
+def isUnlockedHDA(node) -> bool:
     return not node.isLockedHDA() and node.type().definition() is not None
 
 hou.Node.isUnlockedHDA = isUnlockedHDA
 
-def isFeENode(nodeType, detectName = True, detectPath = False):
+def isFeENode(nodeType: hou.NodeType, detectName = True, detectPath = False) -> bool:
     nodeType = convertNodeType(nodeType)
 
     if detectName:
         nameComponents = nodeType.nameComponents()
         if not ( nameComponents[0].startswith('FeE::') or nameComponents[1] == 'FeE' or (nameComponents[2].endswith("_fee") and nodeType.description().startswith("FeE")) ):
             return False
+
+    defi = nodeType.definition()
+    if defi is None:
+        return True
     
     if detectPath:
-        defi = nodeType.definition()
-        if defi is None:
-            libraryFilePath = 'None'
-        else:
-            libraryFilePath = defi.libraryFilePath()
+        libraryFilePath = defi.libraryFilePath()
         
         pathFeELib = hou.getenv('FeELib')
         if pathFeELib is None:
@@ -352,7 +352,7 @@ hou.Node.isFeENode = isFeENode
 hou.NodeType.isFeENode = isFeENode
 hou.HDADefinition.isFeENode = isFeENode
 
-def isSideFXLabsNode(nodeType, detectName = True, detectPath = False):
+def isSideFXLabsNode(nodeType, detectName = True, detectPath = False) -> bool:
     nodeType = convertNodeType(nodeType)
 
     if detectName:
@@ -383,7 +383,7 @@ hou.NodeType.isSideFXLabsNode = isSideFXLabsNode
 hou.HDADefinition.isSideFXLabsNode = isSideFXLabsNode
 
 
-def isSideFXNode(inputNodeType, ignoreDSO = True):
+def isSideFXNode(inputNodeType, ignoreDSO = True) -> bool:
     HFS = hou.getenv('HFS')
     if HFS is None:
         raise AttributeError('dont have HFS env')
@@ -400,7 +400,7 @@ hou.NodeType.isSideFXNode = isSideFXNode
 hou.HDADefinition.isSideFXNode = isSideFXNode
 
 
-def isSideFXDefinition(defi):
+def isSideFXDefinition(defi) -> bool:
     HFS = hou.getenv('HFS')
     if HFS is None:
         raise AttributeError('dont have HFS env')
@@ -534,7 +534,7 @@ def removeEmbeded(displayConfirmation = False):
         nodeTypeCategory = nodeTypeCategories[nodeTypeCategoryKey]
         removeCategoryEmbeded(nodeTypeCategory = nodeTypeCategory)
 
-def hasEmbeded(netCategories):
+def hasEmbeded(netCategories) -> bool:
     dictNodeTypes = netCategories.nodeTypes()
     for nodeTypeDictsKey in dictNodeTypes:
         secNodeType = dictNodeTypes[nodeTypeDictsKey]
@@ -593,7 +593,6 @@ def TABSubmenuPathfromSections(sections):
         return TABSubmenuPathfromSectionToolShelf(sectionToolShelf)
     except:
         print('not found section: Tools Shelf:', end = ' ')
-        print(nodeType)
         return None
     
 
@@ -704,7 +703,7 @@ def extractAllUsedDefiToEmbeded(ignoreNodeTypeNames = (), ignoreFeEHDA = False):
 
 
 
-def expandHDA(origHDAPath, targetHDAPath):
+def expandHDA(origHDAPath, targetHDAPath) -> str:
     if not os.path.exists(origHDAPath):
         raise ValueError("HDA '{}' not exist".format(origHDAPath))
     if os.path.isdir(origHDAPath):
