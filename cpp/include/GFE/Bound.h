@@ -4,15 +4,14 @@
 #ifndef __GFE_Bound_h__
 #define __GFE_Bound_h__
 
-#include "GFE/GFE_Bound.h"
+#include <GFE/Bound.h>
 
+#include <GFE/Core.h>
 
+#include <UT/UT_BoundingBox.h>
 
-
-#include "UT/UT_BoundingBox.h"
-
-
-namespace GFE_Bound {
+_GFE_BEGIN
+namespace Bound {
 
     template<typename _TScalar>
     SYS_FORCE_INLINE static UT_BoundingBoxT<_TScalar> stdBoundingBoxT()
@@ -58,7 +57,7 @@ namespace GFE_Bound {
     template<typename _TScalar>
     static UT_BoundingBoxT<_TScalar> getBBox(const GA_Detail& geo, const GA_Range& pointRange, const GA_Attribute* posAttrib = nullptr)
     {
-        if (GFE_Type::isInvalidPosAttrib(posAttrib))
+        if (gfe::isInvalidPosAttrib(posAttrib))
             posAttrib = geo.getP();
         
         auto bbox = stdBoundingBoxT<fpreal32>();
@@ -85,6 +84,6 @@ namespace GFE_Bound {
     }
     
     
-} // End of namespace GFE_Bound
-
+} // End of namespace Bound
+_GFE_END
 #endif

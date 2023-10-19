@@ -4,33 +4,33 @@
 #ifndef __GFE_VDBActivateByPoint_h__
 #define __GFE_VDBActivateByPoint_h__
 
-#include "GFE/GFE_VDBActivateByPoint.h"
+#include <GFE/GFE_VDBActivateByPoint.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
+#include <GU/GU_PrimVDB.h>
+#include <openvdb/openvdb.h>
 
-
-#include "GU/GU_PrimVDB.h"
-#include "openvdb/openvdb.h"
-
-//#include "openvdb/tools/ChangeBackground.h"
-//#include "openvdb/tools/Interpolation.h"
+//#include <openvdb/tools/ChangeBackground.h>
+//#include <openvdb/tools/Interpolation.h>
 
 
 
-//https://github.com/jtomori/VDB_activate_from_points/blob/master/src/vdb_activate_from_points.C
 
-/*
-    GFE_VDBActivateByPoint vdbActivateByPoint(geo, cookparms);
+#if 0
+
+    gfe::VDBActivateByPoint vdbActivateByPoint(geo, cookparms);
     vdbActivateByPoint.findOrCreateTuple(true, GA_ATTRIB_POINT);
     vdbActivateByPoint.compute();
-*/
-    
-class GFE_VDBActivateByPoint : public GFE_AttribFilterWithRef0 {
+
+#endif
+
+_GFEL_BEGIN
+class VDBActivateByPoint : public AttribFilterWithRef0 {
 
 
 public:
-    using GFE_AttribFilterWithRef0::GFE_AttribFilterWithRef0;
+    using AttribFilterWithRef0::AttribFilterWithRef0;
 
 
     void
@@ -51,22 +51,14 @@ private:
     {
         if (groupParser.isEmpty())
             return true;
-            
-        // we must lock our inputs before we try to access their geometry, OP_AutoLockInputs will automatically unlock our inputs when we return
-        //OP_AutoLockInputs inputs(this);
-        //if (inputs.lock(context) >= UT_ERROR_ABORT)
-        //    return error();
+
         
-        // check for interrupt - interrupt scope closes automatically when 'progress' is destructed.
-        UT_AutoInterrupt progress("Activating voxels...");
-
-
 #if GFE_DEBUG_MODE
         GA_Size numpt_debug = geoRef0->getNumPoints();
 #endif
 
         const GA_Offset vdboff = geo->getFirstVDBoff(groupParser.getPrimitiveGroup());
-        if (GFE_Type::isInvalidOffset(vdboff))
+        if (gfe::isInvalidOffset(vdboff))
         {
             cookparms->sopAddError(SOP_MESSAGE, "First input must contain a VDB!");
             return false;
@@ -87,7 +79,7 @@ private:
         // get a reference to transformation of the grid
         const openvdb::math::Transform& vdbGridXform = vdbPtr->transform();
 
-        GFE_ROPageHandleT<UT_Vector3D> posRef0_ph(geoRef0->getP());
+        gfe::ROPageHandleT<UT_Vector3D> posRef0_ph(geoRef0->getP());
         GA_Offset start, end;
         for (GA_PageIterator pit = groupParserRef0.getPointSplittableRange().beginPages(); !pit.atEnd(); ++pit)
         {
@@ -121,15 +113,7 @@ private:
 
 private:
     
-#undef __TEMP_GFE_VDBActivateByPoint_GroupName
-#undef __TEMP_GFE_VDBActivateByPoint_PieceAttribName
-#undef __TEMP_GFE_VDBActivateByPoint_OutAttribName
-
     
-}; // End of class GFE_VDBActivateByPoint
-
-
-
-
-
+}; // End of class VDBActivateByPoint
+_GFEL_END
 #endif

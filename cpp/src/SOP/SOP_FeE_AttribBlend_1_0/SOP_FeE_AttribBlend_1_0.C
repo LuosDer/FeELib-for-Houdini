@@ -1,4 +1,5 @@
 //#define UT_ASSERT_LEVEL 3
+
 #include "SOP_FeE_AttribBlend_1_0.h"
 #include "SOP_FeE_AttribBlend_1_0.proto.h"
 
@@ -177,7 +178,7 @@ SOP_FeE_AttribBlend_1_0::cookVerb() const
 }
 
 static GA_GroupType
-sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmGroupType)
@@ -192,7 +193,7 @@ sopGroupType(SOP_FeE_AttribBlend_1_0Parms::GroupType parmGroupType)
     return GA_GroupType::GA_GROUP_INVALID;
 }
 
-static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms:: DestinationClass parmAttribClass)
+static GA_AttributeOwner sopAttribOwner(const SOP_FeE_AttribBlend_1_0Parms:: DestinationClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)
@@ -206,7 +207,7 @@ static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms:: Destinati
     return GA_AttributeOwner::GA_ATTRIB_INVALID;
 }
 
-static GA_AttributeOwner sopAttribOwner(SOP_FeE_AttribBlend_1_0Parms::SourceClass parmAttribClass)
+static GA_AttributeOwner sopAttribOwner(const SOP_FeE_AttribBlend_1_0Parms::SourceClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribBlend_1_0Enums;
     switch (parmAttribClass)

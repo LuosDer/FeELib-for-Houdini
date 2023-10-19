@@ -20,7 +20,7 @@ public:
         return newOp;
     }
 
-    static const UT_StringHolder theSOPTypeName;
+    //static const UT_StringHolder theSOPTypeName;
     
     const SOP_NodeVerb *cookVerb() const override;
 

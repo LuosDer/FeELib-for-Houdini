@@ -4,15 +4,39 @@
 #ifndef __GFE_Normal2D_h__
 #define __GFE_Normal2D_h__
 
-#include "GFE/GFE_Normal2D.h"
+#include <GFE/GFE_Normal2D.h>
 
 
 
-#include "GFE/GFE_Normal3D.h"
-#include "GFE/GFE_MeshTopology.h"
-#include "GFE/GFE_GroupExpand.h"
-#include "GFE/GFE_Math.h"
+#include <GFE/GFE_Normal3D.h>
+#include <GFE/GFE_MeshTopology.h>
+#include <GFE/GFE_GroupExpand.h>
+#include <GFE/GFE_Math.h>
 
+
+#if 0
+
+            GFE_Normal2D normal2D(geo, cookparms);
+            normal2D.groupParser.setGroup(groupParser);
+            normal2D.setPositionAttrib(posAttrib);
+            normal2D.setNormal2DAttrib(true);
+            //const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
+            //const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
+            //const bool copyOrigIfZero = false;
+            //normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
+            normal2D.defaultNormal3D = {0,1,0};
+            if (!sopparms.getUseConstantNormal3D())
+                normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
+                    geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());
+            normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
+                sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend());
+            normal2D.compute();
+
+#endif
+
+
+
+_GFE_BEGIN
 
 
 class GFE_Normal2D : public GFE_AttribFilter {
@@ -38,26 +62,12 @@ public:
     
     void
         setComputeParm(
-            const bool extrapolateEnds,
-            const bool scaleByTurns   ,
-            const bool normalize      ,
-            
-            const fpreal64 uniScale,
-            const fpreal64 blend    = 0,
-
             const exint subscribeRatio = 64,
             const exint minGrainSize   = 1024
         )
     {
         setHasComputed();
         
-        this->extrapolateEnds = extrapolateEnds;
-        this->scaleByTurns    = scaleByTurns;
-        this->normalize       = normalize;
-        
-        this->uniScale = uniScale;
-        this->blend    = blend;
-
         this->subscribeRatio = subscribeRatio;
         this->minGrainSize   = minGrainSize;
     }
@@ -78,8 +88,8 @@ public:
 
     void
         setComputeParm(
-            const fpreal64 uniScale,
-            const fpreal64 blend    = 0
+            const fpreal uniScale,
+            const fpreal blend    = 0
         )
     {
         setHasComputed();
@@ -91,9 +101,6 @@ public:
 
 
 
-    
-    SYS_FORCE_INLINE void setNormal3DAttrib()
-    { normal3D.getOutAttribArray().clear(); }
     
     SYS_FORCE_INLINE GA_Attribute* findOrCreateNormal3D(
         const bool findNormal3D,
@@ -184,7 +191,7 @@ private:
                 normal2DAttrib = geo->findPointAttribute(normal2DAttribName);
                 if (GFE_Type::checkTupleAttrib(normal2DAttrib, GA_STORECLASS_FLOAT, GA_STORE_INVALID, 3))
                 {
-                    //onst fpreal64 constValue[] = {0.0, 0.0, 0.0};
+                    //onst fpreal constValue[] = {0.0, 0.0, 0.0};
                     //normal2DAttrib->getAIFTuple()->setRange(normal2DAttrib, groupParser.getPointRange(), constValue, 0, 3);
                     normal2DAttrib->getAIFTuple()->set(normal2DAttrib, groupParser.getPointRange(), 0.0);
                     getOutAttribArray().append(normal2DAttrib);
@@ -197,7 +204,7 @@ private:
         {
             if (normal2DAttrib)
             {
-                //const fpreal64 constValue(0.0);
+                //const fpreal constValue(0.0);
                 //normal2DAttrib->getAIFTuple()->setRange(normal2DAttrib, groupParser.getPointRange(), &constValue, 0, 3);
                 normal2DAttrib->getAIFTuple()->set(normal2DAttrib, groupParser.getPointRange(), 0.0);
             }
@@ -250,7 +257,7 @@ private:
         {
         case GA_STORE_REAL16: computeNormal2D<fpreal16>(); break;
         case GA_STORE_REAL32: computeNormal2D<fpreal32>(); break;
-        case GA_STORE_REAL64: computeNormal2D<fpreal64>(); break;
+        case GA_STORE_REAL64: computeNormal2D<fpreal>(); break;
         default: UT_ASSERT_MSG(0, "Unhandled Storage");    break;
         }
 
@@ -481,19 +488,19 @@ public:
     GFE_Normal3D normal3D;
 
 
-    UT_Vector3T<fpreal64> defaultNormal3D = {0,1,0};
+    UT_Vector3T<fpreal> defaultNormal3D = {0,1,0};
     
     bool extrapolateEnds = true;
     bool scaleByTurns    = true;
     bool normalize       = true;
-    fpreal64 uniScale = 1.0;
-    fpreal64 blend = 0;
+    fpreal uniScale = 1.0;
+    fpreal blend = 0;
     
     bool findNormal3D = false;
     bool addNormal3DIfNoFind = true;
 
 private:
-    UT_Vector3T<fpreal64> defaultNormal3DFinal;
+    UT_Vector3T<fpreal> defaultNormal3DFinal;
     //const GA_Attribute* normal3DAttrib = nullptr;
     GA_AttributeOwner normal3DOwner;
     
@@ -516,5 +523,6 @@ private:
 }; // End of class GFE_Normal2D
 
 
+_GFE_END
 
 #endif

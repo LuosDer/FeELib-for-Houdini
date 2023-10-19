@@ -4,25 +4,25 @@
 #ifndef __GFE_Connectivity_h__
 #define __GFE_Connectivity_h__
 
-#include "GFE/GFE_Connectivity.h"
+#include <GFE/Connectivity.h>
 
-#include "GFE/GFE_GeoFilter.h"
-
-
-#include "GFE/GFE_MeshTopology.h"
-#include "GFE/GFE_AttributeCast.h"
-#include "GFE/GFE_AttributePromote.h"
-#include "GFE/GFE_PackedArrayOfArrays.h"
+#include <GFE/GeoFilter.h>
 
 
-#if GFE_DEBUG_MODE
+#include <GFE/GFE_MeshTopology.h>
+#include <GFE/GFE_AttributeCast.h>
+#include <GFE/GFE_AttributePromote.h>
+#include <GFE/GFE_PackedArrayOfArrays.h>
+
+
+#ifdef GFE_DEBUG_MODE
 #define __GFE_Connectivity_OutTime 1
 #else
 #define __GFE_Connectivity_OutTime 1
 #endif
 
-
-class GFE_Connectivity : public GFE_AttribFilter
+_GFEL_BEGIN
+class Connectivity : public GFE_AttribFilter
 {
 
 //#define GFE_TEMP_ConnectivityAttribName "__topo_GFE_ConnectivityAttrib"
@@ -30,7 +30,7 @@ class GFE_Connectivity : public GFE_AttribFilter
 public:
 
 
-GFE_Connectivity(
+Connectivity(
     GFE_Detail* const geo,
     const SOP_NodeVerb::CookParms* const cookparms = nullptr
 )
@@ -39,7 +39,7 @@ GFE_Connectivity(
 {
 }
 
-GFE_Connectivity(
+Connectivity(
     GA_Detail& geo,
     const SOP_NodeVerb::CookParms* const cookparms = nullptr
 )
@@ -48,7 +48,7 @@ GFE_Connectivity(
 {
 }
     
-~GFE_Connectivity()
+~Connectivity()
 {
 }
 
@@ -603,7 +603,7 @@ void connectivity()
 //#undef GFE_TEMP_ConnectivityAttribName
     
 public:
-    GFE_GroupParser groupParserSeam;
+    gfe::GroupParser groupParserSeam;
     GA_Size startClassnum = 0;
     bool connectivityConstraint = false; // false means point  and  true means edge 
     //GA_AttributeOwner connectivityOwner = GA_ATTRIB_PRIMITIVE;
@@ -617,14 +617,10 @@ private:
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;
 
-    
     //const char* GFE_TEMP_ConnectivityAttribName = "__TEMP_GFE_ConnectivityAttrib";
 
 #undef __GFE_Connectivity_OutTime
     
-}; // End of class GFE_Connectivity
-
-
-
-
+}; // End of class Connectivity
+_GFEL_END
 #endif

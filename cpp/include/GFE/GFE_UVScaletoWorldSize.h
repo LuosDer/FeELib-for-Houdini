@@ -4,33 +4,24 @@
 #ifndef __GFE_UVScaletoWorldSize_h__
 #define __GFE_UVScaletoWorldSize_h__
 
-#include "GFE/GFE_UVScaletoWorldSize.h"
+#include <GFE/GFE_UVScaletoWorldSize.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <GFE/GeoFilter.h>
 
+#include <GU/GU_Promote.h>
 
+#include <GFE/GFE_Connectivity.h>
+#include <GFE/GFE_Measure.h>
 
-
-#include "GU/GU_Promote.h"
-
-
-#include "GFE/GFE_Connectivity.h"
-#include "GFE/GFE_Measure.h"
-//#include "GFE/GFE_Attribute.h"
-//#include "GFE/GFE_GroupParser.h"
-//#include "GFE/GFE_GroupPromote.h"
-//#include "GFE/GFE_Range.h"
-
-
-
-class GFE_UVScaletoWorldSize : public GFE_AttribFilter {
+_GFEL_BEGIN
+class UVScaletoWorldSize : public AttribFilter {
 
 //#define GFE_UVScaletoWorldSize_AreaAttribName   "__area_GFE_UVScaletoWorldSize"
 //#define GFE_UVScaletoWorldSize_AreaUVAttribName "__areaUV_GFE_UVScaletoWorldSize"
 
 public:
 
-    using GFE_AttribFilter::GFE_AttribFilter;
+    using AttribFilter::AttribFilter;
     
 
     void
@@ -76,40 +67,17 @@ private:
         for (size_t i = 0; i < len; ++i)
         {
             uvAttrib = getOutAttribArrayRef()[i];
-            const GA_Storage storage = uvAttrib->getAIFTuple()->getStorage(uvAttrib);
-            switch (uvAttrib->getAIFTuple()->getTupleSize(uvAttrib))
+            
+            const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(uvAttrib);
+            if (!GFE_Variant::isAttribStorageV(attribStorage))
+                continue;
+            auto storageVariant = GFE_Variant::getAttribStorageVariantV(attribStorage);
+            auto isPointAttribVariant = GFE_Variant::getBoolVariant(uvAttrib->getOwner() == GA_ATTRIB_POINT);
+            std::visit([&] (auto storageVariant)
             {
-            case 2:
-                switch (storage)
-                {
-                case GA_STORE_INT32:  uvScaletoWorldSize<UT_Vector2T<int>>();      break;
-                case GA_STORE_INT64:  uvScaletoWorldSize<UT_Vector2T<int64>>();    break;
-                case GA_STORE_REAL16: uvScaletoWorldSize<UT_Vector2T<fpreal16>>(); break;
-                case GA_STORE_REAL32: uvScaletoWorldSize<UT_Vector2T<fpreal32>>(); break;
-                case GA_STORE_REAL64: uvScaletoWorldSize<UT_Vector2T<fpreal64>>(); break;
-                }
-                break;
-            case 3:
-                switch (storage)
-                {
-                case GA_STORE_INT32:  uvScaletoWorldSize<UT_Vector3T<int>>();      break;
-                case GA_STORE_INT64:  uvScaletoWorldSize<UT_Vector3T<int64>>();    break;
-                case GA_STORE_REAL16: uvScaletoWorldSize<UT_Vector3T<fpreal16>>(); break;
-                case GA_STORE_REAL32: uvScaletoWorldSize<UT_Vector3T<fpreal32>>(); break;
-                case GA_STORE_REAL64: uvScaletoWorldSize<UT_Vector3T<fpreal64>>(); break;
-                }
-                break;
-            case 4:
-                switch (storage)
-                {
-                //case GA_STORE_INT32:  uvScaletoWorldSize<UT_Vector4T<int>>();      break;
-                //case GA_STORE_INT64:  uvScaletoWorldSize<UT_Vector4T<int64>>();    break;
-                //case GA_STORE_REAL16: uvScaletoWorldSize<UT_Vector4T<fpreal16>>(); break;
-                case GA_STORE_REAL32: uvScaletoWorldSize<UT_Vector4T<fpreal32>>(); break;
-                case GA_STORE_REAL64: uvScaletoWorldSize<UT_Vector4T<fpreal64>>(); break;
-                }
-                break;
-            }
+                using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+                uvScaletoWorldSize<type>();
+            }, storageVariant);
         
         }
         return true;
@@ -117,12 +85,12 @@ private:
 
 
 
-    template<typename VECTOR_T>
+    template<typename _Ty>
     void uvScaletoWorldSize()
     {
-        using value_type = typename VECTOR_T::value_type;
+        using value_type = typename _Ty::value_type;
         
-        const GA_RWHandleT<VECTOR_T>& uv_h(uvAttrib);
+        const GA_RWHandleT<_Ty>& uv_h(uvAttrib);
         
         GFE_Measure measure(geo, cookparms);
         measure.groupParser.setGroup(groupParser.getPrimitiveGroup());
@@ -161,23 +129,23 @@ private:
             attribPromote.setDestinationAttribute(dstAttribClass);
             attribPromote.compute();
 #else
-            areaAttrib   = GU_Promote::promote(*geo->asGU_Detail(), areaAttrib,   GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityAttrib);
-            areaUVAttrib = GU_Promote::promote(*geo->asGU_Detail(), areaUVAttrib, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, NULL, connectivityAttrib);
+            areaAttrib   = GU_Promote::promote(*geo->asGU_Detail(), areaAttrib,   GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, nullptr, connectivityAttrib);
+            areaUVAttrib = GU_Promote::promote(*geo->asGU_Detail(), areaUVAttrib, GA_ATTRIB_PRIMITIVE, true, GU_Promote::GU_PROMOTE_SUM, nullptr, connectivityAttrib);
 #endif
         }
 
 
-        const VECTOR_T uvScaleTmp = getUVScale<VECTOR_T>();
+        const _Ty uvScaleTmp = getUVScale<_Ty>();
         
         UTparallelFor(groupParser.getPrimitiveSplittableRange(), [this, uvScaleAttrib, areaAttrib, areaUVAttrib, &uvScaleTmp](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<VECTOR_T,   value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> uvScale_ph(uvScaleAttrib);
-            GA_PageHandleT<value_type, value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> area_ph(areaAttrib);
-            GA_PageHandleT<value_type, value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> areaUV_ph(areaUVAttrib);
+            GFE_RWPageHandleT<_Ty> uvScale_ph(uvScaleAttrib);
+            GFE_ROPageHandleT<value_type> area_ph(areaAttrib);
+            GFE_ROPageHandleT<value_type> areaUV_ph(areaUVAttrib);
+            _Ty uvS;
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
-                VECTOR_T uvS;
                 for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
                 {
                     uvScale_ph.setPage(start);
@@ -185,7 +153,7 @@ private:
                     areaUV_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        uvS = sqrt(area_ph.value(elemoff) / areaUV_ph.value(elemoff)) * uvScaleTmp;
+                        uvS = std::sqrt(area_ph.value(elemoff) / areaUV_ph.value(elemoff)) * uvScaleTmp;
                         uvS[0] = doUVScalex ? uvS[0] : value_type(1);
                         uvS[1] = doUVScaley ? uvS[1] : value_type(1);
                         uvS[2] = doUVScalez ? uvS[2] : value_type(1);
@@ -196,14 +164,23 @@ private:
         }, subscribeRatio, minGrainSize);
 
 
-        
-        GA_ROHandleT<VECTOR_T> uvScaleAttrib_h(uvScaleAttrib);
-        
-        const GA_AttributeOwner uvAttribClassFinal = uvAttrib->getOwner();
-        const bool uvAttribClassFinal_bool = uvAttribClassFinal == GA_ATTRIB_POINT;
-        UTparallelFor(groupParser.getSplittableRange(uvAttribClassFinal), [this, &uvScaleAttrib_h, uvAttribClassFinal_bool](const GA_SplittableRange& r)
+
+        auto isPointAttribVariant = GFE_Variant::getBoolVariant(uvAttrib->getOwner() == GA_ATTRIB_POINT);
+        std::visit([&] (auto isPointAttribVariant)
         {
-            GA_PageHandleT<VECTOR_T, value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> uv_ph(uvAttrib);
+            scaleUV<_Ty, isPointAttribVariant>(uvScaleAttrib);
+        }, isPointAttribVariant);
+
+    }
+
+    template<typename _Ty, bool isPointAttrib>
+    SYS_FORCE_INLINE void scaleUV(const GA_Attribute* const uvScaleAttrib)
+    {
+        const GA_ROHandleT<_Ty> uvScaleAttrib_h(uvScaleAttrib);
+        UTparallelFor(groupParser.getSplittableRange<isPointAttrib ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX>(), [this, &uvScaleAttrib_h](const GA_SplittableRange& r)
+        {
+            GFE_RWPageHandleT<_Ty> uv_ph(uvAttrib);
+            GA_Offset primoff;
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -212,22 +189,24 @@ private:
                     uv_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        const GA_Offset primoff = uvAttribClassFinal_bool ? geo->vertexPrimitive(geo->pointVertex(elemoff)) : geo->vertexPrimitive(elemoff);
+                        if constexpr (isPointAttrib)
+                            primoff = geo->vertexPrimitive(geo->pointVertex(elemoff));
+                        else
+                            primoff = geo->vertexPrimitive(elemoff);
                         uv_ph.value(elemoff) *= uvScaleAttrib_h.get(primoff);
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
-
-
-    template<typename VECTOR_T>
-    SYS_FORCE_INLINE VECTOR_T getUVScale() const
+    
+    template<typename _Ty>
+    SYS_FORCE_INLINE _Ty getUVScale() const
     {
-        if constexpr(VECTOR_T::tuple_size == 2)
-            return VECTOR_T(uvScale[0], uvScale[1]);
-        else if constexpr(VECTOR_T::tuple_size == 3)
-            return VECTOR_T(uvScale[0], uvScale[1], uvScale[2]);
+        if constexpr(_Ty::tuple_size == 2)
+            return _Ty(uvScale[0], uvScale[1]);
+        else if constexpr(_Ty::tuple_size == 3)
+            return _Ty(uvScale[0], uvScale[1], uvScale[2]);
         else
             return uvScale;
     }
@@ -245,6 +224,6 @@ private:
     
     exint subscribeRatio = 64;
     exint minGrainSize   = 1024;
-}; // End of Class GFE_UVScaletoWorldSize
-
+}; // End of Class UVScaletoWorldSize
+_GFEL_END
 #endif

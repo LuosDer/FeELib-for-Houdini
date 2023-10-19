@@ -117,8 +117,8 @@ private:
         const bool detached = !GFE_Type::isPublicAttribName(newName);
 
         const GA_Storage storage = GFE_Attribute::getStorage(attribRef);
-        //if(!detached && !attrib.isDetached() && attrib.getName() == newName)
-        if(!detached && !attribRef.isDetached() && strcmp(attribRef.getName().c_str(), newName.c_str()) == 0)
+        //if (!detached && !attrib.isDetached() && attrib.getName() == newName)
+        if (!detached && !attribRef.isDetached() && strcmp(attribRef.getName().c_str(), newName.c_str()) == 0)
         {
             attribRest = getOutAttribArray().findOrCreateTuple(
                 false, attribRef.getOwner(), GA_STORECLASS_FLOAT, storage, __TEMP_GFE_REST_VECTOR_COMPONENT_ATTRIBNAME);
@@ -136,7 +136,7 @@ private:
             
             attribDuplicate();
             
-            if(delOrigin && attribRefPtrNonConst)
+            if (delOrigin && attribRefPtrNonConst)
                 geo->destroyNonDetachedAttrib(attribRefPtrNonConst);
         }
     }
@@ -151,58 +151,28 @@ private:
         const int tupleSize = attribRefPtr->getTupleSize();
         if (comp >= tupleSize)
             return;
-        
-        const GA_Storage storage = aifTuple->getStorage(attribRefPtr);
-        switch (tupleSize)
+
+        const GFE_AttribStorage attribStorage = GFE_Type::getAttribStorage(attribRefPtr);
+        if (!GFE_Variant::isAttribStorageIFV(attribStorage))
+            return;
+        auto storageVariant = GFE_Variant::getAttribStorageVariantIFV(attribStorage);
+            
+        std::visit([&] (auto storageVariant)
         {
-        case 1:
-            switch (storage)
-            {
-                case GA_STORE_REAL16: restFloat<fpreal16>(); break;
-                case GA_STORE_REAL32: restFloat<fpreal32>(); break;
-                case GA_STORE_REAL64: restFloat<fpreal64>(); break;
-                default: break;
-            }
-        case 2:
-            switch (storage)
-            {
-                case GA_STORE_REAL16: restVectorComponent<UT_Vector2T<fpreal16>>(); break;
-                case GA_STORE_REAL32: restVectorComponent<UT_Vector2T<fpreal32>>(); break;
-                case GA_STORE_REAL64: restVectorComponent<UT_Vector2T<fpreal64>>(); break;
-                default: break;
-            }
-        break;
-        case 3:
-            switch (storage)
-            {
-                case GA_STORE_REAL16: restVectorComponent<UT_Vector3T<fpreal16>>(); break;
-                case GA_STORE_REAL32: restVectorComponent<UT_Vector3T<fpreal32>>(); break;
-                case GA_STORE_REAL64: restVectorComponent<UT_Vector3T<fpreal64>>(); break;
-                default: break;
-            }
-        break;
-        case 4:
-            switch (storage)
-            {
-                case GA_STORE_REAL16: restVectorComponent<UT_Vector4T<fpreal16>>(); break;
-                case GA_STORE_REAL32: restVectorComponent<UT_Vector4T<fpreal32>>(); break;
-                case GA_STORE_REAL64: restVectorComponent<UT_Vector4T<fpreal64>>(); break;
-                default: break;
-            }
-        break;
-        default:
-        break;
-        }
+            using type = typename GFE_Variant::getAttribStorage_t<storageVariant>;
+            restVectorComponent<type>();
+        }, storageVariant);
     }
 
     
-    template<typename T>
+    template<typename _Ty>
     void restVectorComponent()
     {
+        using value_type = typename GFE_Type::get_value_type_t<_Ty>;
         UTparallelFor(groupParser.getSplittableRange(attribRefPtr), [this](const GA_SplittableRange& r)
         {
-            GA_PageHandleT<typename T::value_type, typename T::value_type, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRest);
-            GA_PageHandleT<T, typename T::value_type, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
+            GFE_RWPageHandleT<value_type> attrib_ph(attribRest);
+            GFE_ROPageHandleT<_Ty> attribRef_ph(attribRefPtr);
             GA_Offset start, end;
             for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
             {
@@ -212,35 +182,16 @@ private:
                     attribRef_ph.setPage(start);
                     for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
                     {
-                        attrib_ph.value(elemoff) = attribRef_ph.value(elemoff)[comp];
+                        if constexpr (GFE_Type::isScalar<_Ty>)
+                            attrib_ph.value(elemoff) = attribRef_ph.value(elemoff);
+                        else
+                            attrib_ph.value(elemoff) = attribRef_ph.value(elemoff)[comp];
                     }
                 }
             }
         }, subscribeRatio, minGrainSize);
     }
 
-    template<typename T>
-    void restFloat()
-    {
-        UTparallelFor(groupParser.getSplittableRange(attribRefPtr), [this](const GA_SplittableRange& r)
-        {
-            GA_PageHandleT<T, T, true, true, GA_Attribute, GA_ATINumeric, GA_Detail> attrib_ph(attribRest);
-            GA_PageHandleT<T, T, true, false, const GA_Attribute, const GA_ATINumeric, const GA_Detail> attribRef_ph(attribRefPtr);
-            GA_Offset start, end;
-            for (GA_PageIterator pit = r.beginPages(); !pit.atEnd(); ++pit)
-            {
-                for (GA_Iterator it(pit.begin()); it.blockAdvance(start, end); )
-                {
-                    attrib_ph.setPage(start);
-                    attribRef_ph.setPage(start);
-                    for (GA_Offset elemoff = start; elemoff < end; ++elemoff)
-                    {
-                        attrib_ph.value(elemoff) = attribRef_ph.value(elemoff);
-                    }
-                }
-            }
-        }, subscribeRatio, minGrainSize);
-    }
 
 
 public:

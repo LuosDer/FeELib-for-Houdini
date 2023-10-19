@@ -145,7 +145,7 @@ static const char* theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -264,18 +264,6 @@ SOP_FeE_SetVectorComponent_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparm
     const GA_AttributeOwner geo0AttribClass = sopAttribOwner(sopparms.getAttribClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
-    
-/*
-
-            GFE_SetVectorComponent setVectorComponent(geo, nullptr, cookparms);
-            setVectorComponent.comp = comp;
-            setVectorComponent.getOutAttribArray().set(posAttribNonConst);
-            setVectorComponent.setRefAttrib();
-            //setVectorComponent.setRestAttrib("");
-            setVectorComponent.compute();
-            UT_ASSERT(!setVectorComponent.getRestAttrib().isEmpty());
-        
- */
     
     GFE_SetVectorComponent setVectorComponent(outGeo0, inGeo1, &cookparms);
     

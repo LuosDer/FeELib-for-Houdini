@@ -1,22 +1,10 @@
 
 //#define UT_ASSERT_LEVEL 3
+
 #include "SOP_FeE_Enumerate_1_0.h"
-
-
 #include "SOP_FeE_Enumerate_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-
-#include "GFE/GFE_Enumerate.h"
-
-
-
+#include <GFE/GFE_Enumerate.h>
 
 using namespace SOP_FeE_Enumerate_1_0_Namespace;
 
@@ -173,7 +161,7 @@ static const char *theDsFile = R"THEDSFILE(
         cppname "MinGrainSize"
         label   "Min Grain Size"
         type    intlog
-        default { 64 }
+        default { 1024 }
         range   { 0! 2048 }
     }
 }
@@ -310,19 +298,15 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
 
     //outGeo0.replaceWith(inGeo0);
 
-
-
     const GA_AttributeOwner attribClass = sopAttribOwner(sopparms.getClass());
     const GA_StorageClass storageClass = sopStorageClass(sopparms.getStorageClass());
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
-
-
+    
     UT_AutoInterrupt boss("Processing");
     if (boss.wasInterrupted())
         return;
-
     
-    GFE_Enumerate enumerate(outGeo0, cookparms);
+    _gfel::Enumerate enumerate(outGeo0, cookparms);
     if (sopparms.getUsePieceAttrib())
     {
         enumerate.setPieceAttrib(attribClass, sopparms.getPieceAttrib());
@@ -337,8 +321,6 @@ SOP_FeE_Enumerate_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     enumerate.findOrCreateTuple(false, attribClass, storageClass, GA_STORE_INVALID, sopparms.getAttribName());
     enumerate.groupParser.setGroup(groupType, sopparms.getGroup());
     enumerate.computeAndBumpDataId();
-
-    
 
 }
 

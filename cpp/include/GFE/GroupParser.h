@@ -1,25 +1,25 @@
 
 #pragma once
 
-#ifndef __GFE_GroupParser_h__
-#define __GFE_GroupParser_h__
+#ifndef __GroupParser_h__
+#define __GroupParser_h__
 
-#include "GFE/GFE_GroupParser.h"
+#include <GFE/GroupParser.h>
 
-#include "GA/GA_SplittableRange.h"
-#include "SOP/SOP_NodeVerb.h"
-
-
-#include "GFE/GFE_Detail.h"
-
-#include "GFE/GFE_GroupUnion.h"
+#include <GA/GA_SplittableRange.h>
+#include <SOP/SOP_NodeVerb.h>
 
 
-class GFE_GroupParser {
+#include <GFE/Geometry.h>
+#include <GFE/GroupUnion.h>
+
+
+_GFE_BEGIN
+class GroupParser {
 
 public:
 
-    GFE_GroupParser(
+    GroupParser(
         const GFE_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -33,7 +33,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         GFE_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -47,7 +47,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         GA_Detail* const inGeo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -61,7 +61,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
@@ -75,7 +75,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail* const geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -89,7 +89,7 @@ public:
     {
     }
 
-    GFE_GroupParser(
+    GroupParser(
         GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
@@ -102,7 +102,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -115,7 +115,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
@@ -128,7 +128,7 @@ public:
     {
     }
     
-    GFE_GroupParser(
+    GroupParser(
         const GA_Detail& geo,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
@@ -141,7 +141,7 @@ public:
     {
     }
 
-    ~GFE_GroupParser()
+    ~GroupParser()
     {
         //delGroup();
     }
@@ -155,7 +155,7 @@ public:
             //geoNonconst->destroyGroup(geoGroup);
     }
 
-    void copy(const GFE_GroupParser& groupParser)
+    void copy(const GroupParser& groupParser)
     {
         geo = groupParser.geo;
         cookparms = groupParser.cookparms;
@@ -261,7 +261,7 @@ public:
         }
     }
 
-    SYS_FORCE_INLINE void setGroup(const GFE_GroupParser& groupParser)
+    SYS_FORCE_INLINE void setGroup(const GroupParser& groupParser)
     { groupParser.getHasGroup() ? setGroup(groupParser.getGroup()) : clear(); }
 
     
@@ -392,7 +392,7 @@ public:
         case GA_GROUP_VERTEX:
             return static_cast<const GA_ElementGroup*>(geoGroup)->getIndexMap().indexSize();
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
     GA_Size entries() const
@@ -406,7 +406,7 @@ public:
             return static_cast<const GA_ElementGroup*>(geoGroup)->entries(); break;
         case GA_GROUP_EDGE: return static_cast<const GA_EdgeGroup*>(geoGroup)->entries(); break;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
 #else
@@ -419,7 +419,7 @@ public:
         case GA_GROUP_POINT:     return static_cast<const GA_PointGroup*    >(geoGroup)->getIndexMap().indexSize(); break;
         case GA_GROUP_VERTEX:    return static_cast<const GA_VertexGroup*   >(geoGroup)->getIndexMap().indexSize(); break;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 
     GA_Size entries() const
@@ -432,7 +432,7 @@ public:
         case GA_GROUP_VERTEX:    return static_cast<const GA_VertexGroup*   >(geoGroup)->entries(); break;
         case GA_GROUP_EDGE:      return static_cast<const GA_EdgeGroup*     >(geoGroup)->entries(); break;
         }
-        return GFE_INVALID_OFFSET;
+        return gfe::INVALID_OFFSET;
     }
 #endif
     
@@ -753,7 +753,7 @@ private:
     { return geo->getIndexMap(attribOwner); }
 
     SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_GroupType groupType) const
-    { return getIndexMap(GFE_Type::attributeOwner_groupType(groupType)); }
+    { return getIndexMap(gfe::Type::attributeOwner_groupType(groupType)); }
 
         
     SYS_FORCE_INLINE const GA_IndexMap& getIndexMap(const GA_Attribute& attrib) const
@@ -823,7 +823,7 @@ private:
 
         GA_Group* const newGroup = groupTable->newDetachedGroup();
 
-        GFE_GroupUnion::groupUnion(newGroup, group);
+        gfe::GroupUnion::groupUnion(newGroup, group);
         //if (groupType == GA_GROUP_EDGE)
         //    GFE_GroupUnion::groupUnion(static_cast<GA_EdgeGroup&>(*newGroup), group);
         //else
@@ -971,9 +971,9 @@ private:
     //GA_EdgeGroupUPtr      geoEdgeGroupUPtr;
 
 
-    friend class GFE_GeoFilter;
+    friend class GeoFilter;
     
-}; // End of class GFE_GroupParser
+}; // End of class GroupParser
 
 
 
@@ -983,48 +983,8 @@ private:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-namespace GFE_GroupParser_Namespace {
-//namespace GFE_GroupParser {
+namespace GroupParser_Namespace {
+//namespace GroupParser {
 
 
 
@@ -1314,25 +1274,9 @@ parseEdgeGroupDetached(
 {
     return static_cast<const GA_EdgeGroup*>(parseGroupDetached(cookparms, geo, GA_GROUP_EDGE, groupName, gop));
 }
+    
 
+} // End of Namespace GroupParser_Namespace
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-} // End of namespace GFE_GroupParser_Namespace
-
+_GFE_END
 #endif

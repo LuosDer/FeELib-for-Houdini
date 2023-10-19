@@ -4,14 +4,14 @@
 #ifndef __GFE_Normal3D_h__
 #define __GFE_Normal3D_h__
 
-#include "GFE/GFE_Normal3D.h"
+#include <GFE/GFE_Normal3D.h>
 
-#include "GFE/GFE_GeoFilter.h"
-
-
+#include <GFE/GFE_GeoFilter.h>
 
 
-#include "GEO/GEO_Normal.h"
+
+
+#include <GEO/GEO_Normal.h>
 
 
 class GFE_Normal3D : public GFE_AttribFilter {

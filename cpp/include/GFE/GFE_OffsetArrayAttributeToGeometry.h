@@ -4,18 +4,14 @@
 #ifndef __GFE_OffsetArrayAttributeToGeometry_h__
 #define __GFE_OffsetArrayAttributeToGeometry_h__
 
-#include "GFE/GFE_OffsetArrayAttributeToGeometry.h"
+#include <GFE/GFE_OffsetArrayAttributeToGeometry.h>
 
+#include <GU/GU_PackedGeometry.h>
 
+#include <GFE/GeometryBase.h>
 
-
-#include "GFE/GFE_DetailBase.h"
-
-#include "GU/GU_PackedGeometry.h"
-
-namespace GFE_OffsetArrayAttribToGeo {
-
-
+_GFE_BEGIN
+namespace OffsetArrayAttribToGeo {
 
     
     static GU_DetailHandle offsetArrayAttribToGeo(
@@ -37,7 +33,7 @@ namespace GFE_OffsetArrayAttribToGeo {
         const GA_IndexMap& indexMap = geo.getIndexMap(owner);
         const GA_ROHandleT<UT_ValArray<GA_Offset>> intArray_oh(&attrib);
         
-        GU_DetailHandle geoTmp_h = GFE_DetailBase::newDetail();
+        GU_DetailHandle geoTmp_h = gfe::GeoBase::newDetail();
         GU_Detail* const geoTmp = geoTmp_h.gdpNC();
         
         geoTmp->appendPrimitiveBlock(GEO_PRIMNONE, group ? group->entries() : geo.getNumElements(owner));
@@ -127,12 +123,6 @@ namespace GFE_OffsetArrayAttribToGeo {
     }
 
 
-
-
-    
-} // End of namespace GFE_OffsetArrayAttribToGeo
-
-
-
-
+} // End of namespace OffsetArrayAttribToGeo
+_GFE_END
 #endif

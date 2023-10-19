@@ -59,18 +59,111 @@ static const char* theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "attribName"
-        cppname "AttribName"
-        label   "Attrib Name"
+        name    "attrib"
+        cppname "Attrib"
+        label   "Attrib"
         type    string
-        default { "N" }
+        default { "" }
     }
     parm {
-        name    "normalize"
-        cppname "Normalize"
-        label   "Normalize"
+        name    "clampMin"
+        cppname "Clamp Min"
+        label   "Clamp Min"
+        type    toggle
+        default { "off" }
+    }
+    parm {
+        name    "clampMax"
+        cppname "Clamp Max"
+        label   "Clamp Max"
+        type    toggle
+        default { "off" }
+    }
+    parm {
+        name    "useextermum_inmin"
+        cppname "SubscribeRatio"
+        label   "Use Extermum inmin"
         type    toggle
         default { "1" }
+    }
+    parm {
+        name    "inputmin"
+        cppname "SubscribeRatio"
+        label   "Input Min"
+        type    vector
+        size    3
+        default { "0" "0" "0" }
+        disablewhen "{ useextermum_inmin == 1 }"
+        range   { -1 1 }
+    }
+    parm {
+        name    "useextermum_inmax"
+        cppname "SubscribeRatio"
+        label   "Use Extermum inmax"
+        type    toggle
+        default { "1" }
+    }
+    parm {
+        name    "inputmax"
+        cppname "SubscribeRatio"
+        label   "Input Max"
+        type    vector
+        size    3
+        default { "1" "1" "1" }
+        disablewhen "{ useextermum_inmax == 1 }"
+        range   { -1 1 }
+    }
+    parm {
+        name    "useextermum_outmin"
+        cppname "SubscribeRatio"
+        label   "Use Extermum outmin"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "outputmin"
+        cppname "SubscribeRatio"
+        label   "Output Min"
+        type    vector
+        size    3
+        default { "0" "0" "0" }
+        disablewhen "{ useextermum_outmin == 1 }"
+        range   { -1 1 }
+    }
+    parm {
+        name    "useextermum_outmax"
+        cppname "SubscribeRatio"
+        label   "Use Extermum outmax"
+        type    toggle
+        default { "0" }
+    }
+    parm {
+        name    "outputmax"
+        cppname "SubscribeRatio"
+        label   "Output Max"
+        type    vector
+        size    3
+        default { "1" "1" "1" }
+        disablewhen "{ useextermum_outmax == 1 }"
+        range   { -1 1 }
+    }
+    parm {
+        name    "doRemap"
+        cppname "DoRemap"
+        label   "Do Remap"
+        type    toggle
+        nolabel
+        joinnext
+        default { "0" }
+    }
+    parm {
+        name    "remapRamp"
+        cppname "RemapRamp"
+        label   "Remap Ramp"
+        type    ramp_flt
+        default { "2" }
+        disablewhen "{ ramp_toggle == 0 }"
+        range   { 1! 10 }
     }
     parm {
         name    "uniScale"
@@ -81,15 +174,6 @@ static const char* theDsFile = R"THEDSFILE(
         range   { -100 100 }
     }
 
-
-    parm {
-        name    "kernel"
-        cppname "Kernel"
-        label   "Kernel"
-        type    integer
-        default { 0 }
-        range   { 0! 2 }
-    }
 
 
     parm {
@@ -117,6 +201,7 @@ SOP_FeE_AttribRemap_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_AttribRemap_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
+        templ.setChoiceListPtr("attrib"_sh, &SOP_Node::allAttribMenu);
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
     }
     return templ.templates();

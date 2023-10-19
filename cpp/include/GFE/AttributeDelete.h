@@ -4,18 +4,13 @@
 #ifndef __GFE_AttributeDelete_h__
 #define __GFE_AttributeDelete_h__
 
-#include "GFE/GFE_AttributeDelete.h"
+#include <GFE/AttributeDelete.h>
 
-#include "GA/GA_Detail.h"
+#include <GA/GA_Detail.h>
+#include <GA/GA_AttributeFilter.h>
 
-
-#include "GA/GA_AttributeFilter.h"
-
-
-
-
-
-namespace GFE_AttributeDelete {
+_GFE_BEGIN
+namespace AttributeDelete {
 
 
 
@@ -180,19 +175,9 @@ namespace GFE_AttributeDelete {
     //    return attrib->getDetail().getAttributes().destroyAttribute(attrib);
     //}
 
+    
 
 
-
-
-
-
-
-
-
-} // End of namespace GFE_AttributeDelete
-
-
-
-
-
+} // End of namespace AttributeDelete
+_GFE_END
 #endif

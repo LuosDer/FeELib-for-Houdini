@@ -1,25 +1,12 @@
 
 //#define UT_ASSERT_LEVEL 3
+
 #include "SOP_FeE_VDBActivateByPoint_1_0.h"
-
-
 #include "SOP_FeE_VDBActivateByPoint_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-
-#include "GFE/GFE_VDBActivateByPoint.h"
-
-
-
+#include <GFE/GFE_VDBActivateByPoint.h>
 
 using namespace SOP_FeE_VDBActivateByPoint_1_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -74,9 +61,7 @@ SOP_FeE_VDBActivateByPoint_1_0::buildTemplates()
     static PRM_TemplateBuilder templ("SOP_FeE_VDBActivateByPoint_1_0.C"_sh, theDsFile);
     if (templ.justBuilt())
     {
-        templ.setChoiceListPtr("pieceAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
         templ.setChoiceListPtr("group"_sh, &SOP_Node::groupMenu);
-        
     }
     return templ.templates();
 }
@@ -101,7 +86,6 @@ newSopOperator(OP_OperatorTable* table)
 
     newOp->setIconName("SOP_vdb");
     table->addOperator(newOp);
-
 }
 
 
@@ -178,10 +162,10 @@ SOP_FeE_VDBActivateByPoint_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
 
     
     
-    GFE_VDBActivateByPoint vdbActivateByPoint(outGeo0, inGeo1, cookparms);
+    gfe::VDBActivateByPoint vdbActivateByPoint(outGeo0, inGeo1, cookparms);
     vdbActivateByPoint.setComputeParm(
         sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    
     vdbActivateByPoint.groupParser.setGroup(groupType, sopparms.getGroup());
     vdbActivateByPoint.computeAndBumpDataId();
 

@@ -4,25 +4,26 @@
 #ifndef __GFE_GeoFilter_h__
 #define __GFE_GeoFilter_h__
 
+#include <GFE/GeoFilter.h>
 
-#include "GFE/GFE_GeoFilter.h"
+#include <PRM/PRM_TemplateBuilder.h>
+#include <UT/UT_Interrupt.h>
+#include <UT/UT_DSOVersion.h>
+
+#include <GFE/Geometry.h>
+#include <GFE/GroupParser.h>
+#include <GFE/AttributeArray.h>
+#include <GFE/VolumeArray.h>
+#include <GFE/NodeVerb.h>
 
 
-
-#include "GFE/GFE_Detail.h"
-#include "GFE/GFE_AttributeArray.h"
-#include "GFE/GFE_GroupParser.h"
-#include "GFE/GFE_NodeVerb.h"
-#include "GFE/GFE_VolumeArray.h"
-
-
-
-class GFE_GeoFilter {
+_GFE_BEGIN
+class GeoFilter {
 
 public:
     
-    GFE_GeoFilter(
-        GFE_Detail* const geo,
+    GeoFilter(
+        gfe::Geometry* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
         : geo(geo)
@@ -33,36 +34,36 @@ public:
     {
     }
 
-    GFE_GeoFilter(
+    GeoFilter(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(reinterpret_cast<GFE_Detail*>(&geo))
-        //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<gfe::Geometry*>(&geo))
+        //, geoConst(reinterpret_cast<gfe::Geometry*>(&geo))
         , cookparms(cookparms)
         , groupParser(geo, gop, cookparms)
         , volumeArray(geo, cookparms)
     {
     }
     
-    GFE_GeoFilter(
+    GeoFilter(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(reinterpret_cast<GFE_Detail*>(geo))
-        //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<gfe::Geometry*>(geo))
+        //, geoConst(reinterpret_cast<gfe::Geometry*>(&geo))
         , cookparms(cookparms)
         , groupParser(*geo, gop, cookparms)
         , volumeArray(geo, cookparms)
     {
     }
     
-    GFE_GeoFilter(
+    GeoFilter(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : geo(reinterpret_cast<GFE_Detail*>(&geo))
-        //, geoConst(reinterpret_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<gfe::Geometry*>(&geo))
+        //, geoConst(reinterpret_cast<gfe::Geometry*>(&geo))
         , cookparms(&cookparms)
         , groupParser(geo, gop, cookparms)
         , volumeArray(geo, cookparms)
@@ -71,8 +72,8 @@ public:
 
 
     
-    GFE_GeoFilter(
-        GFE_Detail* const geo,
+    GeoFilter(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -84,12 +85,12 @@ public:
     {
     }
 
-    GFE_GeoFilter(
+    GeoFilter(
         GA_Detail& geo,
         const GA_Detail& geoSrc,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : geo(reinterpret_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<gfe::Geometry*>(&geo))
         , geoSrc(&geoSrc)
         , cookparms(&cookparms)
         , groupParser(geoSrc, gop, cookparms)
@@ -97,12 +98,12 @@ public:
     {
     }
 
-    GFE_GeoFilter(
+    GeoFilter(
         GA_Detail& geo,
         const GA_Detail& geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(reinterpret_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<gfe::Geometry*>(&geo))
         , geoSrc(&geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc, gop, cookparms)
@@ -110,12 +111,12 @@ public:
     {
     }
 
-    GFE_GeoFilter(
+    GeoFilter(
         GA_Detail& geo,
         const GA_Detail* const geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geo(reinterpret_cast<GFE_Detail*>(&geo))
+        : geo(reinterpret_cast<gfe::Geometry*>(&geo))
         , geoSrc(geoSrc)
         , cookparms(cookparms)
         , groupParser(geoSrc ? *geoSrc : geo, gop, cookparms)
@@ -123,7 +124,7 @@ public:
     {
     }
 
-    ~GFE_GeoFilter()
+    ~GeoFilter()
     {
         //delTopoAttrib();
     }
@@ -140,7 +141,7 @@ public:
 
     virtual void reset(GA_Detail& inGeo, const SOP_NodeVerb::CookParms* const cookparms = nullptr)
     {
-        geo = reinterpret_cast<GFE_Detail*>(&inGeo);
+        geo = reinterpret_cast<gfe::Geometry*>(&inGeo);
         this->cookparms = cookparms;
         groupParser.reset(geo, cookparms);
         setHasComputed();
@@ -160,7 +161,7 @@ public:
     // { return outTopoAttrib; }
     
 
-    GFE_GroupParser& getGroupParser()
+    GroupParser& getGroupParser()
     { return groupParser; }
     
     SYS_FORCE_INLINE void compute()
@@ -209,7 +210,7 @@ public:
     SYS_FORCE_INLINE void computeAndBumpDataId()
     { compute(); bumpDataId(); }
 
-    SYS_FORCE_INLINE GFE_Detail* getDetail() const
+    SYS_FORCE_INLINE gfe::Geometry* getDetail() const
     { return geo; }
     
     SYS_FORCE_INLINE void visualizeGroup(const GA_Group& group) const
@@ -223,7 +224,7 @@ public:
 
     SYS_FORCE_INLINE void setValidPosAttrib()
     {
-        if (GFE_Type::isInvalidPosAttrib(posAttrib) || GFE_Type::isInvalidPosAttrib(posAttribNonConst))
+        if (gfe::isInvalidPosAttrib(posAttrib) || gfe::isInvalidPosAttrib(posAttribNonConst))
         {
             posAttribNonConst = geo->getP();
             posAttrib = posAttribNonConst;
@@ -233,14 +234,14 @@ public:
     }
     
     SYS_FORCE_INLINE void setValidConstPosAttrib()
-    { if (GFE_Type::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); UT_ASSERT_P(posAttrib); }
+    { if (gfe::isInvalidPosAttrib(posAttrib)) posAttrib = geo->getP(); UT_ASSERT_P(posAttrib); }
 
 
     
-    SYS_FORCE_INLINE GFE_VolumeArray& getVolumeArray()
+    SYS_FORCE_INLINE gfe::VolumeArray& getVolumeArray()
     { return volumeArray; }
 
-    SYS_FORCE_INLINE const GFE_VolumeArray& getVolumeArray() const
+    SYS_FORCE_INLINE const gfe::VolumeArray& getVolumeArray() const
     { return volumeArray; }
 
 private:
@@ -252,7 +253,7 @@ private:
 private:
     SYS_FORCE_INLINE virtual void setDetailBase(GA_Detail& inGeo)
     {
-        geo = reinterpret_cast<GFE_Detail*>(&inGeo);
+        geo = reinterpret_cast<gfe::Geometry*>(&inGeo);
         groupParser.setDetail(geo);
     }
 
@@ -292,13 +293,13 @@ protected:
 
     
 public:
-    GFE_GroupParser groupParser;
+    GroupParser groupParser;
     bool outTopoAttrib = true;
 
 protected:
-    GFE_Detail* geo;
+    gfe::Geometry* geo;
     const GA_Detail* geoSrc = nullptr;
-    //const GFE_Detail* geoConst;
+    //const gfe::Geometry* geoConst;
     const SOP_NodeVerb::CookParms* cookparms;
     
     const GA_Attribute* pieceAttrib = nullptr;
@@ -306,14 +307,14 @@ protected:
     GA_Attribute* posAttribNonConst = nullptr;
     
     GOP_Manager gop;
-    GFE_VolumeArray volumeArray;
+    gfe::VolumeArray volumeArray;
 
 private:
     //bool outTopoAttrib = true;
     bool hasComputed = false;
     
 
-}; // End of class GFE_GeoFilter
+}; // End of class GeoFilter
 
 
 #if 0
@@ -329,12 +330,12 @@ for (GA_Size vtxpnum = 0; vtxpnum < numvtx; ++vtxpnum)
 
 #if 0
 
-class GFE_GeoFilterRef0 {
+class GeoFilterRef0 {
 
 public:
 
-    GFE_GeoFilterRef0(
-        const GFE_Detail* const geoRef0,
+    GeoFilterRef0(
+        const gfe::Geometry* const geoRef0,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -348,12 +349,12 @@ public:
         //UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
 
-    GFE_GeoFilterRef0(
+    GeoFilterRef0(
         const GA_Detail* const geoRef0,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geoRef0(reinterpret_cast<const GFE_Detail*>(geoRef0))
+        : geoRef0(reinterpret_cast<const gfe::Geometry*>(geoRef0))
         , cookparmsRef0(cookparms)
         , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
@@ -363,12 +364,12 @@ public:
         //UT_ASSERT_MSG(geoRef0, "do not find geo");
     }
 
-    GFE_GeoFilterRef0(
+    GeoFilterRef0(
         const GA_Detail& geoRef0,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : geoRef0(reinterpret_cast<const GFE_Detail*>(&geoRef0))
+        : geoRef0(reinterpret_cast<const gfe::Geometry*>(&geoRef0))
         , cookparmsRef0(cookparms)
         , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
@@ -377,12 +378,12 @@ public:
     {
     }
 
-    GFE_GeoFilterRef0(
+    GeoFilterRef0(
         const GA_Detail* const geoRef0,
         GOP_Manager& gop,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : geoRef0(reinterpret_cast<const GFE_Detail*>(geoRef0))
+        : geoRef0(reinterpret_cast<const gfe::Geometry*>(geoRef0))
         , cookparmsRef0(&cookparms)
         , gopRef0(&gop)
         , groupParserRef0(geoRef0, gop, cookparms)
@@ -393,14 +394,14 @@ public:
     }
 
 
-    ~GFE_GeoFilterRef0()
+    ~GeoFilterRef0()
     {
     }
 
     
 
     void resetGeoFilterRef0(
-        const GFE_Detail* const geoRef0,
+        const gfe::Geometry* const geoRef0,
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -414,7 +415,7 @@ public:
     }
     
     SYS_FORCE_INLINE void resetGeoFilterRef0(
-        const GFE_Detail& geoRef0,
+        const gfe::Geometry& geoRef0,
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
@@ -425,22 +426,22 @@ public:
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-    { resetGeoFilterRef0(reinterpret_cast<const GFE_Detail*>(geoRef0), gop, cookparmsRef0); }
+    { resetGeoFilterRef0(reinterpret_cast<const gfe::Geometry*>(geoRef0), gop, cookparmsRef0); }
 
     SYS_FORCE_INLINE void resetGeoFilterRef0(
         const GA_Detail& geoRef0,
         GOP_Manager* const gop,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-    { resetGeoFilterRef0(reinterpret_cast<const GFE_Detail&>(geoRef0), gop, cookparmsRef0); }
+    { resetGeoFilterRef0(reinterpret_cast<const gfe::Geometry&>(geoRef0), gop, cookparmsRef0); }
 
 
     
-    // SYS_FORCE_INLINE GFE_GroupParser& getRef0GroupParser()
+    // SYS_FORCE_INLINE GroupParser& getRef0GroupParser()
     // { return groupParserRef0; }
-    SYS_FORCE_INLINE GFE_RefAttributeArray& getRef0AttribArray()
+    SYS_FORCE_INLINE gfe::RefAttributeArray& getRef0AttribArray()
     { return ref0AttribArray; }
-    SYS_FORCE_INLINE GFE_RefGroupArray& getRef0GroupArray()
+    SYS_FORCE_INLINE gfe::RefGroupArray& getRef0GroupArray()
     { return ref0GroupArray; }
     SYS_FORCE_INLINE std::vector<const GA_Attribute*>& getRef0AttribArrayRef()
     { return ref0AttribArray.ref(); }
@@ -456,7 +457,7 @@ public:
 
     
 private:
-    SYS_FORCE_INLINE virtual void setRef0DetailBase(const GFE_Detail* const inGeo)
+    SYS_FORCE_INLINE virtual void setRef0DetailBase(const gfe::Geometry* const inGeo)
     {
         geoRef0 = inGeo;
         ref0AttribArray.setDetail(inGeo);
@@ -464,15 +465,15 @@ private:
     }
 
     SYS_FORCE_INLINE virtual void setRef0DetailBase(const GA_Detail* const inGeo)
-    { setRef0DetailBase(reinterpret_cast<const GFE_Detail*>(inGeo)); }
+    { setRef0DetailBase(reinterpret_cast<const gfe::Geometry*>(inGeo)); }
 
 
 
 public:
-    GFE_GroupParser groupParserRef0;
+    GroupParser groupParserRef0;
 
 protected:
-    const GFE_Detail* geoRef0;
+    const gfe::Geometry* geoRef0;
 
 private:
     const SOP_NodeVerb::CookParms* cookparmsRef0;
@@ -480,23 +481,23 @@ private:
     
     const GA_Attribute* posRef0Attrib = nullptr;
 
-    GFE_RefAttributeArray ref0AttribArray;
-    GFE_RefGroupArray ref0GroupArray;
+    gfe::RefAttributeArray ref0AttribArray;
+    gfe::RefGroupArray ref0GroupArray;
 
-}; // End of class GFE_GeoFilterRef0
+}; // End of class GeoFilterRef0
 
 
 #else
 
 
 
-#define __GFE_GeoFilterRef_SPECILIZATION(NUM)                                                                                       \
-class GFE_GeoFilterRef##NUM {                                                                                                       \
+#define __GeoFilterRef_SPECILIZATION(NUM)                                                                                           \
+class GeoFilterRef##NUM {                                                                                                           \
                                                                                                                                     \
 public:                                                                                                                             \
                                                                                                                                     \
-    GFE_GeoFilterRef##NUM(                                                                                                          \
-        const GFE_Detail* const geoRef##NUM,                                                                                        \
+    GeoFilterRef##NUM(                                                                                                              \
+        const gfe::Geometry* const geoRef##NUM,                                                                                        \
         GOP_Manager& gop,                                                                                                           \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
@@ -509,12 +510,12 @@ public:                                                                         
     {                                                                                                                               \
     }                                                                                                                               \
                                                                                                                                     \
-    GFE_GeoFilterRef##NUM(                                                                                                          \
+    GeoFilterRef##NUM(                                                                                                              \
         const GA_Detail* const geoRef##NUM,                                                                                         \
         GOP_Manager& gop,                                                                                                           \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
-        : geoRef##NUM(reinterpret_cast<const GFE_Detail*>(geoRef##NUM))                                                             \
+        : geoRef##NUM(reinterpret_cast<const gfe::Geometry*>(geoRef##NUM))                                                             \
         , cookparmsRef##NUM(cookparms)                                                                                              \
         , gopRef##NUM(&gop)                                                                                                         \
         , groupParserRef##NUM(geoRef##NUM, gop, cookparms)                                                                          \
@@ -523,12 +524,12 @@ public:                                                                         
     {                                                                                                                               \
     }                                                                                                                               \
                                                                                                                                     \
-    GFE_GeoFilterRef##NUM(                                                                                                          \
+    GeoFilterRef##NUM(                                                                                                              \
         const GA_Detail& geoRef##NUM,                                                                                               \
         GOP_Manager& gop,                                                                                                           \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
-        : geoRef##NUM(reinterpret_cast<const GFE_Detail*>(&geoRef##NUM))                                                            \
+        : geoRef##NUM(reinterpret_cast<const gfe::Geometry*>(&geoRef##NUM))                                                            \
         , cookparmsRef##NUM(cookparms)                                                                                              \
         , gopRef##NUM(&gop)                                                                                                         \
         , groupParserRef##NUM(geoRef##NUM, gop, cookparms)                                                                          \
@@ -537,12 +538,12 @@ public:                                                                         
     {                                                                                                                               \
     }                                                                                                                               \
                                                                                                                                     \
-    GFE_GeoFilterRef##NUM(                                                                                                          \
+    GeoFilterRef##NUM(                                                                                                              \
         const GA_Detail* const geoRef##NUM,                                                                                         \
         GOP_Manager& gop,                                                                                                           \
         const SOP_NodeVerb::CookParms& cookparms                                                                                    \
     )                                                                                                                               \
-        : geoRef##NUM(reinterpret_cast<const GFE_Detail*>(geoRef##NUM))                                                             \
+        : geoRef##NUM(reinterpret_cast<const gfe::Geometry*>(geoRef##NUM))                                                             \
         , cookparmsRef##NUM(&cookparms)                                                                                             \
         , gopRef##NUM(&gop)                                                                                                         \
         , groupParserRef##NUM(geoRef##NUM, gop, cookparms)                                                                          \
@@ -552,14 +553,14 @@ public:                                                                         
     }                                                                                                                               \
                                                                                                                                     \
                                                                                                                                     \
-    ~GFE_GeoFilterRef##NUM()                                                                                                        \
+    ~GeoFilterRef##NUM()                                                                                                            \
     {                                                                                                                               \
     }                                                                                                                               \
                                                                                                                                     \
                                                                                                                                     \
                                                                                                                                     \
     void resetGeoFilterRef##NUM(                                                                                                    \
-        const GFE_Detail* const geoRef##NUM,                                                                                        \
+        const gfe::Geometry* const geoRef##NUM,                                                                                        \
         GOP_Manager* const gop,                                                                                                     \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
@@ -573,7 +574,7 @@ public:                                                                         
     }                                                                                                                               \
                                                                                                                                     \
     SYS_FORCE_INLINE void resetGeoFilterRef##NUM(                                                                                   \
-        const GFE_Detail& geoRef##NUM,                                                                                              \
+        const gfe::Geometry& geoRef##NUM,                                                                                              \
         GOP_Manager* const gop,                                                                                                     \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
@@ -584,24 +585,24 @@ public:                                                                         
         GOP_Manager* const gop,                                                                                                     \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
-    { resetGeoFilterRef##NUM(reinterpret_cast<const GFE_Detail*>(geoRef##NUM), gop, cookparmsRef##NUM); }                           \
+    { resetGeoFilterRef##NUM(reinterpret_cast<const gfe::Geometry*>(geoRef##NUM), gop, cookparmsRef##NUM); }                           \
                                                                                                                                     \
     SYS_FORCE_INLINE void resetGeoFilterRef##NUM(                                                                                   \
         const GA_Detail& geoRef##NUM,                                                                                               \
         GOP_Manager* const gop,                                                                                                     \
         const SOP_NodeVerb::CookParms* const cookparms = nullptr                                                                    \
     )                                                                                                                               \
-    { resetGeoFilterRef##NUM(reinterpret_cast<const GFE_Detail&>(geoRef##NUM), gop, cookparmsRef##NUM); }                           \
+    { resetGeoFilterRef##NUM(reinterpret_cast<const gfe::Geometry&>(geoRef##NUM), gop, cookparmsRef##NUM); }                           \
                                                                                                                                     \
                                                                                                                                     \
                                                                                                                                     \
-    SYS_FORCE_INLINE GFE_RefAttributeArray& getRef##NUM##AttribArray()                                                              \
+    SYS_FORCE_INLINE gfe::RefAttributeArray& getRef##NUM##AttribArray()                                                              \
     { return ref##NUM##AttribArray; }                                                                                               \
-    SYS_FORCE_INLINE GFE_RefGroupArray& getRef##NUM##GroupArray()                                                                   \
+    SYS_FORCE_INLINE gfe::RefGroupArray& getRef##NUM##GroupArray()                                                                   \
     { return ref##NUM##GroupArray; }                                                                                                \
-    SYS_FORCE_INLINE std::vector<const GA_Attribute*>& getRef##NUM##AttribArrayRef()                                              \
+    SYS_FORCE_INLINE std::vector<const GA_Attribute*>& getRef##NUM##AttribArrayRef()                                                \
     { return ref##NUM##AttribArray.ref(); }                                                                                         \
-    SYS_FORCE_INLINE std::vector<const GA_Group*>& getRef##NUM##GroupArrayRef()                                                   \
+    SYS_FORCE_INLINE std::vector<const GA_Group*>& getRef##NUM##GroupArrayRef()                                                     \
     { return ref##NUM##GroupArray.ref(); }                                                                                          \
                                                                                                                                     \
                                                                                                                                     \
@@ -613,12 +614,12 @@ public:                                                                         
                                                                                                                                     \
                                                                                                                                     \
     SYS_FORCE_INLINE void setValidPosRef##NUM##Attrib()                                                                             \
-    { posRef##NUM##Attrib = geoRef##NUM && GFE_Type::isInvalidPosAttrib(posRef##NUM##Attrib) ? geoRef##NUM->getP() : nullptr; }     \
+    { posRef##NUM##Attrib = geoRef##NUM && gfe::isInvalidPosAttrib(posRef##NUM##Attrib) ? geoRef##NUM->getP() : nullptr; }          \
                                                                                                                                     \
                                                                                                                                     \
                                                                                                                                     \
 private:                                                                                                                            \
-    SYS_FORCE_INLINE virtual void setRef##NUM##DetailBase(const GFE_Detail* const inGeo)                                            \
+    SYS_FORCE_INLINE virtual void setRef##NUM##DetailBase(const gfe::Geometry* const inGeo)                                            \
     {                                                                                                                               \
         geoRef##NUM = inGeo;                                                                                                        \
         ref##NUM##AttribArray.setDetail(inGeo);                                                                                     \
@@ -626,35 +627,35 @@ private:                                                                        
     }                                                                                                                               \
                                                                                                                                     \
     SYS_FORCE_INLINE virtual void setRef##NUM##DetailBase(const GA_Detail* const inGeo)                                             \
-    { setRef##NUM##DetailBase(reinterpret_cast<const GFE_Detail*>(inGeo)); }                                                        \
+    { setRef##NUM##DetailBase(reinterpret_cast<const gfe::Geometry*>(inGeo)); }                                                        \
                                                                                                                                     \
                                                                                                                                     \
                                                                                                                                     \
 public:                                                                                                                             \
-    GFE_GroupParser groupParserRef##NUM;                                                                                            \
+    GroupParser groupParserRef##NUM;                                                                                                \
     const GA_Attribute* posRef##NUM##Attrib = nullptr;                                                                              \
                                                                                                                                     \
 protected:                                                                                                                          \
-    const GFE_Detail* geoRef##NUM;                                                                                                  \
+    const gfe::Geometry* geoRef##NUM;                                                                                                  \
                                                                                                                                     \
 private:                                                                                                                            \
     const SOP_NodeVerb::CookParms* cookparmsRef##NUM;                                                                               \
     GOP_Manager* gopRef##NUM;                                                                                                       \
                                                                                                                                     \
                                                                                                                                     \
-    GFE_RefAttributeArray ref##NUM##AttribArray;                                                                                    \
-    GFE_RefGroupArray     ref##NUM##GroupArray;                                                                                     \
+    gfe::RefAttributeArray ref##NUM##AttribArray;                                                                                    \
+    gfe::RefGroupArray     ref##NUM##GroupArray;                                                                                     \
                                                                                                                                     \
-}; // End of class GFE_GeoFilterRef
+}; // End of class GeoFilterRef
 
 
-__GFE_GeoFilterRef_SPECILIZATION(0)
-__GFE_GeoFilterRef_SPECILIZATION(1)
-__GFE_GeoFilterRef_SPECILIZATION(2)
-__GFE_GeoFilterRef_SPECILIZATION(3)
-__GFE_GeoFilterRef_SPECILIZATION(4)
+__GeoFilterRef_SPECILIZATION(0)
+__GeoFilterRef_SPECILIZATION(1)
+__GeoFilterRef_SPECILIZATION(2)
+__GeoFilterRef_SPECILIZATION(3)
+__GeoFilterRef_SPECILIZATION(4)
         
-#undef __GFE_GeoFilterRef_SPECILIZATION
+#undef __GeoFilterRef_SPECILIZATION
 
 #endif
 
@@ -663,45 +664,45 @@ __GFE_GeoFilterRef_SPECILIZATION(4)
 
 
 
-class GFE_AttribFilter : public GFE_GeoFilter {
+class AttribFilter : public GeoFilter {
 
 public:
     
-    GFE_AttribFilter(
-        GFE_Detail* const geo,
+    AttribFilter(
+        gfe::Geometry* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
+        : GeoFilter(geo, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
     }
 
-    GFE_AttribFilter(
+    AttribFilter(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
+        : GeoFilter(geo, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
     }
 
-    GFE_AttribFilter(
+    AttribFilter(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
+        : GeoFilter(geo, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
     }
 
-    GFE_AttribFilter(
+    AttribFilter(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilter(geo, cookparms)
+        : GeoFilter(geo, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
@@ -709,48 +710,48 @@ public:
 
 
     
-    GFE_AttribFilter(
-        GFE_Detail* const geo,
+    AttribFilter(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        : GeoFilter(geo, geoSrc, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
-    GFE_AttribFilter(
+    AttribFilter(
         GA_Detail& geo,
         const GA_Detail& geoSrc,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        : GeoFilter(geo, geoSrc, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
-    GFE_AttribFilter(
+    AttribFilter(
         GA_Detail& geo,
         const GA_Detail& geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        : GeoFilter(geo, geoSrc, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
         //UT_ASSERT_MSG(geo, "do not find geo");
     }
 
-    GFE_AttribFilter(
+    AttribFilter(
         GA_Detail& geo,
         const GA_Detail* const geoSrc,
         const SOP_NodeVerb::CookParms* const cookparms
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
+        : GeoFilter(geo, geoSrc, cookparms)
         , outAttribArray(geo, cookparms)
         , outGroupArray(geo, cookparms)
     {
@@ -758,14 +759,14 @@ public:
     }
 
     
-    ~GFE_AttribFilter()
+    ~AttribFilter()
     {
     }
 
 
     virtual void reset(GA_Detail& geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
     {
-        GFE_GeoFilter::reset(geo, cookparms);
+        GeoFilter::reset(geo, cookparms);
         outAttribArray.reset(geo, cookparms);
         outGroupArray. reset(geo, cookparms);
     }
@@ -793,7 +794,7 @@ public:
     { return findOrCreateGroup(doDelGroupElement, groupType, groupName); }
 
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const bool detached, const GA_AttributeOwner attribOwner, const UT_StringRef& name = "")
-    { return findOrCreateGroup(detached, GFE_Type::attributeOwner_groupType(attribOwner), name); }
+    { return findOrCreateGroup(detached, gfe::attributeOwner_groupType(attribOwner), name); }
 
     SYS_FORCE_INLINE virtual GA_Group* findOrCreateGroup(const GA_AttributeOwner attribOwner, const UT_StringRef& name = "")
     { return findOrCreateGroup(doDelGroupElement, attribOwner, name); }
@@ -905,7 +906,7 @@ SYS_FORCE_INLINE void delOrVisualizeGroup()
     }
 #endif
     
-SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
+SYS_FORCE_INLINE AttributeArray& getOutAttribArray()
 { return outAttribArray; }
 
 
@@ -925,7 +926,7 @@ SYS_FORCE_INLINE GFE_AttributeArray& getOutAttribArray()
     }
 #endif
 
-SYS_FORCE_INLINE GFE_GroupArray& getOutGroupArray()
+SYS_FORCE_INLINE gfe::GroupArray& getOutGroupArray()
 { return outGroupArray; }
 
 SYS_FORCE_INLINE std::vector<GA_Attribute*>& getOutAttribArrayRef()
@@ -936,10 +937,10 @@ SYS_FORCE_INLINE std::vector<GA_Group*>& getOutGroupArrayRef()
 
 
 
-SYS_FORCE_INLINE const GFE_AttributeArray& getOutAttribArray() const
+SYS_FORCE_INLINE const AttributeArray& getOutAttribArray() const
 { return outAttribArray; } 
 
-SYS_FORCE_INLINE const GFE_GroupArray& getOutGroupArray() const
+SYS_FORCE_INLINE const GroupArray& getOutGroupArray() const
 { return outGroupArray; }
 
 SYS_FORCE_INLINE const std::vector<GA_Attribute*>& getOutAttribArrayRef() const
@@ -972,14 +973,11 @@ private:
     //std::vector<GA_Attribute*> attribArray;
     //std::vector<GA_GroupUPtr> groupUPtrArray;
     //std::vector<GA_Group*> groupArray;
-    GFE_AttributeArray outAttribArray;
-    GFE_GroupArray outGroupArray;
+    AttributeArray outAttribArray;
+    GroupArray outGroupArray;
 
 
-}; // End of class GFE_AttribFilter
-
-
-
+}; // End of class AttribFilter
 
 
 
@@ -996,45 +994,48 @@ private:
 
 
 
-class GFE_AttribCreateFilter : public GFE_AttribFilter {
+
+
+
+class AttribCreateFilter : public AttribFilter {
 
 public:
 
-    GFE_AttribCreateFilter(
-        GFE_Detail* const geo,
+    AttribCreateFilter(
+        gfe::Geometry* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
+        : AttribFilter(geo, cookparms)
         , inAttribArray(geo, cookparms)
         , inGroupArray(geo, cookparms)
     {
     }
 
-    GFE_AttribCreateFilter(
+    AttribCreateFilter(
         GA_Detail* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
+        : AttribFilter(geo, cookparms)
         , inAttribArray(geo, cookparms)
         , inGroupArray(geo, cookparms)
     {
     }
 
-    GFE_AttribCreateFilter(
+    AttribCreateFilter(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
+        : AttribFilter(geo, cookparms)
         , inAttribArray(geo, cookparms)
         , inGroupArray(geo, cookparms)
     {
     }
 
-    GFE_AttribCreateFilter(
+    AttribCreateFilter(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribFilter(geo, cookparms)
+        : AttribFilter(geo, cookparms)
         , inAttribArray(geo, cookparms)
         , inGroupArray(geo, cookparms)
     {
@@ -1042,7 +1043,7 @@ public:
 
 
 
-    ~GFE_AttribCreateFilter()
+    ~AttribCreateFilter()
     {
     }
 
@@ -1052,7 +1053,7 @@ public:
 
     virtual void reset(GA_Detail& geo, const SOP_NodeVerb::CookParms* const cookparms = nullptr) override
     {
-        GFE_AttribFilter::reset(geo, cookparms);
+        AttribFilter::reset(geo, cookparms);
         inAttribArray.reset(geo, cookparms);
         inGroupArray.reset(geo, cookparms);
     }
@@ -1062,10 +1063,10 @@ public:
 
 
     
-    SYS_FORCE_INLINE GFE_AttributeArray& getInAttribArray()
+    SYS_FORCE_INLINE AttributeArray& getInAttribArray()
     { return inAttribArray; }
     
-    SYS_FORCE_INLINE GFE_GroupArray& getInGroupArray()
+    SYS_FORCE_INLINE GroupArray& getInGroupArray()
     { return inGroupArray; }
     
     SYS_FORCE_INLINE std::vector<GA_Attribute*>& getInAttribArrayRef()
@@ -1074,10 +1075,10 @@ public:
     SYS_FORCE_INLINE std::vector<GA_Group*>& getInGroupArrayRef()
     { return inGroupArray.ref(); }
 
-    SYS_FORCE_INLINE const GFE_AttributeArray& getInAttribArray() const
+    SYS_FORCE_INLINE const AttributeArray& getInAttribArray() const
     { return inAttribArray; }
     
-    SYS_FORCE_INLINE const GFE_GroupArray& getInGroupArray() const
+    SYS_FORCE_INLINE const GroupArray& getInGroupArray() const
     { return inGroupArray; }
     
     SYS_FORCE_INLINE const std::vector<GA_Attribute*>& getInAttribArrayRef() const
@@ -1129,12 +1130,10 @@ private:
 private:
     bool inAttribBumpDataId = false;
     bool inGroupBumpDataId = false;
-    GFE_AttributeArray inAttribArray;
-    GFE_GroupArray inGroupArray;
+    AttributeArray inAttribArray;
+    GroupArray inGroupArray;
 
-}; // End of class GFE_AttribCreateFilter
-
-
+}; // End of class AttribCreateFilter
 
 
 
@@ -1149,407 +1148,409 @@ private:
 
 
 
-class GFE_GeoFilterWithRef0 : public GFE_GeoFilter, public GFE_GeoFilterRef0 {
+
+
+class GeoFilterWithRef0 : public GeoFilter, public GeoFilterRef0 {
 
 public:
 
-    GFE_GeoFilterWithRef0(
-        GFE_Detail* const geo,
+    GeoFilterWithRef0(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef0(
-        GFE_Detail& geo,
+    GeoFilterWithRef0(
+        gfe::Geometry& geo,
         const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef0(
+    GeoFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    GFE_GeoFilterWithRef0(
+    GeoFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef0(
+    GeoFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail& geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef0(
+    GeoFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef0(
+    GeoFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail& geoRef0,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), &cookparms)
+        : GeoFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), &cookparms)
     {
     }
 
 
     
-    GFE_GeoFilterWithRef0(
+    GeoFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoSrc,
         const GA_Detail* const geoRef0,
         const SOP_NodeVerb::CookParms* const cookparms
     )
-        : GFE_GeoFilter(geo, geoSrc, cookparms)
-        , GFE_GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
+        : GeoFilter(geo, geoSrc, cookparms)
+        , GeoFilterRef0(geoRef0, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    ~GFE_GeoFilterWithRef0()
+    ~GeoFilterWithRef0()
     {
     }
 
 
 
-}; // End of class GFE_GeoFilterWithRef0
+}; // End of class GeoFilterWithRef0
 
 
 
 
-class GFE_GeoFilterWithRef1 : public GFE_GeoFilterWithRef0, public GFE_GeoFilterRef1 {
+class GeoFilterWithRef1 : public GeoFilterWithRef0, public GeoFilterRef1 {
 
 public:
 
-    GFE_GeoFilterWithRef1(
-        GFE_Detail* const geo,
+    GeoFilterWithRef1(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef1(
-        GFE_Detail& geo,
+    GeoFilterWithRef1(
+        gfe::Geometry& geo,
         const GA_Detail* const geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef1(
+    GeoFilterWithRef1(
         GA_Detail& geo,
         const GA_Detail* const geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    GFE_GeoFilterWithRef1(
+    GeoFilterWithRef1(
         GA_Detail* const geo,
         const GA_Detail* const geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef1(
+    GeoFilterWithRef1(
         GA_Detail* const geo,
         const GA_Detail& geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef1(
+    GeoFilterWithRef1(
         GA_Detail& geo,
         const GA_Detail* const geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_GeoFilterWithRef1(
+    GeoFilterWithRef1(
         GA_Detail& geo,
         const GA_Detail& geoRef,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_GeoFilterWithRef0(geo, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
 
     
-    GFE_GeoFilterWithRef1(
+    GeoFilterWithRef1(
         GA_Detail& geo,
         const GA_Detail* const geoSrc,
         const GA_Detail* const geoRef0,
         const GA_Detail* const geoRef1,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_GeoFilterWithRef0(geo, geoSrc, geoRef0, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+        : GeoFilterWithRef0(geo, geoSrc, geoRef0, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
     
-    ~GFE_GeoFilterWithRef1()
+    ~GeoFilterWithRef1()
     {
     }
 
-}; // End of class GFE_GeoFilterWithRef1
+}; // End of class GeoFilterWithRef1
 
 
 
 
-class GFE_AttribFilterWithRef0 : public GFE_AttribFilter, public GFE_GeoFilterRef0 {
+class AttribFilterWithRef0 : public AttribFilter, public GeoFilterRef0 {
 
 public:
 
-    GFE_AttribFilterWithRef0(
-        GFE_Detail* const geo,
+    AttribFilterWithRef0(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef0(
-        GFE_Detail& geo,
+    AttribFilterWithRef0(
+        gfe::Geometry& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef0(
+    AttribFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    GFE_AttribFilterWithRef0(
+    AttribFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef0(
+    AttribFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef0(
+    AttribFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef0(
+    AttribFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), &cookparms)
+        : AttribFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), &cookparms)
     {
     }
 
 
-    ~GFE_AttribFilterWithRef0()
+    ~AttribFilterWithRef0()
     {
     }
 
 
 
-}; // End of class GFE_AttribFilterWithRef0
+}; // End of class AttribFilterWithRef0
 
 
 
 
 
-class GFE_AttribCreateFilterWithRef0 : public GFE_AttribCreateFilter, public GFE_GeoFilterRef0 {
+class AttribCreateFilterWithRef0 : public AttribCreateFilter, public GeoFilterRef0 {
 
 public:
 
-    GFE_AttribCreateFilterWithRef0(
-        GFE_Detail* const geo,
+    AttribCreateFilterWithRef0(
+        gfe::Geometry* const geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(reinterpret_cast<const GA_Detail*>(nullptr), groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(reinterpret_cast<const GA_Detail*>(nullptr), groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(reinterpret_cast<const GA_Detail*>(nullptr), groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(reinterpret_cast<const GA_Detail*>(nullptr), groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(nullptr, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(nullptr, groupParser.getGOPRef(), cookparms)
     {
     }
 
     
-    GFE_AttribCreateFilterWithRef0(
-        GFE_Detail* const geo,
+    AttribCreateFilterWithRef0(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
-        GFE_Detail& geo,
+    AttribCreateFilterWithRef0(
+        gfe::Geometry& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail* const geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribCreateFilterWithRef0(
+    AttribCreateFilterWithRef0(
         GA_Detail& geo,
         const GA_Detail& geoRef,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribCreateFilter(geo, cookparms)
-        , GFE_GeoFilterRef0(geoRef, groupParser.getGOPRef(), &cookparms)
+        : AttribCreateFilter(geo, cookparms)
+        , GeoFilterRef0(geoRef, groupParser.getGOPRef(), &cookparms)
     {
     }
 
 
-    ~GFE_AttribCreateFilterWithRef0()
+    ~AttribCreateFilterWithRef0()
     {
     }
 
@@ -1562,7 +1563,7 @@ public:
             getInAttribArray().appends(attribClass, attribPattern);
     }
 
-}; // End of class GFE_AttribCreateFilterWithRef0
+}; // End of class AttribCreateFilterWithRef0
 
 
 
@@ -1579,200 +1580,200 @@ public:
 
 
 
-class GFE_AttribFilterWithRef1 : public GFE_AttribFilterWithRef0, public GFE_GeoFilterRef1 {
-
-public:
-
-    GFE_AttribFilterWithRef1(
-        GFE_Detail* const geo,
-        const GA_Detail* const geoRef,
-        const GA_Detail* const geoRef1,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
-    GFE_AttribFilterWithRef1(
-        GFE_Detail& geo,
-        const GA_Detail* const geoRef,
-        const GA_Detail* const geoRef1,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
-    GFE_AttribFilterWithRef1(
-        GA_Detail& geo,
-        const GA_Detail* const geoRef,
-        const GA_Detail* const geoRef1,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
-
-    GFE_AttribFilterWithRef1(
-        GA_Detail* const geo,
-        const GA_Detail* const geoRef,
-        const GA_Detail* const geoRef1,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
-    GFE_AttribFilterWithRef1(
-        GA_Detail* const geo,
-        const GA_Detail& geoRef,
-        const GA_Detail& geoRef1,
-        const SOP_NodeVerb::CookParms* const cookparms = nullptr
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
-    GFE_AttribFilterWithRef1(
-        GA_Detail& geo,
-        const GA_Detail* const geoRef,
-        const GA_Detail* const geoRef1,
-        const SOP_NodeVerb::CookParms& cookparms
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
-    {
-    }
-
-    GFE_AttribFilterWithRef1(
-        GA_Detail& geo,
-        const GA_Detail& geoRef,
-        const GA_Detail& geoRef1,
-        const SOP_NodeVerb::CookParms& cookparms
-    )
-        : GFE_AttribFilterWithRef0(geo, geoRef, cookparms)
-        , GFE_GeoFilterRef1(geoRef1, groupParser.getGOPRef(), &cookparms)
-    {
-    }
-
-
-    ~GFE_AttribFilterWithRef1()
-    {
-    }
-
-
-
-}; // End of class GFE_AttribFilterWithRef1
-
-
-
-
-
-
-class GFE_AttribFilterWithRef2 : public GFE_AttribFilterWithRef1, public GFE_GeoFilterRef2 {
+class AttribFilterWithRef1 : public AttribFilterWithRef0, public GeoFilterRef1 {
 
 public:
 
-    GFE_AttribFilterWithRef2(
-        GFE_Detail* const geo,
+    AttribFilterWithRef1(
+        gfe::Geometry* const geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    AttribFilterWithRef1(
+        gfe::Geometry& geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    AttribFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+
+    AttribFilterWithRef1(
+        GA_Detail* const geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    AttribFilterWithRef1(
+        GA_Detail* const geo,
+        const GA_Detail& geoRef,
+        const GA_Detail& geoRef1,
+        const SOP_NodeVerb::CookParms* const cookparms = nullptr
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    AttribFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail* const geoRef,
+        const GA_Detail* const geoRef1,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), cookparms)
+    {
+    }
+
+    AttribFilterWithRef1(
+        GA_Detail& geo,
+        const GA_Detail& geoRef,
+        const GA_Detail& geoRef1,
+        const SOP_NodeVerb::CookParms& cookparms
+    )
+        : AttribFilterWithRef0(geo, geoRef, cookparms)
+        , GeoFilterRef1(geoRef1, groupParser.getGOPRef(), &cookparms)
+    {
+    }
+
+
+    ~AttribFilterWithRef1()
+    {
+    }
+
+
+
+}; // End of class AttribFilterWithRef1
+
+
+
+
+
+
+class AttribFilterWithRef2 : public AttribFilterWithRef1, public GeoFilterRef2 {
+
+public:
+
+    AttribFilterWithRef2(
+        gfe::Geometry* const geo,
         const GA_Detail* const geoRef,
         const GA_Detail* const geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef2(
-        GFE_Detail& geo,
+    AttribFilterWithRef2(
+        gfe::Geometry& geo,
         const GA_Detail* const geoRef,
         const GA_Detail* const geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef2(
+    AttribFilterWithRef2(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const GA_Detail* const geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
     {
     }
 
 
-    GFE_AttribFilterWithRef2(
+    AttribFilterWithRef2(
         GA_Detail* const geo,
         const GA_Detail* const geoRef,
         const GA_Detail* const geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef2(
+    AttribFilterWithRef2(
         GA_Detail* const geo,
         const GA_Detail& geoRef,
         const GA_Detail& geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms* const cookparms = nullptr
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef2(
+    AttribFilterWithRef2(
         GA_Detail& geo,
         const GA_Detail* const geoRef,
         const GA_Detail* const geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), cookparms)
     {
     }
 
-    GFE_AttribFilterWithRef2(
+    AttribFilterWithRef2(
         GA_Detail& geo,
         const GA_Detail& geoRef,
         const GA_Detail& geoRef1,
         const GA_Detail* const geoRef2,
         const SOP_NodeVerb::CookParms& cookparms
     )
-        : GFE_AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
-        , GFE_GeoFilterRef2(geoRef2, groupParser.getGOPRef(), &cookparms)
+        : AttribFilterWithRef1(geo, geoRef, geoRef1, cookparms)
+        , GeoFilterRef2(geoRef2, groupParser.getGOPRef(), &cookparms)
     {
     }
 
 
-    ~GFE_AttribFilterWithRef2()
+    ~AttribFilterWithRef2()
     {
     }
 
 
-
-}; // End of class GFE_AttribFilterWithRef2
-
+}; // End of class AttribFilterWithRef2
 
 
+
+_GFE_END
 #endif

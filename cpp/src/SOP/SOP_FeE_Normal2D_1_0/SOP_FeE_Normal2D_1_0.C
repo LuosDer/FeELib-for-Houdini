@@ -6,13 +6,8 @@
 #include "SOP_FeE_Normal2D_1_0.proto.h"
 
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
 
-
-#include "GFE/GFE_Normal2D.h"
+#include <GFE/GFE_Normal2D.h>
 
 
 
@@ -21,7 +16,7 @@ using namespace SOP_FeE_Normal2D_1_0_Namespace;
 
 
 
-static const char *theDsFile = R"THEDSFILE(
+static const char *SOP_FeE_Normal2D_1_0_theDsFile = R"THEDSFILE(
 {
     name        parameters
     parm {
@@ -215,7 +210,7 @@ static const char *theDsFile = R"THEDSFILE(
 PRM_Template*
 SOP_FeE_Normal2D_1_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_Normal2D_1_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_Normal2D_1_0.C"_sh, SOP_FeE_Normal2D_1_0_theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
@@ -226,13 +221,14 @@ SOP_FeE_Normal2D_1_0::buildTemplates()
 }
 
 
-const UT_StringHolder SOP_FeE_Normal2D_1_0::theSOPTypeName("FeE::normal2d::1.0"_sh);
+//const UT_StringHolder SOP_FeE_Normal2D_1_0::theSOPTypeName("FeE::normal2d::1.0"_sh);
 
 void
 newSopOperator(OP_OperatorTable* table)
 {
     OP_Operator* newOp = new OP_Operator(
-        SOP_FeE_Normal2D_1_0::theSOPTypeName,
+        "FeE::normal2d::1.0",
+        //SOP_FeE_Normal2D_1_0::theSOPTypeName,
         "FeE Normal 2D",
         SOP_FeE_Normal2D_1_0::myConstructor,
         SOP_FeE_Normal2D_1_0::buildTemplates(),
@@ -358,7 +354,7 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     //outGeo0.replaceWith(inGeo0);
 
     const UT_StringHolder& normal2DAttribName = sopparms.getNormal2DAttribName();
-    if (!normal2DAttribName.isstring() || normal2DAttribName.length() == 0)
+    if (GFE_Type::!normal2DAttribName.isstring() || normal2DAttribName.length() == 0)
         return;
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
@@ -369,50 +365,30 @@ SOP_FeE_Normal2D_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
 
     
-/*
 
-            GFE_Normal2D normal2D(geo, cookparms);
-            normal2D.groupParser.setGroup(groupParser);
-            normal2D.setPositionAttrib(posAttrib);
-            normal2D.setNormal2DAttrib(true);
-            //const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
-            //const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
-            //const bool copyOrigIfZero = false;
-            //normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
-            normal2D.defaultNormal3D = {0,1,0};
-            if (!sopparms.getUseConstantNormal3D())
-                normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
-                    geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());
-            normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
-                sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend());
-            normal2D.compute();
-            
-
- */
-    
-
-    GFE_Normal2D normal2D(outGeo0, &cookparms);
+    gfe::GFE_Normal2D normal2D(outGeo0, &cookparms);
     normal2D.groupParser.setGroup(groupType, sopparms.getGroup());
     
-    normal2D.setPositionAttrib(sopparms.getPosAttrib());
-    
-    normal2D.setNormal2DAttrib(false, sopparms.getNormal2DAttribName());
+    normal2D.setComputeParm(sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
+    normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns());
+    normal2D.setComputeParm(sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend());
 
+    
+    normal2D.setPositionAttrib(sopparms.getPosAttrib());
+    normal2D.setNormal2DAttrib(false, sopparms.getNormal2DAttribName());
     
     const float cuspAngleDegrees = GEO_DEFAULT_ADJUSTED_CUSP_ANGLE;
     const GEO_NormalMethod method = GEO_NormalMethod::ANGLE_WEIGHTED;
     const bool copyOrigIfZero = false;
     normal2D.normal3D.setComputeParm(cuspAngleDegrees, method, copyOrigIfZero);
     normal2D.defaultNormal3D = sopparms.getDefaultNormal3D();
+    
     if (!sopparms.getUseConstantNormal3D())
         normal2D.findOrCreateNormal3D(sopparms.getFindNormal3D(), sopparms.getAddNormal3DIfNoFind(),
             geo0Normal3DSearchOrder, sopparms.getNormal3DAttrib());
     
     
-    normal2D.setComputeParm(sopparms.getExtrapolateEnds(), sopparms.getScaleByTurns(),
-        sopparms.getNormalize(), sopparms.getUniScale(), sopparms.getBlend(),
-        sopparms.getSubscribeRatio(), sopparms.getMinGrainSize());
-
+    
     normal2D.computeAndBumpDataId();
     normal2D.visualizeOutGroup();
 }

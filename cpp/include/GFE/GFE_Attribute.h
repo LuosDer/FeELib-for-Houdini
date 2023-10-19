@@ -4,27 +4,34 @@
 #ifndef __GFE_Attribute_h__
 #define __GFE_Attribute_h__
 
-#include "GFE_Math.h"
-#include "GFE/GFE_Attribute.h"
+#include <GFE/GFE_Attribute.h>
 
 
 
 
-#include "GA/GA_Detail.h"
-#include "GA/GA_SplittableRange.h" // SOP_FeE_HasGroup_1_0 can not compile without this header
+#include <GA/GA_Detail.h>
+#include <GA/GA_SplittableRange.h> // SOP_FeE_HasGroup_1_0 can not compile without this header
 
-#include "GA/GA_PageHandle.h" 
-#include "GA/GA_PageIterator.h" // SOP_FeE_HasGroup_1_0 can not compile without this header
-
-
-#include "GA/GA_AttributeFilter.h"
+#include <GA/GA_PageHandle.h> 
+#include <GA/GA_PageIterator.h> // SOP_FeE_HasGroup_1_0 can not compile without this header
 
 
+#include <GA/GA_AttributeFilter.h>
 
-#include "GFE/GFE_Type.h"
 
 
-enum class GFE_PieceAttribSearchOrder
+#include <GFE/Math.h>
+#include <GFE/Type.h>
+
+
+_GFE_BEGIN
+
+
+
+namespace Attribute {
+
+    
+enum class PieceAttribSearchOrder
 {
     Primitive,
     Point,
@@ -36,7 +43,7 @@ enum class GFE_PieceAttribSearchOrder
 };
 
 
-enum class GFE_NormalSearchOrder
+enum class NormalSearchOrder
 {
     Primitive,
     Point,
@@ -52,11 +59,6 @@ enum class GFE_NormalSearchOrder
 
 
 
-
-
-namespace GFE_Attribute {
-
-    
 
 template<typename FLOAT_T>
 static void accumulateT(GA_Attribute& attrib, const GA_SplittableRange& r)
@@ -118,7 +120,7 @@ static void computeIndexAttrib(GA_Attribute& attrib, const GA_SplittableRange* c
     
 static GA_AttributeUPtr createDetachedIndexAttrib(GA_Detail& geo, const GA_AttributeOwner owner, const GA_SplittableRange* const srange = nullptr, const GA_Index startIndex = 0)
 {
-    //GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, GFE_Type::getPreferredStorageI(geo), 1, GA_Defaults(GFE_INVALID_OFFSET));
+    //GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, gfe::Type::getPreferredStorageI(geo), 1, GA_Defaults(GFE_INVALID_OFFSET));
     GA_AttributeUPtr attribUPtr = geo.createDetachedTupleAttribute(owner, GA_STORE_INT64, 1, GA_Defaults(GFE_INVALID_OFFSET64));
     computeIndexAttrib(*attribUPtr.get(), srange, startIndex);
     return attribUPtr;
@@ -529,7 +531,7 @@ SYS_FORCE_INLINE static GA_Storage getStorage(const GA_Attribute* const attrib)
 
 
 SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute& attrib)
-{ return GFE_Type::precisionFromStorage(getStorage(attrib)); }
+{ return gfe::Type::precisionFromStorage(getStorage(attrib)); }
     
 SYS_FORCE_INLINE static GA_Precision getPrecision(const GA_Attribute* const attrib)
 { UT_ASSERT_P(attrib); return getPrecision(*attrib); }
@@ -972,7 +974,7 @@ findOrCreateUVAttributePointVertex(
     }
     if (!uvAttribPtr)
     {
-        const GA_Storage finalStorageF = storage == GA_STORE_INVALID ? GFE_Type::getPreferredStorageF(geo) : storage;
+        const GA_Storage finalStorageF = storage == GA_STORE_INVALID ? gfe::Type::getPreferredStorageF(geo) : storage;
 #if 1
         uvAttribPtr = static_cast<GEO_Detail&>(geo).addTextureAttribute(uvAttribClass == GA_ATTRIB_POINT ? GA_ATTRIB_POINT : GA_ATTRIB_VERTEX, finalStorageF);
 #else
@@ -1170,19 +1172,19 @@ private:
     template<typename _Ty, bool _Min, bool _Max, bool _MinElemoff = false, bool _MaxElemoff = false>
     class ComputeAttribExtremum
     {
-    using value_type = typename GFE_Type::get_value_type_t<_Ty>;
+    using value_type = typename gfe::Type::get_value_type_t<_Ty>;
     public:
         ComputeAttribExtremum(const GA_Attribute* const attrib)
             : myAttrib(attrib)
-            //, myMin(GFE_Type::numeric_limits<_Ty>::max())
-            //, myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            //, myMin(gfe::Type::numeric_limits<_Ty>::max())
+            //, myMax(gfe::Type::numeric_limits<_Ty>::lowest())
             //, myMinElemoff(GFE_INVALID_OFFSET)
             //, myMaxElemoff(GFE_INVALID_OFFSET)
         {}
         ComputeAttribExtremum(ComputeAttribExtremum& src, UT_Split)
             : myAttrib(src.myAttrib)
-            //, myMin(GFE_Type::numeric_limits<_Ty>::max())
-            //, myMax(GFE_Type::numeric_limits<_Ty>::lowest())
+            //, myMin(gfe::Type::numeric_limits<_Ty>::max())
+            //, myMax(gfe::Type::numeric_limits<_Ty>::lowest())
             //, myMinElemoff(GFE_INVALID_OFFSET)
             //, myMaxElemoff(GFE_INVALID_OFFSET)
         {}
@@ -1290,8 +1292,8 @@ private:
         SYS_FORCE_INLINE GA_Offset getMaxElemoff() const
         { return myMaxElemoff; }
     private:
-        value_type myMin = GFE_Type::numeric_limits<_Ty>::max();
-        value_type myMax = GFE_Type::numeric_limits<_Ty>::lowest();
+        value_type myMin = gfe::Type::numeric_limits<_Ty>::max();
+        value_type myMax = gfe::Type::numeric_limits<_Ty>::lowest();
         GA_Offset myMinElemoff = GFE_INVALID_OFFSET;
         GA_Offset myMaxElemoff = GFE_INVALID_OFFSET;
         const GA_Attribute* const myAttrib;
@@ -1302,7 +1304,7 @@ private:
     
 
     template<typename _Ty>
-    _Ty computeAttribMin(
+    typename gfe::Type::get_value_type_t<_Ty> computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
@@ -1315,7 +1317,7 @@ private:
     }
     
     template<typename _Ty>
-    _Ty computeAttribMax(
+    typename gfe::Type::get_value_type_t<_Ty> computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
         const exint subscribeRatio = 64,
@@ -1331,8 +1333,8 @@ private:
     void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        _Ty& min,
-        _Ty& max,
+        typename gfe::Type::get_value_type_t<_Ty>& min,
+        typename gfe::Type::get_value_type_t<_Ty>& max,
         const exint subscribeRatio = 64,
         const exint minGrainSize   = 1024
     )
@@ -1348,8 +1350,8 @@ private:
     static void computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_SplittableRange& splittableRange,
-        _Ty& min,
-        _Ty& max,
+        typename gfe::Type::get_value_type_t<_Ty>& min,
+        typename gfe::Type::get_value_type_t<_Ty>& max,
         GA_Offset& minElemoff,
         GA_Offset& maxElemoff,
         const exint subscribeRatio = 64,
@@ -1365,7 +1367,7 @@ private:
     }
     
     template<typename _Ty>
-    SYS_FORCE_INLINE _Ty computeAttribMin(
+    SYS_FORCE_INLINE typename gfe::Type::get_value_type_t<_Ty> computeAttribMin(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1375,7 +1377,7 @@ private:
         return computeAttribMin<_Ty>(attrib, GA_SplittableRange(GA_Range(attrib->getIndexMap(), group)), subscribeRatio, minGrainSize);
     }
     template<typename _Ty>
-    SYS_FORCE_INLINE _Ty computeAttribMax(
+    SYS_FORCE_INLINE typename gfe::Type::get_value_type_t<_Ty> computeAttribMax(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1386,7 +1388,7 @@ private:
     }
 
     template<typename _Ty>
-    SYS_FORCE_INLINE _Ty computeAttribExtremum(
+    SYS_FORCE_INLINE typename gfe::Type::get_value_type_t<_Ty> computeAttribExtremum(
         const GA_Attribute* const attrib,
         const GA_ElementGroup* const group = nullptr,
         const exint subscribeRatio = 64,
@@ -1401,6 +1403,17 @@ private:
 
 
     
-} // End of namespace GFE_Attribute
+} // End of namespace Attribute
+
+
+
+
+
+_GFE_END
+
+
+
+
+
 
 #endif

@@ -1,22 +1,11 @@
 
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_Carve_1_0.h"
-
-
 #include "SOP_FeE_Carve_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-#include "GFE/GFE_Carve.h"
-
+#include <GFE/GFE_Carve.h>
 
 using namespace SOP_FeE_Carve_1_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -517,7 +506,7 @@ SOP_FeE_Carve_1_0::cookVerb() const
  
 
 static GA_GroupType
-sopGroupType(SOP_FeE_Carve_1_0Parms::GroupType parmGroupType)
+sopGroupType(const SOP_FeE_Carve_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_Carve_1_0Enums;
     switch (parmGroupType)
@@ -534,7 +523,7 @@ sopGroupType(SOP_FeE_Carve_1_0Parms::GroupType parmGroupType)
 
 
 static GFE_CarveSpace
-sopCarveSpace(SOP_FeE_Carve_1_0Parms::CarveSpace parmCarveSpace)
+sopCarveSpace(const SOP_FeE_Carve_1_0Parms::CarveSpace parmCarveSpace)
 {
     using namespace SOP_FeE_Carve_1_0Enums;
     switch (parmCarveSpace)
@@ -568,7 +557,7 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     if (boss.wasInterrupted())
         return;
     
-    GFE_Carve carve(outGeo0, &cookparms);
+    _gfel::Carve carve(outGeo0, &cookparms);
     
 
     carve.setComputeParm(carveSpace,
@@ -612,8 +601,6 @@ SOP_FeE_Carve_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookparms) const
     carve.computeAndBumpDataIdsForAddOrRemove();
 
     carve.visualizeOutGroup();
-    
-
 
 }
 

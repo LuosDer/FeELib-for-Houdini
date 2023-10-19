@@ -1,21 +1,11 @@
 
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_OffsetAttribToIndex_1_0.h"
-
 #include "SOP_FeE_OffsetAttribToIndex_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-#include "GFE/GFE_OffsetAttributeToIndex.h"
-
-
+#include <GFE/GFE_OffsetAttributeToIndex.h>
 
 using namespace SOP_FeE_OffsetAttribToIndex_1_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -204,18 +194,10 @@ SOP_FeE_OffsetAttribToIndex_1_0Verb::cook(const SOP_NodeVerb::CookParms& cookpar
     //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
     //outGeo0.replaceWith(inGeo0);
-
-    
-/*
-    GFE_OffsetAttribToIndex offsetAttribToIndex(geo, cookparms);
-    offsetAttribToIndex.offsetToIndex = true;
-    offsetAttribToIndex.getOutAttribArray().appends(GA_ATTRIB_PRIMITIVE, );
-    offsetAttribToIndex.compute();
-*/
     
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
     
-    GFE_OffsetAttribToIndex offsetAttribToIndex(outGeo0, cookparms);
+    gfe::OffsetAttribToIndex offsetAttribToIndex(outGeo0, cookparms);
 
     offsetAttribToIndex.groupParser.setGroup(groupType, sopparms.getGroup());
     

@@ -21,7 +21,7 @@ using namespace SOP_FeE_AttribCopy_4_0_Namespace;
 
 
 
-static const char *theDsFile = R"THEDSFILE(
+static const char *SOP_FeE_AttribCopy_4_0_theDsFile = R"THEDSFILE(
 {
     name        parameters
 
@@ -242,7 +242,7 @@ static const char *theDsFile = R"THEDSFILE(
 PRM_Template*
 SOP_FeE_AttribCopy_4_0::buildTemplates()
 {
-    static PRM_TemplateBuilder templ("SOP_FeE_AttribCopy_4_0.C"_sh, theDsFile);
+    static PRM_TemplateBuilder templ("SOP_FeE_AttribCopy_4_0.C"_sh, SOP_FeE_AttribCopy_4_0_theDsFile);
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh,          &SOP_Node::allGroupMenu);
@@ -301,7 +301,7 @@ public:
     //virtual SOP_NodeCache* allocCache() const { return new SOP_FeE_AttribCopy_4_0Cache(); }
     virtual UT_StringHolder name() const { return SOP_FeE_AttribCopy_4_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
 
@@ -319,10 +319,10 @@ SOP_FeE_AttribCopy_4_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribCopy_4_0Parms::DestinationClass attribClass)
+sopAttribOwner(const SOP_FeE_AttribCopy_4_0Parms::DestinationClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribCopy_4_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case DestinationClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case DestinationClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -334,10 +334,10 @@ sopAttribOwner(SOP_FeE_AttribCopy_4_0Parms::DestinationClass attribClass)
 }
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_AttribCopy_4_0Parms::SourceClass attribClass)
+sopAttribOwner(const SOP_FeE_AttribCopy_4_0Parms::SourceClass parmAttribClass)
 {
     using namespace SOP_FeE_AttribCopy_4_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case SourceClass::PRIM:      return GA_ATTRIB_PRIMITIVE;  break;
     case SourceClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -349,10 +349,10 @@ sopAttribOwner(SOP_FeE_AttribCopy_4_0Parms::SourceClass attribClass)
 }
 
 static bool
-sopIDAttribInput(SOP_FeE_AttribCopy_4_0Parms::IDAttribInput iDAttribInput)
+sopIDAttribInput(const SOP_FeE_AttribCopy_4_0Parms::IDAttribInput parmIDAttribInput)
 {
     using namespace SOP_FeE_AttribCopy_4_0Enums;
-    switch (iDAttribInput)
+    switch (parmIDAttribInput)
     {
     case IDAttribInput::SOURCE:          return false;     break;
     case IDAttribInput::DESTINATION:     return true;      break;
@@ -362,10 +362,10 @@ sopIDAttribInput(SOP_FeE_AttribCopy_4_0Parms::IDAttribInput iDAttribInput)
 }
 
 static GFE_AttribMergeType
-sopAttribMergeType(SOP_FeE_AttribCopy_4_0Parms::AttribMergeType attribMergeType)
+sopAttribMergeType(const SOP_FeE_AttribCopy_4_0Parms::AttribMergeType parmAttribMergeType)
 {
     using namespace SOP_FeE_AttribCopy_4_0Enums;
-    switch (attribMergeType)
+    switch (parmAttribMergeType)
     {
     case AttribMergeType::SET:          return GFE_AttribMergeType::Set;        break;
     case AttribMergeType::ADD:          return GFE_AttribMergeType::Add;        break;
@@ -390,10 +390,10 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_AttribCopy_4_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
     const GA_Detail& inGeo1 = *cookparms.inputGeo(1);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
     
     
     const GA_AttributeOwner sourceClass = sopAttribOwner(sopparms.getSourceClass());
@@ -406,25 +406,6 @@ SOP_FeE_AttribCopy_4_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     if (boss.wasInterrupted())
         return;
 
-/*
-
-    
-    GFE_AttribCopy attribCopy(geo, geoTmp, cookparms);
-    attribCopy.ownerSrc = GA_ATTRIB_PRIMITIVE;
-    attribCopy.ownerDst = GA_ATTRIB_POINT;
-    attribCopy.attribMergeType = GFE_AttribMergeType::Set;
-    attribCopy.iDAttribInput = true;
-    attribCopy.setOffsetAttrib(*srcElemoffAttrib, true);
-    
-    attribCopy.getRef0GroupArray ().appends(attribCopy.ownerSrc, pattern);
-    attribCopy.getRef0AttribArray().appends(attribCopy.ownerSrc, pattern);
-    attribCopy.appendGroups ("*");
-    attribCopy.appendAttribs("*");
-    
-    attribCopy.compute();
- 
- */
-    
     GFE_AttribCopy attribCopy(outGeo0, &inGeo1, &cookparms);
 
     attribCopy.ownerDst = destinationClass;

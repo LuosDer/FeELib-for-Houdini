@@ -1,25 +1,11 @@
 
 //#define UT_ASSERT_LEVEL 3
 #include "SOP_FeE_UVGridify_1_0.h"
-
-
 #include "SOP_FeE_UVGridify_1_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-
-#include "GFE/GFE_UVGridify.h"
-
-
-
+#include <GFE/GFE_UVGridify.h>
 
 using namespace SOP_FeE_UVGridify_1_0_Namespace;
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -180,7 +166,7 @@ public:
     virtual SOP_NodeParms *allocParms() const { return new SOP_FeE_UVGridify_1_0Parms(); }
     virtual UT_StringHolder name() const { return SOP_FeE_UVGridify_1_0::theSOPTypeName; }
 
-    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_GENERIC; }
+    virtual CookMode cookMode(const SOP_NodeParms *parms) const { return COOK_INPLACE; }
 
     virtual void cook(const CookParms &cookparms) const;
     
@@ -203,10 +189,10 @@ SOP_FeE_UVGridify_1_0::cookVerb() const
 
 
 static GA_AttributeOwner
-sopAttribOwner(SOP_FeE_UVGridify_1_0Parms::UVAttribClass attribClass)
+sopAttribOwner(const SOP_FeE_UVGridify_1_0Parms::UVAttribClass parmAttribClass)
 {
     using namespace SOP_FeE_UVGridify_1_0Enums;
-    switch (attribClass)
+    switch (parmAttribClass)
     {
     case UVAttribClass::AUTO:      return GA_ATTRIB_INVALID;    break;//not detail but means Auto
     case UVAttribClass::POINT:     return GA_ATTRIB_POINT;      break;
@@ -217,26 +203,26 @@ sopAttribOwner(SOP_FeE_UVGridify_1_0Parms::UVAttribClass attribClass)
 }
 
 
-static GFE_UVGridify_RowColMethod
-sopRowsOrColsNumMethod(SOP_FeE_UVGridify_1_0Parms::RowsOrColsNumMethod parmgrouptype)
+static _gfel::UVGridify::RowColMethod
+sopRowsOrColsNumMethod(const SOP_FeE_UVGridify_1_0Parms::RowsOrColsNumMethod parmRowsOrColsNumMethod)
 {
     using namespace SOP_FeE_UVGridify_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmRowsOrColsNumMethod)
     {
-    case RowsOrColsNumMethod::UNIFORM:     return GFE_UVGridify_RowColMethod::Uniform;    break;
-    case RowsOrColsNumMethod::ROWS:        return GFE_UVGridify_RowColMethod::Rows;       break;
-    case RowsOrColsNumMethod::COLS:        return GFE_UVGridify_RowColMethod::Columns;    break;
+    case RowsOrColsNumMethod::UNIFORM:     return _gfel::UVGridify::RowColMethod::Uniform;    break;
+    case RowsOrColsNumMethod::ROWS:        return _gfel::UVGridify::RowColMethod::Rows;       break;
+    case RowsOrColsNumMethod::COLS:        return _gfel::UVGridify::RowColMethod::Columns;    break;
     }
     UT_ASSERT_MSG(0, "Unhandled UVGridify Rows Or Cols Num Method!");
-    return GFE_UVGridify_RowColMethod::Uniform;
+    return _gfel::UVGridify::RowColMethod::Uniform;
 }
 
 
 static GA_GroupType
-sopGroupType(SOP_FeE_UVGridify_1_0Parms::GroupType parmgrouptype)
+sopGroupType(const SOP_FeE_UVGridify_1_0Parms::GroupType parmGroupType)
 {
     using namespace SOP_FeE_UVGridify_1_0Enums;
-    switch (parmgrouptype)
+    switch (parmGroupType)
     {
     case GroupType::GUESS:     return GA_GROUP_INVALID;    break;
     case GroupType::PRIM:      return GA_GROUP_PRIMITIVE;  break;
@@ -244,7 +230,7 @@ sopGroupType(SOP_FeE_UVGridify_1_0Parms::GroupType parmgrouptype)
     case GroupType::VERTEX:    return GA_GROUP_VERTEX;     break;
     case GroupType::EDGE:      return GA_GROUP_EDGE;       break;
     }
-    UT_ASSERT_MSG(0, "Unhandled geo0Group type!");
+    UT_ASSERT_MSG(0, "Unhandled Group Type!");
     return GA_GROUP_INVALID;
 }
 
@@ -256,15 +242,15 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
     GA_Detail& outGeo0 = *cookparms.gdh().gdpNC();
     //auto sopcache = (SOP_FeE_UVGridify_1_0Cache*)cookparms.cache();
 
-    const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
+    //const GA_Detail& inGeo0 = *cookparms.inputGeo(0);
 
-    outGeo0.replaceWith(inGeo0);
+    //outGeo0.replaceWith(inGeo0);
 
 
     const GA_GroupType groupType = sopGroupType(sopparms.getGroupType());
 
     const GA_AttributeOwner uvAttribClass = sopAttribOwner(sopparms.getUVAttribClass());
-    const GFE_UVGridify_RowColMethod rowsOrColsNumMethod = sopRowsOrColsNumMethod(sopparms.getRowsOrColsNumMethod());
+    const _gfel::UVGridify::RowColMethod rowsOrColsNumMethod = sopRowsOrColsNumMethod(sopparms.getRowsOrColsNumMethod());
     
 
     UT_AutoInterrupt boss("Processing");
@@ -272,7 +258,7 @@ SOP_FeE_UVGridify_1_0Verb::cook(const SOP_NodeVerb::CookParms &cookparms) const
         return;
     
 
-    GFE_UVGridify uvGridify(outGeo0, cookparms);
+    _gfel::UVGridify uvGridify(outGeo0, cookparms);
     uvGridify.groupParser.setGroup(groupType, sopparms.getGroup());
     uvGridify.getOutAttribArray().findOrCreateUV(false, uvAttribClass, GA_STORE_INVALID, sopparms.getUVAttrib());
     uvGridify.setComputeParm(

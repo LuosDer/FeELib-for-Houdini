@@ -1,28 +1,12 @@
 
 //#define UT_ASSERT_LEVEL 3
+
 #include "SOP_FeE_UVScaletoWorldSize_3_0.h"
-
-
 #include "SOP_FeE_UVScaletoWorldSize_3_0.proto.h"
 
-#include "GA/GA_Detail.h"
-#include "PRM/PRM_TemplateBuilder.h"
-#include "UT/UT_Interrupt.h"
-#include "UT/UT_DSOVersion.h"
-
-
-
-
-#include "GFE/GFE_UVScaletoWorldSize.h"
-
-
-
-
-
+#include <GFE/GFE_UVScaletoWorldSize.h>
 
 using namespace SOP_FeE_UVScaletoWorldSize_3_0_Namespace;
-
-
 
 static const char *theDsFile = R"THEDSFILE(
 {
@@ -68,9 +52,9 @@ static const char *theDsFile = R"THEDSFILE(
         }
     }
     parm {
-        name    "uvAttribName"
-        cppname "UVAttribName"
-        label   "UV Attribute Name"
+        name    "uvAttrib"
+        cppname "UVAttrib"
+        label   "UV Attribute"
         type    string
         default { "uv" }
     }
@@ -224,7 +208,7 @@ SOP_FeE_UVScaletoWorldSize_3_0::buildTemplates()
     if (templ.justBuilt())
     {
         templ.setChoiceListPtr("group"_sh, &SOP_Node::allGroupMenu);
-        templ.setChoiceListPtr("uvAttribName"_sh, &SOP_Node::allAttribReplaceMenu);
+        templ.setChoiceListPtr("uvAttrib"_sh, &SOP_Node::allAttribReplaceMenu);
     }
     return templ.templates();
 }
@@ -346,8 +330,8 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     if (!doUVScalex && !doUVScaley && !doUVScalez)
         return;
 
-    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttribNames();
-    if (!geo0AttribNames.isstring())
+    const UT_StringHolder& geo0AttribNames = sopparms.getUVAttrib();
+    if (GFE_Type::isInvalid(geo0AttribNames))
         return;
 
     UT_AutoInterrupt boss("Processing");
@@ -376,8 +360,7 @@ SOP_FeE_UVScaletoWorldSize_3_0Verb::cook(const SOP_NodeVerb::CookParms &cookparm
     const fpreal uvSplitDistThreshold = sopparms.getUVSplitDistThreshold();
 
 
-    GFE_UVScaletoWorldSize uvScaletoWorldSize(outGeo0, cookparms);
-
+    gfe::UVScaletoWorldSize uvScaletoWorldSize(outGeo0, cookparms);
     uvScaletoWorldSize.groupParser.setGroup(groupType, sopparms.getGroup());
     uvScaletoWorldSize.getOutAttribArray().set(geo0AttribClass, geo0AttribNames);
     uvScaletoWorldSize.setComputeParm(computeUVAreaInPiece, uvScale,
